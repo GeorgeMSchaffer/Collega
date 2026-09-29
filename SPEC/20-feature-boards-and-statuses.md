@@ -1,6 +1,6 @@
 # Feature: Boards and Statuses
 
-> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> **At a glance** (added 2026-09-28; the text below wins where they differ)
 > - **Scope:** org-level statuses and boards with status swimlanes; the approval workflow is post-MVP,
 >   deferred and not implemented.
 > - **Key rules:** statuses soft-delete only, not while a swimlane on an active board (Status 5-6); an org
@@ -33,13 +33,16 @@ Organizations can manage idea boards using configurable status swimlanes.
    | Client Review | `#7C3AED` (purple) | 40 |
    | Complete | `#16A34A` (green) | 50 |
 
-   `#64748B` is also the fallback `Color` applied to a custom status created without an explicit color (rule #9). These values are provisioned once at organization creation; an Org Admin may change them afterward like any other status.
-5. Status deletion is soft-delete only so existing board and idea references remain valid.
+   - `#64748B` is also the fallback `Color` for a custom status created without one (rule #9).
+   - Provisioned once at organization creation; an Org Admin may change them afterward like any other status.
+5. Status deletion is soft-delete only, so existing board and idea references remain valid.
 6. A status that is currently referenced as a swimlane on any active board cannot be soft-deleted; the delete must be rejected with an appropriate error until the swimlane reference is removed.
-7. An organization must retain at least 2 active statuses at all times — matching a board's own 2-swimlane minimum, not the 1-active-option minimum used for Idea Type/Business Impact. Deleting a status that would drop the organization below 2 active statuses is rejected, independent of whether that status is currently referenced as a swimlane on any board. This prevents an organization from being left unable to create a new board.
+7. An organization must retain at least 2 active statuses at all times; a delete that would drop it below 2 is rejected, whether or not the status is a swimlane on any board.
+   - Why: matches a board's own 2-swimlane minimum (not the 1-active-option minimum used for Idea Type/Business Impact), so an organization is never left unable to create a new board.
 8. Historical or detail views that reference a soft-deleted status must continue to show the prior status name with an archived or deleted label.
-9. Each status has an admin-editable `Color` (hex/CSS color, max 20 characters) used for the status's swimlane color dot and, where configured, the idea card's status chip.
-10. Each status has an admin-controlled `SortOrder` (integer) that determines its default position in the organization's status catalog (e.g. the Settings > Statuses list and the default order offered when configuring a new board's swimlanes). This is distinct from a board's own swimlane order, which a board can independently reorder via drag-and-drop without changing the organization-level catalog order.
+9. Each status has an admin-editable `Color` (hex/CSS color, max 20 characters), used for the swimlane color dot and, where configured, the idea card's status chip.
+10. Each status has an admin-controlled `SortOrder` (integer): its default position in the organization's status catalog (e.g. the Settings > Statuses list, and the default order offered when configuring a new board's swimlanes).
+    - Distinct from a board's own swimlane order, which a board can reorder by drag-and-drop without changing the organization-level catalog order.
 
 ## Board Rules
 1. A board is a collection of ideas organized by swimlanes.
@@ -52,21 +55,24 @@ Organizations can manage idea boards using configurable status swimlanes.
    - bulk-import ideas from a CSV file
 6. Swimlane order changes are saved immediately when the drag-and-drop action completes.
 7. Board views must provide guided empty states with a primary action and short explanatory text when no ideas exist.
-8. In Development, each seeded demo organization includes exactly two example boards. Each board contains 11 deterministic ideas distributed `3/2/2/1/3` across the five statuses in the canonical order listed above.
+8. In Development, each seeded demo organization includes exactly two example boards, each with 11 deterministic ideas distributed `3/2/2/1/3` across the five statuses in the canonical order above.
 9. User-facing copy uses `Board` or `Boards`, never `Workflow` or `Workflows`.
-10. The canonical client routes are `/boards` for the board list and `/board/{boardId}` for board detail. `/board`, `/workflow`, `/workflows`, and `/workflow/{boardId}` redirect to the corresponding canonical route.
+10. Canonical client routes: `/boards` (board list) and `/board/{boardId}` (board detail). `/board`, `/workflow`, `/workflows`, and `/workflow/{boardId}` redirect to the corresponding canonical route.
 11. Internal application service and namespace names may retain `Workflow` where they are not user-visible.
-12. A board may carry an optional description of at most 500 characters. It is trimmed; a blank description is stored as none. Site Admin and Org Admin set it when creating or editing the board (added 2026-09-27, `SPEC/decisions.md`).
-13. A board is **archived, not deleted** (added 2026-09-27, `decisions.md`; until then boards had no delete endpoint or action). Only an Org Admin of its organization archives or unarchives it, after confirmation. An archived board keeps its swimlanes and ideas, leaves the default board list and every board picker, and accepts no new ideas; its ideas stay reachable from the Ideas list. Unarchiving restores it unchanged. Its own page opens **read-only** with an *Archived* banner (Q4, answered 2026-09-27): lanes and list still show; adding, moving and editing are unavailable; an Org Admin sees *Unarchive* in the banner. The board's own settings (name, description, lanes and their order) cannot be edited while it is archived either; unarchive it first.
+12. A board may carry an optional description of at most 500 characters, trimmed; a blank description is stored as none. Site Admin and Org Admin set it when creating or editing the board (added 2026-09-27, `SPEC/decisions.md`).
+13. A board is **archived, not deleted** (added 2026-09-27, `decisions.md`; until then boards had no delete endpoint or action).
+    - Only an Org Admin of its organization archives or unarchives it, after confirmation.
+    - An archived board keeps its swimlanes and ideas, leaves the default board list and every board picker, and accepts no new ideas; its ideas stay reachable from the Ideas list.
+    - Unarchiving restores it unchanged.
+    - Its own page opens **read-only** with an *Archived* banner (Q4, answered 2026-09-27): lanes and list still show; adding, moving and editing are unavailable; an Org Admin sees *Unarchive* in the banner.
+    - Its settings (name, description, lanes and their order) cannot be edited while archived; unarchive it first.
 
 ## Approval Workflow Decisions (Post-MVP — Deferred)
-The following decisions apply to a future post-MVP approval workflow for board status transitions. **None of these behaviors are implemented in MVP.**
-
-When implemented:
-- A board may expose an approval-required state transition only when the target status is configured as reviewable by the organization.
+For a future post-MVP approval workflow on board status transitions. **None of these behaviors are implemented in MVP.** When implemented:
+- A board may expose an approval-required transition only when the target status is configured as reviewable by the organization.
 - Only Org Admins, Site Admin, and the idea author can initiate or resolve approval actions for an idea.
 - Approval actions are logged as audit events and remain visible in the idea history.
-- A status transition that is rejected or expired must not silently drop the original state; the previous state is restored and the reason is retained.
+- A rejected or expired transition must not silently drop the original state; the previous state is restored and the reason is retained.
 
 ## Acceptance Criteria
 - [ ] Organization-scoped statuses can be created and maintained

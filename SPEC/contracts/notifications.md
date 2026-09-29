@@ -6,6 +6,8 @@ shared data rules). Canonical, and read, not edited, by implementation slices.
 
 ## Notification Event Contract
 
+No route: these are internal events.
+
 ### Internal notification event types
 - `IdeaMentioned`
 - `CommentMentioned`
@@ -29,4 +31,3 @@ MVP event query scope:
 - audit and notification events must be persisted for internal processing and verification
 - read or query endpoints for those events are not required in MVP
 - verification should be provided through tests and internal diagnostics outside the public API surface
-

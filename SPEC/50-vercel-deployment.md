@@ -1,6 +1,6 @@
 # 50 — Vercel Deployment
 
-> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> **At a glance** (added 2026-09-28; the text below wins where they differ)
 > - **Scope:** canonical deployment spec for the TypeScript stack — two Vercel projects, Prisma Postgres.
 >   Repo config committed and exercised locally; the Vercel side is stated as unverified (§11).
 > - **Key rules:** web and api are two projects; the browser never calls the API, so never add CORS (§1, §4).
@@ -34,11 +34,11 @@ stack is never deployed.
 
 `apps/web` and `apps/api` deploy as **two separate Vercel projects from the same repository**.
 
-This is forced rather than preferred. Mounting Nest inside the Next app would mean `apps/web`
-importing `@collega/application` and `@collega/infrastructure`, which is a lint error enforced by
-`biome.json`'s `noRestrictedImports` and asserted by `tools/boundaries` — the layer boundary that
-`SPEC/50-typescript-migration.md` §4.3 exists to preserve. Ticket `08` anticipated the cross-origin
-cost of two hosts and accepted it.
+- This is forced rather than preferred. Mounting Nest inside the Next app would mean `apps/web`
+  importing `@collega/application` and `@collega/infrastructure`, which is a lint error enforced by
+  `biome.json`'s `noRestrictedImports` and asserted by `tools/boundaries` — the layer boundary that
+  `SPEC/50-typescript-migration.md` §4.3 exists to preserve. Ticket `08` anticipated the cross-origin
+  cost of two hosts and accepted it.
 
 | | `collega-web` | `collega-api` |
 |---|---|---|
@@ -48,10 +48,10 @@ cost of two hosts and accepted it.
 | Talks to the database | never | **only this one** |
 | Reached by the browser | yes | **never** (§4) |
 
-Both `vercel.json` files set `framework`, `installCommand`, `buildCommand`, `ignoreCommand` and
-`regions`, so those are version-controlled rather than typed into a settings page. **Root Directory
-is the one setting that cannot live in the file** — Vercel needs it to find the file at all — so it
-is set once per project in the dashboard and never changes.
+- Both `vercel.json` files set `framework`, `installCommand`, `buildCommand`, `ignoreCommand` and
+  `regions`, so those are version-controlled rather than typed into a settings page.
+- **Root Directory is the one setting that cannot live in the file** — Vercel needs it to find the
+  file at all — so it is set once per project in the dashboard and never changes.
 
 ---
 
@@ -64,13 +64,12 @@ dependencies are sibling packages:
 installCommand: cd ../.. && pnpm install --frozen-lockfile
 ```
 
-`--frozen-lockfile` matches CI: a lockfile that disagrees with the manifests fails the deploy
-instead of silently resolving something else.
-
-Both build through Turborepo, which builds the workspace packages first (`^build`) and, for
-anything downstream of `packages/infrastructure`, runs `prisma generate` first as well
-(`turbo.json` makes `db:generate` a dependency of `build`; `packages/infrastructure`'s `postinstall`
-is the second belt on the same braces):
+- `--frozen-lockfile` matches CI: a lockfile that disagrees with the manifests fails the deploy
+  instead of silently resolving something else.
+- Both build through Turborepo, which builds the workspace packages first (`^build`) and, for
+  anything downstream of `packages/infrastructure`, runs `prisma generate` first as well
+  (`turbo.json` makes `db:generate` a dependency of `build`; `packages/infrastructure`'s
+  `postinstall` is the second belt on the same braces):
 
 ```
 collega-web   cd ../.. && pnpm turbo run build --filter=@collega/web
@@ -79,16 +78,14 @@ collega-api   cd ../.. && pnpm turbo run build --filter=@collega/api
               && pnpm --filter @collega/infrastructure db:bootstrap-admin
 ```
 
-`@collega/web#build` has its own `turbo.json` entry whose outputs exclude `!.next/cache/**`; that
-is required for a Next app under Turborepo and is already in place.
-
-**The web build never needs a database.** Its only workspace dependency is
-`@collega/design-system`, and `DATABASE_URL` is not among its inputs. Keep it that way: a web
-deploy that can be blocked by the database is a web deploy that fails during an incident.
-
-The build command's shape is not improvised: `cd ../.. && turbo run build --filter=<package>` is
-what Vercel's own Turborepo page documents for a project whose Root Directory is a workspace
-member.
+- `@collega/web#build` has its own `turbo.json` entry whose outputs exclude `!.next/cache/**`; that
+  is required for a Next app under Turborepo and is already in place.
+- **The web build never needs a database.** Its only workspace dependency is
+  `@collega/design-system`, and `DATABASE_URL` is not among its inputs. Keep it that way: a web
+  deploy that can be blocked by the database is a web deploy that fails during an incident.
+- The build command's shape is not improvised: `cd ../.. && turbo run build --filter=<package>` is
+  what Vercel's own Turborepo page documents for a project whose Root Directory is a workspace
+  member.
 
 ### The ignore step, and why it is not `npx turbo-ignore`
 
@@ -96,20 +93,19 @@ member.
 turbo query affected --base=$VERCEL_GIT_PREVIOUS_SHA --packages @collega/api --exit-code || exit 1
 ```
 
-It skips a project's build when nothing in its dependency graph changed — a `SPEC/`-only commit
-stops burning two builds and two red checks.
-
-**Vercel's Turborepo page documents two forms for this field, and we use the second one
-deliberately.** The first, `npx turbo-ignore --fallback=HEAD^1`, is the one most repositories
-copy — and `npx` with no version resolves and downloads whatever was published most recently, on
-every build, outside `pnpm-lock.yaml`. That happens in a container holding `DATABASE_URL`,
-`ACCESS_TOKEN_SIGNING_KEY` and `SITE_ADMIN_PASSWORD`, with write access to the artifact about to
-deploy. Two lines below it, `--frozen-lockfile` exists precisely so a package that disagrees with
-the lockfile fails the deploy instead of resolving silently; running an unpinned package above it
-exempts one dependency from the guarantee the line below is there to give. So we use the second
-documented form, `turbo query affected`, which invokes a `turbo` already present on the build image
-and fetches nothing. **A future reader should not "fix" this back to the `npx` snippet** — the
-deviation is the point.
+- It skips a project's build when nothing in its dependency graph changed — a `SPEC/`-only commit
+  stops burning two builds and two red checks.
+- **Vercel's Turborepo page documents two forms for this field, and we use the second one
+  deliberately.** The first, `npx turbo-ignore --fallback=HEAD^1`, is the one most repositories
+  copy — and `npx` with no version resolves and downloads whatever was published most recently, on
+  every build, outside `pnpm-lock.yaml`. That happens in a container holding `DATABASE_URL`,
+  `ACCESS_TOKEN_SIGNING_KEY` and `SITE_ADMIN_PASSWORD`, with write access to the artifact about to
+  deploy. Two lines below it, `--frozen-lockfile` exists precisely so a package that disagrees with the lockfile fails
+  the deploy instead of resolving silently; running an unpinned package above it exempts one
+  dependency from the guarantee the line below is there to give. So we use the second documented form,
+  `turbo query affected`, which invokes a `turbo` already present on the build image and fetches
+  nothing. **A future reader should not "fix" this back to the `npx` snippet** — the deviation is
+  the point.
 
 Exit codes, verified against `turbo` 2.10.12 (the version the root `devDependencies` pins):
 
@@ -119,51 +115,47 @@ Exit codes, verified against `turbo` 2.10.12 (the version the root `devDependenc
 | Nothing changed | 0 | **skips** |
 | Any error — bad ref, missing base, `turbo` not on `PATH` | 2, or 127 | builds |
 
-`ignoreCommand`'s semantics are inverted and unforgiving: **0 means skip, anything else means
-build.** The trailing `|| exit 1` normalizes every error exit to a plain 1, because Vercel's own
-wording ("code 0 ignores the build, while code 1 continues it") does not say what it does with a 2,
-and the cost of guessing wrong is a first deployment that silently skips itself.
-
-Two known ways it errs toward building, both harmless:
-
-- **The first deployment of a project.** `VERCEL_GIT_PREVIOUS_SHA` is only exposed once an Ignored
-  Build Step is configured *and* a previous deployment exists, so on the first one `--base=` is
-  empty, `turbo` reports a query error, and the build runs. That is the right answer.
-- **The shallow clone.** Vercel clones with `--depth=10`; a previous SHA older than that is not in
-  the history, `turbo` cannot resolve it, and the build runs. `turbo-ignore` handles this more
-  gracefully with `--fallback=HEAD^1`, which `turbo query affected` has no equivalent for. The
-  cost is builds that were not strictly necessary — never a build that was needed and skipped.
-
-If the first build log shows `turbo: command not found`, the skip is simply not working: builds
-still run and deploy correctly, they just always run. The fallback then is the *pinned* form,
-`npx --yes turbo-ignore@2.10.12 --fallback=HEAD^1` — pinned to the root `turbo` version, since
-`turbo-ignore` ships from the same repository at the same version — and never the unpinned one.
+- `ignoreCommand`'s semantics are inverted and unforgiving: **0 means skip, anything else means
+  build.** The trailing `|| exit 1` normalizes every error exit to a plain 1, because Vercel's own
+  wording ("code 0 ignores the build, while code 1 continues it") does not say what it does with a
+  2, and the cost of guessing wrong is a first deployment that silently skips itself.
+- Two known ways it errs toward building, both harmless:
+  - **The first deployment of a project.** `VERCEL_GIT_PREVIOUS_SHA` is only exposed once an
+    Ignored Build Step is configured *and* a previous deployment exists, so on the first one
+    `--base=` is empty, `turbo` reports a query error, and the build runs. That is the right answer.
+  - **The shallow clone.** Vercel clones with `--depth=10`; a previous SHA older than that is not in
+    the history, `turbo` cannot resolve it, and the build runs. `turbo-ignore` handles this more
+    gracefully with `--fallback=HEAD^1`, which `turbo query affected` has no equivalent for. The
+    cost is builds that were not strictly necessary — never a build that was needed and skipped.
+- If the first build log shows `turbo: command not found`, the skip is simply not working: builds
+  still run and deploy correctly, they just always run. The fallback then is the *pinned* form,
+  `npx --yes turbo-ignore@2.10.12 --fallback=HEAD^1` — pinned to the root `turbo` version, since
+  `turbo-ignore` ships from the same repository at the same version — and never the unpinned one.
 
 ---
 
 ## 3. The API's entrypoint — `apps/api/server.js`
 
-Vercel's Node runtime captures a server through its `listen()` call, and `apps/api/src/main.ts`
-already ends in `await app.listen(config.server.port)` with `PORT` read from the environment
-(`common/config/fragments/server.ts`). So the API needs no handler wrapper and no second copy of
-the bootstrap — but it does need Vercel to run the **compiled** output.
-
-**Why compiled and not the source.** Nest resolves constructor dependencies from
-`design:paramtypes` metadata, which only `tsc` with `emitDecoratorMetadata` emits.
-`apps/api/tsconfig.json` sets it; esbuild — what a bundler reaches for — does not implement it at
-all. A deployment that compiled `src/main.ts` itself would look healthy and fail to resolve every
-provider on the first request. This is the thing not to assume either way: `dist/main.js` is the
-artifact that works, and reaching it is deliberate.
-
-**Established:** Vercel's Node runtime captures `listen()`, and the `functions` glob in
-`apps/api/vercel.json` must match a real serverless function or the build fails naming the pattern.
-**Expected, not documented:** that Vercel resolves an entrypoint named `app` / `index` / `server` /
-`main` at the project root ahead of anything under `src/`. That ordering is how the presets are
-observed to behave and it is why this file is named `server.js` and sits where it does, but no
-Vercel document states it. Vercel publishes an entrypoint escape hatch for its **Python** presets
-(`[tool.vercel] entrypoint = …`) and nothing equivalent for Node, so there is no setting to force
-the matter either. Treat the file's placement as a well-founded expectation to be confirmed by the
-first build log (§11), not as a guarantee.
+- Vercel's Node runtime captures a server through its `listen()` call, and `apps/api/src/main.ts`
+  already ends in `await app.listen(config.server.port)` with `PORT` read from the environment
+  (`common/config/fragments/server.ts`). So the API needs no handler wrapper and no second copy of
+  the bootstrap — but it does need Vercel to run the **compiled** output.
+- **Why compiled and not the source.** Nest resolves constructor dependencies from
+  `design:paramtypes` metadata, which only `tsc` with `emitDecoratorMetadata` emits.
+  `apps/api/tsconfig.json` sets it; esbuild — what a bundler reaches for — does not implement it at
+  all. A deployment that compiled `src/main.ts` itself would look healthy and fail to resolve every
+  provider on the first request. This is the thing not to assume either way: `dist/main.js` is the
+  artifact that works, and reaching it is deliberate.
+- **Established:** Vercel's Node runtime captures `listen()`, and the `functions` glob in
+  `apps/api/vercel.json` must match a real serverless function or the build fails naming the
+  pattern.
+- **Expected, not documented:** that Vercel resolves an entrypoint named `app` / `index` / `server` /
+  `main` at the project root ahead of anything under `src/`. That ordering is how the presets are
+  observed to behave and it is why this file is named `server.js` and sits where it does, but no
+  Vercel document states it. Vercel publishes an entrypoint escape hatch for its **Python** presets
+  (`[tool.vercel] entrypoint = …`) and nothing equivalent for Node, so there is no setting to force
+  the matter either. Treat the file's placement as a well-founded expectation to be confirmed by
+  the first build log (§11), not as a guarantee.
 
 ```js
 // apps/api/server.js
@@ -180,36 +172,33 @@ the build says so rather than deploying the wrong file.
 The pattern "server.js" defined in 'functions' doesn't match any Serverless Functions
 ```
 
-This is the expected first failure, and the likeliest cause is the most benign one: the `nestjs`
-preset resolved `dist/main.js` directly, which exists because that is where Nest apps compile.
-Nothing is wrong with the deployment except the glob.
-
-**Point the glob at the entrypoint the log names. Do not rename `server.js` to match the glob,
-and do not delete the `functions` block.** Renaming chases a moving target and can only be
-confirmed by another failed build; deleting the block makes the error go away and takes
-`maxDuration: 60` silently with it, leaving the API on the default timeout with nothing in the diff
-to say so. Read the build log for the file Vercel chose, put that path in `functions`, keep
-`maxDuration`, and — if the chosen entrypoint is already `dist/`-backed — `server.js` becomes dead
-weight to delete in a follow-up rather than something to fix under pressure.
-
-**Do not set `framework` to `null`.** It was considered and rejected: with no preset, Vercel still
-needs some rule to turn `apps/api` into a function at all, and the "Other" preset has historically
-meant static output — a deployment that produced no function would be a worse and more confusing
-first result than a glob error that names its own fix. Keep `nestjs` for the first deploy and
-change it only with a build log to justify it.
+- This is the expected first failure, and the likeliest cause is the most benign one: the `nestjs`
+  preset resolved `dist/main.js` directly, which exists because that is where Nest apps compile.
+  Nothing is wrong with the deployment except the glob.
+- **Point the glob at the entrypoint the log names. Do not rename `server.js` to match the glob,
+  and do not delete the `functions` block.** Renaming chases a moving target and can only be
+  confirmed by another failed build; deleting the block makes the error go away and takes
+  `maxDuration: 60` silently with it, leaving the API on the default timeout with nothing in the
+  diff to say so. Read the build log for the file Vercel chose, put that path in `functions`, keep
+  `maxDuration`, and — if the chosen entrypoint is already `dist/`-backed — `server.js` becomes dead
+  weight to delete in a follow-up rather than something to fix under pressure.
+- **Do not set `framework` to `null`.** It was considered and rejected: with no preset, Vercel still
+  needs some rule to turn `apps/api` into a function at all, and the "Other" preset has historically
+  meant static output — a deployment that produced no function would be a worse and more confusing
+  first result than a glob error that names its own fix. Keep `nestjs` for the first deploy and
+  change it only with a build log to justify it.
 
 ---
 
 ## 4. Cross-origin: there is none, and that is the design
 
-**The browser never calls `apps/api`.** `apps/api/src/main.ts` calls no `enableCors()`, and
-`apps/web` reaches the API server-side through `COLLEGA_API_URL` (`apps/web/lib/api/config.ts`),
-forwarding the session cookie and re-issuing it on its own origin. `COLLEGA_API_URL` is
-deliberately **not** `NEXT_PUBLIC_`: that would inline the API's address into the client bundle and
-invite exactly the call CORS would then have to permit.
-
-Do not add CORS to make something work. If a browser request to the API host is being blocked,
-something is calling the API from the wrong side of the app.
+- **The browser never calls `apps/api`.** `apps/api/src/main.ts` calls no `enableCors()`, and
+  `apps/web` reaches the API server-side through `COLLEGA_API_URL` (`apps/web/lib/api/config.ts`),
+  forwarding the session cookie and re-issuing it on its own origin.
+- `COLLEGA_API_URL` is deliberately **not** `NEXT_PUBLIC_`: that would inline the API's address into
+  the client bundle and invite exactly the call CORS would then have to permit.
+- Do not add CORS to make something work. If a browser request to the API host is being blocked,
+  something is calling the API from the wrong side of the app.
 
 ### Security headers
 
@@ -223,16 +212,15 @@ something is calling the API from the wrong side of the app.
 | `Referrer-Policy` | `strict-origin-when-cross-origin` | Board and idea ids live in the path; the origin is all any third party needs. |
 | `Permissions-Policy` | camera, microphone, geolocation, interest-cohort off | Nothing in the product asks for them, so nothing embedded in it should be able to. |
 
-`apps/api` gets none: it is never reached by a browser (above), so a header aimed at browser
-behaviour has no reader there.
-
-**A Content-Security-Policy is owed and deliberately not shipped yet.** Next injects inline
-bootstrap scripts, so `script-src 'self'` breaks the app on the first load and `'unsafe-inline'`
-would leave a policy that permits the attack it is named for. Doing it properly means a nonce
-generated per request in middleware and threaded through `next.config.ts` — real work, worth its
-own slice, and worth doing after there is a deployment to test it against. Until then the app has
-no CSP; say so rather than assuming one is there. Whoever writes it should start from Vercel's own
-allowances for its toolbar (`vercel.live`, `ws-us3.pusher.com`), which previews load.
+- `apps/api` gets none: it is never reached by a browser (above), so a header aimed at browser
+  behaviour has no reader there.
+- **A Content-Security-Policy is owed and deliberately not shipped yet.** Next injects inline
+  bootstrap scripts, so `script-src 'self'` breaks the app on the first load and `'unsafe-inline'`
+  would leave a policy that permits the attack it is named for. Doing it properly means a nonce
+  generated per request in middleware and threaded through `next.config.ts` — real work, worth its
+  own slice, and worth doing after there is a deployment to test it against. Until then the app has
+  no CSP; say so rather than assuming one is there. Whoever writes it should start from Vercel's own
+  allowances for its toolbar (`vercel.live`, `ws-us3.pusher.com`), which previews load.
 
 ---
 
@@ -243,7 +231,7 @@ Two databases: one for **production**, one shared **staging** database for every
 
 ### Where `prisma migrate deploy` runs, and why
 
-In the **API project's build command**, after the build and before the deployment goes live.
+In the **API project's build command**, after the build and before the deployment goes live:
 
 - It is the only place that reliably holds the right `DATABASE_URL` for the environment being
   deployed, and it runs exactly once per deployment.
@@ -320,23 +308,22 @@ every name for local development; nothing in this table belongs in a committed f
 | `ANTHROPIC_API_KEY` | optional | no | AI idea assist runs dark — the scripted fallback answers and the API reports "not configured" rather than erroring (`SPEC/20-feature-ai-idea-assist.md` rule 31). D6 is unbuilt, so today it changes nothing. |
 | `POSTGRES_*` | — | **no** | Do not set them. They are the local container's parts; `DATABASE_URL` wins anyway, and having both invites the two drifting. |
 
-**`ACCESS_TOKEN_SIGNING_KEY` is now enforced.** `authFragment` pushes a config problem when the key
-is absent and `NODE_ENV=production`, which Nest surfaces as a boot failure. Before this change an
-unset key meant "generate a random one for this process" — harmless for one local process, and
-actively harmful on serverless, where **every cold start is a new process**: two warm instances
-sign with different keys, so a session issued by one is rejected by the other and users are signed
-out at moments nobody could trace back to a missing variable. Refusing to boot is the cheaper
-failure. Vercel sets `NODE_ENV=production` for preview deployments too, so previews need a key as
-well — a different one.
-
-**A short key is rejected on the same terms.** HS256 signs and verifies with the same secret, so
-`ACCESS_TOKEN_SIGNING_KEY=changeme` is eight guessable bytes standing between an attacker and a
-token this API will accept. What that buys is bounded — `TokenAuthenticationService` re-checks the
-token's `sstamp` claim against the live user row, so forging a session for someone else needs a
-security stamp the attacker does not have — but a forged token still carries an `exp` of the
-attacker's choosing, which is the 8h lifetime made optional. The fragment refuses anything under 32
-characters in production; §12 step 3 already asks for 48 bytes of base64, so this only enforces the
-handoff.
+- **`ACCESS_TOKEN_SIGNING_KEY` is now enforced.** `authFragment` pushes a config problem when the
+  key is absent and `NODE_ENV=production`, which Nest surfaces as a boot failure. Before this change
+  an unset key meant "generate a random one for this process" — harmless for one local process, and
+  actively harmful on serverless, where **every cold start is a new process**: two warm instances
+  sign with different keys, so a session issued by one is rejected by the other and users are signed
+  out at moments nobody could trace back to a missing variable. Refusing to boot is the cheaper
+  failure. Vercel sets `NODE_ENV=production` for preview deployments too, so previews need a key as
+  well — a different one.
+- **A short key is rejected on the same terms.** HS256 signs and verifies with the same secret, so
+  `ACCESS_TOKEN_SIGNING_KEY=changeme` is eight guessable bytes standing between an attacker and a
+  token this API will accept. What that buys is bounded — `TokenAuthenticationService` re-checks the
+  token's `sstamp` claim against the live user row, so forging a session for someone else needs a
+  security stamp the attacker does not have — but a forged token still carries an `exp` of the
+  attacker's choosing, which is the 8h lifetime made optional. The fragment refuses anything under
+  32 characters in production; §12 step 3 already asks for 48 bytes of base64, so this only enforces
+  the handoff.
 
 ### `collega-web`
 
@@ -348,11 +335,11 @@ Not `NEXT_PUBLIC_` — see §4.
 
 ### Never set `DATABASE_URL` in CI
 
-`.github/workflows/ci.yml` deliberately does not set it, and setting it **breaks** that job rather
-than helping it: `packages/infrastructure` guards a suite with `skipIf(!DATABASE_URL)`, so the
-variable's presence stops it skipping and it then tries to reach a database CI does not have.
-`turbo.json` declares `DATABASE_URL` as `env` on `@collega/infrastructure#test` so a cached result
-from a run without a database is never reused for a run with one. Leave all three alone.
+- `.github/workflows/ci.yml` deliberately does not set it, and setting it **breaks** that job
+  rather than helping it: `packages/infrastructure` guards a suite with `skipIf(!DATABASE_URL)`, so
+  the variable's presence stops it skipping and it then tries to reach a database CI does not have.
+- `turbo.json` declares `DATABASE_URL` as `env` on `@collega/infrastructure#test` so a cached result
+  from a run without a database is never reused for a run with one. Leave all three alone.
 
 ---
 
@@ -372,32 +359,30 @@ from a run without a database is never reused for a run with one. Leave all thre
 > worse than naming the gap. The two custom domains that *do* answer are `www.collega-ai.com`
 > (production web, public) and `dev.collega-ai.com` (staging web, behind Vercel SSO).
 
-**Production is a custom domain, `api.collega-ai.com`,** bound to the API project — decided
-2026-09-10. Vercel's generated hostname is derived from the project name, so it changes if the
-project is renamed or recreated, and the web app would keep pointing at a host that no longer
-answers. A domain we own removes that coupling. Nothing about the cookie changes: the browser never
-sees the API, because `apps/web` re-issues the session on its own origin (§4), so the API living on
-a different registrable domain costs nothing.
-
-A preview API deployment gets a unique hostname per commit, which a web preview cannot know. The
-stable address is the API project's **branch alias for `dev`**:
+- **Production is a custom domain, `api.collega-ai.com`,** bound to the API project — decided
+  2026-09-10. Vercel's generated hostname is derived from the project name, so it changes if the
+  project is renamed or recreated, and the web app would keep pointing at a host that no longer
+  answers. A domain we own removes that coupling. Nothing about the cookie changes: the browser
+  never sees the API, because `apps/web` re-issues the session on its own origin (§4), so the API
+  living on a different registrable domain costs nothing.
+- A preview API deployment gets a unique hostname per commit, which a web preview cannot know. The
+  stable address is the API project's **branch alias for `dev`**:
 
 ```
 COLLEGA_API_URL = https://collega-api-git-dev-<team-slug>.vercel.app/api/v1   (Preview)
 ```
 
-**The accepted cost, stated plainly:** two pull requests changing the API at the same time share
-one backend, and a web preview is tested against `dev`'s API rather than against its own branch's.
-For a product with no users yet that is the right trade; when it stops being, the answer is a
-Vercel custom environment for staging, not per-PR databases.
-
-**Deployment Protection is the trap here.** With Vercel Authentication on, a preview (and, on some
-settings, the production deployment URL) answers an SSO redirect instead of the API — and
-`apps/web`'s server-side fetch has no browser session to satisfy it, so every call fails with HTML
-where JSON was expected. The API authenticates its own callers; **turn Vercel Authentication off
-for `collega-api`**, or issue a Protection Bypass for Automation token and send it as
-`x-vercel-protection-bypass` (which would be a change to `apps/web/lib/api/client.ts`, currently
-unwritten). Leave protection on for `collega-web` if you want previews private.
+- **The accepted cost, stated plainly:** two pull requests changing the API at the same time share
+  one backend, and a web preview is tested against `dev`'s API rather than against its own branch's.
+  For a product with no users yet that is the right trade; when it stops being, the answer is a
+  Vercel custom environment for staging, not per-PR databases.
+- **Deployment Protection is the trap here.** With Vercel Authentication on, a preview (and, on some
+  settings, the production deployment URL) answers an SSO redirect instead of the API — and
+  `apps/web`'s server-side fetch has no browser session to satisfy it, so every call fails with HTML
+  where JSON was expected. The API authenticates its own callers; **turn Vercel Authentication off
+  for `collega-api`**, or issue a Protection Bypass for Automation token and send it as
+  `x-vercel-protection-bypass` (which would be a change to `apps/web/lib/api/client.ts`, currently
+  unwritten). Leave protection on for `collega-web` if you want previews private.
 
 ---
 
@@ -420,156 +405,151 @@ unwritten). Leave protection on for `collega-web` if you want previews private.
 > The first is probably right, but it changes boot-time behaviour and should land as its own change
 > rather than riding along with deployment configuration.
 
-The demo seed throws when `NODE_ENV=production` (`packages/infrastructure/prisma/seed/index.ts`),
-so a production database created by `migrate deploy` has **zero users** and a login screen nobody
-can pass. `apps/api` reads `SITE_ADMIN_EMAIL` and `SITE_ADMIN_PASSWORD` and **refuses to boot
-without them, but never acts on them** — the account was only ever created by the .NET
-`StartupSeeder` and, in the new stack, by the demo seed's tenth user.
-
-`SPEC/20-feature-auth.md` requirement 8 says the Site Admin is created on first run and requirement
-9 says it must change that credential on first login. On serverless, boot is the wrong place to
-honour it — "first run" happens on every cold start — so **it runs once per deploy instead**:
+- The demo seed throws when `NODE_ENV=production` (`packages/infrastructure/prisma/seed/index.ts`),
+  so a production database created by `migrate deploy` has **zero users** and a login screen nobody
+  can pass. `apps/api` reads `SITE_ADMIN_EMAIL` and `SITE_ADMIN_PASSWORD` and **refuses to boot
+  without them, but never acts on them** — the account was only ever created by the .NET `StartupSeeder` and, in the new stack, by
+  the demo seed's tenth user.
+- `SPEC/20-feature-auth.md` requirement 8 says the Site Admin is created on first run and
+  requirement 9 says it must change that credential on first login. On serverless, boot is the wrong
+  place to honour it — "first run" happens on every cold start — so **it runs once per deploy
+  instead**:
 
 ```
 packages/infrastructure/prisma/seed/bootstrap-site-admin.ts
 pnpm --filter @collega/infrastructure db:bootstrap-admin
 ```
 
-It creates exactly one account, from the environment, with `must_change_password` set, and it is
-in the API project's build command after `db:migrate`. It can also be run by hand by anyone holding
-`DATABASE_URL`, which is useful for bootstrapping a database that was created outside a deploy.
-
-Four properties that make it safe to leave in a build command that runs on every deploy:
-
-- **Idempotent.** An account already owning that email is reported and left exactly as it is, so a
-  password the administrator has since changed is never reset to the environment's value.
-- **Concurrency-safe.** The existence check and the insert are not one transaction, and two preview
-  builds starting a second apart against the shared staging database will both see "absent". The
-  insert catches the resulting unique violation (`P2002`) and treats it as the already-exists
-  branch, because losing that race is the same outcome as never having raced. Before this was
-  handled, the loser exited non-zero — and because `db:bootstrap-admin` is the last link in an `&&`
-  chain, a non-zero exit **fails the whole Vercel build**.
-- **It invents nothing.** With either variable unset it logs and exits 0 rather than making up a
-  credential. **No credential is ever committed** — the values live only in Vercel's environment
-  variables and your local `.env`, both untracked.
-- **It shares the demo seed's id derivation**, so a development database that has seen both the
-  demo seed and this bootstrap holds one row rather than colliding on the unique email index.
-
-After the first login and password change, `SITE_ADMIN_PASSWORD` can be deleted from the project.
+- It creates exactly one account, from the environment, with `must_change_password` set, and it is
+  in the API project's build command after `db:migrate`. It can also be run by hand by anyone
+  holding `DATABASE_URL`, which is useful for bootstrapping a database that was created outside a
+  deploy.
+- Four properties make it safe to leave in a build command that runs on every deploy:
+  - **Idempotent.** An account already owning that email is reported and left exactly as it is, so
+    a password the administrator has since changed is never reset to the environment's value.
+  - **Concurrency-safe.** The existence check and the insert are not one transaction, and two
+    preview builds starting a second apart against the shared staging database will both see
+    "absent". The insert catches the resulting unique violation (`P2002`) and treats it as the
+    already-exists branch, because losing that race is the same outcome as never having raced.
+    Before this was handled, the loser exited non-zero — and because `db:bootstrap-admin` is the
+    last link in an `&&` chain, a non-zero exit **fails the whole Vercel build**.
+  - **It invents nothing.** With either variable unset it logs and exits 0 rather than making up a
+    credential. **No credential is ever committed** — the values live only in Vercel's environment
+    variables and your local `.env`, both untracked.
+  - **It shares the demo seed's id derivation**, so a development database that has seen both the
+    demo seed and this bootstrap holds one row rather than colliding on the unique email index.
+- After the first login and password change, `SITE_ADMIN_PASSWORD` can be deleted from the project.
 
 ### When the address is owned by an account that cannot administer anything
 
-Leaving an existing row alone is right — re-granting `SiteAdmin` to whoever owns the configured
-address would make this script a privilege-escalation path for anyone able to set an environment
-variable — but leaving it alone *quietly* was wrong. A `SITE_ADMIN_EMAIL` owned by a `ReadOnly` or
-`Inactive` account used to print "already exists … left untouched" and exit 0: the deploy went
-green and shipped an application nobody could administer.
-
-The row is still never modified. But when the account found is not both `role = SiteAdmin` and
-`status = Active`, the script prints what it found and **exits 1, failing the build**. Recovery is
-to fix that account directly against the database, or to point `SITE_ADMIN_EMAIL` at an address
-nothing owns yet — not to re-run this script, which by design will not touch it.
-
-**This script is not a lockout recovery.** A locked-out, deactivated, demoted or
-password-forgotten administrator is precisely the case the idempotency guard refuses to act on;
-running it by hand will print a message and change nothing. Recovering a lost administrator means a
-direct write with `DATABASE_URL` in hand — clear `locked_until_utc` and `failed_login_count`, or
-set `status`/`role` back, or set `password_hash` to a fresh PBKDF2 hash in the format
-`packages/infrastructure/src/security/pbkdf2-password-hasher.ts` produces together with
-`must_change_password = true` and a new `security_stamp` (changing the stamp is what invalidates
-any session the previous state left outstanding). Know that before the incident; the alternative
-during one is to point `SITE_ADMIN_EMAIL` at a fresh address and redeploy, which does work and
-leaves the broken account behind to clean up later.
+- Leaving an existing row alone is right — re-granting `SiteAdmin` to whoever owns the configured
+  address would make this script a privilege-escalation path for anyone able to set an environment
+  variable — but leaving it alone *quietly* was wrong. A `SITE_ADMIN_EMAIL` owned by a `ReadOnly` or
+  `Inactive` account used to print "already exists … left untouched" and exit 0: the deploy went
+  green and shipped an application nobody could administer.
+- The row is still never modified. But when the account found is not both `role = SiteAdmin` and
+  `status = Active`, the script prints what it found and **exits 1, failing the build**. Recovery is
+  to fix that account directly against the database, or to point `SITE_ADMIN_EMAIL` at an address
+  nothing owns yet — not to re-run this script, which by design will not touch it.
+- **This script is not a lockout recovery.** A locked-out, deactivated, demoted or
+  password-forgotten administrator is precisely the case the idempotency guard refuses to act on;
+  running it by hand will print a message and change nothing. Recovering a lost administrator means
+  a direct write with `DATABASE_URL` in hand — clear `locked_until_utc` and `failed_login_count`, or
+  set `status`/`role` back, or set `password_hash` to a fresh PBKDF2 hash in the format
+  `packages/infrastructure/src/security/pbkdf2-password-hasher.ts` produces together with
+  `must_change_password = true` and a new `security_stamp` (changing the stamp is what invalidates
+  any session the previous state left outstanding). Know that before the incident; the alternative
+  during one is to point `SITE_ADMIN_EMAIL` at a fresh address and redeploy, which does work and
+  leaves the broken account behind to clean up later.
 
 ---
 
 ## 8a. The first organization
 
-§8 leaves a fresh deployment with **exactly one row**. The Site Admin belongs to no organization by
-design (`SPEC/20-feature-organizations-and-users.md` User Rule 7), so it signs in, changes its
-password, and lands in an application with no organization, no board, and no catalogs — and cannot
-create any of them, because `apps/web`'s only writes are sign-in/out and the three idea actions.
-The state is also circular: creating an idea needs an active idea type *and* an active business
-impact, so even a hand-made organization would not produce a usable board.
+- §8 leaves a fresh deployment with **exactly one row**. The Site Admin belongs to no organization
+  by design (`SPEC/20-feature-organizations-and-users.md` User Rule 7), so it signs in, changes its
+  password, and lands in an application with no organization, no board, and no catalogs — and cannot
+  create any of them, because `apps/web`'s only writes are sign-in/out and the three idea actions.
+- The state is also circular: creating an idea needs an active idea type *and* an active business
+  impact, so even a hand-made organization would not produce a usable board.
 
 ```
 packages/infrastructure/prisma/seed/bootstrap-organization.ts
 pnpm --filter @collega/infrastructure db:bootstrap-organization
 ```
 
-It creates one organization from `BOOTSTRAP_ORG_TITLE` and `BOOTSTRAP_ORG_DESCRIPTION`, provisions
-it with the same defaults `POST /organizations` provisions — the five statuses, two idea types and
-four business impacts from `@collega/application/organizations`, plus the default `Ideas` board
-carrying all five statuses as swimlanes — and prints the organization's invite code. It shares
-`bootstrap-site-admin.ts`'s properties: with either variable unset it logs what is missing and exits
-0 rather than inventing a name; every write is an upsert on a derived id with an empty `update`, so
-a re-run leaves an existing organization exactly as it is, including catalogs an administrator has
-since renamed, reordered or archived; and two concurrent runs converge on the same derived ids
-rather than racing to a unique-constraint failure. The invite code is the one value **not** derived:
-it is a shared secret, so it comes from `RandomInviteCodeGenerator` and is read back from the row on
-every run, which means a re-run prints the code an administrator may since have regenerated rather
-than the one it would have created.
+- It creates one organization from `BOOTSTRAP_ORG_TITLE` and `BOOTSTRAP_ORG_DESCRIPTION`,
+  provisions it with the same defaults `POST /organizations` provisions — the five statuses, two
+  idea types and four business impacts from `@collega/application/organizations`, plus the default
+  `Ideas` board carrying all five statuses as swimlanes — and prints the organization's invite code.
+- It shares `bootstrap-site-admin.ts`'s properties: with either variable unset it logs what is
+  missing and exits 0 rather than inventing a name; every write is an upsert on a derived id with an
+  empty `update`, so a re-run leaves an existing organization exactly as it is, including catalogs
+  an administrator has since renamed, reordered or archived; and two concurrent runs converge on the
+  same derived ids rather than racing to a unique-constraint failure.
+- The invite code is the one value **not** derived: it is a shared secret, so it comes from
+  `RandomInviteCodeGenerator` and is read back from the row on every run, which means a re-run
+  prints the code an administrator may since have regenerated rather than the one it would have
+  created.
 
 ### Who administers it
 
-The product has already decided this, and the script follows rather than inventing a mechanism.
-Self-registration always produces role `User` (`SPEC/20-feature-auth.md` requirement 17,
-org-and-users requirement #4) and nothing promotes the first member, so the only route to an Org
-Admin is org-and-users "Direct creation by an admin" #1 — *Site Admin can add users to any
-organization*, choosing the role and issuing an initial password. That is
-`POST /organizations/:id/users`, which has no UI yet, so setting `BOOTSTRAP_ORG_ADMIN_EMAIL` makes
-the script do the same thing against the same columns: role `OrgAdmin`, status `Active`,
-`must_change_password` set. Its password is generated by the domain's own
-`generateTemporaryPassword`, **printed once to the terminal and written nowhere** — hand it over out
-of band. An account that already owns that address is reported and left untouched, password
-included; re-issuing would make the script an account-takeover path for anyone able to set an
-environment variable.
+- The product has already decided this, and the script follows rather than inventing a mechanism.
+  Self-registration always produces role `User` (`SPEC/20-feature-auth.md` requirement 17,
+  org-and-users requirement #4) and nothing promotes the first member, so the only route to an Org
+  Admin is org-and-users "Direct creation by an admin" #1 — *Site Admin can add users to any
+  organization*, choosing the role and issuing an initial password. That is
+  `POST /organizations/:id/users`, which has no UI yet, so setting `BOOTSTRAP_ORG_ADMIN_EMAIL`
+  makes the script do the same thing against the same columns:
+  role `OrgAdmin`, status `Active`, `must_change_password` set. Its password is generated by the
+  domain's own `generateTemporaryPassword`, **printed once to the terminal and written nowhere** —
+  hand it over out of band. An account that already owns that address is reported and left
+  untouched, password included; re-issuing would make the script an account-takeover path for
+  anyone able to set an environment variable.
 
 ### Why this is not in the build command
 
-`db:bootstrap-admin` is in `apps/api/vercel.json` because the coupling is real — the API refuses to
-boot without its two variables. Nothing equivalent is true here: the API boots fine with no
-organization, and *which* organization exists is a business decision rather than a deploy step.
-Decisively, this script's entire output is an invite code and, when it mints one, a temporary
-password. A Vercel build log is retained and readable by everyone with project access, which is the
-wrong place for either. So it is **run once, by hand, by whoever holds `DATABASE_URL`** — and its
-three variables belong in that operator's shell, not in the project's environment. Idempotency is
-one more reason: a typo'd title would create an organization that every later run then politely
-declines to correct.
-
-Its guards are the ones it needs, and they are not the demo seed's. `prisma/seed/index.ts` still
-throws on `NODE_ENV=production` and that stays exactly as it is; this script has no such guard
-because production is precisely where it is meant to run. What it guards instead is inventing
-anything (unset variables exit 0), overwriting anything (empty-`update` upserts), and handing out a
-code nobody can use — an archived organization's invite code is rejected at registration
-(org-and-users requirement #9), so it says so and exits 1 rather than printing joining instructions
-that would not work.
+- `db:bootstrap-admin` is in `apps/api/vercel.json` because the coupling is real — the API refuses
+  to boot without its two variables. Nothing equivalent is true here: the API boots fine with no
+  organization, and *which* organization exists is a business decision rather than a deploy step.
+- Decisively, this script's entire output is an invite code and, when it mints one, a temporary
+  password. A Vercel build log is retained and readable by everyone with project access, which is
+  the wrong place for either. So it is **run once, by hand, by whoever holds `DATABASE_URL`** — and
+  its three variables belong in that operator's shell, not in the project's environment.
+- Idempotency is one more reason: a typo'd title would create an organization that every later run
+  then politely declines to correct.
+- Its guards are the ones it needs, and they are not the demo seed's. `prisma/seed/index.ts` still
+  throws on `NODE_ENV=production` and that stays exactly as it is; this script has no such guard
+  because production is precisely where it is meant to run. What it guards instead is inventing
+  anything (unset variables exit 0), overwriting anything (empty-`update` upserts), and handing out
+  a code nobody can use — an archived organization's invite code is rejected at registration
+  (org-and-users requirement #9), so it says so and exits 1 rather than printing joining
+  instructions that would not work.
 
 ### Where the code is spent
 
-`/register` on the web app, which is the whole of the front door: a public route carrying comp Q's
-`s-register` — invite code, first and last name, email, password — posting to `POST /auth/register`.
-Everything the API refuses is rendered beside the field that earned it, because the API keys its
-`errors` bag by field name and those are the same names the form posts: an unknown or archived code
-under Invite code, a duplicate address under Email (the one refusal that arrives as a `409` with no
-bag, keyed onto `email` by `lib/server/auth-actions.ts`), a broken password rule under Password.
-
-Two properties of that route are worth stating because both are decisions rather than accidents.
-
-**Registering does not sign you in.** `POST /auth/register` returns the account and sets no cookie,
-so the page redirects to `/login?registered=1` and the sign-in form carries *Your account was
-created. Sign in to get started.* This is comp P's `s-register` (*"On success the page returns to
-Sign in"*) and one of the three notice strings `s-login` reserves. The alternative — replaying the
-password against `/auth/login` to save one form — would put the web tier in the position of
-explaining a *sign-in* refusal to somebody whose account had just succeeded.
-
-**The code is not accepted from the query string.** `/register?code=…` would be the tidier handout,
-but the code is a standing, non-expiring credential that self-registers anyone into the organization
-(`tools/golden/README.md`), and a URL is the one place a secret is copied without anyone choosing to
-copy it: browser and shell history, platform request logs, `Referer`, and every screenshot of an
-address bar. It would also outlive the tester, staying valid and forwardable long after they were
-in. So the code is pasted once into a field, and step 12 below sends the link and the code as two
-separate things.
+- `/register` on the web app, which is the whole of the front door: a public route carrying comp Q's
+  `s-register` — invite code, first and last name, email, password — posting to
+  `POST /auth/register`.
+- Everything the API refuses is rendered beside the field that earned it, because the API keys its
+  `errors` bag by field name and those are the same names the form posts: an unknown or archived
+  code under Invite code, a duplicate address under Email (the one refusal that arrives as a `409`
+  with no bag, keyed onto `email` by `lib/server/auth-actions.ts`), a broken password rule under
+  Password.
+- Two properties of that route are worth stating because both are decisions rather than accidents:
+  - **Registering does not sign you in.** `POST /auth/register` returns the account and sets no
+    cookie, so the page redirects to `/login?registered=1` and the sign-in form carries *Your account
+    was created. Sign in to get started.* This is comp P's `s-register` (*"On success the page
+    returns to Sign in"*) and one of the three notice strings `s-login` reserves. The alternative —
+    replaying the password against `/auth/login` to save one form — would put the web tier in the
+    position of explaining a *sign-in* refusal to somebody whose account had just succeeded.
+  - **The code is not accepted from the query string.** `/register?code=…` would be the tidier
+    handout, but the code is a standing, non-expiring credential that self-registers anyone into the
+    organization (`tools/golden/README.md`), and a URL is the one place a secret is copied without
+    anyone choosing to copy it: browser and shell history, platform request logs, `Referer`, and
+    every screenshot of an address bar. It would also outlive the tester, staying valid and
+    forwardable long after they were in. So the code is pasted once into a field, and step 12 below
+    sends the link and the code as two separate things.
 
 ---
 
@@ -678,25 +658,23 @@ for deleting and recreating rather than repointing, if repointing turns into mor
 
 ### The one failure that is silent, and how to recognise it
 
-Every row above announces itself. This one does not, and it is the reason §3 insists on
-`dist/`-backed output.
-
-If Vercel's preset compiles `apps/api/src/main.ts` with its own toolchain instead of running the
-`tsc` output, `emitDecoratorMetadata` is lost — esbuild does not implement it — and the build
-succeeds. The first request then 500s with:
+- Every row above announces itself. This one does not, and it is the reason §3 insists on
+  `dist/`-backed output.
+- If Vercel's preset compiles `apps/api/src/main.ts` with its own toolchain instead of running the
+  `tsc` output, `emitDecoratorMetadata` is lost — esbuild does not implement it — and the build
+  succeeds. The first request then 500s with:
 
 ```
 Nest can't resolve dependencies of the IdeasController (?)
 ```
 
-**The `?` in that dependency list is the missing metadata.** Nest is not saying the provider is
-unregistered; it is saying it has no type to look up. Do not go hunting for a missing module
-import — the module graph is fine, the artifact is wrong.
-
-Its build-log tell, visible before any request: a build that **succeeds without ever mentioning
-`server.js`**, plus a compile or bundle step appearing *after* the custom `buildCommand` has
-already finished. Both mean the preset built its own thing. Fix it in §3's terms — point the
-`functions` glob at whatever the log names, having confirmed it is `dist/`-backed.
+- **The `?` in that dependency list is the missing metadata.** Nest is not saying the provider is
+  unregistered; it is saying it has no type to look up. Do not go hunting for a missing module
+  import — the module graph is fine, the artifact is wrong.
+- Its build-log tell, visible before any request: a build that **succeeds without ever mentioning
+  `server.js`**, plus a compile or bundle step appearing *after* the custom `buildCommand` has
+  already finished. Both mean the preset built its own thing. Fix it in §3's terms — point the
+  `functions` glob at whatever the log names, having confirmed it is `dist/`-backed.
 
 ---
 
@@ -803,15 +781,15 @@ database; step 10 is verification; steps 11–12 populate the deployment and get
     number and a symbol. You'll be asked to sign in once with it, and you're in.
     ```
 
-    They join the organization with the `User` role, which can create ideas on the default `Ideas`
-    board and move them between statuses. **The sign-in step is expected, not a fault**: registering
-    returns them to `/login` with *Your account was created*, because `POST /auth/register` issues no
-    session. Nothing else needs doing for them — `/register` is public in `apps/web/proxy.ts`, so
-    the link works with no cookie, and it bounces anyone who is already signed in to `/boards`.
-
-    Treat the code as a shared secret, since anyone holding it can create an account. It does not
-    expire; an Org Admin regenerating it is what invalidates the old one, and anyone who registered
-    with the old code keeps their account.
+    - They join the organization with the `User` role, which can create ideas on the default `Ideas`
+      board and move them between statuses. **The sign-in step is expected, not a fault**:
+      registering returns them to `/login` with *Your account was created*, because
+      `POST /auth/register` issues no session. Nothing else needs doing for them — `/register` is
+      public in `apps/web/proxy.ts`, so the link works with no cookie, and it bounces anyone who is
+      already signed in to `/boards`.
+    - Treat the code as a shared secret, since anyone holding it can create an account. It does not
+      expire; an Org Admin regenerating it is what invalidates the old one, and anyone who
+      registered with the old code keeps their account.
 
 If something fails, §11 names the six candidates and where each shows itself. **Do not fix a
 cross-origin symptom by adding CORS** (§4), and do not set `DATABASE_URL` in the GitHub Actions

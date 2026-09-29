@@ -1,6 +1,6 @@
 # Feature: Organizations and Users
 
-> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> **At a glance** (added 2026-09-28; the text below wins where they differ)
 > - **Scope:** organizations, invite codes, three ways users join, roles, org AI credentials; status unstated.
 > - **Key rules:** only Site Admin creates organizations (Org Rule 2); archive, never hard-delete (8); email
 >   globally unique (User Rule 6); Site Admin belongs to no organization (7); the last Org Admin cannot demote
@@ -12,7 +12,9 @@
 >   2026-09-13 "The AI integration is rescoped and respecified after the current batch"
 
 ## Outcome
-Administrators can manage organizations and users with clear role boundaries within a dedicated Admin section of the application. Organization creation and user registration are kept deliberately simple: an organization needs only a title, description, and optional logo address, and users can join an organization by self-registering with that organization's invite code, by being added directly by an authorized admin, or via admin CSV import.
+Administrators manage organizations and users with clear role boundaries, in a dedicated Admin section of the application. Organization creation and user registration are kept deliberately simple:
+- an organization needs only a title, description, and optional logo address;
+- users join an organization by self-registering with that organization's invite code, by being added directly by an authorized admin, or via admin CSV import.
 
 ## Organization Rules
 1. Organizations are the top-level ownership boundary for all business data.
@@ -41,34 +43,28 @@ Administrators can manage organizations and users with clear role boundaries wit
 - Description (required, max 1000 characters)
 - Logo Address (optional URL, max 500 characters)
 - Invite Code (system-generated, unique across organizations)
-- Logo URL (system-managed)
-- Logo Thumbnail URL (system-managed)
+- Logo URL, Logo Thumbnail URL (system-managed)
 - Logo Height Px (system-managed, max rendered value `150`)
 
 Optional profile fields (editable after creation, not required to create an organization):
-- Address (max 200 characters)
-- City (max 100 characters)
-- State (max 50 characters)
-- Zip (max 20 characters)
-- Phone (max 25 characters)
-- Primary Contact First Name (max 100 characters)
-- Primary Contact Last Name (max 100 characters)
+- Address (max 200 characters); City (max 100 characters); State (max 50 characters); Zip (max 20 characters); Phone (max 25 characters)
+- Primary Contact First Name, Primary Contact Last Name (max 100 characters each)
 
 All organization text fields are trimmed before validation and persistence.
 
 ## Organization AI Credentials
-AI-assisted idea creation (see `SPEC/20-feature-ideas-and-engagement.md`) authenticates every model call with an API key. The deployment supplies a default key, and an organization may optionally supply its own to move that consumption onto its own vendor account.
+AI-assisted idea creation (see `SPEC/20-feature-ideas-and-engagement.md`) authenticates every model call with an API key. The deployment supplies a default key; an organization may optionally supply its own to move that consumption onto its own vendor account.
 
 1. The deployment supplies a default AI API key through configuration (`ANTHROPIC_API_KEY`), read at startup from environment-provided configuration in the same manner as the seed Site Admin credentials.
 2. Each organization may optionally store its own AI API key. When present, it is used for every AI call made in that organization's scope.
-3. Key precedence for any AI call is: the organization's own key when configured, otherwise the deployment default key.
-4. When neither an organization key nor a deployment default key is configured, AI-assisted idea creation is unavailable for that organization. The feature must degrade to the manual idea form with an explanatory message rather than presenting a failing action.
+3. Key precedence for any AI call: the organization's own key when configured, otherwise the deployment default key.
+4. With neither an organization key nor a deployment default key configured, AI-assisted idea creation is unavailable for that organization. The feature must degrade to the manual idea form with an explanatory message rather than presenting a failing action.
 5. Site Admin can set, rotate, and clear the AI API key for any organization. Org Admin can do so only for their own organization. `User` and `Read Only` can neither view nor manage it.
 6. The key is encrypted at rest and is write-only across the entire API surface. No endpoint, log entry, audit payload, error message, or client view ever returns the stored key value.
 7. Administration screens display only whether a key is configured, its last four characters, and when and by whom it was last updated.
 8. A submitted key is validated with a single low-cost model call before it is persisted. A key that fails validation is rejected and the previously stored key, if any, is left untouched.
 9. When an organization's own key fails at request time — invalid, revoked, rate-limited, or erroring — the call is retried once against the deployment default key so the user's flow completes normally. The organization's stored key is left in place and is not automatically cleared or disabled in MVP.
-10. Every fallback to the deployment default key generates an audit event recording the organization, the triggering action, and the failure category. This is the only signal that an organization's key is broken, since the feature keeps working from the user's perspective.
+10. Every fallback to the deployment default key generates an audit event recording the organization, the triggering action, and the failure category. Why: it is the only signal that an organization's key is broken, since the feature keeps working from the user's perspective.
 11. Setting, rotating, and clearing an organization's AI API key each generate an audit event recording the acting user, never the key value.
 12. Clearing an organization's key returns that organization to the deployment default key.
 13. An archived organization's stored key is retained but unused, and is restored to service if the organization is unarchived.
@@ -118,12 +114,8 @@ Users can be added to an organization through three paths:
 13. Every authenticated user can update their own First Name and Last Name; self-service profile editing cannot change Email, Role, Organization, or Status.
 
 ## User Fields
-- First Name (max 100 characters)
-- Last Name (max 100 characters)
-- Email
-- Password
-- Role
-- Organization
+- First Name, Last Name (max 100 characters each)
+- Email, Password, Role, Organization
 - Status (`Active` or `Inactive`)
 
 User profile text fields are trimmed before validation and persistence.

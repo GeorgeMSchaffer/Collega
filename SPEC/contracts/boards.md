@@ -7,28 +7,36 @@ shared data rules). Canonical, and read, not edited, by implementation slices.
 ## Board Contracts
 
 ### `GET /api/v1/organizations/{organizationId}/boards`
-Purpose: List boards for an organization.
+List boards for an organization.
 
-Success response `200` item shape:
-- `boardId`
-- `organizationId`
-- `name`
-- `allowUserStatusUpdate` boolean
-- `swimlaneCount`
-- `ideaCount` — live ideas on the board, excluding soft-deleted ones, so it matches the `totalCount` of `GET /api/v1/boards/{boardId}/ideas`. Added 2026-09-10: the boards list renders the figure on every card, and without it a client has to issue one idea request per board. This endpoint does not page, so that fan-out is unbounded. Like that list it counts only `Discovery`-phase ideas (corrected 2026-09-27 — it had also counted promoted Issues, so a board with promoted items reported more ideas than it showed).
+- **Roles:** —
+- **Request:** `includeArchived` optional boolean (default `false`; added 2026-09-27 with archiving).
+- **Response:** `200`, item shape:
+  - `boardId`
+  - `organizationId`
+  - `name`
+  - `allowUserStatusUpdate` boolean
+  - `swimlaneCount`
+  - `ideaCount` — live ideas on the board, excluding soft-deleted ones, so it matches the `totalCount` of `GET /api/v1/boards/{boardId}/ideas`. Counts only `Discovery`-phase ideas, like that list.
+  - with archiving (added 2026-09-27), each item gains `isArchived` boolean and `archivedAtUtc` timestamp or `null`
 
-Added 2026-09-27 (`SPEC/decisions.md`), for the richer board cards. Every aggregate below counts the same ideas `ideaCount` does, and all of them are computed with a fixed number of grouped queries for the whole list, never one query per board:
-- `description` string or `null`
-- `createdAtUtc` ISO 8601 UTC timestamp
-- `createdBy` — `{ userId, displayName }`, or `null` when the board records no creator or the creator no longer resolves to a user. `displayName` is `"First Last"`, as elsewhere in the API.
-- `laneCounts` — one entry per swimlane, in swimlane order, **including lanes with no ideas**:
-	- `statusId`
-	- `statusName`
-	- `statusColor`
-	- `order` integer
-	- `ideaCount` integer
-- `topTags` — at most three `{ name, ideaCount }`, the tags on the most of the board's ideas; ordered by `ideaCount` descending, then `name` ascending (case-insensitive). Empty when no idea is tagged. **Added 2026-09-28:** each item also carries `color` (`#RRGGBB`, the tag's colour — "Tag Contracts" below).
-- `tagCount` integer — distinct tags across the board's ideas
+  Added 2026-09-27 (`SPEC/decisions.md`), for the richer board cards:
+  - `description` string or `null`
+  - `createdAtUtc` ISO 8601 UTC timestamp
+  - `createdBy` — `{ userId, displayName }`, or `null` when the board records no creator or the creator no longer resolves to a user. `displayName` is `"First Last"`, as elsewhere in the API.
+  - `laneCounts` — one entry per swimlane, in swimlane order, **including lanes with no ideas**:
+    - `statusId`
+    - `statusName`
+    - `statusColor`
+    - `order` integer
+    - `ideaCount` integer
+  - `topTags` — at most three `{ name, ideaCount }`, the tags on the most of the board's ideas; ordered by `ideaCount` descending, then `name` ascending (case-insensitive). Empty when no idea is tagged. **Added 2026-09-28:** each item also carries `color` (`#RRGGBB`, the tag's colour — "Tag Contracts" below).
+  - `tagCount` integer — distinct tags across the board's ideas
+- **Errors:** —
+- **Rules:**
+  - Why `ideaCount` (added 2026-09-10): the boards list renders the figure on every card, and without it a client issues one idea request per board — an unbounded fan-out, since this endpoint does not page.
+  - It excludes promoted Issues (corrected 2026-09-27 — it had counted them, so a board with promoted items reported more ideas than it showed).
+  - Every aggregate counts the same ideas `ideaCount` does, and all are computed with a fixed number of grouped queries for the whole list, never one query per board.
 
 Example item:
 
@@ -53,52 +61,67 @@ Example item:
 ```
 
 ### `POST /api/v1/organizations/{organizationId}/boards`
-Purpose: Create a board with at least two swimlanes.
+Create a board with at least two swimlanes.
 
-Request body:
-- `name` required string
-- `allowUserStatusUpdate` required boolean
-- `description` optional string or `null` (added 2026-09-27) — trimmed; blank or `null` stores no description; more than 500 characters returns `400` keyed `description`
-- `swimlanes` required array of
-	- `statusId` GUID string
-	- `order` integer
-
-Success response `201`:
-- `boardId`
-- `name`
-- `swimlanes`
+- **Roles:** —
+- **Request:** body
+  - `name` required string
+  - `allowUserStatusUpdate` required boolean
+  - `description` optional string or `null` (added 2026-09-27) — trimmed; blank or `null` stores no description
+  - `swimlanes` required array of
+    - `statusId` GUID string
+    - `order` integer
+- **Response:** `201`
+  - `boardId`
+  - `name`
+  - `swimlanes`
+- **Errors:** `description` of more than 500 characters returns `400` keyed `description`.
+- **Rules:** —
 
 ### `GET /api/v1/boards/{boardId}`
-Purpose: Return board detail including swimlanes.
+Return board detail including swimlanes.
 
-Success response `200`: `boardId`, `organizationId`, `name`, `description` (string or `null`, added 2026-09-27), `allowUserStatusUpdate`, and `swimlanes` — each `statusId`, `statusName`, `statusColor`, `order`, `statusIsDeleted`. `PUT /api/v1/boards/{boardId}` returns the same shape.
+- **Roles:** —
+- **Request:** —
+- **Response:** `200`: `boardId`, `organizationId`, `name`, `description` (string or `null`, added 2026-09-27), `allowUserStatusUpdate`, and `swimlanes` — each `statusId`, `statusName`, `statusColor`, `order`, `statusIsDeleted`.
+- **Errors:** —
+- **Rules:** —
 
 ### `PUT /api/v1/boards/{boardId}`
-Purpose: Update board name or selected statuses.
+Update board name or selected statuses.
 
-Request body:
-- `name` required string
-- `allowUserStatusUpdate` required boolean
-- `description` optional string or `null` (added 2026-09-27) — same rules as on create. **Absent leaves the stored description unchanged**; `null` or a blank string clears it.
-- `swimlanes` required array of `statusId` and `order`
+- **Roles:** —
+- **Request:** body
+  - `name` required string
+  - `allowUserStatusUpdate` required boolean
+  - `description` optional string or `null` (added 2026-09-27) — same rules as on create. **Absent leaves the stored description unchanged**; `null` or a blank string clears it.
+  - `swimlanes` required array of `statusId` and `order`
+- **Response:** the same shape as `GET /api/v1/boards/{boardId}`.
+- **Errors:** as for create (the `description` rules are the same); `409 Conflict` for an archived board — see archive below.
+- **Rules:** —
 
 ### `POST /api/v1/boards/{boardId}/archive` and `POST /api/v1/boards/{boardId}/unarchive`
-Purpose: Archive a board, or bring it back (added 2026-09-27; `decisions.md`). Until then boards had no delete endpoint or action; archiving replaces that absence. Org Admin of the board's organization only; a direct Site Admin is refused like every other org-content write.
+Archive a board, or bring it back (added 2026-09-27; `decisions.md`). Until then boards had no delete endpoint or action; archiving replaces that absence.
 
-Archiving keeps the board, its swimlanes and every idea on it. An archived board leaves the default board list and the board pickers, accepts no new ideas, and its ideas stay reachable from `GET /api/v1/organizations/{organizationId}/ideas`. An archived board's own page opens **read-only** with an *Archived* banner (Q4, answered 2026-09-27): no new ideas, no moves, no edits; an Org Admin sees *Unarchive* there. **The board's own settings are frozen too** (added 2026-09-27): `PUT /api/v1/boards/{boardId}` (name, description, lanes) and the swimlane reorder are refused for an archived board with `409 Conflict` — unarchive it first. Creating an idea on it, and moving or editing one of its ideas, are refused the same way.
-
-Success response: `204 No Content`. Archiving an archived board, or unarchiving an active one, is also `204`.
-
-The board list gains `includeArchived` optional boolean (default `false`), and each item gains `isArchived` boolean and `archivedAtUtc` timestamp or `null`.
+- **Roles:** Org Admin of the board's organization only; a direct Site Admin is refused like every other org-content write.
+- **Request:** —
+- **Response:** `204 No Content`. Archiving an archived board, or unarchiving an active one, is also `204`.
+- **Errors:** —
+- **Rules:**
+  - Archiving keeps the board, its swimlanes and every idea on it.
+  - An archived board leaves the default board list and the board pickers, accepts no new ideas, and its ideas stay reachable from `GET /api/v1/organizations/{organizationId}/ideas`.
+  - Its own page opens **read-only** with an *Archived* banner (Q4, answered 2026-09-27): no new ideas, no moves, no edits; an Org Admin sees *Unarchive* there.
+  - **The board's own settings are frozen too** (added 2026-09-27): `PUT /api/v1/boards/{boardId}` (name, description, lanes) and the swimlane reorder are refused for an archived board with `409 Conflict` — unarchive it first. Creating an idea on it, and moving or editing one of its ideas, are refused the same way.
+  - The board list gains `includeArchived`, `isArchived` and `archivedAtUtc` (see the list above).
 
 ### `POST /api/v1/boards/{boardId}/swimlanes/reorder`
-Purpose: Persist swimlane reorder immediately after drag-and-drop.
+Persist swimlane reorder immediately after drag-and-drop.
 
-Request body:
-- `swimlanes` required array of
-	- `statusId`
-	- `order`
-
-Success response:
-- `204 No Content`
-
+- **Roles:** —
+- **Request:** body
+  - `swimlanes` required array of
+    - `statusId`
+    - `order`
+- **Response:** `204 No Content`
+- **Errors:** `409 Conflict` for an archived board (see archive above).
+- **Rules:** —

@@ -1,6 +1,6 @@
 # Feature: Reporting (Post-MVP)
 
-> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> **At a glance** (added 2026-09-28; the text below wins where they differ)
 > - **Scope:** organization-scoped, read-only reports and exports; post-MVP, not required for MVP.
 > - **Key rules:** four baseline reports — idea throughput, idea aging, engagement activity, administration
 >   activity; CSV export required for each, JSON optional, PDF and spreadsheet formats out; date range and
@@ -25,12 +25,12 @@ Authorized users can run organization-scoped operational reports for idea workfl
 ## Filters and Dimensions
 1. Required filters: date range and organization scope.
 2. Optional filters: board, status, priority, assignee, and actor.
-3. Date and time values are represented in UTC at API and export boundaries.
+3. Date and time values are UTC at API and export boundaries.
 
 ## Export Formats (Resolved)
 1. CSV export is required for each report in the initial reporting phase.
 2. JSON export is optional in the initial reporting phase.
-3. PDF and spreadsheet-native formats are out of scope for the initial reporting phase unless later approved.
+3. PDF and spreadsheet-native formats are out of scope for the initial phase unless later approved.
 
 ## Security and Access
 1. Reporting access is organization-scoped and must not leak cross-organization data.

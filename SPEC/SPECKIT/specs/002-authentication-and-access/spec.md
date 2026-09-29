@@ -7,6 +7,7 @@
 	- `SPEC/20-feature-auth.md`
 	- `SPEC/20-feature-user-login.md`
 	- `SPEC/30-Contracts.md`
+	- `SPEC/contracts/auth.md` (the authentication contracts, split out of `SPEC/30-Contracts.md` on 2026-09-28)
 	- `SPEC/40-test-strategy.md`
 - Last Canonical Sync Date: 2026-08-08
 

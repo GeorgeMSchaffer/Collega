@@ -1,6 +1,6 @@
 # Feature: Notifications
 
-> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> **At a glance** (added 2026-09-28; the text below wins where they differ)
 > - **Scope:** persisting `NotificationEvent` rows for four collaboration triggers (MVP); email delivery,
 >   per-user preferences and an inbox UI are a later phase.
 > - **Key rules:** triggers are idea mention, comment mention, comment added and status change; recipients
@@ -32,15 +32,14 @@ Self-notifications are suppressed: no event is written when the actor and the re
 - Status change → idea author + idea assignee (each, if different from actor)
 
 ## Canonical Idea Link
-Each notification event persists a canonical link to the idea:
+Each event persists a canonical link to the idea, stored in the `NotificationEvent` row alongside the idea title:
 
 ```
 /ideas/{ideaId}
 ```
 
-This is the canonical single-idea route; following it opens the Ideas list with that idea's detail drawer open (see the Idea Detail Surface in `SPEC/20-feature-client-ui.md`). The link is stored in the `NotificationEvent` row alongside the idea title.
-
-> **Change from prior spec**: The earlier route pattern `/org/{organizationId}/boards/{boardId}/ideas/{ideaId}` and the interim `/ideas/{ideaId}/edit` full-page route are both superseded by `/ideas/{ideaId}` (drawer-addressable) to match the updated client routing (see `SPEC/20-feature-client-ui.md` Idea Detail Surface and `SPEC/20-feature-client-ui-revisions.md`).
+- It is the canonical single-idea route: following it opens the Ideas list with that idea's detail drawer open (see the Idea Detail Surface in `SPEC/20-feature-client-ui.md`).
+- **Change from prior spec**: it supersedes the earlier `/org/{organizationId}/boards/{boardId}/ideas/{ideaId}` and the interim `/ideas/{ideaId}/edit` full-page route, to match the updated client routing (`SPEC/20-feature-client-ui.md` Idea Detail Surface, `SPEC/20-feature-client-ui-revisions.md`).
 
 ## Implementation Design (MVP)
 
@@ -54,10 +53,10 @@ This is the canonical single-idea route; following it opens the Ideas list with 
 - Injected into `WorkflowManagementService`; called from mention, comment, and status-move paths.
 
 ### Infrastructure layer
-- `NotificationWriter` implements `INotificationWriter`
-- Inserts one `NotificationEvent` row per recipient per event (no batching in MVP)
-- Fields populated: `RecipientUserId`, `EventType`, `IdeaId`, `IdeaTitle`, `OrgId`, `TriggeredByUserId`, `Link` (`/ideas/{ideaId}`), `OccurredAtUtc`
-- No SMTP, email client, or outbound HTTP — purely database writes
+- `NotificationWriter` implements `INotificationWriter`.
+- Inserts one `NotificationEvent` row per recipient per event (no batching in MVP).
+- Fields populated: `RecipientUserId`, `EventType`, `IdeaId`, `IdeaTitle`, `OrgId`, `TriggeredByUserId`, `Link` (`/ideas/{ideaId}`), `OccurredAtUtc`.
+- No SMTP, email client, or outbound HTTP — purely database writes.
 
 ### Test coverage (T037–T039)
 - **T037**: `WorkflowManagementService` emits `IdeaMention` / `CommentMention` / `CommentAdded` / `IdeaStatusChanged` events via `INotificationWriter`; `FakeNotificationWriter` collects events for assertion.

@@ -1,6 +1,6 @@
 # Scope: Migrate Database Technology — MS SQL Server → PostgreSQL
 
-> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> **At a glance** (added 2026-09-28; the text below wins where they differ)
 > - **Scope:** SQL Server → PostgreSQL move of the .NET stack; COMPLETE, merged to `dev` 2026-08-12
 >   (`7c5a78b`). Read for why it went as it did; current state is in the tracker.
 > - **Key rules:** the risk sat wherever behaviour silently leaned on SQL Server semantics (collation, raw
@@ -13,11 +13,17 @@
 
 ## Status — COMPLETE, MERGED TO `dev` (2026-08-12, `7c5a78b`)
 
-**Decided (2026-08-11): Collega's application database moves from SQL Server 2022 to PostgreSQL.** This document was the implementation scope for that decision; the work is done.
+**Decided (2026-08-11): Collega's application database moves from SQL Server 2022 to PostgreSQL.** This
+document was the implementation scope for that decision; the work is done.
 
-`dev` now runs `Npgsql.EntityFrameworkCore.PostgreSQL` 8.0.10 against a single `20260812195251_InitialCreate` migration, with `docker-compose.yml` on `postgres:16`. No `UseSqlServer` call or SQL Server package reference remains anywhere in `src/`. Verified at merge: 579 tests passing, and a live boot against a real `postgres:16` container applying the migration and completing `StartupSeeder` with no `timestamptz`/`Kind` exception.
-
-Read this file now for **why the migration went the way it did** — particularly the corrections below, which record four claims this document originally made that turned out to be wrong. For current state, read `SPEC/implementation-agent-tracker.md`.
+- `dev` now runs `Npgsql.EntityFrameworkCore.PostgreSQL` 8.0.10 against a single
+  `20260812195251_InitialCreate` migration, with `docker-compose.yml` on `postgres:16`. No `UseSqlServer`
+  call or SQL Server package reference remains anywhere in `src/`.
+- Verified at merge: 579 tests passing, and a live boot against a real `postgres:16` container applying the
+  migration and completing `StartupSeeder` with no `timestamptz`/`Kind` exception.
+- Read this file now for **why the migration went the way it did** — especially the corrections below, which
+  record four claims this document originally made that turned out to be wrong. For current state, read
+  `SPEC/implementation-agent-tracker.md`.
 
 **Decisions locked (2026-08-11 user interview):**
 1. Deliverable = this SPEC doc (implementation is a separate approved step).
@@ -28,9 +34,19 @@ Read this file now for **why the migration went the way it did** — particularl
 
 ## Verdict
 
-**Small-to-moderate migration — ~2–4 agent-days.** The provider is cleanly isolated behind EF Core, there is no production data (only the disposable demo seed), and primary keys are `Guid` (no int-identity sequences to port).
+**Small-to-moderate migration — ~2–4 agent-days.** Why: the provider is cleanly isolated behind EF Core,
+there is no production data (only the disposable demo seed), and primary keys are `Guid` (no int-identity
+sequences to port).
 
-**Revised risk assessment (2026-08-12, after implementing).** This verdict originally called the migration "low-risk" and named `DateTime` → `timestamptz` as "the only area needing real care". The UTC audit in fact came back completely clean — every persisted `DateTime` already flowed from `IClock.UtcNow`. The real defects were elsewhere and were **all silent**: a hardcoded SQL-Server filter string in the model, and three case-sensitivity regressions from losing `CI_AS` collation (one of which broke self-registration outright). See the corrections below. The lasting lesson is that **the risk was not where the type mapping was, it was wherever behaviour had been quietly depending on SQL Server semantics** — and none of it was visible to a test suite running on EF InMemory.
+**Revised risk assessment (2026-08-12, after implementing).**
+- The verdict originally called the migration "low-risk" and named `DateTime` → `timestamptz` as "the only
+  area needing real care". The UTC audit in fact came back completely clean — every persisted `DateTime` already
+  flowed from `IClock.UtcNow`.
+- The real defects were elsewhere and **all silent**: a hardcoded SQL-Server filter string in the model, and
+  three case-sensitivity regressions from losing `CI_AS` collation (one broke self-registration outright).
+  See the corrections below.
+- Lesson: **the risk was not where the type mapping was, it was wherever behaviour had been quietly
+  depending on SQL Server semantics** — and none of it was visible to a test suite running on EF InMemory.
 
 ## Coupling surface (complete inventory)
 
@@ -48,7 +64,10 @@ Every place the SQL Server provider is wired in, as of the commit that scoped th
 
 ## The one real risk: `DateTime` → `timestamptz`
 
-The domain uses **68 `DateTime` properties / 287 `datetime2` columns** and **zero `DateTimeOffset`**. Npgsql (EF Core 6+) maps `DateTime` to `timestamp with time zone` and **throws at write time if `DateTime.Kind != Utc`**. Per the locked decision, the mitigation is a **UTC-correctness audit**, not the legacy switch:
+The domain uses **68 `DateTime` properties / 287 `datetime2` columns** and **zero `DateTimeOffset`**. Npgsql
+(EF Core 6+) maps `DateTime` to `timestamp with time zone` and **throws at write time if
+`DateTime.Kind != Utc`**. Per the locked decision, the mitigation is a **UTC-correctness audit**, not the
+legacy switch:
 
 - Confirm every persisted `DateTime` is produced with `DateTime.UtcNow` (or otherwise carries `Kind = Utc`) across Domain, Application, and the `StartupSeeder`.
 - Any value read from an external boundary (request DTO, seed constant) that lands in a persisted column must be normalized to UTC before save.
@@ -65,12 +84,19 @@ The codebase appears UTC-consistent, but this must be **verified, not assumed** 
 - **All LINQ is provider-agnostic** (`.Contains` / `.StartsWith` over strings and in-memory collections); nothing SQL-Server-specific to translate.
 - **Case-insensitivity is handled in code — *only for email and tags*.** Those use pre-normalized lowercase columns (`EmailNormalizer` → `NormalizedEmail`, `Tag.NormalizedName`), so they are genuinely unaffected.
 
-> **Correction (2026-08-12) — the "non-factor" claim was too broad and hid three real regressions.** Everything *not* using a pre-normalized column relied on SQL Server's `CI_AS` collation for free case-insensitivity, and Postgres is case-sensitive. Found during Unit 1 and confirmed against a live container: (1) **invite-code self-registration broke** — codes generate from an uppercase-only alphabet and `AuthService` only trimmed, so any lowercase input failed to match; (2) **all `Ef*Repository` search paths** stopped matching differing case, so `acme` no longer found `Acme`; (3) **field-definition name uniqueness** stopped treating `Priority`/`priority` as a collision. All three are fixed: (1) and (2) in Unit 6, (3) via the `NormalizedName` column — see "Field-definition name uniqueness" at the end of this document. **None of this is catchable by the existing suite**, which runs on EF InMemory and does not model collation.
-> **Correction (2026-08-12) — this was wrong, and it was a latent break.** This section previously claimed the one filtered index "becomes a correct Postgres partial index automatically when migrations are regenerated." It does not. The filter is hardcoded **in the model**, not emitted by the provider: `Persistence/Configurations/FieldDefinitionConfiguration.cs:60` carried `HasFilter("[is_deleted] = 0")`, and that SQL-Server bracket syntax regenerates verbatim into the Npgsql migration and then fails at `MigrateAsync` against Postgres. It was changed to `HasFilter("is_deleted = false")` during Unit 1; the live index is now `... WHERE (is_deleted = false)`. **General lesson: anything passed as a raw SQL string to `HasFilter`, `HasComputedColumnSql`, `HasDefaultValueSql`, or similar is provider-specific and does not migrate itself — grep for those before assuming a regeneration is clean.**
+> **Correction (2026-08-12) — the "non-factor" claim was too broad and hid three real regressions.** Everything *not* using a pre-normalized column relied on SQL Server's `CI_AS` collation for free case-insensitivity, and Postgres is case-sensitive. Found during Unit 1 and confirmed against a live container:
+> (1) **invite-code self-registration broke** — codes generate from an uppercase-only alphabet and `AuthService` only trimmed, so any lowercase input failed to match;
+> (2) **all `Ef*Repository` search paths** stopped matching differing case, so `acme` no longer found `Acme`;
+> (3) **field-definition name uniqueness** stopped treating `Priority`/`priority` as a collision.
+> All three are fixed: (1) and (2) in Unit 6, (3) via the `NormalizedName` column — see "Field-definition name uniqueness" at the end of this document. **None of this is catchable by the existing suite**, which runs on EF InMemory and does not model collation.
+>
+> **Correction (2026-08-12) — this was wrong, and it was a latent break.** This section previously claimed the one filtered index "becomes a correct Postgres partial index automatically when migrations are regenerated." It does not: the filter is hardcoded **in the model**, not emitted by the provider. `Persistence/Configurations/FieldDefinitionConfiguration.cs:60` carried `HasFilter("[is_deleted] = 0")`; that SQL-Server bracket syntax regenerates verbatim into the Npgsql migration and then fails at `MigrateAsync` against Postgres. It was changed to `HasFilter("is_deleted = false")` during Unit 1; the live index is now `... WHERE (is_deleted = false)`. **General lesson: anything passed as a raw SQL string to `HasFilter`, `HasComputedColumnSql`, `HasDefaultValueSql`, or similar is provider-specific and does not migrate itself — grep for those before assuming a regeneration is clean.**
 
 ## Known coverage gap
 
-The 561-test suite runs on the **EF InMemory provider**, so it does **not** exercise real PostgreSQL SQL translation — the same limitation Sprint 3 documented for SQL Server. Green-on-InMemory does not prove the migration. This is why §5 adds a Postgres-backed smoke test.
+The 561-test suite runs on the **EF InMemory provider**, so it does **not** exercise real PostgreSQL SQL
+translation — the same limitation Sprint 3 documented for SQL Server. Green-on-InMemory does not prove the
+migration; that is why §5 adds a Postgres-backed smoke test.
 
 ## Task breakdown & effort
 
@@ -88,7 +114,15 @@ Effort in agent-days (1 agent-day = one focused session from partial to build-cl
 
 ## Documentation fan-out
 
-**Complete as of 2026-08-27 — every document on this list is reconciled.** `SPEC/50-azure-deployment.md` (Azure Database for PostgreSQL Flexible Server, Burstable B1ms), `SPEC/00-project-brief.md`, `CLAUDE.md`, and `SPEC/50-kubernetes-deployment.md` were done with or shortly after the merge. `SPEC/50-technical-implementation-plan.md` was the last one and closed 2026-08-27: its prose had read PostgreSQL since the cutover while its table outlines were still written in `uniqueidentifier`/`nvarchar`/`bit`/`datetime2` — now `uuid`/`character varying(N)`/`text`/`boolean`/`timestamp with time zone`, matching what `20260812195251_InitialCreate` emits. `SPEC/20-feature-issues-and-delivery.md` and `SPEC/50-azure-api-cicd.md` needed no change; both are engine-neutral. `85-implementation-timeline.md` was archived 2026-08-11 and is deliberately **excluded** — do not reconcile archived documents.
+**Complete as of 2026-08-27 — every document on this list is reconciled.**
+- Done with or shortly after the merge: `SPEC/50-azure-deployment.md` (Azure Database for PostgreSQL Flexible
+  Server, Burstable B1ms), `SPEC/00-project-brief.md`, `CLAUDE.md`, `SPEC/50-kubernetes-deployment.md`.
+- `SPEC/50-technical-implementation-plan.md` closed last, 2026-08-27: its prose had read PostgreSQL since the
+  cutover while its table outlines were still in `uniqueidentifier`/`nvarchar`/`bit`/`datetime2` — now
+  `uuid`/`character varying(N)`/`text`/`boolean`/`timestamp with time zone`, matching what
+  `20260812195251_InitialCreate` emits.
+- No change needed (engine-neutral): `SPEC/20-feature-issues-and-delivery.md`, `SPEC/50-azure-api-cicd.md`.
+- `85-implementation-timeline.md` was archived 2026-08-11 and is deliberately **excluded** — do not reconcile archived documents.
 
 ## Open items requiring a human decision before implementation
 
@@ -98,16 +132,27 @@ Effort in agent-days (1 agent-day = one focused session from partial to build-cl
 
 ## Field-definition name uniqueness — RESOLVED (2026-08-12)
 
-**Closed the same day it was raised, by user decision.** The database now enforces case-insensitive uniqueness again, matching what the application layer already did.
+**Closed the same day it was raised, by user decision.** The database now enforces case-insensitive uniqueness
+again, matching what the application layer already did.
 
-The defect: the unique index sat on the raw `Name` column. Under SQL Server's `CI_AS` collation that rejected `"Priority"` alongside `"priority"`; under PostgreSQL it did not. The application guard in `EfFieldDefinitionRepository` had always compared case-insensitively, so single-request behaviour never changed — but the read-then-write guard is not transactional, leaving a window where two concurrent creates of `Cost` and `cost` both committed.
+**The defect:** the unique index sat on the raw `Name` column. Under SQL Server's `CI_AS` collation that
+rejected `"Priority"` alongside `"priority"`; under PostgreSQL it did not. The application guard in
+`EfFieldDefinitionRepository` had always compared case-insensitively, so single-request behaviour never changed —
+but the read-then-write guard is not transactional, leaving a window where two concurrent creates of `Cost`
+and `cost` both committed.
 
-**Fix — the `NormalizedName` column**, following the precedent this document already cites for why email and tags were unaffected (`EmailNormalizer` → `NormalizedEmail`, `Tag.NormalizedName`): put the comparison in a column rather than depend on a collation.
+**Fix — the `NormalizedName` column**, following the precedent this document already cites for why email and tags were unaffected (`EmailNormalizer` →
+`NormalizedEmail`, `Tag.NormalizedName`): put the comparison in a column rather than depend on a collation.
 - `FieldDefinition.NormalizedName` set at both assignment points (`Create` and `Update`) via a public `Normalize` helper mirroring `Tag.Normalize`.
 - The unique index moved to `(organization_id, normalized_name)`, still filtered on `is_deleted = false` so archiving a field frees its name.
 - `EfFieldDefinitionRepository.ExistsActiveByNameAsync` now compares the stored column, so the application check and the constraint agree exactly rather than approximately.
 - `SPEC/20-feature-user-defined-fields.md` updated — both the constraint table and the DDL.
 
-**Verified by two container-backed tests** in `PostgresProviderTests`, not by the InMemory suite, which cannot model collation. One asserts the database itself rejects a case-variant duplicate (SQLSTATE 23505 on the named constraint, with no application check in the path); the other asserts a soft-deleted name can be reused, which is the half a stricter index would silently break. Both were confirmed to have teeth: reverting the index to raw `Name` and regenerating made the duplicate test fail, and the soft-delete test correctly stayed green.
+**Verified by two container-backed tests** in `PostgresProviderTests`, not by the InMemory suite, which cannot
+model collation:
+- One asserts the database itself rejects a case-variant duplicate (SQLSTATE 23505 on the named constraint, with no application check in the path).
+- The other asserts a soft-deleted name can be reused — the half a stricter index would silently break.
+- Both were confirmed to have teeth: reverting the index to raw `Name` and regenerating made the duplicate test fail, and the soft-delete test correctly stayed green.
 
-The two sibling regressions found at the same time were fixed in Unit 6: invite-code lookup, which had broken self-registration for lowercase input, and the `Ef*Repository` search paths.
+The two sibling regressions found at the same time were fixed in Unit 6: invite-code lookup, which had broken
+self-registration for lowercase input, and the `Ef*Repository` search paths.

@@ -1,6 +1,6 @@
 # Feature: Issues and Delivery (Idea → Execution)
 
-> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> **At a glance** (added 2026-09-28; the text below wins where they differ)
 > - **Scope:** Slice 1 (P0) promotion, Sprints, Tasks; Slice 2 (P1) Outcomes/Roadmap, backend unbuilt.
 > - **Key rules:** an Issue is the same row as its Idea, in Delivery phase; promotion is an explicit gate
 >   with `Effort` required, re-promote `409`; delivery statuses fixed, Pending→Complete; completing a sprint
@@ -13,18 +13,15 @@
 
 ## Overview
 
-Today Collega ends where most idea tools end: an idea gets proposed, debated, upvoted, tagged, and eventually reaches a terminal ideation status (`Complete`). What happens next — *actually building the thing* — happens somewhere else (a spreadsheet, Jira, nothing). That handoff is where every competitor loses the story: the moment an idea becomes committed work, its provenance (who proposed it, who upvoted it, the debate, the business case) is retyped away.
+- **The gap:** an idea is proposed, debated, upvoted, tagged and reaches a terminal ideation status (`Complete`); *building the thing* then happens elsewhere (a spreadsheet, Jira, nothing), That handoff is where every competitor loses the story: the moment an idea becomes committed work, its provenance (proposer, upvotes, debate, business case) is retyped away.
+- **The fix:** promote the idea into a lightweight delivery track — Sprints and Issues with just enough Agile ceremony — **inside Collega**, **without creating a second object**. An Issue is the same row in a later *phase*: promotion flips **Discovery** (ideation on a board) to **Delivery** (execution in a sprint), carrying its history forward. The differentiator is **provenance-preserving delivery**, not "we also do sprints": mid-sprint, "why are we building this?" is one click away.
+- Covers the Roadmap → Sprint → Issue concept captured in `SPEC/Bug Triage.md` (IDEAS), in two slices:
+  - **Slice 1 — Delivery (P0).** The phase model, the promotion gate, Sprints, the fixed delivery statuses, provenance, and **Tasks** (a checklist on an Issue). This is the buildable unit.
+  - **Slice 2 — Roadmap (P1).** **Outcomes**: theme grouping over time, *beside* sprints as a lens, not above them as a container. Specified so the domain shape is settled; sequenced after Slice 1. The one question that gated it — Outcome ↔ Issue cardinality — is **decided: single-parent** (see [Design Decisions](#design-decisions-interview-resolved)).
+- **Explicitly deferred:** the Impact×Effort prioritization view, crowd-backlog auto-surfacing, AI-assisted promotion (see [Non-Goals](#non-goals) and [Future Considerations](#future-considerations-p1p2)).
+- **Guardrail:** every field and screen must earn its place by *closing the loop* or *preserving provenance*, never by matching a Jira feature.
 
-This feature closes that loop **inside Collega** by promoting an idea into a lightweight delivery track — Sprints and Issues executed with just enough Agile ceremony — **without creating a second object**. An Issue is not a copy of an Idea; it is the same row in a later *phase* of its life. Promotion flips an item from **Discovery** (ideation on a board) to **Delivery** (execution in a sprint), and the item carries its entire history forward. The differentiator is not "we also do sprints" — it is **provenance-preserving delivery**: mid-sprint, "why are we building this?" is one click away.
-
-This spec covers the Roadmap → Sprint → Issue concept captured in `SPEC/Bug Triage.md` (IDEAS), delivered in two slices:
-
-- **Slice 1 — Delivery (P0).** The phase model, the promotion gate, Sprints, the fixed delivery statuses, provenance, and **Tasks** (a checklist on an Issue). This is the buildable unit.
-- **Slice 2 — Roadmap (P1).** **Outcomes**: theme grouping over time, sitting *beside* sprints as a lens rather than above them as a container. Specified here so the domain shape is settled and sequenced after Slice 1. The one question that gated it — Outcome ↔ Issue cardinality — is **decided: single-parent** (see [Design Decisions](#design-decisions-interview-resolved)).
-
-The Impact×Effort prioritization view, crowd-backlog auto-surfacing, and AI-assisted promotion remain **explicitly deferred** (see [Non-Goals](#non-goals) and [Future Considerations](#future-considerations-p1p2)). The guardrail throughout: every field and screen must earn its place by *closing the loop* or *preserving provenance*, never by matching a Jira feature.
-
-> **Reconciled 2026-08-31.** Tasks and Roadmap were Non-Goals in the 2026-08-10 interview resolution. Review of the delivery comps (`SPEC/mockups/comp-l-delivery-desk.html`) established that an Issue with no task checklist does not actually let a team *run* the sprint this feature promises, and that "what are we trying to achieve this quarter" had no home anywhere in the product. The product owner brought both into scope. The Design Decisions below record the shape agreed at that review; the Non-Goals were rewritten from "not now" to the much narrower "not ever, and here is the line".
+> **Reconciled 2026-08-31.** Tasks and Roadmap were Non-Goals in the 2026-08-10 interview resolution. Review of the delivery comps (`SPEC/mockups/comp-l-delivery-desk.html`) found that without a task checklist a team cannot *run* the sprint, and that "what are we trying to achieve this quarter" had no home in the product; the product owner brought both into scope. Design Decisions below record the agreed shape; the Non-Goals were narrowed from "not now" to "not ever, and here is the line".
 
 ---
 
@@ -33,23 +30,23 @@ The Impact×Effort prioritization view, crowd-backlog auto-surfacing, and AI-ass
 | Decision | Resolution |
 |---|---|
 | Execution model | **Native lightweight delivery** inside Collega (not integrate-and-hand-off to Jira). Chosen 2026-08-10. |
-| Idea vs Issue relationship | **Same object, two phases.** An Issue is a Delivery-phase Idea — the same row, not a new entity. Preserves provenance and eliminates handoff data loss. |
+| Idea vs Issue relationship | **Same object, two phases.** An Issue is a Delivery-phase Idea — the same row, not a new entity. Preserves provenance; no handoff data loss. |
 | Phase model | An item is in exactly one `Phase`: `Discovery` (default) or `Delivery`. Promotion flips Discovery → Delivery. |
-| Promotion trigger | An **explicit "Promote to Issue" decision gate**, *not* an idea reaching a particular ideation status. Overloading the `Complete` status to also mean "committed to delivery" is rejected as the source of the concept's awkwardness. |
-| Relationship to deferred Approval Workflow | The promotion gate **is** the realization of the post-MVP approval gate deferred in `SPEC/20-feature-ideas-and-engagement.md` and `SPEC/20-feature-boards-and-statuses.md`. One build, two features. |
+| Promotion trigger | An **explicit "Promote to Issue" decision gate**, *not* an ideation status. Overloading `Complete` to also mean "committed to delivery" is rejected as the source of the concept's awkwardness. |
+| Relationship to deferred Approval Workflow | The promotion gate **is** the post-MVP approval gate deferred in `SPEC/20-feature-ideas-and-engagement.md` and `SPEC/20-feature-boards-and-statuses.md`. One build, two features. |
 | Two status systems | Ideation statuses (org-configured swimlanes) govern **Discovery**; a **fixed** delivery status set governs **Delivery**. They never mix; both are retained for history. |
 | Delivery statuses | Fixed enum: `Pending`, `Scoping`, `Development`, `Review`, `Complete` (from the captured concept). Not org-configurable in this slice. |
-| Effort | `Effort` (`Low`/`Medium`/`High`) lands on the **Idea** as an optional Discovery field and is **required at the promotion gate**. T-shirt sizing, deliberately *not* story points. |
-| Per-issue dates | **Dropped.** The sprint boxes the dates; per-issue start/end inside a dated sprint creates "which date wins" conflicts and is not how Agile scopes work. Dates live on Sprints (and, later, Roadmap items). |
-| Sprint ↔ Roadmap nesting | Sprint is **not** nested under Outcome, and does not become so in Slice 2. Sprint is a flat, time-boxed container; an Issue belongs to zero or one Sprint. An Outcome *groups* Issues; it does not own them and has no authority over sprint membership. Reaffirmed 2026-08-31. |
-| Task model | **Tasks are checklist items on an Issue**, not first-class work items — no sprint of their own, no dates, no estimate. Decided 2026-08-31. Because the Issue is the unit that moves between sprints, a task can never be stranded in a sprint its parent has left. First-class independently-assignable tasks were considered and rejected as too heavy for "Jira light", and because they would reintroduce the two-object problem the phase model exists to avoid. |
-| Task assignee | A Task may carry an optional assignee, who **need not** be an assignee of the parent Issue — any active user in the org qualifies. This is the one place delivery work is divided between people; constraining it to the Issue's assignees would force spurious Issue assignments just to name a helper. |
-| Task state | Three states (`NotStarted`, `InProgress`, `Done`) rather than a bare checkbox, because "started but not finished" is the state a standup actually asks about. The `N of M done` rollup counts only `Done`. |
-| Roadmap model | An **Outcome** is a named, dated theme that Issues are grouped under — a lens, not a container. Every rollup (issue count, done count, sprint span, quarter placement) is **derived** at read time, never stored. An Outcome has no status field and no percent-complete field. |
-| Outcome ↔ Issue cardinality | **Decided 2026-09-02 — single-parent.** An Issue sits under **at most one** Outcome (`Idea.OutcomeId`, nullable). Chosen so roadmap arithmetic is honest by construction: counts partition the delivery set, totals sum, and "done" is unambiguous without a distinct-count anywhere. Rendered in `SPEC/mockups/comp-m-roadmap-single.html`; `comp-n-roadmap-multi.html` records the rejected multi-parent alternative. **Nothing in Slice 1 depended on this.** |
-| Sprint lifecycle | Explicit `Planned` → `Active` → `Completed` transitions (start/complete are actions, not date-derived), because completing a sprint must handle carry-over deterministically. |
-| Provenance | Nearly free because Issue *is* the Idea. Only new stored provenance fields are `PromotedAtUtc`, `PromotedByUserId`, and an `UpvoteCountAtPromotion` snapshot ("how much support did this have when we committed"). |
-| Board filtering | The ideation board (`/board/{boardId}`) filters to `Phase == Discovery`; promoted items leave it (no data loss — the row and its idea status are retained). Delivery items render on a new **Sprint board**. |
+| Effort | `Effort` (`Low`/`Medium`/`High`) lands on the **Idea** as an optional Discovery field, **required at the promotion gate**. T-shirt sizing, deliberately *not* story points. |
+| Per-issue dates | **Dropped.** The sprint boxes the dates; per-issue dates inside a dated sprint create "which date wins" conflicts and is not how Agile scopes work. Dates live on Sprints (and, later, Roadmap items). |
+| Sprint ↔ Roadmap nesting | Sprint is **not** nested under Outcome, now or in Slice 2: a flat, time-boxed container; an Issue belongs to zero or one Sprint. An Outcome *groups* Issues; it does not own them and has no authority over sprint membership. Reaffirmed 2026-08-31. |
+| Task model | **Tasks are checklist items on an Issue**, not first-class work items — no sprint of their own, no dates, no estimate. Decided 2026-08-31. The Issue is the unit that moves between sprints, so a task is never stranded in a sprint its parent left. First-class independently-assignable tasks were rejected: too heavy for "Jira light", and they reintroduce the two-object problem the phase model avoids. |
+| Task assignee | Optional; **need not** be an assignee of the parent Issue — any active user in the org qualifies. The one place delivery work is divided between people; constraining it would force spurious Issue assignments to name a helper. |
+| Task state | Three states (`NotStarted`, `InProgress`, `Done`), not a checkbox, because "started but not finished" is what a standup asks about. The `N of M done` rollup counts only `Done`. |
+| Roadmap model | An **Outcome** is a named, dated theme Issues are grouped under — a lens, not a container. Every rollup (issue count, done count, sprint span, quarter placement) is **derived** at read time, never stored. No status field, no percent-complete field. |
+| Outcome ↔ Issue cardinality | **Decided 2026-09-02 — single-parent.** An Issue sits under **at most one** Outcome (`Idea.OutcomeId`, nullable), so roadmap arithmetic is honest by construction: counts partition the delivery set, totals sum, and "done" is unambiguous without a distinct-count anywhere. Rendered in `SPEC/mockups/comp-m-roadmap-single.html`; `comp-n-roadmap-multi.html` records the rejected multi-parent alternative. **Nothing in Slice 1 depended on this.** |
+| Sprint lifecycle | Explicit `Planned` → `Active` → `Completed` transitions (actions, not date-derived), because completing a sprint must handle carry-over deterministically. |
+| Provenance | Nearly free because Issue *is* the Idea. The only new stored provenance fields are `PromotedAtUtc`, `PromotedByUserId`, and an `UpvoteCountAtPromotion` snapshot ("how much support did this have when we committed"). |
+| Board filtering | The ideation board (`/board/{boardId}`) filters to `Phase == Discovery`; promoted items leave it (the row and its idea status are retained). Delivery items render on a new **Sprint board**. |
 | Backward compatibility | All existing ideas backfill to `Phase = Discovery`; delivery views start empty; ideation boards are unchanged. |
 
 ---
@@ -73,17 +70,17 @@ An idea in Collega has a rich life — proposal, discussion, upvotes, business-i
 
 ## Non-Goals
 
-- **A separate `Issue` entity/table.** An Issue is a Delivery-phase Idea. A parallel object would reintroduce the provenance-loss problem this feature exists to solve.
-- **Outcomes that own Issues, or Sprints nested under Outcomes.** An Outcome groups; it never contains. Sprint membership is unaffected by outcome membership and vice versa. Deleting an Outcome never touches an Issue.
-- **Dates, status, or progress fields stored on an Outcome.** Only the Outcome's own target window is stored. Its progress, issue counts, and sprint span are *derived* from the Issues grouped under it. There is no outcome-level status enum, no percent-complete column, and no outcome-to-outcome dependency link.
-- **Epics as a third phase.** An Outcome is not a phase and not a work item; it never appears on a board, has no delivery status, and cannot be promoted, assigned, or commented on.
-- **The Impact × Effort prioritization quadrant** and **crowd-backlog auto-surfacing** ("top-voted ideas not yet promoted"). The enabling fields land now (`Effort`, `Phase`), but the views are deferred (P1).
+- **A separate `Issue` entity/table.** A parallel object would reintroduce the provenance loss this feature solves.
+- **Outcomes that own Issues, or Sprints nested under Outcomes.** An Outcome groups; it never contains. Sprint and outcome membership are independent. Deleting an Outcome never touches an Issue.
+- **Dates, status, or progress fields stored on an Outcome.** Only its own target window is stored; progress, issue counts and sprint span are *derived*. No outcome-level status enum, no percent-complete column, no outcome-to-outcome dependency link.
+- **Epics as a third phase.** An Outcome is not a phase or work item: never on a board, no delivery status, cannot be promoted, assigned, or commented on.
+- **The Impact × Effort prioritization quadrant** and **crowd-backlog auto-surfacing** ("top-voted ideas not yet promoted"). The enabling fields land now (`Effort`, `Phase`); the views are deferred (P1).
 - **AI-assisted promotion** (drafting acceptance criteria / task breakdown from the idea + comments). Deferred (P1); it rides the existing Haiku extraction pattern when built.
 - **Story points, velocity, burndown/burnup, capacity planning.** Deferred (P2), gated behind demonstrated demand. `Effort` stays T-shirt sizing.
-- **First-class sub-issues.** A Task is a checklist item on an Issue: no sprint of its own, no dates, no estimate, no comments, no upvotes, no tags, no nesting, and no promotion path. Anything needing one of those is an Issue, not a Task. Task counts must not be surfaced as a velocity or capacity proxy — see the story-points Non-Goal below.
+- **First-class sub-issues.** A Task has no sprint, dates, estimate, comments, upvotes, tags, nesting, or promotion path; anything needing one is an Issue. Task counts must not be surfaced as a velocity or capacity proxy (see the story-points Non-Goal).
 - **Per-issue start/end dates and cross-issue dependencies.** Dropped by design.
-- **Org-configurable delivery statuses.** The delivery status set is fixed in this slice.
-- **Integrate/export to external trackers (Jira, etc.).** The chosen direction is native; an export/link path is out of scope here.
+- **Org-configurable delivery statuses.** Fixed in this slice.
+- **Integrate/export to external trackers (Jira, etc.).** The direction is native; an export/link path is out of scope.
 
 ---
 
@@ -96,8 +93,8 @@ An idea in Collega has a rich life — proposal, discussion, upvotes, business-i
 | **Promote** | The explicit gate that flips an item Discovery → Delivery. |
 | **Sprint** | A time-boxed container that Issues are pulled into for execution. |
 | **Delivery backlog** | Delivery-phase items not yet assigned to a Sprint (`SprintId is null`). |
-| **Task** | A checklist step on an Issue. Ordered, optionally assigned, in one of three states. Has no independent life: it exists only as a child of its Issue and moves with it. |
-| **Outcome** | A named, dated theme that Issues are grouped under (Slice 2). A reporting lens over Issues — "what are we trying to achieve" — not a container that owns them. |
+| **Task** | A checklist step on an Issue. Ordered, optionally assigned, in one of three states. Exists only as a child of its Issue and moves with it. |
+| **Outcome** | A named, dated theme that Issues are grouped under (Slice 2). A reporting lens — "what are we trying to achieve" — not a container. |
 
 ---
 
@@ -148,8 +145,8 @@ public void AssignToSprint(Guid? sprintId, DateTime nowUtc, Guid actorUserId);
 Invariants:
 - `PromoteToIssue` is valid only from `Phase == Discovery`; sets `Phase = Delivery`, `DeliveryStatus = Pending`, records `Effort`, `PromotedAtUtc`, `PromotedByUserId`, `UpvoteCountAtPromotion`. Re-promoting a Delivery item is rejected.
 - `ChangeDeliveryStatus` and `AssignToSprint` are valid only from `Phase == Delivery` (else `409`/`400`).
-- `ReturnToDiscovery` flips `Phase = Delivery → Discovery`, clears `SprintId` and `DeliveryStatus`, and **retains** `Effort` and the promotion snapshot for history (so a re-promote and audit trail remain coherent).
-- The **ideation `StatusId` is never cleared** by promotion — it is frozen at its last Discovery value for provenance. Ideation `Complete` and delivery `Complete` are distinct terminal states and both are retained.
+- `ReturnToDiscovery` flips `Phase = Delivery → Discovery`, clears `SprintId` and `DeliveryStatus`, and **retains** `Effort` and the promotion snapshot, so a re-promote and the audit trail stay coherent.
+- The **ideation `StatusId` is never cleared** by promotion — frozen at its last Discovery value for provenance. Ideation `Complete` and delivery `Complete` are distinct terminal states; both are retained.
 
 ### New enums (`Collega.Domain`)
 
@@ -186,14 +183,14 @@ public sealed class Sprint : AuditableEntityBase
 Invariants:
 - `EndDate >= StartDate`; `Name` trimmed and non-empty (uniqueness **not** required — "Sprint 12"-style names may repeat across time).
 - `Start()` requires `State == Planned` → `Active`. `Complete()` requires `State == Active` → `Completed`.
-- On `Complete()`, every assigned Issue whose `DeliveryStatus != Complete` is unassigned back to the delivery backlog (`SprintId = null`). Carry-over-to-next-sprint is a P1 refinement.
-- `OwnerUserId`, when set, must be an active user in the sprint's organization (validated in the Application layer, consistent with assignee validation).
+- On `Complete()`, every assigned Issue whose `DeliveryStatus != Complete` returns to the delivery backlog (`SprintId = null`). Carry-over-to-next-sprint is a P1 refinement.
+- `OwnerUserId`, when set, must be an active user in the sprint's organization (validated in the Application layer, like assignee validation).
 
-Issue ↔ Sprint is a simple nullable FK on `Idea` (`SprintId`); an Issue belongs to zero or one Sprint. There is no join entity.
+Issue ↔ Sprint is a simple nullable FK on `Idea` (`SprintId`); an Issue belongs to zero or one Sprint. No join entity.
 
 ### New entity: `IssueTask` (`AuditableEntityBase`) — Slice 1
 
-A checklist step belonging to exactly one Issue. Org scope is inherited through the parent Idea and is **not** duplicated on the row; every query reaches tasks through their Idea, so the existing org-scoping on `Idea` remains the single enforcement point.
+A checklist step belonging to exactly one Issue. Org scope is inherited through the parent Idea and **not** duplicated on the row: every query reaches tasks through their Idea, so the org-scoping on `Idea` stays the single enforcement point.
 
 ```csharp
 public sealed class IssueTask : AuditableEntityBase
@@ -214,11 +211,11 @@ public sealed class IssueTask : AuditableEntityBase
 
 Invariants:
 - `Title` is trimmed and non-empty; `SortOrder` is dense and contiguous within the parent, maintained on insert, delete, and reorder.
-- `ChangeState(Done)` stamps `CompletedAtUtc`/`CompletedByUserId`; moving *off* `Done` clears both. The stamps are the only completion record — there is no per-task history.
-- Tasks may only be created on an Idea whose `Phase == Delivery` (`400` otherwise). A task list is a delivery artifact; ideas in Discovery do not have one.
-- `ReturnToDiscovery` **retains** tasks (hidden, not deleted) so a re-promote is lossless — consistent with retaining `Effort` and the promotion snapshot.
-- Deleting a Task is a hard delete; there is no soft-delete or audit trail on a checklist item.
-- **Tasks never block a status change.** An Issue may be set to `Complete` with tasks outstanding; the UI warns, the domain permits. Enforcing "all tasks done" would make the checklist a gate, which is a ceremony this feature explicitly refuses.
+- `ChangeState(Done)` stamps `CompletedAtUtc`/`CompletedByUserId`; moving *off* `Done` clears both. The stamps are the only completion record — no per-task history.
+- Tasks may only be created on an Idea whose `Phase == Delivery` (`400` otherwise): a task list is a delivery artifact.
+- `ReturnToDiscovery` **retains** tasks (hidden, not deleted) so a re-promote is lossless — like `Effort` and the promotion snapshot.
+- Deleting a Task is a hard delete; no soft-delete or audit trail on a checklist item.
+- **Tasks never block a status change.** An Issue may be set to `Complete` with tasks outstanding; the UI warns, the domain permits. Enforcing "all tasks done" would make the checklist a gate — ceremony this feature refuses.
 
 ### New entity: `Outcome` (`AuditableEntityBase`) — Slice 2
 
@@ -245,21 +242,13 @@ public sealed class Outcome : AuditableEntityBase
 ```
 
 Invariants:
-- `TargetEndDate >= TargetStartDate`. The window is the Outcome's *intent*; the derived sprint span shown on the roadmap is computed from grouped Issues and may disagree with it — that disagreement is the signal the view exists to surface, not an error to reconcile.
+- `TargetEndDate >= TargetStartDate`. The window is the Outcome's *intent*; the derived sprint span on the roadmap comes from grouped Issues and may disagree — that disagreement is the signal the view surfaces, not an error to reconcile.
 - Soft-deleting an Outcome **never touches an Issue**; it only removes the grouping.
 - No status, no percent-complete, and no `SprintId` — an Outcome is orthogonal to sprints.
-- **`Color` (added 2026-09-28, comp R)** — the colour of the Outcome's roadmap bar, swatch and derived
-  sprint-span line. Required; a new Outcome takes a random colour from the tag palette
-  (`20-feature-ideas-and-engagement.md` Tags rule 9) unless one is chosen, and like a tag it may be
-  any `#RRGGBB` (answered 2026-09-28 for tags; outcomes follow). **For when Outcomes are built:** comp
-  R labels the bar with dark text (`#0F1113`) on this colour, which the ten palette colours clear
-  (4.8:1 or better, measured 2026-09-28) but a custom colour may not — so the bar's label must be
-  computed like a tag chip's text (dark or light, whichever clears 4.5:1), and the backend slice's
-  QA asserts it. This is presentation data, not a status: it says nothing about progress.
+- **`Color` (added 2026-09-28, comp R)** — the colour of the Outcome's roadmap bar, swatch and derived sprint-span line. Required; a new Outcome takes a random colour from the tag palette (`20-feature-ideas-and-engagement.md` Tags rule 9) unless one is chosen, and like a tag may be any `#RRGGBB` (answered 2026-09-28 for tags; outcomes follow). Presentation data, not a status: it says nothing about progress.
+  - **For when Outcomes are built:** comp R labels the bar with dark text (`#0F1113`), which the ten palette colours clear (4.8:1 or better, measured 2026-09-28) but a custom colour may not — so the bar's label must be computed like a tag chip's text (dark or light, whichever clears 4.5:1), and the backend slice's QA asserts it.
 
-**Outcome ↔ Issue linkage is single-parent.** An Issue carries `Idea.OutcomeId` (nullable FK). Grouping it under an Outcome is a **move**, not an add: assigning a new Outcome clears the old one, and clearing it leaves the Issue ungrouped.
-
-This was a genuine fork, resolved 2026-09-02. What the rejected shape would have cost, recorded so it is not re-argued:
+**Outcome ↔ Issue linkage is single-parent** (resolved 2026-09-02). An Issue carries `Idea.OutcomeId` (nullable FK). Grouping is a **move**, not an add: a new Outcome clears the old one; clearing leaves the Issue ungrouped. What the rejected shape would have cost, so it is not re-argued:
 
 | | Single-parent (**chosen**) | Multi-parent (rejected) |
 |---|---|---|
@@ -268,7 +257,7 @@ This was a genuine fork, resolved 2026-09-02. What the rejected shape would have
 | Reassignment | A move (leaves the old outcome) | An add/remove (may belong to both) |
 | Comp | `comp-m-roadmap-single.html` | `comp-n-roadmap-multi.html` |
 
-The cost of the choice is real: work that genuinely serves two quarterly goals must pick one. The failure mode to watch for is **teams raising duplicate Issues** so two Outcomes can each claim the work — which would reintroduce exactly the provenance loss the phase model exists to prevent. If that appears in practice, single → multi is a cheap forward migration (copy the FK into the join table, drop the column); the reverse is lossy.
+The cost is real: work that genuinely serves two quarterly goals must pick one. Watch for **teams raising duplicate Issues** so two Outcomes can each claim the work — that reintroduces the provenance loss the phase model prevents. If it appears, single → multi is a cheap forward migration (copy the FK into the join table, drop the column); the reverse is lossy.
 
 ### New enums (Slice 1 / Slice 2)
 
@@ -296,15 +285,15 @@ Admin-only (in-scope OrgAdmin, or SiteAdmin), mirroring existing org-scoped admi
 
 ### Idea/Issue delivery operations (extend `IdeaService`)
 
-- **Promote:** `PromoteIdeaAsync(ideaId, effort, sprintId?, note?, actor)`. Authorizes actor (author or in-scope admin), reads the idea's current upvote count, calls `Idea.PromoteToIssue(...)`, emits a promotion audit event and notifications (below). If `sprintId` is supplied it must be a non-`Completed` sprint in the same org.
+- **Promote:** `PromoteIdeaAsync(ideaId, effort, sprintId?, note?, actor)`. Authorizes the author or an in-scope admin, reads the current upvote count, calls `Idea.PromoteToIssue(...)`, emits a promotion audit event and notifications (below). A supplied `sprintId` must be a non-`Completed` sprint in the same org.
 - **Return to Discovery:** `ReturnIdeaToDiscoveryAsync(ideaId, actor)` — admin-only; emits an audit event.
-- **Change delivery status:** `ChangeDeliveryStatusAsync(ideaId, target, actor)` — authorizes author, an assignee, or an in-scope admin; emits audit + notification (author + assignees, self-suppressed).
+- **Change delivery status:** `ChangeDeliveryStatusAsync(ideaId, target, actor)` — the author, an assignee, or an in-scope admin; emits audit + notification (author + assignees, self-suppressed).
 - **Assign to sprint:** `AssignIssueToSprintAsync(ideaId, sprintId?, actor)` — admin-only in this slice; emits an audit event. Target sprint must be a non-`Completed` sprint in the same org, or `null` for backlog.
-- **Delivery queries:** a phase-aware list for the sprint board and backlog — `ListDeliveryAsync(orgId, sprintId? , deliveryStatus?)` returning the existing compact card projection plus `deliveryStatus`, `effort`, `sprint`, a `taskSummary` (`{ done, total }`), and provenance summary.
+- **Delivery queries:** a phase-aware list for the sprint board and backlog — `ListDeliveryAsync(orgId, sprintId? , deliveryStatus?)` returning the compact card projection plus `deliveryStatus`, `effort`, `sprint`, a `taskSummary` (`{ done, total }`), and provenance summary.
 
 ### New service: `IIssueTaskService` (`Collega.Application/Delivery/`) — Slice 1
 
-Authorization mirrors `ChangeDeliveryStatusAsync`: the idea author, any Issue assignee, or an in-scope admin. Read is available to any org member who can see the Issue. Every method resolves the parent Idea first and authorizes against it — tasks carry no independent scope.
+Authorization mirrors `ChangeDeliveryStatusAsync`: the idea author, any Issue assignee, or an in-scope admin. Read: any org member who can see the Issue. Every method resolves and authorizes against the parent Idea first — tasks carry no independent scope.
 
 | Method | Purpose |
 |---|---|
@@ -317,7 +306,7 @@ Authorization mirrors `ChangeDeliveryStatusAsync`: the idea author, any Issue as
 
 ### New service: `IOutcomeService` (`Collega.Application/Delivery/`) — Slice 2
 
-Admin-only for management (in-scope OrgAdmin or SiteAdmin); read available to all org members. Mirrors `ISprintService` authorization exactly.
+Admin-only for management (in-scope OrgAdmin or SiteAdmin); read for all org members. Mirrors `ISprintService` authorization exactly.
 
 | Method | Purpose |
 |---|---|
@@ -327,14 +316,14 @@ Admin-only for management (in-scope OrgAdmin or SiteAdmin); read available to al
 | `UpdateAsync(orgId, id, cmd)` | Rename / re-describe / re-window / reassign owner |
 | `ReorderAsync(orgId, orderedIds)` | Roadmap row order |
 | `DeleteAsync(orgId, id)` | Soft-delete; grouped Issues are ungrouped, never deleted |
-| `SetIssueOutcomeAsync(ideaId, outcomeId?)` | Grouping mutation — sets or clears the Issue's single Outcome. A null `outcomeId` ungroups it; assigning a new one replaces any existing grouping. |
-| `GetRoadmapAsync(orgId, granularity)` | The roadmap grid: outcomes × time buckets (quarters or sprints), with derived spans. *Superseded 2026-09-28 (comp R): the time axis is drawn in the client at the zoom the viewer picks (Weeks, Months, Quarters), so the read takes no granularity — it returns every outcome with its window, colour and grouped Issues (key when one exists, title, delivery status, effort, assignees, sprint dates), and the derived sprint span. See "Client UI" below.* |
+| `SetIssueOutcomeAsync(ideaId, outcomeId?)` | Sets or clears the Issue's single Outcome. A null `outcomeId` ungroups it; a new one replaces any existing grouping. |
+| `GetRoadmapAsync(orgId, granularity)` | The roadmap grid: outcomes × time buckets (quarters or sprints), with derived spans. *Superseded 2026-09-28 (comp R): the client draws the time axis at the zoom the viewer picks (Weeks, Months, Quarters), so the read takes no granularity — it returns every outcome with its window, colour and grouped Issues (key when one exists, title, delivery status, effort, assignees, sprint dates), and the derived sprint span. See "Client UI" below.* |
 
-Rollups (`issueCount`, `doneCount`, derived sprint span, quarter placement) are computed in the query, never stored. Because grouping is single-parent these are plain counts: no rollup carries a distinct-count beside it, and the per-outcome totals sum to the delivery set.
+Rollups (`issueCount`, `doneCount`, derived sprint span, quarter placement) are computed in the query, never stored. Because grouping is single-parent they are plain counts: no distinct-count, and per-outcome totals sum to the delivery set.
 
 ### Board & idea-list phase filtering
 
-- Existing ideation board queries add `Phase == Discovery` (promoted items drop off the ideation board without data loss).
+- Ideation board queries add `Phase == Discovery` (promoted items drop off without data loss).
 - The global `/ideas` list gains an optional `phase` filter (`All` default / `Ideas` / `Issues`) so search and provenance span both phases.
 
 ---
@@ -383,7 +372,9 @@ All under `/api/v1`, org-scoped, following existing conventions and problem-deta
 | `PUT` | `/ideas/{ideaId}/tasks/order` | `{ "taskIds": ["<guid>", "..."] }` | Author, assignee, or in-scope admin |
 | `DELETE` | `/ideas/{ideaId}/tasks/{taskId}` | — | Author, assignee, or in-scope admin |
 
-Creating a task on a `Discovery` item → `400`. A `taskId` whose parent is not `{ideaId}` → `404` (never `403`, so the route cannot be used to probe for ideas in other orgs). A reorder whose id set does not exactly match the Issue's tasks → `400`.
+- Creating a task on a `Discovery` item → `400`.
+- A `taskId` whose parent is not `{ideaId}` → `404` (never `403`, so the route cannot probe for ideas in other orgs).
+- A reorder whose id set does not exactly match the Issue's tasks → `400`.
 
 ### Outcomes (Slice 2) — Admin only for management; read available to all org members
 
@@ -405,207 +396,99 @@ Creating a task on a `Discovery` item → `400`. A `taskId` whose parent is not 
 Reuses the existing audit-event and `INotificationWriter` patterns (`SPEC/20-feature-notifications.md`); self-notifications remain suppressed.
 
 - **Audit events** (new types): `IdeaPromotedToIssue`, `IssueReturnedToDiscovery`, `IssueDeliveryStatusChanged`, `IssueSprintAssignmentChanged`, `SprintCreated`, `SprintStarted`, `SprintCompleted`, `SprintUpdated`, `SprintDeleted`. Slice 2 adds `OutcomeCreated`, `OutcomeUpdated`, `OutcomeDeleted`, `IssueOutcomeGroupingChanged`.
-- **Task mutations are deliberately NOT audited.** A checklist ticked a dozen times a day would drown the audit log that exists to answer "who committed us to this work". `CompletedAtUtc`/`CompletedByUserId` on the row carry the only record that matters. This is a conscious asymmetry with every other mutation in the feature.
-- **Notification events** (new types, notify idea author + assignees): `IdeaPromoted` and `IssueDeliveryStatusChanged`. The stored canonical link is `/ideas/{ideaId}` (drawer-addressable, the same item), consistent with the notifications spec.
+- **Task mutations are deliberately NOT audited** — a conscious asymmetry with every other mutation here. A checklist ticked a dozen times a day would drown the log that answers "who committed us to this work"; `CompletedAtUtc`/`CompletedByUserId` on the row are the only record that matters.
+- **Notification events** (new types, notify idea author + assignees): `IdeaPromoted` and `IssueDeliveryStatusChanged`. Stored canonical link `/ideas/{ideaId}` (drawer-addressable, the same item), per the notifications spec.
 - **Task assignment notifies the new assignee only** (`IssueTaskAssigned`, self-suppressed, link `/ideas/{ideaId}`). No other task event notifies anyone — ticking a box must not page the room.
 
 ---
 
 ## Client UI (later wave, per repo convention)
 
-Layouts here are **directional**; the locked Comp C system (`SPEC/mockups/comp-c-review-06-lockin-v5-final.html`) and its mobile gap apply. Throwaway review comps should precede production Blazor per the working rules.
+Layouts here are **directional**; the locked Comp C system (`SPEC/mockups/comp-c-review-06-lockin-v5-final.html`) and its mobile gap apply. Throwaway review comps precede production Blazor per the working rules.
 
-- **Promotion action** on Idea Detail: a "Promote to Issue" button (visible to author + in-scope admins on Discovery-phase items) opens a small confirm dialog — required **Effort** selector, optional **Sprint** picker (or "Backlog"), optional note — then flips the page into its Issue/Delivery lens.
-- **Issue/Delivery lens** on the same detail page: ideation Type is read-only context; a **Provenance panel** shows "Originated as an idea by *X* on *date* · *N* upvotes at promotion (*M* now) · promoted by *Y* on *date*", with the original comment thread inline. This panel is the differentiator — it ships in this slice.
-- **Sprint board** (`/delivery` or `/sprints/{sprintId}`): fixed 5-swimlane kanban (`Pending`→`Complete`), Issue cards reusing the existing compact card with an `Effort` chip and delivery status. Drag between swimlanes mirrors the idea-board move (optimistic, revert on failure); keyboard/touch use the detail status selector — consistent with existing board mechanics. *Superseded in part 2026-09-28 by "Sprint board (comp R)" below: the Effort chip becomes the effort bar, and the page gains the sprint strip.*
+- **Promotion action** on Idea Detail: "Promote to Issue" (visible to author + in-scope admins on Discovery-phase items) opens a confirm dialog — required **Effort** selector, optional **Sprint** picker (or "Backlog"), optional note — then flips the page into its Issue/Delivery lens.
+- **Issue/Delivery lens** on the same detail page: ideation Type is read-only context; a **Provenance panel** shows "Originated as an idea by *X* on *date* · *N* upvotes at promotion (*M* now) · promoted by *Y* on *date*", with the original comment thread inline. This panel is the differentiator and ships in this slice.
+- **Sprint board** (`/delivery` or `/sprints/{sprintId}`): fixed 5-swimlane kanban (`Pending`→`Complete`), Issue cards reusing the compact card with an `Effort` chip and delivery status. Drag between swimlanes mirrors the idea-board move (optimistic, revert on failure); keyboard/touch use the detail status selector — consistent with existing board mechanics. *Superseded in part 2026-09-28 by "Sprint board (comp R)" below: the Effort chip becomes the effort bar, and the page gains the sprint strip.*
 - **Delivery backlog** view: Delivery-phase Issues with no sprint, the source list admins pull from.
 - **Sprint admin**: create/edit/start/complete sprint; a rail "Delivery" (or "Sprints") destination is added to the 64px icon rail.
-- **Task checklist** on the Issue/Delivery lens: an ordered list under the description with an `N of M done` counter, per-row state control, optional assignee, drag-to-reorder, and an inline "+ Add task" affordance. Rendered in `comp-l-delivery-desk.html` (Issue screen). Read-only viewers see the list and the counter with no controls.
-- **Roadmap** (`/roadmap`, Slice 2): outcomes as rows against a quarter or sprint axis, each row showing its derived span, issue count, and done count; selecting a row lists its Issues. Rendered in `comp-m-roadmap-single.html`, which is the chosen shape. `comp-n-roadmap-multi.html` is retained only as the record of the rejected alternative — do not build from it. *Superseded 2026-09-28 by "Roadmap (comp R)" below: comp R replaces comp M as the shape, and the axis is Weeks, Months or Quarters. Single-parent grouping, derived rollups and "a lens, not a container" are unchanged.*
+- **Task checklist** on the Issue/Delivery lens: ordered list under the description with an `N of M done` counter, per-row state control, optional assignee, drag-to-reorder, and inline "+ Add task". Rendered in `comp-l-delivery-desk.html` (Issue screen). Read-only viewers see the list and counter with no controls.
+- **Roadmap** (`/roadmap`, Slice 2): outcomes as rows against a quarter or sprint axis, each with derived span, issue count and done count; selecting a row lists its Issues. Rendered in `comp-m-roadmap-single.html`, the chosen shape; `comp-n-roadmap-multi.html` is only the record of the rejected alternative — do not build from it. *Superseded 2026-09-28 by "Roadmap (comp R)" below: comp R replaces comp M as the shape, and the axis is Weeks, Months or Quarters. Single-parent grouping, derived rollups and "a lens, not a container" are unchanged.*
 - **Ideation board** unchanged except that promoted items no longer appear (phase filter).
 
 ### Comp R iteration (2026-09-28)
 
-`SPEC/mockups/comp-r-portico-prototype.html` (screens *Sprint board* and *Roadmap*) is the reference
-from 2026-09-28 (`decisions.md`). The Layout note at the top of this section no longer applies to
-these two screens: comp R is their decided layout, on the list and detail pattern and the forms and
-controls rules of `20-feature-client-ui.md`. The prototype's sprint, outcome and issue data are
-samples.
-
-**Issue keys are a gap.** Comp R labels every Issue with a key — `IDE-01`, `OPP-04`, a board prefix
-and a number — on sprint cards, roadmap rows and the outcome form. No such key exists: there is no
-column for it, `30-Contracts.md` records that a reference "needs a per-organization sequence and
-therefore a schema amendment slice", and the web app dropped comp Q's `CLG-114` for the same reason.
-**The key slot is left out** wherever comp R draws one, and nothing is derived from the id to fill
-it (answered 2026-09-28). Keys are decided separately, with their own schema amendment.
+- `SPEC/mockups/comp-r-portico-prototype.html` (screens *Sprint board* and *Roadmap*) is the reference from 2026-09-28 (`decisions.md`). The Layout note above no longer applies to these two screens: comp R is their decided layout, on the list and detail pattern and the forms and controls rules of `20-feature-client-ui.md`. The prototype's sprint, outcome and issue data are samples.
+- **Issue keys are a gap.** Comp R labels every Issue with a key — `IDE-01`, `OPP-04`, a board prefix and a number — on sprint cards, roadmap rows and the outcome form. No such key exists: no column, `30-Contracts.md` records that a reference "needs a per-organization sequence and therefore a schema amendment slice", and the web app dropped comp Q's `CLG-114` for the same reason. **The key slot is left out** wherever comp R draws one, and nothing is derived from the id to fill it (answered 2026-09-28). Keys are decided separately, with their own schema amendment.
 
 #### Effort bar (comp R)
 
-The effort bar (`20-feature-client-ui.md` "Tag colours and the effort bar") replaces the effort chip
-or dot on **every Issue card and row**: Sprint board cards, Backlog rows, and each Issue row under an
-Outcome on the Roadmap, always with its words (*Medium effort*). On **idea cards and rows** — a
-board's lanes and list, and Ideas — it shows too, **whenever the idea has an `effort`** (answered
-2026-09-28), which in Discovery is optional; an idea without one shows nothing, not an empty bar.
-The idea list items carry `effort` for it (`30-Contracts.md`).
+- The effort bar (`20-feature-client-ui.md` "Tag colours and the effort bar") replaces the effort chip or dot on **every Issue card and row** — Sprint board cards, Backlog rows, each Issue row under an Outcome on the Roadmap — always with its words (*Medium effort*).
+- On **idea cards and rows** (a board's lanes and list, and Ideas) it shows **whenever the idea has an `effort`** (answered 2026-09-28), which in Discovery is optional; without one, nothing, not an empty bar. The idea list items carry `effort` for it (`30-Contracts.md`).
 
 #### Sprint board (comp R)
 
 The page for the organization's running sprint (`/delivery/sprint`, as built).
 
-- **Header:** the sprint's name as the H1 and *Goal: {goal}* as its description. On the right
-  **Plan next sprint** and, while the sprint is `Active`, **Complete sprint** (primary). Both are an
-  in-scope admin's; every other role sees them disabled with *Administrators only* (a Site Admin,
-  the View As wording the delivery screens already use). **Plan next sprint** opens the **Add New
-  Sprint** form in the drawer (answered 2026-09-28; comp R does not draw it): **Name** (required, up
-  to 100), **Goal** (optional, up to 500), **Start** and **End** (required dates, side by side; *On
-  or after the start.*) and **Owner** (optional, an active member). *Create sprint* calls the
-  existing `POST /organizations/{orgId}/sprints`; the new sprint is `Planned`, the drawer closes and
-  a toast says *Sprint created*. Field errors from the API sit beside their fields.
-- **Sprint strip** under the header, a definition list of four cells with mono uppercase terms:
-  **STATE** (*ACTIVE* or *PLANNED* — the board shows the running sprint, or the next planned one
-  when none is running — plus *{N} DAYS PAST END* in the warning colour while an
-  Active sprint is past its end date, counted in the viewer's local calendar days), **WINDOW**
-  (*10–24 SEP*), **ISSUES** (*{n} · {d} DONE*) and **PROGRESS** (one segment per Issue, filled in
-  the Complete colour when done, labelled *{d} of {n} done* for assistive technology). The cells
-  stack below 900px.
-- **Five lanes**, `Pending`, `Scoping`, `Development`, `Review`, `Complete`, each with its fixed
-  delivery-status colour tinting the header and the count beside the name; lanes follow the board's
-  lane style. An empty lane says *No issues*. Below 900px the lanes scroll sideways.
-- **Card:** the Issue key *(gap — omitted, above)* and the assignees' avatars on the first line (a
-  dashed *—* placeholder named *Unassigned* when there are none), the title, up to two coloured
-  tag chips with *+N* for the rest (added 2026-09-28 to match `30-Contracts.md`'s Sprint board
-  bullet; comp R draws none), then the effort bar with its words. Cards in `Complete` are dimmed
-  but stay readable (4.5:1 still applies).
-- **Moving an Issue** keeps this section's existing rule: drag between lanes (optimistic, revert on
-  failure) by the author, an assignee or an in-scope admin, through
-  `PUT /ideas/{ideaId}/delivery-status`; keyboard and touch use the status selector in the Issue's
-  detail. A note under the lanes says who may move one.
-- **Selecting a card** opens the Issue **in the drawer** over the board (answered 2026-09-28) — see
-  "The Issue in the drawer" below.
-- **Complete sprint** confirms first — *Complete this sprint? {N} unfinished issues return to the
-  backlog. Completed issues stay with the sprint.* — then calls
-  `POST /organizations/{orgId}/sprints/{sprintId}/complete` and reports *Sprint completed · {N}
-  issues back in the backlog*.
-- **No running sprint — Start sprint** (the user, 2026-09-28; comp R draws no Start control). When
-  no sprint is `Active`, the board shows the **next `Planned` sprint** — the one with the earliest
-  start date (ties by name) — with the same header, strip (*PLANNED*) and five lanes of the Issues
-  already assigned to it, and **Start sprint** as the primary action in place of *Complete sprint*.
-  It is an in-scope admin's, disabled with the reason for every other role exactly as *Complete
-  sprint* is. It confirms first — *Start this sprint? "{name}" becomes the running sprint, {n}
-  issues.* (Cancel focused first; the action is the primary button, not the danger one) — then calls
-  the existing `POST /organizations/{orgId}/sprints/{sprintId}/start` and reports *Sprint started*.
-  *Plan next sprint* stays beside it. Only when there is no `Active` and no `Planned` sprint does the
-  existing empty state show (how many Issues wait in the backlog, with *Plan next sprint*). If
-  several sprints are `Active` (the API allows it), the board keeps today's behaviour and shows the
-  first the sprint list returns.
+- **Header:** the sprint's name as the H1 and *Goal: {goal}* as its description. On the right **Plan next sprint** and, while the sprint is `Active`, **Complete sprint** (primary). Both are an in-scope admin's; every other role sees them disabled with *Administrators only* (a Site Admin, the View As wording the delivery screens already use).
+  - **Plan next sprint** opens the **Add New Sprint** form in the drawer (answered 2026-09-28; comp R does not draw it): **Name** (required, up to 100), **Goal** (optional, up to 500), **Start** and **End** (required dates, side by side; *On or after the start.*) and **Owner** (optional, an active member). *Create sprint* calls the existing `POST /organizations/{orgId}/sprints`; the new sprint is `Planned`, the drawer closes, a toast says *Sprint created*. API field errors sit beside their fields.
+- **Sprint strip** under the header, a definition list of four cells with mono uppercase terms (stacking below 900px):
+  - **STATE** — *ACTIVE* or *PLANNED* (the board shows the running sprint, or the next planned one when none is running), plus *{N} DAYS PAST END* in the warning colour while an Active sprint is past its end date, counted in the viewer's local calendar days;
+  - **WINDOW** (*10–24 SEP*); **ISSUES** (*{n} · {d} DONE*);
+  - **PROGRESS** — one segment per Issue, filled in the Complete colour when done, labelled *{d} of {n} done* for assistive technology.
+- **Five lanes**, `Pending`, `Scoping`, `Development`, `Review`, `Complete`, each with its fixed delivery-status colour tinting the header and the count beside the name, in the board's lane style. An empty lane says *No issues*. Below 900px the lanes scroll sideways.
+- **Card:** the Issue key *(gap — omitted, above)* and the assignees' avatars on the first line (a dashed *—* placeholder named *Unassigned* when there are none), the title, up to two coloured tag chips with *+N* for the rest (added 2026-09-28 to match `30-Contracts.md`'s Sprint board bullet; comp R draws none), then the effort bar with its words. Cards in `Complete` are dimmed but stay readable (4.5:1 still applies).
+- **Moving an Issue** keeps the existing rule: drag between lanes (optimistic, revert on failure) by the author, an assignee or an in-scope admin, through `PUT /ideas/{ideaId}/delivery-status`; keyboard and touch use the status selector in the Issue's detail. A note under the lanes says who may move one.
+- **Selecting a card** opens the Issue **in the drawer** over the board (answered 2026-09-28) — see "The Issue in the drawer" below.
+- **Complete sprint** confirms first — *Complete this sprint? {N} unfinished issues return to the backlog. Completed issues stay with the sprint.* — then calls `POST /organizations/{orgId}/sprints/{sprintId}/complete` and reports *Sprint completed · {N} issues back in the backlog*.
+- **No running sprint — Start sprint** (the user, 2026-09-28; comp R draws no Start control):
+  - When no sprint is `Active`, the board shows the **next `Planned` sprint** — earliest start date, ties by name — with the same header, strip (*PLANNED*) and five lanes of its assigned Issues, and **Start sprint** as the primary action in place of *Complete sprint*, an in-scope admin's, disabled with the reason for every other role exactly as *Complete sprint* is.
+  - It confirms first — *Start this sprint? "{name}" becomes the running sprint, {n} issues.* (Cancel focused first; the action is the primary button, not the danger one) — then calls the existing `POST /organizations/{orgId}/sprints/{sprintId}/start` and reports *Sprint started*. *Plan next sprint* stays beside it.
+  - Only with no `Active` and no `Planned` sprint does the existing empty state show (how many Issues wait in the backlog, with *Plan next sprint*). If several sprints are `Active` (the API allows it), the board keeps today's behaviour and shows the first the sprint list returns.
 
 #### The Issue in the drawer (answered 2026-09-28)
 
-An Issue selected on the Sprint board, the Backlog or (once Outcomes exist) the Roadmap opens in the
-list and detail pattern's drawer, in view mode, over the screen it came from (`?idea={ideaId}`, as
-for ideas). Eyebrow *Issue · {sprint name or Backlog} · {delivery status}*, the title, then:
+An Issue selected on the Sprint board, the Backlog or (once Outcomes exist) the Roadmap opens in the list and detail pattern's drawer, in view mode, over the screen it came from (`?idea={ideaId}`, as for ideas). Eyebrow *Issue · {sprint name or Backlog} · {delivery status}*, the title, then:
 
-- **Delivery facts:** **Status** — a select of the five delivery statuses for the author, an
-  assignee or an in-scope admin (saving through `PUT /ideas/{ideaId}/delivery-status`; it is the
-  keyboard and touch path for moving a card), plain text for everyone else; **Effort** (the bar and
-  its words); **Sprint** (name and window, or *Backlog*); **Outcome** (*Not grouped* until Outcomes
-  exist); and the **Provenance** panel this section already specifies (raised by, when, upvotes at
-  promotion and now, promoted by and when).
-- **Tasks:** the checklist with its *N of M done* counter and the controls this section already
-  gives the author, assignees and admins; read-only for everyone else.
-- **The idea's own content**, as the idea drawer shows it: Problem, Proposed solutions, Impact
-  rationale, Summary, custom fields and the discussion.
+- **Delivery facts:** **Status** — a select of the five delivery statuses for the author, an assignee or an in-scope admin (saving through `PUT /ideas/{ideaId}/delivery-status`; the keyboard and touch path for moving a card), plain text for everyone else; **Effort** (the bar and its words); **Sprint** (name and window, or *Backlog*); **Outcome** (*Not grouped* until Outcomes exist); and the **Provenance** panel specified above (raised by, when, upvotes at promotion and now, promoted by and when).
+- **Tasks:** the checklist with its *N of M done* counter and the controls already given to the author, assignees and admins; read-only for everyone else.
+- **The idea's own content**, as the idea drawer shows it: Problem, Proposed solutions, Impact rationale, Summary, custom fields and the discussion.
 - **Footer:** Edit (the idea form, as for ideas) where the role may edit.
-
-It reads the delivery card, `GET /ideas/{ideaId}` and `GET /ideas/{ideaId}/tasks`. Opened from a
-board it uses the card already in hand; opened from a **deep link** (`?idea={ideaId}` on a delivery
-screen) or on **`/delivery/issues/{ideaId}`**, which stays for existing links, the card comes from
-**`GET /ideas/{ideaId}/delivery`** — the single-Issue read the user added on 2026-09-28 (`30-Contracts.md`),
-replacing the web app's fetch of every sprint and the backlog to find one Issue.
+- **Data:** the delivery card, `GET /ideas/{ideaId}` and `GET /ideas/{ideaId}/tasks`. From a board it uses the card in hand; from a **deep link** (`?idea={ideaId}` on a delivery screen) or **`/delivery/issues/{ideaId}`** (kept for existing links) the card comes from **`GET /ideas/{ideaId}/delivery`** — the single-Issue read the user added on 2026-09-28 (`30-Contracts.md`), replacing the web app's fetch of every sprint and the backlog to find one Issue.
 
 #### Roadmap (comp R)
 
-**Sprint 11 builds the screen, not the backend** (answered 2026-09-28: "UI now, backend later").
-The Outcomes backend — Slice 2's table, entity, service, routes and roadmap read — is a gap for a
-later sprint (`30-Contracts.md` Delivery preamble; `decisions.md` 2026-09-28). So the Roadmap is
-built in two layers:
+**Sprint 11 builds the screen, not the backend** (answered 2026-09-28: "UI now, backend later"). The Outcomes backend — Slice 2's table, entity, service, routes and roadmap read — is a gap for a later sprint (`30-Contracts.md` Delivery preamble; `decisions.md` 2026-09-28). So the Roadmap is built in two layers:
 
 **What Sprint 11 shows, from data that exists.**
 
-- **Header:** *Roadmap* and its description as below. **Add New Outcome** renders **disabled for
-  every role with the reason** *Outcomes arrive in a later release* — an empty state's action is
-  disabled with a reason, never omitted (`decisions.md` 2026-09-08). The breadcrumb's mono count is
-  *{m} ISSUES*.
+- **Header:** *Roadmap* and its description as below. **Add New Outcome** renders **disabled for every role with the reason** *Outcomes arrive in a later release* — an empty state's action is disabled with a reason, never omitted (`decisions.md` 2026-09-08). The breadcrumb's mono count is *{m} ISSUES*.
 - **Zoom** exactly as below: Weeks, Months, Quarters, the fixed windows, no panning, no shortcuts.
-- **Timeline** with the column header, the **TODAY** rule, and a **Sprints** group of rows — one per
-  non-deleted sprint whose window meets the visible window (`GET /organizations/{orgId}/sprints`),
-  ordered by start date. Each row's label column holds the sprint's name; its bar runs from start to
-  end date, clipped to the window, labelled in mono *{d} / {n} DONE* from the sprint item's
-  `doneCount` / `issueCount`. The bar is a tint with the theme's ink as its text (so it clears 4.5:1
-  in every theme); an `Active` sprint is marked with a primary-colour border and *ACTIVE* in its
-  label, a `Planned` one is a dashed outline, a `Completed` one is muted. The Active sprint's bar
-  links to the Sprint board; the others are not interactive. With no sprint in the window the group
-  says *No sprints in this window.*
-- **Empty state** in place of the outcome rows and cards: the existing roadmap empty state — *{m}
-  delivery issues and nothing to group them by* — with the line *Outcomes, which group issues under
-  what the team is working toward, arrive in a later release.* The closing line about ungrouped
-  Issues is not drawn (every Issue is ungrouped).
-- **The Sprints rows are kept** (the user, 2026-09-28). Whether they stay once Outcomes exist is
-  decided in the Outcomes sprint.
+- **Timeline** with the column header, the **TODAY** rule, and a **Sprints** group of rows — one per non-deleted sprint whose window meets the visible window (`GET /organizations/{orgId}/sprints`), ordered by start date.
+  - Each row's label column holds the sprint's name; its bar runs start to end date, clipped to the window, labelled in mono *{d} / {n} DONE* from the sprint item's `doneCount` / `issueCount`. The bar is a tint with the theme's ink as its text (clears 4.5:1 in every theme).
+  - An `Active` sprint has a primary-colour border and *ACTIVE* in its label; a `Planned` one is a dashed outline; a `Completed` one is muted. The Active sprint's bar links to the Sprint board; the others are not interactive. With no sprint in the window the group says *No sprints in this window.*
+- **Empty state** in place of the outcome rows and cards: the existing roadmap empty state — *{m} delivery issues and nothing to group them by* — with the line *Outcomes, which group issues under what the team is working toward, arrive in a later release.* The closing line about ungrouped Issues is not drawn (every Issue is ungrouped).
+- **The Sprints rows are kept** (the user, 2026-09-28). Whether they stay once Outcomes exist is decided in the Outcomes sprint.
 
-**What the Roadmap shows once Outcomes are built** (the comp R target, specified now so the later
-sprint does not reopen the design):
+**What the Roadmap shows once Outcomes are built** (the comp R target, specified now so the later sprint does not reopen the design). Outcomes (Slice 2) on a time axis, then the Issues under each; everything drawn is derived from the Outcomes and their Issues, and nothing on the page is stored except the Outcome itself.
 
-Outcomes (Slice 2) on a time axis, then the Issues under each. Everything drawn is derived from the
-Outcomes and their Issues; nothing on the page is stored except the Outcome itself.
-
-- **Header:** *Roadmap*, *The outcomes the team is working toward, when, and the issues under each.*,
-  and **Add New Outcome** — an in-scope admin's, disabled with *Administrators only* for everyone
-  else. The breadcrumb carries a mono count, *{n} OUTCOMES · {m} ISSUES*.
-- **Zoom:** a segmented control at the right of the toolbar, **Weeks**, **Months** (default),
-  **Quarters**. It is the only control on the toolbar. No keyboard shortcuts (the user,
-  2026-09-28). The visible window is **fixed and anchored on today** (answered 2026-09-28): Weeks —
-  16 week columns (weeks start Monday) beginning two weeks before the current week; Months — 7 month
-  columns beginning with the current month; Quarters — 4 quarter columns beginning with the current
-  quarter. "Today" is the viewer's local calendar date. **No panning**: anything outside the window
-  is clipped at its edge. The zoom is URL state, like the list pattern's view.
-- **Timeline** (a card that scrolls sideways under 760px): a header row with the column labels in
-  mono, then **one row per Outcome** in `SortOrder` — a 260px label column (the Outcome's colour
-  swatch and its name, which opens the Outcome drawer) and a track with faint column rules. On the
-  track:
-  - the **target-window bar** from `TargetStartDate` to `TargetEndDate`, filled in the Outcome's
-    colour with a mono label *{done} / {total} DONE* (dark text on the colour), clipped to the
-    visible window. Its accessible name is *{name}, {start} to {end}*; it opens the drawer too.
-  - a **planned** Outcome — one whose window starts after today and whose Issues are all `Pending` —
-    draws the bar as a dashed outline in its colour instead of a fill, with *PLANNED · 0 / {n}*,
-    and its swatch dashed to match.
-  - beneath the bar, a thin **sprint-span line** in the Outcome's colour from the earliest start to
-    the latest end of the sprints its Issues are in, when any are. Where it disagrees with the
-    window is the signal the view exists to show (see the Outcome invariants).
+- **Header:** *Roadmap*, *The outcomes the team is working toward, when, and the issues under each.*, and **Add New Outcome** — an in-scope admin's, disabled with *Administrators only* for everyone else. The breadcrumb carries a mono count, *{n} OUTCOMES · {m} ISSUES*.
+- **Zoom:** a segmented control at the right of the toolbar — **Weeks**, **Months** (default), **Quarters** — the only control on the toolbar. No keyboard shortcuts (the user, 2026-09-28). The zoom is URL state, like the list pattern's view.
+  - The visible window is **fixed and anchored on today** (answered 2026-09-28): Weeks — 16 week columns (weeks start Monday) beginning two weeks before the current week; Months — 7 month columns beginning with the current month; Quarters — 4 quarter columns beginning with the current quarter. "Today" is the viewer's local calendar date.
+  - **No panning**: anything outside the window is clipped at its edge.
+- **Timeline** (a card that scrolls sideways under 760px): a header row with the column labels in mono, then **one row per Outcome** in `SortOrder` — a 260px label column (the Outcome's colour swatch and its name, which opens the Outcome drawer) and a track with faint column rules. On the track:
+  - the **target-window bar** from `TargetStartDate` to `TargetEndDate`, filled in the Outcome's colour with a mono label *{done} / {total} DONE* (dark text on the colour), clipped to the visible window. Accessible name *{name}, {start} to {end}*; it opens the drawer too.
+  - a **planned** Outcome — window starts after today and all its Issues `Pending` — draws the bar as a dashed outline in its colour instead of a fill, with *PLANNED · 0 / {n}*, and its swatch dashed to match.
+  - beneath the bar, a thin **sprint-span line** in the Outcome's colour from the earliest start to the latest end of its Issues' sprints, when any. Where it disagrees with the window is the signal the view exists to show (see the Outcome invariants).
   - a vertical **TODAY** rule across every row, in the primary colour.
-- **Outcome cards** below the timeline, two to a row (one below 900px); a card with more than two
-  Issues spans the row. Each has the swatch, the name (opens the drawer), the window as months
-  (*SEP – NOV 2026*), a progress strip with one segment per Issue in its delivery-status colour
-  (when it has more than one), and *{done} / {total}*. Then one row per Issue: key *(gap)*, title
-  (opens the Issue, same target as the Sprint board card), delivery status (dot and word), the
-  effort bar with its words, and the first assignee's avatar or the dashed *Unassigned* mark. An
-  Outcome with none says *No issues grouped here yet.*
-- A closing line states how many Issues are under no Outcome, and that each Issue sits under at most
-  one, so the counts add up to the delivery set.
-- **Outcome drawer**, on the list and detail pattern. *View*: eyebrow *Outcome · {start month} –
-  {end month}*, the name, the description (or *No description yet.*), facts **Window** (dates),
-  **Done** (*{d} of {n} issues*), **State** (derived: *Planned*, *In its window* or *Past its
-  window*) and **Colour** (swatch), then **Issues** listed with their status. Footer: Edit and
-  Delete, an in-scope admin's. *Create and edit*: **Name** (required), **Target start** and
-  **Target end** (required, side by side; *On or after the start.*), **Colour**, **Description**,
-  and **Issues under this outcome** — a checklist of every Issue, where ticking one already under
-  another Outcome says *moves from {other}*, since grouping is single-parent. Footer: Cancel and
-  *Create outcome* / *Save changes*. **Delete** confirms (comp R does not; the pattern wins) and
-  ungroups the Outcome's Issues, never deleting one.
-- **The backend does not exist yet, and Sprint 11 does not build it** (answered 2026-09-28).
-  Slice 2 (Outcomes, the grouping mutation, the roadmap read) is specified above and unbuilt, with no
-  `outcomes` table in the schema; the web app's outcome readers keep answering empty on purpose.
-  `30-Contracts.md` records what the later backend slice must add.
+- **Outcome cards** below the timeline, two to a row (one below 900px); a card with more than two Issues spans the row.
+  - Each has the swatch, the name (opens the drawer), the window as months (*SEP – NOV 2026*), a progress strip with one segment per Issue in its delivery-status colour (when it has more than one), and *{done} / {total}*.
+  - Then one row per Issue: key *(gap)*, title (opens the Issue, same target as the Sprint board card), delivery status (dot and word), the effort bar with its words, and the first assignee's avatar or the dashed *Unassigned* mark. An Outcome with none says *No issues grouped here yet.*
+- A closing line states how many Issues are under no Outcome, and that each Issue sits under at most one, so the counts add up to the delivery set.
+- **Outcome drawer**, on the list and detail pattern:
+  - *View*: eyebrow *Outcome · {start month} – {end month}*, the name, the description (or *No description yet.*), facts **Window** (dates), **Done** (*{d} of {n} issues*), **State** (derived: *Planned*, *In its window* or *Past its window*) and **Colour** (swatch), then **Issues** listed with their status. Footer: Edit and Delete, an in-scope admin's.
+  - *Create and edit*: **Name** (required), **Target start** and **Target end** (required, side by side; *On or after the start.*), **Colour**, **Description**, and **Issues under this outcome** — a checklist of every Issue, where ticking one already under another Outcome says *moves from {other}*, since grouping is single-parent. Footer: Cancel and *Create outcome* / *Save changes*.
+  - **Delete** confirms (comp R does not; the pattern wins) and ungroups the Outcome's Issues, never deleting one.
+- **The backend does not exist yet, and Sprint 11 does not build it** (answered 2026-09-28). Slice 2 (Outcomes, the grouping mutation, the roadmap read) is specified above and unbuilt, with no `outcomes` table in the schema; the web app's outcome readers keep answering empty on purpose. `30-Contracts.md` records what the later backend slice must add.
 
 ---
 
@@ -636,7 +519,7 @@ A Site Admin tick on a **mutating** row is exercised through View As, never dire
 - **[P0] Same-object phase model.** An Issue is a Delivery-phase Idea (same row). `Idea.Phase` defaults to `Discovery`; promotion flips it to `Delivery`. No separate Issue table exists.
   - *Given* a Discovery idea *When* it is promoted *Then* `Phase` becomes `Delivery`, `DeliveryStatus` becomes `Pending`, and `Effort`, `PromotedAtUtc`, `PromotedByUserId`, `UpvoteCountAtPromotion` are recorded.
   - *Given* a Delivery item *When* promotion is attempted again *Then* it is rejected (`409`).
-- **[P0] Explicit promotion gate with required Effort.** Promotion is an explicit action requiring `Effort`; it is not triggered by any ideation status. Authorized to author + in-scope admins.
+- **[P0] Explicit promotion gate with required Effort.** Promotion is an explicit action requiring `Effort`; no ideation status triggers it. Authorized to author + in-scope admins.
 - **[P0] Provenance preserved and surfaced.** A promoted Issue exposes its originating proposer, creation date, upvote count at promotion and now, business impact, idea type, tags, and full comment thread — with no manual copy. The ideation `StatusId` is retained (not cleared) on promotion.
 - **[P0] Fixed delivery lifecycle.** Delivery statuses are exactly `Pending, Scoping, Development, Review, Complete`. Delivery-status changes are valid only in `Delivery` phase and emit audit + notification.
 - **[P0] Sprints.** Admins can create sprints (name, goal, start/end, optional owner), assign/unassign Issues, and transition `Planned → Active → Completed`. `EndDate >= StartDate` is enforced.
@@ -683,12 +566,12 @@ A Site Admin tick on a **mutating** row is exercised through View As, never dire
 - `ideas` gains: `phase` (int, NOT NULL, default `0`/Discovery — existing rows backfill to Discovery), `effort` (int, null), `delivery_status` (int, null), `sprint_id` (guid, null, FK → `sprints`, `ON DELETE` restricted; unassignment is handled in the app layer), `promoted_at_utc` (timestamptz, null — `DateTime` with `Kind = Utc`, per the Npgsql mapping in `SPEC/50-postgres-migration.md`), `promoted_by_user_id` (guid, null), `upvote_count_at_promotion` (int, null).
 - New table `sprints` (snake_case, per Infrastructure convention) with `organization_id`, `name`, `goal`, `start_date`, `end_date`, `owner_user_id`, `state`, `is_deleted`, and audit columns.
 - Indexes: `(organization_id, phase)` on `ideas` (board/backlog filtering); `sprint_id` on `ideas`; `(organization_id, state)` on `sprints`.
-- New table `issue_tasks` (snake_case) with `idea_id` (FK → `ideas`, `ON DELETE CASCADE` — a checklist has no meaning without its Issue, and it is the one place in this feature where cascade is correct), `title`, `assignee_user_id`, `state`, `sort_order`, `completed_at_utc`, `completed_by_user_id`, and audit columns. Index `(idea_id, sort_order)`.
-- Because every existing idea backfills to `Discovery` and no sprints exist, all ideation boards and idea flows are byte-for-byte unchanged post-migration; delivery surfaces are simply empty. No existing row gains a task.
+- New table `issue_tasks` (snake_case) with `idea_id` (FK → `ideas`, `ON DELETE CASCADE` — a checklist has no meaning without its Issue; the one place in this feature where cascade is correct), `title`, `assignee_user_id`, `state`, `sort_order`, `completed_at_utc`, `completed_by_user_id`, and audit columns. Index `(idea_id, sort_order)`.
+- Every existing idea backfills to `Discovery` and no sprints exist, so ideation boards and idea flows are byte-for-byte unchanged post-migration; delivery surfaces are simply empty. No existing row gains a task.
 
 **EF migration `AddOutcomes` (Slice 2):**
 - New table `outcomes` with `organization_id`, `name`, `description`, `target_start_date`, `target_end_date`, `owner_user_id`, `sort_order`, `is_deleted`, and audit columns. Index `(organization_id, sort_order)`. *Added 2026-09-28:* `color VARCHAR(7) NOT NULL` (comp R). The schema freeze needs its own amendment in `decisions.md` before this migration is written; the 2026-09-28 (fourth) amendment does **not** cover it — Outcomes are a later sprint's (answered 2026-09-28).
-- Plus `ideas.outcome_id` (guid, null, FK → `outcomes`, `ON DELETE SET NULL`) — single-parent, per the 2026-09-02 decision. There is no join table.
+- Plus `ideas.outcome_id` (guid, null, FK → `outcomes`, `ON DELETE SET NULL`) — single-parent, per the 2026-09-02 decision. No join table.
 - `ON DELETE SET NULL` rather than cascade: removing an Outcome must never delete an Issue, only ungroup it. Moving to multi-parent later, should the duplicate-Issue failure mode appear, is a cheap forward migration (copy the FK into the join table, drop the column); the reverse is lossy and needs a human to choose which grouping survives.
 - Touches only new/changed tables, so it should merge cleanly against `CollegaDbContextModelSnapshot` provided no other in-flight slice adds a concurrent migration.
 
@@ -709,11 +592,11 @@ Approving this spec requires these canonical edits *before* implementation (per 
 
 ## Open Questions
 
-- **[Product — RESOLVED 2026-09-02]** **May an Issue sit under more than one Outcome?** **No — single-parent, at most one.** Roadmap arithmetic is then honest by construction: counts partition, totals sum, "done" is unambiguous, and no rollup needs a distinct-count. The accepted cost is that work genuinely serving two quarterly goals must pick one; the failure mode to watch is teams raising duplicate Issues so two Outcomes can each claim the work. `SPEC/mockups/comp-n-roadmap-multi.html` records the rejected alternative. **No open question blocks Slice 2 now.**
-- **[Product]** Should promotion be allowed from any Discovery status, or gated on the item first reaching a specific ideation status (e.g. `Complete`)? *Default (chosen): any Discovery status — the gate is the explicit decision, not the status.* An org-level "require status X before promote" is a P2 option. — non-blocking.
+- **[Product — RESOLVED 2026-09-02]** **May an Issue sit under more than one Outcome?** **No — single-parent, at most one** (see Design Decisions and the Outcome section for the reasoning and the accepted cost; `SPEC/mockups/comp-n-roadmap-multi.html` records the rejected alternative). **No open question blocks Slice 2 now.**
+- **[Product]** Promotion from any Discovery status, or only after a specific ideation status (e.g. `Complete`)? *Default (chosen): any Discovery status — the gate is the explicit decision, not the status.* An org-level "require status X before promote" is a P2 option. — non-blocking.
 - **[Product]** May a plain author self-promote, or only *request* promotion for an admin to confirm? *Default: author may self-promote (matches the deferred approval decision).* The P1 toggle can tighten this. — non-blocking.
-- **[Product]** On sprint completion, is backlog the right default for unfinished Issues, or should carry-over-to-next be the default? *Default: backlog; carry-over is P1.* — non-blocking.
-- **[Eng]** Should exactly one sprint be `Active` per org at a time (single-team assumption), or may multiple run concurrently? *Default: no single-active constraint in this slice.* — non-blocking.
+- **[Product]** On sprint completion, is backlog the right default for unfinished Issues, or carry-over-to-next? *Default: backlog; carry-over is P1.* — non-blocking.
+- **[Eng]** Exactly one `Active` sprint per org (single-team assumption), or several concurrently? *Default: no single-active constraint in this slice.* — non-blocking.
 - **[Product]** Is `ReturnToDiscovery` the right recovery model, or should mis-promotion be prevented by a stronger confirm only? *Default: reversible return, admin-only.* — non-blocking.
 
 ---

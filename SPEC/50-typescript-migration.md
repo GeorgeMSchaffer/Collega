@@ -1,6 +1,6 @@
 # TypeScript Stack Migration — Costed, Sequenced Plan
 
-> **At a glance** (added 2026-09-28; the text below is unchanged and wins where they differ)
+> **At a glance** (added 2026-09-28; the text below wins where they differ)
 > - **Scope:** the .NET → Next.js + Nest.js + Prisma conversion plan — waves, slices, settled constraints;
 >   "authorized and executing" (Wave A done 2026-09-03, Wave 0 2026-09-06, F6 2026-09-13).
 > - **Key rules:** §1's settled constraints are not re-litigated — big-bang cutover (6), HTTP-only
@@ -11,28 +11,23 @@
 >   conversion: three constraints settled"; 2026-09-11 "The golden replay is not a gate, and never was meant
 >   to be one"; 2026-09-08 "Wave G is cut from the conversion and revisited after cutover"
 
-Status: **authorized and executing.** Written 2026-08-31; became the active sprint's plan
-2026-09-04, when Sprint 8 was cancelled and conversion ticket `08` cleared the last gate on
-Wave 0. Execution wrapper: `SPEC/sprints/sprint-09-typescript-conversion.md`.
-Supersedes nothing; constrains the conversion effort.
+Status: **authorized and executing.** Written 2026-08-31; became the active sprint's plan 2026-09-04, when
+Sprint 8 was cancelled and conversion ticket `08` cleared the last gate on Wave 0. Execution wrapper:
+`SPEC/sprints/sprint-09-typescript-conversion.md`. Supersedes nothing; constrains the conversion effort.
 
-Converts Collega from .NET 8 / Blazor WASM / EF Core to Next.js + Nest.js + Prisma +
-Postgres on Vercel, per the stack recorded in `CLAUDE.md`.
-
-**Provenance.** This document assembles the `wayfinder` map charted 2026-08-30 —
-its twelve tickets, its settled constraints, and its measured baseline. It is the
-artifact ticket `12` exists to produce. The map now lives beside this file at
-`SPEC/typescript-conversion-map/` (ported from `feature/068-typescript-conversion-map`
-on 2026-09-03); its `README.md` says which tickets this plan answers and names one
-unresolved conflict on ticket `01`.
+- Converts Collega from .NET 8 / Blazor WASM / EF Core to Next.js + Nest.js + Prisma + Postgres on Vercel,
+  per the stack recorded in `CLAUDE.md`.
+- **Provenance.** Assembles the `wayfinder` map charted 2026-08-30 — its twelve tickets, settled
+  constraints and measured baseline; it is the artifact ticket `12` exists to produce. The map now lives beside this file at
+  `SPEC/typescript-conversion-map/` (ported from `feature/068-typescript-conversion-map` on 2026-09-03); its
+  `README.md` says which tickets this plan answers and names one unresolved conflict on ticket `01`.
 
 ---
 
 ## 1. What is settled
 
-Nine constraints were settled with the user during charting (2026-08-30), three more
-on 2026-08-31, and three on 2026-09-03. Do not re-litigate these; re-open them explicitly
-if you must.
+Nine constraints settled with the user during charting (2026-08-30), three more on 2026-08-31, three on
+2026-09-03. Do not re-litigate these; re-open them explicitly if you must.
 
 | # | Constraint | Detail |
 |---|---|---|
@@ -54,24 +49,22 @@ if you must.
 
 ### The standing risk, restated
 
-Constraints 6 and 7 compound. Big-bang removes the shippable intermediate; reshaping the
-schema removes "same data, same answers" as a correctness check; and the 16,900-line test
-suite does not survive the port. That is a ~60,000-line rewrite with its oracle removed.
-The user was shown this and chose both deliberately. **Constraint 10 is what replaces
-those safety nets** — it is not optional garnish, and Wave A exists solely to buy it
-before the .NET API is gone.
-
-Prior evidence this is not theoretical: Sprint 5's four Postgres defects were invisible
-to 561 green tests, because the InMemory provider saw neither collation, SQL translation,
-nor DDL. A full rewrite has a much larger version of that blind spot.
+- Constraints 6 and 7 compound: big-bang removes the shippable intermediate; reshaping the schema removes
+  "same data, same answers" as a correctness check; and the 16,900-line test suite does not survive the
+  port. That is a ~60,000-line rewrite with its oracle removed. The user was shown this and chose both
+  deliberately.
+- **Constraint 10 is what replaces those safety nets** — not optional garnish; Wave A exists solely to buy
+  it before the .NET API is gone.
+- Why it is not theoretical: Sprint 5's four Postgres defects were invisible to 561 green tests, because the
+  InMemory provider saw neither collation, SQL translation, nor DDL. A full rewrite has a much larger
+  version of that blind spot.
 
 ---
 
 ## 2. Measured baseline
 
-Counted from the working tree on `feature/066-delivery-comps-and-spec` on **2026-08-31**,
-not read from a tracker. Both tracker lineages were wrong about client size when the map
-was charted; this table is measured for the same reason.
+Counted from the working tree on `feature/066-delivery-comps-and-spec` on **2026-08-31**, not read from a tracker. Both tracker lineages were wrong about client size when the map was charted; this table is
+measured for the same reason.
 
 | Project | Lines | Units |
 |---|---:|---|
@@ -83,10 +76,9 @@ was charted; this table is measured for the same reason.
 | Tests | 16,900 | |
 | **Total** | **~60,300** | **to re-express** |
 
-Already TypeScript and portable: the `e2e/` Playwright suite (9 specs).
-
-Expected output is smaller than input: **~40–45k lines of TypeScript including tests.**
-TS is terser than C#, and Prisma absorbs most of what EF Core expresses as configuration.
+- Already TypeScript and portable: the `e2e/` Playwright suite (9 specs).
+- Expected output is smaller than input: **~40–45k lines of TypeScript including tests.** TS is terser than
+  C#, and Prisma absorbs most of what EF Core expresses as configuration.
 
 ---
 
@@ -113,42 +105,42 @@ collega/
     └── arch/                   the identity chokepoint, which lint cannot fully express
 ```
 
-Layer rules, enforced by lint rather than convention — `biome.json` carries one
-`noRestrictedImports` override per layer, and `tools/boundaries/boundaries.test.ts` asserts
-the full matrix in both directions:
+Layer rules, enforced by lint rather than convention — `biome.json` carries one `noRestrictedImports`
+override per layer, and `tools/boundaries/boundaries.test.ts` asserts the full matrix in both directions:
 
 - `domain` imports nothing.
 - `application` imports `domain` only.
 - `infrastructure` implements `application`/`domain` abstractions.
 - `apps/api` imports `application` + `infrastructure`.
-- **`apps/web` imports `design-system` only.** It reaches the server over HTTP. A lint
-  error, not a code review note, is what stops constraint 11 from eroding.
+- **`apps/web` imports `design-system` only.** It reaches the server over HTTP. A lint error, not a code
+  review note, is what stops constraint 11 from eroding.
 
-The overrides must use `patterns` with a `group` covering both `@collega/<pkg>` and
-`@collega/<pkg>/*`. `paths` matches exact specifiers only, so it blocks the bare package and
-silently allows every subpath import — which, given section 4.2, is all of them.
+The overrides must use `patterns` with a `group` covering both `@collega/<pkg>` and `@collega/<pkg>/*`.
+Why: `paths` matches exact specifiers only, so it blocks the bare package and silently allows every subpath
+import — which, given section 4.2, is all of them.
 
 ---
 
 ## 4. The collision model
 
-This is the section that makes multi-agent execution safe, and it is the part most likely
-to be skipped under time pressure. Don't.
+This is the section that makes multi-agent execution safe, and the part most likely to be skipped under
+time pressure. Don't.
 
 ### 4.1 The rule
 
 > **A slice owns paths, not features. Two slices may run concurrently if and only if
 > their owned path globs are disjoint.**
 
-Feature ownership is a useful heuristic but it is not the contract — the contract is the
-glob. Every slice below states its owned paths. An agent that needs to edit a path it
-does not own **stops and escalates** rather than editing it; that is the whole discipline.
+- Feature ownership is a useful heuristic, not the contract — the contract is the glob. Every slice below
+  states its owned paths.
+- An agent that needs to edit a path it does not own **stops and escalates** rather than editing it; that
+  is the whole discipline.
 
 ### 4.2 Contended artifacts, and how each is neutralized
 
-These are the files that would otherwise be edited by every slice at once. Each is either
-owned exactly once and then frozen, or generated rather than hand-edited. This table is
-the difference between seven agents working and seven agents producing merge conflicts.
+Files every slice would otherwise edit at once. Each is either owned exactly once and then frozen, or
+generated rather than hand-edited — the difference between seven agents working and seven agents producing
+merge conflicts.
 
 | Artifact | Why it collides | Resolution |
 |---|---|---|
@@ -163,24 +155,22 @@ the difference between seven agents working and seven agents producing merge con
 
 ### 4.3 Why HTTP-only is load-bearing here
 
-Ticket `09`'s answer is what makes Waves D and E parallelisable at all. With HTTP-only,
-an `apps/web` agent and an `apps/api` agent have provably disjoint globs and can run
-simultaneously all the way through. With direct package imports, both would be editing
-`packages/application`, and every web slice would serialize behind an api slice.
-
-The cost is paid in the contract instead: **`SPEC/30-Contracts.md` becomes the shared
-artifact between the two waves.** It is already canonical for endpoints, so keep it that
-way — Wave D implements it, Wave E consumes it, and neither edits it. Changes to the
-contract are an escalation.
+- Ticket `09`'s answer is what makes Waves D and E parallelisable at all. With HTTP-only, an `apps/web`
+  agent and an `apps/api` agent have provably disjoint globs and can run simultaneously all the way through.
+  With direct package imports, both would edit `packages/application`, and every web slice would serialize
+  behind an api slice.
+- The cost is paid in the contract: **`SPEC/30-Contracts.md` becomes the shared artifact between the two
+  waves.** It is already canonical for endpoints, so keep it that way — Wave D implements it, Wave E
+  consumes it, and neither edits it. Changes to the contract are an escalation.
 
 ### 4.4 Review is the real bottleneck
 
-Per `CLAUDE.md`, a Code Reviewer gates every branch before it merges to `dev` and is not
-a parallel implementer. One reviewer against seven implementers queues badly.
+Per `CLAUDE.md`, a Code Reviewer gates every branch before it merges to `dev` and is not a parallel
+implementer; one reviewer against seven implementers queues badly.
 
-**Recommendation: 3–5 concurrent implementers, 1 reviewer**, rather than maximum
-theoretical fan-out. The waves below state maximum safe concurrency; treat it as a
-ceiling set by collisions, and the reviewer as the throttle set by throughput.
+**Recommendation: 3–5 concurrent implementers, 1 reviewer**, rather than maximum theoretical fan-out. The
+waves below state maximum safe concurrency; treat it as a ceiling set by collisions, and the reviewer as the
+throttle set by throughput.
 
 ---
 
@@ -190,10 +180,9 @@ Sized to one worktree agent session. `⇉` marks the maximum number that can run
 
 ### Wave A — Golden capture ⇉ 2 · **COMPLETE 2026-09-03**
 
-The only part of this effort that could not wait, and it is done. It ran against the
-**live .NET API**, so it collided with nothing in the TypeScript tree. Its deadline was
-never Sprint 8's close — it is cutover, which deletes the .NET solution and with it any
-ability to record again.
+The only part of this effort that could not wait, and it is done. It ran against the **live .NET API**, so it
+collided with nothing in the TypeScript tree. Its deadline was never Sprint 8's close — it is cutover, which
+deletes the .NET solution and with it any ability to record again.
 
 | Slice | Owns | Notes |
 |---|---|---|
@@ -201,11 +190,11 @@ ability to record again.
 | **A2** Golden corpus | `tools/golden/fixtures/` | **Recorded 2026-09-03.** **447 cases over all 81 endpoints** at four roles and anonymous, error paths and validation failures included, replaying 447/447 clean against a fresh seed. This is the oracle. `golden scaffold` generates the full grid of cases; `golden coverage` reports the holes, and `tools/golden/README.md` names the two deliberate ones. |
 | **A3** Replay harness | `tools/golden/replay/` | **Built 2026-09-03.** Replays the corpus against a target base URL and diffs. Written as a self-check against the stack it recorded, pointed at Nest in Wave F. |
 
-The endpoint count above is not quoted, it was read: `golden inventory` parsed the controller
-source and reported 81 across 19 controllers. Slice F6 deleted that source, so the result is
-committed as `tools/golden/inventory.json` and the harness's tests fail if it stops agreeing with
-the fixture manifest. Coverage is measured against the same list, so a route
-the corpus never touches shows up as a hole rather than as silence.
+The endpoint count was read, not quoted: `golden inventory` parsed the controller source and reported 81
+across 19 controllers. Slice F6 deleted that source, so the result is committed as
+`tools/golden/inventory.json` and the harness's tests fail if it stops agreeing with the fixture manifest.
+Coverage is measured against the same list, so a route the corpus never touches shows up as a hole rather
+than as silence.
 
 > **Until Wave F, the .NET stack must stay runnable** even though no development happens on
 > it. A re-capture is only possible while the API still boots, and cutover deletes it. A
@@ -221,13 +210,13 @@ the corpus never touches shows up as a hole rather than as silence.
 | **S0.4** Typed config | `apps/api/src/common/config/**` — per-feature env fragments composed by one loader, reading `.env` natively on Node 24. **Done 2026-09-06.** Missing `ANTHROPIC_API_KEY` boots and runs dark (rule 31); missing `SITE_ADMIN_*` refuses to boot. It was §4.2's Foundation requirement and was missed in the first pass of Wave 0 |
 | **S0.3** Cross-cutting kernel | `packages/{domain,application}/src/common/**`, `apps/api/src/common/**` — error model, pagination, auth guard skeleton, and the `AsyncLocalStorage` request context that View As will need. `07` §4 specifies it: four files plus the `CurrentUserContext` port, with `attributeAudit`, `ensureNotDirectSiteAdmin` and the branded `Attribution` type alongside. **Done 2026-09-06**, and it also carries the identity chokepoint that moved off S0.1: the Biome override plus `tools/arch/identity-chokepoint.test.ts`. The nine domain enums land here too, in `packages/domain/src/enums/`, because every Wave B partition needs `Role` and the kernel is written against it |
 
-S0.3 exists so that seven feature agents do not each invent their own error shape. It is
-cheap insurance against the most expensive kind of rework.
+Why S0.3 exists: so seven feature agents do not each invent their own error shape — cheap insurance against
+the most expensive kind of rework.
 
 ### Wave B — Domain + Application ⇉ 7
 
-Each slice owns `packages/domain/src/<feature>/**` **and**
-`packages/application/src/<feature>/**` for its features. Disjoint by construction.
+Each slice owns `packages/domain/src/<feature>/**` **and** `packages/application/src/<feature>/**` for its
+features. Disjoint by construction.
 
 | Slice | Features | Rough share of the 30 services |
 |---|---|---|
@@ -239,30 +228,28 @@ Each slice owns `packages/domain/src/<feature>/**` **and**
 | **B6** | AI assist, prompt versions, usage records | 3 |
 | **B7** | **View As / impersonation** | 2 — isolated per ticket `03` |
 
-B7 is separate because impersonation is ambient identity, not a feature: it changes who
-every other service thinks the caller is. Porting it inside B1 would hide that. It is
-also the Site Admin's only org-content mutation path, so it is load-bearing.
+Why B7 is separate: impersonation is ambient identity, not a feature — it changes who every other service
+thinks the caller is, and porting it inside B1 would hide that. It is also the Site Admin's only org-content
+mutation path, so it is load-bearing.
 
 ### Wave C — Infrastructure ⇉ 2
 
-Smaller than its 14,401 lines suggest — Prisma absorbs most EF configuration and all 
-migrations.
+Smaller than its 14,401 lines suggest — Prisma absorbs most EF configuration and all migrations.
 
 | Slice | Owns |
 |---|---|
 | **C1** Repository adapters | `packages/infrastructure/src/repositories/**` — transaction boundaries, unit of work |
 | **C2** Integrations | `packages/infrastructure/src/integrations/**` — `sharp` for portraits (this **removes the ImageSharp 3.1.x licensing constraint**), `csv-parse` for import, `@nestjs/throttler` for rate limiting, notification delivery |
 
-C2 must preserve the product rule that survived from the .NET side: **user import is
-direct, idea import goes through View As.**
+C2 must preserve the product rule that survived from the .NET side: **user import is direct, idea import
+goes through View As.**
 
 ### Wave D — API ⇉ 7
 
-Mirrors the Wave B partition exactly, so the same boundaries hold and D*n* can start as
-soon as B*n* merges. Each owns `apps/api/src/<feature>/**`.
-
-D1–D7 map one-to-one onto B1–B7, covering the 15 controllers and 81 endpoints.
-`SPEC/30-Contracts.md` is authoritative and is **read, not edited**, by every D slice.
+- Mirrors the Wave B partition exactly, so the same boundaries hold and D*n* can start as soon as B*n*
+  merges. Each owns `apps/api/src/<feature>/**`.
+- D1–D7 map one-to-one onto B1–B7, covering the 15 controllers and 81 endpoints.
+- `SPEC/30-Contracts.md` is authoritative and is **read, not edited**, by every D slice.
 
 ### Wave E — Web ⇉ 6, after E0
 
@@ -276,15 +263,13 @@ D1–D7 map one-to-one onto B1–B7, covering the 15 controllers and 81 endpoint
 | **E5** | `apps/web/app/(desk)/admin/**` | Organizations, users, statuses, idea types, fields |
 | **E6** | `apps/web/app/(desk)/delivery/**` | Roadmap, sprint board, backlog, issue, grouping |
 
-E2 owns the desk layout file, so E3–E6 must not edit it — they render into it. This is
-the one place inside Wave E where a collision is plausible; the glob makes it explicit.
-
-**E6's product scope was resolved 2026-09-02: single-parent.** An Issue sits under at most
-one Outcome (`Idea.OutcomeId`, nullable FK, `ON DELETE SET NULL`); no join table
-(`SPEC/decisions.md`). So E6's grouping control **is** a radio group and the outcomes chip
-list collapses to one value — comp P's multi-parent affordances were a layout choice, and
-the delivery comp was regenerated on the decision. No Open Question remains in
-`SPEC/20-feature-issues-and-delivery.md`.
+- E2 owns the desk layout file, so E3–E6 must not edit it — they render into it. The one place inside Wave E
+  where a collision is plausible; the glob makes it explicit.
+- **E6's product scope was resolved 2026-09-02: single-parent.** An Issue sits under at most one Outcome
+  (`Idea.OutcomeId`, nullable FK, `ON DELETE SET NULL`); no join table (`SPEC/decisions.md`). So E6's grouping
+  control **is** a radio group and the outcomes chip list collapses to one value — comp P's multi-parent
+  affordances were a layout choice, and the delivery comp was regenerated on the decision. No Open Question
+  remains in `SPEC/20-feature-issues-and-delivery.md`.
 
 ### Wave F — Validation and cutover ⇉ 3, converging to 1
 
@@ -297,21 +282,19 @@ the delivery comp was regenerated on the decision. No Open Question remains in
 | **F5** Spec reconciliation | Ticket `11` — `SPEC/*.md` updated to describe the shipped stack, including reconciling `20-feature-client-ui.md` against comp P |
 | **F6** Delete the .NET solution | **Done 2026-09-13.** `src/Collega.*`, `tests/`, `Collega.sln`, `global.json`, `.config/dotnet-tools.json`, `tools/Collega.AiPlayground`, `deploy/azure`, `docker/proxy-ca`, `DOTNET.md`, the compose `api` and `web` services, and the launch config — 481 files. Plus a sweep of the stale pointers left behind and a rewritten `README.md`. Two things needed real work rather than deletion: `tools/golden` parsed the controllers for its endpoint inventory, so that is now a committed snapshot; and `tools/Collega.AiPlayground`'s evaluation corpus was moved to `tools/prompt-eval` because it outlives its runner |
 
-F1, F2 and F3 parallelise. F4 needs all three. F5 and F6 land last.
-
-**F6 is the only slice that may delete `src/` or `tests/`.** They were frozen on 2026-09-06
-(`SPEC/decisions.md`) — no features, no fixes, no tests — but kept on disk because re-recording a
-golden fixture needs the .NET API to boot, and Waves D and E are precisely where a missing or wrong
-fixture surfaces. Once F1 replays clean, that reason is spent and the code goes.
+- F1, F2 and F3 parallelise. F4 needs all three. F5 and F6 land last.
+- **F6 is the only slice that may delete `src/` or `tests/`.** They were frozen on 2026-09-06
+  (`SPEC/decisions.md`) — no features, no fixes, no tests — but kept on disk because re-recording a golden
+  fixture needs the .NET API to boot, and Waves D and E are precisely where a missing or wrong fixture
+  surfaces. Once F1 replays clean, that reason is spent and the code goes.
 
 ### Wave G — Net-new scope ⇉ 3 · **starts when F1 is green**
 
-Decided 2026-09-03 (`SPEC/decisions.md`, ticket `01` Question C). This is the only
-part of the effort that is not a re-expression of something that already exists, and
-it is kept in its own wave for exactly that reason: **the golden corpus covers the
-port and nothing else.** New endpoints have no fixtures by definition, so each slice
-here carries a spec and its own Vitest coverage instead. Wave G never blocks F, and
-may ship on either side of cutover.
+Decided 2026-09-03 (`SPEC/decisions.md`, ticket `01` Question C).
+- The only part of the effort that is not a re-expression of something that already exists, kept in its own
+  wave for exactly that reason: **the golden corpus covers the port and nothing else.** New endpoints have no
+  fixtures by definition, so each slice here carries a spec and its own Vitest coverage instead.
+- Wave G never blocks F, and may ship on either side of cutover.
 
 | Slice | Owns | Cost |
 |---|---|---|
@@ -322,25 +305,24 @@ may ship on either side of cutover.
 
 **~10 slices, 4 entities, 11 endpoints, 6 surfaces**, none of it carrying unpriced risk.
 
-**Not in scope**, and not to be smuggled back in: momentum over totals (needs a
-gaming-resistant velocity algorithm, and the schema stores vote totals rather than vote
-events, so there is nothing to compute over), duplicate clustering (real similarity
-detection is the ML problem the spec already defers), and vote budget (reset, carryover
-and exemption policy are undecided). Ticket `01` round 2 is where those are asked.
+**Not in scope**, and not to be smuggled back in (ticket `01` round 2 is where those are asked):
+- momentum over totals — needs a gaming-resistant velocity algorithm, and the schema stores vote totals rather
+  than vote events, so there is nothing to compute over;
+- duplicate clustering — real similarity detection is the ML problem the spec already defers;
+- vote budget — reset, carryover and exemption policy are undecided.
 
-**The schema consequence, and it had a deadline.** Wave G's four entities want tables, and
-**the Prisma schema freezes after S0.2**. Settled 2026-09-04 with `06`: S0.2 does **not**
-lay them down, so **Wave G buys a schema amendment slice**. Wave G's entities are net-new,
-not a forced reshape, and freezing four speculative tables into S0.2 would put them in
-every replay diff from F1 onward for a design nobody has drawn yet. Reversible until S0.2
-starts, and only until then.
+**The schema consequence, and it had a deadline.** Wave G's four entities want tables, and **the Prisma
+schema freezes after S0.2**. Settled 2026-09-04 with `06`: S0.2 does **not** lay them down, so **Wave G buys
+a schema amendment slice**. Why: Wave G's entities are net-new, not a forced reshape, and freezing four
+speculative tables into S0.2 would put them in every replay diff from F1 onward for a design nobody has drawn
+yet. Reversible until S0.2 starts, and only until then.
 
 ---
 
 ## 6. Estimate
 
-**~66–82 slices.** Slightly under the map's first-pass 70–90, because HTTP-only keeps
-integration debugging contained and Prisma collapses much of the Infrastructure layer.
+**~66–82 slices.** Slightly under the map's first-pass 70–90, because HTTP-only keeps integration debugging
+contained and Prisma collapses much of the Infrastructure layer.
 
 | Wave | Slices |
 |---|---:|
@@ -354,9 +336,8 @@ integration debugging contained and Prisma collapses much of the Infrastructure 
 | G — net-new scope (decided 2026-09-03) | ~10 |
 | Review agents | ~1 per implementation slice |
 
-**Tokens: ~18–33M for the port, centred near 22M**, plus Wave G's ~10 slices on top.
-G is priced separately on purpose: it is the part that could be cut without the
-conversion failing.
+**Tokens: ~18–33M for the port, centred near 22M**, plus Wave G's ~10 slices on top. G is priced separately
+on purpose: it is the part that could be cut without the conversion failing.
 
 Derivation, stated so it can be argued with rather than trusted:
 
@@ -372,8 +353,8 @@ Derivation, stated so it can be argued with rather than trusted:
 - **Golden capture (constraint 10) adds ~2–3M on its own.** It was chosen with that
   known.
 
-**Confidence: low on the multiplier, moderate on the slice count.** Deliberately not
-converted to currency — that needs current per-model pricing checked rather than guessed.
+**Confidence: low on the multiplier, moderate on the slice count.** Deliberately not converted to currency —
+that needs current per-model pricing checked rather than guessed.
 
 **Agent-slices are a planning unit, not a promise of wall-clock time.**
 
@@ -383,77 +364,72 @@ converted to currency — that needs current per-model pricing checked rather th
 |---|---|
 | `11` spec reconciliation | Lands as F5; does not gate earlier waves. **The only ticket still open.** |
 
-Answered 2026-09-03 and no longer open (`SPEC/decisions.md`): `01` Question C — Loop,
-decision records, commitment strip and Triage Mode are in, as **Wave G**; `10` — the .NET
-suite is discarded in favour of the golden corpus plus per-slice Vitest; `02` — Vercel
-with Prisma Postgres, which makes serverless Nest a design constraint rather than a
-deployment detail.
-
-Answered 2026-09-04: `05`, by running introspection against a live database rather than
-reading documentation — `SPEC/typescript-conversion-map/findings/05-prisma-introspection.md`.
-The risk it existed to measure is **not there**: the codebase has no EF global query filters
-at all, so organization and soft-delete scoping is explicit Application-layer code that ports
-as ordinary logic a reviewer can see. Columns, keys, foreign keys and plain indexes round-trip
-exactly. What introspection loses is **three partial unique indexes**, silently — `db pull`
-says nothing and `migrate diff` reports an empty migration, because the engine does not model
-them. S0.2 owes them as raw SQL in the first migration, with a test that fails if any is
-absent; one of the three is what makes "at most one open View As session per user" a database
-guarantee rather than a race. That moves the estimate's risk on S0.2 down, not up.
-
-And `07`, as a recommendation with worked code —
-`SPEC/typescript-conversion-map/findings/07-nest-ambient-identity.md`. Identity is ambient through
-**`AsyncLocalStorage`**, not Nest request-scoped providers: a store seeded in middleware (a guard
-cannot open one — `canActivate` returns before the handler runs), filled by the auth guard, and
-read through a **singleton** provider with lazy getters implementing the `CurrentUserContext` port.
-Request scope loses because it bubbles through 14 of the 16 concrete Application services and 14
-of the 15 controllers above them; because `Scope.REQUEST` cannot cross constraint 8's boundary, so
-the lifetime rule protecting a property of `packages/application` would live entirely in
-`apps/api`, invisible from the code depending on it; and because Wave B's tests would then need a
-Nest runtime Wave D has not built. Three consequences worth pulling forward: an absent store must **throw** rather
-than read as anonymous, or `ensureNotDirectSiteAdmin` passes for background work; on Vercel the
-new hazard is **module-scope** identity caching, which serves one user's identity to the next in
-a warm container; and the chokepoint gets lint enforcement plus one exact-equality architecture
-test, because documentation did not prevent this bug class before.
+- **Answered 2026-09-03** and no longer open (`SPEC/decisions.md`): `01` Question C — Loop, decision records,
+  commitment strip and Triage Mode are in, as **Wave G**; `10` — the .NET suite is discarded in favour of the
+  golden corpus plus per-slice Vitest; `02` — Vercel with Prisma Postgres, which makes serverless Nest a
+  design constraint rather than a deployment detail.
+- **Answered 2026-09-04: `05`**, by running introspection against a live database rather than reading
+  documentation — `SPEC/typescript-conversion-map/findings/05-prisma-introspection.md`.
+  - The risk it existed to measure is **not there**: the codebase has no EF global query filters at all, so
+    organization and soft-delete scoping is explicit Application-layer code that ports as ordinary logic a
+    reviewer can see. Columns, keys, foreign keys and plain indexes round-trip exactly.
+  - What introspection loses is **three partial unique indexes**, silently — `db pull` says nothing and
+    `migrate diff` reports an empty migration, because the engine does not model them. S0.2 owes them as raw
+    SQL in the first migration, with a test that fails if any is absent; one of the three is what makes "at
+    most one open View As session per user" a database guarantee rather than a race.
+  - That moves the estimate's risk on S0.2 down, not up.
+- **And `07`**, as a recommendation with worked code —
+  `SPEC/typescript-conversion-map/findings/07-nest-ambient-identity.md`.
+  - Identity is ambient through **`AsyncLocalStorage`**, not Nest request-scoped providers: a store seeded in
+    middleware (a guard cannot open one — `canActivate` returns before the handler runs), filled by the auth
+    guard, and read through a **singleton** provider with lazy getters implementing the `CurrentUserContext`
+    port.
+  - Why request scope loses: it bubbles through 14 of the 16 concrete Application services and 14 of the 15
+    controllers above them; `Scope.REQUEST` cannot cross constraint 8's boundary, so the lifetime rule
+    protecting a property of `packages/application` would live entirely in `apps/api`, invisible from the code
+    depending on it; and Wave B's tests would then need a Nest runtime Wave D has not built.
+  - Three consequences worth pulling forward: an absent store must **throw** rather than read as anonymous, or
+    `ensureNotDirectSiteAdmin` passes for background work; on Vercel the new hazard is **module-scope**
+    identity caching, which serves one user's identity to the next in a warm container; and the chokepoint
+    gets lint enforcement plus one exact-equality architecture test, because documentation did not prevent
+    this bug class before.
 
 ---
 
 ## 7. Cutover and rollback
 
-Big-bang was chosen deliberately, so the rollback posture has to be explicit rather than
-assumed.
+Big-bang was chosen deliberately, so the rollback posture has to be explicit rather than assumed.
 
 - **Gate:** F1 green — all 81 endpoints × 4 roles replay against Nest with every diff either
   fixed or recorded in `tools/golden/src/accepted.ts` — plus F2's adapted Playwright suite
   green. No cutover before both.
-- **Rollback unit is the database, not the .NET deployment.** This bullet originally read
-  "the .NET stack stays deployable and its database restorable" — that is **dead as of
-  2026-09-04**, when Sprint 8 was cancelled and the .NET stack was never deployed. There is no
-  .NET deployment to fall back to, and after F6 there is no .NET code either. F4 must therefore
-  state the rollback posture in terms of the database alone: what is backed up, how it is
-  restored, and for how long.
-- **F3 must state whether the data transform is reversible.** If it is not, that is the
-  real point of no return, and it should be scheduled and announced as one rather than
-  discovered.
+- **Rollback unit is the database, not the .NET deployment.** This bullet originally read "the .NET stack stays
+  deployable and its database restorable" — that is **dead as of 2026-09-04**, when Sprint 8 was cancelled and
+  the .NET stack was never deployed. There is no .NET deployment to fall back to, and after F6 there is no .NET
+  code either. F4 must therefore state the rollback posture in terms of the database alone: what is backed up,
+  how it is restored, and for how long.
+- **F3 must state whether the data transform is reversible.** If it is not, that is the real point of no
+  return, and it should be scheduled and announced as one rather than discovered.
 
 ---
 
 ## 8. Not converting
 
-- **The .NET solution itself.** It is replaced, not maintained in parallel — that is what
-  big-bang means. **Frozen 2026-09-06** (`SPEC/decisions.md`): its code and every instruction file
-  under `src/` and `tests/` are no longer applicable guidance, and nothing may be built, fixed or
-  tested there. It stayed on disk until **F6** (2026-09-13) solely as a golden-fixture recorder
-  and as the only runnable reference for existing behaviour; both jobs are over.
-- **The 16,900-line C# test suite**, as C#. Its *coverage* is replaced by F1 + F2 +
-  re-derived Vitest tests (ticket `10`).
-- **Sprint 7.5.** Implemented on .NET before this starts. **Sprint 8 was cancelled**
-  2026-09-04 and the .NET stack is never deployed.
-- **The product's feature set** — with one bounded exception. The conversion itself
-  re-expresses existing behaviour; **Wave G** carries the four net-new features decided
-  on 2026-09-03 and starts only once F1 is green, so the oracle still covers the port
-  completely. Everything else new is `SPEC/ideas-inbox.md`'s business.
-- **Per-org AI credentials.** Already deliberately unimplemented (tracker rule 30); the
-  conversion does not change that.
+- **The .NET solution itself.** Replaced, not maintained in parallel — that is what big-bang means. **Frozen
+  2026-09-06** (`SPEC/decisions.md`): its code and every instruction file under `src/` and `tests/` are no
+  longer applicable guidance, and nothing may be built, fixed or tested there. It stayed on disk until **F6**
+  (2026-09-13) solely as a golden-fixture recorder and as the only runnable reference for existing behaviour;
+  both jobs are over.
+- **The 16,900-line C# test suite**, as C#. Its *coverage* is replaced by F1 + F2 + re-derived Vitest tests
+  (ticket `10`).
+- **Sprint 7.5.** Implemented on .NET before this starts. **Sprint 8 was cancelled** 2026-09-04 and the .NET
+  stack is never deployed.
+- **The product's feature set** — with one bounded exception. The conversion itself re-expresses existing
+  behaviour; **Wave G** carries the four net-new features decided on 2026-09-03 and starts only once F1 is
+  green, so the oracle still covers the port completely. Everything else new is `SPEC/ideas-inbox.md`'s
+  business.
+- **Per-org AI credentials.** Already deliberately unimplemented (tracker rule 30); the conversion does not
+  change that.
 
 ---
 
