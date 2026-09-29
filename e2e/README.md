@@ -10,7 +10,9 @@ is the whole thing — nothing needs to be running first.
 
 ## What is here, and what is not
 
-The harness, and a two-assertion check that the harness works. **There are no product flows yet.**
+The harness, its two-assertion self-check (`tests/harness.spec.ts`), and the product specs F2 and
+later slices added beside it in `tests/` — sign-in, the demo path, a user journey, organization and
+user creation, tags and delivery.
 
 This suite used to drive the Blazor client at `:5098` against the .NET API at `:5103`. That stack is
 frozen (`SPEC/decisions.md` 2026-09-06) and its seven specs went with it — they were written against
@@ -67,38 +69,21 @@ backend), which is not the same thing and is not a gap to cover.
 
 `tests/signs-in.spec.ts` is the spec that proves all of the above is actually wired: it could not
 have passed before F2, because signing in needs the API, the database and the seed at once. If the
-second `webServer` entry ever stops working, that is the test that should say so.
+API's `webServer` entry ever stops working, that is the test that should say so.
 
-## The prerequisite: `apps/api` as a second `webServer`
+## How the API and the database are wired
 
-Covering the four screens above needs `apps/api` added as a second `webServer` entry in
-`playwright.config.ts`, listening on `:3001` (`apps/web/lib/api/config.ts` defaults
-`COLLEGA_API_URL` to `http://127.0.0.1:3001/api/v1`), pointed at a database dropped and seeded per
-run. Two things are worth knowing before starting:
+F2 finished this: `apps/api` is the first `webServer` entry in `playwright.config.ts`, and every run
+drops, migrates and seeds its own schema. `AGENTS.md` here says what a run does, in what order, and
+which database and ports it uses; the config's header comment is the authority on the order. Two
+things from before F2 still hold and are worth knowing when writing a spec:
 
-- **`apps/api` has no `dev` or `start` script.** It builds and typechecks; nothing launches it. That
-  script is part of this work, not a given.
-- **Sign-in has to go through the app.** The session is an httpOnly cookie the API issues, and only
-  the Next server talks to the API — the browser never does. So a spec cannot inject a token; it
-  signs in through `/login` like a reader, or reuses a Playwright storage state captured that way.
-
-**The database half is ready.** Five seed modules under
-`packages/infrastructure/prisma/seed/modules/` build the demo dataset — 2 organizations, 10 users,
-4 boards, 44 ideas, with accounts that sign in — and a throwaway database is three commands and
-under four seconds:
-
-```bash
-dropdb CollegaE2E && createdb CollegaE2E
-DATABASE_URL=…/CollegaE2E pnpm --filter @collega/infrastructure db:migrate
-DATABASE_URL=…/CollegaE2E pnpm --filter @collega/infrastructure db:seed
-```
-
-Re-running the seed against an existing database is inert by design, so a spec that needs a clean
-slate must drop and recreate rather than re-seed.
-
-So the remaining gate is the wiring itself, not the pieces: `apps/api` exists and the four screens
-above already call it, but this suite never starts it. Until it does, the honest coverage here is
-the harness check and nothing more.
+- **Sign-in goes through the app.** The session is an httpOnly cookie the API issues, and only the
+  Next server talks to the API, so a spec cannot inject a token. It reuses a stored session
+  (`SEEDED.<role>.file`, written by `tests/auth.setup.ts`) unless signing in is what it tests.
+- **A clean slate means a fresh schema, not a re-seed.** Re-running the seed against an existing
+  database is inert by design, which is why global setup drops `collega_e2e` rather than seeding
+  over it.
 
 ## Claude Code on the web
 
