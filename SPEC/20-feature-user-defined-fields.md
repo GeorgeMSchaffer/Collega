@@ -3,7 +3,7 @@
 > **At a glance** (added 2026-09-28; the text below wins where they differ)
 > - **Scope:** org-level custom fields on ideas (7 types). Behaviour canonical; the .NET implementation
 >   sections are history. Build status not stated here.
-> - **Key rules:** one field schema per org, shared by all boards; only Site/Org Admin manage definitions.
+> - **Key rules:** one field schema per org, shared by all boards; only Site/Org Admin manage definitions (a Site Admin through View As).
 > - Required UDFs block save; per-type required-ness now comes from `20-feature-idea-type-fields.md`.
 > - Active names unique per org, case-insensitively; delete is soft — values kept but hidden.
 > - Value changes emit `IdeaFieldValueChanged`; values flow into CSV export/import and list filters.
@@ -403,7 +403,7 @@ How the two readings reconcile:
 
 | Role | View field definitions (admin UI) | Manage field definitions | Fill UDF values on idea form | View UDF values on idea detail |
 |---|---|---|---|---|
-| `SiteAdmin` | ✅ | ✅ | ✅ | ✅ |
+| `SiteAdmin` | ✅ | ✅ (a Site Admin through View As) | ✅ | ✅ |
 | `OrgAdmin` | ✅ | ✅ | ✅ | ✅ |
 | `User` | ❌ (admin UI hidden) | ❌ | ✅ | ✅ |
 | `ReadOnly` | ❌ | ❌ | ❌ | ✅ |
@@ -413,7 +413,7 @@ How the two readings reconcile:
 ## Acceptance Criteria
 
 ### Field Definition Management
-- [ ] Only `SiteAdmin` and `OrgAdmin` can create, edit, reorder, and soft-delete field definitions
+- [ ] Only `SiteAdmin` (a Site Admin through View As) and `OrgAdmin` can create, edit, reorder, and soft-delete field definitions
 - [ ] Field definitions are scoped to the organization; all boards in the org share the schema
 - [ ] Field names are unique within an organization when active (duplicate name rejected with `400`)
 - [ ] Supported field types: `Text`, `Number`, `Date`, `Boolean`, `Dropdown`, `MultiSelect`, `Url`
