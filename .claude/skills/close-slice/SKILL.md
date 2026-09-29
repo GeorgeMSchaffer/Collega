@@ -17,7 +17,7 @@ step that fails; don't work around it.
    stop on any blocking finding.
 3. **Tracker.** Update `SPEC/implementation-agent-tracker.md` for the finished slice, and add a
    `SPEC/decisions.md` entry if the slice settled something later work must respect. A finished
-   row moves verbatim to `SPEC/tracker-history.md` (the tracker's Maintenance Rule 6); a new
+   row moves verbatim to `SPEC/tracker-history.md` (the newest rows file under `SPEC/tracker-history/`) (the tracker's Maintenance Rule 6); a new
    decision goes in full at the top of the entries, with an index line (the rotation rule at the
    top of `decisions.md`). Commit on the
    feature branch — focused message, no references to Claude, agents, or code generation.
