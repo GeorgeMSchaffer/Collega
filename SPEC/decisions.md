@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-09-29 | Removing a lane moves its ideas | active | full below |
 | 2026-09-29 | Spec contradictions resolved | active | full below |
 | 2026-09-28 | The Idea Field Option contract follows the code | active | full below |
 | 2026-09-28 | The v2 corpus format, as built | active | full below |
@@ -43,7 +44,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-28 | Graphite replaces Notte as the dark theme | active | full below |
 | 2026-09-28 | The next comp R iteration is adopted: denser forms, Sprint board, Roadmap, tag colours and Settings → Tags | active | full below |
 | 2026-09-27 | The API sends the custom field list | active | full below |
-| 2026-09-27 | The idea assistant is rescoped as a co-author, and ideas gain structured fields | active | full below |
+| 2026-09-27 | The idea assistant is rescoped as a co-author, and ideas gain structured fields | active | [2026-09-27 to 2026-09-27](decisions/archive-2026-09-27-to-2026-09-27.md) |
 | 2026-09-27 | The S0.2 schema freeze is amended a third time, for structured ideas and board archive | active | [2026-09-27 to 2026-09-27](decisions/archive-2026-09-27-to-2026-09-27.md) |
 | 2026-09-27 | Terrazzo is the palette, with a theme picker | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-27 | One list and detail pattern, and a drawer instead of the docked inspector | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
@@ -91,6 +92,38 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-09-29 — Removing a lane moves its ideas
+
+**Decided by the user.** A board save that removes a lane still holding live ideas moves those ideas
+to another lane of the board. The admin picks the target in a confirm step, defaulting to the
+board's first remaining lane (*3 ideas are in In Review. Move them to: [New / Pending ▾]*). The API
+takes the targets in the save request, refuses a save that removes an occupied lane without one, and
+writes a status-change audit entry per moved idea. Archived boards still refuse the save (`409`).
+Applied in slice 123: `20-feature-boards-and-statuses.md` Board rule 14, `contracts/boards.md`
+`PUT /boards/{boardId}`, and the Boards header notes in `20-feature-client-ui.md`.
+
+**Why.** Until now the save was accepted and the ideas kept a status that was no longer a column, so
+they vanished from the board while still counting in its `ideaCount` (Bug Triage, found in the
+review of slice 097). The three answers were to refuse the save, move the ideas, or show them
+somewhere; refusing makes the admin move every card by hand first, and a "no column" bucket keeps
+the inconsistency and only labels it. Moving them is one decision the admin is already making.
+
+**Settled with it, by the slice** (the lane and status model decides each; none is a new product
+choice):
+
+- **Which ideas:** the lane's live `Discovery` ideas — what `ideaCount` and `laneCounts` count and
+  the board shows. A promoted Issue keeps its ideation status, which is frozen at promotion for
+  provenance; a soft-deleted idea keeps its, since restore is deferred and its row is a retained
+  record.
+- **Request shape:** `ideaMoves: [{ fromStatusId, toStatusId }]`, one target per removed lane rather
+  than one for the whole save, because the confirm step asks per lane and one-for-all is the
+  special case of it. The target may be a lane added in the same save.
+- **Audit:** `IdeaStatusChanged` in the shape a move on the board writes, and the `BoardUpdated`
+  entry records the moves with their counts. No notification is sent for these moves: they
+  reconfigure a board rather than decide anything about one idea.
 
 ---
 
@@ -471,33 +504,6 @@ edit (name and colour), delete, and add in advance of use.
   idea's stored values as well as the current options) but may not add one; the form shows it,
   labelled by its id, only while it is selected. Chosen over soft-deleting options, which needs a
   schema amendment, and over silently dropping the value on the next save.
-
----
-
-## 2026-09-27 — The idea assistant is rescoped as a co-author, and ideas gain structured fields
-
-**Decided by the user**, reviewing an interactive prototype (comp R). This is the rescope
-2026-09-13 scheduled. `20-feature-ai-idea-assist-v2.md` is the spec; the v1 spec stays authoritative
-for what is live until v2 ships.
-
-- **Ideas gain three dedicated fields: Problem, Proposed solutions (a list), Impact rationale.**
-  Chosen over three custom fields (every organization would have to configure them) and over
-  sections inside Description (not enforceable, not searchable). Custom fields attached through the
-  Idea Type are unchanged and follow the core fields. Description becomes an optional summary.
-  Existing ideas are backfilled so the three fields are required on every save; a solution list
-  holds 1 to 5 items. This is a schema and contract change (`30-Contracts.md`, rule 2a of
-  `20-feature-ideas-and-engagement.md`).
-- **The assistant maps, interviews and brainstorms.** Free text fills fields visibly; it asks for
-  the next missing field in a fixed order; it offers solution ideas, a sharper problem statement and
-  measurable rationales as chips the person accepts. It never overwrites a field the person has
-  edited, and that is enforced on the server (`lockedFields`).
-- **Skip is always one click, and any failure hands off to the form** with everything captured,
-  including the failing turn's own text. v1's scripted-nudge fallback is dropped for v2.
-- **Surface:** the create drawer opens wide with the assistant beside the form, replacing v1's
-  720px modal followed by a create modal.
-- **Measurement comes first**: v2 is not enabled until a TypeScript prompt-eval runner reports
-  mapping accuracy and scope-gate results. `ai-draft` and `ai-polish`, specified and never built,
-  are withdrawn.
 
 ---
 
