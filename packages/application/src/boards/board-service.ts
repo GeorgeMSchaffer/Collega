@@ -207,6 +207,7 @@ export class BoardService {
       await this.boards.moveIdeas(
         board.id,
         move.ideas.map((idea) => idea.ideaId),
+        move.fromStatusId,
         move.toStatusId,
         now,
         this.currentUser.userId,
@@ -263,27 +264,37 @@ export class BoardService {
       .map((swimlane) => swimlane.statusId)
       .filter((statusId) => !kept.has(statusId))
 
+    // Every problem is reported at once, deduplicated, rather than the first alone. A lane named by
+    // any entry, valid or not, is not reported again as unplaced: its entry's message says why.
+    const problems = new Set<string>()
+    const named = new Set<string>()
     const targets = new Map<string, string>()
     for (const move of requested) {
       if (!removed.includes(move.fromStatusId)) {
-        throw invalidIdeaMoves(['A move must come from a lane this save removes.'])
+        problems.add('A move must come from a lane this save removes.')
+        continue
       }
-      if (targets.has(move.fromStatusId)) {
-        throw invalidIdeaMoves(['A removed lane can move its ideas to one lane only.'])
+      if (named.has(move.fromStatusId)) {
+        problems.add('A removed lane can move its ideas to one lane only.')
+        continue
       }
+      named.add(move.fromStatusId)
       if (!kept.has(move.toStatusId)) {
-        throw invalidIdeaMoves(['Ideas can only move to a lane that stays on the board.'])
+        problems.add('Ideas can only move to a lane that stays on the board.')
+        continue
       }
       targets.set(move.fromStatusId, move.toStatusId)
     }
 
     if (removed.length === 0) {
+      if (problems.size > 0) {
+        throw invalidIdeaMoves([...problems])
+      }
       return []
     }
 
     const ideas = await this.boards.listLaneIdeas(existing.id, removed)
     const planned: PlannedIdeaMove[] = []
-    const unplaced: string[] = []
     for (const fromStatusId of removed) {
       const laneIdeas = ideas.filter((idea) => idea.statusId === fromStatusId)
       if (laneIdeas.length === 0) {
@@ -291,18 +302,21 @@ export class BoardService {
       }
       const toStatusId = targets.get(fromStatusId)
       if (toStatusId === undefined) {
+        if (named.has(fromStatusId)) {
+          continue
+        }
         const name = statusLookup.get(fromStatusId)?.name ?? 'A removed lane'
         const [count, them] =
           laneIdeas.length === 1 ? ['1 idea', 'it'] : [`${laneIdeas.length} ideas`, 'them']
-        unplaced.push(
+        problems.add(
           `'${name}' still holds ${count}. Choose a lane that stays on the board to move ${them} to.`,
         )
         continue
       }
       planned.push({ fromStatusId, toStatusId, ideas: laneIdeas })
     }
-    if (unplaced.length > 0) {
-      throw invalidIdeaMoves(unplaced)
+    if (problems.size > 0) {
+      throw invalidIdeaMoves([...problems])
     }
     return planned
   }
