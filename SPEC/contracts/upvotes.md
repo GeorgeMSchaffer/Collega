@@ -7,10 +7,13 @@ shared data rules). Canonical, and read, not edited, by implementation slices.
 ## Upvote Contracts
 
 ### `POST /api/v1/ideas/{ideaId}/upvote/toggle`
-Purpose: Toggle the caller's upvote on an idea.
+Toggle the caller's upvote on an idea.
 
-Success response `200`:
-- `ideaId`
-- `hasUpvoted` boolean
-- `upvoteCount` integer
-
+- **Roles:** —
+- **Request:** —
+- **Response:** `200`
+  - `ideaId`
+  - `hasUpvoted` boolean
+  - `upvoteCount` integer
+- **Errors:** —
+- **Rules:** —
