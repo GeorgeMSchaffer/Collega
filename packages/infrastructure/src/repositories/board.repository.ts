@@ -172,6 +172,7 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
   async moveIdeas(
     boardId: string,
     ideaIds: readonly string[],
+    fromStatusId: string,
     toStatusId: string,
     nowUtc: Date,
     actorUserId: string | null,
@@ -179,9 +180,15 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
     if (ideaIds.length === 0) {
       return
     }
+    // `status_id` in the filter: an idea someone moved out of the lane since it was counted keeps
+    // the lane they chose rather than being overwritten.
     this.unitOfWork.enqueue(
       this.prisma.ideas.updateMany({
-        where: { ...boardIdeasWhere([boardId]), id: { in: [...ideaIds] } },
+        where: {
+          ...boardIdeasWhere([boardId]),
+          id: { in: [...ideaIds] },
+          status_id: fromStatusId,
+        },
         data: { status_id: toStatusId, updated_at_utc: nowUtc, updated_by_user_id: actorUserId },
       }),
     )

@@ -58,12 +58,14 @@ export interface BoardRepository {
   listLaneIdeas(boardId: string, statusIds: readonly string[]): Promise<readonly LaneIdea[]>
 
   /**
-   * Stages moving the given ideas of the board to `toStatusId`, in the same unit of work as the
-   * board's own save, so the lane change and the move commit or fail together.
+   * Stages moving the given ideas of the board from `fromStatusId` to `toStatusId`, in the same
+   * unit of work as the board's own save, so the lane change and the move commit or fail together.
+   * An idea no longer in `fromStatusId` when the batch commits is left where it is.
    */
   moveIdeas(
     boardId: string,
     ideaIds: readonly string[],
+    fromStatusId: string,
     toStatusId: string,
     nowUtc: Date,
     actorUserId: string | null,
