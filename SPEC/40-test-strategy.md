@@ -27,7 +27,7 @@
 - `/api/v1/auth/login`: success, invalid credential, and 15-minute lockout branches
 - protected endpoints reject unauthenticated requests
 - seeded Site Admin is forced through password change on first login
-- a bearer token remains accepted by `/api/v1/auth/me` after a successful required password change in the same API process
+- the session cookie remains accepted by `/api/v1/auth/me` after a successful required password change in the same API process. *Corrected 2026-09-29 (`SPEC/decisions.md` 2026-09-29, "Spec contradictions resolved"): this said a bearer token.*
 - post-MVP reset requests return the same generic response for eligible, unknown, inactive, external-only, and throttled emails
 - post-MVP reset confirmation treats invalid, expired, superseded, and used tokens identically
 - post-MVP successful reset consumes the token, revokes all existing sessions, and does not issue a new session
@@ -79,8 +79,8 @@ not in the corpus:
   - an idea can be created on the new board and appears in the board view without validation errors
 - Smoke test is intended as a release-readiness check for the MVP critical workflow, alongside the detailed unit, integration, and contract coverage
 - Authentication navigation verifies protected anonymous routes redirect to `/login`, ordinary login lands on `/`, required password change is gated by `MustChangePassword`, and `/logout` clears the session before returning to `/login`.
-- Authentication restoration verifies a valid stored token is confirmed through `/api/v1/auth/me`, an expired or API-unknown token clears all client auth state, and the browser returns to `/login`.
-- Active-session authentication verifies a protected-request `401` signs the user out only when `/api/v1/auth/me` also rejects the token; an incorrect-current-password `401` preserves a token that `/api/v1/auth/me` accepts.
+- Authentication restoration verifies a valid session cookie is confirmed through `/api/v1/auth/me`, and an expired or API-unknown cookie is dropped and the browser returns to `/login`. *Corrected 2026-09-29 (`SPEC/decisions.md` 2026-09-29, "Spec contradictions resolved"): this said a stored token, cleared from all client auth state.*
+- Active-session authentication verifies a protected-request `401` signs the user out only when `/api/v1/auth/me` also rejects the session cookie; an incorrect-current-password `401` preserves a session that `/api/v1/auth/me` accepts. *Corrected 2026-09-29 (`SPEC/decisions.md` 2026-09-29, "Spec contradictions resolved"): this said token.*
 - Password-change authentication verifies a successful required password change remains authenticated after browser reload while the issuing API process remains available.
 - Board navigation verifies `/boards` lists boards, `/board/{boardId}` opens detail, legacy routes redirect to canonical routes, and no user-facing Workflow terminology remains.
 
@@ -138,7 +138,7 @@ Coverage required before this feature merges. The provider is never called from 
 - Soft delete: verify only authorized admins see Delete, confirmation is required, success closes detail and removes the card, and failure leaves the idea visible with an error.
 - Description editing: verify author and in-scope admins can edit while other roles see a read-only description.
 - Idea Fields settings: verify admins can create, edit, reorder, and archive options; first active option is presented as default and last-option deletion is blocked.
-- Column reorder: verify SiteAdmin and OrgAdmin users can reorder columns and `UpdateStatusAsync` is called per affected status; verify reorder saves immediately on drop without a confirmation step; verify User and ReadOnly users cannot trigger a reorder; verify all columns revert on API failure with error toast.
+- Column reorder: verify an Org Admin (and a Site Admin through View As) can reorder columns and one `POST /api/v1/boards/{boardId}/swimlanes/reorder` is sent naming every swimlane (*corrected 2026-09-29, `SPEC/decisions.md` "Spec contradictions resolved": this said SiteAdmin and OrgAdmin, and `UpdateStatusAsync` called per affected status*); verify reorder saves immediately on drop without a confirmation step; verify User and ReadOnly users cannot trigger a reorder; verify all columns revert on API failure with error toast.
 - Filter chips and search: verify All / Created by me / Assigned to me filter chips correctly hide non-matching cards client-side; verify search matches by title, tag, and assignee name (case-insensitive); verify search is combinable with filter chips; verify empty columns display the "No ideas" placeholder.
 - Primary navigation: verify the active item has no border radius or left active border, uses the flat selected background and stronger text/icon style, exposes `aria-current="page"`, and retains a visible keyboard focus indicator; verify tabs and filter controls are unaffected.
 - Board visual regression: compare desktop and mobile captures to `mockups/sprint-management/idea-board.html` for hierarchy, density, full-height lanes, card tag/persona/age placement, and responsive overflow without importing demo-only controls.

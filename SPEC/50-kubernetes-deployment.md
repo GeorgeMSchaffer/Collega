@@ -1,8 +1,19 @@
 # Collega Kubernetes deployment plan
 
+> **At a glance** (added 2026-09-28; the text below wins where they differ)
+> - **Scope:** SUPERSEDED — Helm/Kubernetes plan for the frozen .NET stack; never built, never deployed.
+>   Kept for its cost model, topology and database/secret reasoning.
+> - **Key rules:** superseded by `SPEC/50-vercel-deployment.md` (Vercel + Prisma Postgres, ticket `02`);
+>   nothing here is a build instruction.
+> - **Contracts:** none
+> - **Decisions:** 2026-09-03 "The conversion's remaining gates: net-new scope, the test suite, and where it
+>   deploys"; 2026-09-04 "Sprint 8 is cancelled: the .NET stack is never deployed"; 2026-09-06 "The .NET
+>   stack is frozen; its code and instructions are no longer applicable"
+
 > ## ⛔ SUPERSEDED — describes the frozen .NET stack
 >
-> This document plans the deployment of `src/Collega.*`, which is **frozen and never deployed**:
+> This document plans the deployment of the .NET solution, which was **never deployed** and was
+> deleted in slice F6 (2026-09-13); paths into it were removed 2026-09-29:
 > Sprint 8 was cancelled on 2026-09-04, and the .NET code is deleted in slice F6
 > (`SPEC/decisions.md` 2026-09-06, `SPEC/50-typescript-migration.md`). The product ships to
 > **Vercel with Prisma Postgres** (ticket `02`, decided 2026-09-03).
@@ -12,37 +23,36 @@
 
 > ## ⚠️ THIS DESCRIBES INFRASTRUCTURE THAT DOES NOT EXIST YET
 >
-> **Nothing in this document is built.** It is a forward-looking plan, not a description of
-> the current repository. Verified against `dev` on 2026-08-12 — the repository contains
-> **no** `k8s/` directory, **no** Helm chart (`Chart.yaml`, `values.yaml`, `values.dev.yaml`,
-> `values.prod.yaml`, `templates/`), **no** Kubernetes manifests of any kind (a repo-wide
-> search finds zero YAML files containing `apiVersion:`), and **no** Dockerfiles anywhere.
->
-> **Do not read any statement here as "already done."** Where this document says the chart
-> "creates" a Service or the client image "comes from" a Dockerfile, read it as *would*,
-> *once someone writes it*. Every path below (`k8s/…`, `src/Collega.API/Dockerfile`,
-> `src/Collega.Client/Dockerfile`) is a **proposed** location for a file that is absent today.
+> - **Nothing in this document is built.** It is a forward-looking plan, not a description of the
+>   current repository. Verified against `dev` on 2026-08-12: **no** `k8s/` directory, **no** Helm chart
+>   (`Chart.yaml`, `values.yaml`, `values.dev.yaml`, `values.prod.yaml`, `templates/`), **no** Kubernetes
+>   manifests of any kind (a repo-wide search finds zero YAML files containing `apiVersion:`), and **no**
+>   Dockerfiles anywhere.
+> - **Do not read any statement here as "already done."** Where it says the chart "creates" a Service or
+>   the client image "comes from" a Dockerfile, read *would*, *once someone writes it*. Every path below
+>   (`k8s/…`, and a Dockerfile in each of the API and client projects) is a **proposed** location
+>   for a file that is absent today.
 >
 > **Hard prerequisites, none of which are met:**
 >
 > | Prerequisite | Status |
 > |---|---|
-> | `src/Collega.API/Dockerfile` | Does not exist |
-> | `src/Collega.Client/Dockerfile` | Does not exist |
+> | A Dockerfile for the API project | Does not exist |
+> | A Dockerfile for the client project | Does not exist |
 > | Helm chart under `k8s/` | Does not exist |
 > | Container images published to a registry | No registry, no build pipeline for images |
 >
-> Writing those artifacts is **out of scope for the current sprint**; this document
-> deliberately stays a plan. Treat it as a design to review and cost, not a runbook to follow.
+> Writing those artifacts is **out of scope for the current sprint**; this document deliberately stays a
+> plan — a design to review and cost, not a runbook to follow.
 >
-> *(This warning exists because a previous version of this document was written in the
-> present and past tense — "the implementation uses a Helm chart under `k8s\`" — while
-> describing a chart that had never been written, for a different project entirely. That
-> phrasing caused a real planning error. Keep the tense honest when editing this file.)*
+> *(Why this warning exists: a previous version was written in the present and past tense —
+> "the implementation uses a Helm chart under `k8s\`" — while describing a chart that had never been
+> written, for a different project entirely. That phrasing caused a real planning error. Keep the tense honest when
+> editing this file.)*
 
-**Database engine:** this plan targets **PostgreSQL 16**, per the locked decision in
-`SPEC/50-postgres-migration.md`. Earlier revisions described an in-cluster SQL Server 2022
-pod; that is superseded and should not be reintroduced.
+**Database engine:** this plan targets **PostgreSQL 16**, per the locked decision in `SPEC/50-postgres-migration.md`.
+Earlier revisions described an in-cluster SQL Server 2022 pod; that is superseded and should not be
+reintroduced.
 
 ## Decision log
 
@@ -78,7 +88,7 @@ flowchart LR
 
 ### Client pod
 
-- Image source: `src/Collega.Client/Dockerfile` — **not written yet**
+- Image source: a Dockerfile in the client project — **not written yet**
 - Runtime: `nginx:alpine`
 - Replicas: 2
 - Purpose: Serve the Blazor WebAssembly static assets and SPA fallback routing
@@ -90,7 +100,7 @@ flowchart LR
 
 ### API pod
 
-- Image source: `src/Collega.API/Dockerfile` — **not written yet**
+- Image source: a Dockerfile in the API project — **not written yet**
 - Runtime: `mcr.microsoft.com/dotnet/aspnet:8.0`
 - Replicas: 2
 - Container port: 8080 (set `ASPNETCORE_URLS=http://+:8080`; the local `launchSettings.json` port is irrelevant in-container)
@@ -101,10 +111,9 @@ flowchart LR
   - `SiteAdmin__Email` and `SiteAdmin__Password` from a dedicated Site Admin secret (see `SPEC/20-feature-auth.md`)
 - Health checks:
   - Liveness/readiness: `GET /api/v1/health` (the `api/v1` prefix is applied by `ApiVersionRoutePrefixConvention`)
-- Startup note: the API runs EF Core `MigrateAsync` and idempotent seeding on boot, so the
-  API pod must tolerate PostgreSQL being briefly unavailable. Prefer a generous
-  `startupProbe` (or an init container that waits on the database) over a tight
-  `livenessProbe` that would restart-loop the pod during first migration.
+- Startup note: the API runs EF Core `MigrateAsync` and idempotent seeding on boot, so it must tolerate
+  PostgreSQL being briefly unavailable. Prefer a generous `startupProbe` (or an init container that waits
+  on the database) over a tight `livenessProbe` that would restart-loop the pod during first migration.
 
 ### PostgreSQL pod
 
@@ -120,9 +129,9 @@ flowchart LR
   - `PGDATA` — `/var/lib/postgresql/data/pgdata`
 - Storage:
   - PVC mounted at `/var/lib/postgresql/data`
-  - **`PGDATA` must point at a subdirectory of the mount**, as above. Many dynamic provisioners
-    hand back a volume containing `lost+found`, and `initdb` refuses to initialize a non-empty
-    directory. Pointing `PGDATA` one level down is the standard workaround.
+  - **`PGDATA` must point at a subdirectory of the mount**, as above. Many dynamic provisioners hand
+    back a volume containing `lost+found`, and `initdb` refuses to initialize a non-empty directory.
+    Pointing `PGDATA` one level down is the standard workaround.
 - Health checks:
   - Readiness/liveness: `pg_isready` exec probe, e.g.
     `pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" -h 127.0.0.1`
@@ -150,18 +159,17 @@ flowchart LR
 - Access mode: `ReadWriteOnce`
 - Default size: `20Gi`
 - Storage class: cluster default, unless explicitly overridden in Helm values
-- This is acceptable for local development. **For production, move the database to a managed
-  service rather than keeping a stateful PostgreSQL pod inside the cluster** — `SPEC/50-azure-deployment.md`
-  already targets Azure Database for PostgreSQL (Flexible Server, Burstable B1ms) and is the
-  intended production path. A single-pod Postgres has no replication, no failover, and no
-  point-in-time recovery; running one in production would mean hand-rolling all three.
+- This is acceptable for local development. **For production, move the database to a managed service
+  rather than keeping a stateful PostgreSQL pod inside the cluster** — `SPEC/50-azure-deployment.md`
+  already targets Azure Database for PostgreSQL (Flexible Server, Burstable B1ms) and is the intended
+  production path. A single-pod Postgres has no replication, no failover, and no point-in-time recovery;
+  running one in production would mean hand-rolling all three.
 
 ## Secrets management
 
-Never store secrets in source control. Any `k8s/secrets/postgres-secret.template.yaml` that
-gets added should be a placeholder reference only, holding no real values.
-
-Create the real secret directly in the cluster at deploy time:
+Never store secrets in source control. Any `k8s/secrets/postgres-secret.template.yaml` added should be a
+placeholder reference only, holding no real values. Create the real secret directly in the cluster at deploy
+time:
 
 ```bash
 kubectl create secret generic postgres-secret \
@@ -170,9 +178,8 @@ kubectl create secret generic postgres-secret \
   --from-literal=connection-string='Host=collega-postgres;Port=5432;Database=Collega;Username=collega;Password=<POSTGRES_PASSWORD>'
 ```
 
-The connection string is **Npgsql format** (`Host=…;Port=…;Database=…;Username=…;Password=…`),
-matching `SPEC/50-postgres-migration.md`. It is consumed by the API as
-`ConnectionStrings__DefaultConnection`.
+The connection string is **Npgsql format** (`Host=…;Port=…;Database=…;Username=…;Password=…`), matching
+`SPEC/50-postgres-migration.md`, consumed by the API as `ConnectionStrings__DefaultConnection`.
 
 Recommendations:
 
@@ -194,10 +201,10 @@ Recommendations:
 | API | `250m` CPU / `256Mi` memory | `500m` CPU / `512Mi` memory |
 | PostgreSQL | `100m` CPU / `256Mi` memory | `500m` CPU / `1Gi` memory |
 
-PostgreSQL's floor is substantially lower than the SQL Server figures this table previously
-carried (`500m`/`1Gi` request, `1` CPU/`2Gi` limit). SQL Server will not start under 2 GB;
-`postgres:16` runs comfortably in a few hundred MB at development data volumes. Revisit the
-limit if the local dataset grows or if `shared_buffers` is tuned upward.
+PostgreSQL's floor is substantially lower than the SQL Server figures this table previously carried
+(`500m`/`1Gi` request, `1` CPU/`2Gi` limit). SQL Server will not start under 2 GB; `postgres:16` runs
+comfortably in a few hundred MB at development data volumes. Revisit the limit if the local dataset grows or
+`shared_buffers` is tuned upward.
 
 ### Health checks
 
@@ -236,8 +243,7 @@ This keeps one set of templates while allowing local-dev and production-oriented
 
 ## Deployment steps
 
-These steps are **not runnable today** — they assume the Dockerfiles and the chart above have
-been written first.
+These steps are **not runnable today** — they assume the Dockerfiles and the chart above have been written first.
 
 1. Ensure your local cluster is running and the Nginx Ingress Controller is installed.
 2. Build and push the API and client images through CI/CD.

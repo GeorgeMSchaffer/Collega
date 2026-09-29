@@ -1,42 +1,50 @@
 # Feature: Idea Assistant v2 — a co-author for new ideas
 
-**Status:** Specified 2026-09-27 as the rescope `SPEC/decisions.md` 2026-09-13 scheduled. **Not
-built.** It supersedes `20-feature-ai-idea-assist.md` for all new work; that spec describes what is
-live today and stays authoritative for it until this one ships. The reference rendering is comp R,
-`SPEC/mockups/comp-r-portico-prototype.html` (the New Idea flow on any board or the Ideas list).
+> **At a glance** (added 2026-09-28; the text below wins where they differ)
+> - **Scope:** the idea assistant as a co-author of structured idea fields; specified 2026-09-27, not
+>   built; supersedes v1 for all new work.
+> - **Key rules:** ships only after a TypeScript `tools/prompt-eval` runner reports scope-gate and mapping
+>   results; an edited field is owned, `lockedFields` output dropped server-side; skip never gated; any
+>   failed turn hands off to the form, no scripted fallback; never a write path; `ai-draft`/`ai-polish` gone.
+> - **Contracts:** contracts/ai-assist.md, contracts/ideas.md
+> - **Decisions:** 2026-09-27 "The idea assistant is rescoped as a co-author, and ideas gain structured
+>   fields"; 2026-09-13 "The AI integration is rescoped and respecified after the current batch"
 
-Its open questions were answered on 2026-09-27; see "Resolved questions" at the end.
+**Status:** Specified 2026-09-27 as the rescope `SPEC/decisions.md` 2026-09-13 scheduled. **Not
+built.** Supersedes `20-feature-ai-idea-assist.md` for all new work; that spec describes what is
+live today and stays authoritative for it until this one ships. Reference rendering: comp R,
+`SPEC/mockups/comp-r-portico-prototype.html` (the New Idea flow on any board or the Ideas list).
+Open questions answered 2026-09-27; see "Resolved questions" at the end.
 
 ## Why this exists
 
-The v1 chat drafts a title, a description and three classifications. The ideas it produces are
-still one block of prose, and the three things a reviewer needs to judge an idea (what is wrong,
-what we would do about it, and why it is worth doing) are mixed together or missing. v2 changes two
-things at once:
+v1 drafts a title, a description and three classifications, but the idea is still one block of
+prose, and what a reviewer needs (what is wrong, what we would do, why it is worth doing) is mixed
+together or missing. v2 changes two things:
 
 1. **The idea itself gains structure.** Problem, Proposed solutions and Impact rationale become
    first-class fields (`20-feature-ideas-and-engagement.md` rule 2, `30-Contracts.md` idea
    contracts). The assistant exists to fill them well.
 2. **The assistant works with the person, not only for the form.** At minimum it maps free text
    onto fields and asks for what is missing. Beyond that it brainstorms solutions, offers a sharper
-   statement of the problem, and suggests measurable rationales, each as a suggestion the person
-   accepts or ignores.
+   problem statement, and suggests measurable rationales, each a suggestion the person accepts or
+   ignores.
 
 ## Goals
 
 1. **Every submitted idea states a problem, at least one proposed solution, and a business case.**
-2. **Mapping first.** Anything the person types that fits a field lands in that field, visibly.
+2. **Mapping first.** Anything typed that fits a field lands in that field, visibly.
 3. **Interview for the gaps**, one question at a time, in a fixed order.
 4. **Brainstorm on request**, never on the person's behalf: suggestions are offered, never applied
    silently.
-5. **The form is always the source of truth and always reachable**: skip at any time, and any
+5. **The form is always the source of truth and always reachable**: skip at any time; any
    assistant failure hands off to the form with everything captured so far.
 6. Unchanged from v1: stay on topic, stay grounded in the organization's own options, and **never
    become a write path**. The person submits; existing validation authorizes the write.
 
 ## Non-goals (this spec)
 
-- **Refining existing ideas** (editing with the assistant). Separate spec; `decisions.md`
+- **Refining existing ideas** (editing with the assistant): separate spec; `decisions.md`
   2026-09-13 explains why it must not be conflated with drafting.
 - **Ingestion** of pasted documents, transcripts or backlogs (`SPEC/ideas-inbox.md`).
 - **Similar-idea retrieval / dedupe** (v2 of D-DEDUPE, needs embeddings).
@@ -46,21 +54,21 @@ things at once:
 
 `decisions.md` 2026-09-13: "A rescope that adds AI surface area without restoring measurement is
 adding unmeasured security-relevant behaviour." **v2 does not ship until a TypeScript runner for
-`tools/prompt-eval` exists** and reports, at minimum, scope-gate precision/recall and field-mapping
-accuracy against the corpus, extended with v2 cases (structured fields, brainstorm turns, locked
-fields). The runner is its own slice and lands before the v2 prompt is enabled; it is specified in
+`tools/prompt-eval` exists** and reports at least scope-gate precision/recall and field-mapping
+accuracy over the corpus, extended with v2 cases (structured fields, brainstorm turns, locked
+fields). The runner is its own slice, lands before the v2 prompt is enabled, and is specified in
 `20-feature-prompt-eval-runner.md`.
 
 ## Surface
 
 - **Where:** *Add New Idea* on the Ideas list and on a board opens the drawer in **create mode, wide**:
   `clamp(720px, 62vw, 1100px)`, still an overlay (`20-feature-client-ui.md` "List and detail
-  pattern"). The assistant is the left pane (~42%), the form the right. On narrow viewports the
-  panes stack, chat above form.
-- **Skip is never gated** (v1 rule 3 carried): *Fill out manually* sits in the assistant header and
-  *Skip the assistant and fill out the form* under the composer. Either collapses the chat, narrows
-  the drawer to the normal width, and keeps every value already in the form. *Use the assistant*
-  in the footer brings it back, with the conversation intact.
+  pattern"). Assistant is the left pane (~42%), form the right; on narrow viewports they stack,
+  chat above form.
+- **Skip is never gated** (v1 rule 3 carried): *Fill out manually* in the assistant header and
+  *Skip the assistant and fill out the form* under the composer each collapse the chat, narrow the
+  drawer to normal width, and keep every value already in the form. *Use the assistant* in the
+  footer brings it back with the conversation intact.
 - **Availability** is v1 rules 32a–32c unchanged: the client reads `GET /ai-assist/availability`
   once per page load; when unavailable, *Add New Idea* opens the form directly with the rule 32c
   notice.
@@ -82,29 +90,30 @@ Supersedes v1 D-PREFILL.
 | Custom fields | values for the fields the chosen Idea Type carries: numbers, dropdown options, names | only fields visible for that type; option values must be real option ids |
 | Summary (Description) | drafted from Problem + Proposed solutions | optional summary (Q2) |
 
-Never proposed: Board, Status, Assignees, Due date. (Assignees and dates are the person's call;
-Board and Status come from where *Add New Idea* was pressed.)
+Never proposed: Board, Status, Assignees, Due date. Assignees and dates are the person's call;
+Board and Status come from where *Add New Idea* was pressed.
 
 ## Suggested vs owned
 
-- A value the assistant writes is **Suggested**: marked `✦ Suggested` beside the label, with the
-  field tinted in the theme's **suggestion hue** (`--suggest-tint`, border `--suggest`), which is
-  distinct from the accent so a suggestion never reads as "selected" (Q5; carries v1 D-SUGGEST). It animates once when filled (skipped under reduced motion).
-- **The moment the person edits a field it is theirs.** The mark clears, and the assistant never
-  overwrites it again for the rest of the conversation. When a later turn would have changed it, the
-  assistant says so in its reply ("I kept your edit to Problem").
+- A value the assistant writes is **Suggested**: `✦ Suggested` beside the label, field tinted in the
+  theme's **suggestion hue** (`--suggest-tint`, border `--suggest`), distinct from the accent so a
+  suggestion never reads as "selected" (Q5; carries v1 D-SUGGEST). It animates once when filled
+  (skipped under reduced motion).
+- **Once the person edits a field it is theirs.** The mark clears and the assistant never
+  overwrites it for the rest of the conversation. When a later turn would have changed it, the reply
+  says so ("I kept your edit to Problem").
 - The client sends the owned field names with every turn (`lockedFields`); the server drops any
-  model output for them. This is enforced server-side, not only in the UI.
+  model output for them. Enforced server-side, not only in the UI.
 
 ## Conversation
 
-1. **Opening:** one greeting that says what will happen, plus 2–3 starter prompts drawn from the
+1. **Opening:** one greeting saying what will happen, plus 2–3 starter prompts drawn from the
    organization's recent idea titles or, failing that, fixed examples.
-2. **Every turn:** the model returns the structured turn object (below). The server validates it,
+2. **Every turn:** the model returns the structured turn object (below); the server validates it,
    removes locked fields, and returns what changed. The UI fills changed fields, then shows the
    reply with a *Filled in: …* line naming them.
 3. **Interview order** for the next question: Problem → Proposed solutions → Impact rationale →
-   Business impact → Idea type → required custom fields of that type. Title is asked last and only
+   Business impact → Idea type → required custom fields of that type. Title is asked last, only
    if still empty. One question per turn.
 4. **Brainstorm offers** appear as chips on the relevant question:
    - at *Proposed solutions*: up to 3 solution ideas grounded in the problem (multi-select; each
@@ -120,17 +129,16 @@ Board and Status come from where *Add New Idea* was pressed.)
 
 ## Failure and hand-off
 
-Carries v1 rules 32 and 32b and tightens them, because v2 is the only path to the new fields:
+Carries v1 rules 32 and 32b, tightened because v2 is the only path to the new fields:
 
 - Any failure on any turn (timeout, rate limit, refusal, malformed output, `503`) ends the
   conversation for this idea and **hands off to the form** with the notice "AI assist is unavailable
   right now. Everything captured so far is filled in; finish the idea here." No scripted-nudge
   fallback in v2: it would keep the person in a chat that can no longer fill the form.
-- **Nothing typed is lost.** The draft from earlier successful turns is already in the form. The
-  failing turn's text is placed by the client, without a model call: into the field the assistant
-  had just asked about when that field is empty and not owned, otherwise into Problem when Problem
-  is empty, otherwise appended to Problem on a new line. Title, when empty, takes the text's first
-  clause.
+- **Nothing typed is lost.** Earlier successful turns' draft is already in the form. The failing
+  turn's text is placed by the client, without a model call: into the field the assistant had just
+  asked about when that field is empty and not owned, else into Problem when Problem is empty, else
+  appended to Problem on a new line. Title, when empty, takes the text's first clause.
 - `429` keeps its v1 meaning (`Retry-After`), shown as "Too many requests; try again in N seconds"
   with the form still usable. It does not end the conversation.
 

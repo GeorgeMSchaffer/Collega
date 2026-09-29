@@ -1,5 +1,14 @@
 # Feature: Notifications
 
+> **At a glance** (added 2026-09-28; the text below wins where they differ)
+> - **Scope:** persisting `NotificationEvent` rows for four collaboration triggers (MVP); email delivery,
+>   per-user preferences and an inbox UI are a later phase.
+> - **Key rules:** triggers are idea mention, comment mention, comment added and status change; recipients
+>   per trigger as listed; self-notifications are suppressed; each event stores the link `/ideas/{ideaId}`;
+>   no SMTP, email client or outbound HTTP in the path; no read or query endpoints required in MVP.
+> - **Contracts:** contracts/notifications.md
+> - **Decisions:** none recorded
+
 ## Outcome
 Notification events are persisted for collaboration events. Email delivery is deferred to a later phase.
 
@@ -23,37 +32,34 @@ Self-notifications are suppressed: no event is written when the actor and the re
 - Status change → idea author + idea assignee (each, if different from actor)
 
 ## Canonical Idea Link
-Each notification event persists a canonical link to the idea:
+Each event persists a canonical link to the idea, stored in the `NotificationEvent` row alongside the idea title:
 
 ```
 /ideas/{ideaId}
 ```
 
-This is the canonical single-idea route; following it opens the Ideas list with that idea's detail drawer open (see the Idea Detail Surface in `SPEC/20-feature-client-ui.md`). The link is stored in the `NotificationEvent` row alongside the idea title.
-
-> **Change from prior spec**: The earlier route pattern `/org/{organizationId}/boards/{boardId}/ideas/{ideaId}` and the interim `/ideas/{ideaId}/edit` full-page route are both superseded by `/ideas/{ideaId}` (drawer-addressable) to match the updated client routing (see `SPEC/20-feature-client-ui.md` Idea Detail Surface and `SPEC/20-feature-client-ui-revisions.md`).
+- It is the canonical single-idea route: following it opens the Ideas list with that idea's detail drawer open (see `SPEC/20-feature-client-ui.md` "List and detail pattern (comp R — 2026-09-27)"; the "Idea Detail Surface" section this cited no longer exists).
+- **Change from prior spec**: it supersedes the earlier `/org/{organizationId}/boards/{boardId}/ideas/{ideaId}` and the interim `/ideas/{ideaId}/edit` full-page route, to match the updated client routing (`SPEC/20-feature-client-ui.md` "List and detail pattern (comp R — 2026-09-27)", `SPEC/20-feature-client-ui-revisions.md`).
 
 ## Implementation Design (MVP)
 
 ### Application layer
-- `NotificationEventType` enum: `IdeaMention`, `CommentMention`, `CommentAdded`, `IdeaStatusChanged`
-- `INotificationWriter` interface:
-  ```csharp
-  Task WriteAsync(Guid recipientUserId, Guid actorUserId, NotificationEventType eventType,
-                  Guid ideaId, string ideaTitle, Guid organizationId, CancellationToken ct);
-  ```
-- Injected into `WorkflowManagementService`; called from mention, comment, and status-move paths.
+- `NotificationEventType` (`packages/domain/src/enums`): `IdeaMention`, `CommentMention`, `CommentAdded`, `IdeaStatusChanged` (Issues & Delivery adds its own event types — `20-feature-issues-and-delivery.md`).
+- A `NotificationWriter` port (`packages/application/src/notifications/models.ts`) with one operation, `notify(input)`; the input carries the event type, recipient, actor, idea id and title, board id and organization id.
+- `NotificationService` implements it: it applies self-notification suppression and builds the event through the domain factory.
+- The idea and comment services call it from the mention, comment, and status-move paths, each through its own narrow port.
 
 ### Infrastructure layer
-- `NotificationWriter` implements `INotificationWriter`
-- Inserts one `NotificationEvent` row per recipient per event (no batching in MVP)
-- Fields populated: `RecipientUserId`, `EventType`, `IdeaId`, `IdeaTitle`, `OrgId`, `TriggeredByUserId`, `Link` (`/ideas/{ideaId}`), `OccurredAtUtc`
-- No SMTP, email client, or outbound HTTP — purely database writes
+- `NotificationEventRepository` (`packages/infrastructure/src/repositories/notification-event.repository.ts`) persists the events.
+- Inserts one `NotificationEvent` row per recipient per event (no batching in MVP).
+- Fields populated: `RecipientUserId`, `EventType`, `IdeaId`, `IdeaTitle`, `OrgId`, `TriggeredByUserId`, `Link` (`/ideas/{ideaId}`), `OccurredAtUtc`.
+- No SMTP, email client, or outbound HTTP — purely database writes.
 
-### Test coverage (T037–T039)
-- **T037**: `WorkflowManagementService` emits `IdeaMention` / `CommentMention` / `CommentAdded` / `IdeaStatusChanged` events via `INotificationWriter`; `FakeNotificationWriter` collects events for assertion.
-- **T038**: Emitted event `Link` field equals `/ideas/{ideaId}`.
-- **T039**: Infrastructure DI registration test asserts `INotificationWriter` resolves to `NotificationWriter` and that no `SmtpClient` or `IHttpClientFactory` descriptor is present in the service collection.
+### Test coverage
+The .NET tests T037–T039 were discarded with that suite (ticket `10`; `SPEC/50-typescript-migration.md` §1). What they asserted still holds and is what coverage checks:
+- the idea and comment paths emit `IdeaMention` / `CommentMention` / `CommentAdded` / `IdeaStatusChanged` events through the writer port, observable with a fake writer;
+- an emitted event's `Link` field equals `/ideas/{ideaId}`;
+- the notification path has no SMTP client and no outbound HTTP client.
 
 ## Delivery Rules (later phase)
 1. One email per event (no consolidation).
@@ -62,10 +68,10 @@ This is the canonical single-idea route; following it opens the Ideas list with 
 4. Approval-workflow events (approve/reject/expire) follow the same rules when implemented.
 
 ## Acceptance Criteria
-- [ ] `INotificationWriter` and `NotificationWriter` are implemented and registered
-- [ ] `WorkflowManagementService` calls `INotificationWriter` for all four trigger events
+- [ ] The `NotificationWriter` port and its implementation are implemented and registered
+- [ ] The idea and comment services call the writer for all four trigger events
 - [ ] Self-notifications are suppressed (actor == recipient → no event written)
 - [ ] Each emitted event's `Link` field stores `/ideas/{ideaId}`
-- [ ] No SMTP, email client, or outbound HTTP code is present in the notification path (T039 test guard)
+- [ ] No SMTP, email client, or outbound HTTP code is present in the notification path
 - [ ] Notification events do not require read or query API endpoints in MVP
 - [ ] Email delivery and per-user preferences remain deferred outside MVP

@@ -1,14 +1,28 @@
 # Feature: User-Defined Fields (UDFs) for Ideas
 
-> **Implementation sections below target the frozen .NET stack.** The EF Core configuration, the
-> `AddUserDefinedFields` migration and the Blazor component mapping describe how this was built in
-> `src/Collega.*`, which is frozen and deleted in slice F6 (`SPEC/decisions.md` 2026-09-06). The
-> **behaviour** they specify is canonical and ports as-is; the framework mechanics are history. The
-> schema now lives in `packages/infrastructure/prisma/`, and the field components in `apps/web`.
+> **At a glance** (added 2026-09-28; the text below wins where they differ)
+> - **Scope:** org-level custom fields on ideas (7 types). Behaviour canonical; the .NET implementation
+>   sections are history. Build status not stated here.
+> - **Key rules:** one field schema per org, shared by all boards; only Site/Org Admin manage definitions.
+> - Required UDFs block save; per-type required-ness now comes from `20-feature-idea-type-fields.md`.
+> - Active names unique per org, case-insensitively; delete is soft — values kept but hidden.
+> - Value changes emit `IdeaFieldValueChanged`; values flow into CSV export/import and list filters.
+> - **Contracts:** contracts/ideas.md, contracts/idea-type-fields.md
+> - **Decisions:** 2026-09-27 "The API sends the custom field list"; 2026-09-06 "The .NET stack is frozen;
+>   its code and instructions are no longer applicable"
+
+> **Implementation sections below were written for the .NET stack**, deleted in slice F6
+> (`SPEC/decisions.md` 2026-09-13). On 2026-09-29 its C# listings, EF Core configuration, Blazor
+> component names and paths were replaced by field lists and pointers into the TypeScript code; the
+> `AddUserDefinedFields` migration listing and the Effort Sizing table are kept as history. The
+> **behaviour** they specify is canonical and ports as-is. The schema now lives in
+> `packages/infrastructure/prisma/`, and the field components in `apps/web`.
 
 ## Overview
 
-Organizations can extend the `Idea` entity with custom fields (User-Defined Fields / UDFs) to capture domain-specific data not covered by the core idea schema. Field definitions are owned at the organization level and are shared across all boards. Admins manage the schema; all org members can fill in UDF values on idea forms.
+Organizations extend the `Idea` entity with custom fields (User-Defined Fields / UDFs) for domain-specific data the core idea schema lacks.
+- Field definitions are owned at the organization level and shared across all boards.
+- Admins manage the schema; all org members fill in UDF values on idea forms.
 
 ---
 
@@ -22,10 +36,10 @@ Organizations can extend the `Idea` entity with custom fields (User-Defined Fiel
 | Field ordering | Admin-configurable display order; drag-and-drop reorder |
 | Visibility / access | All org users see and fill UDF fields on idea forms; only Admins can manage field definitions |
 | Templates integration | **Realized as Idea-Type Fields (`SPEC/20-feature-idea-type-fields.md`).** A "template" is a per-type **field selection** (which UDFs show per idea type, each required-or-optional for that type, mapped directly onto the type), *not* a default-value injector. Default values are deferred to P2 there. See the reinterpretation note in "Template Integration" below. |
-| CSV export / import | UDF values are included as columns in CSV export and CSV import |
+| CSV export / import | UDF values are columns in CSV export and CSV import |
 | Filtering / search | UDF values are filterable and full-text searchable in the ideas list |
 | History / audit | UDF value changes are tracked in the audit log |
-| New-field migration | Existing ideas receive `null`/empty value for new fields; no backfill |
+| New-field migration | Existing ideas get a `null`/empty value for new fields; no backfill |
 | Field deletion | Soft delete — definition is archived; values are preserved but hidden from the UI |
 
 ---
@@ -34,142 +48,69 @@ Organizations can extend the `Idea` entity with custom fields (User-Defined Fiel
 
 ### New Entities
 
-#### `FieldDefinition` (extends `AuditableEntityBase`)
+#### `FieldDefinition` (auditable)
 
-```csharp
-public sealed class FieldDefinition : AuditableEntityBase
-{
-    public Guid OrganizationId { get; set; }
-    public Organization Organization { get; set; } = null!;
+`packages/domain/src/fields/`:
+- `organizationId` — the owning organization
+- `name` — max 100 characters
+- `description` — optional, max 500 characters
+- `fieldType` — a `FieldType`
+- `isRequired` — boolean
+- `displayOrder` — integer
+- soft delete: `isDeleted`, `deletedAtUtc` (nullable), `deletedByUserId` (nullable)
+- its options (`FieldDefinitionOption`) and the ideas' values for it (`IdeaFieldValue`)
 
-    public string Name { get; set; } = string.Empty;           // max 100
-    public string? Description { get; set; }                    // max 500
+#### `FieldDefinitionOption`
 
-    public FieldType FieldType { get; set; }
+Only for `Dropdown` and `MultiSelect` field types.
+- `fieldDefinitionId` — the owning field
+- `label` — max 200 characters
+- `displayOrder` — integer
 
-    public bool IsRequired { get; set; }
-    public int DisplayOrder { get; set; }
+#### `IdeaFieldValue` (auditable)
 
-    // Soft delete
-    public bool IsDeleted { get; set; }
-    public DateTime? DeletedAtUtc { get; set; }
-    public Guid? DeletedByUserId { get; set; }
-
-    public ICollection<FieldDefinitionOption> Options { get; set; } = new List<FieldDefinitionOption>();
-    public ICollection<IdeaFieldValue> IdeaFieldValues { get; set; } = new List<IdeaFieldValue>();
-}
-```
-
-#### `FieldDefinitionOption` (extends `EntityBase`)
-
-Applies only to `Dropdown` and `MultiSelect` field types.
-
-```csharp
-public sealed class FieldDefinitionOption : EntityBase
-{
-    public Guid FieldDefinitionId { get; set; }
-    public FieldDefinition FieldDefinition { get; set; } = null!;
-
-    public string Label { get; set; } = string.Empty;  // max 200
-    public int DisplayOrder { get; set; }
-}
-```
-
-#### `IdeaFieldValue` (extends `AuditableEntityBase`)
-
-Stores the value of one UDF for one idea. Values are serialized as strings and interpreted per `FieldType`.
-
-```csharp
-public sealed class IdeaFieldValue : AuditableEntityBase
-{
-    public Guid IdeaId { get; set; }
-    public Idea Idea { get; set; } = null!;
-
-    public Guid FieldDefinitionId { get; set; }
-    public FieldDefinition FieldDefinition { get; set; } = null!;
-
-    // Serialization format per type:
-    // Text / Url   → raw string (max 2000 / 2048)
-    // Number       → invariant decimal string (e.g. "50000.00")
-    // Date         → ISO-8601 date (yyyy-MM-dd)
-    // Boolean      → "true" / "false"
-    // Dropdown     → single FieldDefinitionOption.Id (GUID string)
-    // MultiSelect  → comma-separated FieldDefinitionOption.Id GUIDs, no duplicates
-    public string? Value { get; set; }
-}
-```
+One UDF's value for one idea, serialized as a string and interpreted per `FieldType`.
+- `ideaId`, `fieldDefinitionId`
+- `value` — nullable string. Serialization format per type:
+  - `Text` / `Url` → raw string (max 2000 / 2048)
+  - `Number` → invariant decimal string (e.g. `"50000.00"`)
+  - `Date` → ISO-8601 date (`yyyy-MM-dd`)
+  - `Boolean` → `"true"` / `"false"`
+  - `Dropdown` → a single `FieldDefinitionOption` id (GUID string)
+  - `MultiSelect` → comma-separated `FieldDefinitionOption` ids, no duplicates
 
 #### `FieldType` enum
 
-```csharp
-public enum FieldType
-{
-    Text       = 1,
-    Number     = 2,
-    Date       = 3,
-    Boolean    = 4,
-    Dropdown   = 5,
-    MultiSelect = 6,
-    Url        = 7,
-}
-```
+`Text`, `Number`, `Date`, `Boolean`, `Dropdown`, `MultiSelect`, `Url` — stored as names; the .NET stack's integers (1–7, in that order) are history.
 
 ### Modified Entities
 
-`Idea` gains a navigation property:
-
-```csharp
-public ICollection<IdeaFieldValue> FieldValues { get; set; } = new List<IdeaFieldValue>();
-```
+An `Idea` has zero or more `IdeaFieldValue` rows — at most one per field.
 
 ### Database Indices
 
 | Table | Index | Notes |
 |---|---|---|
-| `FieldDefinitions` | Unique on `(OrganizationId, NormalizedName)` filtered where `IsDeleted = false` | Prevents duplicate active names per org, **case-insensitively** |
+| `FieldDefinitions` | Unique on `(OrganizationId, NormalizedName)` filtered where `IsDeleted = false` | No duplicate active names per org, **case-insensitively** |
 | `IdeaFieldValues` | Unique on `(IdeaId, FieldDefinitionId)` | One value row per field per idea |
 | `IdeaFieldValues` | Non-unique on `(FieldDefinitionId, Value)` | Supports filter/sort queries |
 
 ---
 
-## EF Core Configuration
+## Persistence Configuration
 
-```csharp
-// FieldDefinition
-modelBuilder.Entity<FieldDefinition>()
-    .HasIndex(f => new { f.OrganizationId, f.Name })
-    .HasFilter("[IsDeleted] = 0")
-    .IsUnique();
+The .NET EF Core configuration that stood here is gone with that stack. `packages/infrastructure/prisma/schema.prisma` declares the same limits (name 100, description 500, option label 200, value 4000) and the `(idea_id, field_definition_id)` unique index. Two indexes in the table above differ:
 
-modelBuilder.Entity<FieldDefinition>()
-    .Property(f => f.Name).HasMaxLength(100);
-
-modelBuilder.Entity<FieldDefinition>()
-    .Property(f => f.Description).HasMaxLength(500);
-
-// FieldDefinitionOption
-modelBuilder.Entity<FieldDefinitionOption>()
-    .Property(o => o.Label).HasMaxLength(200);
-
-// IdeaFieldValue
-modelBuilder.Entity<IdeaFieldValue>()
-    .HasIndex(v => new { v.IdeaId, v.FieldDefinitionId })
-    .IsUnique();
-
-modelBuilder.Entity<IdeaFieldValue>()
-    .HasIndex(v => new { v.FieldDefinitionId, v.Value });
-
-modelBuilder.Entity<IdeaFieldValue>()
-    .Property(v => v.Value).HasMaxLength(4000);
-```
+- The **partial** unique index on `(organization_id, normalized_name) WHERE is_deleted = false` is raw SQL in the baseline migration, `packages/infrastructure/prisma/migrations/00000000000000_baseline/migration.sql`, because Prisma's schema cannot express a partial index.
+- The non-unique `(field_definition_id, value)` index was **not carried over**: only `ix_idea_field_values_field_definition_id`, on `field_definition_id` alone, exists.
 
 ---
 
 ## Migration Strategy
 
-### EF Core Migration: `AddUserDefinedFields`
+### Migration: `AddUserDefinedFields` (.NET, history)
 
-Creates three new tables; no backfill required because null/empty is the correct default for existing ideas.
+Creates three new tables; no backfill, because null/empty is the correct default for existing ideas.
 
 ```sql
 -- field_definitions
@@ -233,14 +174,13 @@ CREATE UNIQUE INDEX ux_idea_field_values_idea_id_field_definition_id
     ON idea_field_values (idea_id, field_definition_id);
 ```
 
-> **This listing is illustrative; `Persistence/Migrations/20260812195251_InitialCreate.cs` is authoritative.** Two details are easy to get wrong from the prose above: `normalized_name` (not `name`) carries the uniqueness guarantee, because PostgreSQL compares case-sensitively and the pre-Sprint-5 index relied on SQL Server's case-insensitive default collation; and the partial index `WHERE is_deleted = false` is what lets a soft-deleted definition's name be reused. Keys are generated by the application, not by a column default.
-
+> **This listing is illustrative; the Prisma schema and migrations are authoritative** — `packages/infrastructure/prisma/schema.prisma` for columns and limits, and the baseline `packages/infrastructure/prisma/migrations/00000000000000_baseline/migration.sql` for the partial unique index on `normalized_name`, which the schema cannot express (the .NET migration this named was deleted with that stack). The `(field_definition_id, value)` index above has no Prisma counterpart. Two details are easy to get wrong from the prose above: `normalized_name` (not `name`) carries the uniqueness guarantee, because PostgreSQL compares case-sensitively and the pre-Sprint-5 index relied on SQL Server's case-insensitive default collation; and the partial index `WHERE is_deleted = false` is what lets a soft-deleted definition's name be reused. Keys are generated by the application, not by a column default.
 
 ---
 
 ## API Endpoints
 
-All routes follow existing conventions: path versioning under `/api/v1`, plural nouns, org-scoped.
+Existing conventions: path versioning under `/api/v1`, plural nouns, org-scoped.
 
 ### Field Definitions (Admin only: `OrgAdmin` or `SiteAdmin`)
 
@@ -255,7 +195,7 @@ All routes follow existing conventions: path versioning under `/api/v1`, plural 
 
 ### UDF Values on Ideas
 
-Field values are embedded inside existing idea create/update payloads and returned in `IdeaDetailModel`. No additional endpoints are required.
+Field values ride inside the existing idea create/update payloads and come back in `IdeaDetailModel`; no additional endpoints.
 
 #### `CreateIdeaRequest` / `UpdateIdeaRequest` extension
 
@@ -283,17 +223,13 @@ Field values are embedded inside existing idea create/update payloads and return
 }
 ```
 
-### Filtering Extension to `IdeaListQueryModel`
+### Filtering Extension to the idea list query
 
 ```
 GET /api/v1/boards/{boardId}/ideas?fieldFilters[<fieldDefinitionId>]=<value>
 ```
 
-Added property on `IdeaListQueryModel`:
-
-```csharp
-public Dictionary<Guid, string> FieldFilters { get; set; } = new();
-```
+The list query carries these as a map from field definition id to filter value.
 
 Filter semantics per type:
 
@@ -310,36 +246,13 @@ Filter semantics per type:
 
 ## Application Layer
 
-### New Interface: `IFieldDefinitionService`
+### Service: `FieldDefinitionService`
 
-Located in `Collega.Application/FieldDefinitions/`
+`packages/application/src/fields/field-definition-service.ts`. Operations, each scoped to one organization and authorized for the calling user: list (optionally including archived definitions), get one, create, update, soft-delete, and reorder (a list of ordered definition ids).
 
-```csharp
-public interface IFieldDefinitionService
-{
-    Task<ServiceResult<IReadOnlyList<FieldDefinitionModel>>> ListAsync(
-        WorkflowActorContext actor, Guid organizationId, bool includeDeleted, CancellationToken ct);
+### Idea create and update
 
-    Task<ServiceResult<FieldDefinitionModel>> GetAsync(
-        WorkflowActorContext actor, Guid organizationId, Guid id, CancellationToken ct);
-
-    Task<ServiceResult<FieldDefinitionModel>> CreateAsync(
-        WorkflowActorContext actor, Guid organizationId, CreateFieldDefinitionRequest request, CancellationToken ct);
-
-    Task<ServiceResult<FieldDefinitionModel>> UpdateAsync(
-        WorkflowActorContext actor, Guid organizationId, Guid id, UpdateFieldDefinitionRequest request, CancellationToken ct);
-
-    Task<ServiceResult> DeleteAsync(
-        WorkflowActorContext actor, Guid organizationId, Guid id, CancellationToken ct);
-
-    Task<ServiceResult> ReorderAsync(
-        WorkflowActorContext actor, Guid organizationId, IReadOnlyList<Guid> orderedIds, CancellationToken ct);
-}
-```
-
-### `IWorkflowManagementService` Extensions
-
-Existing `CreateIdeaAsync` and `UpdateIdeaAsync` are extended to accept `IReadOnlyList<FieldValueWriteModel>` and run UDF validation before persistence.
+Idea create and update (`IdeaService`) accept a list of field values (`FieldValueWriteModel` below) and run UDF validation before persistence.
 
 **UDF Validation Rules**
 
@@ -359,7 +272,7 @@ Existing `CreateIdeaAsync` and `UpdateIdeaAsync` are extended to accept `IReadOn
 
 **Audit Emission**
 
-After each idea save, the service compares new vs. previous `IdeaFieldValue` rows and emits `IdeaFieldValueChanged` audit events for each changed, added, or cleared value:
+After each idea save, the service diffs new vs. previous `IdeaFieldValue` rows and emits one `IdeaFieldValueChanged` audit event per changed, added, or cleared value:
 
 ```json
 {
@@ -376,79 +289,30 @@ After each idea save, the service compares new vs. previous `IdeaFieldValue` row
 
 ### Application Models
 
-```csharp
-// Read model returned by the service
-public sealed class FieldDefinitionModel
-{
-    public Guid FieldDefinitionId { get; init; }
-    public Guid OrganizationId { get; init; }
-    public string Name { get; init; } = string.Empty;
-    public string? Description { get; init; }
-    public string FieldType { get; init; } = string.Empty;  // serialized enum string
-    public bool IsRequired { get; init; }
-    public int DisplayOrder { get; init; }
-    public bool IsDeleted { get; init; }
-    public IReadOnlyList<FieldOptionModel> Options { get; init; } = Array.Empty<FieldOptionModel>();
-}
+Read model returned by the service — `FieldDefinitionModel`:
+- `fieldDefinitionId`, `organizationId`
+- `name`
+- `description` — nullable
+- `fieldType` — the enum name as a string
+- `isRequired`, `displayOrder`, `isDeleted`
+- `options` — array of `FieldOptionModel`: `optionId`, `label`, `displayOrder`
 
-public sealed class FieldOptionModel
-{
-    public Guid OptionId { get; init; }
-    public string Label { get; init; } = string.Empty;
-    public int DisplayOrder { get; init; }
-}
+Write models:
+- `CreateFieldDefinitionRequest` — `name` required, max 100; `description` optional, max 500; `fieldType` required; `isRequired`; `displayOrder`; `options` array of `CreateFieldOptionRequest` (`label` required, max 200; `displayOrder`)
+- `UpdateFieldDefinitionRequest` — the same shape as create
+- `ReorderFieldDefinitionsRequest` — `orderedIds` required, an array of definition ids
+- `FieldValueWriteModel` (embedded in the idea write request) — `fieldDefinitionId`, `value` nullable
 
-// Write models
-public sealed class CreateFieldDefinitionRequest
-{
-    [Required][StringLength(100)] public string Name { get; set; } = string.Empty;
-    [StringLength(500)] public string? Description { get; set; }
-    [Required] public string FieldType { get; set; } = string.Empty;
-    public bool IsRequired { get; set; }
-    public int DisplayOrder { get; set; }
-    public IReadOnlyList<CreateFieldOptionRequest> Options { get; set; } = Array.Empty<CreateFieldOptionRequest>();
-}
-
-public sealed class CreateFieldOptionRequest
-{
-    [Required][StringLength(200)] public string Label { get; set; } = string.Empty;
-    public int DisplayOrder { get; set; }
-}
-
-public sealed class UpdateFieldDefinitionRequest : CreateFieldDefinitionRequest { }
-
-public sealed class ReorderFieldDefinitionsRequest
-{
-    [Required] public IReadOnlyList<Guid> OrderedIds { get; set; } = Array.Empty<Guid>();
-}
-
-// Embedded in idea write request
-public sealed class FieldValueWriteModel
-{
-    public Guid FieldDefinitionId { get; set; }
-    public string? Value { get; set; }
-}
-
-// Embedded in IdeaDetailModel
-public sealed class IdeaFieldValueModel
-{
-    public Guid FieldDefinitionId { get; init; }
-    public string FieldName { get; init; } = string.Empty;
-    public string FieldType { get; init; } = string.Empty;
-    public string? Value { get; init; }
-}
-```
+Embedded in the idea detail — `IdeaFieldValueModel`: `fieldDefinitionId`, `fieldName`, `fieldType`, `value` nullable.
 
 ---
 
 ## New API Controller
 
-`Collega.API/Controllers/FieldDefinitionsController.cs`
-
-Follows the same `ApiControllerBase` pattern. Delegates all logic to `IFieldDefinitionService`. No business logic in the controller.
+`apps/api/src/field-definitions/` — delegates all logic to `FieldDefinitionService`, no business logic in the controller.
 
 ```
-GET    /api/v1/organizations/{orgId}/field-definitions           → 200 IReadOnlyList<FieldDefinitionModel>
+GET    /api/v1/organizations/{orgId}/field-definitions           → 200 array of FieldDefinitionModel
 POST   /api/v1/organizations/{orgId}/field-definitions           → 201 FieldDefinitionModel
 GET    /api/v1/organizations/{orgId}/field-definitions/{id}      → 200 FieldDefinitionModel
 PUT    /api/v1/organizations/{orgId}/field-definitions/{id}      → 200 FieldDefinitionModel
@@ -462,19 +326,17 @@ PUT    /api/v1/organizations/{orgId}/field-definitions/reorder   → 204
 
 ### Admin: Field Definition Manager
 
-**Route**: `/organizations/{orgId}/settings/fields`
+- **Route**: `/settings/fields` in `apps/web` (the Blazor client used `/organizations/{orgId}/settings/fields`)
+- **Access**: visible and navigable only for `OrgAdmin` and `SiteAdmin`.
+- **Navigation**: a "Custom Fields" link in the Organization Settings navigation menu.
 
-**Access**: Visible and navigable only for `OrgAdmin` and `SiteAdmin`.
+**Parts**:
 
-**Components**:
-
-| Component | Responsibility |
+| Part | Responsibility |
 |---|---|
-| `FieldDefinitionList.razor` | Scrollable list of active definitions; drag-handle for reorder; Edit / Archive buttons |
-| `FieldDefinitionEditor.razor` | Create/edit dialog: name, description, type selector, required toggle, display order, options sub-editor |
-| `FieldOptionEditor.razor` | Embedded in editor; add/remove/reorder option labels for Dropdown and MultiSelect types |
-
-**Navigation**: Add "Custom Fields" link to the Organization Settings navigation menu.
+| Definition list | Scrollable list of active definitions; drag-handle for reorder; Edit / Archive buttons |
+| Definition editor | Create/edit: name, description, type selector, required toggle, display order, options sub-editor |
+| Option editor | Embedded in the editor; add/remove/reorder option labels for Dropdown and MultiSelect types |
 
 **Behaviors**:
 - Reorder via drag-and-drop; saves order immediately on drop (calls `PUT .../reorder`)
@@ -483,59 +345,48 @@ PUT    /api/v1/organizations/{orgId}/field-definitions/reorder   → 204
 
 ### Idea Form UDF Fields
 
-**Location**: the create modal and the Idea Detail drawer's edit form (addressable as `/ideas/{ideaId}`), rendered below the standard fields in a collapsible "Custom Fields" section.
+- **Location**: the create modal and the Idea Detail drawer's edit form (addressable as `/ideas/{ideaId}`), below the standard fields in a collapsible "Custom Fields" section.
+- **Validation**: required fields show inline error text on submit attempt, in the canonical format `<FieldName> is required.`
+- **Field definition loading**: the form renders the idea type's `effectiveFields` on create and the idea's `formFields` on edit, both sent by the API, rather than fetching and resolving definitions itself (`SPEC/decisions.md` 2026-09-27, "The API sends the custom field list"). *(The Blazor client fetched `GET …/field-definitions` and cached it in a session-scoped service.)*
 
 **Rendering per type**:
 
-| Field Type | Blazor Component |
+| Field Type | Control |
 |---|---|
-| `Text` | `FluentTextField` |
-| `Number` | `FluentNumberField<decimal?>` |
-| `Date` | `FluentDatePicker` |
-| `Boolean` | `FluentCheckbox` |
-| `Dropdown` | `FluentSelect` |
-| `MultiSelect` | `FluentListbox` (multi) or tag-chip input |
-| `Url` | `FluentTextField` with URI format annotation |
-
-**Validation**: Required fields show inline error text on submit attempt using the canonical format `<FieldName> is required.`
-
-**Field definition loading**: On component init, fetch from `GET /api/v1/organizations/{orgId}/field-definitions`. Cache in a scoped `FieldDefinitionCacheService` to avoid redundant fetches within the same session.
+| `Text` | text field |
+| `Number` | number field (decimal) |
+| `Date` | date picker |
+| `Boolean` | checkbox |
+| `Dropdown` | single select |
+| `MultiSelect` | multi-select list or tag-chip input |
+| `Url` | text field with URL format |
 
 ### Ideas List Filter Panel
 
-A "Custom Fields" accordion section is added to the filter panel. Each active definition renders a type-appropriate filter control:
+A "Custom Fields" accordion section in the filter panel; each active definition renders a type-appropriate control. Applied filters serialize to `fieldFilters[<id>]=<value>` in the query string.
 
 | Type | Filter control |
 |---|---|
 | Text / Url | Text input (contains match) |
 | Number | Dual numeric inputs (min / max) |
 | Date | Two date pickers (from / to) |
-| Boolean | `FluentCheckbox` or three-state toggle (any / true / false) |
+| Boolean | checkbox or three-state toggle (any / true / false) |
 | Dropdown | Checkbox list of option labels |
 | MultiSelect | Checkbox list of option labels (any-of match) |
 
-Applied filters serialize to `fieldFilters[<id>]=<value>` in the query string.
+### Client data access
 
-### New Client API Client
-
-`Collega.Client/FieldDefinitions/FieldDefinitionApiClient.cs`
-
-```csharp
-public interface IFieldDefinitionApiClient
-{
-    Task<IReadOnlyList<FieldDefinitionModel>> ListAsync(Guid organizationId, bool includeDeleted = false);
-    Task<FieldDefinitionModel> CreateAsync(Guid organizationId, CreateFieldDefinitionRequest request);
-    Task<FieldDefinitionModel> UpdateAsync(Guid organizationId, Guid id, UpdateFieldDefinitionRequest request);
-    Task DeleteAsync(Guid organizationId, Guid id);
-    Task ReorderAsync(Guid organizationId, ReorderFieldDefinitionsRequest request);
-}
-```
+`apps/web` reads field definitions through `lib/data/admin.ts` and writes them through the Server Functions in `lib/server/catalog-actions.ts`, over the routes above. *(The Blazor client had a dedicated API client for them, deleted in F6.)*
 
 ---
 
 ## Template Integration — Realized as Idea-Type Field Selection
 
-> **Reinterpreted (see `SPEC/20-feature-idea-type-fields.md`).** The original forward-compat note below imagined "templates" as *default field-value injectors*. That is **not** the v1 direction. The interview-resolved feature is **per-type field selection (direct mapping)**: an Idea Type directly maps an ordered selection of existing org UDFs (each required-or-optional for that type), and the idea form/validator/detail resolve fields by the idea's type. There is no separate reusable "field set" entity — fields attach straight to the type. Idea type is **immutable after creation** (with an admin-only reassignment exception that archives out-of-scope values), so there is no value reconciliation on the normal edit path. Default/prefilled values are a **P2 future consideration**, not part of v1.
+> **Reinterpreted (see `SPEC/20-feature-idea-type-fields.md`).** The original note imagined "templates" as *default field-value injectors*; that is **not** the v1 direction.
+> - v1 is **per-type field selection (direct mapping)**: an Idea Type maps an ordered selection of existing org UDFs (each required-or-optional for that type), and the idea form/validator/detail resolve fields by the idea's type.
+> - There is no separate reusable "field set" entity — fields attach straight to the type.
+> - Idea type is **immutable after creation** (with an admin-only reassignment exception that archives out-of-scope values), so the normal edit path has no value reconciliation.
+> - Default/prefilled values are a **P2 future consideration**, not part of v1.
 
 How the two readings reconcile:
 
@@ -566,10 +417,10 @@ How the two readings reconcile:
 - [ ] Supported field types: `Text`, `Number`, `Date`, `Boolean`, `Dropdown`, `MultiSelect`, `Url`
 - [ ] `Dropdown` and `MultiSelect` fields require at least one option on create
 - [ ] Display order is admin-configurable and persisted independently
-- [ ] Deleting a field definition performs a soft delete; the definition and its values are preserved
+- [ ] Deleting a field definition is a soft delete; the definition and its values are preserved
 - [ ] Soft-deleted fields are hidden from idea forms and filter panels
 - [ ] `GET .../field-definitions?includeDeleted=true` returns soft-deleted definitions to admins
-- [ ] Field definitions for archived fields continue to appear by name in audit records
+- [ ] Archived fields' definitions still appear by name in audit records
 
 ### Field Values on Ideas
 - [ ] UDF fields appear in the create modal and the Idea Detail drawer edit form, ordered by `DisplayOrder`
@@ -580,7 +431,7 @@ How the two readings reconcile:
 - [ ] `MultiSelect` values must contain no duplicate option IDs
 - [ ] UDF values are returned in `IdeaDetailModel.fieldValues`
 - [ ] `IdeaListItemModel` does not include UDF values
-- [ ] When a new field definition is created, existing ideas have no value for it (null/empty — no backfill)
+- [ ] A newly created field definition has no value on existing ideas (null/empty — no backfill)
 - [ ] Submitting a field value for a soft-deleted field definition returns `400`
 
 ### Audit

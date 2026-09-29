@@ -152,7 +152,7 @@ function parseOptions(argv: readonly string[]): Options {
     files,
     baseline: values.baseline,
     dryRun: values['dry-run'] ?? false,
-    cases: values.case && values.case.length > 0 ? values.case : null,
+    cases: values.case && values.case.length > 0 ? [...new Set(values.case)] : null,
     repeats: positiveInteger(values.repeats, 5, '--repeats'),
     concurrency: positiveInteger(values.concurrency, 1, '--concurrency'),
     promptFile: values['prompt-file'],
@@ -236,6 +236,7 @@ function printDryRun(
   prompt: PromptSource,
   cases: readonly EvalCase[],
   fixtures: ReadonlyMap<string, PreparedFixture>,
+  v2Only: readonly EvalCase[],
 ): void {
   const calls = plannedCalls(cases, options.repeats)
   let inputTokens = 0
@@ -275,6 +276,12 @@ function printDryRun(
     )
   }
   out.push('')
+  if (v2Only.length > 0) {
+    out.push(
+      `Validated, not run (${v2Only.length} v2 cases; the v2 turn is not built): ${v2Only.map((c) => c.id).join(', ')}`,
+    )
+    out.push('')
+  }
   out.push(`Planned    ${formatNumber(calls)} calls across ${cases.length} cases`)
   out.push(
     `Estimate   ~${formatNumber(inputTokens)} input tokens (characters / ${CHARS_PER_TOKEN}; ` +
@@ -393,6 +400,7 @@ async function liveRun(
         organizationId: f.catalog.organizationId,
         ideaTypes: f.catalog.ideaTypes,
         businessImpacts: f.catalog.businessImpacts,
+        ...(f.catalog.fields === undefined ? {} : { fields: f.catalog.fields }),
       }),
     ),
     cases: Object.fromEntries(
@@ -405,6 +413,8 @@ async function liveRun(
           assistant: c.assistant,
           turns: c.turns,
           expect: c.expect,
+          ...(c.draft === null ? {} : { draft: c.draft }),
+          ...(c.lockedFields.length === 0 ? {} : { lockedFields: c.lockedFields }),
         },
       ]),
     ),
@@ -485,7 +495,8 @@ export async function main(
     if (options.dryRun) {
       // Read as a live run would, so a bad --baseline fails here rather than after the spend.
       const baseline = options.baseline === undefined ? null : await loadBaseline(options.baseline)
-      printDryRun(options, prompt, cases, fixtures)
+      const v2Only = corpus.cases.filter((c) => c.assistant === 'v2')
+      printDryRun(options, prompt, cases, fixtures, v2Only)
       if (baseline !== null) {
         console.log(`Baseline   ${baseline.path} (${baseline.run.trials.length} trials, readable)`)
       }

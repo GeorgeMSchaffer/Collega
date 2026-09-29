@@ -84,10 +84,15 @@ export function renderSummary(run: RunData, metrics: RunMetrics, verdict: Verdic
     `| **overall** (micro-average, \`inScope: true\` cases) | ${metrics.overallMapping.n} | ${proportion(metrics.overallMapping)} | | | |`,
   )
   out.push('')
-  if (metrics.lockedFields === null) {
+  const locked = metrics.lockedFields
+  if (locked === null) {
     out.push('Locked fields: no case in this run declares them.')
-    out.push('')
+  } else {
+    out.push(
+      `Locked fields (rule 16): model proposed a change in ${locked.proposals}/${locked.trials} trials (${fmt(locked.proposalRate)}); ${locked.survivals} survived the server's drop${locked.survivals > 0 ? ` - **a defect**: ${locked.survived.join('; ')}` : ''}.`,
+    )
   }
+  out.push('')
 
   out.push('## Cases')
   out.push('')

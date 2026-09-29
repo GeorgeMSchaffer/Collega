@@ -1,0 +1,18 @@
+{
+  "id": "v2-interview-order-complete",
+  "fixture": "acme-v2",
+  "assistant": "v2",
+  "note": "The interview order carried through (rule 5): Problem, then Proposed solutions, then Impact rationale, each answered in turn. With all three filled and no impact level stated or implied (the rationale avoids the safety, time and cost cues v2 infers a level from), the next question is Business impact. Read v2-interview-order with it: that case stops one turn earlier.",
+  "turns": [
+    "The label printers in packing jam constantly and one person spends half their day clearing them.",
+    "We could replace the two oldest printers, or move to the thermal model the shipping team already uses.",
+    "It matters because smudged and half-printed labels from jammed printers are behind most of the complaints the shipping team hears."
+  ],
+  "expect": {
+    "inScope": true,
+    "problemSet": true,
+    "proposedSolutions": { "min": 2 },
+    "impactRationaleSet": true,
+    "nextStep": "businessImpactId"
+  }
+}
