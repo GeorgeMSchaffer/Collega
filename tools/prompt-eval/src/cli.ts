@@ -55,7 +55,7 @@ const REPO_ROOT = path.resolve(PACKAGE_ROOT, '..', '..')
 export interface RunnerDeps {
   readonly env: NodeJS.ProcessEnv
   /** The root `.env`, read for the key alone. */
-  readonly envFile: string
+  readonly envFile: string | readonly string[]
   readonly runsDir: string
   /** Holds `cases/` and `fixtures/`. */
   readonly corpusRoot: string
@@ -67,7 +67,7 @@ export interface RunnerDeps {
 
 const DEFAULT_DEPS: RunnerDeps = {
   env: process.env,
-  envFile: path.join(REPO_ROOT, '.env'),
+  envFile: [path.join(REPO_ROOT, '.env.local'), path.join(REPO_ROOT, '.env')],
   runsDir: path.join(PACKAGE_ROOT, 'runs'),
   corpusRoot: PACKAGE_ROOT,
   git: () => gitState(REPO_ROOT),
