@@ -4,11 +4,15 @@
 //   - a non-string value is refused by the controller itself - the body type is compile-time only,
 //     so without that check `{"description": 42}` would reach the domain and be stored as "42";
 //   - an over-long string is refused by the domain, mapped by the service to the kernel error.
+//
+// `ideaMoves` on PUT (added 2026-09-29) is read here and judged by the Application layer, so its
+// tests pin what the controller hands the service, and one refusal rendered as a response.
 
 import {
   type BoardRepository,
   BoardService,
   type OrganizationExistenceLookup,
+  type UpdateBoardCommand,
 } from '@collega/application/boards'
 import type {
   AuditEventWriter,
@@ -220,5 +224,88 @@ describe('Board description at the HTTP boundary', () => {
     })
 
     expect(detail.description).toHaveLength(500)
+  })
+})
+
+describe('Board ideaMoves at the HTTP boundary', () => {
+  /** A controller over a service that only records the command `update` was handed. */
+  function recording(): { controller: BoardsController; commands: UpdateBoardCommand[] } {
+    const commands: UpdateBoardCommand[] = []
+    const service = {
+      update: async (_boardId: string, command: UpdateBoardCommand) => {
+        commands.push(command)
+        return {} as never
+      },
+    } as unknown as BoardService
+    return { controller: new BoardsController(service), commands }
+  }
+
+  const put = (ideaMoves: unknown) => ({
+    name: 'Ideas',
+    swimlanes: SWIMLANES,
+    ideaMoves: ideaMoves as never,
+  })
+
+  it('passes each move through as fromStatusId and toStatusId', async () => {
+    const { controller: boards, commands } = recording()
+
+    await boards.update(
+      BOARD,
+      put([
+        { fromStatusId: STATUS_1, toStatusId: STATUS_2 },
+        { fromStatusId: STATUS_2, toStatusId: STATUS_1, extra: 'ignored' },
+      ]),
+    )
+
+    expect(commands[0]?.ideaMoves).toEqual([
+      { fromStatusId: STATUS_1, toStatusId: STATUS_2 },
+      { fromStatusId: STATUS_2, toStatusId: STATUS_1 },
+    ])
+  })
+
+  it.each([
+    ['absent', undefined],
+    ['null', null],
+    ['an object', { fromStatusId: STATUS_1, toStatusId: STATUS_2 }],
+    ['a string', 'moves'],
+  ])('reads %s as no moves', async (_label, ideaMoves) => {
+    const { controller: boards, commands } = recording()
+
+    await boards.update(BOARD, put(ideaMoves))
+
+    expect(commands[0]?.ideaMoves).toEqual([])
+  })
+
+  it('carries a missing or non-string id as an empty string, for the service to refuse', async () => {
+    const { controller: boards, commands } = recording()
+
+    await boards.update(
+      BOARD,
+      put([null, { fromStatusId: 7 }, { toStatusId: STATUS_2 }, 'not an entry']),
+    )
+
+    expect(commands[0]?.ideaMoves).toEqual([
+      { fromStatusId: '', toStatusId: '' },
+      { fromStatusId: '', toStatusId: '' },
+      { fromStatusId: '', toStatusId: STATUS_2 },
+      { fromStatusId: '', toStatusId: '' },
+    ])
+  })
+
+  it('answers a move from a lane the save keeps with 400 keyed ideaMoves', async () => {
+    const { controller: boards, persisted } = controller()
+
+    const error = await thrownBy(
+      boards.update(BOARD, put([{ fromStatusId: STATUS_1, toStatusId: STATUS_2 }])),
+    )
+
+    expect(render(error, `/api/v1/boards/${BOARD}`)).toMatchObject({
+      status: 400,
+      body: {
+        title: 'One or more fields are invalid.',
+        errors: { ideaMoves: ['A move must come from a lane this save removes.'] },
+      },
+    })
+    expect(persisted).toHaveLength(0)
   })
 })

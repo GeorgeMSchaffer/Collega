@@ -67,13 +67,13 @@ function idea(overrides: Partial<IdeaDetail> = {}): IdeaDetail {
   }
 }
 
-function renderForm(detail: IdeaDetail | null, contentLocked = false) {
+function renderForm(detail: IdeaDetail | null, contentLocked = false, options = OPTIONS) {
   const onSaved = vi.fn()
   const view = render(
     <IdeaForm
       formId="idea-form"
       idea={detail}
-      options={OPTIONS}
+      options={options}
       boards={null}
       boardId="board-1"
       contentLocked={contentLocked}
@@ -284,5 +284,65 @@ describe('IdeaForm structured fields for a reader who is neither author nor Org 
     renderForm(idea(), false)
     expect((screen.getByLabelText('Problem') as HTMLTextAreaElement).readOnly).toBe(false)
     expect(screen.getByRole('button', { name: '+ Add a solution' })).toBeTruthy()
+  })
+})
+
+describe('IdeaForm classification defaults', () => {
+  // Active-only, in sort order, as the options arrive from the catalog readers.
+  const CATALOG: IdeaFormOptions = {
+    ideaTypes: [
+      {
+        id: 'type-kaizen',
+        name: 'Kaizen',
+        fields: [{ id: 'f-line', name: 'Line', fieldType: 'Text', required: false, options: [] }],
+      },
+      ...OPTIONS.ideaTypes,
+    ],
+    businessImpacts: [{ id: 'impact-high', name: 'High' }, ...OPTIONS.businessImpacts],
+  }
+  const typeSelect = () => screen.getByLabelText('Idea type') as HTMLSelectElement
+  const impactSelect = () => screen.getByLabelText('Business impact') as HTMLSelectElement
+
+  it('preselects the first Idea Type and Business Impact on a new idea', () => {
+    renderForm(null, false, CATALOG)
+
+    expect(typeSelect().value).toBe('type-kaizen')
+    expect(impactSelect().value).toBe('impact-high')
+  })
+
+  it("shows the preselected type's custom fields without a pick", () => {
+    renderForm(null, false, CATALOG)
+
+    expect(screen.getByText('Kaizen fields')).toBeTruthy()
+    expect(screen.getByLabelText('Line (optional)')).toBeTruthy()
+    expect(screen.queryByText('Pick an Idea Type to see its custom fields.')).toBeNull()
+  })
+
+  it('sends the preselected ids when saved untouched', async () => {
+    const { form } = renderForm(null, false, CATALOG)
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Shorter changeovers' } })
+    fireEvent.change(screen.getByLabelText('Problem'), { target: { value: 'Two hours each.' } })
+    fireEvent.change(screen.getByLabelText('Solution 1'), { target: { value: 'Pre-stage.' } })
+    fireEvent.change(screen.getByLabelText('Impact rationale'), { target: { value: 'Idle line.' } })
+
+    submit(form)
+    await waitFor(() => expect(saveIdea).toHaveBeenCalled())
+    expect(sent()).toMatchObject({ ideaTypeId: 'type-kaizen', businessImpactId: 'impact-high' })
+  })
+
+  it("keeps an edited idea's own Idea Type and Business Impact", () => {
+    renderForm(idea(), false, CATALOG)
+
+    expect(typeSelect().value).toBe('type-ci')
+    expect(impactSelect().value).toBe('impact-med')
+    expect(screen.getByText('Continuous Improvement fields')).toBeTruthy()
+  })
+
+  it('leaves both unchosen when the catalogs are empty', () => {
+    renderForm(null, false, { ideaTypes: [], businessImpacts: [] })
+
+    expect(typeSelect().value).toBe('')
+    expect(impactSelect().value).toBe('')
+    expect(screen.getByText('Pick an Idea Type to see its custom fields.')).toBeTruthy()
   })
 })

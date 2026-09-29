@@ -21,6 +21,7 @@ import { appendFileSync, copyFileSync, existsSync, readFileSync } from 'node:fs'
 import { createConnection, createServer } from 'node:net'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { allowsRemoteDatabase, parseEnvText } from './env-file.ts'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 const ENV_FILE = join(ROOT, '.env')
@@ -37,29 +38,10 @@ function fail(message: string): never {
   process.exit(1)
 }
 
-/**
- * `KEY=VALUE` lines, which is all `.env` holds and all the Prisma CLI reads out of it.
- *
- * Hand-parsed rather than through `--env-file`, because this script has to *derive* one variable
- * from the others before anything runs, and because Node's env-file precedence rules are one more
- * thing to be wrong about when a value is already exported in the shell.
- */
+/** `.env`'s values, parsed as `parseEnvText` describes; none when there is no file yet. */
 function readEnvFile(): Map<string, string> {
-  const values = new Map<string, string>()
-  if (!existsSync(ENV_FILE)) return values
-
-  for (const line of readFileSync(ENV_FILE, 'utf8').split('\n')) {
-    const text = line.trim()
-    if (text === '' || text.startsWith('#')) continue
-    const separator = text.indexOf('=')
-    if (separator <= 0) continue
-    const value = text.slice(separator + 1).trim()
-    // A value copied from Prisma or Vercel usually arrives quoted; Prisma's own loader drops them.
-    const quoted =
-      value.length >= 2 && (value[0] === '"' || value[0] === "'") && value.at(-1) === value[0]
-    values.set(text.slice(0, separator).trim(), quoted ? value.slice(1, -1) : value)
-  }
-  return values
+  if (!existsSync(ENV_FILE)) return new Map()
+  return parseEnvText(readFileSync(ENV_FILE, 'utf8'))
 }
 
 function run(command: string, args: string[], env: NodeJS.ProcessEnv = {}): void {
@@ -191,8 +173,10 @@ const postgresIsLocal =
 // does not set. Neither belongs on a shared cluster by accident, so a non-loopback host stops the
 // run here rather than being caught twice further down.
 // Read from the shell or `.env`, as `.env.example` documents it; the file alone used to be ignored.
-const allowRemoteDatabase =
-  (process.env.COLLEGA_ALLOW_REMOTE_DATABASE ?? env.get('COLLEGA_ALLOW_REMOTE_DATABASE')) === '1'
+const allowRemoteDatabase = allowsRemoteDatabase(
+  process.env.COLLEGA_ALLOW_REMOTE_DATABASE,
+  env.get('COLLEGA_ALLOW_REMOTE_DATABASE'),
+)
 if (!postgresIsLocal && !allowRemoteDatabase) {
   fail(
     `DATABASE_URL points at ${postgresHost}:${postgresPort}, which is not this machine.\n\n` +
