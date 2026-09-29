@@ -21,12 +21,14 @@
     "test:e2e": "turbo run test --filter=collega-e2e",
     "shots": "pnpm --filter @collega/demo-shots capture",
     "deck": "pnpm --filter @collega/demo-shots deck",
-    "check": "pnpm run lint && turbo run typecheck test build --filter=!collega-e2e"
+    "check": "pnpm run lint && turbo run typecheck test build --filter=!collega-e2e",
+    "env:pull": "vercel env pull ../../.env.local --cwd apps/api --environment=development --yes"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.12",
     "@types/node": "26.4.1",
     "turbo": "2.10.12",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "vercel": "60.1.3"
   }
 }
