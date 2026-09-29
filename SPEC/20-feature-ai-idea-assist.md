@@ -25,7 +25,7 @@
 
 ## Overview
 
-`Components/IdeaBrainstormModal.razor` fronts idea creation on the Ideas list with a ChatGPT-style chat. Today it is **scripted**: three canned assistant nudges cycle, and the user's messages are handed to `IdeaCreateModal.InitialDescription` as a seed description. This feature replaces the nudges with a model-backed conversation that also **maps the user's answers onto Idea form fields**, confined to idea drafting for this organization.
+The Blazor client's brainstorm modal (`IdeaBrainstormModal`, deleted with that client in F6) fronted idea creation on the Ideas list with a ChatGPT-style chat. It was **scripted**: three canned assistant nudges cycle, and the user's messages are handed to `IdeaCreateModal.InitialDescription` as a seed description. This feature replaces the nudges with a model-backed conversation that also **maps the user's answers onto Idea form fields**, confined to idea drafting for this organization.
 
 Two mechanisms, two jobs; conflating them is the failure mode this spec prevents:
 
@@ -40,7 +40,7 @@ Two mechanisms, two jobs; conflating them is the failure mode this spec prevents
 |---|---|---|
 | **D-SCOPE** | How is "in scope" decided? | **Idea Types + an Org-Admin-editable scope statement.** Structural boundary = "could this become an Idea of one of this org's active Idea Types?"; an Org Admin may add a free-text narrowing statement (e.g. *"business process improvement only"*). Per-org, retunable without a deploy. |
 | **D-DEDUPE** | Does v1 retrieve similar existing ideas? | **No — deferred to v2.** v1 retrieves structured org data only: no embeddings, no `pgvector`, no dependency on the Sprint 5 migration beyond running after it. |
-| **D-CREDS** | Where does the API key live? | **Single platform-level key in server configuration/secrets** for v1. The per-org override endpoints in `SPEC/30-Contracts.md` stay **unimplemented** — see "Credentials" below. |
+| **D-CREDS** | Where does the API key live? | **Single platform-level key in server configuration/secrets** for v1. The per-org override endpoints in `SPEC/contracts/organizations.md` stay **unimplemented** — see "Credentials" below. |
 | **D-PREFILL** | Which Idea fields may the assistant pre-fill? | **Title, Description, Idea Type, Business Impact, Priority**, as editable suggestions. User-Defined Field values and tag suggestions are **out of v1 scope**. |
 
 ## UI Decisions (Comp-Resolved 2026-08-16)
@@ -51,7 +51,7 @@ Locked from the comp round, `SPEC/mockups/comp-c-review-11-ai-assist-{a-handoff,
 |---|---|---|
 | **D-SURFACE** | Where does drafting happen? | **Direction C — "Draft Strip".** One 720px surface at a time (chat modal → create modal), `CreateModalShell` unchanged, plus a slim **read-only** strip between transcript and composer showing what is classified so far. Rejected: A (no strip; the user learns nothing until the handoff) and B (two-pane editable sheet; needs new chrome and per-field suggested-vs-edited state, and has no narrow-viewport answer). |
 | **D-SUGGEST** | How is a suggested value marked? | **Teal**, never the indigo accent: indigo already means "active/selected" in Comp C and a suggestion is neither. On the form: a `Suggested` chip beside the label, a tinted field, a 3px left border. On the strip: the same teal as pills. |
-| **D-SCOPEUI** | Where does an Org Admin edit the scope statement? | **A dedicated Settings page**, not the Organization detail drawer, because `Settings.razor` is `[Authorize(Roles = "SiteAdmin")]` and the drawer is unreachable for the Org Admin who owns this setting (rule 6). |
+| **D-SCOPEUI** | Where does an Org Admin edit the scope statement? | **A dedicated Settings page**, not the Organization detail drawer, because the Blazor client's Settings page that held the drawer was Site-Admin-only, so the drawer was unreachable for the Org Admin who owns this setting (rule 6). |
 | **D-REFUSED** | What does the user see when a turn is refused? | **Ghost-then-drop.** The message renders greyed and struck through for one beat with the redirect note beneath, then disappears. Rejected: never rendering it — cleaner, but typed input vanishes unacknowledged and reads as a bug. |
 
 ---
@@ -126,7 +126,7 @@ The scripted chat collects prose only. What kind of idea it is, who it affects a
 25. Everything retrieved is **untrusted data**, not instructions. Idea text, tag names and (in v2) uploaded documents are user-authored and may carry injection attempts, so retrieved content is fenced in the prompt and explicitly labeled as data the assistant must not follow instructions from.
 26. Requests are rate limited per user and per organization. The limits are configuration, not hard-coded.
 
-    26a. *Mechanism.* A sliding window counted from rule 28c's usage records, not a separate counter: they already carry organization, actor and timestamp, are written for every turn, and so count correctly across instances once a deployment scales past one. Keys: `Ai:RateLimit:WindowSeconds`, `Ai:RateLimit:PerUserCalls`, `Ai:RateLimit:PerOrganizationCalls`; non-positive disables, matching the budget convention.
+    26a. *Mechanism.* A sliding window counted from rule 28c's usage records, not a separate counter: they already carry organization, actor and timestamp, are written for every turn, and so count correctly across instances once a deployment scales past one. Settings: `rateLimitWindowSeconds`, `perUserCallsPerWindow`, `perOrganizationCallsPerWindow` in `DEFAULT_AI_USAGE_LIMITS` (`packages/application/src/ai/models.ts`; the .NET stack read them as `Ai:RateLimit:*` configuration); non-positive disables, matching the budget convention.
 
     26b. *The per-user allowance follows the real administrator, not the impersonated user.* Otherwise a Site Admin could reset their quota by moving between View As targets, which would make the per-user limit decorative for exactly the account that needs it least.
 
@@ -152,11 +152,11 @@ The deployment key is shared by every organization (rule 29), so without a ceili
 
 ### Credentials (D-CREDS)
 
-29. v1 uses a **single deployment-level key** from server configuration (user-secrets locally, App Service configuration in Azure — see `SPEC/50-azure-deployment.md`), shared by all organizations. The configuration key is **`ANTHROPIC_API_KEY`** (user decision, 2026-08-25, replacing the vendor-neutral `Ai:ApiKey` — rule 29a). It has no `:` segment, so the configuration key and the environment-variable form are the **same string**, with no `__` mapping to get wrong. `docker-compose.yml` binds it from `ANTHROPIC_API_KEY` in `.env`. It is a secret and never belongs in `appsettings*.json`. The other `Ai:*` settings the cost controls read keep their names.
+29. v1 uses a **single deployment-level key** from server configuration (`.env` locally, the API project's environment variables on Vercel — see `SPEC/50-vercel-deployment.md` §6), shared by all organizations. The configuration key is **`ANTHROPIC_API_KEY`** (user decision, 2026-08-25, replacing the vendor-neutral `Ai:ApiKey` — rule 29a). It has no `:` segment, so the configuration key and the environment-variable form are the **same string**, with no `__` mapping to get wrong. It is a secret and never belongs in a committed file; `.env.example` lists it empty. The cost controls' other settings are constants in `DEFAULT_AI_USAGE_LIMITS`, not configuration.
 
     29a. **The key name is provider-specific, deliberately.** It was `Ai:ApiKey` so a provider change would be a spec-and-adapter change, not a configuration change. Reversed 2026-08-25: `ANTHROPIC_API_KEY` is what the vendor's tooling, SDKs and shells already export, so the neutral name made every developer and deployment keep a redundant copy of the same secret. A second provider gets its own provider-named key, not a shared neutral one. **API contract fields stay vendor-neutral** (`aiApiKey`, `aiKeyConfigured`); only the server-side configuration key changed, so no client contract breaks.
-30. `SPEC/30-Contracts.md` specifies `PUT`/`DELETE /api/v1/organizations/{organizationId}/ai-key` for a **per-org key overriding the deployment default**. Those contracts stay in the spec and stay **unimplemented in v1** — the "Org AI credentials" backlog item. A deliberate deferral: a future agent must not build them as part of this sprint.
-31. If no key is configured, the feature is **off**: the brainstorm modal falls back to its current scripted behavior and the API returns a clear "not configured" response rather than an error. The product must work with the feature dark.
+30. `SPEC/contracts/organizations.md` specifies `PUT`/`DELETE /api/v1/organizations/{organizationId}/ai-key` for a **per-org key overriding the deployment default**. Those contracts stay in the spec and stay **unimplemented in v1** — the "Org AI credentials" backlog item. A deliberate deferral: a future agent must not build them as part of this sprint.
+31. If no key is configured, the feature is **off**: the turn endpoint answers `503` — the same undifferentiated `503` as an unavailable provider or an exhausted daily budget (`contracts/ai-assist.md`) — and `GET /ai-assist/availability` reports `false`, so the client degrades (rules 32–32c) instead of surfacing an error. The product must work with the feature dark. *Corrected 2026-09-29 (`SPEC/decisions.md` 2026-09-29, "Spec contradictions resolved"): this said the API returns a clear "not configured" response rather than an error.*
 
 ### Degradation
 
@@ -230,6 +230,6 @@ The per-org AI key fields implied by the `ai-key` contracts are **not** added in
 - `SPEC/30-Contracts.md` → "AI Idea Assist Contracts" — the endpoint contract.
 - `SPEC/20-feature-ideas-and-engagement.md` — Idea rules the drafted values must satisfy.
 - `SPEC/20-feature-idea-type-fields.md` — Idea Types and per-type field resolution used as retrieval context.
-- `SPEC/20-feature-client-ui.md` — Comp C design direction; this feature is **comp-first** (2026-08-11 process decision) and needs a mockup for the suggestion-indicator treatment before production Blazor.
+- `SPEC/20-feature-client-ui.md` — Comp C design direction; this feature is **comp-first** (2026-08-11 process decision) and needed a mockup for the suggestion-indicator treatment before production UI.
 - `SPEC/40-test-strategy.md` → "AI Idea Assist" — required coverage.
 - `SPEC/sprints/sprint-07-ai-idea-assist.md` — the sprint plan.
