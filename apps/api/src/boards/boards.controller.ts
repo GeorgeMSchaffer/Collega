@@ -3,6 +3,7 @@ import {
   type BoardListItem,
   BoardService,
   type CreateBoardResult,
+  type IdeaMoveInput,
   type SwimlaneInput,
 } from '@collega/application/boards'
 import { BOARD_NAME_MAX_LENGTH } from '@collega/domain/boards'
@@ -26,7 +27,10 @@ type CreateBoardBody = {
   swimlanes?: readonly SwimlaneBody[]
 }
 
-type UpdateBoardBody = CreateBoardBody
+/** One entry of `PUT`'s `ideaMoves` (added 2026-09-29): a removed lane and where its ideas go. */
+type IdeaMoveBody = { fromStatusId?: string; toStatusId?: string }
+
+type UpdateBoardBody = CreateBoardBody & { ideaMoves?: readonly IdeaMoveBody[] }
 
 /** `ReorderSwimlanesRequest` carries no validation attributes at all - only the swimlane list. */
 type ReorderSwimlanesBody = { swimlanes?: readonly SwimlaneBody[] }
@@ -78,6 +82,21 @@ function toSwimlaneInputs(swimlanes: unknown): readonly SwimlaneInput[] {
     statusId: typeof entry?.statusId === 'string' ? entry.statusId : '',
     // `int`, not `int?`, on the .NET record - an absent order bound to 0 rather than failing.
     order: typeof entry?.order === 'number' ? entry.order : 0,
+  }))
+}
+
+/**
+ * `ideaMoves` read the way `toSwimlaneInputs` reads `swimlanes`: a non-array is none, and a member
+ * missing an id carries `''`, which the Application layer refuses as naming no removed lane or no
+ * kept one. Whether the moves are right for this board is the Application layer's question.
+ */
+function toIdeaMoves(moves: unknown): readonly IdeaMoveInput[] {
+  if (!Array.isArray(moves)) {
+    return []
+  }
+  return moves.map((entry: IdeaMoveBody | null | undefined) => ({
+    fromStatusId: typeof entry?.fromStatusId === 'string' ? entry.fromStatusId : '',
+    toStatusId: typeof entry?.toStatusId === 'string' ? entry.toStatusId : '',
   }))
 }
 
@@ -141,6 +160,7 @@ export class BoardsController {
       description: toDescription(body.description),
       allowUserStatusUpdate: body.allowUserStatusUpdate === true,
       swimlanes: toSwimlaneInputs(body.swimlanes),
+      ideaMoves: toIdeaMoves(body.ideaMoves),
     })
   }
 

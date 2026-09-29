@@ -128,6 +128,10 @@ function harness(options: {
       const names = options.userNames ?? {}
       return new Map(ids.flatMap((id) => (names[id] ? [[id, names[id]] as const] : [])))
     },
+    async listLaneIdeas() {
+      return []
+    },
+    async moveIdeas() {},
   }
 
   const statuses: StatusRepository = {

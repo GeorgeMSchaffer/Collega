@@ -14,6 +14,7 @@ import type {
   BoardRepository,
   BoardStatusIdeaCount,
   BoardTagIdeaCount,
+  LaneIdea,
   UserName,
 } from '@collega/application/boards'
 import type { BoardsPort } from '@collega/application/ideas'
@@ -152,6 +153,37 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
     })
     return new Map(
       rows.map((row) => [row.id, { firstName: row.first_name, lastName: row.last_name }]),
+    )
+  }
+
+  /** `boardIdeasWhere` again, so a lane removal moves exactly the ideas its lane count showed. */
+  async listLaneIdeas(boardId: string, statusIds: readonly string[]): Promise<readonly LaneIdea[]> {
+    if (statusIds.length === 0) {
+      return []
+    }
+    const rows = await this.prisma.ideas.findMany({
+      where: { ...boardIdeasWhere([boardId]), status_id: { in: [...statusIds] } },
+      select: { id: true, title: true, status_id: true },
+      orderBy: [{ created_at_utc: 'asc' }, { id: 'asc' }],
+    })
+    return rows.map((row) => ({ ideaId: row.id, title: row.title, statusId: row.status_id }))
+  }
+
+  async moveIdeas(
+    boardId: string,
+    ideaIds: readonly string[],
+    toStatusId: string,
+    nowUtc: Date,
+    actorUserId: string | null,
+  ): Promise<void> {
+    if (ideaIds.length === 0) {
+      return
+    }
+    this.unitOfWork.enqueue(
+      this.prisma.ideas.updateMany({
+        where: { ...boardIdeasWhere([boardId]), id: { in: [...ideaIds] } },
+        data: { status_id: toStatusId, updated_at_utc: nowUtc, updated_by_user_id: actorUserId },
+      }),
     )
   }
 

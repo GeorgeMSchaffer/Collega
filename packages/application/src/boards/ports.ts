@@ -50,6 +50,30 @@ export interface BoardRepository {
    * absent. Here rather than on a users port for the reason `countIdeasByBoard` gives.
    */
   getUserNames(userIds: readonly string[]): Promise<ReadonlyMap<string, UserName>>
+
+  /**
+   * The board's ideas in the given lanes: the same population as `countIdeasByBoard` (live and in
+   * Discovery), so the ideas a lane removal moves are exactly the ones its lane count showed.
+   */
+  listLaneIdeas(boardId: string, statusIds: readonly string[]): Promise<readonly LaneIdea[]>
+
+  /**
+   * Stages moving the given ideas of the board to `toStatusId`, in the same unit of work as the
+   * board's own save, so the lane change and the move commit or fail together.
+   */
+  moveIdeas(
+    boardId: string,
+    ideaIds: readonly string[],
+    toStatusId: string,
+    nowUtc: Date,
+    actorUserId: string | null,
+  ): Promise<void>
+}
+
+export type LaneIdea = {
+  readonly ideaId: string
+  readonly title: string
+  readonly statusId: string
 }
 
 export type BoardStatusIdeaCount = {
