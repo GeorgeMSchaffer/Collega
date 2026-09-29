@@ -34,6 +34,8 @@ export function IdeaMovesGuard({
   const [confirming, setConfirming] = useState(false)
   const anchor = useRef<HTMLInputElement>(null)
   const confirmed = useRef(false)
+  // Set by the first "Move ideas and save" of an opening, so a second click cannot submit twice.
+  const sent = useRef(false)
   const needsConfirm = useRef(false)
   needsConfirm.current = removed.length > 0
   const idPrefix = useId()
@@ -57,6 +59,7 @@ export function IdeaMovesGuard({
       }
       if (!needsConfirm.current) return
       event.preventDefault()
+      sent.current = false
       setConfirming(true)
     }
     form.addEventListener('submit', onSubmit)
@@ -90,6 +93,8 @@ export function IdeaMovesGuard({
         destructive={false}
         onCancel={() => setConfirming(false)}
         onConfirm={() => {
+          if (sent.current) return
+          sent.current = true
           confirmed.current = true
           setConfirming(false)
           anchor.current?.form?.requestSubmit()
