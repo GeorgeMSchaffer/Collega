@@ -37,7 +37,6 @@ open work (the rows are in that file; each stays listed here until it closes):
 
 ### Locked decisions (current only — reversals are deleted, not struck through)
 - Outcome ↔ Issue cardinality = **single-parent**: an Issue sits under at most one Outcome (`Idea.OutcomeId`, nullable FK, `ON DELETE SET NULL`); no join table. Decided 2026-09-02 → `SPEC/decisions.md`.
-- Portrait image library = **ImageSharp** (`SixLabors.ImageSharp`, pinned **3.1.12**). Fully managed, no native assets — chosen 2026-08-13 specifically because SkiaSharp's package ships natives for Windows/macOS only and broke portrait upload on Linux App Service. **Stay on the 3.1.x line:** 4.x requires a Six Labors license key and warns on every build; 3.1.x is the Split License (free for OSS/personal and organizations under the revenue threshold — re-verify terms before any commercial release).
 - Site Admin org-content mutation = **View As act-as only** (Sprint 6, full act-as + dual attribution); no direct create/edit paths, no org dropdowns. Org + user admin stay direct as the bootstrap exception. → `20-feature-client-ui.md`.
 - AI idea drafting: single platform-level key (per-org keys stay unbuilt), dedupe deferred to v2, `Anthropic` package approved. The system prompt is a Site-Admin-managed versioned setting. → `20-feature-ai-idea-assist.md`.
 - AI assist UI = Direction **C "Draft Strip"** (`mockups/comp-c-review-11-ai-assist-c-draftstrip.html`), teal suggestion indicator, scope statement on its own Settings page, ghost-then-drop for refused turns. Canonical in `20-feature-ai-idea-assist.md` → "UI Decisions". The read-only strip is load-bearing: making it editable brings back a per-field suggested-vs-edited state machine v1 deliberately does not have.
@@ -49,8 +48,8 @@ open work (the rows are in that file; each stays listed here until it closes):
 - TypeScript conversion, decided 2026-09-03 → `SPEC/decisions.md`:
   - the .NET test suite is **discarded** (golden contract corpus plus per-slice Vitest, written by a QA agent);
   - deployment is **Vercel + Prisma Postgres**, so Nest runs serverless and keeps no in-process state;
-  - net-new scope is **Wave G** — Loop, decision records, commitment strip, Triage Mode — starting only once F1 is green, with momentum, duplicate clustering and vote budget out.
-- Judgment calls resolved 2026-08-11, no code change needed: fixed-window lockout for MVP; JWT key stays ephemeral until Sprint 8; `Status` name stays `nvarchar(100)`; status defaults final. → `sprints/archive/sprint-04-qa-review-debt.md`.
+  - net-new scope is **Wave G** — Loop, decision records, commitment strip, Triage Mode — with momentum, duplicate clustering and vote budget out. Wave G is revisited after cutover (2026-09-08), and F1 is not a gate (2026-09-11).
+- Judgment calls resolved 2026-08-11, no code change needed: fixed-window lockout for MVP; `Status` name stays `nvarchar(100)`; status defaults final. → `sprints/archive/sprint-04-qa-review-debt.md`.
 
 ### Agreed order of work (2026-09-12, decided with the user)
 Settled in one sitting, so a later reader meets the whole set rather than one row of it. Items are

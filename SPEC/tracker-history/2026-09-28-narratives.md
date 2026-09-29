@@ -52,3 +52,18 @@ one authorization rule means constructing all fifteen — that suite's harness i
 it. And `IdeaAssistContextBuilder` is a concrete class with seven injected ports and no interface, so
 a double cannot be structurally typed against it; the suite casts through `unknown`. That is the cost
 of the no-interfaces-for-single-implementations rule showing up, not a reason to change it.
+
+### Locked decisions removed or rewritten (2026-09-29, slice 121)
+
+Removed from the tracker's "Locked decisions" because they no longer hold, per its rule that
+reversals are deleted there and recorded here:
+
+- **Portrait image library = ImageSharp** (`SixLabors.ImageSharp`, pinned 3.1.12, chosen 2026-08-13
+  over SkiaSharp for Linux App Service). A .NET library; that stack was deleted in F6 (2026-09-13).
+  The TypeScript API processes portraits with `sharp`
+  (`packages/infrastructure/src/integrations/image-processing/sharp-image-processor.ts`).
+- **"JWT key stays ephemeral until Sprint 8"** (judgment call, 2026-08-11). Sprint 8 was cancelled,
+  and since 2026-09-10 the API refuses to boot in production without `ACCESS_TOKEN_SIGNING_KEY`
+  (at least 32 characters); an ephemeral key remains only for local runs.
+- **Wave G "starting only once F1 is green"** (2026-09-03), rewritten: Wave G is revisited after
+  cutover (`SPEC/decisions.md` 2026-09-08) and F1 is not a gate (2026-09-11).
