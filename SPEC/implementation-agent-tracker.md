@@ -26,7 +26,7 @@ open work (the rows are in that file; each stays listed here until it closes):
 - **Schema drift:** awaiting someone with access to run the three rebuild commands.
 - **Slice 117:** its carry-over of rule 33's shared-case comparison.
 - **Sprint 12** (the prompt-eval runner, `SPEC/sprints/sprint-12-prompt-eval-runner.md`): slices
-  113-115 and 117 are merged; 116 (the v1 baseline) and 118 (QA) remain.
+  113-115, 117 and 118 are merged; 116 (the v1 baseline) remains.
 
 | Area | State | Detail / authority |
 |---|---|---|
