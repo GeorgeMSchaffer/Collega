@@ -24,13 +24,13 @@ export const AUTH_HOURLY_THROTTLER = 'authHourly'
  * - Login is raised to twenty because it is the one endpoint a shared egress hits repeatedly with
  *   DIFFERENT people behind it.
  *
- * **Twenty is NOT enough for the golden replay, and the note that used to say so was wrong.** It
- * claimed the replay signs in eight times per run; `cli.ts` calls `runner.resetSessions()` after
- * every scenario, so all 15 re-authenticate every role they use and the run exhausts both buckets
- * partway through. Measured 2026-09-11: the replay cannot complete against this stack at all.
- * `pnpm check` does not run the replay, so this surfaces only at the F1 gate - see
- * `SPEC/Bug Triage.md`. Raising the numbers here is one of three candidate fixes and not
- * obviously the right one, so the limits are unchanged pending that decision.
+ * **The test harnesses fit inside these limits because they reuse sessions, not because the
+ * limits leave room for them.** Until 2026-09-29 the golden replay signed in again for every
+ * scenario - about sixty logins a run - and could not complete against this stack. It now holds
+ * one session per role and signs in about a dozen times a run, three of them the corpus's own
+ * `POST /auth/login` cases. The Playwright suite signs each seeded role in once and reuses the
+ * cookie, fourteen sign-ins a run. `SPEC/decisions.md` 2026-09-29 is the decision to keep these
+ * numbers as they are and make the harnesses fit.
  *
  * **This does NOT stop the account-lockout denial of service.** Five failed attempts lock an
  * account for fifteen minutes (`packages/domain/src/users/user.ts`), and five is below any limit

@@ -50,6 +50,7 @@ async function formFor(search: Search, boards: BoardOverview[]): Promise<BoardFo
     description: board.description ?? '',
     userStatusMoves: board.allowUserStatusUpdate,
     swimlaneIds: board.lanes.map((lane) => lane.id),
+    laneIdeaCounts: Object.fromEntries(listed.lanes.map((lane) => [lane.id, lane.ideaCount])),
     // A lane whose status has since been archived is missing from the catalog; merging it in keeps
     // it visible and removable rather than silently dropped on the next save (as Settings does).
     statuses: [

@@ -17,7 +17,7 @@ import { readCorpus, readManifest, writeCorpus } from './corpus.ts'
 import { report as coverageReport, formatReport as formatCoverage } from './coverage.ts'
 import { explainMismatch, fingerprint } from './fingerprint.ts'
 import { type Endpoint, ROLES, readInventory } from './inventory.ts'
-import { type Exchange, Runner, type StepFailure } from './runner.ts'
+import { changesSessionState, type Exchange, Runner, type StepFailure } from './runner.ts'
 import { scaffoldScenarios } from './scaffold.ts'
 import { loadScenarios } from './scenarios.ts'
 
@@ -103,7 +103,15 @@ async function run(
     summary.failures.push(...result.failures)
     summary.skipped.push(...result.skipped)
     summary.surprises.push(...result.surprises)
-    runner.resetSessions()
+    // Each role signs in once and keeps its session across scenarios. Re-signing for every
+    // scenario, as this used to, cost about sixty logins a run - three times what
+    // `POST /auth/login` allows a minute - and the replay could not finish against the Nest stack.
+    //
+    // A scenario that starts View As is followed by fresh sign-ins all the same. On this stack
+    // that is caution rather than necessity: an impersonation is a server-side row keyed on the
+    // real user and the token is never reissued, so a new sign-in lands in the same state, and
+    // what actually ends it is the scenario's own `DELETE /auth/view-as` steps.
+    runner.resetSessions(changesSessionState(scenario) ? 'all' : 'overrides')
     process.stdout.write(
       `${String(result.exchanges.length).padStart(3)} run, ${result.failures.length} failed, ` +
         `${result.skipped.length} todo\n`,
