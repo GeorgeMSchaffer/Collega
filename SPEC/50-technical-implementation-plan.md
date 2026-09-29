@@ -444,7 +444,10 @@ Validation gate:
 - SAML and OAuth coexist without regressing local login
 - protocol validation and audit coverage meet feature acceptance criteria
 
-Release validation gate (every phase):
+Validation gate:
+
+*Note (2026-09-29): this second gate directly follows the SAML phase's own, with no heading between them, and has since the plan was written. Its checks are release-wide, so it most likely closed a phase whose heading was lost; it is left as found rather than guessed at.*
+
 - contracts and OpenAPI remain synchronized
 - acceptance criteria are traceable to executable tests
 - deferred scope does not leak into the release
