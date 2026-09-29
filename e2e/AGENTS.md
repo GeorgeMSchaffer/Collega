@@ -30,7 +30,9 @@ see, the retired flows, recording a run); this file is what to know before touch
 
 `COLLEGA_E2E_WEB_PORT` and `COLLEGA_E2E_API_PORT` (default 3000 and 3001) let a run sit beside
 `pnpm dev` or another checkout. Outside CI `reuseExistingServer` is on: whatever already answers on
-those ports is what gets driven, against whatever database it has, and its build step never runs.
+those ports is what gets driven, against whatever database it has, and its build step never runs —
+including the build the seed imports, so this checkout's `packages/infrastructure/dist` is used as
+it is.
 Pick free ports rather than sharing.
 
 ## Signing in

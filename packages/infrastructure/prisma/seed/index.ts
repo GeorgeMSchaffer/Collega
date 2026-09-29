@@ -18,7 +18,8 @@
 // It imports the BUILT package rather than `src`, because `node` strips types here and a `.js`
 // specifier into `src/demo-seed` resolves to nothing - there is no emitted file beside the source.
 // So `dist/` must exist before this runs. Every caller already builds: `pnpm dev` through turbo,
-// `e2e/global-setup.ts` before it migrates, and the package's own `typecheck`. Building again here
+// the API's `webServer` command in `e2e/playwright.config.ts` before global setup runs, and the
+// package's own `typecheck`. Building again here
 // was tried and reverted - on Windows it collides with the build that just ran, over the generated
 // Prisma client's files.
 
