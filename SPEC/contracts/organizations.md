@@ -102,24 +102,37 @@ Update organization detail.
 ### `PUT /api/v1/organizations/{organizationId}/logo`
 Upload or replace an organization logo.
 
-- **Roles:** — (not stated; the `403` is under Errors).
-- **Request:**
-  - `multipart/form-data`
-  - field `logoFile` required
-- **Response:** `200`:
-  - `logoUrl`
-  - `logoThumbnailUrl`
-  - `logoHeightPx`
+- **Roles:** Site Admin, or the Org Admin of this organization.
+- **Request:** JSON body:
+  - `thumbnailDataUri` required string — a `data:image/…` URI, at most 300,000 characters
+  - `heightPx` optional integer, clamped to `1`–`150`; absent or not a number is treated as `0`, so stored as `1`
+- **Response:** `200` updated organization detail, as `GET /api/v1/organizations/{organizationId}`
 - **Errors:**
-  - `400` request body is malformed or violates file constraints
+  - `400` keyed `thumbnailDataUri`: missing (the Required template), not a `data:image/` URI (`"Logo must be an image."`), or too long (`"Logo image is too large."`)
   - `401` caller is not authenticated
-  - `403` caller is authenticated but not allowed to update this organization
-  - `404` organization does not exist or is outside caller scope
+  - `403` caller is a User or Read Only (`"You are not allowed to administer organizations."`)
+  - `404` organization does not exist, or an Org Admin names another organization
 - **Rules:**
-  - exactly one active logo per organization
-  - new upload replaces previous logo atomically
-  - return thumbnail metadata for immediate preview
+  - exactly one active logo per organization; the upload replaces the previous one, stored as `logoThumbnailUrl` and `logoHeightPx`
+  - `logoUrl` is untouched — it is the organization's own field, set by create and update
   - rendered usage in UI is constrained to max height `150px` while preserving aspect ratio
+  - writes an `OrganizationLogoUpdated` audit event
+- *Reconciled 2026-09-29 from the code (slice 134): this described a `multipart/form-data` upload in a `logoFile` field, answering only `logoUrl`, `logoThumbnailUrl` and `logoHeightPx`. Neither stack served that; the golden corpus records the JSON body and the full detail (`organizations.logo.set.*`).*
+
+### `DELETE /api/v1/organizations/{organizationId}/logo`
+Remove an organization logo. *Added 2026-09-29 from the code (slice 134): served and recorded by the golden corpus (`organizations.logo.clear.*`), never documented here.*
+
+- **Roles:** Site Admin, or the Org Admin of this organization.
+- **Request:** —
+- **Response:** `200` updated organization detail, with `logoThumbnailUrl` and `logoHeightPx` `null`
+- **Errors:**
+  - `401` caller is not authenticated
+  - `403` caller is a User or Read Only (`"You are not allowed to administer organizations."`)
+  - `404` organization does not exist, or an Org Admin names another organization
+- **Rules:**
+  - succeeds when there is no logo to remove
+  - `logoUrl` is untouched
+  - writes an `OrganizationLogoCleared` audit event
 
 ### `POST /api/v1/organizations/{organizationId}/invite-code/regenerate`
 Regenerate the organization invite code, invalidating the previous code.
