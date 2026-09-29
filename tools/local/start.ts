@@ -52,7 +52,12 @@ function readEnvFile(): Map<string, string> {
     const text = line.trim()
     if (text === '' || text.startsWith('#')) continue
     const separator = text.indexOf('=')
-    if (separator > 0) values.set(text.slice(0, separator).trim(), text.slice(separator + 1).trim())
+    if (separator <= 0) continue
+    const value = text.slice(separator + 1).trim()
+    // A value copied from Prisma or Vercel usually arrives quoted; Prisma's own loader drops them.
+    const quoted =
+      value.length >= 2 && (value[0] === '"' || value[0] === "'") && value.at(-1) === value[0]
+    values.set(text.slice(0, separator).trim(), quoted ? value.slice(1, -1) : value)
   }
   return values
 }
@@ -185,7 +190,10 @@ const postgresIsLocal =
 // organizations and users whose only guard is `NODE_ENV === 'production'`, which a developer shell
 // does not set. Neither belongs on a shared cluster by accident, so a non-loopback host stops the
 // run here rather than being caught twice further down.
-if (!postgresIsLocal && process.env.COLLEGA_ALLOW_REMOTE_DATABASE !== '1') {
+// Read from the shell or `.env`, as `.env.example` documents it; the file alone used to be ignored.
+const allowRemoteDatabase =
+  (process.env.COLLEGA_ALLOW_REMOTE_DATABASE ?? env.get('COLLEGA_ALLOW_REMOTE_DATABASE')) === '1'
+if (!postgresIsLocal && !allowRemoteDatabase) {
   fail(
     `DATABASE_URL points at ${postgresHost}:${postgresPort}, which is not this machine.\n\n` +
       'This script deploys migrations and seeds demo organizations and users into whatever it is\n' +
