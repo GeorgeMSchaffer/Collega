@@ -296,6 +296,19 @@ test('--case narrows the run and is recorded; a v2 or unknown case is refused', 
   }
 })
 
+test('a --case given twice runs and is recorded once', async () => {
+  const o = await runMain([
+    '--repeats',
+    '1',
+    '--case',
+    'approval-threshold',
+    '--case',
+    'approval-threshold',
+  ])
+  assert.equal(o.code, 0)
+  assert.deepEqual((await runFileOf(o)).header.caseSelection, ['approval-threshold'])
+})
+
 test('--model and --effort overrides reach the request and are recorded as overridden', async () => {
   const o = await runMain([
     '--repeats',
