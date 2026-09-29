@@ -2,9 +2,10 @@
 // a fake Anthropic client, fixed time, scratch directories and hand-built run files. Nothing here
 // can reach a provider.
 
-import { cp, mkdir, mkdtemp, readFile } from 'node:fs/promises'
+import { cp, mkdir, mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
+import { after } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import type { AiTokenUsage, IdeaDraft, IdeaDraftModel } from '@collega/application/ai'
 import type { AnthropicIdeaDraftModelConfig } from '@collega/infrastructure/integrations/ai'
@@ -29,13 +30,21 @@ globalThis.fetch = () => {
 }
 
 export const PACKAGE_ROOT = fileURLToPath(new URL('..', import.meta.url))
-export const REPO_ROOT = path.resolve(PACKAGE_ROOT, '..', '..')
 
 /** Shaped like an Anthropic key so the pattern redaction would also catch it. */
 export const TEST_KEY = 'sk-ant-eval-TESTONLY-0123456789abcdef'
 
+const scratchDirs: string[] = []
+// Registered at import, so it is a file-level hook and runs once every test in the file is done.
+after(async () => {
+  await Promise.all(scratchDirs.map((dir) => rm(dir, { recursive: true, force: true })))
+})
+
+/** A fresh temporary directory, removed when the test file finishes. */
 export async function scratchDir(): Promise<string> {
-  return mkdtemp(path.join(tmpdir(), 'prompt-eval-test-'))
+  const dir = await mkdtemp(path.join(tmpdir(), 'prompt-eval-test-'))
+  scratchDirs.push(dir)
+  return dir
 }
 
 /** A copy of the real corpus, for tests that break a file. */
