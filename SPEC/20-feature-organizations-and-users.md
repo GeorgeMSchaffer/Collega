@@ -54,7 +54,7 @@ Optional profile fields (editable after creation, not required to create an orga
 All organization text fields are trimmed before validation and persistence.
 
 ## Organization AI Credentials
-> **Deferred — not built (tracker rule 30).** Everything in this section about an organization's **own** key — rules 2, 3 and 5–13, the credential fields and their acceptance criteria — is kept as the specification for when per-organization keys are built. Only the deployment key is built: rule 1, and rule 4 read as "no deployment key configured". Labelled 2026-09-29, `SPEC/decisions.md` "Spec contradictions resolved"; see `SPEC/20-feature-ai-idea-assist.md` rules 29–31.
+> **Deferred — not built (tracker rule 30).** Everything in this section about an organization's **own** key — rules 2, 3, 5 and 7–13, the credential fields and their acceptance criteria — is kept as the specification for when per-organization keys are built. Only the deployment key is built: rule 1, and rule 4 read as "no deployment key configured". Rule 6's never-returned guarantee is not deferred: it holds today, since no key is stored, and applies when keys are built. Labelled 2026-09-29, `SPEC/decisions.md` "Spec contradictions resolved"; see `SPEC/20-feature-ai-idea-assist.md` rules 29–31.
 
 AI-assisted idea creation (see `SPEC/20-feature-ai-idea-assist.md`; the ideas spec's own AI section is superseded) authenticates every model call with an API key. The deployment supplies a default key; an organization may optionally supply its own to move that consumption onto its own vendor account.
 
@@ -63,7 +63,7 @@ AI-assisted idea creation (see `SPEC/20-feature-ai-idea-assist.md`; the ideas sp
 3. **Deferred — not built (tracker rule 30).** Key precedence for any AI call: the organization's own key when configured, otherwise the deployment default key.
 4. With neither an organization key nor a deployment default key configured, AI-assisted idea creation is unavailable for that organization. The feature must degrade to the manual idea form with an explanatory message rather than presenting a failing action.
 5. **Deferred — not built (tracker rule 30).** Site Admin can set, rotate, and clear the AI API key for any organization. Org Admin can do so only for their own organization. `User` and `Read Only` can neither view nor manage it.
-6. **Deferred — not built (tracker rule 30).** The key is encrypted at rest and is write-only across the entire API surface. No endpoint, log entry, audit payload, error message, or client view ever returns the stored key value.
+6. *Applies when per-organization keys are built (tracker rule 30); the write-only guarantee holds today, since no key is stored.* The key is encrypted at rest and is write-only across the entire API surface. No endpoint, log entry, audit payload, error message, or client view ever returns the stored key value.
 7. **Deferred — not built (tracker rule 30).** Administration screens display only whether a key is configured, its last four characters, and when and by whom it was last updated.
 8. **Deferred — not built (tracker rule 30).** A submitted key is validated with a single low-cost model call before it is persisted. A key that fails validation is rejected and the previously stored key, if any, is left untouched.
 9. **Deferred — not built (tracker rule 30).** When an organization's own key fails at request time — invalid, revoked, rate-limited, or erroring — the call is retried once against the deployment default key so the user's flow completes normally. The organization's stored key is left in place and is not automatically cleared or disabled in MVP.
@@ -168,7 +168,7 @@ User profile text fields are trimmed before validation and persistence.
 - [ ] *(Deferred — not built, tracker rule 30)* Site Admin can set, rotate, and clear the AI API key for any organization
 - [ ] *(Deferred — not built, tracker rule 30)* Org Admin can set, rotate, and clear the AI API key only for their own organization
 - [ ] *(Deferred — not built, tracker rule 30)* `User` and `Read Only` can neither view nor manage an organization's AI API key
-- [ ] *(Deferred — not built, tracker rule 30)* A stored AI API key is never returned by any endpoint, log, audit payload, or client view
+- [ ] A stored AI API key is never returned by any endpoint, log, audit payload, or client view *(holds today, since no key is stored; applies when per-organization keys are built)*
 - [ ] *(Deferred — not built, tracker rule 30)* Administration screens show only whether a key is configured, its last four characters, and when and by whom it was last updated
 - [ ] *(Deferred — not built, tracker rule 30)* A submitted AI API key is validated with a low-cost model call before persistence, and a failing key is rejected without disturbing the previously stored key
 - [ ] *(Deferred — not built, tracker rule 30)* An organization with its own AI API key uses that key for AI calls; an organization without one uses the deployment default key

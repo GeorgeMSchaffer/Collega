@@ -80,8 +80,8 @@ Return organization detail.
   - `403` caller is authenticated but not allowed to view this organization
   - `404` organization does not exist or is outside caller scope
 - **Rules:**
-  - **Deferred — not built (tracker rule 30).** The stored AI API key value itself is never returned by this or any other endpoint.
-  - **Deferred — not built (tracker rule 30).** The three `aiKey*` metadata fields are omitted entirely for callers whose role is `User` or `Read Only`.
+  - The stored AI API key value itself is never returned by this or any other endpoint. This guarantee holds today — no key is stored — and applies unchanged when per-organization keys are built.
+  - **Deferred — not built (tracker rule 30).** The three `aiKey*` metadata fields — `aiKeyLastFour`, `aiKeyUpdatedAtUtc` and `aiKeyUpdatedByUserId`, beside the `aiKeyConfigured` flag, making the four listed above — are omitted entirely for callers whose role is `User` or `Read Only`.
 
 ### `PUT /api/v1/organizations/{organizationId}`
 Update organization detail.
