@@ -58,7 +58,7 @@ ds-bundle/
 .env*.local
 
 # Vercel CLI project link (`vercel link`)
-.vercel/
+.vercel
 
 # Comp Q build toolchain (SPEC/mockups/_build/tw); compiled CSS is inlined into the comps
 SPEC/mockups/_build/tw/input.css

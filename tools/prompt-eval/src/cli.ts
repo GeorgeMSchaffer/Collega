@@ -54,7 +54,7 @@ const REPO_ROOT = path.resolve(PACKAGE_ROOT, '..', '..')
  */
 export interface RunnerDeps {
   readonly env: NodeJS.ProcessEnv
-  /** The root `.env`, read for the key alone. */
+  /** The root `.env.local` then `.env`, read for the key alone. */
   readonly envFile: string | readonly string[]
   readonly runsDir: string
   /** Holds `cases/` and `fixtures/`. */
