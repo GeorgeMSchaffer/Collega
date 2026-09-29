@@ -45,6 +45,8 @@
       "cache": false,
       "passThroughEnv": [
         "CI",
+        "COLLEGA_E2E_*",
+        "DATABASE_URL",
         "PLAYWRIGHT_BROWSERS_PATH",
         "PLAYWRIGHT_CHROMIUM_PATH"
       ]
