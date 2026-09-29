@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-09-29 | Contracts and wording written from the code | active | full below |
 | 2026-09-29 | Spec contradictions resolved | active | full below |
 | 2026-09-28 | The Idea Field Option contract follows the code | active | full below |
 | 2026-09-28 | The v2 corpus format, as built | active | full below |
@@ -43,7 +44,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-28 | Graphite replaces Notte as the dark theme | active | full below |
 | 2026-09-28 | The next comp R iteration is adopted: denser forms, Sprint board, Roadmap, tag colours and Settings → Tags | active | full below |
 | 2026-09-27 | The API sends the custom field list | active | full below |
-| 2026-09-27 | The idea assistant is rescoped as a co-author, and ideas gain structured fields | active | full below |
+| 2026-09-27 | The idea assistant is rescoped as a co-author, and ideas gain structured fields | active | [2026-09-27 to 2026-09-27](decisions/archive-2026-09-27-to-2026-09-27.md) |
 | 2026-09-27 | The S0.2 schema freeze is amended a third time, for structured ideas and board archive | active | [2026-09-27 to 2026-09-27](decisions/archive-2026-09-27-to-2026-09-27.md) |
 | 2026-09-27 | Terrazzo is the palette, with a theme picker | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-27 | One list and detail pattern, and a drawer instead of the docked inspector | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
@@ -91,6 +92,37 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-09-29 — Contracts and wording written from the code
+
+**An implementation record, not a user decision** (slice 124). Slice 121 listed routes the code
+serves and no contract describes, and spec lines the code contradicts. They were written from the
+code as it stands, with no code change, and checked against the golden corpus wherever it records
+the route. Nothing here changes behaviour; a reader who wants different behaviour needs a decision,
+not an edit to these contracts.
+
+- **New contracts:** the six `/organizations/{organizationId}/field-definitions` routes, in a new
+  `contracts/field-definitions.md` — reorder is `PUT …/reorder`, with no coverage check, unlike the
+  other catalogs' reorders; reads are open to any member of the organization, writes to an
+  in-scope Org Admin, and a direct Site Admin is refused. `PUT`/`DELETE /auth/me/portrait` in
+  `contracts/auth.md`. The `GET /users/{userId}` success shape, roles and errors in
+  `contracts/users.md`.
+- **Filled in:** the statuses list item carries `color` and `sortOrder`, the list takes
+  `includeDeleted`, and `PUT /statuses/{statusId}` answers the item. The organizations `sortBy`
+  sorts by `title` for any value but `createdAt` — so `companyName`, the contract's old spelling,
+  and `title`, the item's field, behave the same.
+- **Every fixture agrees** except in one field already known: the `profile.portrait.*` fixtures,
+  like `auth.me.*`, predate `organizationTitle`.
+- **Not written:** `GET /organizations/{organizationId}/users/import-template` appears only in the
+  derived `Specs Overview.md`. No code serves it and the corpus does not record it, so there is
+  nothing to describe.
+- **Wording:** a required password change ends the session it was made in. The change regenerates
+  the user's `SecurityStamp`, and the web client deletes its cookie and returns to
+  `/login?passwordChanged=1`. `40-test-strategy.md`, `05-product-definition.md`,
+  `20-feature-auth.md` rule 32a and `contracts/auth.md` said the session carried on; each keeps
+  a dated note of what it said.
 
 ---
 
@@ -471,33 +503,6 @@ edit (name and colour), delete, and add in advance of use.
   idea's stored values as well as the current options) but may not add one; the form shows it,
   labelled by its id, only while it is selected. Chosen over soft-deleting options, which needs a
   schema amendment, and over silently dropping the value on the next save.
-
----
-
-## 2026-09-27 — The idea assistant is rescoped as a co-author, and ideas gain structured fields
-
-**Decided by the user**, reviewing an interactive prototype (comp R). This is the rescope
-2026-09-13 scheduled. `20-feature-ai-idea-assist-v2.md` is the spec; the v1 spec stays authoritative
-for what is live until v2 ships.
-
-- **Ideas gain three dedicated fields: Problem, Proposed solutions (a list), Impact rationale.**
-  Chosen over three custom fields (every organization would have to configure them) and over
-  sections inside Description (not enforceable, not searchable). Custom fields attached through the
-  Idea Type are unchanged and follow the core fields. Description becomes an optional summary.
-  Existing ideas are backfilled so the three fields are required on every save; a solution list
-  holds 1 to 5 items. This is a schema and contract change (`30-Contracts.md`, rule 2a of
-  `20-feature-ideas-and-engagement.md`).
-- **The assistant maps, interviews and brainstorms.** Free text fills fields visibly; it asks for
-  the next missing field in a fixed order; it offers solution ideas, a sharper problem statement and
-  measurable rationales as chips the person accepts. It never overwrites a field the person has
-  edited, and that is enforced on the server (`lockedFields`).
-- **Skip is always one click, and any failure hands off to the form** with everything captured,
-  including the failing turn's own text. v1's scripted-nudge fallback is dropped for v2.
-- **Surface:** the create drawer opens wide with the assistant beside the form, replacing v1's
-  720px modal followed by a create modal.
-- **Measurement comes first**: v2 is not enabled until a TypeScript prompt-eval runner reports
-  mapping accuracy and scope-gate results. `ai-draft` and `ai-polish`, specified and never built,
-  are withdrawn.
 
 ---
 
