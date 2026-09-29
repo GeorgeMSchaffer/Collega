@@ -28,7 +28,7 @@ the idle deadline, without saying it is unbuilt in `apps/web`; and sent expiry t
 - Anonymous endpoints — login, register — are unaffected, since an unauthenticated caller owes no rotation.
 
 Rules:
-- the flag is read from live persisted state on each request, not from a claim baked into the token at issuance, so completing the rotation lifts the restriction on the very next request without reissuing a token
+- the flag is read from live persisted state on each request, not from a claim baked into the token at issuance; completing the rotation also regenerates `SecurityStamp`, so the session that made the change is revoked and the next sign-in carries no restriction. *Corrected 2026-09-29 (slice 124): this said completing the rotation lifts the restriction on the next request without a new token; the password change also regenerates `SecurityStamp`, which revokes that token.*
 - login still succeeds, still sets the session cookie, and returns `requiresPasswordChange: true`; the session is simply scoped to the allowlist until the rotation is done
 - the allowlist is opt-in per endpoint — a newly added endpoint is refused during rotation unless it is explicitly marked
 - this is a server-side gate. The client's own `mustChangePassword` routing is a UX convenience layered on top of it and is not the enforcement point
