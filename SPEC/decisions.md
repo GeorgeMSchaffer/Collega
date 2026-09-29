@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-09-29 | The test harnesses reuse sessions; the auth rate limits stay | active | full below |
 | 2026-09-29 | Spec contradictions resolved | active | full below |
 | 2026-09-28 | The Idea Field Option contract follows the code | active | full below |
 | 2026-09-28 | The v2 corpus format, as built | active | full below |
@@ -42,8 +43,8 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-28 | The S0.2 schema freeze is amended a fourth time, for tag colours | active | full below |
 | 2026-09-28 | Graphite replaces Notte as the dark theme | active | full below |
 | 2026-09-28 | The next comp R iteration is adopted: denser forms, Sprint board, Roadmap, tag colours and Settings → Tags | active | full below |
-| 2026-09-27 | The API sends the custom field list | active | full below |
-| 2026-09-27 | The idea assistant is rescoped as a co-author, and ideas gain structured fields | active | full below |
+| 2026-09-27 | The API sends the custom field list | active | [2026-09-27 to 2026-09-27](decisions/archive-2026-09-27-to-2026-09-27.md) |
+| 2026-09-27 | The idea assistant is rescoped as a co-author, and ideas gain structured fields | active | [2026-09-27 to 2026-09-27](decisions/archive-2026-09-27-to-2026-09-27.md) |
 | 2026-09-27 | The S0.2 schema freeze is amended a third time, for structured ideas and board archive | active | [2026-09-27 to 2026-09-27](decisions/archive-2026-09-27-to-2026-09-27.md) |
 | 2026-09-27 | Terrazzo is the palette, with a theme picker | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-27 | One list and detail pattern, and a drawer instead of the docked inspector | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
@@ -54,7 +55,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-13 | The .NET stack is deleted; stale pointers go, inherited rationale stays | active | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-13 | The usage report returns the contract's `totals`, not the frozen app's flat fields | active | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-12 | A lockout refuses a wrong password, not a right one | active | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
-| 2026-09-12 | The rate limiter's collision with the golden replay is deferred, knowingly | active | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
+| 2026-09-12 | The rate limiter's collision with the golden replay is deferred, knowingly | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-11 | The S0.2 schema freeze is amended once, for Issues-and-Delivery Slice 1 | active | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-11 | The golden replay is not a gate, and never was meant to be one | active | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-11 | Registration answers `409` again; hiding the status did not close the enumeration oracle | active | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
@@ -91,6 +92,36 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-09-29 — The test harnesses reuse sessions; the auth rate limits stay
+
+**Decided by the user**, closing the two Bug Triage items where the auth rate limiter broke the
+golden replay and the Playwright suite. Supersedes in part 2026-09-12 ("The rate limiter's
+collision with the golden replay is deferred, knowingly"). Slice 122 applied it.
+
+- **Production limits are unchanged**: login twenty a minute; the auth surface ten a minute and a
+  hundred an hour, per IP and per route (`AUTH_THROTTLERS`). The harnesses fit the limits, not
+  the other way round. Exempting a harness caller and raising the limits for one stay rejected,
+  for 2026-09-12's reasons.
+- **The golden replay signs each role in once and keeps the session across scenarios**
+  (`tools/golden/src/cli.ts`). It signs every role in afresh after a scenario that starts or ends
+  View As (today only `auth`), and drops the sessions of accounts a scenario created for itself
+  after every scenario (`profile` changes one's password, which ends its session anyway). About
+  sixty logins a run become twelve, three of them the corpus's own `POST /auth/login` cases.
+  2026-09-12's objection, that caching weakens the isolation `resetSessions` gave, does not hold on
+  Nest: a View As session is a server-side row keyed on the real user and the token is never
+  reissued, so a fresh sign-in lands in the same state. The corpus's own `DELETE /auth/view-as`
+  steps are what end it; the re-sign after View As is caution, not correctness.
+- **The Playwright suite signs each seeded role in once and reuses the cookie via `storageState`**
+  (`e2e/tests/auth.setup.ts`, in place since 2026-09-14; the last seeded sign-in outside it, in
+  `demo-path.spec.ts`, now uses the stored session). Specs that exist to test signing in
+  (`signs-in.spec.ts`, `journey.spec.ts`) and every sign-in as an account a spec just created stay
+  real. Fifteen sign-ins a run become fourteen, nine of them as created accounts.
+- **Verified 2026-09-29, limits intact, scratch databases:** the full Playwright suite passed
+  (38/38). The replay ran all fifteen scenarios to completion on a fresh seed: 360/447 match, 52
+  accepted, 35 unexplained, 69 stale accepted entries. The same corpus replayed with the old per-scenario re-sign, paced under the limits (a 25-second pause after each scenario), produced a byte-identical report, so reusing sessions changes no result.
 
 ---
 
@@ -447,57 +478,6 @@ edit (name and colour), delete, and add in advance of use.
   outcome drawer's Delete confirms (comp R deletes at once), and comp R's *Ctrl ↵* save is not built.
 - **Open at adoption, answered the same day** — see "The comp R iteration's open questions are
   answered" above.
-
----
-
-## 2026-09-27 — The API sends the custom field list
-
-**Decided by the user.** The idea form no longer works out which custom fields an Idea Type shows.
-`GET /organizations/{id}/idea-types` carries each type's `effectiveFields`, for Create, and
-`GET /ideas/{id}` carries the idea's own `formFields` with raw stored values, for Edit
-(`30-Contracts.md`).
-
-- **Why:** slice 102 transcribed `resolveEffectiveFields` into `apps/web`, which cannot import the
-  domain. Review found the drift is not always loud — a field the client fails to show is cleared on
-  save — and it already bit twice: an idea whose type is archived had no fields to edit, and
-  multi-select values were rebuilt from display labels, so a label with a comma, or an option since
-  removed, was lost.
-- **Chosen over** resolved fields on the type list only (Edit would still reverse labels to ids) and
-  over a per-type endpoint (a request per type picked, same Edit problem).
-- The domain resolver stays the single source of truth; the API now exposes its result instead of
-  the browser copying it.
-- **A removed option is kept until unticked.** Options are hard-deleted, so an idea can store an
-  option id its field no longer offers. An edit may keep such an id (the save validates against the
-  idea's stored values as well as the current options) but may not add one; the form shows it,
-  labelled by its id, only while it is selected. Chosen over soft-deleting options, which needs a
-  schema amendment, and over silently dropping the value on the next save.
-
----
-
-## 2026-09-27 — The idea assistant is rescoped as a co-author, and ideas gain structured fields
-
-**Decided by the user**, reviewing an interactive prototype (comp R). This is the rescope
-2026-09-13 scheduled. `20-feature-ai-idea-assist-v2.md` is the spec; the v1 spec stays authoritative
-for what is live until v2 ships.
-
-- **Ideas gain three dedicated fields: Problem, Proposed solutions (a list), Impact rationale.**
-  Chosen over three custom fields (every organization would have to configure them) and over
-  sections inside Description (not enforceable, not searchable). Custom fields attached through the
-  Idea Type are unchanged and follow the core fields. Description becomes an optional summary.
-  Existing ideas are backfilled so the three fields are required on every save; a solution list
-  holds 1 to 5 items. This is a schema and contract change (`30-Contracts.md`, rule 2a of
-  `20-feature-ideas-and-engagement.md`).
-- **The assistant maps, interviews and brainstorms.** Free text fills fields visibly; it asks for
-  the next missing field in a fixed order; it offers solution ideas, a sharper problem statement and
-  measurable rationales as chips the person accepts. It never overwrites a field the person has
-  edited, and that is enforced on the server (`lockedFields`).
-- **Skip is always one click, and any failure hands off to the form** with everything captured,
-  including the failing turn's own text. v1's scripted-nudge fallback is dropped for v2.
-- **Surface:** the create drawer opens wide with the assistant beside the form, replacing v1's
-  720px modal followed by a create modal.
-- **Measurement comes first**: v2 is not enabled until a TypeScript prompt-eval runner reports
-  mapping accuracy and scope-gate results. `ai-draft` and `ai-polish`, specified and never built,
-  are withdrawn.
 
 ---
 
