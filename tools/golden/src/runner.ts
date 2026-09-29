@@ -177,9 +177,21 @@ export class Runner {
     return session.value.replace(/^Bearer /, '')
   }
 
-  /** Forget held sessions — used between scenarios that end a View As session. */
-  resetSessions() {
-    this.#sessions.clear()
+  /**
+   * Forget held sessions, so the next step that needs one signs in again.
+   *
+   * `'overrides'` drops only the sessions held for a step's own `credentials` - accounts a
+   * scenario created for itself, whose session is spent once the scenario ends (the one that
+   * changes its password has also invalidated it). `'all'` drops the four roles' sessions too.
+   */
+  resetSessions(scope: 'all' | 'overrides' = 'all') {
+    if (scope === 'all') {
+      this.#sessions.clear()
+      return
+    }
+    for (const key of this.#sessions.keys()) {
+      if (key.startsWith('override:')) this.#sessions.delete(key)
+    }
   }
 
   /** A read outside the corpus, for the seed fingerprint. Never recorded. */
@@ -331,6 +343,21 @@ export class Runner {
       response: { status: response.status, headers: response.headers, body: parsed },
     }
   }
+}
+
+/** The endpoints that start or end a View As session for the caller. */
+const VIEW_AS_ENDPOINTS = new Set(['POST /auth/view-as', 'DELETE /auth/view-as'])
+
+/**
+ * Whether a scenario changes the session state of one of the four role accounts, so the sessions
+ * held for them should be signed in afresh before the next scenario.
+ *
+ * Only View As qualifies. The other session-changing steps in the corpus - a password change, a
+ * temporary password - act on accounts the scenario created for itself, which `resetSessions`
+ * drops after every scenario anyway. Nothing in the corpus rotates a role account's credential.
+ */
+export function changesSessionState(scenario: Scenario): boolean {
+  return scenario.steps.some((step) => step.todo !== true && VIEW_AS_ENDPOINTS.has(step.endpoint))
 }
 
 function bearerSession(role: Role, body: unknown, setCookie: readonly string[]): SessionHeader {

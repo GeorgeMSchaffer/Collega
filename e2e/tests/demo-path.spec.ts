@@ -16,9 +16,6 @@ import { signIn } from './sign-in'
  * The accounts are the seeded demo roster, whose password is published in `demo.md`. Safe here and
  * only here: `global-setup.ts` refuses to seed anything but a local `collega_e2e` schema.
  */
-const ORG_ADMIN = SEEDED.orgAdmin.email
-const DEMO_PASSWORD = 'Abc123!'
-
 /** A seeded board in every demo organization, with ideas in its lanes. */
 const SEEDED_BOARD = 'Ideas'
 
@@ -41,13 +38,15 @@ async function openSeededBoard(page: Page): Promise<void> {
 }
 
 test.describe('changing a password', () => {
+  // The org admin only creates the account, so its stored session will do. The new account's two
+  // sign-ins are real: they are what this test is about, and `signIn` clears the stored cookie first.
+  test.use({ storageState: SEEDED.orgAdmin.file })
+
   test('a new account is forced through the change, and the new password then works', async ({
     page,
   }) => {
     // A user of this spec's own making, so it never fights another spec over one account's
     // credential — and so the "sign in with the new password" half is real rather than simulated.
-    await signIn(page, ORG_ADMIN, DEMO_PASSWORD)
-
     const email = `rotates.${Date.now()}@acme-robotics.demo.collega.test`
     const first = 'Initial!Pass1'
     const second = 'Rotated!Pass2'

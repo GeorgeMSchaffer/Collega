@@ -269,9 +269,11 @@ excluded from every metric denominator below.
 ### Credentials
 
 36. The runner reads **only `PROMPT_EVAL_ANTHROPIC_API_KEY`**, from its process environment or, when
-    absent there, the repository root `.env`. It **never reads `ANTHROPIC_API_KEY`** — the API's
-    key (v1 rule 29) — so a developer's local API key cannot be picked up by accident. From `.env`
-    it reads that one variable rather than loading the file into the environment. A single key;
+    absent there, the repository root `.env.local` (which `pnpm env:pull` writes from the linked
+    Vercel project, so the key never has to be pasted anywhere — added 2026-09-29) and then `.env`.
+    It **never reads `ANTHROPIC_API_KEY`** — the API's key (v1 rule 29) — so a developer's local API
+    key cannot be picked up by accident. From each file it reads that one variable rather than
+    loading the file into the environment. A single key;
     per-organization keys stay unimplemented (tracker rule 30, v1 rule 30).
 37. **A dedicated evaluation key, never the production deployment key**, so evaluation spend is
     visible on its own and a runaway run cannot use up provider-side limits production depends on.

@@ -55,6 +55,10 @@ ds-bundle/
 
 # Local secrets — never commit
 .env.local
+.env*.local
+
+# Vercel CLI project link (`vercel link`)
+.vercel
 
 # Comp Q build toolchain (SPEC/mockups/_build/tw); compiled CSS is inlined into the comps
 SPEC/mockups/_build/tw/input.css
