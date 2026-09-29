@@ -12,7 +12,8 @@
 
 > ## ⛔ SUPERSEDED — describes the frozen .NET stack
 >
-> This document plans the deployment of `src/Collega.*`, which is **frozen and never deployed**:
+> This document plans the deployment of the .NET solution, which was **never deployed** and was
+> deleted in slice F6 (2026-09-13); paths into it were removed 2026-09-29:
 > Sprint 8 was cancelled on 2026-09-04, and the .NET code is deleted in slice F6
 > (`SPEC/decisions.md` 2026-09-06, `SPEC/50-typescript-migration.md`). The product ships to
 > **Vercel with Prisma Postgres** (ticket `02`, decided 2026-09-03).
@@ -31,7 +32,7 @@ reflects the **actual** wiring in the codebase as of this document:
 
 ## 1. Architecture and cost
 
-The client (`src/Collega.Client`) is Blazor WebAssembly — static html/wasm/js calling the API as a
+The client (`Collega.Client`) was Blazor WebAssembly — static html/wasm/js calling the API as a
 **separate origin** — so the frontend is nearly free to host; the only real cost drivers are the API
 compute and the database.
 
@@ -63,7 +64,7 @@ the database stopped when idle.
 ## 2. Prerequisites
 
 - An Azure subscription and the **Azure CLI** (`az`) signed in: `az login`.
-- The **.NET 8 SDK** locally (matches `global.json` → `8.0.118`, `latestFeature` roll-forward).
+- The **.NET 8 SDK** locally (the solution pinned `8.0.118`, `latestFeature` roll-forward).
 - A GitHub repository for the code (Static Web Apps Free deploys via a GitHub Actions workflow it generates for you).
 - Choose values now and reuse them throughout:
 
@@ -204,7 +205,8 @@ az webapp config appsettings set --name $API_APP --resource-group $RG --settings
 ### 5.3 Publish the code
 
 ```bash
-dotnet publish src/Collega.API/Collega.API.csproj -c Release -o ./publish
+# <api-project>: the Collega.API project file, deleted in F6
+dotnet publish <api-project> -c Release -o ./publish
 (cd publish && zip -r ../collega-api.zip .)
 
 az webapp deploy \
@@ -233,7 +235,7 @@ at the deployed API by adding a Production settings file — no rebuild logic re
 
 ### 6.1 Set the production API URL
 
-`src/Collega.Client/wwwroot/appsettings.Production.json` **already exists in the repo** with a
+The client's production settings file (`appsettings.Production.json`) **already existed in the repo** with a
 placeholder host — edit it, don't create it. (The WASM host loads `appsettings.json` then
 `appsettings.{Environment}.json`; a published app runs as `Production`.)
 
@@ -254,14 +256,14 @@ frontend that calls a nonexistent host over plain HTTP — every request fails o
 
 ### 6.1a SPA routing fallback (already in the repo)
 
-`src/Collega.Client/wwwroot/staticwebapp.config.json` gives Static Web Apps a navigation fallback to
+The client's `staticwebapp.config.json` gives Static Web Apps a navigation fallback to
 `/index.html`. Blazor WASM routes on the client, so **without it every deep link and every browser
 refresh returns 404** — Blazor's publish does not generate this file. It needs no editing; listed so it
 is not mistaken for stray config and deleted.
 
 ### 6.2 Create the Static Web App
 
-The repo already has a hand-written deploy workflow — `.github/workflows/deploy-client.yml` — so
+The repo had a hand-written deploy workflow — `deploy-client.yml`, deleted 2026-09-10 — so
 create the SWA **without** `--source`. Passing `--source`/`--login-with-github` makes Azure generate
 its *own* workflow, and you would end up with two pipelines deploying the same app:
 
@@ -283,17 +285,18 @@ az staticwebapp secrets list --name $SWA_NAME --resource-group $RG \
 | `AZURE_STATIC_WEB_APPS_API_TOKEN` | the `apiKey` printed above |
 
 That is the only secret the frontend pipeline needs — the API host is runtime config (§6.1), not a
-build input. Pushes to `main` that touch `src/Collega.Client/**` now deploy automatically; you can also
+build input. Pushes to `main` that touched the client project deployed automatically; you can also
 trigger a run by hand from the **Actions** tab.
 
 > **Why the workflow builds the app itself.** It runs `dotnet publish` and hands Static Web Apps the
 > finished output (`skip_app_build: true`). The alternative — letting SWA's Oryx builder
-> compile the project — uses an SDK Oryx chooses, which does not honour `global.json`'s `8.0.118` pin.
+> compile the project — uses an SDK Oryx chooses, which does not honour the solution's `8.0.118` SDK pin.
 > Building in the workflow keeps CI and local builds on the same SDK.
 
 > **First deploy, or no GitHub:** you can push the same output straight from a workstation:
 > ```bash
-> dotnet publish src/Collega.Client/Collega.Client.csproj -c Release -o ./client-publish
+> # <client-project>: the Collega.Client project file, deleted in F6
+> dotnet publish <client-project> -c Release -o ./client-publish
 > npx @azure/static-web-apps-cli deploy ./client-publish/wwwroot \
 >   --deployment-token "$(az staticwebapp secrets list --name $SWA_NAME --resource-group $RG --query properties.apiKey -o tsv)"
 > ```
