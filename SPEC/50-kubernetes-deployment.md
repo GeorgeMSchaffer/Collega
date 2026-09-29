@@ -12,7 +12,8 @@
 
 > ## ⛔ SUPERSEDED — describes the frozen .NET stack
 >
-> This document plans the deployment of `src/Collega.*`, which is **frozen and never deployed**:
+> This document plans the deployment of the .NET solution, which was **never deployed** and was
+> deleted in slice F6 (2026-09-13); paths into it were removed 2026-09-29:
 > Sprint 8 was cancelled on 2026-09-04, and the .NET code is deleted in slice F6
 > (`SPEC/decisions.md` 2026-09-06, `SPEC/50-typescript-migration.md`). The product ships to
 > **Vercel with Prisma Postgres** (ticket `02`, decided 2026-09-03).
@@ -29,15 +30,15 @@
 >   Dockerfiles anywhere.
 > - **Do not read any statement here as "already done."** Where it says the chart "creates" a Service or
 >   the client image "comes from" a Dockerfile, read *would*, *once someone writes it*. Every path below
->   (`k8s/…`, `src/Collega.API/Dockerfile`, `src/Collega.Client/Dockerfile`) is a **proposed** location
+>   (`k8s/…`, and a Dockerfile in each of the API and client projects) is a **proposed** location
 >   for a file that is absent today.
 >
 > **Hard prerequisites, none of which are met:**
 >
 > | Prerequisite | Status |
 > |---|---|
-> | `src/Collega.API/Dockerfile` | Does not exist |
-> | `src/Collega.Client/Dockerfile` | Does not exist |
+> | A Dockerfile for the API project | Does not exist |
+> | A Dockerfile for the client project | Does not exist |
 > | Helm chart under `k8s/` | Does not exist |
 > | Container images published to a registry | No registry, no build pipeline for images |
 >
@@ -87,7 +88,7 @@ flowchart LR
 
 ### Client pod
 
-- Image source: `src/Collega.Client/Dockerfile` — **not written yet**
+- Image source: a Dockerfile in the client project — **not written yet**
 - Runtime: `nginx:alpine`
 - Replicas: 2
 - Purpose: Serve the Blazor WebAssembly static assets and SPA fallback routing
@@ -99,7 +100,7 @@ flowchart LR
 
 ### API pod
 
-- Image source: `src/Collega.API/Dockerfile` — **not written yet**
+- Image source: a Dockerfile in the API project — **not written yet**
 - Runtime: `mcr.microsoft.com/dotnet/aspnet:8.0`
 - Replicas: 2
 - Container port: 8080 (set `ASPNETCORE_URLS=http://+:8080`; the local `launchSettings.json` port is irrelevant in-container)
