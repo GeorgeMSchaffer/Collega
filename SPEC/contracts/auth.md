@@ -114,6 +114,52 @@ Update the currently authenticated user's editable profile fields.
   - Both fields are trimmed before persistence.
   - Email, role, organization, and status cannot be changed through this endpoint.
 
+### `PUT /api/v1/auth/me/portrait`
+Set the current user's portrait.
+
+*Written 2026-09-29 from the code (slice 124, `SPEC/decisions.md` 2026-09-29 "Contracts and wording
+written from the code"): `apps/api/src/authentication/authentication.controller.ts` and
+`AuthService.updatePortrait`.*
+
+- **Roles:** the authenticated caller, for their own portrait. Not on the mandatory-rotation
+  allowlist, so it answers `403` while a password change is required.
+- **Request:** JSON body
+  - `imageBase64` required string — the image file as Base64, or a whole `data:` URL (everything
+    up to the first comma is dropped). Whitespace inside the payload is ignored.
+- **Response:** `200`, the authenticated user summary (the `GET /api/v1/auth/me` shape), with
+  `portraitDataUrl` set to `data:image/png;base64,…`.
+- **Errors:**
+  - `400` `imageBase64` `"Image Base64 is required."` when it is missing or blank, and `"The uploaded
+    image could not be read."` when it is not valid Base64 — both request-shape failures, with no
+    `traceId`
+  - `400` `portrait` `"That file isn't a supported image. Upload a GIF, JPEG, or PNG."` when the
+    bytes do not decode as one of those three formats
+  - `401` caller is not authenticated or cannot be resolved
+  - `403` a password change is required
+- **Rules:**
+  - What is stored is not what was sent: the image is decoded, scaled to fit within 25 × 25 pixels
+    without enlarging, and re-encoded as PNG. Content that only claims to be an image is rejected,
+    never stored.
+  - Audited as `UserPortraitUpdated`.
+  - The `tools/golden/fixtures/profile.portrait.*` summaries were recorded before
+    `organizationTitle` existed (added 2026-09-10) and lack it; they agree with this contract
+    otherwise, for both routes and all four roles.
+
+### `DELETE /api/v1/auth/me/portrait`
+Remove the current user's portrait, so the initials avatar shows again.
+
+*Written 2026-09-29 from the code, as above.*
+
+- **Roles:** the authenticated caller, for their own portrait. Not on the mandatory-rotation
+  allowlist.
+- **Request:** —
+- **Response:** `200` (not `204`), the authenticated user summary with `portraitDataUrl` `null`, so
+  the client can re-render from the answer.
+- **Errors:**
+  - `401` caller is not authenticated or cannot be resolved
+  - `403` a password change is required
+- **Rules:** Answers `200` when there was no portrait to remove. Audited as `UserPortraitRemoved`.
+
 ### `POST /api/v1/auth/change-password`
 Change the current user's password, including the first-login Site Admin password change.
 
