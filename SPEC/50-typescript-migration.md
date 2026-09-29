@@ -45,7 +45,7 @@ Nine constraints settled with the user during charting (2026-08-30), three more 
 | 12 | **Everything ports; View As isolated** | Ticket `03`. Nothing deferred; impersonation gets its own slice. |
 | 13 | **The .NET test suite is discarded** | Ticket `10`, decided 2026-09-03. Behaviour is pinned by the golden corpus at the HTTP surface; each slice writes fresh Vitest coverage for its own layer, by a QA agent rather than by the agent that wrote the code. The accepted gap: 142 Domain + 324 Application unit assertions vanish until slices re-write them, and the corpus cannot see an invariant that never reaches an endpoint. |
 | 14 | **Vercel, with Prisma Postgres** | Ticket `02`, decided 2026-09-03. Nest runs as serverless functions: no long-lived in-process state, and every request pays a cold start. AI idea assist is where this bites first — its budget gate and per-organization usage counters must be storage-backed, not process-backed. |
-| 15 | **Net-new scope is Wave G, after F1** | Ticket `01` Question C, decided 2026-09-03. Loop, decision records, commitment strip and Triage Mode are in; momentum, duplicate clustering and vote budget are not. |
+| 15 | **Net-new scope is Wave G, after F1** | Ticket `01` Question C, decided 2026-09-03. Loop, decision records, commitment strip and Triage Mode are in; momentum, duplicate clustering and vote budget are not. *Superseded 2026-09-29 — see `SPEC/decisions.md` "Spec contradictions resolved", 2026-09-08 "Wave G is cut from the conversion and revisited after cutover" and 2026-09-11 "The golden replay is not a gate, and never was meant to be one": Wave G waits until after cutover, and F1 is not a gate. The scope decision stands.* |
 
 ### The standing risk, restated
 
@@ -196,10 +196,12 @@ across 19 controllers. Slice F6 deleted that source, so the result is committed 
 Coverage is measured against the same list, so a route the corpus never touches shows up as a hole rather
 than as silence.
 
-> **Until Wave F, the .NET stack must stay runnable** even though no development happens on
+> ~~**Until Wave F, the .NET stack must stay runnable** even though no development happens on
 > it. A re-capture is only possible while the API still boots, and cutover deletes it. A
 > change that breaks the API's boot path is still a problem — escalate rather than
-> quietly proceeding.
+> quietly proceeding.~~
+>
+> *Superseded 2026-09-29 — see `SPEC/decisions.md` "Spec contradictions resolved": the .NET stack was deleted in F6 on 2026-09-13, not chained to F1 (2026-09-11 "The golden replay is not a gate, and never was meant to be one"), so there is nothing left to keep runnable and the corpus can no longer be re-recorded.*
 
 ### Wave 0 — Foundation ⇉ 1 (strictly serial; blocks everything after it)
 
@@ -275,7 +277,7 @@ goes through View As.**
 
 | Slice | Owns |
 |---|---|
-| **F1** Golden replay | Point A3 at Nest, diff all 81 endpoints × 4 roles, and resolve every diff: fix it, record it in `tools/golden/src/accepted.ts`, or deliberately do better. **Green means no unexplained diff**, not zero diffs — `SPEC/decisions.md` 2026-09-09. **This is the gate.** |
+| **F1** Golden replay | Point A3 at Nest, diff all 81 endpoints × 4 roles, and resolve every diff: fix it, record it in `tools/golden/src/accepted.ts`, or deliberately do better. **Green means no unexplained diff**, not zero diffs — `SPEC/decisions.md` 2026-09-09. ~~**This is the gate.**~~ *Superseded 2026-09-29 — see `SPEC/decisions.md` "Spec contradictions resolved" and 2026-09-11 "The golden replay is not a gate, and never was meant to be one": the replay is a signal, not a gate; a failing or unrunnable replay blocks no merge, cutover or release. `pnpm check` is the gate.* |
 | **F2** E2E adaptation | `e2e/**` — the suite is kept in principle, but comp P is a redesign, so its selectors will not survive unchanged |
 | **F3** Data migration | The transform, plus an answer to whether it is reversible |
 | **F4** Cutover runbook | Sequence, rollback posture, the go/no-go checklist |
@@ -286,9 +288,11 @@ goes through View As.**
 - **F6 is the only slice that may delete `src/` or `tests/`.** They were frozen on 2026-09-06
   (`SPEC/decisions.md`) — no features, no fixes, no tests — but kept on disk because re-recording a golden
   fixture needs the .NET API to boot, and Waves D and E are precisely where a missing or wrong fixture
-  surfaces. Once F1 replays clean, that reason is spent and the code goes.
+  surfaces. ~~Once F1 replays clean, that reason is spent and the code goes.~~ *Superseded 2026-09-29 — see `SPEC/decisions.md` "Spec contradictions resolved" and 2026-09-11 "The golden replay is not a gate, and never was meant to be one": that chain was cut, and F6 deleted the code on 2026-09-13 on its own merits.*
 
 ### Wave G — Net-new scope ⇉ 3 · **starts when F1 is green**
+
+> *Superseded 2026-09-29 — see `SPEC/decisions.md` "Spec contradictions resolved" and 2026-09-08 "Wave G is cut from the conversion and revisited after cutover": Wave G is cut from the conversion and revisited after cutover — not started when F1 is green, and F1 is no longer a gate. The wave's definition below stands, so it can be picked up as written; the schema amendment slice it buys is deferred with it.
 
 Decided 2026-09-03 (`SPEC/decisions.md`, ticket `01` Question C).
 - The only part of the effort that is not a re-expression of something that already exists, kept in its own
@@ -400,9 +404,9 @@ that needs current per-model pricing checked rather than guessed.
 
 Big-bang was chosen deliberately, so the rollback posture has to be explicit rather than assumed.
 
-- **Gate:** F1 green — all 81 endpoints × 4 roles replay against Nest with every diff either
-  fixed or recorded in `tools/golden/src/accepted.ts` — plus F2's adapted Playwright suite
-  green. No cutover before both.
+- **Gate:** ~~F1 green — all 81 endpoints × 4 roles replay against Nest with every diff either
+  fixed or recorded in `tools/golden/src/accepted.ts` — plus~~ F2's adapted Playwright suite
+  green. *Superseded 2026-09-29 — see `SPEC/decisions.md` "Spec contradictions resolved" and 2026-09-11 "The golden replay is not a gate, and never was meant to be one": F1 is not a gate — a failing or unrunnable replay does not block cutover — and `pnpm check` is.*
 - **Rollback unit is the database, not the .NET deployment.** This bullet originally read "the .NET stack stays
   deployable and its database restorable" — that is **dead as of 2026-09-04**, when Sprint 8 was cancelled and
   the .NET stack was never deployed. There is no .NET deployment to fall back to, and after F6 there is no .NET
@@ -425,8 +429,8 @@ Big-bang was chosen deliberately, so the rollback posture has to be explicit rat
 - **Sprint 7.5.** Implemented on .NET before this starts. **Sprint 8 was cancelled** 2026-09-04 and the .NET
   stack is never deployed.
 - **The product's feature set** — with one bounded exception. The conversion itself re-expresses existing
-  behaviour; **Wave G** carries the four net-new features decided on 2026-09-03 and starts only once F1 is
-  green, so the oracle still covers the port completely. Everything else new is `SPEC/ideas-inbox.md`'s
+  behaviour; **Wave G** carries the four net-new features decided on 2026-09-03 ~~and starts only once F1 is
+  green, so the oracle still covers the port completely~~ (*Superseded 2026-09-29 — see `SPEC/decisions.md` "Spec contradictions resolved": Wave G is revisited after cutover, 2026-09-08 "Wave G is cut from the conversion and revisited after cutover").* Everything else new is `SPEC/ideas-inbox.md`'s
   business.
 - **Per-org AI credentials.** Already deliberately unimplemented (tracker rule 30); the conversion does not
   change that.
@@ -443,9 +447,9 @@ Big-bang was chosen deliberately, so the rollback posture has to be explicit rat
    same day too, as Wave G.
 2. **Schedule Wave A.** Done 2026-09-03 — 447 cases over all 81 endpoints, committed. Its
    deadline was never Sprint 8's close (that sprint is cancelled); it is cutover, which
-   deletes the .NET solution and with it any ability to record again. **Until then the .NET
+   deletes the .NET solution and with it any ability to record again. ~~**Until then the .NET
    stack must stay runnable**, even though no further development happens on it: a
-   re-capture is only possible while the API still boots.
+   re-capture is only possible while the API still boots.~~ *Superseded 2026-09-29 — see `SPEC/decisions.md` "Spec contradictions resolved": F6 deleted the .NET stack on 2026-09-13.*
 3. **Answer the Outcome ↔ Issue cardinality question** before Wave E6 — answered
    2026-09-02, **single-parent** (`SPEC/decisions.md`). See Wave E6 above.
 4. **Take ticket `10`** — answered 2026-09-03: the .NET suite is discarded in favour of the

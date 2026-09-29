@@ -347,7 +347,7 @@ Dependencies: BE-1 through BE-4.
 3. Add API integration and OpenAPI contract tests for option CRUD/reorder/delete, expanded projections, idea delete, and `400`/`403`/`404` behavior.
 4. Add Client/component tests for route redirects, terminology, drag rollback, Idea Detail status movement, upvote rollback, comment focus, and role-aware editing/deletion.
 5. Add Playwright coverage for the desktop critical path and verify mobile uses the status selector rather than touch drag.
-6. Run `scripts/spec_drift_gate.ps1`, solution build, affected test projects, and browser tests before completion.
+6. Run the spec drift gate, solution build, affected test projects, and browser tests before completion. (The gate was a PowerShell script that no longer exists; `pnpm check` is the gate now.)
 7. Add migration and Application/API tests proving valid singular assignments are preserved, invalid assignee collections are rejected, assignment authorization is enforced, notifications deduplicate recipients, CSV supports pipe-delimited assignees, and tag limits are enforced.
 8. Add Client/browser accessibility and visual-regression tests for primary-nav active styling, Board reference fidelity, tag/persona overflow, full-name exposure, and deterministic local-day age.
 
@@ -445,6 +445,9 @@ Validation gate:
 - protocol validation and audit coverage meet feature acceptance criteria
 
 Validation gate:
+
+*Note (2026-09-29): this second gate directly follows the SAML phase's own, with no heading between them, and has since the plan was written. Its checks are release-wide, so it most likely closed a phase whose heading was lost; it is left as found rather than guessed at.*
+
 - contracts and OpenAPI remain synchronized
 - acceptance criteria are traceable to executable tests
 - deferred scope does not leak into the release
@@ -539,7 +542,7 @@ Validation gate:
 - `organization_id` uuid foreign key
 - `board_id` uuid foreign key
 - `author_user_id` uuid foreign key
-- `assignee_user_id` uuid nullable foreign key
+- ~~`assignee_user_id` uuid nullable foreign key~~ — removed by Phase BE-1 step 7: assignments moved to the `idea_assignees` join table (zero to five per idea). *Marked 2026-09-29, `SPEC/decisions.md` "Spec contradictions resolved".*
 - `status_id` uuid foreign key
 - `title` character varying(150)
 - `description` character varying(4000)

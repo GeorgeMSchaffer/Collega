@@ -191,7 +191,7 @@ Validation rules:
 - Every `fieldDefinitionId` in a selection must be an **active** field definition in the same org (else `400`).
 - No duplicate field in a type's selection.
 - `ColorHex` must be `#RRGGBB` if present; contrast is advisory (mirror the status picker's warning), not blocking.
-- Reassign target must be an active idea type in the same org (else `400`); actor must be OrgAdmin (own org) or SiteAdmin.
+- Reassign target must be an active idea type in the same org (else `400`); actor must be OrgAdmin (own org), or a SiteAdmin acting through View As (a direct SiteAdmin is refused with `403`; corrected 2026-09-29, `SPEC/decisions.md` 2026-09-29, "Spec contradictions resolved").
 
 ### `IdeaService` changes
 
@@ -249,9 +249,9 @@ Design locked in `SPEC/mockups/comp-c-review-09-idea-type-fields.html` (built on
 - Type shown **read-only** as a badge (immutable). An admin-only **"Reassign type…"** control opens an inline confirm that names which current values would be archived; the change is logged.
 - Historical out-of-type values render muted with an "archived" tag, consistent with soft-deleted UDFs.
 
-### Type badge placement (open)
+### Type badge placement (decided 2026-09-04)
 
-On swimlane/list cards the badge shares space with the priority chip and status dot — placement TBD to avoid chip overload (see Open Questions #10).
+On swimlane/list cards the badge shared space with the priority chip and status dot. Decided 2026-09-04 (`SPEC/decisions.md`, "The idea-type badge moves to the tag row on swimlane cards"): the badge always renders its name, and on swimlane and List cards it sits in the tag row, capped at 92px with an ellipsis and the full name on the tooltip.
 
 ---
 
@@ -259,10 +259,12 @@ On swimlane/list cards the badge shares space with the priority chip and status 
 
 | Role | Manage type fields / appearance | Reassign idea type | Pick type + fill fields | View idea fields |
 |---|---|---|---|---|
-| `SiteAdmin` | ✅ | ✅ | ✅ | ✅ |
+| `SiteAdmin` | through View As only | through View As only | through View As only | ✅ |
 | `OrgAdmin` | ✅ (own org) | ✅ (own org) | ✅ | ✅ |
 | `User` | ❌ | ❌ | ✅ | ✅ |
 | `ReadOnly` | ❌ | ❌ | ❌ | ✅ |
+
+The `SiteAdmin` row said ✅ for the three write columns until 2026-09-29 (`SPEC/decisions.md` 2026-09-29, "Spec contradictions resolved"): a Site Admin changes organization content only while acting through View As, and the API refuses the direct path (`ensureNotDirectSiteAdmin`).
 
 ---
 
@@ -319,7 +321,7 @@ Per repo working rules, make these canonical edits **before implementation**:
 
 - **[Product]** New-field propagation to `Curated` types is manual by design. Confirm the admin UI surfaces "N types don't include this new field" prominently enough. — non-blocking.
 - **[Product]** Admin reassign is P1. Confirm it isn't needed for MVP launch (immutability alone ships as P0). — non-blocking.
-- **[Design]** Type badge placement on cards vs the priority chip + status dot (chip overload). — resolve in the card comp before Client work.
+- ~~**[Design]** Type badge placement on cards vs the priority chip + status dot (chip overload).~~ — decided 2026-09-04: the badge moves to the tag row (see "Type badge placement").
 - **[Eng]** Should the global `FieldDefinition.IsRequired` be dropped eventually or kept as the `AllActiveFields` default? (P2 decides; v1 keeps it.) — non-blocking.
 
 ---

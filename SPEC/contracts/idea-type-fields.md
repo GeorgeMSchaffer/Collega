@@ -9,8 +9,8 @@ shared data rules). Canonical, and read, not edited, by implementation slices.
 Shared by every route below:
 - Idea Types scope which User-Defined Fields appear on an idea by **direct mapping**: an Idea Type owns an ordered selection of the organization's existing UDFs, each marked required-or-optional *for that type* (`SPEC/20-feature-idea-type-fields.md`). There is no separate "field set" resource.
 - A type has a **field mode** — `AllActiveFields` (default; shows every active org UDF, global required) or `Curated` (shows only the mapped fields, per-type required).
-- Roles: Site Admin may manage any organization supplied by route context; Org Admin only their own; User and Read Only callers receive `403 Forbidden`.
-- The Idea Type list/create/rename/reorder/soft-delete contracts are unchanged (see the Idea Field Option Contracts above); the routes below add field selection, appearance, and reassignment.
+- Roles: an in-scope Org Admin, for their own organization only; User and Read Only callers receive `403 Forbidden`. **A Site Admin acting directly is refused with `403`** (`ensureNotDirectSiteAdmin`, called from `ensureAdminScope`); a Site Admin manages another organization's types only while acting through View As. *Corrected 2026-09-29 (`SPEC/decisions.md`, "Spec contradictions resolved"): this said a Site Admin may manage any organization supplied by route context.*
+- The Idea Type list/create/rename/reorder/soft-delete contracts are unchanged (see "Idea Field Option Contracts" in [`contracts/idea-field-options.md`](idea-field-options.md)); the routes below add field selection, appearance, and reassignment.
 
 ### `PUT /api/v1/organizations/{organizationId}/idea-types/{ideaTypeId}/fields`
 Replace the Idea Type's field selection.

@@ -16,13 +16,13 @@
   (`SPEC/50-typescript-migration.md`, Wave E).
 - Reference: the four generated files `SPEC/mockups/comp-p-{focus-roadmap,auth,admin,delivery}.html`,
   built from `SPEC/mockups/_build/`, at four roles and four states each.
-- **The shipped Blazor client does not implement this direction.** It implements the superseded
-  Comp C shell (icon rail + right slide-in drawers) until cutover — Sprint 7.5 and Sprint 8 land on
-  it as it is.
+- **The Blazor client never implemented this direction.** It implemented the superseded Comp C
+  shell (icon rail + right slide-in drawers) and was deleted in slice F6 (2026-09-13); `apps/web` is
+  the client.
 - Surface-neutral rules (what a card shows, how a move is saved, who may do what) bind both clients.
   Rules that name a surface (sidebar, the drawer (the docked inspector until 2026-09-27), inline
-  create) bind the comp P build; the Blazor equivalent is recorded once under **Superseded surfaces**
-  at the end.
+  create) bind the comp P build; the Blazor equivalent is recorded once, as history, under
+  **Superseded surfaces** at the end.
 
 ## NAVIGATION
 
@@ -196,9 +196,9 @@ Combinable with filter chips.
 5. Board `allowUserStatusUpdate` and role restrictions are enforced server-side (403 → revert + permission message).
 
 ### Drag-and-Drop: Reordering Columns
-1. SiteAdmin and OrgAdmin users can drag column headers to reorder columns.
+1. An Org Admin — and a Site Admin only while acting through View As — can drag column headers to reorder columns. *Corrected 2026-09-29 (`SPEC/decisions.md` 2026-09-29, "Spec contradictions resolved"): this said SiteAdmin and OrgAdmin users.*
 2. Optimistic reorder applied immediately.
-3. For each column whose `SortOrder` changed, calls `PUT /api/v1/boards/{boardId}/statuses/{statusId}` with the new `sortOrder`. Saves immediately on drop — no additional confirmation.
+3. Calls `POST /api/v1/boards/{boardId}/swimlanes/reorder` once, naming every swimlane on the board with its new `order` (`contracts/boards.md`). Saves immediately on drop — no additional confirmation. *Corrected 2026-09-29 (`SPEC/decisions.md` 2026-09-29, "Spec contradictions resolved"): this said one `PUT /api/v1/boards/{boardId}/statuses/{statusId}` per moved column, a route that does not exist.*
 4. On failure: revert all columns, show error toast.
 5. User and ReadOnly roles see columns but cannot reorder them.
 6. Changing status in the drawer (drawer since 2026-09-27) uses the same move operation and immediately updates the idea's status; the card re-slots into the matching swimlane behind the open drawer (no navigation away).
@@ -515,12 +515,12 @@ assistant filled (`20-feature-ai-idea-assist-v2.md` Q5). Each theme also carries
 
 ## SUPERSEDED SURFACES — the shipped Blazor client (Comp C, until cutover)
 
-Kept so the running product can be read against this spec without confusion. None of this is a target
-for new work.
+Kept as history: the Blazor client this describes was deleted in slice F6 (2026-09-13). None of this
+is a target for new work.
 
 - **Shell**: a 64px icon rail (Home, Boards, Ideas, Settings) with a bottom avatar popover holding Profile and Sign Out; no header bar. Reference `comp-c-review-06-lockin-v5-final.html`. Sprint 7.5 records the rail's *Log out* wording and placement drift from that lock.
 - **Detail, edit and create**: a right slide-in drawer (≈620px, `DrawerShell`) over a dim backdrop for ideas (locked 2026-08-10) and for the five admin entities (2026-08-14), with create moved from a centered modal into the same drawer on 2026-08-17. `CreateModalShell` survives only as the brainstorm chat chrome. Sprint 7.5 records that the drawer never takes focus and Escape is dead.
 - **Board cards**: the *Flat* treatment — pale lane background, priority chip, left-border status accent; columns as equal fractions of the width.
 - **Components**: Fluent UI Blazor, whose shadow-DOM submit buttons and text fields are two of Sprint 7.5's three systemic accessibility defects. Icons from Fluent System Icons. Native and Fluent text-like controls at a stable 36px.
-- **Palette in `app.css`**: still the indigo/warm-neutral Comp C tokens with 6px/4px radii; never migrated to the 2026-08-31 palette.
+- **Palette in the Blazor client's stylesheet**: still the indigo/warm-neutral Comp C tokens with 6px/4px radii; never migrated to the 2026-08-31 palette.
 - **Home**: the D4 tile grid with an *Activity feed coming soon* placeholder.

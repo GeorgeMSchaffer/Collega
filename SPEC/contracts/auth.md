@@ -7,14 +7,20 @@ shared data rules). Canonical, and read, not edited, by implementation slices.
 ## Authentication Contracts
 
 ### Access Token Format and Session Revocation (Resolved 2026-08-07)
-- `accessToken` is a signed JWT, not an opaque server-tracked token.
-- Every `User` has a server-side `SecurityStamp`: a random value regenerated whenever sessions must be invalidated. Each issued JWT embeds the `SecurityStamp` current at issuance as a claim.
-- `GET /api/v1/auth/me` and every authenticated request revalidate the embedded `SecurityStamp` claim against the User's current `SecurityStamp` in the database. A mismatch is an invalid/expired token (`401`), exactly like an expired JWT.
+Rewritten 2026-09-29 (`SPEC/decisions.md`, "Spec contradictions resolved"): the session is the
+httpOnly cookie Nest issues (decision 2026-09-04, `08`), not a bearer token the client stores.
+This section said "`accessToken` is a signed JWT"; named the .NET lifetime setting
+`Auth:AccessTokenLifetimeMinutes` (`Auth__AccessTokenLifetimeMinutes`); said the browser enforces
+the idle deadline, without saying it is unbuilt in `apps/web`; and sent expiry to
+`/login?sessionExpired=true`.
+- The session is an **httpOnly cookie named `collega_session`**, set by the API on a successful `POST /api/v1/auth/login` (`Secure`, `SameSite=Lax`, `Path=/`). Its value is a signed JWT (HS256) carrying the user id (`sub`); no response body carries it, no client script reads it, and no client sends an `Authorization` header. The API reads identity from this cookie and nothing else.
+- Every `User` has a server-side `SecurityStamp`: a random value regenerated whenever sessions must be invalidated. Each issued JWT embeds the `SecurityStamp` current at issuance as a claim (`sstamp`).
+- `GET /api/v1/auth/me` and every authenticated request revalidate the embedded `SecurityStamp` claim against the User's current `SecurityStamp` in the database. A mismatch is an invalid/expired session (`401`), exactly like an expired JWT.
 - "Revoke all existing sessions" (self-service and admin-issued password reset, `SPEC/20-feature-auth.md` requirements #29 and the self-service reset acceptance criteria) regenerates `User.SecurityStamp`. Why: it immediately invalidates every previously issued token for that user without a token blocklist or session table.
-- Access tokens expire absolutely 480 minutes after issuance, so a successful login returns `expiresInSeconds: 28800`. Deployments may override the lifetime through `Auth:AccessTokenLifetimeMinutes` (environment variable `Auth__AccessTokenLifetimeMinutes`).
-- The browser independently enforces a 30-minute inactivity deadline, warns at minute 28 with a two-minute countdown, and synchronizes activity and logout/expiry across tabs.
-- Staying signed in resets only browser inactivity; it never changes `expiresInSeconds` or the JWT expiry.
-- Idle or absolute expiry clears client authentication and navigates to `/login?sessionExpired=true`. Explicit logout and successful password changes do not use that query state.
+- Access tokens expire absolutely 480 minutes after issuance, so a successful login returns `expiresInSeconds: 28800`, and the cookie's lifetime equals the token's so it never outlives the JWT it carries. Deployments may override the lifetime through the environment variable `ACCESS_TOKEN_LIFETIME_MINUTES`. The signing key is `ACCESS_TOKEN_SIGNING_KEY`; production refuses to boot without one of at least 32 characters.
+- `apps/web` posts sign-in through a Next Server Function and re-issues the cookie on its own origin under the same name and lifetime (`httpOnly`, `SameSite=Lax`, `Secure` in production), so the browser holds one cookie for one origin; server-rendered requests forward it to the API as a `Cookie` header. Signing out deletes the cookie — there is no logout endpoint, because a stateless JWT has no server-side record to revoke.
+- A session the API refuses (expired, revoked, or signed with a key it no longer holds) sends the reader to `/login?expired=1`, where the cookie is dropped. Explicit logout (`/login`) and a successful password change (`/login?passwordChanged=1`) do not use that query state.
+- The browser inactivity deadline (30 minutes, a warning at minute 28 with a two-minute countdown, activity and logout synchronized across tabs; staying signed in never changes `expiresInSeconds` or the JWT expiry) is specified in `SPEC/20-feature-auth.md` requirements 38–42 and is **not built in `apps/web`**.
 
 ### Mandatory Password Rotation Gate (Resolved 2026-08-11, Sprint 4)
 - While a user's persisted `MustChangePassword` is true, the API refuses every authenticated endpoint except a fixed allowlist, returning `403` with the standard problem-details envelope.
@@ -23,9 +29,9 @@ shared data rules). Canonical, and read, not edited, by implementation slices.
 
 Rules:
 - the flag is read from live persisted state on each request, not from a claim baked into the token at issuance, so completing the rotation lifts the restriction on the very next request without reissuing a token
-- login still succeeds and still returns a token plus `requiresPasswordChange: true`; the token is simply scoped to the allowlist until the rotation is done
+- login still succeeds, still sets the session cookie, and returns `requiresPasswordChange: true`; the session is simply scoped to the allowlist until the rotation is done
 - the allowlist is opt-in per endpoint — a newly added endpoint is refused during rotation unless it is explicitly marked
-- this is a server-side gate. The Blazor client's own `mustChangePassword` routing is a UX convenience layered on top of it and is not the enforcement point
+- this is a server-side gate. The client's own `mustChangePassword` routing is a UX convenience layered on top of it and is not the enforcement point
 - why: before this gate the rule was enforced only client-side. The issued token was valid everywhere, so a caller holding an admin-issued temporary password could skip the rotation entirely by calling the API directly and continue on a credential the issuing admin still knew.
 
 ### Rate limiting on the authentication surface
@@ -65,7 +71,7 @@ Authenticate a user with globally unique email credentials.
   - `429` locked out after 5 failed attempts within 15 minutes
   - `429` too many requests from this caller IP (see "Rate limiting on the authentication surface")
 - **Rules:**
-  - **Session transport (decision `08`, 2026-09-04).** The Nest host issues the session as an **httpOnly cookie** named `collega_session`, not as a bearer token in the body: `Secure`, `SameSite=Lax`, `Path=/`. The client never reads it and never sets an `Authorization` header — why: that keeps `apps/web` a pure client. Cleared on logout and on View As start and exit.
+  - **Session transport (decision `08`, 2026-09-04).** The Nest host issues the session as an **httpOnly cookie** named `collega_session`, not as a bearer token in the body: `Secure`, `SameSite=Lax`, `Path=/`. The client never reads it and never sets an `Authorization` header — why: that keeps `apps/web` a pure client. The API sets it only here; `apps/web` deletes it on sign-out and after a password change. View As start and exit do not touch it: impersonation is resolved server-side on every request (`contracts/view-as.md`).
   - This document said nothing about cookies until 2026-09-08, which is how the frozen .NET API (bearer) and the Nest host (cookie) came to disagree with nothing forcing the question. The body is otherwise unchanged.
   - The `accessToken` field the .NET API returned is **gone**: issuing it alongside the cookie would hand the token back to JavaScript and defeat the point of `httpOnly`. One golden fixture records that field and will diff against Nest until it is re-recorded — the single known cost of this decision, and cheaper than the alternative.
 

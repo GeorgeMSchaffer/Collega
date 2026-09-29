@@ -63,11 +63,11 @@ Users can securely access the application using organization-scoped accounts.
     - The client's routing gate is a UX convenience on top of this, not the enforcement point.
 32b. **An unrotated temporary password stays temporary (added 2026-08-11, Sprint 4).** A successful login clears the failed-attempt and lockout counters but leaves `TemporaryPasswordExpiresAtUtc` intact while `MustChangePassword` is true; only a completed password change retires the deadline.
     - Why: clearing it on login turned an admin-issued temporary password — one the issuing admin still knows — into a permanent credential, defeating requirement #13's expiry.
-33. Persisted client authentication data is a cached session candidate and must not establish an authenticated client principal until `GET /api/v1/auth/me` accepts the stored bearer token.
-34. When the API rejects a stored or active bearer token, the client clears its authentication state and redirects to `/login`. Endpoint-specific authorization failures must not clear a token that `GET /api/v1/auth/me` still accepts.
+33. The session is the httpOnly `collega_session` cookie the API sets on login (decision 2026-09-04; `contracts/auth.md` "Access Token Format and Session Revocation"); no client script can read it, and the client holds no token of its own. A holder of the cookie is not treated as signed in until `GET /api/v1/auth/me` accepts it and returns the current user — `apps/web` resolves `/auth/me` on every authenticated page request. *(Rewritten 2026-09-29, `SPEC/decisions.md` "Spec contradictions resolved": this said the client stores a bearer token.)*
+34. When the API rejects the session cookie (expired, revoked, or unknown), the client drops the cookie and redirects to `/login`. An endpoint's own `401` refusal — one the use case raises after authenticating the caller, such as a wrong current password — is shown as that endpoint's error and does not end a session that `GET /api/v1/auth/me` still accepts. *(Rewritten 2026-09-29, `SPEC/decisions.md` "Spec contradictions resolved": this said the client clears its state when the API rejects a stored or active bearer token.)*
 
 ## Session Mechanism (Resolved 2026-08-07)
-35. `accessToken` is a signed JWT embedding the issuing `User.SecurityStamp` value as a claim. Every authenticated request revalidates the embedded `SecurityStamp` against the user's current database value; a mismatch is rejected the same way an expired token is. A JWT-plus-server-side-check design, not an opaque session-table design.
+35. The session cookie's value is a signed JWT embedding the issuing `User.SecurityStamp` value as a claim. Every authenticated request revalidates the embedded `SecurityStamp` against the user's current database value; a mismatch is rejected the same way an expired token is. A JWT-plus-server-side-check design, not an opaque session-table design.
 36. "Revoke all existing sessions" (requirement #29 and the self-service reset acceptance criteria) is implemented by regenerating `User.SecurityStamp`. This single write immediately invalidates every previously issued JWT for that user — no token blocklist or session table.
 37. Access tokens have an absolute lifetime of 480 minutes (8 hours). Client activity can never extend this server-enforced JWT expiry.
 38. An authenticated browser session expires after 30 minutes without user activity. The client warns at 28 minutes and displays a live two-minute countdown with actions to stay signed in or sign out.
@@ -84,7 +84,7 @@ Users can securely access the application using organization-scoped accounts.
 - [ ] Password changes are rejected if they do not satisfy the password complexity policy
 - [ ] Seed Site Admin is created at first run
 - [ ] Seed Site Admin must change the environment-provided initial credential on first login
-- [ ] Startup fails fast with a clear error if `SiteAdmin__Email` or `SiteAdmin__Password` is missing
+- [ ] Startup fails fast with a clear error if `SITE_ADMIN_EMAIL` or `SITE_ADMIN_PASSWORD` is missing
 - [ ] Development startup seed creates one Org Admin and two User accounts per demo organization using `Abc123!`
 - [ ] Development startup seeded demo users can log in with `Abc123!` without a forced password change
 - [ ] Admin-issued temporary password reset is implemented in P1
@@ -95,9 +95,9 @@ Users can securely access the application using organization-scoped accounts.
 - [ ] Unauthenticated protected-route navigation redirects to `/login`, while `/register` remains public
 - [ ] Authenticated users without a required password change land on the Dashboard at `/`
 - [ ] Only users marked `MustChangePassword` can access the standalone `/change-password` flow
-- [ ] Reloading with a valid stored token restores the authenticated session from `GET /api/v1/auth/me`
-- [ ] Reloading with an expired or API-unknown stored token clears the client session and redirects to `/login`
-- [ ] A protected API `401` clears the client session only when `GET /api/v1/auth/me` also rejects the bearer token
+- [ ] Reloading with a valid session cookie restores the authenticated session from `GET /api/v1/auth/me`
+- [ ] Reloading with an expired or API-unknown session cookie drops the cookie and redirects to `/login`
+- [ ] A protected API `401` ends the client session only when `GET /api/v1/auth/me` also rejects the session cookie
 - [ ] Unauthenticated/unauthorized users do not see protected navigation links
 - [ ] Authenticated users can update their own first and last name from My Profile
 - [ ] A profile update trims and validates both names, emits an audit event, and immediately refreshes the displayed session name
@@ -108,7 +108,7 @@ Users can securely access the application using organization-scoped accounts.
 - [ ] Invalid, expired, superseded, and used reset links display the same invalid-link state
 - [ ] A successful post-MVP reset revokes all sessions and returns the user to Login without automatic authentication
 - [ ] Password-reset requests and outcomes are audited without exposing the token or plaintext password
-- [ ] `accessToken` is a JWT carrying the issuing `SecurityStamp` claim; a request whose claim no longer matches the user's current `SecurityStamp` is rejected as unauthenticated
+- [ ] The session cookie carries a JWT with the issuing `SecurityStamp` claim; a request whose claim no longer matches the user's current `SecurityStamp` is rejected as unauthenticated
 - [ ] Regenerating a user's `SecurityStamp` (on any "revoke all sessions" action) invalidates every previously issued token for that user on their very next request
 - [ ] Issued access tokens expire exactly 480 minutes after issuance and browser activity never extends that absolute deadline
 - [ ] At 28 minutes without activity, the browser displays an accessible warning with a live two-minute countdown and Stay signed in / Sign out actions

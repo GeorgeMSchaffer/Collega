@@ -5,7 +5,7 @@
 >   drawers and Boards page are superseded (D6, 2026-09-27); `20-feature-client-ui.md` is authoritative.
 > - **Key rules:** logout is route-based via `/logout` (D2); the unauthenticated shell shows only Login and
 >   Register (D3); Admin is renamed Settings, `/admin` returns 404; Home is D4's richer dashboard (D1
->   superseded); list pages search and paginate server-side, 25/50/100/250, default 25.
+>   superseded); list pages search and paginate server-side — paging is now 10/25/50/100, default 10 (comp R).
 > - **Contracts:** contracts/auth.md
 > - **Decisions:** 2026-09-03 "Comp P is the canonical comp; the client is built on Tailwind CSS + shadcn/ui";
 >   2026-09-27 "Desk screens use the full width, and the Boards screens carry the board actions"
@@ -37,8 +37,8 @@ interviews on 2026-07-30 and 2026-07-31.
 - Decision D5: The admin management entities — Organizations, Users, Statuses, Idea Types, and Custom Fields — adopt the **List + Drawer** pattern canonically, matching the Ideas surface.
   - Replaces the earlier full-page-form (Organizations, Users) and inline-edit-card (Statuses, Idea Types, Custom Fields) patterns under "Admin-Style Pages: List/Form Pattern" below; that section's list-column definitions remain current, its full-page/inline **edit** surface is superseded by the drawer.
   - Each list row's **Details** action opens a right slide-in drawer (read view + Edit toggle → inline form + Save/Cancel footer); **Add New** opens a centered create modal.
-  - The chrome is the shared `Components/DrawerShell.razor` / `Components/CreateModalShell.razor`, used by Ideas too.
-  - Full specification and the preserved per-entity rules/retired routes: `SPEC/20-feature-client-ui.md` → "Admin entities use the same List + Drawer pattern". Delivered in Sprint 2 (`SPEC/sprints/archive/sprint-02-drawer-pattern-rollout.md`).
+  - The chrome was the Blazor client's shared `DrawerShell` / `CreateModalShell` components, used by Ideas too (deleted with that client in F6).
+  - Current specification: `SPEC/20-feature-client-ui.md` "List and detail pattern (comp R — 2026-09-27)"; the Blazor drawer is recorded under that file's "SUPERSEDED SURFACES — the shipped Blazor client (Comp C, until cutover)". *(This pointed at a section, "Admin entities use the same List + Drawer pattern", that no longer exists.)* Delivered in Sprint 2 (`SPEC/sprints/archive/sprint-02-drawer-pattern-rollout.md`).
 
 - Decision D4: Home dashboard scope is locked to the **richer dashboard** — welcome message, `Boards` / `Your ideas` / `Assigned to you` counts, a "Your boards" tile grid (one tile per accessible board with an open/assigned/last-active summary, plus a "Request a new board" tile), and a "Catching you up" activity feed (recent mentions, upvotes, and status moves).
   - Supersedes Decision D1's simpler MVP version ("Home Page Dashboard" below still describes the superseded D1 scope).
@@ -48,11 +48,11 @@ interviews on 2026-07-30 and 2026-07-31.
 
 ### BUG-1: Errant `else {` on Change Password screen
 - The Change Password page renders a literal `else {` and `else {}` as visible page content.
-- Root cause: the `</AuthGate>` tag closes before the `else` branch; fix the Razor structure so the conditional is valid.
+- Root cause: the `</AuthGate>` tag closed before the `else` branch; the fix made the Blazor page's conditional valid. (That client was deleted in F6.)
 - Acceptance: no stray code fragments render on `ChangePassword` in any state (initial, validation error, success).
 
 ### BUG-2: Placeholder template code removal
-- Remove all Weather/forecast and Counter placeholder functionality left over from the Blazor template: `Pages/Weather.razor`, `Pages/Counter.razor`, related sample data/services, and any nav links to them.
+- Remove all Weather/forecast and Counter placeholder functionality left over from the Blazor template: the Weather and Counter pages, related sample data/services, and any nav links to them. (That client was deleted in F6.)
 - Acceptance: no routes, menu items, or code references to Weather or Counter remain; solution builds and tests pass.
 
 ## Layout and Header
@@ -74,7 +74,7 @@ Settings icon" and "menu" as "rail":
 - Rail links navigate to list-entry pages: Home (`/`), Boards (`/boards`), Ideas (`/ideas`), Settings (`/settings`).
 
 ### Rail (locked 2026-08-07; superseded for the conversion by Decision D6)
-See `SPEC/20-feature-client-ui.md` NAVIGATION for the comp P sidebar that replaces it, and its *Superseded surfaces* section for the rail and `SPEC/mockups/comp-c-review-06-lockin-v5-final.html` for the reference implementation (supersedes `-v4-combined.html`).
+See `SPEC/20-feature-client-ui.md` "NAVIGATION" for the comp P sidebar that replaces it, and its "SUPERSEDED SURFACES — the shipped Blazor client (Comp C, until cutover)" section for the rail and `SPEC/mockups/comp-c-review-06-lockin-v5-final.html` for the reference implementation (supersedes `-v4-combined.html`).
 
 ### Unauthenticated and Unauthorized Shell
 - Unauthenticated users can access `/login` and `/register`; attempting protected routes redirects them to `/login`.
@@ -85,7 +85,7 @@ See `SPEC/20-feature-client-ui.md` NAVIGATION for the comp P sidebar that replac
 Client layout and interaction details should align to the mockup set in `SPEC/mockups`:
 - `01-login-and-org-selection.svg` for login/register baseline structure (while using invite-code self-registration behavior from current auth contracts).
 - `02-admin-organizations.svg`, `03-admin-users.svg`, and `06-status-management.svg` for settings administration list/form rhythm.
-- `04-board-overview.svg`, `05-idea-detail-panel.svg`, and `12-idea-card-and-overlay.svg` for board and idea interaction patterns — **superseded**: the Comp C pivot first replaced these SVG overlays with a full-page Idea Detail, and the 2026-08-10 decision then replaced that with a right slide-in **drawer** (detail + inline edit) plus a centered **create modal**, addressable at `/ideas/{ideaId}` / `?idea={ideaId}` (see `SPEC/20-feature-client-ui.md` → Idea Detail Surface). `SPEC/mockups/comp-c-review-09-detail-surfaces.html` (Right slide-in pattern) is the locked reference for idea detail/edit/create; `comp-c-review-04-idea-detail.html` is retained only for the field-level content it enumerates.
+- `04-board-overview.svg`, `05-idea-detail-panel.svg`, and `12-idea-card-and-overlay.svg` for board and idea interaction patterns — **superseded**: the Comp C pivot first replaced these SVG overlays with a full-page Idea Detail, and the 2026-08-10 decision then replaced that with a right slide-in **drawer** (detail + inline edit) plus a centered **create modal**, addressable at `/ideas/{ideaId}` / `?idea={ideaId}` (see `SPEC/20-feature-client-ui.md` "List and detail pattern (comp R — 2026-09-27)", which carries those URL rules; the "Idea Detail Surface" section this cited no longer exists). `SPEC/mockups/comp-c-review-09-detail-surfaces.html` (Right slide-in pattern) is the locked reference for idea detail/edit/create; `comp-c-review-04-idea-detail.html` is retained only for the field-level content it enumerates.
 - `10-board-empty-state-guided-setup.svg` for guided empty-state behavior.
 
 ## Settings Area (formerly "Admin")
@@ -151,8 +151,10 @@ Applies to Settings pages for Organizations, Users, and Boards & Statuses.
 | Is Default | Boolean — requires `Status.IsDefault` domain addition |
 
 > **Domain additions required** before the Boards & Statuses Settings page can be fully built:
-> - `Board.IsArchived` (bool) — EF migration: `AddBoardIsArchived`
-> - `Status.Color` (string?, max 20), `Status.SortOrder` (int), `Status.IsDefault` (bool) — EF migration: `AddStatusListFields`
+> - `Board.IsArchived` (bool)
+> - `Status.Color` (string?, max 20), `Status.SortOrder` (int), `Status.IsDefault` (bool)
+>
+> The EF Core migrations this named belonged to the deleted .NET stack; the schema is now `packages/infrastructure/prisma/schema.prisma`.
 
 ## Boards Page
 
@@ -165,10 +167,10 @@ Applies to Settings pages for Organizations, Users, and Boards & Statuses.
 
 ## Ideas Page (new)
 
-- New "Ideas" page at `/ideas`, reachable from the rail's `Ideas` icon. No comp exists yet for this page — see `SPEC/20-feature-client-ui.md`'s Visual Design Direction "Still unsettled" note.
+- New "Ideas" page at `/ideas`, reachable from the rail's `Ideas` icon. *(This said no comp existed yet, citing a "Still unsettled" note that is gone; the page's pattern is now `SPEC/20-feature-client-ui.md` "List and detail pattern (comp R — 2026-09-27)".)*
 - Displays a combined list of ideas created by OR assigned to the current user, with a filter: All (default), Created by me, Assigned to me.
 - List columns: Title, Created By, Assigned To, Status, Created Date (all searchable).
-- **Details** on a row navigates to `/ideas/{id}/edit` (dedicated route, not inline swap); that Edit Idea form has a Back button returning to `/ideas`.
+- **Details** on a row opens the idea in the drawer over the list, at `/ideas?idea={id}` (`SPEC/20-feature-client-ui.md` "List and detail pattern (comp R — 2026-09-27)"). *Superseded 2026-09-29 — see `SPEC/decisions.md` 2026-09-29, "Spec contradictions resolved": this said Details navigates to a dedicated `/ideas/{id}/edit` route with a Back button.*
 
 ## Home Page Dashboard (authenticated users) (superseded 2026-08-07 by Decision D4 — see above)
 
@@ -187,7 +189,7 @@ Superseded D1 sections, for reference only: welcome summary (user name + role); 
 Applies to Organizations, Users, Ideas, Boards, and any future entity list page.
 
 - Uniform search bar above the list, filtering across all columns displayed for that entity (see per-entity column tables above).
-- Pagination controls with page size options 25 (default), 50, 100, 250.
+- Pagination controls with page size options 10 (default), 25, 50 and 100 (`SPEC/20-feature-client-ui.md` "List and detail pattern (comp R — 2026-09-27)"). *Superseded 2026-09-29 — see `SPEC/decisions.md` 2026-09-29, "Spec contradictions resolved": this said 25 (default), 50, 100, 250.*
 - Search and pagination are SERVER-SIDE: list API endpoints accept `search`, `page`, and `pageSize` query parameters per SPEC/30-Contracts.md collection conventions.
 - Changing the search text resets to page 1.
 
@@ -211,8 +213,8 @@ Applies to Organizations, Users, Ideas, Boards, and any future entity list page.
 - [ ] Primary navigation and Dashboard quick actions use `Boards` and `/boards`; no user-facing Workflow terminology remains.
 - [ ] `/board`, `/workflow`, and `/workflows` redirect to `/boards`, and `/workflow/{id}` redirects to `/board/{id}`.
 - [ ] Boards & Statuses Settings page shows boards list (Name/Board Type/Status) and statuses list (Name/Color/Sort Order/Is Default) — pending domain additions for `Board.IsArchived`, `Status.Color`, `Status.SortOrder`, `Status.IsDefault`.
-- [ ] Ideas page (`/ideas`) lists combined created-by/assigned-to ideas with All/Created/Assigned filter and Title/Created By/Assigned To/Status/Created Date columns; Details navigates to `/ideas/{id}/edit`.
-- [ ] All list pages have a uniform search bar and server-side pagination with 25/50/100/250 page sizes (default 25).
+- [ ] Ideas page (`/ideas`) lists combined created-by/assigned-to ideas with All/Created/Assigned filter and Title/Created By/Assigned To/Status/Created Date columns; Details opens the idea's drawer at `/ideas?idea={id}` (superseded 2026-09-29; this said `/ideas/{id}/edit`).
+- [ ] All list pages have a uniform search bar and server-side pagination with 10/25/50/100 page sizes (default 10) — superseded 2026-09-29; this said 25/50/100/250 (default 25).
 - [ ] Home page is an authenticated dashboard per Decision D4: welcome message, `Boards`/`Your ideas`/`Assigned to you` counts, a "Your boards" tile grid with a "Request a new board" tile, and a "Catching you up" activity feed.
 - [ ] My Profile edits first and last name with immediate shell refresh, keeps email/role read-only, and provides voluntary password change.
 - [ ] Successful required and voluntary password changes clear authentication, return to Login with confirmation, and re-login lands on Dashboard.

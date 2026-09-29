@@ -32,7 +32,7 @@
 Two capabilities distinguish it from a generic board:
 
 - **AI Idea Assist** turns capture into a short conversation: describe the problem in plain English, answer a few questions, get a pre-filled, fully editable form. It classifies against the organization's *real* active options and is never a write path — the user still submits the form.
-- **Issues & Delivery** (specified, unbuilt) promotes an approved idea into delivery — sprints, a fixed five-stage lifecycle, a task checklist — without becoming a second object, so mid-sprint "why are we building this?" is one click away: the Issue *is* the Idea.
+- **Issues & Delivery** (Slice 1 built; Slice 2, Outcomes and the Roadmap, unbuilt) promotes an approved idea into delivery — sprints, a fixed five-stage lifecycle, a task checklist — without becoming a second object, so mid-sprint "why are we building this?" is one click away: the Issue *is* the Idea.
 
 ---
 
@@ -109,7 +109,7 @@ Why: a Site Admin is not a member of the organization, so a member's position �
 | **User** | **Email is globally unique** and is the mention identity. Exactly one organization and one role — except Site Admin, who is global. Status `Active`/`Inactive` only; inactive users cannot authenticate and cannot be newly assigned, though they stay visible on historical assignments. **The last Org Admin cannot remove their own role or self-deactivate.** Self-service profile editing covers first and last name only (≤100 each). `MustChangePassword` is the persisted source of truth for forced rotation; regenerating `SecurityStamp` is the session-revocation mechanism. |
 | **Board** | Belongs to one organization. Ideas organized by swimlanes; **each swimlane maps to a status**; **minimum 2 swimlanes**. Swimlane order is board-local and independent of the organization's status catalog order. Canonical routes `/boards` and `/board/{boardId}`. |
 | **Status** | Organization-scoped. `Color` (≤20 chars, fallback `#64748B`) and integer `SortOrder`. **Soft-delete only.** Cannot be deleted while referenced as a swimlane on an active board, nor if it drops the organization below **2 active statuses** — regardless of board references. Soft-deleted statuses still render their prior name with an archived label. |
-| **Idea** | Belongs to one board, therefore one organization. Title ≤150 required; Description ≤4000 required, **plain text only**; Priority required, hard-defaults to `Medium`; Idea Type required and **immutable after creation**; Business Impact required, **defaults to `Medium`, not first-active**; Due Date optional; Status must be an active swimlane on the board, defaults to the leftmost lane; **0–5 distinct assignees**, active same-org users at selection time; **≤10 distinct tags**. Stays editable and collaborative in `Complete`. **Soft-delete only, by in-scope Org Admin or Site Admin, after confirmation; no restore in this release.** Addressable at `/ideas/{ideaId}`; drawer at `?idea={ideaId}`. |
+| **Idea** | Belongs to one board, therefore one organization. Title ≤150 required; Description ≤4000 required, **plain text only**; Priority required, hard-defaults to `Medium`; Idea Type required and **immutable after creation**; Business Impact required, the form preselecting the **first active option** (changed 2026-09-29 from `Medium`); Due Date optional; Status must be an active swimlane on the board, defaults to the leftmost lane; **0–5 distinct assignees**, active same-org users at selection time; **≤10 distinct tags**. Stays editable and collaborative in `Complete`. **Soft-delete only, by in-scope Org Admin (a Site Admin through View As), after confirmation; no restore in this release.** Addressable at `/ideas/{ideaId}`; drawer at `?idea={ideaId}`. |
 | **Tag** | Organization-scoped and reusable. ≤100 characters, **trimmed, case-insensitive, unique within an organization**. Concurrent creation of the same normalized name **merges into one tag**. Created on idea save when no match exists; autocomplete after 2 characters. **Read Only users cannot create tags**, because they cannot edit ideas. |
 | **Comment** | Belongs to one idea. **Plain text with line breaks, ≤2000 characters**, live counter and inline overflow validation. Chronological. Authors edit and delete their own; Site Admin and Org Admin delete any within scope. |
 | **Upvote** | Belongs to (user, idea). **Toggle; at most one active upvote per user per idea; only the caster can remove it.** Optimistic UI with rollback on failure. |
@@ -124,10 +124,10 @@ Why: a Site Admin is not a member of the organization, so a member's position �
 | **Minimums** | Statuses: **≥2 active** per organization. Idea Type / Business Impact: **≥1 active** option. `20-feature-boards-and-statuses.md` calls the difference out explicitly — do not unify them. |
 | **CSV failure models** | **Idea** CSV is **all-or-nothing** — any bad row rejects the whole file. **User** CSV reports **per-row outcomes** and rejects bad rows individually. Deliberately different. |
 
-### Defaulting, which is also not symmetric
+### Defaulting
 
-- Idea Type defaults to the **first active option by sort order**.
-- Business Impact defaults to **`Medium`**, falling back to first-active only where no option is named `Medium`. Why: decoupled on 2026-08-17 when the seeded impact order was reversed to most-severe-first — first-active would have pre-marked every new idea `Critical`, inflating reported severity through a default nobody chose. It mirrors `Priority`, which already hard-defaults to `Medium`.
+- Idea Type and Business Impact both default to the **first active option by sort order**: the idea form preselects it, and the API stores no default.
+- *Superseded 2026-09-29 (`decisions.md` 2026-09-29 "Spec contradictions resolved"):* Business Impact defaulted to **`Medium`**, falling back to first-active only where no option is named `Medium` — decoupled on 2026-08-17 when the seeded impact order was reversed to most-severe-first, so that first-active would not pre-mark every new idea `Critical`.
 
 ---
 
@@ -698,14 +698,16 @@ The critical-path check is **sign in → create a board → create an idea**. It
 
 Alongside it, five navigation and session scenarios:
 - **Authentication navigation** — protected anonymous routes redirect to `/login`; ordinary login lands on `/`; required change is gated by `MustChangePassword`; `/logout` clears the session first.
-- **Authentication restoration** — a valid stored token is confirmed through `/auth/me`; an expired or unknown token clears **all** client auth state.
-- **Active-session authentication** — a protected-request `401` signs the user out **only when `/auth/me` also rejects the token**; an incorrect-current-password `401` preserves a token that `/auth/me` accepts.
+- **Authentication restoration** — a valid session cookie is confirmed through `/auth/me`; an expired or unknown cookie is dropped and the reader returns to `/login`.
+- **Active-session authentication** — a protected-request `401` signs the user out **only when `/auth/me` also rejects the session cookie**; an incorrect-current-password `401` preserves a session that `/auth/me` accepts.
+
+*Corrected 2026-09-29 (`decisions.md` "Spec contradictions resolved"): these two said a stored token.*
 - **Password-change authentication** — a successful required change stays authenticated across a browser reload.
 - **Board navigation** — `/boards` lists, `/board/{boardId}` opens detail, legacy routes redirect, and **no user-facing "Workflow" terminology remains**.
 
 ### 6.3 Manual client acceptance
 
-Six items requiring a human at a browser:
+Five items requiring a human at a browser:
 - the 28-minute idle warning and its countdown to the 30-minute deadline, with "Stay signed in" resetting **only** the idle deadline;
 - cross-tab synchronization of activity and logout signals;
 - the session-expired message appearing on idle and absolute expiry but **not** on explicit logout or password change;
@@ -772,17 +774,15 @@ Reading a replay run: the per-scenario `failed` column counts steps that **did n
 
 Defects in the canonical specs, surfaced by this reconciliation and **reported rather than fixed**: canonical files are edited deliberately, first, and with the user's agreement. Each needs a decision.
 
-**1. `30-Contracts.md` duplicates a whole section.** `## Idea Field Option Contracts` appears **twice** — at lines **736** and **1599** — repeating the idea-type and business-impact blocks. **Two of the duplicates conflict on method**: the first section documents `POST /organizations/{id}/idea-types/reorder` (line 767) and `POST .../business-impacts/reorder` (813); the second documents the same two as **`PUT`** (1632 and 1670). The implementation uses `POST`, so **the `PUT` variants are stale**.
-
-The second copy also states *"The first active option is the default"* for **both** collections. That is true of Idea Type only — Business Impact defaults to `Medium`, decoupled on 2026-08-17 precisely so a most-severe-first ordering would not pre-mark every idea `Critical`. See §3.
+**1. Resolved.** `30-Contracts.md` carried `## Idea Field Option Contracts` twice, and the copies disagreed on the reorder method (`POST` vs `PUT`) and on the Business Impact default. The copies were merged into `contracts/idea-field-options.md` on 2026-09-28, following the code (`POST`); the default was decided on 2026-09-29 — the first active option for both collections, preselected by the form (`decisions.md` 2026-09-29 "Spec contradictions resolved"). See §3.
 
 **2. The six `field-definitions` routes are built and still undocumented.** `30-Contracts.md` contains no mention of them; their contracts live in `20-feature-user-defined-fields.md` instead. *(The View As, AI-assist and delivery routes were undocumented when this reconciliation began and have since been added — only `field-definitions` remains.)*
 
 **3. Five capabilities are contracted or specified but unbuilt, each deliberately.** Two `password-reset` routes (Post-MVP); two `ai-key` routes (unimplemented per AI rule 30 — *a future agent reading those contracts must not build them*); `ai-draft` / `ai-polish` (no implementation ever existed); a notification read API (MVP is database writes only); and Outcomes.
 
-*Items 1–2 mean the Definition of Done's own Contracts clause — "implementation and tests remain aligned with canonical SPEC docs" — is currently violated by `30-Contracts.md`. Slice **F5** owns spec reconciliation and is the natural home for the fix.*
+*Item 2 means the Definition of Done's own Contracts clause — "implementation and tests remain aligned with canonical SPEC docs" — is currently violated by `30-Contracts.md`. Slice **F5** owns spec reconciliation and is the natural home for the fix.*
 
-**4. Superseded text still reads as current.** The Idea Type decision table's "Option appearance" row says label and sort order only — but rule #9 gives Idea Type options a color **and** icon. The row is the superseded text and should be struck.
+**4. Resolved 2026-09-29.** The Idea Type decision table's "Option appearance" row, which said label and sort order only, is marked superseded by rule #9 (a color **and** icon).
 
 **5. Source typos worth not propagating.** In `20-feature-ideas-and-engagement.md`: the Upvotes rule uses `4,` where it means `4.`, and the file ends with a stray backtick. In `20-feature-auth.md`: requirement numbering **skips #3** (it runs 1, 2, 4, 5…).
 

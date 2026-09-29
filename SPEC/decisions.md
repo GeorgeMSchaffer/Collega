@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-09-29 | Spec contradictions resolved | active | full below |
 | 2026-09-28 | The Idea Field Option contract follows the code | active | full below |
 | 2026-09-28 | The v2 corpus format, as built | active | full below |
 | 2026-09-28 | The prompt-eval runner's provisional limits stand for the first baseline | active | full below |
@@ -43,7 +44,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-28 | The next comp R iteration is adopted: denser forms, Sprint board, Roadmap, tag colours and Settings → Tags | active | full below |
 | 2026-09-27 | The API sends the custom field list | active | full below |
 | 2026-09-27 | The idea assistant is rescoped as a co-author, and ideas gain structured fields | active | full below |
-| 2026-09-27 | The S0.2 schema freeze is amended a third time, for structured ideas and board archive | active | full below |
+| 2026-09-27 | The S0.2 schema freeze is amended a third time, for structured ideas and board archive | active | [2026-09-27 to 2026-09-27](decisions/archive-2026-09-27-to-2026-09-27.md) |
 | 2026-09-27 | Terrazzo is the palette, with a theme picker | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-27 | One list and detail pattern, and a drawer instead of the docked inspector | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-27 | The Boards screen has a card view and a list view | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
@@ -78,7 +79,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-04 | .NET development stops; the conversion starts now | active | [2026-09-04 to 2026-09-10](decisions/archive-2026-09-04-to-2026-09-10.md) |
 | 2026-09-04 | Sprint 8 is cancelled: the .NET stack is never deployed | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-04 | The idea-type badge moves to the tag row on swimlane cards | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
-| 2026-09-04 | The session lives in a cookie Nest issues; the reshape takes only what introspection forces | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+| 2026-09-04 | The session lives in a cookie Nest issues; the reshape takes only what introspection forces | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-03 | The conversion's remaining gates: net-new scope, the test suite, and where it deploys | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-03 | Comp P is the canonical comp; the client is built on Tailwind CSS + shadcn/ui | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Outcome ↔ Issue cardinality: single-parent | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
@@ -90,6 +91,67 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-09-29 — Spec contradictions resolved
+
+**Decided by the user**, one question at a time, on the contradictions between canonical specs that
+the restructure's Phase 2 (slice 120) found. Slice 121 applied them; each is recorded here once.
+Where a spec keeps history the old text stays, marked superseded; elsewhere it was rewritten.
+
+1. **Sessions are the httpOnly cookie Nest issues** (2026-09-04). The API sets `collega_session`,
+   a signed JWT, on login; `apps/web` re-issues it on its own origin and forwards it; no client
+   holds a bearer token. `contracts/auth.md` "Access Token Format and Session Revocation" and the
+   rotation gate, `20-feature-auth.md` requirements 33–35 and `20-feature-user-login.md` scenarios
+   9–11 now describe that. The browser idle deadline (auth requirements 38–42) is not built in
+   `apps/web`, and the contract says so. This supersedes 2026-09-04 decision `08` in part, on two
+   points where the code differs: Nest sets the cookie on login only — View As start and exit do
+   not touch it — and `apps/web` does hold it, re-issuing it on its own origin and deleting it on
+   sign-out; `08` said Nest sets and clears it on login and View As start/exit and Next holds no
+   session of its own.
+2. **A Site Admin changes organization content only while acting through View As**; organization
+   and user administration stay direct. This is the locked 2026-08-11 decision and what
+   `ensureNotDirectSiteAdmin` enforces from every service's `ensureAdminScope`. The boards and
+   statuses, ideas, and idea-type-fields specs and `contracts/idea-type-fields.md` said otherwise.
+3. **Business Impact defaults to the first active option**, like Idea Type: the idea form preselects
+   it and the API stores no default; a reorder makes the new first option the preselection. This
+   replaces the 2026-08-17 `Medium` default in `20-feature-ideas-and-engagement.md`, kept there as
+   superseded. Following 2026-09-28 "The Idea Field Option contract follows the code", the Idea
+   Type item in `contracts/idea-field-options.md` also gained the `colorHex`, `icon`, `fieldMode`
+   and `fields` the code returns, and the reorder routes their null-body `400` messages.
+4. **Lists page at 10 per page, with 25, 50 and 100** (comp R). The 25/50/100/250 rule in
+   `20-feature-client-ui-revisions.md` "Uniform List Conventions" is superseded.
+5. **Per-organization AI keys stay deferred and unbuilt** (tracker rule 30). Their text stays as
+   the specification for later, labelled "Deferred — not built" in `contracts/organizations.md`
+   and `20-feature-organizations-and-users.md`.
+6. **F1 is not a gate, deleting the .NET stack was not chained to F1, and Wave G waits until after
+   cutover** — 2026-09-08 and 2026-09-11, applied to `50-typescript-migration.md`, where the older
+   text is marked superseded.
+7. **A status colour is `#RRGGBB`**, as the API enforces (`20-feature-boards-and-statuses.md`
+   rule 9 said any hex/CSS colour).
+8. **Columns reorder with `POST /boards/{boardId}/swimlanes/reorder`**, not the nonexistent
+   `PUT /boards/{boardId}/statuses/{statusId}` that `20-feature-client-ui.md` named. `apps/web`
+   does not call the reorder route yet: column drag is unbuilt.
+9. **An idea's details open in the drawer at `/ideas?idea={id}`**, not a `/ideas/{id}/edit` route
+   (`20-feature-client-ui-revisions.md`).
+10. **Idea Type options carry a colour and icon** (Fields rule 9); the ideas spec's decision-table
+    row "label and sort order only" is superseded.
+11. **The technical plan's `ideas` outline drops `assignee_user_id`**, removed by Phase BE-1 for
+    `idea_assignees`. `priority` was listed for removal too, but BE-1 never removed it and it is a
+    live column (`Priority` enum in `schema.prisma`), so it stays — reported, not applied.
+12. **An unconfigured AI assistant answers `503`**, the same as an unavailable provider or an
+    exhausted budget (`20-feature-ai-idea-assist.md` rule 31, matching `contracts/ai-assist.md`).
+13. **`SITE_ADMIN_PASSWORD` stays in place** after the first login, because the API refuses to boot
+    without it; `50-vercel-deployment.md` §8 said it could be deleted. The guide also now counts
+    §11's seven candidates, not six.
+
+**Why record them together.** Each was a place where two canonical documents disagreed, which
+AGENTS.md says to ask about rather than pick. They were asked together and answered together, and
+none changes code: where a spec and the code differed, the answer was the code. Three gaps remain where
+the specs now say more than the code does: the idea form preselects neither option yet (item 3),
+the browser idle deadline is unbuilt (item 1), and no client calls the swimlane reorder route
+(item 8).
 
 ---
 
@@ -436,27 +498,6 @@ for what is live until v2 ships.
 - **Measurement comes first**: v2 is not enabled until a TypeScript prompt-eval runner reports
   mapping accuracy and scope-gate results. `ai-draft` and `ai-polish`, specified and never built,
   are withdrawn.
-
-## 2026-09-27 — The S0.2 schema freeze is amended a third time, for structured ideas and board archive
-
-**Decided by the user**, with the rescope above and board archive ("One list and detail pattern"
-below). Under the 2026-09-11 rule — the freeze stands, and each change to `schema.prisma` needs
-its own entry here — this is that entry. It is not a general licence either.
-
-- **`ideas`** gains `problem VARCHAR(2000)`, `proposed_solutions TEXT[]` (1 to 5 items, enforced in
-  the domain) and `impact_rationale VARCHAR(1000)`; **`description` changes from `NOT NULL` to
-  nullable**, since it is now an optional summary.
-- **`boards`** gains `is_archived BOOLEAN` and `archived_at_utc` (timestamp, nullable), for archive
-  in place of delete.
-- **The migrations backfill** per rule 2a of `20-feature-ideas-and-engagement.md`: Problem takes the
-  idea's Description, or *Not captured before 2026-09-27.* when that is empty; Proposed solutions
-  takes the single item *Not captured before 2026-09-27.*; Impact rationale takes the same text.
-  Every existing board reads not archived. After the backfill the three idea columns are required
-  on every save.
-
-**Golden corpus.** This changes the idea detail and list response shapes and makes `description`
-nullable, so the replay will differ there. Those differences are accepted, and slice 099 records
-them in `tools/golden/src/accepted.ts`.
 
 ---
 

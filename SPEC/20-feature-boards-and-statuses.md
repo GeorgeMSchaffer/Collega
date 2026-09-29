@@ -16,7 +16,7 @@ Organizations can manage idea boards using configurable status swimlanes.
 
 ## Status Rules
 1. Statuses are defined at the organization level.
-2. Site Admin and Org Admin can create, edit, and delete statuses.
+2. An in-scope Org Admin can create, edit, and delete statuses; a Site Admin does so only while acting through View As (`20-feature-view-as.md` rules 25–25b; corrected 2026-09-29, `SPEC/decisions.md` "Spec contradictions resolved").
 3. Default statuses are:
    - New / Pending
    - In Review
@@ -40,7 +40,7 @@ Organizations can manage idea boards using configurable status swimlanes.
 7. An organization must retain at least 2 active statuses at all times; a delete that would drop it below 2 is rejected, whether or not the status is a swimlane on any board.
    - Why: matches a board's own 2-swimlane minimum (not the 1-active-option minimum used for Idea Type/Business Impact), so an organization is never left unable to create a new board.
 8. Historical or detail views that reference a soft-deleted status must continue to show the prior status name with an archived or deleted label.
-9. Each status has an admin-editable `Color` (hex/CSS color, max 20 characters), used for the swimlane color dot and, where configured, the idea card's status chip.
+9. Each status has an admin-editable `Color` in `#RRGGBB` format — the format is enforced by the API, within a 20-character column (corrected 2026-09-29 from "hex/CSS color"; `contracts/statuses.md`) — used for the swimlane color dot and, where configured, the idea card's status chip.
 10. Each status has an admin-controlled `SortOrder` (integer): its default position in the organization's status catalog (e.g. the Settings > Statuses list, and the default order offered when configuring a new board's swimlanes).
     - Distinct from a board's own swimlane order, which a board can reorder by drag-and-drop without changing the organization-level catalog order.
 
@@ -49,7 +49,7 @@ Organizations can manage idea boards using configurable status swimlanes.
 2. Each swimlane maps to a status.
 3. A board must have at least 2 swimlanes.
 4. Each new organization starts with one default board.
-5. Site Admin and Org Admin can:
+5. An in-scope Org Admin can — and a Site Admin only while acting through View As (corrected 2026-09-29):
    - select statuses used by a board
    - reorder swimlanes by drag-and-drop
    - bulk-import ideas from a CSV file
@@ -59,7 +59,7 @@ Organizations can manage idea boards using configurable status swimlanes.
 9. User-facing copy uses `Board` or `Boards`, never `Workflow` or `Workflows`.
 10. Canonical client routes: `/boards` (board list) and `/board/{boardId}` (board detail). `/board`, `/workflow`, `/workflows`, and `/workflow/{boardId}` redirect to the corresponding canonical route.
 11. Internal application service and namespace names may retain `Workflow` where they are not user-visible.
-12. A board may carry an optional description of at most 500 characters, trimmed; a blank description is stored as none. Site Admin and Org Admin set it when creating or editing the board (added 2026-09-27, `SPEC/decisions.md`).
+12. A board may carry an optional description of at most 500 characters, trimmed; a blank description is stored as none. An in-scope Org Admin sets it when creating or editing the board (added 2026-09-27, `SPEC/decisions.md`); a Site Admin only while acting through View As (corrected 2026-09-29).
 13. A board is **archived, not deleted** (added 2026-09-27, `decisions.md`; until then boards had no delete endpoint or action).
     - Only an Org Admin of its organization archives or unarchives it, after confirmation.
     - An archived board keeps its swimlanes and ideas, leaves the default board list and every board picker, and accepts no new ideas; its ideas stay reachable from the Ideas list.
@@ -81,7 +81,7 @@ For a future post-MVP approval workflow on board status transitions. **None of t
 - [ ] A status referenced as a swimlane on any active board cannot be soft-deleted; the delete is rejected with an error
 - [ ] An organization cannot be reduced below 2 active statuses; a delete that would do so is rejected with an error, even if the status being deleted is not currently referenced as a swimlane
 - [ ] Historical or detail views show soft-deleted status names with an archived or deleted label
-- [ ] Statuses support an admin-editable `Color` used by the swimlane color dot and idea card status chip
+- [ ] Statuses support an admin-editable `#RRGGBB` `Color` used by the swimlane color dot and idea card status chip
 - [ ] Statuses support an admin-controlled `SortOrder` for the organization's default status catalog order, independent of any single board's swimlane order
 - [ ] A board cannot be created with fewer than 2 swimlanes
 - [ ] A new organization receives one default board
@@ -90,6 +90,6 @@ For a future post-MVP approval workflow on board status transitions. **None of t
 - [ ] Board screens provide guided empty states with a primary action and short explanatory text when no ideas exist
 - [ ] Development startup seed includes exactly two example boards per demo organization
 - [ ] Each seeded example board contains 11 ideas distributed `3/2/2/1/3` in canonical status order
-- [ ] Site Admin and Org Admin can bulk-import ideas from a CSV file
+- [ ] An Org Admin, and a Site Admin through View As, can bulk-import ideas from a CSV file
 - [ ] User-facing navigation, headings, actions, and messages use Board terminology
 - [ ] `/boards` and `/board/{boardId}` are canonical and legacy Workflow routes redirect without data loss

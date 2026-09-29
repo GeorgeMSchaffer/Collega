@@ -19,10 +19,10 @@ Users can create, discuss, organize, and support ideas within their organization
 |---|---|
 | Field model | `Priority` unchanged. `Idea Type` and `Business Impact` are dedicated, required, organization-scoped configurable fields. |
 | Initial values | Idea Type: `Continuous Improvement`, `Process Revision`. Business Impact, seeded most severe first (**changed 2026-08-17, user decision**): `Critical` (`#DC2626`), `High` (`#D97706`), `Medium` (`#2563EB`), `Low` (`#16A34A`). |
-| Defaults | Idea Type defaults to the first active option by admin-controlled sort order. **Business Impact does not** — it defaults to `Medium` where that option exists, else the first active option. Why (decoupled 2026-08-17): with `Critical` first, first-active would pre-mark every new idea Critical and inflate reported severity through a default nobody chose; this mirrors `Priority`, which already hard-defaults to `Medium` rather than to first-in-list. Reordering options does not change existing ideas' values. |
+| Defaults | Idea Type **and Business Impact** default to the organization's first active option by admin-controlled sort order: the idea form preselects it, and the API stores no default (`contracts/idea-field-options.md`). Reordering options does not change existing ideas' values. *Superseded 2026-09-29 — see `SPEC/decisions.md` 2026-09-29 "Spec contradictions resolved": Business Impact defaulted to `Medium` where that option exists, else the first active option (decoupled 2026-08-17, so a most-severe-first order would not pre-mark every new idea `Critical`).* |
 | Existing idea migration | Existing ideas get `Continuous Improvement` and `Medium`. |
 | Option lifecycle | Soft-deleted. Existing ideas keep archived values; archived values cannot be newly selected; the last active option cannot be deleted. |
-| Option appearance | Business Impact options have an admin-editable chip color. Idea Type options have a label and sort order only. |
+| Option appearance | Business Impact options have an admin-editable chip color. ~~Idea Type options have a label and sort order only.~~ *Superseded 2026-09-29 for Idea Type — see `SPEC/decisions.md` 2026-09-29 "Spec contradictions resolved": Idea Type options carry an editable color and icon (Organization-Managed Idea Fields rule 9).* |
 | Description authorization | The idea author, an in-scope Org Admin, or Site Admin may edit the description. **The same rule covers Problem, Proposed solutions and Impact rationale** (added 2026-09-27, user decision). |
 | Idea deletion | Only an in-scope Org Admin or Site Admin may soft-delete an idea, after confirmation. Restore is deferred. |
 | Card movement | Desktop cards use a dedicated drag handle; keyboard and touch users use the status selector in Idea Detail. |
@@ -90,9 +90,9 @@ Users can create, discuss, organize, and support ideas within their organization
     - **Column sort** on Title, Created By, Assigned To (alphabetically-first assignee), Status, and Created Date (since 2026-09-27 also Board, Priority, Votes and Tags; `30-Contracts.md` lists the `sortBy` values), ascending or descending, with a stable idea-id tiebreaker so paging is deterministic.
 
 ## Organization-Managed Idea Fields
-1. Site Admin and Org Admin can create, rename, reorder, and soft-delete Idea Type and Business Impact options within their authorized organization scope.
+1. An in-scope Org Admin can create, rename, reorder, and soft-delete Idea Type and Business Impact options; a Site Admin does so only while acting through View As (corrected 2026-09-29, `SPEC/decisions.md` 2026-09-29 "Spec contradictions resolved").
 2. The management surface is **Settings > Idea Fields** at `/settings/organizations/{organizationId}/idea-fields`.
-3. Site Admin selects the target organization; Org Admin manages only their own.
+3. Org Admin manages only their own organization's options. A Site Admin reads any organization's options, and changes them only by acting through View As as a user of that organization (corrected 2026-09-29; it said the Site Admin selects the target organization).
 4. Option labels are trimmed, compared case-insensitively, and unique among active options of the same field and organization.
 5. Sort order is admin-controlled. The first active option in sort order is the default.
 6. Each field must always have at least one active option; deleting the last active option is rejected.
@@ -111,10 +111,11 @@ Users can create, discuss, organize, and support ideas within their organization
 5. Rich content and attachments are deferred post-MVP and need explicit security and storage contracts first.
 
 ## Permissions
-- Site Admin, Org Admin, and User can create and edit ideas.
-- Site Admin and Org Admin can soft-delete ideas within their authorized scope; soft-deleted ideas are excluded from board views and list queries.
-- The Delete action shows in Idea Detail only to an authorized Site Admin or Org Admin, requires confirmation, returns to the board on success, and removes the card immediately.
-- Only the creating author, an in-scope Org Admin, or Site Admin can edit an idea's description, its Problem, Proposed solutions or Impact rationale (added 2026-09-27), or change its assignee collection. Other editable fields keep the general idea-edit permission unless a narrower rule says otherwise.
+- **A Site Admin changes organization content only while acting through View As** (`20-feature-view-as.md` rules 25–25c); acting as themselves they read, and the API refuses every idea, comment, upvote, tag and option write with `403` (`ensureNotDirectSiteAdmin`). Organization and user administration stays direct. Wherever this spec names a Site Admin beside an Org Admin for a change to organization content — the decision table above, Comments, CSV Import — read it as a Site Admin acting through View As. Corrected 2026-09-29 (`SPEC/decisions.md` 2026-09-29 "Spec contradictions resolved").
+- Org Admin and User can create and edit ideas; a Site Admin through View As.
+- An in-scope Org Admin can soft-delete ideas (a Site Admin through View As); soft-deleted ideas are excluded from board views and list queries.
+- The Delete action shows in Idea Detail only to an authorized Org Admin (or a Site Admin acting as one through View As), requires confirmation, returns to the board on success, and removes the card immediately.
+- Only the creating author, an in-scope Org Admin, or a Site Admin through View As can edit an idea's description, its Problem, Proposed solutions or Impact rationale (added 2026-09-27), or change its assignee collection. Other editable fields keep the general idea-edit permission unless a narrower rule says otherwise.
 - For assignee selection and mention lookup, any authenticated caller scoped to an organization (User and Read Only included, not only admins) can read a minimal list of its active members — id, name, and email only — via `GET /organizations/{organizationId}/members`. Deliberately narrower than the admin listing (`GET /organizations/{organizationId}/users`), which exposes roles, status filters and full user administration and stays Org-Admin+. Callers outside the organization receive a 404.
 - Idea deletion generates an audit event.
 - Read Only cannot edit or delete idea content.
@@ -122,8 +123,8 @@ Users can create, discuss, organize, and support ideas within their organization
 - User can update idea status for any idea on a board if board configuration allows it.
 
 ## Site Admin Organization Context
-- Site Admin works in the context of the specific resource accessed or modified; org-scoped operations (board, idea, status, tag management) use the organization that owns the resource.
-- When creating org-scoped resources (e.g., a new board), Site Admin must specify the target `organizationId`.
+- Site Admin reads in the context of the specific resource accessed; org-scoped reads (boards, ideas, statuses, tags) use the organization that owns the resource.
+- Changing organization content — board, idea, status, tag and option management — happens only while acting through View As, in the impersonated user's organization (`20-feature-view-as.md` rules 25–25b). Organization and user administration stays direct, and there the Site Admin names the target `organizationId` in the route. *Corrected 2026-09-29 (`SPEC/decisions.md` 2026-09-29 "Spec contradictions resolved"): this said a Site Admin creates org-scoped resources such as a board directly by specifying the target `organizationId`.*
 - Site Admin has no organization affiliation, so cannot be @mentioned and does not appear in mention lookup results.
 
 ## Tags

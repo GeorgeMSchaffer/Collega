@@ -122,25 +122,18 @@ An idea in Collega has a rich life — proposal, discussion, upvotes, business-i
 
 `Idea` already carries `IdeaTypeId`, `BusinessImpactId`, assignees, tags, comments, upvotes, and an ideation `StatusId` (verified against `dev`). This feature adds a **phase** and its delivery facets to the *same* entity.
 
-```csharp
-// New facets on the existing Idea entity (no new table — the Issue IS the Idea):
-public IdeaPhase Phase { get; private set; }              // Discovery (default) | Delivery
-public EffortLevel? Effort { get; private set; }          // optional in Discovery; required at promotion
-public DeliveryStatus? DeliveryStatus { get; private set; } // null in Discovery; Pending on promotion
-public Guid? SprintId { get; private set; }               // null = delivery backlog (only meaningful in Delivery)
+New facets on the existing idea (no new table — the Issue IS the Idea): `packages/domain/src/ideas/idea.ts`, stored on the `ideas` table in `packages/infrastructure/prisma/schema.prisma`.
+- `phase` — `Discovery` (default) or `Delivery`.
+- `effort` — optional in Discovery; required at promotion.
+- `deliveryStatus` — null in Discovery; `Pending` on promotion.
+- `sprintId` — nullable; null is the delivery backlog (only meaningful in Delivery).
 
-// Provenance snapshot (the only genuinely new provenance storage):
-public DateTime? PromotedAtUtc { get; private set; }
-public Guid? PromotedByUserId { get; private set; }
-public int? UpvoteCountAtPromotion { get; private set; }
+Provenance snapshot (the only genuinely new provenance storage):
+- `promotedAtUtc` — nullable timestamp.
+- `promotedByUserId` — nullable user id.
+- `upvoteCountAtPromotion` — nullable integer.
 
-// Invariant methods (factory-style, matching existing Idea mutators):
-public void PromoteToIssue(EffortLevel effort, Guid? sprintId, int currentUpvoteCount,
-                           DateTime nowUtc, Guid actorUserId);
-public void ReturnToDiscovery(DateTime nowUtc, Guid actorUserId);
-public void ChangeDeliveryStatus(DeliveryStatus target, DateTime nowUtc, Guid actorUserId);
-public void AssignToSprint(Guid? sprintId, DateTime nowUtc, Guid actorUserId);
-```
+Invariant functions, matching the existing idea mutators (each takes the clock's `nowUtc` and the actor's id): `promoteIdeaToIssue` (effort, optional sprint, current upvote count) — `PromoteToIssue` below; `returnIdeaToDiscovery` — `ReturnToDiscovery`; `changeIdeaDeliveryStatus` (target) — `ChangeDeliveryStatus`; `assignIdeaToSprint` (optional sprint) — `AssignToSprint`.
 
 Invariants:
 - `PromoteToIssue` is valid only from `Phase == Discovery`; sets `Phase = Delivery`, `DeliveryStatus = Pending`, records `Effort`, `PromotedAtUtc`, `PromotedByUserId`, `UpvoteCountAtPromotion`. Re-promoting a Delivery item is rejected.
@@ -148,37 +141,27 @@ Invariants:
 - `ReturnToDiscovery` flips `Phase = Delivery → Discovery`, clears `SprintId` and `DeliveryStatus`, and **retains** `Effort` and the promotion snapshot, so a re-promote and the audit trail stay coherent.
 - The **ideation `StatusId` is never cleared** by promotion — frozen at its last Discovery value for provenance. Ideation `Complete` and delivery `Complete` are distinct terminal states; both are retained.
 
-### New enums (`Collega.Domain`)
+### New enums (`packages/domain/src/enums`)
 
-```csharp
-public enum IdeaPhase     { Discovery = 0, Delivery = 1 }
-public enum EffortLevel   { Low = 0, Medium = 1, High = 2 }
-public enum DeliveryStatus{ Pending = 0, Scoping = 1, Development = 2, Review = 3, Complete = 4 }
-public enum SprintState   { Planned = 0, Active = 1, Completed = 2 }
-```
+- `IdeaPhase`: `Discovery`, `Delivery`
+- `EffortLevel`: `Low`, `Medium`, `High`
+- `DeliveryStatus`: `Pending`, `Scoping`, `Development`, `Review`, `Complete`
+- `SprintState`: `Planned`, `Active`, `Completed`
 
-### New entity: `Sprint` (`AuditableEntityBase`)
+Stored as their names; the .NET stack's integer values (in the order listed, from 0) are history.
 
-Org-scoped, soft-deletable, time-boxed. A flat container in this slice (no Roadmap parent).
+### New entity: `Sprint` (auditable)
 
-```csharp
-public sealed class Sprint : AuditableEntityBase
-{
-    public const int NameMaxLength = 100;
-    public const int GoalMaxLength = 500;
+Org-scoped, soft-deletable, time-boxed. A flat container in this slice (no Roadmap parent). `packages/domain/src/sprints/sprint.ts`:
+- `organizationId`
+- `name` — required, non-empty, max 100 characters
+- `goal` — optional, max 500 characters
+- `startDate`, `endDate` — dates; `endDate` must be on or after `startDate`
+- `ownerUserId` — optional; an active user in the same org
+- `state` — `Planned` → `Active` → `Completed`
+- `isDeleted`
 
-    public Guid OrganizationId { get; private set; }
-    public string Name { get; private set; }            // required, non-empty
-    public string? Goal { get; private set; }
-    public DateOnly StartDate { get; private set; }
-    public DateOnly EndDate { get; private set; }       // must be >= StartDate
-    public Guid? OwnerUserId { get; private set; }      // optional; active user in the same org
-    public SprintState State { get; private set; }      // Planned → Active → Completed
-    public bool IsDeleted { get; private set; }
-
-    // Create / Update / Start / Complete / SoftDelete — factory + invariant methods.
-}
-```
+Operations: create, update, start, complete, soft-delete — factory and invariant functions.
 
 Invariants:
 - `EndDate >= StartDate`; `Name` trimmed and non-empty (uniqueness **not** required — "Sprint 12"-style names may repeat across time).
@@ -188,26 +171,19 @@ Invariants:
 
 Issue ↔ Sprint is a simple nullable FK on `Idea` (`SprintId`); an Issue belongs to zero or one Sprint. No join entity.
 
-### New entity: `IssueTask` (`AuditableEntityBase`) — Slice 1
+### New entity: `IssueTask` (auditable) — Slice 1
 
 A checklist step belonging to exactly one Issue. Org scope is inherited through the parent Idea and **not** duplicated on the row: every query reaches tasks through their Idea, so the org-scoping on `Idea` stays the single enforcement point.
 
-```csharp
-public sealed class IssueTask : AuditableEntityBase
-{
-    public const int TitleMaxLength = 200;
+`packages/domain/src/issue-tasks/issue-task.ts`:
+- `ideaId` — required; the parent Issue
+- `title` — required, non-empty, trimmed, max 200 characters
+- `assigneeUserId` — optional; any active user in the parent's org
+- `state` — `NotStarted` (default), `InProgress` or `Done`
+- `sortOrder` — dense 0..n-1 within the parent Issue
+- `completedAtUtc`, `completedByUserId` — nullable
 
-    public Guid IdeaId { get; private set; }            // required; the parent Issue
-    public string Title { get; private set; }           // required, non-empty, trimmed
-    public Guid? AssigneeUserId { get; private set; }   // optional; any active user in the parent's org
-    public IssueTaskState State { get; private set; }   // NotStarted (default) | InProgress | Done
-    public int SortOrder { get; private set; }          // dense 0..n-1 within the parent Issue
-    public DateTime? CompletedAtUtc { get; private set; }
-    public Guid? CompletedByUserId { get; private set; }
-
-    // Create / Rename / Assign / ChangeState / Reorder — factory + invariant methods.
-}
-```
+Operations: create, rename, assign, change state, reorder — factory and invariant functions.
 
 Invariants:
 - `Title` is trimmed and non-empty; `SortOrder` is dense and contiguous within the parent, maintained on insert, delete, and reorder.
@@ -217,29 +193,21 @@ Invariants:
 - Deleting a Task is a hard delete; no soft-delete or audit trail on a checklist item.
 - **Tasks never block a status change.** An Issue may be set to `Complete` with tasks outstanding; the UI warns, the domain permits. Enforcing "all tasks done" would make the checklist a gate — ceremony this feature refuses.
 
-### New entity: `Outcome` (`AuditableEntityBase`) — Slice 2
+### New entity: `Outcome` (auditable) — Slice 2
 
 Org-scoped, soft-deletable, dated. A grouping lens over Issues.
 
-```csharp
-public sealed class Outcome : AuditableEntityBase
-{
-    public const int NameMaxLength = 120;
-    public const int DescriptionMaxLength = 1000;
+Not built (Slice 2); the shape it will take:
+- `organizationId`
+- `name` — required, non-empty, max 120 characters
+- `description` — optional, max 1000 characters
+- `targetStartDate`, `targetEndDate` — dates; `targetEndDate` must be on or after `targetStartDate`
+- `ownerUserId` — optional; an active user in the same org
+- `sortOrder` — row order on the roadmap grid
+- `color` — `#RRGGBB`; added 2026-09-28 (comp R)
+- `isDeleted`
 
-    public Guid OrganizationId { get; private set; }
-    public string Name { get; private set; }             // required, non-empty
-    public string? Description { get; private set; }
-    public DateOnly TargetStartDate { get; private set; }
-    public DateOnly TargetEndDate { get; private set; }  // must be >= TargetStartDate
-    public Guid? OwnerUserId { get; private set; }       // optional; active user in the same org
-    public int SortOrder { get; private set; }           // row order on the roadmap grid
-    public string Color { get; private set; }            // #RRGGBB; added 2026-09-28 (comp R)
-    public bool IsDeleted { get; private set; }
-
-    // Create / Update / Reorder / SoftDelete — factory + invariant methods.
-}
-```
+Operations: create, update, reorder, soft-delete — factory and invariant functions.
 
 Invariants:
 - `TargetEndDate >= TargetStartDate`. The window is the Outcome's *intent*; the derived sprint span on the roadmap comes from grouped Issues and may disagree — that disagreement is the signal the view surfaces, not an error to reconcile.
@@ -261,17 +229,15 @@ The cost is real: work that genuinely serves two quarterly goals must pick one. 
 
 ### New enums (Slice 1 / Slice 2)
 
-```csharp
-public enum IssueTaskState { NotStarted = 0, InProgress = 1, Done = 2 }   // Slice 1
-```
+- `IssueTaskState` (Slice 1): `NotStarted`, `InProgress`, `Done` — stored as names, like the enums above.
 
 ---
 
 ## Application Layer
 
-### New service: `ISprintService` (`Collega.Application/Sprints/`)
+### New service: `SprintService` (`packages/application/src/sprints/sprint.service.ts`)
 
-Admin-only (in-scope OrgAdmin, or SiteAdmin), mirroring existing org-scoped admin services' `EnsureAdminScope` authorization.
+Admin-only (an in-scope OrgAdmin, or a SiteAdmin acting through View As), mirroring existing org-scoped admin services' `ensureAdminScope` authorization, which refuses a direct SiteAdmin (`ensureNotDirectSiteAdmin`).
 
 | Method | Purpose |
 |---|---|
@@ -291,7 +257,7 @@ Admin-only (in-scope OrgAdmin, or SiteAdmin), mirroring existing org-scoped admi
 - **Assign to sprint:** `AssignIssueToSprintAsync(ideaId, sprintId?, actor)` — admin-only in this slice; emits an audit event. Target sprint must be a non-`Completed` sprint in the same org, or `null` for backlog.
 - **Delivery queries:** a phase-aware list for the sprint board and backlog — `ListDeliveryAsync(orgId, sprintId? , deliveryStatus?)` returning the compact card projection plus `deliveryStatus`, `effort`, `sprint`, a `taskSummary` (`{ done, total }`), and provenance summary.
 
-### New service: `IIssueTaskService` (`Collega.Application/Delivery/`) — Slice 1
+### New service: `IssueTaskService` (`packages/application/src/issue-tasks/issue-task.service.ts`) — Slice 1
 
 Authorization mirrors `ChangeDeliveryStatusAsync`: the idea author, any Issue assignee, or an in-scope admin. Read: any org member who can see the Issue. Every method resolves and authorizes against the parent Idea first — tasks carry no independent scope.
 
@@ -304,9 +270,9 @@ Authorization mirrors `ChangeDeliveryStatusAsync`: the idea author, any Issue as
 | `ReorderAsync(ideaId, orderedTaskIds, actor)` | Rewrite `SortOrder` densely; the full id set must match exactly |
 | `DeleteAsync(taskId, actor)` | Hard delete, then re-densify `SortOrder` |
 
-### New service: `IOutcomeService` (`Collega.Application/Delivery/`) — Slice 2
+### New service: `OutcomeService` — Slice 2, not built
 
-Admin-only for management (in-scope OrgAdmin or SiteAdmin); read for all org members. Mirrors `ISprintService` authorization exactly.
+Admin-only for management (an in-scope OrgAdmin, or a SiteAdmin through View As); read for all org members. Mirrors `SprintService` authorization exactly.
 
 | Method | Purpose |
 |---|---|
@@ -393,7 +359,7 @@ All under `/api/v1`, org-scoped, following existing conventions and problem-deta
 
 ## Audit & Notifications
 
-Reuses the existing audit-event and `INotificationWriter` patterns (`SPEC/20-feature-notifications.md`); self-notifications remain suppressed.
+Reuses the existing audit-event and `NotificationWriter` patterns (`SPEC/20-feature-notifications.md`); self-notifications remain suppressed.
 
 - **Audit events** (new types): `IdeaPromotedToIssue`, `IssueReturnedToDiscovery`, `IssueDeliveryStatusChanged`, `IssueSprintAssignmentChanged`, `SprintCreated`, `SprintStarted`, `SprintCompleted`, `SprintUpdated`, `SprintDeleted`. Slice 2 adds `OutcomeCreated`, `OutcomeUpdated`, `OutcomeDeleted`, `IssueOutcomeGroupingChanged`.
 - **Task mutations are deliberately NOT audited** — a conscious asymmetry with every other mutation here. A checklist ticked a dozen times a day would drown the log that answers "who committed us to this work"; `CompletedAtUtc`/`CompletedByUserId` on the row are the only record that matters.
@@ -404,7 +370,7 @@ Reuses the existing audit-event and `INotificationWriter` patterns (`SPEC/20-fea
 
 ## Client UI (later wave, per repo convention)
 
-Layouts here are **directional**; the locked Comp C system (`SPEC/mockups/comp-c-review-06-lockin-v5-final.html`) and its mobile gap apply. Throwaway review comps precede production Blazor per the working rules.
+Layouts here are **directional**; the locked Comp C system (`SPEC/mockups/comp-c-review-06-lockin-v5-final.html`) and its mobile gap apply. Throwaway review comps precede production UI per the working rules.
 
 - **Promotion action** on Idea Detail: "Promote to Issue" (visible to author + in-scope admins on Discovery-phase items) opens a confirm dialog — required **Effort** selector, optional **Sprint** picker (or "Backlog"), optional note — then flips the page into its Issue/Delivery lens.
 - **Issue/Delivery lens** on the same detail page: ideation Type is read-only context; a **Provenance panel** shows "Originated as an idea by *X* on *date* · *N* upvotes at promotion (*M* now) · promoted by *Y* on *date*", with the original comment thread inline. This panel is the differentiator and ships in this slice.
@@ -607,9 +573,9 @@ Approving this spec requires these canonical edits *before* implementation (per 
 |---|---|---|
 | **Domain** | `IdeaPhase`/`EffortLevel`/`DeliveryStatus`/`SprintState`/`IssueTaskState` enums, `Idea` delivery facets + invariant methods, `Sprint` entity + lifecycle invariants, `IssueTask` entity + ordering invariants | M — 1.5–2 days |
 | **Infrastructure / EF** | `Sprint` + `IssueTask` config, 7 new `ideas` columns, `sprints` and `issue_tasks` tables, `AddDeliveryAndSprints` migration (Discovery backfill, indexes) | M — 1.5–2 days |
-| **Application** | `ISprintService` (CRUD + lifecycle + carry-over), `IIssueTaskService` (CRUD + state + dense reorder), idea promotion/return/delivery-status/sprint-assignment ops, board/idea-list phase filtering, delivery query + task rollup, audit + notification wiring | L — 4–5 days |
+| **Application** | `SprintService` (CRUD + lifecycle + carry-over), `IssueTaskService` (CRUD + state + dense reorder), idea promotion/return/delivery-status/sprint-assignment ops, board/idea-list phase filtering, delivery query + task rollup, audit + notification wiring | L — 4–5 days |
 | **API** | Promotion/delivery routes (4), sprint routes (7), task routes (6), delivery query, contracts | M — 2.5 days |
 | **Tests** | Promotion (phase flip, required effort, re-promote reject), provenance snapshot, delivery-status transitions, sprint lifecycle + carry-over, phase filtering, return-to-discovery, task CRUD + state stamping + dense ordering + Discovery rejection + retention across return-to-discovery + non-blocking Complete, backward-compat (no-op for un-promoted orgs) | L — 4 days |
 | **Client (later wave)** | Promotion dialog, provenance panel, Sprint board + backlog, sprint admin, task checklist with drag-reorder, rail destination, phase filters | L — 6–8 days |
 | **Slice 1 backend total** | | **~12–14 dev-days** |
-| **Slice 2 — Outcomes & Roadmap** | `Outcome` entity, `IOutcomeService`, grouping mutation, derived roadmap query, 8 routes, roadmap grid UI, tests | M–L — **~5–7 dev-days** |
+| **Slice 2 — Outcomes & Roadmap** | `Outcome` entity, `OutcomeService`, grouping mutation, derived roadmap query, 8 routes, roadmap grid UI, tests | M–L — **~5–7 dev-days** |

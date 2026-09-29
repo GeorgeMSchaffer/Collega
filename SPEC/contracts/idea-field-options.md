@@ -11,7 +11,7 @@ shared data rules). Canonical, and read, not edited, by implementation slices.
 were decided by the user the same day to match the code as it stands (`SPEC/decisions.md`
 2026-09-28).
 
-Idea Type and Business Impact are dedicated organization-scoped option collections. Active labels are trimmed, case-insensitively unique within their field and organization, and returned in ascending `sortOrder`. The first active option is the default. Every organization must retain at least one active option in each collection.
+Idea Type and Business Impact are dedicated organization-scoped option collections. Active labels are trimmed, case-insensitively unique within their field and organization, and returned in ascending `sortOrder`. The idea form preselects the first active option of each collection; the API stores no default — idea create requires an active `ideaTypeId` and `businessImpactId` (decided for Business Impact 2026-09-29, `SPEC/decisions.md` 2026-09-29, "Spec contradictions resolved"). Every organization must retain at least one active option in each collection.
 
 Shared rules, for both option types:
 - **Roles, mutations** (create, update, reorder, delete): an in-scope Org Admin, for their own organization only. User and Read Only callers receive `403 Forbidden`.
@@ -31,6 +31,10 @@ List the organization's Idea Type options.
   - `name` string, max 100 characters
   - `sortOrder` integer
   - `isDeleted` boolean
+  - `colorHex` string in `#RRGGBB` format, or `null` — the badge colour (`contracts/idea-type-fields.md`, the appearance route)
+  - `icon` string, max 64 characters, or `null` — the badge icon
+  - `fieldMode` `AllActiveFields` or `Curated` (`contracts/idea-type-fields.md`)
+  - `fields` array — the type's curated field selection, ordered by `displayOrder`, each `{ fieldDefinitionId, displayOrder, isRequired }`; empty for an `AllActiveFields` type
   - `effectiveFields` array — the custom fields an idea of this type shows, in form order, resolved by
     the effective-field rule (`SPEC/20-feature-idea-type-fields.md` "Effective-field resolution"). An
     archived type (returned under `includeDeleted=true`) resolves the same way. Item shape:
@@ -43,6 +47,7 @@ List the organization's Idea Type options.
 - **Errors:** `404` "Organization not found." for a caller outside the organization.
 - **Rules:**
   - Active options only unless `includeDeleted=true`.
+  - `colorHex`, `icon`, `fieldMode` and `fields` are what the code returns (`toItem` in `packages/application/src/idea-fields/idea-type-service.ts`) and what the golden corpus recorded; they were added here 2026-09-29 under the 2026-09-28 decision that this contract follows the code.
   - `effectiveFields` was added 2026-09-27 so the idea form stops re-deriving the rule in the browser,
     where it could drift from the validator (`SPEC/decisions.md` 2026-09-27, "The API sends the custom
     field list").
@@ -73,8 +78,8 @@ Replace the complete active Idea Type order atomically.
 - **Request:**
   - `orderedIdeaTypeIds` required non-empty array listing every active Idea Type ID in the organization exactly once; archived options are not listed
 - **Response:** `204 No Content`
-- **Errors:** `400` "The reorder must list every active option exactly once." when the array misses, repeats or adds an ID; `403`, `404` as in the shared rules.
-- **Rules:** sets no default — idea create requires an active `ideaTypeId`.
+- **Errors:** `400` "The reorder must list every active option exactly once." when the array misses, repeats or adds an ID; `400` keyed on `orderedIdeaTypeIds`, "Ordered Idea Type Ids is required.", when the field is `null`; `403`, `404` as in the shared rules.
+- **Rules:** stores no default; the new first active option becomes the form's preselection.
 
 ### `DELETE /api/v1/idea-types/{ideaTypeId}`
 Soft-delete an Idea Type while preserving existing idea references.
@@ -126,8 +131,8 @@ Replace the complete active Business Impact order atomically.
 - **Request:**
   - `orderedBusinessImpactIds` required non-empty array listing every active Business Impact ID in the organization exactly once; archived options are not listed
 - **Response:** `204 No Content`
-- **Errors:** `400` "The reorder must list every active option exactly once."; `403`, `404` as in the shared rules.
-- **Rules:** sets no default.
+- **Errors:** `400` "The reorder must list every active option exactly once."; `400` keyed on `orderedBusinessImpactIds`, "Ordered Business Impact Ids is required.", when the field is `null`; `403`, `404` as in the shared rules.
+- **Rules:** stores no default; the new first active option becomes the form's preselection.
 
 ### `DELETE /api/v1/business-impacts/{businessImpactId}`
 Soft-delete a Business Impact while preserving existing idea references.

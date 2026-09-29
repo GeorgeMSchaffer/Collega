@@ -11,6 +11,14 @@
 > - **Decisions:** 2026-09-06 "The .NET stack is frozen; its code and instructions are no longer applicable";
 >   2026-09-13 "The .NET stack is deleted; stale pointers go, inherited rationale stays"
 
+> ## ⛔ SUPERSEDED — history of the deleted .NET stack
+>
+> This move was made in the .NET stack, which was deleted in slice F6 (`SPEC/decisions.md`
+> 2026-09-13). The application is TypeScript on Prisma and PostgreSQL
+> (`packages/infrastructure/prisma/`); nothing here is a build instruction. Kept for why the move
+> went as it did. File paths into the deleted tree were removed 2026-09-29; the files are named by
+> what they were.
+
 ## Status — COMPLETE, MERGED TO `dev` (2026-08-12, `7c5a78b`)
 
 **Decided (2026-08-11): Collega's application database moves from SQL Server 2022 to PostgreSQL.** This
@@ -18,7 +26,7 @@ document was the implementation scope for that decision; the work is done.
 
 - `dev` now runs `Npgsql.EntityFrameworkCore.PostgreSQL` 8.0.10 against a single
   `20260812195251_InitialCreate` migration, with `docker-compose.yml` on `postgres:16`. No `UseSqlServer`
-  call or SQL Server package reference remains anywhere in `src/`.
+  call or SQL Server package reference remained anywhere in the .NET source.
 - Verified at merge: 579 tests passing, and a live boot against a real `postgres:16` container applying the
   migration and completing `StartupSeeder` with no `timestamptz`/`Kind` exception.
 - Read this file now for **why the migration went the way it did** — especially the corrections below, which
@@ -54,13 +62,13 @@ Every place the SQL Server provider is wired in, as of the commit that scoped th
 
 | # | Location | Change |
 |---|---|---|
-| 1 | `src/Collega.Infrastructure/Collega.Infrastructure.csproj:13` — `Microsoft.EntityFrameworkCore.SqlServer` 8.0.10 | Replace with `Npgsql.EntityFrameworkCore.PostgreSQL` 8.0.x (approved). |
-| 2 | `Persistence/DependencyInjection/InfrastructureServiceCollectionExtensions.cs:23` and `Persistence/CollegaDbContextFactory.cs:26` — two `UseSqlServer(...)` calls | → `UseNpgsql(...)` |
-| 3 | `Persistence/Configurations/IdeaConfiguration.cs:58` `HasColumnType("date")`; `UserConfiguration.cs:44` (`PasswordHash`) and `AuditEventConfiguration.cs:44` `HasColumnType("nvarchar(max)")`; `UserConfiguration.cs:83` (`PortraitPng`) `HasColumnType("varbinary(max)")` | `date` is valid on Npgsql — keep. Drop the two `nvarchar(max)` annotations (unbounded string maps to `text`) **and the `varbinary(max)` one** (`byte[]` maps to `bytea`). |
-| 4 | 11 migrations + `CollegaDbContextModelSnapshot.cs` in `Persistence/Migrations/` — SQL-Server-flavored throughout (287 `datetime2`, 31 `nvarchar(max)`, `UseIdentityColumns`, `filter: "[is_deleted] = 0"`) | **Regenerate fresh** (see §3). Counts refreshed 2026-08-12 after the portrait migration landed. |
-| 5 | Connection strings: `src/Collega.API/appsettings.Development.json:9` (localdb); `CollegaDbContextFactory.cs:17` hardcoded default; `docker-compose.yml` `sqlserver` service + `api` service `ConnectionStrings__DefaultConnection`; `.env` / `.env.example` `MSSQL_SA_PASSWORD` | Rewrite to Npgsql format; swap the compose image to `postgres:16`; rename the password env var. |
-| 6 | `src/Collega.API/Startup/StartupConfigurationValidator.cs:16` — description "the SQL Server connection string" | Cosmetic text update. |
-| 7 | `src/Collega.API/Program.cs:128-134` — `MigrateAsync` on relational hosts, `EnsureCreatedAsync` for InMemory test hosts | No code change; requires valid PG migrations to exist (§3). |
+| 1 | The Infrastructure project's package reference — `Microsoft.EntityFrameworkCore.SqlServer` 8.0.10 | Replace with `Npgsql.EntityFrameworkCore.PostgreSQL` 8.0.x (approved). |
+| 2 | The infrastructure service registration and the design-time DbContext factory — two `UseSqlServer(...)` calls | → `UseNpgsql(...)` |
+| 3 | Entity configurations: the idea's `HasColumnType("date")`; the user's `PasswordHash` and the audit event's `HasColumnType("nvarchar(max)")`; the user's `PortraitPng` `HasColumnType("varbinary(max)")` | `date` is valid on Npgsql — keep. Drop the two `nvarchar(max)` annotations (unbounded string maps to `text`) **and the `varbinary(max)` one** (`byte[]` maps to `bytea`). |
+| 4 | 11 migrations + the model snapshot — SQL-Server-flavored throughout (287 `datetime2`, 31 `nvarchar(max)`, `UseIdentityColumns`, `filter: "[is_deleted] = 0"`) | **Regenerate fresh** (see §3). Counts refreshed 2026-08-12 after the portrait migration landed. |
+| 5 | Connection strings: the API's development appsettings (localdb); the DbContext factory's hardcoded default; `docker-compose.yml` `sqlserver` service + `api` service `ConnectionStrings__DefaultConnection`; `.env` / `.env.example` `MSSQL_SA_PASSWORD` | Rewrite to Npgsql format; swap the compose image to `postgres:16`; rename the password env var. |
+| 6 | The API's startup configuration validator — description "the SQL Server connection string" | Cosmetic text update. |
+| 7 | The API's startup — `MigrateAsync` on relational hosts, `EnsureCreatedAsync` for InMemory test hosts | No code change; requires valid PG migrations to exist (§3). |
 
 ## The one real risk: `DateTime` → `timestamptz`
 
@@ -80,7 +88,7 @@ The codebase appears UTC-consistent, but this must be **verified, not assumed** 
 - **`Guid` keys** map cleanly to `uuid`; no identity-sequence porting.
 - **No raw SQL and no `rowversion`/concurrency tokens.** The org logo thumbnail is base64 `text` (`Organization.LogoThumbnailUrl`, max 300 000 chars), not binary.
 
-> **Correction (2026-08-12):** this section previously also claimed "no `varbinary`". That stopped being true when the profile-portrait slice merged `User.PortraitPng` as `HasColumnType("varbinary(max)")` (`UserConfiguration.cs:83`). It is **not** a non-issue — `varbinary(max)` is SQL-Server-only and must be dropped so EF maps `byte[]` to `bytea`. Tracked in the coupling surface, row 3.
+> **Correction (2026-08-12):** this section previously also claimed "no `varbinary`". That stopped being true when the profile-portrait slice merged `User.PortraitPng` as `HasColumnType("varbinary(max)")` (in the user configuration). It is **not** a non-issue — `varbinary(max)` is SQL-Server-only and must be dropped so EF maps `byte[]` to `bytea`. Tracked in the coupling surface, row 3.
 - **All LINQ is provider-agnostic** (`.Contains` / `.StartsWith` over strings and in-memory collections); nothing SQL-Server-specific to translate.
 - **Case-insensitivity is handled in code — *only for email and tags*.** Those use pre-normalized lowercase columns (`EmailNormalizer` → `NormalizedEmail`, `Tag.NormalizedName`), so they are genuinely unaffected.
 
@@ -90,7 +98,7 @@ The codebase appears UTC-consistent, but this must be **verified, not assumed** 
 > (3) **field-definition name uniqueness** stopped treating `Priority`/`priority` as a collision.
 > All three are fixed: (1) and (2) in Unit 6, (3) via the `NormalizedName` column — see "Field-definition name uniqueness" at the end of this document. **None of this is catchable by the existing suite**, which runs on EF InMemory and does not model collation.
 >
-> **Correction (2026-08-12) — this was wrong, and it was a latent break.** This section previously claimed the one filtered index "becomes a correct Postgres partial index automatically when migrations are regenerated." It does not: the filter is hardcoded **in the model**, not emitted by the provider. `Persistence/Configurations/FieldDefinitionConfiguration.cs:60` carried `HasFilter("[is_deleted] = 0")`; that SQL-Server bracket syntax regenerates verbatim into the Npgsql migration and then fails at `MigrateAsync` against Postgres. It was changed to `HasFilter("is_deleted = false")` during Unit 1; the live index is now `... WHERE (is_deleted = false)`. **General lesson: anything passed as a raw SQL string to `HasFilter`, `HasComputedColumnSql`, `HasDefaultValueSql`, or similar is provider-specific and does not migrate itself — grep for those before assuming a regeneration is clean.**
+> **Correction (2026-08-12) — this was wrong, and it was a latent break.** This section previously claimed the one filtered index "becomes a correct Postgres partial index automatically when migrations are regenerated." It does not: the filter is hardcoded **in the model**, not emitted by the provider. The field-definition configuration carried `HasFilter("[is_deleted] = 0")`; that SQL-Server bracket syntax regenerates verbatim into the Npgsql migration and then fails at `MigrateAsync` against Postgres. It was changed to `HasFilter("is_deleted = false")` during Unit 1; the live index is now `... WHERE (is_deleted = false)`. **General lesson: anything passed as a raw SQL string to `HasFilter`, `HasComputedColumnSql`, `HasDefaultValueSql`, or similar is provider-specific and does not migrate itself — grep for those before assuming a regeneration is clean.**
 
 ## Known coverage gap
 
@@ -105,9 +113,9 @@ Effort in agent-days (1 agent-day = one focused session from partial to build-cl
 1. **Provider swap** (~0.25 d) — package reference (approved), both `UseNpgsql` calls, remove the two `nvarchar(max)` annotations and the one `varbinary(max)` annotation.
 2. **Regenerate migrations** (~0.5 d) — delete the 11 migrations + snapshot; `dotnet ef migrations add InitialCreate` against Npgsql; verify the generated DDL (partial index, `uuid`, `timestamptz`, `text`).
 3. **Regenerate fresh (chosen strategy)** — history is discarded intentionally; there is no production database, so a single clean `InitialCreate` is correct. (Alternative hand-port of all 11 migrations was rejected: slower, error-prone, no benefit without prod data.)
-4. **Connection-string / infra rewrite** (~0.5 d) — `appsettings.Development.json`, `CollegaDbContextFactory` default, `docker-compose.yml` (`postgres:16` image, volume, healthcheck), `.env`/`.env.example`, `StartupConfigurationValidator` text.
+4. **Connection-string / infra rewrite** (~0.5 d) — the development appsettings, the DbContext factory default, `docker-compose.yml` (`postgres:16` image, volume, healthcheck), `.env`/`.env.example`, the startup validator text.
 5. **UTC-correctness audit + Postgres smoke test** (~1 d) — audit all persisted `DateTime` writes for `Kind = Utc`; add a Postgres-backed integration/smoke test (Testcontainers or local compose DB) covering migrate-up + a timestamped round-trip + email-uniqueness (Testcontainers package approved).
-6. **Full-suite + live verification** (~0.5 d) — `dotnet test Collega.sln` green; run the API against a real Postgres container; confirm `MigrateAsync` + `StartupSeeder` succeed end-to-end.
+6. **Full-suite + live verification** (~0.5 d) — the .NET test suite green; run the API against a real Postgres container; confirm `MigrateAsync` + `StartupSeeder` succeed end-to-end.
 7. **Documentation fan-out** (~0.5 d) — see below.
 
 **Total: ~2.75–3.5 agent-days** plus review, assuming the two package approvals land.

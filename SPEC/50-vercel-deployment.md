@@ -23,10 +23,13 @@ stack is never deployed.
 
 > **What is in the repository and what is not.** Everything below that lives in files —
 > `apps/*/vercel.json`, `apps/api/server.js`, the migration and bootstrap steps — is committed and
-> was exercised locally. **Nothing on Vercel itself has been created or verified**: the two
-> projects do not exist yet, and neither does the database. §11 lists exactly what remains
-> unproven and what proving it would take; §12 is the ordered list of what only the account holder
-> can do.
+> was exercised locally. **On Vercel itself, little has been verified.** Projects and a database
+> now exist — the pre-existing `collega` web project carries the stale settings §11 describes, and
+> Preview's `DATABASE_URL` points at the database holding the real Site Admin, confirmed from a
+> build log — but most of §11 is still unproven. §11 lists what remains unproven and what proving
+> it would take; §12 is the ordered list of what only the account holder can do; the Owner-side
+> list in `SPEC/implementation-agent-tracker.md` is current. *(Corrected 2026-09-29: this said the
+> two projects and the database did not exist yet.)*
 
 ---
 
@@ -305,7 +308,7 @@ every name for local development; nothing in this table belongs in a committed f
 | `SITE_ADMIN_EMAIL` | Production, Preview | **yes** | The API refuses to boot, and nothing creates the first administrator (§8). |
 | `SITE_ADMIN_PASSWORD` | Production, Preview | **yes** | Same, and **not removable** — `siteAdminFragment` reads it through `required()`, so deleting it after the first login takes the API down on the next cold start. Nothing reads the value: the bootstrap script reads `process.env` directly, so the fragment's only effect is to refuse boot. See the note under §8. |
 | `ACCESS_TOKEN_LIFETIME_MINUTES` | optional | no | Defaults to 480 (8h). |
-| `ANTHROPIC_API_KEY` | optional | no | AI idea assist runs dark — the scripted fallback answers and the API reports "not configured" rather than erroring (`SPEC/20-feature-ai-idea-assist.md` rule 31). D6 is unbuilt, so today it changes nothing. |
+| `ANTHROPIC_API_KEY` | optional | no | Without it AI idea assist runs dark — the turn endpoint answers `503`, availability reports `false`, and the client degrades to the plain form (`SPEC/20-feature-ai-idea-assist.md` rule 31). Setting it turns the assistant on: D6 is built. |
 | `POSTGRES_*` | — | **no** | Do not set them. They are the local container's parts; `DATABASE_URL` wins anyway, and having both invites the two drifting. |
 
 - **`ACCESS_TOKEN_SIGNING_KEY` is now enforced.** `authFragment` pushes a config problem when the
@@ -438,7 +441,7 @@ pnpm --filter @collega/infrastructure db:bootstrap-admin
     variables and your local `.env`, both untracked.
   - **It shares the demo seed's id derivation**, so a development database that has seen both the
     demo seed and this bootstrap holds one row rather than colliding on the unique email index.
-- After the first login and password change, `SITE_ADMIN_PASSWORD` can be deleted from the project.
+- **Leave `SITE_ADMIN_PASSWORD` in place** after the first login and password change: the API refuses to boot without it (the note at the top of this section, and §12 step 10). *Corrected 2026-09-29 (`SPEC/decisions.md` 2026-09-29, "Spec contradictions resolved"): this said it could be deleted, which would take the deployment down on the next cold start.*
 
 ### When the address is owned by an account that cannot administer anything
 
@@ -791,6 +794,6 @@ database; step 10 is verification; steps 11–12 populate the deployment and get
       expire; an Org Admin regenerating it is what invalidates the old one, and anyone who
       registered with the old code keeps their account.
 
-If something fails, §11 names the six candidates and where each shows itself. **Do not fix a
+If something fails, §11 names the seven candidates and where each shows itself. **Do not fix a
 cross-origin symptom by adding CORS** (§4), and do not set `DATABASE_URL` in the GitHub Actions
 workflow (§6).

@@ -70,6 +70,7 @@ Return organization detail.
   - `logoUrl` nullable string
   - `logoThumbnailUrl` nullable string
   - `logoHeightPx` nullable integer, max rendered value `150`
+  - **Deferred — not built (tracker rule 30).** The four `aiKey*` fields below belong to the per-organization AI key, which is deliberately unimplemented; the API does not return them.
   - `aiKeyConfigured` boolean indicating whether this organization has its own AI API key stored
   - `aiKeyLastFour` nullable string, the last four characters of the stored key, null when `aiKeyConfigured` is false
   - `aiKeyUpdatedAtUtc` nullable timestamp
@@ -79,8 +80,8 @@ Return organization detail.
   - `403` caller is authenticated but not allowed to view this organization
   - `404` organization does not exist or is outside caller scope
 - **Rules:**
-  - The stored AI API key value itself is never returned by this or any other endpoint.
-  - The three `aiKey*` metadata fields are omitted entirely for callers whose role is `User` or `Read Only`.
+  - The stored AI API key value itself is never returned by this or any other endpoint. This guarantee holds today — no key is stored — and applies unchanged when per-organization keys are built.
+  - **Deferred — not built (tracker rule 30).** The three `aiKey*` metadata fields — `aiKeyLastFour`, `aiKeyUpdatedAtUtc` and `aiKeyUpdatedByUserId`, beside the `aiKeyConfigured` flag, making the four listed above — are omitted entirely for callers whose role is `User` or `Read Only`.
 
 ### `PUT /api/v1/organizations/{organizationId}`
 Update organization detail.
@@ -145,6 +146,8 @@ Archive an organization without hard deletion.
 - **Rules:** —
 
 ### `PUT /api/v1/organizations/{organizationId}/ai-key`
+> **Deferred — not built (tracker rule 30).** Kept as the specification for when per-organization keys are built; no such route exists (`SPEC/20-feature-ai-idea-assist.md` rule 30). Labelled 2026-09-29, `SPEC/decisions.md` "Spec contradictions resolved".
+
 Set or rotate the organization's own AI API key, overriding the deployment default key for all AI calls made in this organization's scope.
 
 - **Roles:** authorized for Site Admin on any organization, and for Org Admin on their own organization only.
@@ -168,6 +171,8 @@ Set or rotate the organization's own AI API key, overriding the deployment defau
   - generates an audit event recording the acting user and never the key value
 
 ### `DELETE /api/v1/organizations/{organizationId}/ai-key`
+> **Deferred — not built (tracker rule 30).** As for `PUT` above; no such route exists.
+
 Clear the organization's own AI API key, returning the organization to the deployment default key.
 
 - **Roles:** authorized for Site Admin on any organization, and for Org Admin on their own organization only.

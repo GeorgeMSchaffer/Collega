@@ -13,7 +13,7 @@
 ## Outcome
 A privileged user can temporarily act in Collega **as** another user — same role, same organization scope, same visible data — to reproduce issues, verify permissions, and support users.
 
-- **This is not a convenience feature.** A decision on 2026-08-11 removed every direct Site-Admin create/edit path for organization-owned content (`SPEC/20-feature-client-ui.md` → "Site Admin org-content mutation model"). View As is therefore the **only** way a Site Admin can create or edit org content at all. Until it ships, that capability does not exist.
+- **This is not a convenience feature.** A decision on 2026-08-11 removed every direct Site-Admin create/edit path for organization-owned content (`SPEC/20-feature-client-ui.md` → "Site Admin org-content mutation model"). View As is therefore the **only** way a Site Admin can create or edit org content at all. It shipped in Sprint 6 and was ported to the Nest host in slice D7.
 - It is explicitly **not** a login as the target (no password, no session issued for them) and **not** a role change.
 
 ## Locked decisions (2026-08-11 user interview)
@@ -29,11 +29,11 @@ Design comp, signed off: `SPEC/mockups/comp-c-review-10-view-as.html`.
 
 ## Mechanism
 
-1. Impersonation is a **server-side session**, not a claim in the access token. The access token identifies only the real user (`SPEC/30-Contracts.md` → "Access Token Format and Session Revocation"); it is never reissued to start or end a View As session, and a captured token never carries impersonation authority.
+1. Impersonation is a **server-side session**, not a claim in the access token. The access token identifies only the real user (`SPEC/contracts/auth.md` → "Access Token Format and Session Revocation"); it is never reissued to start or end a View As session, and a captured token never carries impersonation authority.
 2. A session records the **real actor**, the **target user**, started-at, last-seen-at, absolute-expiry-at, and ended-at. At most one session may be active per real actor.
 3. The session is resolved on each request where identity is already resolved — `TokenAuthenticationService` re-reads live user state per request today, so the impersonation lookup extends an existing read rather than adding a new class of work.
-4. While a session is active, `ICurrentUserContext` reports the **impersonated** user's id, organization and role, so every existing organization-scoping and role check applies unchanged, with no per-service special-casing. The real actor is exposed separately, for audit and for the banner.
-4a. **`ICurrentUserContext` is the single chokepoint for identity, and must stay that way.** This is what makes rule 4 work.
+4. While a session is active, `CurrentUserContext` (`packages/application/src/common/current-user-context.ts`) reports the **impersonated** user's id, organization and role, so every existing organization-scoping and role check applies unchanged, with no per-service special-casing. The real actor is exposed separately, for audit and for the banner.
+4a. **`CurrentUserContext` is the single chokepoint for identity, and must stay that way.** This is what makes rule 4 work.
     - Verified 2026-08-13 (Sprint 6 Slice 0) against the application this replaced: nothing outside the API's own authentication layer read the raw claims principal, and no controller resolved identity itself. The Nest port preserves that shape — the guard resolves identity once and nothing downstream reaches for the request.
     - Why: **a service that reads claims directly would silently opt itself out of impersonation** — authorizing as the real admin while the rest of the request acts as the target. Treat any new direct claim read outside the authentication layer as a defect.
 4b. Authorization derives organization scope from the context, never from a caller-supplied `organizationId`. Also verified in Slice 0 across all 34 methods that take one: an `organizationId` argument is the *target*, always validated against the context. Why: this keeps impersonation from becoming a cross-organization write path.
@@ -96,7 +96,7 @@ Per the locked comp; `SPEC/20-feature-client-ui.md` governs general chrome.
 - Each remains fully available through View As, which is the point: the action is then attributable to a real member of that organization, with the acting administrator recorded alongside (rule 14).
 - None of this touches Read Only users, who are members and keep both rules in full.
 
-25b. The enforcement needs no special case for impersonation, deliberately. While a session is live, `ICurrentUserContext.Role` is the **target's** role, not `SiteAdmin` — so the refusal does not fire, and the same guard that blocks the direct path permits the View As path. The mechanism that makes rule 4 work makes this work.
+25b. The enforcement needs no special case for impersonation, deliberately. While a session is live, `CurrentUserContext.role` is the **target's** role, not `SiteAdmin` — so the refusal does not fire, and the same guard that blocks the direct path permits the View As path. The mechanism that makes rule 4 work makes this work.
 26. **Bootstrap exception:** organization and user administration — creating organizations and users, **user** CSV import, invite codes, archiving — stay **direct** for Site Admin. The product rule (user, 2026-08-14): *a Site Admin creates organizations and users for organizations; for every other activity they use Act As.*
     - The two CSV imports fall on opposite sides of that line: **user** import (`/organizations/{id}/users/import`) is bootstrap and stays direct; **idea** import (`/boards/{id}/ideas/import`) is org content and goes through View As (rule 25).
     - Filling a new organization: create an Org Admin in it directly, then act as that user to add boards and ideas. Why: without this a new deployment could never be set up, since there would be no user to act as.
