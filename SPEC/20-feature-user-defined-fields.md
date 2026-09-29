@@ -182,7 +182,9 @@ CREATE UNIQUE INDEX ux_idea_field_values_idea_id_field_definition_id
 
 Existing conventions: path versioning under `/api/v1`, plural nouns, org-scoped.
 
-### Field Definitions (Admin only: `OrgAdmin` or `SiteAdmin`)
+### Field Definitions (writes: an in-scope `OrgAdmin`; reads: any member, or a `SiteAdmin`)
+
+The contract is [`contracts/field-definitions.md`](contracts/field-definitions.md). *Corrected 2026-09-29 (slice 124, `SPEC/decisions.md` 2026-09-29 "Contracts and wording written from the code"): this heading said all six routes were admin only (`OrgAdmin` or `SiteAdmin`). The code, and the `fielddefinitions.*` fixtures, let any member of the organization list and get the active schema, since every idea form needs it (rule above: "all org members fill in UDF values"), and refuse a Site Admin acting directly on the four writes, as for all organization content.*
 
 | Method | Route | Description |
 |---|---|---|

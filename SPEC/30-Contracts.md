@@ -92,12 +92,13 @@ contract states nothing for that item, and the conventions above apply.
 
 | Section | File | Routes |
 |---|---|---|
-| Authentication Contracts | [`contracts/auth.md`](contracts/auth.md) | `/auth/login`, `/auth/me`, `/auth/change-password`, `/auth/password-reset/*`, `/users/{userId}/temporary-password`; also the session, password-rotation and rate-limiting rules. Subsections: Access Token Format and Session Revocation; Mandatory Password Rotation Gate; Rate limiting on the authentication surface |
+| Authentication Contracts | [`contracts/auth.md`](contracts/auth.md) | `/auth/login`, `/auth/me` (and `/portrait`), `/auth/change-password`, `/auth/password-reset/*`, `/users/{userId}/temporary-password`; also the session, password-rotation and rate-limiting rules. Subsections: Access Token Format and Session Revocation; Mandatory Password Rotation Gate; Rate limiting on the authentication surface |
 | View As Contracts | [`contracts/view-as.md`](contracts/view-as.md) | `/auth/view-as`, `/auth/view-as/candidates`; the effect on `/auth/me` |
 | Organization Contracts | [`contracts/organizations.md`](contracts/organizations.md) | `/organizations`, `/organizations/{organizationId}` (and `/logo`, `/invite-code/regenerate`, `/archive`, `/ai-key`) |
 | User Contracts | [`contracts/users.md`](contracts/users.md) | `/auth/register`, `/organizations/{organizationId}/users` (and `/import`), `/organizations/{organizationId}/members`, `/users/{userId}` |
 | Status Contracts | [`contracts/statuses.md`](contracts/statuses.md) | `/organizations/{organizationId}/statuses` (and `/reorder`), `/statuses/{statusId}` |
 | Idea Field Option Contracts | [`contracts/idea-field-options.md`](contracts/idea-field-options.md) | `/organizations/{organizationId}/idea-types`, `/idea-types/{ideaTypeId}`, `/organizations/{organizationId}/business-impacts`, `/business-impacts/{businessImpactId}`. Merged from two sections of this name; the differences between them were decided 2026-09-28 (`SPEC/decisions.md`). |
+| User-Defined Field Contracts | [`contracts/field-definitions.md`](contracts/field-definitions.md) | `/organizations/{organizationId}/field-definitions` (and `/{id}`, `/reorder`). Written from the code 2026-09-29 (`SPEC/decisions.md`). |
 | Idea-Type Field Contracts | [`contracts/idea-type-fields.md`](contracts/idea-type-fields.md) | `/organizations/{organizationId}/idea-types/{ideaTypeId}/fields` and `/appearance`, `/organizations/{organizationId}/ideas/{ideaId}/idea-type` |
 | Board Contracts | [`contracts/boards.md`](contracts/boards.md) | `/organizations/{organizationId}/boards`, `/boards/{boardId}` (and `/archive`, `/unarchive`, `/swimlanes/reorder`) |
 | Idea Contracts | [`contracts/ideas.md`](contracts/ideas.md) | `/boards/{boardId}/ideas` (and `/export`, `/import`, `/ai-draft`, `/ai-polish`), `/organizations/{organizationId}/ideas`, `/ideas/{ideaId}` (and `/status`) |
