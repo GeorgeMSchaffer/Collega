@@ -1,7 +1,6 @@
 'use client'
 
 import { Button, Dot } from '@collega/design-system'
-import { useState } from 'react'
 // Not through `@/lib/data`: that barrel re-exports the API-backed readers, so pulling these two
 // constants through it drags `next/headers` into the client graph and fails the build.
 import { SWIMLANE_FLOOR } from '@/lib/mock'
@@ -21,14 +20,23 @@ import type { Status } from '@/lib/types'
  *
 
  * The organization's statuses arrive as a prop because this component cannot await: the route that
- * renders it reads them and hands them down.
+ * renders it reads them and hands them down. The selection is its caller's state, because the board
+ * form also needs to know which of the board's lanes a save would remove.
  *
  * Every refused control is `aria-disabled` and stays focusable, never `disabled`: a `disabled`
  * button leaves the tab order and takes the `aria-describedby` reason with it, so the reader who
  * most needs to know why it is refused is the one who cannot reach it.
  */
-export function SwimlanePicker({ selected, statuses }: { selected: string[]; statuses: Status[] }) {
-  const [ids, setIds] = useState(selected)
+export function SwimlanePicker({
+  ids,
+  onChange,
+  statuses,
+}: {
+  ids: string[]
+  onChange: (update: (current: string[]) => string[]) => void
+  statuses: Status[]
+}) {
+  const setIds = onChange
 
   const lanes = ids.flatMap((id) => {
     const status = statuses.find((candidate) => candidate.id === id)

@@ -15,16 +15,14 @@ import type { Page } from '@playwright/test'
  * `expect(page).not.toHaveURL(/\/login/) timed out` and nothing else, and the obvious reading is
  * that the credential is wrong.
  *
- * It is not. `POST /auth/login` allows twenty attempts per minute per caller IP, and **a single
- * full run of this suite exceeds that**: twenty-five tests sign in around twenty-seven times in
- * under two minutes. Measured 2026-09-14, when the whole suite was first run after the database
- * isolation fix — two specs failed on sign-in, neither of them about sign-in, and both looked like
- * credential bugs. `SPEC/Bug Triage.md` recorded this as an hourly-limit problem that appears on
- * the fourth consecutive run; that was the wrong bucket and far too generous.
+ * It is not. `POST /auth/login` allows twenty attempts per minute per caller IP, and a full run of
+ * this suite used to sign in about twenty-seven times in under two minutes (measured 2026-09-14),
+ * failing specs that had nothing to do with sign-in in a way that looked like credential bugs.
  *
- * The real fix is `storageState` — authenticate once per role and reuse the cookie, which takes the
- * twenty-seven down to about four. Until that exists, this at least makes the failure say what it
- * is rather than sending the next person to check a password that was always correct.
+ * `auth.setup.ts` fixed that: the seeded roles sign in once and every other spec reuses the stored
+ * cookie, so a run now signs in fourteen times, nine of them as accounts the specs create
+ * themselves (measured 2026-09-29). If a new spec pushes that back towards twenty, this is how
+ * the failure will read - as what it is, not as a password that was always correct.
  */
 export async function signIn(page: Page, email: string, password: string): Promise<void> {
   await page.context().clearCookies()

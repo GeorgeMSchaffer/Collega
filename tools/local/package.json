@@ -1,0 +1,14 @@
+{
+  "name": "@collega/local",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "pnpm dev's launcher (start.ts), and the self-tests of the .env rules it applies.",
+  "scripts": {
+    "test": "node --test \"*.test.ts\""
+  },
+  "devDependencies": {
+    "@types/node": "26.4.1",
+    "typescript": "7.0.2"
+  }
+}

@@ -91,48 +91,36 @@ Today every idea in an organization shows the *same* set of User-Defined Fields 
 
 ## Domain Model
 
-### Modified entity: `IdeaType` (`Collega.Domain.IdeaFields`, `AuditableEntityBase`)
+### Modified entity: `IdeaType` (`packages/domain/src/idea-fields/idea-type.ts`, auditable)
 
-Already shipped with `OrganizationId`, `Name`, `SortOrder`, `IsDeleted`, and soft-delete/rename/reorder methods. This feature adds:
+Already shipped with `organizationId`, `name`, `sortOrder`, `isDeleted`, and soft-delete/rename/reorder transitions. This feature adds:
 
-```csharp
-public string? ColorHex { get; private set; }     // 7-char #RRGGBB, nullable → falls back to a neutral badge
-public string? Icon { get; private set; }          // short token (emoji or icon key), nullable
-public IdeaTypeFieldMode FieldMode { get; private set; } // AllActiveFields (default) | Curated
+- `colorHex` — `#RRGGBB`, exactly 7 characters (`IDEA_TYPE_COLOR_HEX_LENGTH`), nullable; null falls back to a neutral badge.
+- `icon` — a short token (emoji or icon key), at most 64 characters (`IDEA_TYPE_ICON_MAX_LENGTH`), nullable; null renders no icon.
+- `fieldMode` — `IdeaTypeFieldMode` (`packages/domain/src/enums`):
+  - `AllActiveFields` — the default, and backward compatible: show every active organization field, with the field's global `isRequired`.
+  - `Curated` — show only the mapped `IdeaTypeField` links, with each link's own `isRequired`.
+- `fields` — the type's `IdeaTypeField` links, consulted only when `fieldMode` is `Curated`.
 
-private readonly List<IdeaTypeField> _fields = new();
-public IReadOnlyList<IdeaTypeField> Fields => _fields;
+Transitions (plain functions over immutable data, per `packages/domain/src/common`):
+- `setIdeaTypeAppearance(ideaType, colorHex, icon, …)` — sets or clears either part; blank clears.
+- `setIdeaTypeFieldSelection(ideaType, links, …)` — replaces `fields` and sets `fieldMode` to `Curated`; an empty list is `clearIdeaTypeFieldSelection`.
+- `clearIdeaTypeFieldSelection(ideaType, …)` — empties `fields` and sets `fieldMode` to `AllActiveFields`.
 
-// New/extended invariant methods:
-// SetAppearance(colorHex, icon, …)
-// SetFieldSelection(IReadOnlyList<IdeaTypeFieldInput> links, …)  → replaces _fields, sets FieldMode = Curated
-// ClearFieldSelection(…)                                         → empties _fields, sets FieldMode = AllActiveFields
-```
+### New link entity: `IdeaTypeField`
 
-```csharp
-public enum IdeaTypeFieldMode
-{
-    AllActiveFields = 0, // backward-compatible default: show every active org field, global IsRequired
-    Curated = 1,         // show only mapped IdeaTypeField links, per-link IsRequired
-}
-```
+The type↔field association, in the same file. **Per-type required-ness and order live here.**
 
-### New link entity: `IdeaTypeField` (`EntityBase`)
+- `id`
+- `ideaTypeId`
+- `fieldDefinitionId`
+- `displayOrder` — order within **this** type
+- `isRequired` — required **within** this type (overrides the field definition's global default)
 
-The type↔field association. **Per-type required-ness and order live here.**
+*Corrected 2026-09-29 (slice 124): this section carried C# declarations from the deleted .NET domain (`Collega.Domain.IdeaFields`, `AuditableEntityBase`, `EntityBase`); the fields, limits and enum values are unchanged. The mode was an `int` there (`AllActiveFields = 0`, `Curated = 1`) and is a PostgreSQL enum of the same names now.*
 
-```csharp
-public sealed class IdeaTypeField : EntityBase
-{
-    public Guid IdeaTypeId { get; private set; }
-    public Guid FieldDefinitionId { get; private set; }
-    public int DisplayOrder { get; private set; }   // order within THIS type
-    public bool IsRequired { get; private set; }     // required WITHIN this type (overrides global default)
-}
-```
-
-- Unique on `(IdeaTypeId, FieldDefinitionId)` — a field appears at most once per type.
-- `DisplayOrder` is per-type; the same field can sit in different positions on different types.
+- Unique on `(ideaTypeId, fieldDefinitionId)` — a field appears at most once per type.
+- `displayOrder` is per-type; the same field can sit in different positions on different types.
 - A link whose `FieldDefinition` is soft-deleted is retained but filtered at resolution (mirrors archived-UDF handling).
 
 ### `Idea` — type already wired; make it immutable

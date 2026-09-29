@@ -14,7 +14,9 @@ import type { Response } from 'express'
 export const SESSION_COOKIE_NAME = 'collega_session'
 
 /**
- * Sets the session cookie on login and on View As start/exit (decision `08`). `maxAgeSeconds`
+ * Sets the session cookie. Only `POST /auth/login` calls it: View As start and exit leave the
+ * cookie alone, because it names the real user and the impersonation is resolved server-side on
+ * every request. apps/web re-issues the same token on its own origin. `maxAgeSeconds`
  * is the access token's own lifetime - the cookie must not outlive the JWT it carries, or a
  * browser would keep sending a token the server already treats as expired.
  *
@@ -32,9 +34,10 @@ export function setSessionCookie(res: Response, token: string, maxAgeSeconds: nu
   })
 }
 
-/** Clears the session cookie. Decision `08` names login, View As start, and View As exit as the
- * three places the cookie is written or cleared - which of those two this is at each site is a
- * call for whichever slice builds that endpoint, not this helper. */
+/**
+ * Clears the session cookie. Nothing calls it: the API has no logout route, and apps/web signs out
+ * - on logout and after a password change - by deleting its own copy of the cookie.
+ */
 export function clearSessionCookie(res: Response): void {
   res.clearCookie(SESSION_COOKIE_NAME, { httpOnly: true, secure: true, sameSite: 'lax', path: '/' })
 }

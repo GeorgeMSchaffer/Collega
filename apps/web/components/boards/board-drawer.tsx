@@ -20,6 +20,8 @@ export type BoardFormData = {
   description: string
   userStatusMoves: boolean
   swimlaneIds: string[]
+  /** Live ideas per lane of the board being edited, for the confirm step a lane removal needs. */
+  laneIdeaCounts?: Readonly<Record<string, number>> | undefined
   statuses: Status[]
 }
 
@@ -122,6 +124,7 @@ export function BoardDrawer({
           defaultDescription={form.description}
           userStatusMoves={form.userStatusMoves}
           swimlaneIds={form.swimlaneIds}
+          laneIdeaCounts={form.laneIdeaCounts}
           statuses={form.statuses}
           sectionHeading="h3"
         />

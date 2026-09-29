@@ -28,6 +28,9 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-09-29 | Contracts and wording written from the code | active | full below |
+| 2026-09-29 | Removing a lane moves its ideas | active | full below |
+| 2026-09-29 | The test harnesses reuse sessions; the auth rate limits stay | active | full below |
 | 2026-09-29 | Spec contradictions resolved | active | full below |
 | 2026-09-28 | The Idea Field Option contract follows the code | active | full below |
 | 2026-09-28 | The v2 corpus format, as built | active | full below |
@@ -39,12 +42,12 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-28 | The prompt-eval runner: what existing decisions already settle | superseded in part | full below |
 | 2026-09-28 | Starting a sprint, a single-Issue read, the Roadmap's sprint rows, and tag audit events | active | full below |
 | 2026-09-28 | The comp R iteration's open questions are answered | active | full below |
-| 2026-09-28 | The S0.2 schema freeze is amended a fourth time, for tag colours | active | full below |
-| 2026-09-28 | Graphite replaces Notte as the dark theme | active | full below |
-| 2026-09-28 | The next comp R iteration is adopted: denser forms, Sprint board, Roadmap, tag colours and Settings → Tags | active | full below |
-| 2026-09-27 | The API sends the custom field list | active | full below |
-| 2026-09-27 | The idea assistant is rescoped as a co-author, and ideas gain structured fields | active | full below |
-| 2026-09-27 | The S0.2 schema freeze is amended a third time, for structured ideas and board archive | active | [2026-09-27 to 2026-09-27](decisions/archive-2026-09-27-to-2026-09-27.md) |
+| 2026-09-28 | The S0.2 schema freeze is amended a fourth time, for tag colours | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
+| 2026-09-28 | Graphite replaces Notte as the dark theme | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
+| 2026-09-28 | The next comp R iteration is adopted: denser forms, Sprint board, Roadmap, tag colours and Settings → Tags | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
+| 2026-09-27 | The API sends the custom field list | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
+| 2026-09-27 | The idea assistant is rescoped as a co-author, and ideas gain structured fields | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
+| 2026-09-27 | The S0.2 schema freeze is amended a third time, for structured ideas and board archive | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-27 | Terrazzo is the palette, with a theme picker | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-27 | One list and detail pattern, and a drawer instead of the docked inspector | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-27 | The Boards screen has a card view and a list view | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
@@ -54,7 +57,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-13 | The .NET stack is deleted; stale pointers go, inherited rationale stays | active | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-13 | The usage report returns the contract's `totals`, not the frozen app's flat fields | active | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-12 | A lockout refuses a wrong password, not a right one | active | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
-| 2026-09-12 | The rate limiter's collision with the golden replay is deferred, knowingly | active | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
+| 2026-09-12 | The rate limiter's collision with the golden replay is deferred, knowingly | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-11 | The S0.2 schema freeze is amended once, for Issues-and-Delivery Slice 1 | active | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-11 | The golden replay is not a gate, and never was meant to be one | active | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-11 | Registration answers `409` again; hiding the status did not close the enumeration oracle | active | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
@@ -91,6 +94,107 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-09-29 — Contracts and wording written from the code
+
+**An implementation record, not a user decision** (slice 124). Slice 121 listed routes the code
+serves and no contract describes, and spec lines the code contradicts. They were written from the
+code as it stands, with no code change, and checked against the golden corpus wherever it records
+the route. Nothing here changes behaviour; a reader who wants different behaviour needs a decision,
+not an edit to these contracts.
+
+- **New contracts:** the six `/organizations/{organizationId}/field-definitions` routes, in a new
+  `contracts/field-definitions.md` — reorder is `PUT …/reorder`, with no coverage check, unlike the
+  other catalogs' reorders; reads are open to any member of the organization, writes to an
+  in-scope Org Admin, and a direct Site Admin is refused. `PUT`/`DELETE /auth/me/portrait` in
+  `contracts/auth.md`. The `GET /users/{userId}` success shape, roles and errors in
+  `contracts/users.md`.
+- **Filled in:** the statuses list item carries `color` and `sortOrder`, the list takes
+  `includeDeleted`, and `PUT /statuses/{statusId}` answers the item. The organizations `sortBy`
+  sorts by `title` for any value but `createdAt` — so `companyName`, the contract's old spelling,
+  and `title`, the item's field, behave the same.
+- **Every fixture agrees** except in one field already known: the `profile.portrait.*` fixtures,
+  like `auth.me.*`, predate `organizationTitle`.
+- **Not written:** `GET /organizations/{organizationId}/users/import-template` appears only in the
+  derived `Specs Overview.md`. No code serves it and the corpus does not record it, so there is
+  nothing to describe.
+- **Decided by the user: the idea form preselects the first active Idea Type too.** The Defaults
+  row of `20-feature-ideas-and-engagement.md` and `contracts/idea-field-options.md` already said so,
+  but the form preselected neither. It now preselects both on a new idea, so the first type's custom
+  fields show at once. An edit keeps the idea's stored values, and "Choose…" stays in each select.
+- **Wording:** a required password change ends the session it was made in. The change regenerates
+  the user's `SecurityStamp`, and the web client deletes its cookie and returns to
+  `/login?passwordChanged=1`. `40-test-strategy.md`, `05-product-definition.md`,
+  `20-feature-auth.md` rule 32a and `contracts/auth.md` said the session carried on; each keeps
+  a dated note of what it said.
+
+---
+
+## 2026-09-29 — Removing a lane moves its ideas
+
+**Decided by the user.** A board save that removes a lane still holding live ideas moves those ideas
+to another lane of the board. The admin picks the target in a confirm step, defaulting to the
+board's first remaining lane (*3 ideas are in In Review. Move them to: [New / Pending ▾]*). The API
+takes the targets in the save request, refuses a save that removes an occupied lane without one, and
+writes a status-change audit entry per moved idea. Archived boards still refuse the save (`409`).
+The moves send **no notification** (decided by the user the same day): they reconfigure a board
+rather than decide anything about one idea, so `20-feature-notifications.md` trigger 4 carries the
+exception.
+Applied in slice 123: `20-feature-boards-and-statuses.md` Board rule 14, `contracts/boards.md`
+`PUT /boards/{boardId}`, and the Boards header notes in `20-feature-client-ui.md`.
+
+**Why.** Until now the save was accepted and the ideas kept a status that was no longer a column, so
+they vanished from the board while still counting in its `ideaCount` (Bug Triage, found in the
+review of slice 097). The three answers were to refuse the save, move the ideas, or show them
+somewhere; refusing makes the admin move every card by hand first, and a "no column" bucket keeps
+the inconsistency and only labels it. Moving them is one decision the admin is already making.
+
+**Settled with it, by the slice** (the lane and status model decides each; none is a new product
+choice):
+
+- **Which ideas:** the lane's live `Discovery` ideas — what `ideaCount` and `laneCounts` count and
+  the board shows. A promoted Issue keeps its ideation status, which is frozen at promotion for
+  provenance; a soft-deleted idea keeps its, since restore is deferred and its row is a retained
+  record.
+- **Request shape:** `ideaMoves: [{ fromStatusId, toStatusId }]`, one target per removed lane rather
+  than one for the whole save, because the confirm step asks per lane and one-for-all is the
+  special case of it. The target may be a lane added in the same save.
+- **Audit:** `IdeaStatusChanged` in the shape a move on the board writes, and the `BoardUpdated`
+  entry records the moves with their counts.
+
+---
+
+## 2026-09-29 — The test harnesses reuse sessions; the auth rate limits stay
+
+**Decided by the user**, closing the two Bug Triage items where the auth rate limiter broke the
+golden replay and the Playwright suite. Supersedes in part 2026-09-12 ("The rate limiter's
+collision with the golden replay is deferred, knowingly"). Slice 122 applied it.
+
+- **Production limits are unchanged**: login twenty a minute; the auth surface ten a minute and a
+  hundred an hour, per IP and per route (`AUTH_THROTTLERS`). The harnesses fit the limits, not
+  the other way round. Exempting a harness caller and raising the limits for one stay rejected,
+  for 2026-09-12's reasons.
+- **The golden replay signs each role in once and keeps the session across scenarios**
+  (`tools/golden/src/cli.ts`). It signs every role in afresh after a scenario that starts or ends
+  View As (today only `auth`), and drops the sessions of accounts a scenario created for itself
+  after every scenario (`profile` changes one's password, which ends its session anyway). About
+  sixty logins a run become twelve, three of them the corpus's own `POST /auth/login` cases.
+  2026-09-12's objection, that caching weakens the isolation `resetSessions` gave, does not hold on
+  Nest: a View As session is a server-side row keyed on the real user and the token is never
+  reissued, so a fresh sign-in lands in the same state. The corpus's own `DELETE /auth/view-as`
+  steps are what end it; the re-sign after View As is caution, not correctness.
+- **The Playwright suite signs each seeded role in once and reuses the cookie via `storageState`**
+  (`e2e/tests/auth.setup.ts`, in place since 2026-09-14; the last seeded sign-in outside it, in
+  `demo-path.spec.ts`, now uses the stored session). Specs that exist to test signing in
+  (`signs-in.spec.ts`, `journey.spec.ts`) and every sign-in as an account a spec just created stay
+  real. Fifteen sign-ins a run become fourteen, nine of them as created accounts.
+- **Verified 2026-09-29, limits intact, scratch databases:** the full Playwright suite passed
+  (38/38). The replay ran all fifteen scenarios to completion on a fresh seed: 360/447 match, 52
+  accepted, 35 unexplained, 69 stale accepted entries. The same corpus replayed with the old
+  per-scenario re-sign, paced under the limits (a 25-second pause after each scenario), produced
+  a byte-identical report, so reusing sessions changes no result.
 
 ---
 
@@ -366,140 +470,6 @@ markers are gone.
 10. **No keyboard shortcuts anywhere:** no *Ctrl ↵* save, no zoom keys, no key-hint chips. Escape
     still closes the drawer and the dialogs.
 11. **Order of work:** Sprint 11 first, then the prompt-eval runner, then idea assistant v2.
-
----
-
-## 2026-09-28 — The S0.2 schema freeze is amended a fourth time, for tag colours
-
-**Decided by the user** with the adoption below ("Tags get a colour picker; by default a tag gets a
-random colour"). Under the 2026-09-11 rule — the freeze stands, and each change to `schema.prisma`
-needs its own entry here — this is that entry, and it is not a general licence.
-
-- **`tags`** gains `color VARCHAR(7) NOT NULL` — any `#RRGGBB`, stored upper case
-  (`20-feature-ideas-and-engagement.md` Tags rule 9). No other column: `tags` already has
-  `created_at_utc` and `created_by_user_id`, which Settings → Tags shows.
-- **The migration backfills every existing tag** with the palette colour at index
-  `get_byte(decode(md5(normalized_name), 'hex'), 0) % 10`, indexing Tags rule 9's palette in its
-  listed order (`#E5484D` is 0, `#94A3B8` is 9), so the result is repeatable across databases and
-  replays; then sets `NOT NULL`. The demo seed computes the same index in `node:crypto` (the first
-  byte of the MD5 digest of the normalized name, modulo 10). Tags created afterwards take a random palette colour chosen by the application, from an
-  injected random source.
-- **Not covered: Outcomes.** Sprint 11 builds the Roadmap screen, not its backend (the answers
-  entry above), so the `outcomes` table — with its `color VARCHAR(7) NOT NULL`, added to the spec
-  2026-09-28 — and `ideas.outcome_id` wait for the later sprint that builds Slice 2, under an
-  amendment of their own.
-- **Not covered:** an issue key or idea reference (comp R's `IDE-01`). That needs its own decision
-  and its own amendment.
-
-**Golden corpus.** Board list items gain `topTags[].color`; idea list, detail and delivery items
-gain `tags`; and idea list items (the board list and the organization list) gain `effort` — so the
-replay will differ there. Those differences are accepted, and the backend slice
-records them in `tools/golden/src/accepted.ts`.
-
-## 2026-09-28 — Graphite replaces Notte as the dark theme
-
-> Supersedes in part 2026-09-27 "Terrazzo is the palette, with a theme picker", which named Notte as
-> the dark theme.
-
-**Decided by the user** from their design canvas: "Graphite replaces Notte as the dark theme." The
-picker offers Terrazzo (default), Portico, Piazza Sera and Lagoon as light themes and **Graphite** as
-the dark one: a near-black neutral ground, near-white ink, an amber primary and a cyan metric and
-suggestion hue, in IBM Plex Sans with JetBrains Mono (`20-feature-client-ui.md` "Themes", token
-values in comp R's `graphite` block). Notte's self-contained `[data-theme]` block, shipped in slice
-100, is replaced rather than kept as a sixth theme, and a `collega-theme` cookie that still says
-`notte` is served Graphite, so a person who chose dark stays in dark. The 4.5:1 rule is unchanged;
-Graphite's pairs were measured against it on 2026-09-28. The Terrazzo default, the per-browser
-cookie and the per-theme suggestion hue all stand.
-
-## 2026-09-28 — The next comp R iteration is adopted: denser forms, Sprint board, Roadmap, tag colours and Settings → Tags
-
-**Decided by the user** ("go ahead with it"), reviewing the iteration of
-`SPEC/mockups/comp-r-portico-prototype.html` that folds in their design canvas. In the user's words,
-in substance: integrate the Graphite theme and the denser form and control layout; refactor the
-Roadmap structurally and functionally to match, with Weeks, Months and Quarters as its zoom levels
-and no keyboard shortcuts for now; add the effort bar to cards, the sprint lanes included; add the
-Sprint board; give tags a colour picker, a random palette colour by default, changed by an
-administrator in Settings; and add Settings → Tags on the list and detail pattern — list, view,
-edit (name and colour), delete, and add in advance of use.
-
-- **Where it is written.** Forms and controls, tag chip colours and the effort bar:
-  `20-feature-client-ui.md`. Tag colour and Settings → Tags: `20-feature-ideas-and-engagement.md`
-  "Tags" rules 9–15. Sprint board, Roadmap and the effort bar's placement:
-  `20-feature-issues-and-delivery.md` "Comp R iteration". Contracts: `30-Contracts.md`, each
-  addition dated 2026-09-28. The work is planned as Sprint 11
-  (`SPEC/sprints/sprint-11-comp-r-iteration.md`).
-- **The denser layout applies in every theme**, not only Graphite: 32px buttons, 34px fields,
-  12px labels, short fields three or two to a row. It supersedes the control heights slice 100
-  shipped.
-- **Tag chip text is required to clear 4.5:1 in every theme.** Comp R's colour mix fails it in the
-  light themes for seven of the ten palette colours; the spec keeps the rule and fixes the mix rather
-  than accepting the comp.
-- **Tags are administered by the Org Admin** (a Site Admin through View As), like the other
-  organization configuration collections. The tag rules had never named an administrator — anyone
-  who could edit an idea could create a tag, and nobody could rename, recolour or delete one — so
-  this is a reading of the existing permission model, recorded so it is not mistaken for a new
-  rule. Inline creation while tagging an idea is unchanged.
-- **Two things comp R draws have no backend, and this adoption does not invent one.** Issue keys
-  (`IDE-01`) are left out of every screen until they are decided separately; Outcomes (Slice 2)
-  stay specified and unbuilt — Sprint 11 builds the Roadmap screen without them (answered the same
-  day). Both are recorded as gaps in `30-Contracts.md`.
-- **Where comp R and the spec disagree, the spec wins** and the difference is written down: the
-  outcome drawer's Delete confirms (comp R deletes at once), and comp R's *Ctrl ↵* save is not built.
-- **Open at adoption, answered the same day** — see "The comp R iteration's open questions are
-  answered" above.
-
----
-
-## 2026-09-27 — The API sends the custom field list
-
-**Decided by the user.** The idea form no longer works out which custom fields an Idea Type shows.
-`GET /organizations/{id}/idea-types` carries each type's `effectiveFields`, for Create, and
-`GET /ideas/{id}` carries the idea's own `formFields` with raw stored values, for Edit
-(`30-Contracts.md`).
-
-- **Why:** slice 102 transcribed `resolveEffectiveFields` into `apps/web`, which cannot import the
-  domain. Review found the drift is not always loud — a field the client fails to show is cleared on
-  save — and it already bit twice: an idea whose type is archived had no fields to edit, and
-  multi-select values were rebuilt from display labels, so a label with a comma, or an option since
-  removed, was lost.
-- **Chosen over** resolved fields on the type list only (Edit would still reverse labels to ids) and
-  over a per-type endpoint (a request per type picked, same Edit problem).
-- The domain resolver stays the single source of truth; the API now exposes its result instead of
-  the browser copying it.
-- **A removed option is kept until unticked.** Options are hard-deleted, so an idea can store an
-  option id its field no longer offers. An edit may keep such an id (the save validates against the
-  idea's stored values as well as the current options) but may not add one; the form shows it,
-  labelled by its id, only while it is selected. Chosen over soft-deleting options, which needs a
-  schema amendment, and over silently dropping the value on the next save.
-
----
-
-## 2026-09-27 — The idea assistant is rescoped as a co-author, and ideas gain structured fields
-
-**Decided by the user**, reviewing an interactive prototype (comp R). This is the rescope
-2026-09-13 scheduled. `20-feature-ai-idea-assist-v2.md` is the spec; the v1 spec stays authoritative
-for what is live until v2 ships.
-
-- **Ideas gain three dedicated fields: Problem, Proposed solutions (a list), Impact rationale.**
-  Chosen over three custom fields (every organization would have to configure them) and over
-  sections inside Description (not enforceable, not searchable). Custom fields attached through the
-  Idea Type are unchanged and follow the core fields. Description becomes an optional summary.
-  Existing ideas are backfilled so the three fields are required on every save; a solution list
-  holds 1 to 5 items. This is a schema and contract change (`30-Contracts.md`, rule 2a of
-  `20-feature-ideas-and-engagement.md`).
-- **The assistant maps, interviews and brainstorms.** Free text fills fields visibly; it asks for
-  the next missing field in a fixed order; it offers solution ideas, a sharper problem statement and
-  measurable rationales as chips the person accepts. It never overwrites a field the person has
-  edited, and that is enforced on the server (`lockedFields`).
-- **Skip is always one click, and any failure hands off to the form** with everything captured,
-  including the failing turn's own text. v1's scripted-nudge fallback is dropped for v2.
-- **Surface:** the create drawer opens wide with the assistant beside the form, replacing v1's
-  720px modal followed by a create modal.
-- **Measurement comes first**: v2 is not enabled until a TypeScript prompt-eval runner reports
-  mapping accuracy and scope-gate results. `ai-draft` and `ai-polish`, specified and never built,
-  are withdrawn.
-
----
 
 ## Earlier decisions
 

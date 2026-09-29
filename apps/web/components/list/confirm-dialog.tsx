@@ -36,7 +36,9 @@ function focusHeadingIfOpenerLeaves(opener: HTMLElement): () => void {
 /**
  * The one destructive modal (comp R): asks before Delete or Archive. `role="alertdialog"` on a
  * native modal `<dialog>`, so the page behind is inert; focus starts on **Cancel**, Tab and
- * Shift+Tab cycle between Cancel and the action only, and Escape cancels. Focus returns to whatever
+ * Shift+Tab cycle through the dialog's controls only, and Escape cancels. `children` holds any
+ * choice the confirmation needs (a board save's "move them to" lane pickers), between the
+ * description and the buttons, and joins the Tab cycle. Focus returns to whatever
  * opened it — or, when that has gone (the row it sat on was archived or deleted out of the list), to
  * the page's heading rather than dropping to `<body>`.
  */
@@ -49,6 +51,7 @@ export function ConfirmDialog({
   pending = false,
   onConfirm,
   onCancel,
+  children,
 }: {
   open: boolean
   /** A question: "Delete this idea?" */
@@ -62,6 +65,7 @@ export function ConfirmDialog({
   pending?: boolean
   onConfirm: () => void
   onCancel: () => void
+  children?: ReactNode
 }) {
   const dialog = useRef<HTMLDialogElement>(null)
   const cancel = useRef<HTMLButtonElement>(null)
@@ -101,8 +105,9 @@ export function ConfirmDialog({
       event.preventDefault()
       onCancel()
     } else if (event.key === 'Tab') {
-      const first = cancel.current
-      const last = confirm.current
+      const controls = dialog.current?.querySelectorAll<HTMLElement>('button, select, input') ?? []
+      const first = controls[0]
+      const last = controls[controls.length - 1]
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault()
         last?.focus()
@@ -130,6 +135,7 @@ export function ConfirmDialog({
       <p id={descriptionId} className="m-0 mt-3 text-sm text-secondary-foreground">
         {description}
       </p>
+      {children}
       <div className="mt-4 flex justify-end gap-2">
         <button
           ref={cancel}

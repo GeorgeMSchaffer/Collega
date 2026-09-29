@@ -10,11 +10,13 @@ shared data rules). Canonical, and read, not edited, by implementation slices.
 List all active and visible statuses for an organization.
 
 - **Roles:** —
-- **Request:** —
-- **Response:** `200`, item shape:
+- **Request:** query `includeDeleted` optional boolean — only the literal `true` (any casing) sets it, and it adds soft-deleted statuses for any caller who may read the list. *Added 2026-09-29 from the code (slice 124).*
+- **Response:** `200`, array ordered by `sortOrder`, then `name`; item shape:
   - `statusId`
   - `organizationId`
   - `name`
+  - `color` string `#RRGGBB` *(added 2026-09-29 from the code, slice 124; every `statuses.list.*` fixture carries it)*
+  - `sortOrder` integer *(added 2026-09-29, as `color`)*
   - `isDeleted`
 - **Errors:** —
 - **Rules:** Historical display behavior: when a soft-deleted status is surfaced through related entities, the prior name remains visible with an archived or deleted label.
@@ -43,7 +45,7 @@ Rename or update a status.
   - `name` required string
   - `color` optional string in `#RRGGBB` format (max 20 chars, but the format is what is enforced)
   - `sortOrder` optional integer
-- **Response:** —
+- **Response:** `200`, the list's item shape *(added 2026-09-29 from the code, slice 124; agrees with `statuses.update.orgadmin`)*
 - **Errors:** —
 - **Rules:** —
 
