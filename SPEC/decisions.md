@@ -118,6 +118,10 @@ not an edit to these contracts.
 - **Not written:** `GET /organizations/{organizationId}/users/import-template` appears only in the
   derived `Specs Overview.md`. No code serves it and the corpus does not record it, so there is
   nothing to describe.
+- **Decided by the user: the idea form preselects the first active Idea Type too.** The Defaults
+  row of `20-feature-ideas-and-engagement.md` and `contracts/idea-field-options.md` already said so,
+  but the form preselected neither. It now preselects both on a new idea, so the first type's custom
+  fields show at once. An edit keeps the idea's stored values, and "Choose…" stays in each select.
 - **Wording:** a required password change ends the session it was made in. The change regenerates
   the user's `SecurityStamp`, and the web client deletes its cookie and returns to
   `/login?passwordChanged=1`. `40-test-strategy.md`, `05-product-definition.md`,

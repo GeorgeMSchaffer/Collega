@@ -35,9 +35,9 @@ type Draft = {
 }
 
 /**
- * A new idea preselects the first active Business Impact — the options arrive active-only in sort
- * order — and the API stores no default (`20-feature-ideas-and-engagement.md` Defaults). An edit
- * keeps the idea's own value.
+ * A new idea preselects the first active Idea Type and Business Impact — the options arrive
+ * active-only in sort order — and the API stores no default (`20-feature-ideas-and-engagement.md`
+ * Defaults). An edit keeps the idea's own values.
  */
 function initialDraft(
   idea: IdeaDetail | null,
@@ -52,7 +52,7 @@ function initialDraft(
     impactRationale: idea?.impactRationale ?? '',
     description: idea?.description ?? '',
     priority: idea?.priority ?? 'Medium',
-    ideaTypeId: idea?.ideaTypeId ?? '',
+    ideaTypeId: idea ? idea.ideaTypeId : (options.ideaTypes[0]?.id ?? ''),
     businessImpactId: idea ? idea.businessImpactId : (options.businessImpacts[0]?.id ?? ''),
     dueDate: idea?.dueDate ?? '',
     tags: idea?.tags.map((tag) => tag.name).join(', ') ?? '',
