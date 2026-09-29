@@ -96,9 +96,25 @@ Update board name or selected statuses.
   - `allowUserStatusUpdate` required boolean
   - `description` optional string or `null` (added 2026-09-27) — same rules as on create. **Absent leaves the stored description unchanged**; `null` or a blank string clears it.
   - `swimlanes` required array of `statusId` and `order`
-- **Response:** the same shape as `GET /api/v1/boards/{boardId}`.
-- **Errors:** as for create (the `description` rules are the same); `409 Conflict` for an archived board — see archive below.
-- **Rules:** —
+  - `ideaMoves` optional array (added 2026-09-29, `decisions.md` "Removing a lane moves its ideas") — where the ideas of each lane this save removes go. Absent or `null` is none. Each entry:
+    - `fromStatusId` — a lane on the board now that this save's `swimlanes` leaves out
+    - `toStatusId` — a lane in this save's `swimlanes`, so one the board keeps (a lane added by the same save counts)
+- **Response:** the same shape as `GET /api/v1/boards/{boardId}`. Unchanged by `ideaMoves`.
+- **Errors:**
+  - as for create (the `description` rules are the same)
+  - `409 Conflict` for an archived board — see archive below. Checked before `ideaMoves`.
+  - `400` keyed `ideaMoves`, title `One or more fields are invalid.`, with one message per problem:
+    - a removed lane that still holds ideas and has no entry: `'{status name}' still holds {n} ideas. Choose a lane that stays on the board to move them to.` (singular: `1 idea` … `move it to.`) — one message per such lane
+    - `toStatusId` not among `swimlanes`: `Ideas can only move to a lane that stays on the board.`
+    - `fromStatusId` not a lane this save removes: `A move must come from a lane this save removes.`
+    - the same `fromStatusId` twice: `A removed lane can move its ideas to one lane only.`
+- **Rules:**
+  - The ideas a removal concerns are the lane's **live `Discovery` ideas** — the population `ideaCount` and `laneCounts` count. Soft-deleted ideas and promoted Issues keep their status: an Issue's ideation status is frozen at promotion for provenance (`20-feature-issues-and-delivery.md`), and a soft-deleted idea's is part of its retained record.
+  - One target per removed lane, not one for the whole save, so a save that drops two lanes can send their ideas to different places; a client that wants one destination sends the same `toStatusId` for each.
+  - An entry for a removed lane that holds no ideas is accepted and does nothing, so a client whose counts were stale by one removal is not refused for it.
+  - The lane change and every move commit in one transaction; a refused save moves nothing.
+  - Each moved idea gets an `IdeaStatusChanged` audit event in the shape a move on the board writes (`entityType` `Idea`, message `Idea '{title}' moved to a new status.`, metadata `{ fromStatusId, toStatusId }`), attributed to the administrator saving the board. The `BoardUpdated` event's metadata gains `ideaMoves: [{ fromStatusId, toStatusId, ideaCount }]` when anything moved.
+  - A move sends no notification: it is a board reconfiguration, not a decision about any one idea.
 
 ### `POST /api/v1/boards/{boardId}/archive` and `POST /api/v1/boards/{boardId}/unarchive`
 Archive a board, or bring it back (added 2026-09-27; `decisions.md`). Until then boards had no delete endpoint or action; archiving replaces that absence.
