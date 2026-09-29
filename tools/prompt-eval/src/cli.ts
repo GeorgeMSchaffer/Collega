@@ -152,7 +152,7 @@ function parseOptions(argv: readonly string[]): Options {
     files,
     baseline: values.baseline,
     dryRun: values['dry-run'] ?? false,
-    cases: values.case && values.case.length > 0 ? values.case : null,
+    cases: values.case && values.case.length > 0 ? [...new Set(values.case)] : null,
     repeats: positiveInteger(values.repeats, 5, '--repeats'),
     concurrency: positiveInteger(values.concurrency, 1, '--concurrency'),
     promptFile: values['prompt-file'],

@@ -429,7 +429,9 @@ export function computeMetrics(run: RunData): RunMetrics {
     const [a, b] = halves
     const difference =
       halves.length === 2 && a.refusalRate !== null && b.refusalRate !== null
-        ? Math.abs(a.refusalRate - b.refusalRate)
+        ? // One division of whole numbers, not a difference of two rounded rates: 0.7 - 0.2 is
+          // 0.49999999999999994, which would flag a pair sitting exactly on the margin.
+          Math.abs(a.refusals * b.trials - b.refusals * a.trials) / (a.trials * b.trials)
         : null
     return {
       pair,
