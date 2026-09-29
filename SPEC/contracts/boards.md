@@ -112,9 +112,9 @@ Update board name or selected statuses.
   - The ideas a removal concerns are the lane's **live `Discovery` ideas** — the population `ideaCount` and `laneCounts` count. Soft-deleted ideas and promoted Issues keep their status: an Issue's ideation status is frozen at promotion for provenance (`20-feature-issues-and-delivery.md`), and a soft-deleted idea's is part of its retained record.
   - One target per removed lane, not one for the whole save, so a save that drops two lanes can send their ideas to different places; a client that wants one destination sends the same `toStatusId` for each.
   - An entry for a removed lane that holds no ideas is accepted and does nothing, so a client whose counts were stale by one removal is not refused for it.
-  - The lane change and every move commit in one transaction; a refused save moves nothing.
+  - The lane change and every move commit in one transaction; a refused save moves nothing. A move only takes an idea still in its `fromStatusId` at commit, so an idea someone moved out of the lane meanwhile keeps their choice.
   - Each moved idea gets an `IdeaStatusChanged` audit event in the shape a move on the board writes (`entityType` `Idea`, message `Idea '{title}' moved to a new status.`, metadata `{ fromStatusId, toStatusId }`), attributed to the administrator saving the board. The `BoardUpdated` event's metadata gains `ideaMoves: [{ fromStatusId, toStatusId, ideaCount }]` when anything moved.
-  - A move sends no notification: it is a board reconfiguration, not a decision about any one idea.
+  - A move sends no notification (decided by the user 2026-09-29): it is a board reconfiguration, not a decision about any one idea. `20-feature-notifications.md` trigger 4 carries the exception.
 
 ### `POST /api/v1/boards/{boardId}/archive` and `POST /api/v1/boards/{boardId}/unarchive`
 Archive a board, or bring it back (added 2026-09-27; `decisions.md`). Until then boards had no delete endpoint or action; archiving replaces that absence.

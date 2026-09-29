@@ -102,6 +102,9 @@ to another lane of the board. The admin picks the target in a confirm step, defa
 board's first remaining lane (*3 ideas are in In Review. Move them to: [New / Pending ▾]*). The API
 takes the targets in the save request, refuses a save that removes an occupied lane without one, and
 writes a status-change audit entry per moved idea. Archived boards still refuse the save (`409`).
+The moves send **no notification** (decided by the user the same day): they reconfigure a board
+rather than decide anything about one idea, so `20-feature-notifications.md` trigger 4 carries the
+exception.
 Applied in slice 123: `20-feature-boards-and-statuses.md` Board rule 14, `contracts/boards.md`
 `PUT /boards/{boardId}`, and the Boards header notes in `20-feature-client-ui.md`.
 
@@ -122,8 +125,7 @@ choice):
   than one for the whole save, because the confirm step asks per lane and one-for-all is the
   special case of it. The target may be a lane added in the same save.
 - **Audit:** `IdeaStatusChanged` in the shape a move on the board writes, and the `BoardUpdated`
-  entry records the moves with their counts. No notification is sent for these moves: they
-  reconfigure a board rather than decide anything about one idea.
+  entry records the moves with their counts.
 
 ---
 
