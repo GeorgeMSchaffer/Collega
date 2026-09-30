@@ -2,7 +2,7 @@ import { Button } from '@collega/design-system'
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { SettingsPage } from '@/components/settings/settings-page'
-import type { Role } from '@/lib/mock'
+import type { Role } from '@/lib/types'
 import { actAs } from './support/acting-role'
 
 /**

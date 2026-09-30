@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { members } from '@/lib/mock'
 import { engagementDenial, isAdministrator, type Role, writeDenial } from '@/lib/roles'
 import { currentUser, deliveryAdminDenial } from '@/lib/session'
 import { actAs } from './support/acting-role'
+import { members } from './support/seed-members'
 
 /**
  * The four-role gating matrix.

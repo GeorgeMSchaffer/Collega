@@ -140,6 +140,7 @@ export default async function BoardPage({
             lanes: board.lanes,
             isArchived: board.isArchived,
             canMove: moveDenial === null,
+            canReorder: user.role === 'OrgAdmin',
           }}
           drawer={drawer}
         />

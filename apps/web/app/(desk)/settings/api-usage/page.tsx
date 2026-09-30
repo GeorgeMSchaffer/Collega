@@ -1,12 +1,7 @@
 import { Badge, Card, CardContent, Meter } from '@collega/design-system'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
-import {
-  compactTokens,
-  DAILY_TOKEN_BUDGET,
-  getUsage,
-  getUsageForOrganization,
-  totalTokens,
-} from '@/lib/data'
+import { getUsage, getUsageForOrganization } from '@/lib/data'
+import { compactTokens } from '@/lib/display'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
@@ -43,7 +38,7 @@ function budgetVariant(pct: number): 'ok' | 'warn' | 'over' {
 
 async function DeploymentUsage() {
   const usage = await getUsage()
-  const pct = usage.pctOfBudget
+  const pct = usage.dailyTokenLimit > 0 ? (usage.tokensUsedToday / usage.dailyTokenLimit) * 100 : 0
 
   return (
     <>
@@ -54,10 +49,10 @@ async function DeploymentUsage() {
           </div>
           <div className="flex flex-wrap items-baseline gap-2">
             <span className="text-2xl font-semibold tabular-nums">
-              {compactTokens(usage.tokens)}
+              {compactTokens(usage.tokensUsedToday)}
             </span>
             <span className="text-sm text-muted-foreground">
-              of {compactTokens(DAILY_TOKEN_BUDGET)} tokens
+              of {compactTokens(usage.dailyTokenLimit)} tokens
             </span>
             <span className="ml-auto text-sm font-semibold tabular-nums">{Math.round(pct)}%</span>
           </div>
@@ -69,63 +64,70 @@ async function DeploymentUsage() {
         </CardContent>
       </Card>
 
-      <AdminTable summary="Estimated cost is computed from published token prices and is not a bill.">
-        <thead>
-          <tr className="border-b bg-muted/40">
-            <Th>Organization</Th>
-            <Th className="w-32 text-right">Conversations</Th>
-            <Th className="w-24 text-right">Input</Th>
-            <Th className="w-24 text-right">Output</Th>
-            <Th className="w-24 text-right">Cached</Th>
-            <Th className="w-32 text-right">Total tokens</Th>
-            <Th className="w-32 text-right">Estimated cost</Th>
-          </tr>
-        </thead>
-        <tbody>
-          {usage.rows.map((row) => (
-            <tr key={row.organizationId} className="border-b last:border-0">
-              <td className="px-4 py-2.5 font-medium">{row.organizationName}</td>
-              <td className="px-4 py-2.5 text-right tabular-nums">{row.conversations}</td>
-              <td className="px-4 py-2.5 text-right tabular-nums">
-                {compactTokens(row.inputTokens)}
-              </td>
-              <td className="px-4 py-2.5 text-right tabular-nums">
-                {compactTokens(row.outputTokens)}
-              </td>
-              <td className="px-4 py-2.5 text-right tabular-nums">
-                {compactTokens(row.cachedTokens)}
+      {usage.rows.length === 0 ? (
+        <p className="m-0 max-w-prose text-sm text-muted-foreground">
+          No assist usage recorded in any organization today.
+        </p>
+      ) : (
+        <AdminTable summary="Estimated cost is computed from published token prices and is not a bill.">
+          <thead>
+            <tr className="border-b bg-muted/40">
+              <Th>Organization</Th>
+              <Th className="w-32 text-right">Conversations</Th>
+              <Th className="w-24 text-right">Input</Th>
+              <Th className="w-24 text-right">Output</Th>
+              <Th className="w-24 text-right">Cached</Th>
+              <Th className="w-32 text-right">Total tokens</Th>
+              <Th className="w-32 text-right">Estimated cost</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {usage.rows.map((row) => (
+              <tr key={row.organizationId} className="border-b last:border-0">
+                <td className="px-4 py-2.5 font-medium">{row.organizationName}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums">{row.conversations}</td>
+                <td className="px-4 py-2.5 text-right tabular-nums">
+                  {compactTokens(row.inputTokens)}
+                </td>
+                <td className="px-4 py-2.5 text-right tabular-nums">
+                  {compactTokens(row.outputTokens)}
+                </td>
+                <td className="px-4 py-2.5 text-right tabular-nums">
+                  {compactTokens(row.cachedTokens)}
+                </td>
+                <td className="px-4 py-2.5 text-right font-medium tabular-nums">
+                  {compactTokens(row.totalTokens)}
+                </td>
+                <td className="px-4 py-2.5 text-right tabular-nums">
+                  ${row.estimatedCost.toFixed(2)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr className="border-t bg-muted/40">
+              <td className="px-4 py-2.5 font-medium">All organizations</td>
+              <td className="px-4 py-2.5 text-right tabular-nums">{usage.conversations}</td>
+              <td colSpan={3} className="px-4 py-2.5 text-right text-xs text-muted-foreground">
+                summed into Total tokens
               </td>
               <td className="px-4 py-2.5 text-right font-medium tabular-nums">
-                {compactTokens(totalTokens(row))}
+                {compactTokens(usage.tokens)}
               </td>
-              <td className="px-4 py-2.5 text-right tabular-nums">
-                ${row.estimatedCost.toFixed(2)}
+              <td className="px-4 py-2.5 text-right font-medium tabular-nums">
+                ${usage.estimatedCost.toFixed(2)}
               </td>
             </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr className="border-t bg-muted/40">
-            <td className="px-4 py-2.5 font-medium">All organizations</td>
-            <td className="px-4 py-2.5 text-right tabular-nums">{usage.conversations}</td>
-            <td colSpan={3} className="px-4 py-2.5 text-right text-xs text-muted-foreground">
-              summed into Total tokens
-            </td>
-            <td className="px-4 py-2.5 text-right font-medium tabular-nums">
-              {compactTokens(usage.tokens)}
-            </td>
-            <td className="px-4 py-2.5 text-right font-medium tabular-nums">
-              ${usage.estimatedCost.toFixed(2)}
-            </td>
-          </tr>
-        </tfoot>
-      </AdminTable>
+          </tfoot>
+        </AdminTable>
+      )}
     </>
   )
 }
 
 async function OrganizationUsage() {
-  const row = await getUsageForOrganization('acme-robotics')
+  const organizationId = currentUser().organizationId
+  const row = organizationId ? await getUsageForOrganization(organizationId) : null
 
   // No budget card: the cap is deployment-wide (28a), so showing an Org Admin a bar they share with
   // organizations they cannot see would read as their own allowance.
@@ -158,7 +160,7 @@ async function OrganizationUsage() {
           <td className="px-4 py-2.5 text-right tabular-nums">{compactTokens(row.outputTokens)}</td>
           <td className="px-4 py-2.5 text-right tabular-nums">{compactTokens(row.cachedTokens)}</td>
           <td className="px-4 py-2.5 text-right font-medium tabular-nums">
-            {compactTokens(totalTokens(row))}
+            {compactTokens(row.totalTokens)}
           </td>
           <td className="px-4 py-2.5 text-right tabular-nums">${row.estimatedCost.toFixed(2)}</td>
         </tr>

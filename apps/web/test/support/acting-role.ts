@@ -1,6 +1,6 @@
-import { members } from '@/lib/mock'
 import { roleLabel } from '@/lib/roles'
 import { type CurrentUser, type Role, setCurrentUser } from '@/lib/session'
+import { members } from './seed-members'
 
 /**
  * Switches the signed-in identity for one test.

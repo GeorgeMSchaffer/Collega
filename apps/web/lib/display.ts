@@ -6,9 +6,52 @@
  * has a colour because comp Q says so, not because the API said so.
  */
 
-import type { DeliveryStatus } from './types'
+import type { DeliveryStatus, Effort, Priority } from './types'
 
-export { EFFORT_COLORS, PRIORITY_COLORS } from './mock'
+/**
+ * Priority has its own colour scale, independent of status.
+ *
+ * Comp Q keys every dot to the label beside it, which is what lets the same palette token mean
+ * different things in different markers. Colouring a priority dot by status breaks that: inside one
+ * lane every card would show the same dot, and a `--purple` dot labelled "High" would sit next to a
+ * lane where `--purple` means "In Review". Low is deliberately uncoloured.
+ */
+export const PRIORITY_COLORS: Record<Priority, string | undefined> = {
+  Critical: 'var(--orange)',
+  High: 'var(--sky)',
+  Medium: 'var(--teal)',
+  Low: undefined,
+}
+
+/**
+ * The effort scale's colour. Low is deliberately uncoloured: it is the ordinary case, and a dot on
+ * every card would stop the other two meaning anything.
+ */
+export const EFFORT_COLORS: Record<Effort, string | undefined> = {
+  Low: undefined,
+  Medium: 'var(--teal)',
+  High: 'var(--orange)',
+}
+
+/** Comp Q's compact token figures: 1.9M, 268k, 412. */
+export function compactTokens(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`
+  if (value >= 1_000) return `${(value / 1_000).toFixed(value >= 100_000 ? 0 : 1)}k`
+  return String(value)
+}
+
+/**
+ * How long ago something happened, as comp Q's attention queue prints it: `14m`, `3h`, `9d`.
+ *
+ * `now` is a parameter rather than read here, so the caller decides where the clock comes from.
+ */
+export function compactAge(fromUtc: string, now: Date): string {
+  const minutes = Math.max(0, Math.floor((now.getTime() - new Date(fromUtc).getTime()) / 60_000))
+  if (minutes < 60) return `${minutes}m`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h`
+  return `${Math.floor(hours / 24)}d`
+}
 
 /**
  * The five delivery statuses, in lifecycle order.

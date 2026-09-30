@@ -22,7 +22,8 @@ import { type LoginState, signIn } from '@/lib/server/auth-actions'
  * The notices are the exception, and none is a failure. Comp Q's `s-returned` gives the screen
  * three and says why they exist: *"Every route back to this page carries its reason: an expired
  * session, a changed password, or a freshly created account. A deliberate sign-out carries none."*
- * `expired` means `proxy.ts` sent the reader here after dropping a session the API refused;
+ * `expired` means `proxy.ts` sent the reader here after dropping a session the API refused, or
+ * that the session ran out — idle in the browser, or past the token's lifetime (`IdleSignOut`);
  * `registered` means they have just created an account, which per comp P's `s-register` ends here
  * rather than signed in; `passwordChanged` means the change invalidated the session it was made
  * with, which is what `changePassword` explains. Without a word for any of them, the form looks
@@ -83,7 +84,7 @@ export function LoginForm({
           fact and the one they need in hand, so it is the one that shows. */}
       {expired && !state.error && !passwordChanged ? (
         <Alert variant="note" role="status" className="mb-4">
-          <span>Your session has ended. Sign in again to pick up where you left off.</span>
+          <span>Your session expired. Sign in again to continue.</span>
         </Alert>
       ) : null}
 

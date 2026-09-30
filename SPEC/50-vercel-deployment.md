@@ -37,7 +37,7 @@ stack is never deployed.
 
 ## 1. Two projects, not one
 
-`apps/web` and `apps/api` deploy as **two separate Vercel projects from the same repository**.
+`apps/web` and `apps/api` deploy as **two separate Vercel projects from the same repository**. The web project is named `collega` — the pre-existing project, which still has to be repointed (§12 step 4) — and the API project `collega-api`. *(Corrected 2026-09-29: this named the web project `collega-web`, which never existed.)*
 
 - This is forced rather than preferred. Mounting Nest inside the Next app would mean `apps/web`
   importing `@collega/application` and `@collega/infrastructure`, which is a lint error enforced by
@@ -45,7 +45,7 @@ stack is never deployed.
   `SPEC/50-typescript-migration.md` §4.3 exists to preserve. Ticket `08` anticipated the cross-origin
   cost of two hosts and accepted it.
 
-| | `collega` | `collega-api` |
+| | `collega` (web) | `collega-api` |
 |---|---|---|
 | Root Directory | `apps/web` | `apps/api` |
 | Framework Preset | Next.js | Nest.js |
@@ -322,7 +322,7 @@ every name for local development; nothing in this table belongs in a committed f
   32 characters in production; §12 step 3 already asks for 48 bytes of base64, so this only enforces
   the handoff.
 
-### `collega`
+### `collega` (web)
 
 | Variable | Environments | Required | What breaks without it |
 |---|---|---|---|
@@ -342,9 +342,9 @@ Not `NEXT_PUBLIC_` — see §4.
 
 ## 7. Previews and staging
 
-- **Production** — `main`. `collega` production → `collega-api` production → production
+- **Production** — `main`. `collega` (web) production → `collega-api` production → production
   database.
-- **Preview** — every other branch, including `dev`. All previews of `collega` point at **one
+- **Preview** — every other branch, including `dev`. All previews of `collega` (web) point at **one
   shared staging API**, backed by **one shared staging database**.
 
 > **Unverified as of 2026-09-14: `api.collega-ai.com` does not resolve.** A DNS lookup fails
@@ -386,7 +386,7 @@ COLLEGA_API_URL = https://collega-api-git-dev-<team-slug>.vercel.app/api/v1   (P
   where JSON was expected. The API authenticates its own callers; **turn Vercel Authentication off
   for `collega-api`**, or issue a Protection Bypass for Automation token and send it as
   `x-vercel-protection-bypass` (which would be a change to `apps/web/lib/api/client.ts`, currently
-  unwritten). Leave protection on for `collega` if you want previews private.
+  unwritten). Leave protection on for `collega` (web) if you want previews private.
 
 ---
 
@@ -597,7 +597,7 @@ settled this: the .NET stack was never deployed, so there is nothing to fall bac
 there is no .NET code either. What follows is that statement made operational.
 
 - **Code rolls back instantly and by itself.** Vercel keeps every deployment; Instant Rollback
-  repoints production at the previous one in seconds, per project. Roll back `collega` and
+  repoints production at the previous one in seconds, per project. Roll back `collega` (web) and
   `collega-api` **together** unless you know the pair is compatible.
 - **The database does not roll back with it.** A rollback restores code against a schema that has
   already moved. So: **every migration must be backward-compatible with the deployment before it**
@@ -625,17 +625,26 @@ fail-fast refusing to boot without a signing key and booting with one, `db:boots
 its create and its already-exists paths, a real login as the account it created returning
 `requiresPasswordChange: true`, and `pnpm check` at 23/23.
 
-**Nothing on Vercel has been verified**, because the session that wrote this had no access to the
-account. In rough order of how likely each is to be the thing that bites:
+~~**Nothing on Vercel has been verified**, because the session that wrote this had no access to the
+account.~~ *Corrected 2026-09-29 — some of it has, by probe rather than inferred from a build state
+(the Deployment (Vercel) row in `SPEC/tracker-history/2026-09-28-rows-part-1.md`):* on 2026-09-13
+`collega-api` was READY at `ebf604e`, answered `GET /api/v1/health` with `200`, and answered a wrong
+password on `POST /api/v1/auth/login` with a correctly shaped `401` carrying a `traceId` — which
+exercises routing, the database and the problem-details filter. So the API's entrypoint, its Node
+version, its Prisma query engine and its connection string all work; the rows below say
+which. The web project `collega` still carries the stale settings described below, and Preview's
+`DATABASE_URL` was confirmed from a build log to point at the database that holds the real Site
+Admin — the failure the preview row warns about. In rough order of how likely each is to be the
+thing that bites:
 
 | Unverified | How it would show up | What it takes |
 |---|---|---|
-| That Vercel resolves `server.js` as the entrypoint | "No entrypoint found which imports nestjs", or a deployment that 404s every route (§3) | The first API deployment's build log |
-| That `@vercel/nft` traces the Prisma query engine out of `packages/infrastructure/dist/generated/prisma/` | Runtime error about a missing query engine on the first database call | One request to any authenticated endpoint |
+| That Vercel resolves `server.js` as the entrypoint — **verified for `collega-api`, 2026-09-13** | "No entrypoint found which imports nestjs", or a deployment that 404s every route (§3) | The first API deployment's build log |
+| That `@vercel/nft` traces the Prisma query engine out of `packages/infrastructure/dist/generated/prisma/` — **verified 2026-09-13** (the login probe reaches the database) | Runtime error about a missing query engine on the first database call | One request to any authenticated endpoint |
 | That the `prisma+postgres://` URL works with the pinned client | Boot failure naming the datasource protocol | Swap to the direct `postgresql://` string (§5) |
-| Node 24 selection on the build image | `Invalid Node.js Version` during install | Set the project's Node.js Version to 24.x |
+| Node 24 selection on the build image — **verified for `collega-api`** (it builds) | `Invalid Node.js Version` during install | Set the project's Node.js Version to 24.x |
 | Deployment Protection on the API (§7) | Web previews receiving HTML from every API call | Turn Vercel Authentication off for `collega-api` |
-| That preview builds see Preview-scoped variables at build time | `db:migrate` failing or migrating the wrong database | The first preview build's log — **check which database it touched** (§12 step 10, required) |
+| That preview builds see Preview-scoped variables at build time — **observed wrong**: Preview's `DATABASE_URL` points at the database holding the real Site Admin | `db:migrate` failing or migrating the wrong database | The first preview build's log — **check which database it touched** (§12 step 10, required) |
 | **Observed, not hypothetical:** stale settings on a project repointed rather than created | Build fails asking you to remove the `public` output directory so the Next.js build output can be used | Clear the Output Directory override *and* set Root Directory — see below |
 
 ### Stale project settings on a repointed project
@@ -703,12 +712,13 @@ database; step 10 is verification; steps 11–12 populate the deployment and get
    console offers both.
 3. **Generate two signing keys** — `openssl rand -base64 48`, once for production, once for
    staging. They are not interchangeable and neither is ever committed.
-4. **Create the web project.** New Project → this repository → **Root Directory `apps/web`** →
-   Framework **Next.js**. Do not override the build or install commands; `apps/web/vercel.json`
-   already sets them.
+4. **Repoint the web project, `collega`** — it exists, and is still owed this. *(Corrected
+   2026-09-29: this step read "Create the web project", with repointing as the alternative.)* For
+   a fresh project instead: New Project → this repository → **Root Directory `apps/web`** →
+   Framework **Next.js**, without overriding the build or install commands, which
+   `apps/web/vercel.json` already sets.
 
-   *Or repoint the existing one.* `georgemschaffers-projects/collega` has no Root Directory set,
-   which is why every push fails. It can become the web project, but **it carries settings a fresh
+   `georgemschaffers-projects/collega` has no Root Directory set, which is why every push fails. It can become the web project, but **it carries settings a fresh
    project would not have** — it was auto-detected as "Other" at the repository root, so its Output
    Directory is pinned to `public` and its build fails asking you to remove it. Fix all three:
    Root Directory → `apps/web`; Output Directory → override **off**
@@ -716,9 +726,10 @@ database; step 10 is verification; steps 11–12 populate the deployment and get
    Development Settings — `vercel.json` cannot express this); Framework then corrects itself from
    the file. §11 has the full symptom. Deleting it and creating fresh is the shorter path if you
    have no attachment to the project's history.
-5. **Create the API project.** New Project → the same repository → **Root Directory `apps/api`** →
-   Framework **Nest.js**. Same: the commands come from `apps/api/vercel.json`. Create this one
-   fresh — there is no existing project to repoint, and nothing to inherit.
+5. **The API project, `collega-api`, exists** — Root Directory `apps/api`, Framework **Nest.js**,
+   the commands from `apps/api/vercel.json` — and was READY and answering on 2026-09-13 (§11).
+   *(Corrected 2026-09-29: this step said to create it and that no API project existed.)* On a new
+   account, create it that way: New Project → the same repository → those two settings.
 6. **Turn Vercel Authentication off for the API project** (Settings → Deployment Protection).
    `apps/web` calls it server-side and cannot satisfy an SSO redirect.
 7. **Set the API project's variables:**

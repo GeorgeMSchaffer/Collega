@@ -76,6 +76,31 @@ export async function issueSession(token: string, maxAgeSeconds: number): Promis
   })
 }
 
+/**
+ * Milliseconds left on the session token, from its `exp` claim, or `null` when there is no token
+ * or it carries none.
+ *
+ * For `IdleSignOut` alone, which needs the absolute deadline to land an expiring reader on the
+ * expired notice (`SPEC/20-feature-auth.md` requirement 41): the cookie's lifetime equals the
+ * token's, so by the time the next request is made the cookie is simply gone and `proxy.ts` cannot
+ * tell expiry from never having signed in. The payload is read, not verified — that stays the
+ * API's job, and the worst a forged `exp` can do is sign its own holder out early. A duration
+ * rather than a time, so the browser's clock never has to agree with this one.
+ */
+export async function sessionRemainingMs(): Promise<number | null> {
+  const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value
+  const payload = token?.split('.')[1]
+  if (!payload) return null
+  try {
+    const { exp } = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as {
+      exp?: unknown
+    }
+    return typeof exp === 'number' ? exp * 1000 - Date.now() : null
+  } catch {
+    return null
+  }
+}
+
 export async function clearSession(): Promise<void> {
   ;(await cookies()).delete(SESSION_COOKIE_NAME)
 }

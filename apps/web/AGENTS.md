@@ -16,18 +16,19 @@ else from the workspace. An import of `@collega/application`, `@collega/domain` 
 | `lib/data/` | **The data seam** — every reader the screens call |
 | `lib/api/` | `fetch` client, wire types, Problem Details handling |
 | `lib/server/` | Server actions (`*-actions.ts`) |
-| `lib/mock.ts` | Fixtures for the surfaces not yet pointed at the API |
 | `test/` | Vitest |
 
 Use the `@/…` alias (`@/lib`, `@/components`, `@/app`) rather than relative paths.
 
 ## Conventions
 
-- **Screens call `lib/data/`, never `lib/api/` or `lib/mock.ts` directly.** Each reader there is
-  either a real `fetch` or still a fixture, and the call site cannot tell — converting a reader
-  replaces a body, never a signature. Read that file's header before adding one.
-- **Fixtures live only in `lib/mock.ts`**, and mirror the demo seed exactly. No screen invents its
-  own.
+- **Screens call `lib/data/`, never `lib/api/` directly.** Every reader there calls the API; a
+  reader's signature is the screen's contract, so changing where its data comes from replaces a
+  body, never a signature. Read that file's header before adding one.
+- **No screen invents data.** Where the API has no route for something a design shows, the screen
+  renders that part's empty or unavailable state (Home's untracked tiles are the example) rather
+  than a fixture. Test data lives under `test/`, mirrors the demo seed, and is never imported by
+  `app/`, `components/` or `lib/`.
 - **No business rules here.** Validation that decides an outcome belongs in
   `packages/application`; the client validates for feedback, not for authority.
 - Build from `@collega/design-system` primitives; don't restyle shadcn per screen or reach for raw
