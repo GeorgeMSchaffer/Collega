@@ -52,7 +52,7 @@ The original epic/milestone/estimate planning documents (`70-delivery-backlog.md
 
 - `50-technical-implementation-plan.md` — implementation plan across layers
 - `50-vercel-deployment.md` — **the deployment spec for the shipping stack.** The two Vercel projects and their settings, the environment matrix, where `prisma migrate deploy` runs, the preview/staging topology, how the first administrator is created, the rollback posture, and a handoff checklist for the account holder. Authoritative for anything about deploying `apps/web` or `apps/api`.
-- `50-cutover-runbook.md` — **the release runbook** (conversion slice F4): the go/no-go checklist, the release sequence with owner-only steps marked, the rollback posture and the first-day checks. Operational; `50-vercel-deployment.md` holds the reasoning and wins where they differ.
+- `50-cutover-runbook.md` — **the release runbook** (conversion slice F4): the go/no-go checklist, the release sequence with owner-only steps marked, the rollback posture and the first-day checks. Operational: the deployment spec explains the reasoning; where it and this runbook differ on a procedure, the runbook and the code win.
 - `50-azure-deployment.md`, `50-azure-api-cicd.md` — **superseded**; the cancelled Azure target for the .NET stack, which was deleted in slice F6 on 2026-09-13 (Sprint 8; renumbered from 7 on 2026-08-11). Kept for the cost model and topology reasoning, not as build instructions.
 - `50-postgres-migration.md` — **done**; the Sprint 5 Postgres migration plan, written against EF Core. The migration landed; Prisma has since replaced the ORM it describes.
 - `50-kubernetes-deployment.md` — **superseded**; Kubernetes notes for the .NET stack, deleted in slice F6. Every path it names is gone.

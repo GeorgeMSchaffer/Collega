@@ -2,11 +2,13 @@
 
 > **At a glance** (added 2026-09-29, slice 135 — conversion slice **F4**)
 > - **Scope:** the go/no-go checklist, the release sequence, the rollback posture and the first-day
->   checks for putting the TypeScript stack on production. Operational only; the *why* lives in
->   `SPEC/50-vercel-deployment.md`, which wins where the two differ.
+>   checks for putting the TypeScript stack on production. Operational only. `SPEC/50-vercel-deployment.md`
+>   explains the reasoning; where it and this runbook differ on a procedure, this runbook and the
+>   code win.
 > - **Key rules:** `pnpm check` is the gate, not the golden replay; there is no data to migrate from
->   .NET — the target is seeded fresh; code rolls back, the database does not.
-> - **Decisions:** 2026-09-09 "The drifted database is rebuilt, not migrated"; 2026-09-10 "How the two
+>   .NET — the target is seeded fresh. Code rolls back; the database does not, and there is no
+>   older stack behind either.
+> - **Decisions:** 2026-09-29 "How the cutover is run" (this runbook's owner answers); 2026-09-09 "The drifted database is rebuilt, not migrated"; 2026-09-10 "How the two
 >   Vercel projects are configured, and how production gets its first administrator"; 2026-09-11 "The
 >   golden replay is not a gate, and never was meant to be one"; 2026-09-29 "Spec contradictions
 >   resolved".
@@ -62,7 +64,7 @@ environment badges.
 
 | Name | Production | Preview | Check |
 |---|---|---|---|
-| `COLLEGA_API_URL` | required | required | Ends in `/api/v1`, no trailing slash, not `NEXT_PUBLIC_`. Production names the production API; Preview names the `collega-api` branch alias for `dev`. The value is Sensitive and cannot be read back — confirm it by the smoke checks in §2 step 7, not by reading it. |
+| `COLLEGA_API_URL` | required | required | Ends in `/api/v1`, no trailing slash, not `NEXT_PUBLIC_`. Production names **`collega-api`'s production `*.vercel.app` URL** — a custom API domain is a later, separate change. Preview names the `collega-api` branch alias for `dev`. The value is Sensitive and cannot be read back — confirm it by the smoke checks in §2 step 9, not by reading it. |
 | `MOCK_LATENCY_MS`, `MOCK_FAIL` | unset | unset | Inert in production anyway; unset keeps the matrix honest. |
 
 ### Project settings — **Owner**, confirm in the dashboard
@@ -72,23 +74,25 @@ None of these can be expressed in `vercel.json`, so nothing in the repository pr
 - [ ] `collega` Root Directory is `apps/web`, Output Directory override is **off**, framework Next.js.
 - [ ] `collega-api` Root Directory is `apps/api`, framework Nest.js.
 - [ ] Node.js Version is 24.x on both.
-- [ ] `collega-api`'s function `maxDuration` is set in project settings (it cannot live in
-      `vercel.json` — `README.md`, "Two things that are load-bearing and invisible"). The intended
-      value is not recorded anywhere; confirm it in the dashboard.
+- [ ] `collega-api`'s function `maxDuration` is **60 seconds** — the user's decision
+      (`SPEC/decisions.md` 2026-09-29) — set in project settings; confirm it in the dashboard. It
+      cannot live in `vercel.json` (`README.md`, "Two things that are load-bearing and invisible").
 - [ ] Vercel Authentication is **off** for `collega-api` (on, every server-side call from web gets an
       SSO page instead of JSON).
 - [ ] Production branch is `main` on both projects.
-- [ ] The Preview `DATABASE_URL` points at a separate staging database. The tracker records that
-      Preview's `DATABASE_URL` points at the database holding the real Site Admin; until that is
-      separated, **this line is a no-go**.
+- [ ] A separate staging Prisma Postgres database is provisioned, and Preview's `DATABASE_URL`
+      points at it — ticked for Preview only. The tracker records that Preview's `DATABASE_URL`
+      points at the database holding the real Site Admin; **until the staging database exists and
+      Preview points at it, this line is a no-go.** Its first preview build migrates it and creates
+      Preview's throwaway Site Admin; confirm from that build's log which database it touched.
 - [ ] Prisma Postgres backup retention and point-in-time window for the production database are
       known and written down (`SPEC/50-vercel-deployment.md` §10). Not documented in the repository.
 
 ### The database — **Owner**
 
-- [ ] Production starts **fresh**: nothing on it is kept (`SPEC/decisions.md` 2026-09-09). If demo
-      rows or test accounts are there from earlier trials, decide whether to rebuild before release.
-      The repository documents no wipe procedure for Prisma Postgres — confirm it in the console.
+- [ ] Production starts **fresh** on a **new** Prisma Postgres database (§2 step 2), not a wiped
+      one: nothing on the current production database is kept (`SPEC/decisions.md` 2026-09-09).
+      The old database is kept, untouched, until the release is confirmed (§4), and then deleted.
 - [ ] `SITE_ADMIN_EMAIL` in Production is not already owned by a non-admin or inactive account —
       `db:bootstrap-admin` fails the build with exit 1 in that case (deployment spec §8).
 
@@ -99,12 +103,27 @@ None of these can be expressed in `vercel.json`, so nothing in the repository pr
 In order. Each step says what proves it worked; stop at the first that does not and go to §3.
 
 1. **Freeze `dev`** for the release. Note the commit hash to be released. *(anyone)*
-2. **Run §1's checklist** against that commit and record the answers. *(anyone, then **Owner** for the
+2. **Create the new production database.** Provision a new Prisma Postgres database in the region
+   the functions use (`iad1` in both `vercel.json` files), take its direct `postgres://` string, and
+   replace `collega-api`'s Production `DATABASE_URL` with it — ticked for Production only. Leave the
+   old database as it is: repointing `DATABASE_URL` back at it is this step's rollback. The new value
+   reaches nothing until a build runs (step 6), and the first build migrates the empty database and
+   creates the Site Admin. Do this immediately before the merge in step 5. *(**Owner**)*
+3. **Confirm the release rebuilds the API**, or step 2's `DATABASE_URL` never takes effect:
+   `pnpm turbo query affected --base=<production's last deployed commit> --packages @collega/api`
+   must list `@collega/api` for the release range. If it does not, add a commit touching `apps/api/`
+   to the release — or, from a shell with the new `DATABASE_URL` exported, run
+   `pnpm --filter @collega/infrastructure db:migrate` and then `db:bootstrap-admin` by hand. The
+   running deployment keeps the old database until a new build is live (values are baked at build
+   time); anything that serves against the new `DATABASE_URL` before it is migrated will answer API
+   errors, so expect them in that window. *(anyone runs the query; **Owner** runs the commands)*
+4. **Run §1's checklist** against that commit and record the answers. *(anyone, then **Owner** for the
    owner lines)*
-3. **Open a pull request `dev` → `main`.** Recent releases went through a `sync/<date>` branch
-   (pull requests #24, #25, #27); either shape works as long as the merged tree is the checked
-   commit. CI runs `pnpm check` on the pull request. *(anyone opens it; **Owner** merges)*
-4. **What builds.** The merge to `main` starts a Production build on each project whose ignore step
+5. **Open the release pull requests through a sync branch**, as for pull requests #22–#27: push
+   `dev`'s tip as `sync/<date>` (`git push origin dev:sync/<date>`), then open two pull requests from
+   it, one into `dev` and one into `main`. CI runs `pnpm check` on each. *(anyone opens them;
+   **Owner** merges the one into `main`)*
+6. **What builds.** The merge to `main` starts a Production build on each project whose ignore step
    reports its package affected (`turbo query affected --base=$VERCEL_GIT_PREVIOUS_SHA`):
    - `collega-api`: install, `turbo run build --filter=@collega/api`, then
      `db:migrate` (`prisma migrate deploy` against Production's `DATABASE_URL`), then
@@ -117,24 +136,29 @@ In order. Each step says what proves it worked; stop at the first that does not 
      same commit is cancelled by the same step (`apps/web/AGENTS.md`), and an empty commit touches no
      path. **To rebuild after an env change, ship a commit that touches a file under `apps/api/`
      (for the API) or `apps/web/` (for web)** — a comment or markdown file is enough — and promote it.
+   - **This release must rebuild `collega-api`** — step 3 checked it.
    *(Vercel; **Owner** watches both build logs)*
-5. **Read the `collega-api` build log.** *(**Owner**)*
+7. **Read the `collega-api` build log.** *(**Owner**)*
    - `prisma migrate deploy` lists the migrations it applied, or says there are none pending.
    - The bootstrap ends with `created Site Admin …` or `… already exists`.
-   - The log mentions `server.js` / `dist/bootstrap.js` as the entrypoint. A successful build that
-     never mentions it, with a compile step after the custom build command, is the silent failure in
-     `SPEC/50-vercel-deployment.md` §11 — treat it as a failed release.
-6. **Confirm which database the build touched** — production for this build. The first preview build
-   after any change to `DATABASE_URL` must be checked the same way for staging (§12 step 10 of the
-   deployment spec). *(**Owner**)*
-7. **Smoke checks, against production**, in order:
+   - The entrypoint: the log is **expected** to show `server.js` → `dist/bootstrap.js` being used —
+     expected from the deployment spec §3, not verified against a recorded log. Compare with the last
+     good `collega-api` build log. A successful build that never mentions `server.js`, with a compile
+     step after the custom build command, is the silent failure in `SPEC/50-vercel-deployment.md`
+     §11 — treat it as a failed release.
+8. **Confirm which database the build touched** — the **new** production database for this build.
+   The first preview build after any change to `DATABASE_URL` must be checked the same way for
+   staging (§12 step 10 of the deployment spec). *(**Owner**)*
+9. **Smoke checks, against production**, in order:
    1. `curl -i https://<api host>/api/v1/health` → `200`, `{"status":"Healthy",…}`. No auth, no
       database — proves routing and boot. *(anyone)*
    2. `curl -i https://<api host>/api/v1/auth/me` → `401` with a JSON problem document. HTML, a
       redirect or a 404 means Deployment Protection or the entrypoint (§11 of the deployment spec),
       not a code bug. *(anyone)*
-   3. Open the web app and **sign in as `SITE_ADMIN_EMAIL`**. First sign-in forces a password change,
-      and the change signs you out to `/login?passwordChanged=1`; sign in again with the new one.
+   3. Open the web app and **sign in as `SITE_ADMIN_EMAIL`**. On the new database the Site Admin was
+      just created, so the first sign-in forces a password change, and the change signs you out to
+      `/login?passwordChanged=1`; sign in again with the new one. If the build reported
+      `… already exists` instead, there is no forced change — sign in with the existing password.
       *(**Owner** — only they hold the credential)*
    4. **Create an organization:** Settings → Organizations → New. It is provisioned with default
       statuses, idea types, business impacts and an `Ideas` board; its invite code shows on the
@@ -152,19 +176,19 @@ In order. Each step says what proves it worked; stop at the first that does not 
    9. If `ANTHROPIC_API_KEY` is set: signed in, `GET /api/v1/ai-assist/availability` reports
       available, and a turn in the idea form answers. If it is deliberately unset, the form shows the
       plain fields and nothing errors. *(anyone signed in)*
-8. **Decide the smoke-test data.** Keep the organization if it is the real first tenant; otherwise
+10. **Decide the smoke-test data.** Keep the organization if it is the real first tenant; otherwise
    archive it (Settings → Organizations). Archiving invalidates its invite code. *(**Owner**)*
-9. **Go live.** Hand out the real organization's invite code and `/register` address as two separate
+11. **Go live.** Hand out the real organization's invite code and `/register` address as two separate
    messages (`SPEC/50-vercel-deployment.md` §12 step 12). *(**Owner**)*
-10. **Record the release.** Tracker row for the release with the `main` merge hash and both
+12. **Record the release.** Tracker row for the release with the `main` merge hash and both
     deployment ids; mark F4 done in `SPEC/50-typescript-migration.md`. *(anyone)*
 
 ---
 
 ## 3. Rollback posture
 
-**The rollback unit is the database, and there is nothing behind it.** No .NET deployment exists
-to fall back to (`SPEC/50-typescript-migration.md` §7).
+**Code rolls back; the database does not, and there is no older stack behind either.** No .NET
+deployment exists to fall back to (`SPEC/50-typescript-migration.md` §7).
 
 ### What rolls back
 
@@ -173,7 +197,13 @@ to fall back to (`SPEC/50-typescript-migration.md` §7).
   build command do not run — no migration, no bootstrap. *(**Owner**)*
 - **Roll back `collega` and `collega-api` together** unless you know the pair is compatible.
 - **Environment variables** roll back only with a new build: change the value, then ship a commit that
-  touches the right app directory (§2 step 4).
+  touches the right app directory (§2 step 6).
+- **The database swap (§2 step 2).** Environment variables are baked into a deployment at build
+  time (`apps/web/AGENTS.md`), so the `collega-api` deployment before the release still reads the
+  **old** database: an Instant Rollback of `collega-api` is also a rollback to the old database.
+  Then set Production's `DATABASE_URL` back to the old database's string, so the next build does not
+  land on the new one. This is why the old database is kept until the release is confirmed.
+  *(**Owner**)*
 - Whether Vercel pauses automatic production assignment after an Instant Rollback, and how to undo
   that, is a Vercel setting — **confirm in the dashboard** before the release, not during an incident.
 
@@ -202,8 +232,8 @@ to fall back to (`SPEC/50-typescript-migration.md` §7).
 | Build fails before `db:migrate` | Nothing changed in production. Fix and re-release. |
 | `db:migrate` fails | Old deployment still serving. Resolve the migration as above; do not roll back code — there is nothing to roll back. |
 | `db:bootstrap-admin` fails (exit 1) | Migration already applied; old code still serving against the new schema — safe if check 5 held. Fix the account or `SITE_ADMIN_EMAIL` (deployment spec §8), then ship an `apps/api` commit. |
-| Build green, smoke 7.1 or 7.2 fails | Configuration or entrypoint, not code: see §11 of the deployment spec. Roll back `collega-api` if the previous deployment was answering. |
-| Sign-in or an app flow fails | Instant Rollback of both projects; then diagnose on a preview. |
+| Build green, smoke 9.1 or 9.2 fails | Configuration or entrypoint, not code: see §11 of the deployment spec. Roll back `collega-api` if the previous deployment was answering. |
+| Sign-in or an app flow fails | Instant Rollback of both projects — which also returns the API to the old database — and repoint Production's `DATABASE_URL` at the old database; then diagnose on a preview. |
 | After real users have written data | A rollback no longer loses only code; restoring the database would lose their writes. Prefer fixing forward, and treat a restore as an announced event. |
 
 ---
@@ -228,5 +258,7 @@ the runtime logs for it. No external error tracker is configured in this reposit
   risks", not a defect to hot-fix.
 - **Users signed out at random** — two instances signing with different keys: check
   `ACCESS_TOKEN_SIGNING_KEY` is set for Production.
+- **Once the release is confirmed**, delete the old production database in the Prisma Postgres
+  console. From then on a rollback reaches code only, not the pre-release database. *(**Owner**)*
 - At the end of the day: re-run the health and `/auth/me` checks, confirm `COLLEGA_ALLOW_DEMO_SEED` is
   still unset on Production, and write the outcome into the release's tracker row.
