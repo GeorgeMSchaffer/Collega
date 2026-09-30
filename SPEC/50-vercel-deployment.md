@@ -6,6 +6,8 @@
 > - **Key rules:** web and api are two projects; the browser never calls the API, so never add CORS (§1, §4).
 > - The API build runs `prisma migrate deploy`, then `db:bootstrap-admin`; migrations stay additive (§5, §10).
 > - Scope Preview `DATABASE_URL` to staging only; never set it in CI; keep `turbo query affected` (§2, §6, §12).
+> - **Procedure:** `SPEC/50-cutover-runbook.md` is the release runbook. This spec explains the reasoning;
+>   where the two differ on a procedure, the runbook and the code win.
 > - **Contracts:** contracts/auth.md
 > - **Decisions:** 2026-09-10 "How the two Vercel projects are configured, and how production gets its first
 >   administrator"; 2026-09-03 "The conversion's remaining gates: net-new scope, the test suite, and where it
