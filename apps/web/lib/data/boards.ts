@@ -26,7 +26,7 @@ import type { Board, BoardAdmin, BoardOverview, BoardRef, BoardWithLanes, Status
 import { failIfRequested, resolve } from './latency'
 import { everyOrganization, organizationScope } from './scope'
 
-export { SWIMLANE_FLOOR } from '../mock'
+export { SWIMLANE_FLOOR } from '../limits'
 export type {
   Board,
   BoardAdmin,

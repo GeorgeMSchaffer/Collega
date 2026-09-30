@@ -1,9 +1,9 @@
 'use client'
 
 import { Button, Dot } from '@collega/design-system'
-// Not through `@/lib/data`: that barrel re-exports the API-backed readers, so pulling these two
-// constants through it drags `next/headers` into the client graph and fails the build.
-import { SWIMLANE_FLOOR } from '@/lib/mock'
+// Not through `@/lib/data`: that barrel re-exports the API-backed readers, so pulling a constant
+// through it drags `next/headers` into the client graph and fails the build.
+import { SWIMLANE_FLOOR } from '@/lib/limits'
 import type { Status } from '@/lib/types'
 
 /**
