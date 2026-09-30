@@ -54,8 +54,10 @@ const API_PORT = process.env.COLLEGA_E2E_API_PORT?.trim() || '3001'
  *    already listening. That is safe because nothing has touched the database yet: the Prisma
  *    client connects lazily on its first query (the API never calls `$connect` and runs no query at
  *    boot), the readiness probe below is a route that needs no database, and no test runs until
- *    global setup returns. A query at boot would break that, so keep boot database-free. Global
- *    setup refuses anything but a local `collega_e2e` schema; read it before pointing it anywhere.
+ *    global setup returns. A query at boot would break that, so keep boot database-free.
+ *
+ * `e2eDatabaseUrl()` below refuses anything but a local `collega_e2e` schema, so a bad URL stops the
+ * run here, before either server starts; read `database-url.ts` before pointing it anywhere.
  *
  * The web app may be ready before the API is, which does not matter: it renders nothing that
  * fetches until a test navigates.
