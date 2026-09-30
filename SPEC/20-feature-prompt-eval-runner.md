@@ -14,8 +14,9 @@
 >   2026-09-30 "The prompt-eval thresholds stand, confirmed against the v1 baseline"
 
 **Status:** Specified 2026-09-28 (slice 113). **Built** in Sprint 12,
-`SPEC/sprints/sprint-12-prompt-eval-runner.md`: slices 114, 115, 117 and 118 are merged; slice 116,
-the v1 baseline, remains (`SPEC/implementation-agent-tracker.md`). Open questions answered 2026-09-28
+`SPEC/sprints/sprint-12-prompt-eval-runner.md`: slices 114–118 are merged; the v1 baseline is
+`tools/prompt-eval/baselines/v1-default.json` (slice 116, 2026-09-30) and its thresholds were confirmed
+(`SPEC/decisions.md` 2026-09-30). Open questions answered 2026-09-28
 (`SPEC/decisions.md`, "The prompt-eval runner's open questions are answered").
 
 **Why this file sits with the feature specs.** It is a developer tool, not product surface, but it

@@ -32,7 +32,7 @@ Useful options:
 | Option | Default | |
 |---|---|---|
 | `--repeats <n>` | 5 | Trials per case |
-| `--case <name>` | every v1 case | Repeatable; a run of a subset cannot be compared with the baseline |
+| `--case <name>` | every v1 case | Repeatable; comparing a subset with the baseline warns that the runs are not like with like |
 | `--prompt-file <path>` | the compiled template | A candidate template, used verbatim |
 | `--baseline <file>` | none | Judge the run against a baseline as well as the absolute floor |
 | `--max-calls <n>` / `--max-tokens <n>` | 200 / 1,000,000 | Ceilings; hitting one aborts the run and exits 2 |
