@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-09-29 | How the cutover is run | active | full below |
 | 2026-09-29 | Board lanes reorder by dragging the header, with buttons as the fallback | active | full below |
 | 2026-09-29 | Contracts and wording written from the code | active | full below |
 | 2026-09-29 | Removing a lane moves its ideas | active | full below |
@@ -95,6 +96,28 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-09-29 — How the cutover is run
+
+**Decided by the user**, answering the five questions slice 135 left in the cutover runbook
+(`SPEC/50-cutover-runbook.md`, conversion slice F4). Each answer is written into the runbook.
+
+1. **A separate staging database comes first.** A staging Prisma Postgres database is provisioned
+   before cutover and Preview's `DATABASE_URL` points at it. Until then the release is a no-go —
+   today Preview points at the database holding the real Site Admin. An owner step.
+2. **Production starts on a new database, not a wiped one.** A new Prisma Postgres database is
+   created and Production's `DATABASE_URL` pointed at it; the release build migrates it and creates
+   the Site Admin. The old database is kept until the release is confirmed, then deleted — keeping
+   it is the rollback for that step, since the pre-release `collega-api` deployment still reads it.
+   An owner step. This settles *how* production is seeded fresh (2026-09-09).
+3. **`collega-api`'s `maxDuration` is 60 seconds**, set in project settings; `vercel.json` cannot
+   hold it.
+4. **Production's `COLLEGA_API_URL` is `collega-api`'s production `*.vercel.app` URL.** A custom API
+   domain is a later, separate change; `api.collega-ai.com` is not current.
+5. **A release goes through a sync branch**, as pull requests #22–#27 did: `dev`'s tip is pushed as
+   `sync/<date>`, and pull requests from it go into `dev` and into `main`.
 
 ---
 

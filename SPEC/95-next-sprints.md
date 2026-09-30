@@ -50,6 +50,9 @@ Note: the Site Admin seed-reset flag bundled into Sprint 2 has no cross-sprint d
 | 11 | Comp R iteration — Graphite and the denser controls, tag colours and Settings → Tags, the effort bar, the Sprint board and the Roadmap | `SPEC/sprints/sprint-11-comp-r-iteration.md` | Not started (planned 2026-09-28; questions answered the same day) | Large |
 | 12 | Prompt-eval runner — the TypeScript replacement for the runner F6 deleted; measures v1, commits a baseline, and gates idea assistant v2 | `SPEC/sprints/sprint-12-prompt-eval-runner.md` | Not started (planned 2026-09-28; slice 113's questions answered the same day) | Medium |
 
+**Cutover** (Sprint 9, Wave F slice F4) follows `SPEC/50-cutover-runbook.md`: its go/no-go checklist
+gates the release of the conversion onto `main`.
+
 **Comp R work (added 2026-09-27, `SPEC/decisions.md` "One list and detail pattern").** Three phases, in
 order: **phase 1** — themes, the list and detail pattern on Boards, a board and Ideas, the structured
 idea fields with their backfill, board archive and the two-`h1` fix — is **Sprint 10**,
