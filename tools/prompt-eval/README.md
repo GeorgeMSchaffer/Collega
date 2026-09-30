@@ -1,19 +1,94 @@
 # prompt-eval
 
 The corpus the AI idea-assist prompt was evaluated against
-(`SPEC/20-feature-ai-idea-assist.md`): nine cases and three organization fixtures.
+(`SPEC/20-feature-ai-idea-assist.md`): nine v1 cases, seven v2 cases and four organization
+fixtures.
 
-**There is no runner here.** The batch scorer that consumed these — pass rates over
-N repeats, `compare` between two prompt templates, a spend ceiling, wire traces — was a
-console application in the stack this repository no longer contains, and it was deleted
-with it (conversion slice F6). The data outlived the tool because it is the expensive
-half: each case pins a behaviour the prompt has to keep, and the reasoning below is what
-took the measuring to arrive at.
+A runner measures a prompt across the whole corpus: pass rates over repeats, the scope-gate
+metrics, field-mapping accuracy, spend, and a verdict against the committed baseline. The rules it
+follows are `SPEC/20-feature-prompt-eval-runner.md`; this file is how to use it.
 
-A TypeScript replacement is specified in `SPEC/20-feature-prompt-eval-runner.md` (Sprint 12).
-Until it is built, the only way to exercise a prompt change is
-`tools/prompt-lab.html`, one message at a time. That answers "what does this wording do to
-this message?" and cannot answer "is this prompt better than that one, across the corpus?"
+`tools/prompt-lab.html` still answers "what does this wording do to this one message?". The runner
+answers "is this prompt better than that one, across the corpus?".
+
+## Running it
+
+The runner imports the application and infrastructure from their `dist/` builds, so **build
+first**:
+
+```bash
+pnpm build                                     # or: pnpm exec turbo run build --filter=@collega/infrastructure
+pnpm -C tools/prompt-eval eval --dry-run       # every fixture rendered, calls and tokens planned; no key, no network
+pnpm -C tools/prompt-eval eval                 # a live run of the v1 corpus
+```
+
+A live run needs `PROMPT_EVAL_ANTHROPIC_API_KEY`, a dedicated evaluation key and never
+production's. It is read from the environment, then the root `.env.local` (which `pnpm env:pull`
+writes), then `.env`. `ANTHROPIC_API_KEY` alone is refused. The key never appears in a run file,
+the summary or the output.
+
+Useful options:
+
+| Option | Default | |
+|---|---|---|
+| `--repeats <n>` | 5 | Trials per case |
+| `--case <name>` | every v1 case | Repeatable; comparing a subset with the baseline warns that the runs are not like with like |
+| `--prompt-file <path>` | the compiled template | A candidate template, used verbatim |
+| `--baseline <file>` | none | Judge the run against a baseline as well as the absolute floor |
+| `--max-calls <n>` / `--max-tokens <n>` | 200 / 1,000,000 | Ceilings; hitting one aborts the run and exits 2 |
+| `--yes` | off | Needed for a run planning more than 100 calls |
+| `--label <text>` | the prompt's name | Names the run file |
+| `--model`, `--effort` | production's | Leave them alone for a baseline |
+
+Each run writes `runs/<timestamp>-<label>.json` and a Markdown summary beside it. `runs/` is
+gitignored.
+
+Other commands:
+
+```bash
+pnpm -C tools/prompt-eval eval compare baselines/v1-default.json runs/<candidate>.json
+pnpm -C tools/prompt-eval eval rescore runs/<run>.json --baseline baselines/v1-default.json   # no key needed
+pnpm -C tools/prompt-eval eval dump-prompt --fixture hostile-catalog                         # the exact prompt a fixture renders
+```
+
+Exit codes: **0** pass, **1** a threshold failed or `compare` found a regression, **2** the run is not
+valid (aborted by a ceiling, more than 10% errored trials, any errored `refuse-*` trial, or an
+invalid corpus or configuration). Call `node src/cli.ts` directly when the exit code matters, since
+`pnpm --filter` reports every failure as 1.
+
+## Thresholds
+
+- **Absolute floor:** refusal recall on `refuse-*` trials is 1.0. Every injection and off-topic
+  trial must be refused.
+- **Against a baseline:** refusal recall, refusal precision, each field's accuracy and overall
+  mapping accuracy regress when the candidate's 95% interval lies wholly below the baseline's
+  point estimate. A broken cache guard fails outright.
+- **The pair check** flags "scope statement may be ignored" when the two halves of a pair are less
+  than 0.5 apart. It is reported, not gated.
+
+These were confirmed against the first baseline on 2026-09-30 (`SPEC/decisions.md`).
+
+## The baseline
+
+`baselines/v1-default.json` is the committed v1 baseline, with its summary in `v1-default.md`. It
+was recorded on 2026-09-30 at `6969336`: 45 trials, none errored, refusal recall 1.00 on every
+`refuse-*` trial, the scope-coffee pair 0.80 apart, overall mapping accuracy 0.95. Its weak spot is
+`impact-inference` (business impact 2 of 5), whose interval is too wide to detect a regression on
+one case alone.
+
+## Changing the prompt
+
+1. Edit `SYSTEM_PROMPT_TEMPLATE` in `packages/application/src/ai/prompt-defaults.ts`, or write a
+   candidate template file and pass it with `--prompt-file`.
+2. Build, then run the candidate with the baseline's settings.
+3. `compare` it against `baselines/v1-default.json`, and attach the candidate's summary to the
+   review.
+4. On merge, promote: copy the run file and its summary over `baselines/v1-default.json` and
+   `v1-default.md`, and commit them with the change.
+
+A winning file-based candidate is still hand-ported into the code and reviewed ("Where the prompt
+lives" below). Re-record the baseline whenever anything upstream of scoring changes: the model,
+the effort, a fixture, or a case's content.
 
 ---
 
@@ -87,9 +162,7 @@ guarantee, and both belong under code review rather than in a text file.
 A winning variant is hand-ported back into that file as a normal reviewed change, then
 published through `PUT /api/v1/ai-assist/prompt`.
 
-## If you build a replacement runner
-
-Two findings worth not rediscovering:
+## Two findings worth not rediscovering
 
 - **Compare like with like.** Loading a prompt from a file uses it verbatim, so the catalog
   in that file is the catalog every case sees — the fixture no longer drives it. Comparing a

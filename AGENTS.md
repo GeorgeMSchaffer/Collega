@@ -123,7 +123,7 @@ on. `SPEC/50-typescript-migration.md` §4 has the full mapping.
 | `tools/golden` | Capture/replay harness — a regression detector, not a gate |
 | `tools/boundaries`, `tools/arch` | Architecture tests |
 | `tools/local` | `pnpm dev`'s launcher |
-| `tools/prompt-eval` | The AI-assist evaluation corpus — data only, its runner is gone |
+| `tools/prompt-eval` | The AI-assist evaluation corpus, its runner and the committed v1 baseline |
 
 ## Source of Truth
 
@@ -198,8 +198,8 @@ Two artefacts survive as **data, not patterns**:
   re-recorded against its original, so it is a fixed record now, frozen alongside `inventory.json`
   (the endpoint list used to be parsed from the controllers that F6 deleted).
 - `tools/prompt-eval` — the AI-assist evaluation corpus. Its batch runner was .NET and went with the
-  rest, so corpus-scale prompt evaluation currently has no tool, and changes to the scope gate — a
-  security control — are unmeasured. `SPEC/decisions.md` 2026-09-13 schedules the rescope.
+  rest; Sprint 12 replaced it with a TypeScript runner, and the v1 baseline it measures prompt
+  changes against was committed on 2026-09-30. `SPEC/decisions.md` 2026-09-13 schedules the rescope.
 
 The .NET test suite was **discarded**, not ported (ticket `10`). The database left the keep list on
 2026-09-09: the seed rebuilds it from committed code in about four seconds.

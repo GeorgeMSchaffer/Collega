@@ -48,7 +48,7 @@ Note: the Site Admin seed-reset flag bundled into Sprint 2 has no cross-sprint d
 | 9 | TypeScript conversion — **the active sprint** | `SPEC/sprints/sprint-09-typescript-conversion.md` | **In Progress (2026-09-04)** — Wave A complete; Wave 0 is the frontier | Large |
 | 10 | Comp R, phase 1 — themes, the list and detail pattern on Boards, a board and Ideas, structured idea fields, board archive | `SPEC/sprints/sprint-10-comp-r-phase-1.md` | Not started (planned 2026-09-27) | Large |
 | 11 | Comp R iteration — Graphite and the denser controls, tag colours and Settings → Tags, the effort bar, the Sprint board and the Roadmap | `SPEC/sprints/sprint-11-comp-r-iteration.md` | Not started (planned 2026-09-28; questions answered the same day) | Large |
-| 12 | Prompt-eval runner — the TypeScript replacement for the runner F6 deleted; measures v1, commits a baseline, and gates idea assistant v2 | `SPEC/sprints/sprint-12-prompt-eval-runner.md` | Not started (planned 2026-09-28; slice 113's questions answered the same day) | Medium |
+| 12 | Prompt-eval runner — the TypeScript replacement for the runner F6 deleted; measures v1, commits a baseline, and gates idea assistant v2 | `SPEC/sprints/sprint-12-prompt-eval-runner.md` | **Complete (2026-09-30)** — slices 113–118 merged; the v1 baseline is committed | Medium |
 
 **Cutover** (Sprint 9, Wave F slice F4) follows `SPEC/50-cutover-runbook.md`: its go/no-go checklist
 gates the release of the conversion onto `main`.
