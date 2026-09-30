@@ -1,6 +1,7 @@
 'use client'
 
-import { useLayoutEffect, useRef } from 'react'
+import { cn } from '@collega/design-system'
+import { type DragEvent, useLayoutEffect, useRef } from 'react'
 import { Icon } from '@/components/list/icons'
 import type { Idea, Status } from '@/lib/types'
 import { IdeaCard } from './idea-card'
@@ -9,18 +10,27 @@ const ARROW =
   'inline-flex size-6 items-center justify-center rounded-md border border-current/25 hover:bg-background/60 aria-disabled:cursor-not-allowed aria-disabled:opacity-40'
 
 /**
- * The lane header's move left / move right, for an Org Admin. `null` hides them, which is every
+ * How an Org Admin reorders lanes: drag a lane by its header onto another lane, or, from the
+ * keyboard or a screen reader, the header's move left / move right. `null` hides them, which is every
  * other role's view (the row-actions exception to the Denied rule). `denialId` names the element
  * holding why they are refused — an archived board. Every refused arrow, the board's ends included,
  * is `aria-disabled` rather than `disabled`: a lane moved to an end would otherwise have the button
  * just pressed drop out of the tab order, and keyboard focus with it. While a save is `pending` the
  * arrows are `aria-disabled` too, and ignore a press. After a move the lane puts focus back on the
- * arrow that was pressed (see `Lane`).
+ * arrow that was pressed (see `Lane`). The header drags only when the arrows would work.
+ * `onDragOver` answers whether a lane drag is under way, so a drop is accepted only for one.
  */
 export type LaneReorder = {
   denialId: string | null
   pending: boolean
   onMove: (delta: -1 | 1) => void
+  dragging: boolean
+  over: boolean
+  onDragStart: () => void
+  onDragEnd: () => void
+  onDragOver: () => boolean
+  onDragLeave: () => void
+  onDrop: () => void
 }
 
 /**
@@ -106,15 +116,41 @@ export function Lane({
     )
   }
 
+  const draggable = reorder !== null && reorder.denialId === null && !pending
+
   return (
     <section
       aria-label={status.name}
-      className="flex min-h-[min(62vh,560px)] min-w-0 flex-col gap-2 rounded-[14px] border border-border/70 bg-muted/55 px-1.5 pt-1.5 pb-3"
+      onDragOver={(event: DragEvent) => {
+        if (reorder?.onDragOver()) event.preventDefault()
+      }}
+      onDragLeave={() => reorder?.onDragLeave()}
+      onDrop={(event: DragEvent) => {
+        if (!reorder) return
+        event.preventDefault()
+        reorder.onDrop()
+      }}
+      className={cn(
+        'flex min-h-[min(62vh,560px)] min-w-0 flex-col gap-2 rounded-[14px] border border-border/70 bg-muted/55 px-1.5 pt-1.5 pb-3',
+        reorder?.over && 'border-primary',
+        reorder?.dragging && 'opacity-60',
+      )}
     >
       {/* The status colour is data, so it tints the header through `color-mix` against the
           theme's own card and ink rather than standing alone as a raw fill. */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: dragging is the pointer path; the header's arrows are the keyboard and screen-reader one */}
       <div
-        className="flex items-center gap-2 rounded-t-xl rounded-b-sm px-3 py-1.5 text-[13px] font-semibold"
+        draggable={draggable}
+        onDragStart={(event: DragEvent) => {
+          event.dataTransfer.effectAllowed = 'move'
+          event.dataTransfer.setData('text/plain', status.id)
+          reorder?.onDragStart()
+        }}
+        onDragEnd={() => reorder?.onDragEnd()}
+        className={cn(
+          'flex items-center gap-2 rounded-t-xl rounded-b-sm px-3 py-1.5 text-[13px] font-semibold',
+          draggable && 'cursor-grab active:cursor-grabbing',
+        )}
         style={{
           background: `color-mix(in srgb, ${status.color} 14%, var(--card))`,
           color: `color-mix(in srgb, ${status.color} 55%, var(--foreground))`,

@@ -86,12 +86,16 @@ export function IdeaWorkspace({
   // What the polite live region last said about a lane move; screen readers hear the new position.
   const [reorderNews, setReorderNews] = useState('')
 
-  const moveLane = (index: number, delta: -1 | 1) => {
-    if (!board) return
+  // The lane being dragged by its header, and the lane it is over; both null outside a drag.
+  const [draggingLane, setDraggingLane] = useState<string | null>(null)
+  const [overLane, setOverLane] = useState<string | null>(null)
+
+  const moveLane = (from: number, to: number) => {
+    if (!board || from === to) return
     const next = [...lanes]
-    const [moved] = next.splice(index, 1)
+    const [moved] = next.splice(from, 1)
     if (moved === undefined) return
-    next.splice(index + delta, 0, moved)
+    next.splice(to, 0, moved)
     setReorderNews('')
     startReorder(async () => {
       setLanes(next)
@@ -101,7 +105,7 @@ export function IdeaWorkspace({
       )
       setReorderError(result.error)
       if (!result.error) {
-        setReorderNews(`${moved.name} moved to position ${index + delta + 1} of ${next.length}`)
+        setReorderNews(`${moved.name} moved to position ${to + 1} of ${next.length}`)
       }
     })
   }
@@ -320,7 +324,27 @@ export function IdeaWorkspace({
                     ? ({
                         denialId: board.isArchived ? 'why-reorder-lanes' : null,
                         pending: reordering,
-                        onMove: (delta) => moveLane(index, delta),
+                        onMove: (delta) => moveLane(index, index + delta),
+                        dragging: draggingLane === status.id,
+                        over: draggingLane !== null && overLane === status.id,
+                        onDragStart: () => setDraggingLane(status.id),
+                        onDragEnd: () => {
+                          setDraggingLane(null)
+                          setOverLane(null)
+                        },
+                        onDragOver: () => {
+                          if (draggingLane === null) return false
+                          setOverLane(status.id)
+                          return true
+                        },
+                        onDragLeave: () =>
+                          setOverLane((current) => (current === status.id ? null : current)),
+                        onDrop: () => {
+                          const from = lanes.findIndex((lane) => lane.id === draggingLane)
+                          setDraggingLane(null)
+                          setOverLane(null)
+                          if (from >= 0) moveLane(from, index)
+                        },
                       } satisfies LaneReorder)
                     : null
                 }
