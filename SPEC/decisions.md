@@ -28,11 +28,11 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
-| 2026-09-29 | Board lanes reorder with left / right buttons, not header drag | active | full below |
+| 2026-09-29 | Board lanes reorder by dragging the header, with buttons as the fallback | active | full below |
 | 2026-09-29 | Contracts and wording written from the code | active | full below |
 | 2026-09-29 | Removing a lane moves its ideas | active | full below |
 | 2026-09-29 | The test harnesses reuse sessions; the auth rate limits stay | active | full below |
-| 2026-09-29 | Spec contradictions resolved | superseded in part | full below |
+| 2026-09-29 | Spec contradictions resolved | active | full below |
 | 2026-09-28 | The Idea Field Option contract follows the code | active | full below |
 | 2026-09-28 | The v2 corpus format, as built | active | full below |
 | 2026-09-28 | The prompt-eval runner's provisional limits stand for the first baseline | active | full below |
@@ -98,32 +98,31 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 ---
 
-## 2026-09-29 — Board lanes reorder with left / right buttons, not header drag
+## 2026-09-29 — Board lanes reorder by dragging the header, with buttons as the fallback
 
-**An implementation record, not a user decision** (slice 130), recording where the build departs
-from `20-feature-client-ui.md` "Drag-and-Drop: Reordering Columns" and its acceptance criterion
-"Column drag (SiteAdmin/OrgAdmin only) saves immediately on drop; reverts on failure".
+**Decided by the user** (slice 130), keeping `20-feature-client-ui.md` "Drag-and-Drop: Reordering
+Columns" as written: a lane is reordered by dragging its column header, saved immediately on drop.
 
-- **Lanes move with left / right buttons on the lane header**, matching the arrows that already
-  move a card one lane over. They are keyboard-reachable with no new shortcut (answer 10 of "The
-  comp R iteration's open questions are answered" rules shortcuts out). **Header drag is not
-  built**; the spec's drag wording (rule 1, "Saves immediately on drop", the acceptance criterion)
-  stays as written and describes a control that does not exist yet.
-- **The acceptance criterion is met in intent:** the new order shows at once, each press sends one
-  `POST /boards/{boardId}/swimlanes/reorder` naming every lane, and a refusal puts the lanes back
-  with the API's message above them. After a move, focus stays on the pressed arrow and a polite
-  live region announces the lane's new position.
-- **Who sees them.** An Org Admin, and a Site Admin through View As. They are **hidden** for other
-  roles, under the Denied rule's per-row exception (`20-feature-client-ui.md` "Denied is shown,
-  not hidden"): the board page's *Edit board* is still shown, disabled with its reason, so the
-  capability is announced once at page level.
-- **On an archived board** the arrows are shown `aria-disabled`, described by a visible line saying
-  the lanes keep their order until the board is unarchived. The lanes at either end are
-  `aria-disabled` rather than `disabled` for the same reason: the pressed button keeps its focus.
+- **Header drag is the control.** An Org Admin drags a lane by its header onto another lane; the
+  drop sends one `POST /boards/{boardId}/swimlanes/reorder` naming every lane with a dense `order`.
+  It uses native HTML drag and drop, as the Sprint board's cards do; no dependency is added.
+- **Left / right buttons on the header are the accessible fallback**, for the keyboard and screen
+  readers, matching the arrows that move a card one lane over. They need no new shortcut (answer
+  10 of "The comp R iteration's open questions are answered" rules shortcuts out). After a button
+  move, focus stays on the pressed arrow.
+- **Both paths behave the same:** the new order shows at once, the lane rail is `aria-busy` and
+  the arrows `aria-disabled` while the save is in flight, a polite live region announces the lane's
+  new position, and a refusal puts the lanes back with the API's message above them.
+- **Who sees them.** An Org Admin, and a Site Admin through View As. The arrows are **hidden** and
+  the header does not drag for other roles, under the Denied rule's per-row exception
+  (`20-feature-client-ui.md` "Denied is shown, not hidden"): the board page's *Edit board* is still
+  shown, disabled with its reason, so the capability is announced once at page level.
+- **On an archived board** the header does not drag, and the arrows are shown `aria-disabled`,
+  described by a visible line saying the lanes keep their order until the board is unarchived. The
+  lanes at either end are `aria-disabled` rather than `disabled`, so the pressed button keeps its
+  focus.
 
-This **supersedes in part** "Spec contradictions resolved" item 8's "`apps/web` does not call the
-reorder route yet: column drag is unbuilt" — the route has a web caller now; the drag is still
-unbuilt. The route itself, item 8's actual decision, stands.
+The route is the one "Spec contradictions resolved" item 8 chose; that decision stands.
 
 ---
 
@@ -267,8 +266,6 @@ Where a spec keeps history the old text stays, marked superseded; elsewhere it w
 8. **Columns reorder with `POST /boards/{boardId}/swimlanes/reorder`**, not the nonexistent
    `PUT /boards/{boardId}/statuses/{statusId}` that `20-feature-client-ui.md` named. `apps/web`
    does not call the reorder route yet: column drag is unbuilt.
-   *Superseded in part 2026-09-29 by "Board lanes reorder with left / right buttons, not header
-   drag": `apps/web` calls the reorder route from lane-header buttons; column drag is still unbuilt.*
 9. **An idea's details open in the drawer at `/ideas?idea={id}`**, not a `/ideas/{id}/edit` route
    (`20-feature-client-ui-revisions.md`).
 10. **Idea Type options carry a colour and icon** (Fields rule 9); the ideas spec's decision-table
