@@ -7,7 +7,7 @@
 // Every time here is an explicit `nowUtc`, never the wall clock - which is also what the service's
 // `noTimestamp`/`clockTimestamp` options exist to allow.
 
-import jsonwebtoken from 'jsonwebtoken'
+import { createHmac } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import { JwtAccessTokenService } from '../src/security/jwt-access-token.service.js'
 
@@ -16,6 +16,18 @@ const LIFETIME_SECONDS = 480 * 60
 const ISSUED = new Date('2026-09-29T08:00:00.000Z')
 
 const service = new JwtAccessTokenService({ signingKey: KEY, lifetimeSeconds: LIFETIME_SECONDS })
+
+/**
+ * A JWT built by hand rather than with `jsonwebtoken`, which only the chokepoint may import. HMAC
+ * for the HS algorithms, an empty signature for `none`.
+ */
+function craft(alg: 'HS256' | 'HS512' | 'none', payload: object, key = KEY): string {
+  const encode = (value: object) => Buffer.from(JSON.stringify(value)).toString('base64url')
+  const unsigned = `${encode({ alg, typ: 'JWT' })}.${encode(payload)}`
+  if (alg === 'none') return `${unsigned}.`
+  const hash = alg === 'HS256' ? 'sha256' : 'sha512'
+  return `${unsigned}.${createHmac(hash, key).update(unsigned).digest('base64url')}`
+}
 
 function secondsAfter(date: Date, seconds: number): Date {
   return new Date(date.getTime() + seconds * 1000)
@@ -75,36 +87,25 @@ describe('JwtAccessTokenService.tryValidate', () => {
   })
 
   it('refuses an unsigned token', () => {
-    const unsigned = jsonwebtoken.sign({ sub: 'user-1', sstamp: 'STAMP-1' }, '', {
-      algorithm: 'none',
-    })
+    const unsigned = craft('none', { sub: 'user-1', sstamp: 'STAMP-1' })
 
     expect(service.tryValidate(unsigned, ISSUED)).toBeNull()
   })
 
   it('refuses a token signed with the right key under another algorithm', () => {
-    const hs512 = jsonwebtoken.sign({ sub: 'user-1', sstamp: 'STAMP-1' }, KEY, {
-      algorithm: 'HS512',
-      noTimestamp: true,
-    })
+    const hs512 = craft('HS512', { sub: 'user-1', sstamp: 'STAMP-1' })
 
     expect(service.tryValidate(hs512, ISSUED)).toBeNull()
   })
 
   it('refuses a validly signed token that names no user', () => {
-    const noSubject = jsonwebtoken.sign({ sstamp: 'STAMP-1' }, KEY, {
-      algorithm: 'HS256',
-      noTimestamp: true,
-    })
+    const noSubject = craft('HS256', { sstamp: 'STAMP-1' })
 
     expect(service.tryValidate(noSubject, ISSUED)).toBeNull()
   })
 
   it('reads a missing stamp as empty, which no account holds', () => {
-    const noStamp = jsonwebtoken.sign({ sub: 'user-1' }, KEY, {
-      algorithm: 'HS256',
-      noTimestamp: true,
-    })
+    const noStamp = craft('HS256', { sub: 'user-1' })
 
     expect(service.tryValidate(noStamp, ISSUED)).toEqual({ userId: 'user-1', securityStamp: '' })
   })
