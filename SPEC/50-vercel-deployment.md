@@ -244,7 +244,9 @@ step only**. Two qualifications, both of which have been read too generously bef
 - "Serialize" overstates what the lock does even for the migration. A waiter that does not get the
   lock inside Prisma's timeout fails with `P1002` rather than queueing behind the holder, so under
   real contention the second build errors out and needs a redeploy. Idempotent means the redeploy is
-  safe, not that it is unnecessary.
+  safe, not that it is unnecessary. A Redeploy works here, unlike after a variable change: the ignore
+  step diffs against `VERCEL_GIT_PREVIOUS_SHA`, the last *successful* deployment, which the failed
+  build is not, so the build's own change is still in range.
 
 Migrations are additive — see the rollback posture in §10 before writing one that is not.
 
@@ -461,8 +463,10 @@ pnpm --filter @collega/infrastructure db:bootstrap-admin
   `packages/infrastructure/src/security/pbkdf2-password-hasher.ts` produces together with
   `must_change_password = true` and a new `security_stamp` (changing the stamp is what invalidates
   any session the previous state left outstanding). Know that before the incident; the alternative
-  during one is to point `SITE_ADMIN_EMAIL` at a fresh address and redeploy, which does work and
-  leaves the broken account behind to clean up later.
+  during one is to point `SITE_ADMIN_EMAIL` at a fresh address and ship a commit that touches
+  `apps/api/` — a Redeploy is cancelled by the ignore step (`apps/web/AGENTS.md`) — which does work
+  and leaves the broken account behind to clean up later. *Corrected 2026-09-29: this said "and
+  redeploy".*
 
 ---
 
