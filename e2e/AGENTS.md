@@ -23,7 +23,8 @@ see, the retired flows, recording a run); this file is what to know before touch
 - A **schema**, not a database: `collega_e2e` inside `DATABASE_URL` (read from the root `.env`,
   which `pnpm dev` writes), so `public` is untouched. `COLLEGA_E2E_DATABASE_URL` replaces the whole
   URL; it must carry `?schema=collega_e2e`.
-- Global setup refuses any other schema and any non-local host. Don't loosen that.
+- `e2eDatabaseUrl()` refuses any other schema and any non-local host, so the config stops before any
+  server starts, and global setup checks again before it drops. Don't loosen that.
 - Every run starts from the seed. Specs may change data, and a later spec in the same run sees it.
 
 ## Ports
