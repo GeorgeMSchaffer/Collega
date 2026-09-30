@@ -1,6 +1,7 @@
 import { Kbd } from '@collega/design-system'
 import Link from 'next/link'
 import { LoginForm } from '@/components/auth/login-form'
+import { SessionEndedSignal } from '@/components/auth/session-ended-signal'
 import { AuthPitch } from '@/components/auth-pitch'
 
 export const metadata = { title: 'Sign in · Collega' }
@@ -57,6 +58,9 @@ export default async function LoginPage({
           </p>
 
           <LoginForm expired={expired} registered={registered} passwordChanged={passwordChanged} />
+          <SessionEndedSignal
+            notice={passwordChanged ? 'passwordChanged' : expired ? 'expired' : null}
+          />
 
           <p className="mt-4 text-sm text-muted-foreground">
             Have an invite code? <Link href="/register">Create an account</Link>.
