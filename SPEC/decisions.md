@@ -28,10 +28,11 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-09-29 | Board lanes reorder with left / right buttons, not header drag | active | full below |
 | 2026-09-29 | Contracts and wording written from the code | active | full below |
 | 2026-09-29 | Removing a lane moves its ideas | active | full below |
 | 2026-09-29 | The test harnesses reuse sessions; the auth rate limits stay | active | full below |
-| 2026-09-29 | Spec contradictions resolved | active | full below |
+| 2026-09-29 | Spec contradictions resolved | superseded in part | full below |
 | 2026-09-28 | The Idea Field Option contract follows the code | active | full below |
 | 2026-09-28 | The v2 corpus format, as built | active | full below |
 | 2026-09-28 | The prompt-eval runner's provisional limits stand for the first baseline | active | full below |
@@ -41,7 +42,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-28 | The prompt-eval runner's open questions are answered | active | full below |
 | 2026-09-28 | The prompt-eval runner: what existing decisions already settle | superseded in part | full below |
 | 2026-09-28 | Starting a sprint, a single-Issue read, the Roadmap's sprint rows, and tag audit events | active | full below |
-| 2026-09-28 | The comp R iteration's open questions are answered | active | full below |
+| 2026-09-28 | The comp R iteration's open questions are answered | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | The S0.2 schema freeze is amended a fourth time, for tag colours | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | Graphite replaces Notte as the dark theme | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | The next comp R iteration is adopted: denser forms, Sprint board, Roadmap, tag colours and Settings → Tags | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
@@ -94,6 +95,35 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-09-29 — Board lanes reorder with left / right buttons, not header drag
+
+**An implementation record, not a user decision** (slice 130), recording where the build departs
+from `20-feature-client-ui.md` "Drag-and-Drop: Reordering Columns" and its acceptance criterion
+"Column drag (SiteAdmin/OrgAdmin only) saves immediately on drop; reverts on failure".
+
+- **Lanes move with left / right buttons on the lane header**, matching the arrows that already
+  move a card one lane over. They are keyboard-reachable with no new shortcut (answer 10 of "The
+  comp R iteration's open questions are answered" rules shortcuts out). **Header drag is not
+  built**; the spec's drag wording (rule 1, "Saves immediately on drop", the acceptance criterion)
+  stays as written and describes a control that does not exist yet.
+- **The acceptance criterion is met in intent:** the new order shows at once, each press sends one
+  `POST /boards/{boardId}/swimlanes/reorder` naming every lane, and a refusal puts the lanes back
+  with the API's message above them. After a move, focus stays on the pressed arrow and a polite
+  live region announces the lane's new position.
+- **Who sees them.** An Org Admin, and a Site Admin through View As. They are **hidden** for other
+  roles, under the Denied rule's per-row exception (`20-feature-client-ui.md` "Denied is shown,
+  not hidden"): the board page's *Edit board* is still shown, disabled with its reason, so the
+  capability is announced once at page level.
+- **On an archived board** the arrows are shown `aria-disabled`, described by a visible line saying
+  the lanes keep their order until the board is unarchived. The lanes at either end are
+  `aria-disabled` rather than `disabled` for the same reason: the pressed button keeps its focus.
+
+This **supersedes in part** "Spec contradictions resolved" item 8's "`apps/web` does not call the
+reorder route yet: column drag is unbuilt" — the route has a web caller now; the drag is still
+unbuilt. The route itself, item 8's actual decision, stands.
 
 ---
 
@@ -237,6 +267,8 @@ Where a spec keeps history the old text stays, marked superseded; elsewhere it w
 8. **Columns reorder with `POST /boards/{boardId}/swimlanes/reorder`**, not the nonexistent
    `PUT /boards/{boardId}/statuses/{statusId}` that `20-feature-client-ui.md` named. `apps/web`
    does not call the reorder route yet: column drag is unbuilt.
+   *Superseded in part 2026-09-29 by "Board lanes reorder with left / right buttons, not header
+   drag": `apps/web` calls the reorder route from lane-header buttons; column drag is still unbuilt.*
 9. **An idea's details open in the drawer at `/ideas?idea={id}`**, not a `/ideas/{id}/edit` route
    (`20-feature-client-ui-revisions.md`).
 10. **Idea Type options carry a colour and icon** (Fields rule 9); the ideas spec's decision-table
@@ -431,45 +463,6 @@ already approved; everything else in that spec is marked *(pending answer)* unti
   with the tag's id, its old and new name and the number of ideas affected. The ideas are not
   touched: no per-idea events, and their `updatedAtUtc` stays. This replaces the adoption draft's
   "no audit event" for tags (`20-feature-ideas-and-engagement.md` rule 15, `30-Contracts.md`).
-
----
-
-## 2026-09-28 — The comp R iteration's open questions are answered
-
-**Decided by the user**, answering the ten questions left open by the adoption entry below, plus the
-order of work. Each answer is written into the spec where it applies, and the *(pending answer)*
-markers are gone.
-
-1. **Outcomes: the screen now, the backend later.** Sprint 11 restructures the Roadmap against the
-   data that exists — the Weeks / Months / Quarters axis, the TODAY rule, the organization's sprints
-   as rows, and an empty state where outcomes will go, with *Add New Outcome* disabled and its
-   reason given. Slice 2's backend (the `outcomes` table with its colour, `ideas.outcome_id`, the
-   routes and the roadmap read) is a gap for a later sprint, with its own schema amendment; the
-   fourth amendment covers `tags.color` only. Chosen over building Slice 2 now and over deferring
-   the whole Roadmap.
-2. **Bug Triage exception granted for Sprint 11, on one condition:** slice 106 also fixes the
-   `db:seed` `P2002` on `board_swimlanes` item, since it changes the seed anyway. The other four
-   `TODO` items stay queued.
-3. **Issue keys are left out of every screen for now**, and decided separately.
-4. **Colours are the palette plus a custom colour.** The picker offers ten swatches and a Custom
-   input; the API accepts any `#RRGGBB`. Because a custom colour can be anything, a chip's text
-   colour is computed per theme to clear 4.5:1 rather than fixed (`20-feature-client-ui.md` "Tag
-   colours and the effort bar"), and a test proves it over the palette and the extreme colours.
-   Outcome colours follow when Outcomes are built, with their bar label's contrast computed too.
-5. **Settings → Tags is Org Admins' only**, read-only for a Site Admin; members do not see it. The
-   tag catalog read stays open to members, because the Ideas Tags filter every role uses needs the
-   full set (`30-Contracts.md` says why).
-6. **The effort bar is on idea cards and rows too**, whenever an effort is set; idea list items carry
-   `effort`.
-7. **An Issue opens in the drawer** from the Sprint board, the Backlog and the Roadmap, with its
-   delivery facts — status selector, effort, sprint, outcome, provenance and tasks.
-8. **Plan next sprint opens an Add New Sprint form in the drawer** (name, goal, dates, owner) on the
-   existing `POST /organizations/{orgId}/sprints`.
-9. **The Roadmap's window is fixed and anchored on today:** Weeks shows 16 weeks from two weeks back,
-   Months 7 months from this month, Quarters 4 quarters from this quarter; no panning.
-10. **No keyboard shortcuts anywhere:** no *Ctrl ↵* save, no zoom keys, no key-hint chips. Escape
-    still closes the drawer and the dialogs.
-11. **Order of work:** Sprint 11 first, then the prompt-eval runner, then idea assistant v2.
 
 ## Earlier decisions
 
