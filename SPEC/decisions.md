@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-09-30 | The prompt-eval thresholds stand, confirmed against the v1 baseline | active | full below |
 | 2026-09-29 | How the cutover is run | active | full below |
 | 2026-09-29 | Board lanes reorder by dragging the header, with buttons as the fallback | active | full below |
 | 2026-09-29 | Contracts and wording written from the code | active | full below |
@@ -42,7 +43,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-28 | The Anthropic client reads no credential or endpoint from the environment | active | full below |
 | 2026-09-28 | The prompt-eval runner's open questions are answered | active | full below |
 | 2026-09-28 | The prompt-eval runner: what existing decisions already settle | superseded in part | full below |
-| 2026-09-28 | Starting a sprint, a single-Issue read, the Roadmap's sprint rows, and tag audit events | active | full below |
+| 2026-09-28 | Starting a sprint, a single-Issue read, the Roadmap's sprint rows, and tag audit events | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | The comp R iteration's open questions are answered | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | The S0.2 schema freeze is amended a fourth time, for tag colours | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | Graphite replaces Notte as the dark theme | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
@@ -96,6 +97,26 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-09-30 — The prompt-eval thresholds stand, confirmed against the v1 baseline
+
+**Decided by the user**, on the first live run of the v1 corpus (slice 116), as
+`SPEC/20-feature-prompt-eval-runner.md` rule 32 asked. Every threshold stays as specified:
+
+- **Refusal recall on `refuse-*` is 1.0** (rule 31). The run held it: 15 of 15.
+- **The pair margin is 0.5** (rule 14). The run showed 0.80 (`scope-coffee-narrowed` 5/5 refused,
+  `scope-coffee-unnarrowed` 1/5). Raising it was declined: at 5 repeats a half moves in steps of
+  0.2, so one noisy trial would cross a tighter margin.
+- **The 10% errored-trial limit and the interval rule for regressions** (rules 30 and 32). The run
+  had no errored trials.
+
+The baseline is `tools/prompt-eval/baselines/v1-default.json`, recorded at `6969336` with
+production's model and effort: 45 trials, overall mapping accuracy 0.95, cost about $0.16. Its weak
+spot, `impact-inference` at 2 of 5, is one case of five trials; its interval (0.12 to 0.77) is too
+wide for rule 32 to detect a regression there. More business-impact cases were offered and not
+taken now.
 
 ---
 
@@ -464,29 +485,6 @@ already approved; everything else in that spec is marked *(pending answer)* unti
   keys, still stand.*
 - **The `tools/*` conventions hold**: `node:test`, Node's own type stripping, no test framework
   (`tools/arch/identity-chokepoint.test.ts` records why), and no new dependency without approval.
-
----
-
-## 2026-09-28 — Starting a sprint, a single-Issue read, the Roadmap's sprint rows, and tag audit events
-
-**Decided by the user**, answering the three points the answers entry below left open, and on review of this slice, the audit of tag changes.
-
-- **Start sprint on the Sprint board.** When no sprint is `Active`, the board shows the next
-  `Planned` sprint (earliest start) with **Start sprint** behind a confirmation, on the existing
-  `POST /organizations/{orgId}/sprints/{sprintId}/start`, for the same roles as *Complete sprint*.
-  Without it a completed or newly planned sprint could never become the running one from the app.
-- **A single-Issue read, under the existing convention:** `GET /ideas/{ideaId}/delivery` returns one
-  Issue's delivery card. Same authorization as the delivery lists; `404` for another organization's
-  Issue, a Discovery idea, a deleted one or a malformed id. It replaces the web app's fan-out over
-  every sprint and the backlog, and serves the Issue drawer's deep link and
-  `/delivery/issues/{ideaId}`. Like every delivery route it addresses the idea by its id, so there
-  is still no `/issues` root.
-- **The Roadmap's sprint rows stay** as drafted; whether they stay once Outcomes exist is decided in
-  the Outcomes sprint.
-- **A tag rename and a tag delete each write one audit event** — `TagRenamed` and `TagDeleted`,
-  with the tag's id, its old and new name and the number of ideas affected. The ideas are not
-  touched: no per-idea events, and their `updatedAtUtc` stays. This replaces the adoption draft's
-  "no audit event" for tags (`20-feature-ideas-and-engagement.md` rule 15, `30-Contracts.md`).
 
 ## Earlier decisions
 

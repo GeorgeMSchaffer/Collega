@@ -2,15 +2,16 @@
 
 > **At a glance** (added 2026-09-28; the text below wins where they differ)
 > - **Scope:** a local developer tool scoring the idea assistant (v1, and v2's gate) over `tools/prompt-eval`;
->   specified 2026-09-28 (slice 113); built in Sprint 12 (slices 114, 115, 117, 118 merged), the v1 baseline
->   (slice 116) still to run.
+>   specified 2026-09-28 (slice 113); built in Sprint 12 (slices 114–118); the v1 baseline is
+>   `tools/prompt-eval/baselines/v1-default.json` (slice 116, 2026-09-30).
 > - **Key rules:** reuses production's prompt, adapter and sanitizer, never a copy (rules 8–9); refusal is the
 >   positive class, with Wilson intervals (13); `refuse-*` recall floor 1.0 (31); exit codes 0/1/2 (30);
 >   reads only `PROMPT_EVAL_ANTHROPIC_API_KEY` (36–37); never runs in `pnpm check`, no CI (39, 41).
 > - **Contracts:** none (rule 26 saves candidates from `GET /api/v1/ai-assist/prompt`, contracts/ai-assist.md)
 > - **Decisions:** 2026-09-28 "The prompt-eval runner's open questions are answered";
 >   2026-09-28 "The prompt-eval runner's provisional limits stand for the first baseline";
->   2026-09-28 "The Anthropic client reads no credential or endpoint from the environment"
+>   2026-09-28 "The Anthropic client reads no credential or endpoint from the environment";
+>   2026-09-30 "The prompt-eval thresholds stand, confirmed against the v1 baseline"
 
 **Status:** Specified 2026-09-28 (slice 113). **Built** in Sprint 12,
 `SPEC/sprints/sprint-12-prompt-eval-runner.md`: slices 114, 115, 117 and 118 are merged; slice 116,
@@ -248,7 +249,7 @@ excluded from every metric denominator below.
     guard (rule 18) and survival of a locked field (rule 16) fail outright. Everything else is
     reported, not gated. Rule 14 (the 0.5 pair margin) and rules 30–32 (the 10% errored-trial limit
     included) are revisited with the user once the first v1 baseline (slice 116) shows the real
-    rates.
+    rates. *Revisited 2026-09-30: all stand (`SPEC/decisions.md`).*
 33. **v2 enablement** needs a v2 run that passes 31 and 32 against the v1 baseline for the cases both
     share, plus the v2-only figures reported, attached to the slice that enables v2. The v2
     thresholds are decided with the v2 enablement, from the first v2 run.
@@ -332,7 +333,7 @@ excluded from every metric denominator below.
 - [ ] No run file, summary or log line contains the key.
 - [ ] A live run with only `ANTHROPIC_API_KEY` set refuses to start.
 - [ ] `pnpm check` runs only the hermetic self-tests; nothing in it reaches a provider.
-- [ ] A v1 baseline is committed in `tools/prompt-eval/baselines/`.
+- [x] A v1 baseline is committed in `tools/prompt-eval/baselines/`.
 - [ ] The v2 case format is specified in the corpus and scored from saved runs in the self-tests; a
       live v2 run follows when the v2 turn is built.
 
