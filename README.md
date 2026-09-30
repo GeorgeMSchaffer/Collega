@@ -318,7 +318,9 @@ Both projects set an `ignoreCommand` that asks Turborepo whether the app is affe
 It reasons correctly on source changes — a commit touching only `packages/application` genuinely
 does not affect `apps/web`, which cannot import it. The gap is **environment-variable changes**: they
 leave no diff, so the ignore step sees an unaffected app and cancels a build you actually wanted.
-Push an empty commit to force one.
+To force one, push a commit that touches a file under `apps/api/` (for the API) or `apps/web/` (for
+the web app) — any file, a comment or markdown will do. An empty commit or a Redeploy touches no
+path and is cancelled the same way; `apps/web/AGENTS.md` has the detail.
 
 ### CI
 
