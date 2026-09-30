@@ -509,3 +509,49 @@ export type WireViewAsCandidate = {
   organizationName: string
   selectable: boolean
 }
+
+/** `GET /organizations/{id}/ai-assist/settings`. Never carries key material. */
+export type WireAiAssistSettings = {
+  aiAssistAvailable: boolean
+  scopeStatement: string | null
+}
+
+/** `GET /ai-assist/prompt` — the active template, its two redirects, and the history. */
+export type WireAiPromptSettings = {
+  body: string
+  outOfScopeRedirect: string
+  conversationClosedRedirect: string
+  version: number | null
+  isBuiltInDefault: boolean
+  versions: readonly {
+    version: number
+    createdAtUtc: string
+    createdByUserId: string | null
+    createdByDisplayName: string | null
+    isActive: boolean
+  }[]
+}
+
+export type WireAiUsageSummary = {
+  organizationId: string
+  organizationName: string
+  calls: number
+  inputTokens: number
+  outputTokens: number
+  cacheReadInputTokens: number
+  cacheCreationInputTokens: number
+  estimatedCost: number
+}
+
+/**
+ * `GET /ai-assist/usage` and `GET /organizations/{id}/ai-assist/usage`. The single-organization
+ * report answers the same envelope with at most one row, and the two ceiling fields null.
+ */
+export type WireAiUsageReport = {
+  fromUtc: string
+  toUtc: string
+  organizations: readonly WireAiUsageSummary[]
+  dailyTokenLimit: number | null
+  tokensUsedToday: number | null
+  totals: Omit<WireAiUsageSummary, 'organizationId' | 'organizationName'>
+}

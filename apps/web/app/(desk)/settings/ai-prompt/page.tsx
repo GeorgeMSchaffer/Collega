@@ -13,7 +13,7 @@ import {
 } from '@collega/design-system'
 import { InertForm } from '@/components/common/inert-form'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
-import { getAiPrompt, SYSTEM_PROMPT_MAX } from '@/lib/data'
+import { AI_REDIRECT_MAX, getAiPrompt, SYSTEM_PROMPT_MAX } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 
 export const metadata = { title: 'AI Prompt · Collega' }
@@ -29,7 +29,8 @@ export default async function AiPromptPage() {
   // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
   await requireCurrentUser()
 
-  const { prompt, probes, versions } = await getAiPrompt()
+  const prompt = await getAiPrompt()
+  const versions = prompt.versions
 
   return (
     <SettingsPage
@@ -58,8 +59,8 @@ export default async function AiPromptPage() {
           <CardContent>
             <InertForm>
               <Field htmlFor="systemPrompt" label="System prompt">
-                {/* Counted from the fixture rather than from the live value: a counter that tracks
-                    typing needs 'use client', and nothing else on this screen is interactive. */}
+                {/* Counted from the published text rather than from the live value: a counter that
+                    tracks typing needs 'use client', and nothing else on this screen is interactive. */}
                 <Textarea
                   id="systemPrompt"
                   name="systemPrompt"
@@ -75,11 +76,23 @@ export default async function AiPromptPage() {
               </Field>
 
               <div className="mt-4 grid gap-x-4 sm:grid-cols-2">
-                <Field htmlFor="opening" label="Opening message">
-                  <Input id="opening" name="opening" type="text" defaultValue={prompt.opening} />
+                <Field htmlFor="outOfScopeRedirect" label="Refusal message">
+                  <Input
+                    id="outOfScopeRedirect"
+                    name="outOfScopeRedirect"
+                    type="text"
+                    maxLength={AI_REDIRECT_MAX}
+                    defaultValue={prompt.outOfScopeRedirect}
+                  />
                 </Field>
-                <Field htmlFor="refusal" label="Refusal message">
-                  <Input id="refusal" name="refusal" type="text" defaultValue={prompt.refusal} />
+                <Field htmlFor="conversationClosedRedirect" label="Conversation-closed message">
+                  <Input
+                    id="conversationClosedRedirect"
+                    name="conversationClosedRedirect"
+                    type="text"
+                    maxLength={AI_REDIRECT_MAX}
+                    defaultValue={prompt.conversationClosedRedirect}
+                  />
                 </Field>
               </div>
 
@@ -99,35 +112,16 @@ export default async function AiPromptPage() {
           <div>
             <h2 className="m-0 text-base font-semibold">Safety probes</h2>
             <p className="m-0 mt-1 max-w-prose text-sm text-muted-foreground">
-              Three fixed requests run against the draft above. The first two must be refused; the
-              third must be allowed. This is a smoke test, not a guarantee &mdash; it catches
-              instructions that have stopped refusing at all, not every way one can go wrong.
+              Three fixed requests &mdash; an injection, a fence-closing attempt and an off-topic
+              question &mdash; run against the draft above, and each must be refused. This is a
+              smoke test, not a guarantee &mdash; it catches instructions that have stopped refusing
+              at all, not every way one can go wrong.
             </p>
           </div>
-          <AdminTable summary={`${probes.length} probes ran against the draft above.`}>
-            <thead>
-              <tr className="border-b bg-muted/40">
-                <Th>Request</Th>
-                <Th className="w-32">Outcome</Th>
-                <Th className="w-40">Verdict</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {probes.map((probe) => (
-                <tr key={probe.request} className="border-b last:border-0">
-                  <td className="px-4 py-2.5">{probe.request}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{probe.outcome}</td>
-                  <td className="px-4 py-2.5">
-                    {probe.asExpected ? (
-                      <Badge variant="success">as expected</Badge>
-                    ) : (
-                      <Badge variant="destructive">unexpected</Badge>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </AdminTable>
+          <p className="m-0 rounded-lg border border-dashed bg-card px-4 py-3 text-sm text-muted-foreground">
+            Not run against this draft yet. Run the safety probes to see how each request is
+            answered.
+          </p>
         </section>
 
         <section className="flex flex-col gap-3">
@@ -138,43 +132,50 @@ export default async function AiPromptPage() {
               not publish on its own.
             </p>
           </div>
-          <AdminTable summary={`${versions.length} published versions.`}>
-            <thead>
-              <tr className="border-b bg-muted/40">
-                <Th className="w-32">Version</Th>
-                <Th className="w-64">Published</Th>
-                <Th>Author</Th>
-                <Th className="w-28">
-                  <span className="sr-only">Actions</span>
-                </Th>
-              </tr>
-            </thead>
-            <tbody>
-              {versions.map((version) => (
-                <tr key={version.version} className="border-b last:border-0">
-                  <td className="px-4 py-2.5">
-                    <span className="flex items-center gap-2">
-                      <b className="font-medium">v{version.version}</b>
-                      {version.active ? <Badge variant="success">active</Badge> : null}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{version.publishedAt}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{version.author}</td>
-                  <td className="px-4 py-2.5 text-right">
-                    {version.active ? null : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        aria-label={`Restore version ${version.version}`}
-                      >
-                        Restore
-                      </Button>
-                    )}
-                  </td>
+          {versions.length === 0 ? (
+            <p className="m-0 rounded-lg border border-dashed bg-card px-4 py-3 text-sm text-muted-foreground">
+              Nothing published yet. Every organization&rsquo;s assistant runs under the built-in
+              default until the first version is published.
+            </p>
+          ) : (
+            <AdminTable summary={`${versions.length} published versions.`}>
+              <thead>
+                <tr className="border-b bg-muted/40">
+                  <Th className="w-32">Version</Th>
+                  <Th className="w-64">Published</Th>
+                  <Th>Author</Th>
+                  <Th className="w-28">
+                    <span className="sr-only">Actions</span>
+                  </Th>
                 </tr>
-              ))}
-            </tbody>
-          </AdminTable>
+              </thead>
+              <tbody>
+                {versions.map((version) => (
+                  <tr key={version.version} className="border-b last:border-0">
+                    <td className="px-4 py-2.5">
+                      <span className="flex items-center gap-2">
+                        <b className="font-medium">v{version.version}</b>
+                        {version.active ? <Badge variant="success">active</Badge> : null}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 text-muted-foreground">{version.publishedAt}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground">{version.author}</td>
+                    <td className="px-4 py-2.5 text-right">
+                      {version.active ? null : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          aria-label={`Restore version ${version.version}`}
+                        >
+                          Restore
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </AdminTable>
+          )}
         </section>
       </div>
     </SettingsPage>

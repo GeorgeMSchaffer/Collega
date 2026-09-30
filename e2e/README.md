@@ -41,7 +41,7 @@ Until F2 this said the opposite, and the paragraph below is what it said. It is 
 explains why the suite had one spec:
 
 > `playwright.config.ts` starts `apps/web` and nothing else. That used to cost nothing, because
-> every screen answered from `apps/web/lib/mock.ts`. It is now the single thing blocking product
+> every screen answered from `apps/web/lib/mock.ts` (deleted since, in slice 132). It is now the single thing blocking product
 > coverage.
 
 These four screens are wired to the real API and `fetch` `apps/api` on render — **they now work
@@ -59,12 +59,13 @@ fails to render at all, suspect the API server rather than the assertion — its
 and `global-setup.ts`'s migrate and seed run before any test, so a database problem surfaces there
 rather than in a test.
 
-`apps/web/lib/data/index.ts` is the seam and names exactly which readers have been converted; check
-it before assuming a screen is fixture-backed. **The AI-assist admin screens are the exception that
-remains** — `getAiAssist`, `getAiPrompt`, `getUsage` and `getUsageForOrganization` in
-`lib/data/admin.ts` still answer from `lib/mock.ts`, so nothing they show persists and a flow that
-writes through them cannot pass. The outcome readers answer empty by design (Slice 2 has no
-backend), which is not the same thing and is not a gap to cover.
+`apps/web/lib/data/index.ts` is the seam, and every reader in it calls the API: `apps/web/lib/mock.ts`
+was deleted in slice 132, so no screen is fixture-backed. **The AI-assist admin screens read but do
+not write** — `getAiAssist`, `getAiPrompt`, `getUsage` and `getUsageForOrganization` in
+`lib/data/admin.ts` show the real settings and usage, but the scope-statement and prompt forms are
+inert (`components/common/inert-form.tsx`), so a flow that saves through them cannot pass yet. The
+outcome readers answer empty by design (Slice 2 has no backend), which is not the same thing and is
+not a gap to cover.
 
 `tests/signs-in.spec.ts` is the spec that proves all of the above is actually wired: it could not
 have passed before F2, because signing in needs the API, the database and the seed at once. If the

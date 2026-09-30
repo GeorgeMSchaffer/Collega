@@ -120,17 +120,17 @@ Two consequences worth expecting:
   [`scenario.ts`](packages/infrastructure/src/demo-seed/modules/scenario.ts), which is in this
   repository. A database holding that data must never be one that matters.
 
-### What is real, and what is still a fixture
+### What is real, and what is not yet
 
 Nearly everything reads the API. Sign-in, boards and board detail, the ideas list and the idea
 inspector, delivery, and the settings screens are all live against the real database, including the
 writes: author an idea, move a card between lanes, toggle an upvote, promote an idea to an issue.
 
-Two things are not:
+Two things are not finished:
 
 | | |
 |---|---|
-| The **AI-assist admin screens** — prompt editor, probes, usage | Fixtures, from [`apps/web/lib/mock.ts`](apps/web/lib/mock.ts). The API side exists; the web side is not wired to it yet. |
+| The **AI-assist admin screens** — prompt editor, probes, usage | Read from the API since slice 132, but their forms are inert: nothing is saved from them yet. |
 | **Outcomes and the roadmap** | Empty, deliberately. They are Slice 2 of Issues-and-Delivery: no table, no entity, no route. [`SPEC/30-Contracts.md`](SPEC/30-Contracts.md) says so outright, and `apps/web/lib/data/delivery.ts` explains why empty beats invented. |
 
 Which of the two a screen gets is decided in [`apps/web/lib/data/`](apps/web/lib/data) and nowhere

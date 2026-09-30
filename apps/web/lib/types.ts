@@ -12,9 +12,6 @@
  * on the list item and the board separately resolves colour from its swimlanes, while a card only
  * ever needed `statusId`. Adapting once, at the boundary, keeps that reconciliation in one file
  * instead of in every component.
- *
- * `lib/mock.ts` is typed against this module too, so a fixture-backed reader and a real one return
- * the same thing and a screen cannot tell which it got.
  */
 
 export type Role = 'SiteAdmin' | 'OrgAdmin' | 'User' | 'ReadOnly'
@@ -603,3 +600,108 @@ export type MemberOption = { id: string; name: string }
  * `lib/data/delivery.ts` for why those readers answer empty rather than inventing rows.
  */
 export type Outcome = { id: string; name: string; color: string; quarter: string }
+
+/**
+ * An organization's assistant settings, as `/settings/ai-assist` renders them.
+ *
+ * No refusal wording: the fixed refusal is part of the deployment's prompt (rule 34), which only a
+ * Site Admin may read, and the organization's settings route does not carry it.
+ */
+export type AiAssistSettings = {
+  scopeStatement: string
+  available: boolean
+}
+
+/** One published version of the deployment's system prompt, newest first. */
+export type PromptVersion = {
+  version: number
+  publishedAt: string
+  author: string
+  active: boolean
+}
+
+/**
+ * The deployment's active system prompt and its two fixed redirects (rules 8, 10 and 34), plus the
+ * version history. `version` is null while the built-in default is in force.
+ */
+export type AiPrompt = {
+  text: string
+  outOfScopeRedirect: string
+  conversationClosedRedirect: string
+  version: number | null
+  isBuiltInDefault: boolean
+  versions: PromptVersion[]
+}
+
+/**
+ * One organization's AI assist consumption for a window (rules 28a-28e). Counts only.
+ *
+ * `cachedTokens` is both cache kinds together, and `totalTokens` is all four counts — the same sum
+ * the daily ceiling is measured in, so a row and the budget bar speak the same unit.
+ */
+export type UsageRow = {
+  organizationId: string
+  organizationName: string
+  conversations: number
+  inputTokens: number
+  outputTokens: number
+  cachedTokens: number
+  totalTokens: number
+  estimatedCost: number
+}
+
+/** Every organization's usage today, with the deployment's daily ceiling beside it. */
+export type Usage = {
+  rows: UsageRow[]
+  conversations: number
+  tokens: number
+  estimatedCost: number
+  dailyTokenLimit: number
+  tokensUsedToday: number
+}
+
+/**
+ * One KPI tile on Home. `value` is null when the tile's figure cannot be computed from what the API
+ * serves; the tile still renders its definition, so the reader learns what will be counted there.
+ */
+export type HomeKpi = {
+  label: string
+  value: number | null
+  detail: string | null
+  definition: string
+  href: string | null
+}
+
+/** A row of Home's attention queue. */
+export type AttentionItem = {
+  id: string
+  title: string
+  boardName: string | null
+  ideaType: string
+  status: Status
+  priority: Priority
+  createdAtUtc: string
+}
+
+/** Home for a member of an organization — Org Admin, User or Read Only. */
+export type OrganizationHome = {
+  counts: { ideas: number; boards: number; issues: number }
+  statuses: Status[]
+  kpis: HomeKpi[]
+  attention: AttentionItem[]
+}
+
+/** A board on the Site Admin's roll-up, with the organization that owns it. */
+export type PlatformBoard = {
+  id: string
+  name: string
+  organizationName: string
+  laneCount: number
+}
+
+/** Home for a Site Admin: the platform roll-up. */
+export type PlatformHome = {
+  counts: { organizations: number; ideas: number; issues: number }
+  kpis: HomeKpi[]
+  boards: PlatformBoard[]
+}

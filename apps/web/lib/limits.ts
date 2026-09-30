@@ -48,3 +48,20 @@ export const ORGANIZATION_DESCRIPTION_MAX_LENGTH = 1000
 
 /** `packages/domain/src/users/user.ts` — the person-name cap the API applies to both name fields. */
 export const PERSON_NAME_MAX_LENGTH = 100
+
+/**
+ * `packages/domain/src/boards/board.ts` — `MIN_SWIMLANES`.
+ *
+ * Below two there is nothing to move a card *between*, so the board stops being a board. The picker
+ * disables Remove at the floor rather than hiding it, and says why.
+ */
+export const SWIMLANE_FLOOR = 2
+
+/** `packages/domain/src/organizations/organization.ts` — `ORGANIZATION_AI_SCOPE_STATEMENT_MAX_LENGTH`. */
+export const SCOPE_STATEMENT_MAX = 500
+
+/** `packages/domain/src/ai/ai-prompt-version.ts` — `AI_PROMPT_BODY_MAX_LENGTH`. */
+export const SYSTEM_PROMPT_MAX = 20000
+
+/** `packages/domain/src/ai/ai-prompt-version.ts` — `AI_PROMPT_REDIRECT_MAX_LENGTH`. */
+export const AI_REDIRECT_MAX = 500

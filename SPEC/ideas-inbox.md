@@ -155,6 +155,21 @@ Grouped by one thesis: *each is about the board still making sense to someone wh
 
 **The share link is the one proposal with a genuine security surface**, and the comp says so itself: an unauthenticated tokenized URL is a new way for organization-scoped data to leave the organization, and *the role model has no concept of "not a member."* It is deliberately **not** the Read Only role — Read Only is a member with an account; a share link is for someone who will never have one. Four choices in it are unconfirmed by design: token-only credential unless a passphrase is set, the 30-day default, people/comments defaulting off, and Org-Admin-only creation. This one needs a security decision before a spec, not after.
 
+## Status categories — mark which status means Complete or In Review
+
+> Raised 2026-09-30 by slice 132. **User decision 2026-09-30:** Home's *Open ideas* and *Awaiting
+> review* tiles stay "not tracked yet" for now; this is the later fix.
+
+Statuses are organization-defined and their names are free text, so nothing tells the client which
+one means Complete and which means In Review. Home (comp Q `s-home`) needs exactly that to count
+open ideas and ideas awaiting review. Guessing from the default names breaks on the first rename,
+and guessing from lane position would be a business rule written in the client.
+
+The idea: a category on each status (for example `Open`, `InReview`, `Complete`), set by an Org
+Admin, defaulted for the seeded five, and served on the statuses routes — a schema change. A
+cheaper partial alternative is a server-side `open` filter on the idea lists, defined as not in a
+board's last lane; it answers *Open ideas* but not *Awaiting review*.
+
 ## Portals — seatless employee submissions via public links
 
 *Refined 2026-09-28 in an ideation session. Comp: `mockups/comp-s-portal-form.html` (branded-shell mode, Terrazzo).*
