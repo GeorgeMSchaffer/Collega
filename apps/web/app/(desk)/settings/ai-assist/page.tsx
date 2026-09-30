@@ -96,8 +96,8 @@ async function ScopeStatement({ org }: { org: string }) {
         <CardContent>
           <InertForm>
             <Field htmlFor="scopeStatement" label={`What ${org} wants ideas about`}>
-              {/* Counted from the fixture rather than from the live value: a counter that tracks
-                  typing needs 'use client', and nothing else on this screen is interactive. */}
+              {/* Counted from the saved statement rather than from the live value: a counter that
+                  tracks typing needs 'use client', and nothing else on this screen is interactive. */}
               <Textarea
                 id="scopeStatement"
                 name="scopeStatement"
@@ -125,16 +125,11 @@ async function ScopeStatement({ org }: { org: string }) {
               ))}
             </div>
 
-            <h4 className="m-0 mt-6 text-sm font-semibold">What a refusal sounds like</h4>
-            <div className="mt-2 rounded-lg bg-muted p-4">
-              <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                Assistant
-              </div>
-              <p className="m-0 mt-1.5 text-sm">{aiAssist.refusal}</p>
-            </div>
-            <p className="m-0 mt-2 max-w-prose text-sm text-muted-foreground">
-              The wording is fixed. The statement changes <i>when</i> it is used, never what it says
-              &mdash; so a scope mistake cannot turn into a rude reply.
+            <h4 className="m-0 mt-6 text-sm font-semibold">When a request is off-topic</h4>
+            <p className="m-0 mt-1 max-w-prose text-sm text-muted-foreground">
+              The assistant declines with the deployment&rsquo;s fixed refusal message and offers to
+              help with an idea instead. The statement changes <i>when</i> that message is used,
+              never what it says &mdash; so a scope mistake cannot turn into a rude reply.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-2">
