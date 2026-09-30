@@ -10,20 +10,19 @@ is the whole thing — nothing needs to be running first.
 
 ## What is here, and what is not
 
-The harness, its two-assertion self-check (`tests/harness.spec.ts`), and the product specs F2 and
-later slices added beside it in `tests/` — sign-in, the demo path, a user journey, organization and
-user creation, tags and delivery.
+Product flows on the TypeScript stack, 38 tests (slice **F2**, closed 2026-09-29): signing in,
+creating an organization and a user, the demo path, a multi-step journey, delivery, and tags —
+`tests/*.spec.ts` — plus `tests/auth.setup.ts`, which signs each seeded role in once.
 
-This suite used to drive the Blazor client at `:5098` against the .NET API at `:5103`. That stack is
-frozen (`SPEC/decisions.md` 2026-09-06) and its seven specs went with it — they were written against
+This suite used to drive the Blazor client at `:5098` against the .NET API at `:5103`. That stack was
+deleted (slice F6, 2026-09-13) and its seven specs went with it — they were written against
 FluentUI's shadow roots and a `CollegaE2E` database seeded on API boot, and neither exists in the
-TypeScript stack. Rewriting them for the Next client is slice **F2**, and QA writes them, per
-`CLAUDE.md`. Nothing in `SPEC/` holds their flow list, so it is kept at the bottom of this file —
-F2 starts from a list of what was covered rather than from the deleted specs.
+TypeScript stack. Their flow list is kept at the bottom of this file as a record of what they
+covered.
 
-What replaced them, `tests/harness.spec.ts`, asserts only that a route renders server-side and that
-the route gate redirects an anonymous visitor to `/login`. If it ever needs a fixture or a login, it
-has stopped being a harness check and belongs in a spec of its own.
+`tests/harness.spec.ts` asserts only that a route renders server-side and that the route gate
+redirects an anonymous visitor to `/login`. If it ever needs a fixture or a login, it has stopped
+being a harness check and belongs in a spec of its own.
 
 ## What the tests can and cannot see
 
@@ -126,7 +125,7 @@ pgrep -f next-server | xargs -r kill -9
 
 ## Flows the retired suite covered
 
-Kept for F2. These ran green against the Blazor stack; they are a starting list, not a
+Kept as F2's starting list. These ran green against the Blazor stack; they are a record, not a
 specification — where one disagrees with `SPEC/`, the spec wins.
 
 | # | Flow |

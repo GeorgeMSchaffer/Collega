@@ -101,6 +101,17 @@ Republish an earlier version.
 - **Errors:** `401` · `403` · `404` no such version.
 - **Rules:** publishes a **copy** of `{version}` as a new version rather than reactivating the old row, so history stays append-only and the restore is itself visible in it.
 
+### `POST /api/v1/ai-assist/prompt/reset`
+Return the deployment to the built-in default template. *Added 2026-09-29 from the code (slice 134): the route was served and recorded by the golden corpus (`aiassist.prompt.reset.*`) but never documented here.*
+
+- **Roles:** Site Admin only, as for the `GET`.
+- **Request:** —
+- **Response:** `200`, same shape as the `GET` — with no version active, the built-in default with `version` of `null` and `isBuiltInDefault` true.
+- **Errors:** `401` unauthenticated · `403` caller is not a Site Admin
+- **Rules:**
+  - deactivates every version rather than deleting any, so the history keeps the record of what ran and a later restore can bring any of them back
+  - writes an `AiPromptResetToDefault` audit event
+
 ### `POST /api/v1/ai-assist/prompt/probe`
 Run advisory safety probes against a draft template before publishing (rule 37).
 

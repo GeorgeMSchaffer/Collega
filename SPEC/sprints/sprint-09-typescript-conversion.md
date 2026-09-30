@@ -50,9 +50,9 @@ throughput.
 | 0 | Foundation: monorepo, Prisma schema, kernel | **1 (serial)** | **Complete 2026-09-06** — five slices, not three: S0.1, S0.2, S0.3, plus S0.4 (typed config) and S0.5 (kernel), which the first pass missed |
 | B | Domain + Application, 7 feature partitions | 7 | **Complete — all seven merged 2026-09-06** (`41ea143`, `c29fcc1`, `13ac239`, `238e12a`, `12d9391`, `bcecddc`, `76349df`). This row said "B4-B7 open" until 2026-09-08 |
 | C | Infrastructure: repositories, integrations | 2 | **Complete — C1 `5df98cf`, C2 `f0c6797`, both 2026-09-06** |
-| D | API, mirroring B's partition | 7 | **D0-D5 merged; D6 (AI assist) and D7 (View As) owe the last 15 of the 81.** `apps/api` has 15 controllers and 85 route decorators (2026-09-12) — but 18 of those are the net-new delivery endpoints and one is health, so the count against the original target is **66 of 81**. Read it from the tree, not from here. This row said "D0 only, one controller, `FEATURE_MODULES` empty" until 2026-09-12, which was true on 2026-09-08 and four slices out of date by the time anyone read it. |
+| D | API, mirroring B's partition | 7 | **Complete — D6 and D7 merged together (`15e3c56`), closing the 81.** *Status as of 2026-09-12, kept for its warning:* **D0-D5 merged; D6 (AI assist) and D7 (View As) owe the last 15 of the 81.** `apps/api` has 15 controllers and 85 route decorators (2026-09-12) — but 18 of those are the net-new delivery endpoints and one is health, so the count against the original target is **66 of 81**. Read it from the tree, not from here. This row said "D0 only, one controller, `FEATURE_MODULES` empty" until 2026-09-12, which was true on 2026-09-08 and four slices out of date by the time anyone read it. |
 | E | Web — **E0 design system first, alone** | 6 after E0 | **Complete through E7 (`2575b4f`, 2026-09-08)** — built against `lib/mock.ts`, since no D*n* exists to call |
-| F | Validation, data migration, cutover | 3 → 1 | D complete, E complete. **F2's harness was repointed at `apps/web` 2026-09-08**; F1 and F3-F6 untouched |
+| F | Validation, data migration, cutover | 3 → 1 | **F6 done 2026-09-13; F2 and F5 closed 2026-09-29** (38/38; slice 134); F3 has nothing to transform. **F1 and F4 remain.** |
 
 D*n* does not wait for all of Wave B — it waits for **B*n***. The partitions are
 independent, so partition 3 can be in D while partition 5 is still in B.
@@ -140,4 +140,4 @@ Answered 2026-09-04, which is what unblocked Wave 0:
   stays a pure client; the cross-origin setup is accepted as the cost. This was the last
   thing gating Wave 0.
 
-Still open, and deliberately not gating: **`11` spec reconciliation**, which lands as F5.
+~~Still open, and deliberately not gating: **`11` spec reconciliation**, which lands as F5.~~ *Closed 2026-09-29 with F5 (slice 134).*
