@@ -164,7 +164,8 @@ In order. Each step says what proves it worked; stop at the first that does not 
       statuses, idea types, business impacts and an `Ideas` board; its invite code shows on the
       Organizations list. *(**Owner**)*
    5. **Create an Org Admin:** Settings → Users → New, choosing that organization and the Org Admin
-      role. Hand the temporary password over out of band. *(**Owner**)*
+      role, and set the initial password yourself — the API does not generate one. Hand it over out
+      of band; the account must change it at first sign-in. *(**Owner**)*
    6. **Register a user:** in a private window, `/register` with the invite code typed into the field
       (not in the URL). It returns to `/login` with *Your account was created*; sign in. *(anyone
       given the code)*
