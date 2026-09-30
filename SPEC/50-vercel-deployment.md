@@ -45,7 +45,7 @@ stack is never deployed.
   `SPEC/50-typescript-migration.md` §4.3 exists to preserve. Ticket `08` anticipated the cross-origin
   cost of two hosts and accepted it.
 
-| | `collega-web` | `collega-api` |
+| | `collega` | `collega-api` |
 |---|---|---|
 | Root Directory | `apps/web` | `apps/api` |
 | Framework Preset | Next.js | Nest.js |
@@ -77,7 +77,7 @@ installCommand: cd ../.. && pnpm install --frozen-lockfile
   `postinstall` is the second belt on the same braces):
 
 ```
-collega-web   cd ../.. && pnpm turbo run build --filter=@collega/web
+collega       cd ../.. && pnpm turbo run build --filter=@collega/web
 collega-api   cd ../.. && pnpm turbo run build --filter=@collega/api
               && pnpm --filter @collega/infrastructure db:migrate
               && pnpm --filter @collega/infrastructure db:bootstrap-admin
@@ -322,7 +322,7 @@ every name for local development; nothing in this table belongs in a committed f
   32 characters in production; §12 step 3 already asks for 48 bytes of base64, so this only enforces
   the handoff.
 
-### `collega-web`
+### `collega`
 
 | Variable | Environments | Required | What breaks without it |
 |---|---|---|---|
@@ -342,9 +342,9 @@ Not `NEXT_PUBLIC_` — see §4.
 
 ## 7. Previews and staging
 
-- **Production** — `main`. `collega-web` production → `collega-api` production → production
+- **Production** — `main`. `collega` production → `collega-api` production → production
   database.
-- **Preview** — every other branch, including `dev`. All previews of `collega-web` point at **one
+- **Preview** — every other branch, including `dev`. All previews of `collega` point at **one
   shared staging API**, backed by **one shared staging database**.
 
 > **Unverified as of 2026-09-14: `api.collega-ai.com` does not resolve.** A DNS lookup fails
@@ -386,7 +386,7 @@ COLLEGA_API_URL = https://collega-api-git-dev-<team-slug>.vercel.app/api/v1   (P
   where JSON was expected. The API authenticates its own callers; **turn Vercel Authentication off
   for `collega-api`**, or issue a Protection Bypass for Automation token and send it as
   `x-vercel-protection-bypass` (which would be a change to `apps/web/lib/api/client.ts`, currently
-  unwritten). Leave protection on for `collega-web` if you want previews private.
+  unwritten). Leave protection on for `collega` if you want previews private.
 
 ---
 
@@ -571,7 +571,7 @@ pnpm --filter @collega/infrastructure db:bootstrap-organization
                        │  https
                        ▼
           ┌────────────────────────┐
-          │  collega-web (Next)    │   apps/web  ·  no database
+          │  collega (Next)        │   apps/web  ·  no database
           │  session cookie on     │
           │  its own origin        │
           └───────────┬────────────┘
@@ -597,7 +597,7 @@ settled this: the .NET stack was never deployed, so there is nothing to fall bac
 there is no .NET code either. What follows is that statement made operational.
 
 - **Code rolls back instantly and by itself.** Vercel keeps every deployment; Instant Rollback
-  repoints production at the previous one in seconds, per project. Roll back `collega-web` and
+  repoints production at the previous one in seconds, per project. Roll back `collega` and
   `collega-api` **together** unless you know the pair is compatible.
 - **The database does not roll back with it.** A rollback restores code against a schema that has
   already moved. So: **every migration must be backward-compatible with the deployment before it**
