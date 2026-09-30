@@ -672,6 +672,122 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
       'detail, `tagNames` included, is still compared.',
     kind: 'extra',
   },
+  {
+    cases: [
+      'ideas.create.orgadmin',
+      'ideas.create.user',
+      'ideas.get.orgadmin',
+      'ideas.get.readonly',
+      'ideas.get.siteadmin',
+      'ideas.get.user',
+      'ideas.own-idea',
+      'ideas.update.orgadmin',
+      'ideas.update.user',
+    ],
+    path: 'body.statusId',
+    decided: '2026-09-29',
+    reason:
+      'Not a different status - a different label for the same one. The `ideas` scenario lists ' +
+      "the organization's boards before it lists its statuses, and since 2026-09-27 each board " +
+      'list item carries `laneCounts` (accepted above as `body[].laneCounts`), one entry per lane ' +
+      'with its `statusId`, in swimlane order. A GUID is labelled where it is first seen, so the ' +
+      'lane statuses are now first seen on the board list rather than on the statuses list, and ' +
+      'every later `statusId` in the scenario carries the lane label. The mask holds the relation: ' +
+      'both sides must name the same index once the two prefixes are masked, so an idea that ' +
+      'landed in the second status rather than the first still fails. The shape confines both ' +
+      'sides to those two sources, so a status id minted anywhere else is a different mismatch.',
+    shape: /^<guid@(statuses\.body|board\.body\[0\]\.laneCounts)\[\d+\]\.statusId>$/,
+    mask: /statuses\.body|board\.body\[0\]\.laneCounts/g,
+  },
+  {
+    cases: ['ideas.statuses'],
+    path: 'body[].statusId',
+    decided: '2026-09-29',
+    reason:
+      'The same labelling as `body.statusId` above, on the statuses list itself: each status is ' +
+      'first seen as a lane on the board list, so its label moves while its position does not. ' +
+      'The mask requires status N to carry the label of lane N, which is the order both lists ' +
+      'are in, so a reordered or substituted status still fails.',
+    shape: /^<guid@(statuses\.body|board\.body\[0\]\.laneCounts)\[\d+\]\.statusId>$/,
+    mask: /statuses\.body|board\.body\[0\]\.laneCounts/g,
+  },
+  {
+    cases: [
+      'aiassist.usage.org.orgadmin',
+      'aiassist.usage.org.siteadmin',
+      'aiassist.usage.platform.siteadmin',
+    ],
+    path: 'body.totals',
+    decided: '2026-09-13',
+    reason:
+      'Deliberately better (SPEC/decisions.md 2026-09-13, "The usage report returns the ' +
+      "contract's `totals`, not the frozen app's flat fields\"). Both usage reports return a " +
+      '`totals` object with the six summed fields `SPEC/contracts/ai-assist.md` specifies; the ' +
+      'recorded app returned three flat totals with no token breakdown. Accepted as the object ' +
+      'appearing, which is what `kind` says; every other recorded field, the organization rows ' +
+      'included, is still compared. Not pinned to a shape - it is an object.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'aiassist.usage.org.orgadmin',
+      'aiassist.usage.org.siteadmin',
+      'aiassist.usage.platform.siteadmin',
+    ],
+    path: 'body.totalCalls',
+    decided: '2026-09-13',
+    reason:
+      'The other half of `body.totals` above: the flat field it replaces is gone. Accepted as ' +
+      'an absence and only that, which is what `kind` says.',
+    kind: 'missing',
+  },
+  {
+    cases: [
+      'aiassist.usage.org.orgadmin',
+      'aiassist.usage.org.siteadmin',
+      'aiassist.usage.platform.siteadmin',
+    ],
+    path: 'body.totalTokens',
+    decided: '2026-09-13',
+    reason:
+      'The other half of `body.totals` above: the flat field it replaces is gone. Accepted as ' +
+      'an absence and only that, which is what `kind` says.',
+    kind: 'missing',
+  },
+  {
+    cases: [
+      'aiassist.usage.org.orgadmin',
+      'aiassist.usage.org.siteadmin',
+      'aiassist.usage.platform.siteadmin',
+    ],
+    path: 'body.totalEstimatedCost',
+    decided: '2026-09-13',
+    reason:
+      'The other half of `body.totals` above: the flat field it replaces is gone. Accepted as ' +
+      'an absence and only that, which is what `kind` says.',
+    kind: 'missing',
+  },
+  {
+    cases: ['auth.viewas.start', 'auth.viewas.start.orgadmin'],
+    path: 'body.impersonating.organizationTitle',
+    decided: '2026-09-10',
+    reason:
+      'The CurrentUserSummary field accepted above as `body.organizationTitle`, which carries the ' +
+      'full reasoning, on the summaries a View As start returns: `SPEC/contracts/view-as.md` gives ' +
+      '`impersonating` the same shape as `GET /auth/me`. Listed separately because an entry names ' +
+      'one path. Accepted as the field appearing, and only that.',
+    kind: 'extra',
+  },
+  {
+    cases: ['auth.viewas.start', 'auth.viewas.start.orgadmin'],
+    path: 'body.realUser.organizationTitle',
+    decided: '2026-09-10',
+    reason:
+      'The same field on `realUser`, which the contract also gives the `GET /auth/me` shape - ' +
+      '`null` for a Site Admin, the organization for an Org Admin. Accepted as the field ' +
+      'appearing, and only that.',
+    kind: 'extra',
+  },
 ]
 
 /** One entry as it applies to one of its cases - the unit staleness is reported at. */

@@ -5,7 +5,7 @@
 >   generated 2026-09-14; do not implement from it; the canonical spec wins where they differ.
 > - **Key rules:** Site Admin mutates org content only through View As, bootstrap admin stays direct
 >   (§2.2); statuses keep ≥2 active, Idea Type / Business Impact ≥1 (§3); an Issue is the same row as its
->   Idea (Epic 10); §7 delivery counts are pinned to `a2bbbc3`, the tracker outranks it.
+>   Idea (Epic 10); §7 delivery counts are pinned to `e92ddde`, the tracker outranks it.
 > - **Contracts:** none of its own (derived; it cites `30-Contracts.md`)
 > - **Decisions:** 2026-09-11 "The golden replay is not a gate, and never was meant to be one";
 >   2026-09-02 "Outcome ↔ Issue cardinality: single-parent"; 2026-09-08 "Wave G is cut from the conversion
@@ -16,7 +16,7 @@
 > - **Do not implement from this file.** Read the canonical spec for the area (`SPEC/README.MD` indexes them; `SPEC/30-Contracts.md` is authoritative for endpoints and payloads).
 > - **Where this file disagrees with a canonical spec, the canonical spec wins.** That is precedence, not a conflict — resolve it and move on. It is *not* the "specs conflict, ask the user" case in `CLAUDE.md`, which covers two **canonical** specs disagreeing.
 > - **Do not edit behavior here.** Update the canonical spec first, then regenerate.
-> - **Generated 2026-09-14 from `19beace`** (`dev`), against every canonical `SPEC/*.md`, `decisions.md`, `implementation-agent-tracker.md`, the sprint plans, `e2e/README.md`, and the code in `apps/` and `packages/`. Every count in §7 was taken from the working tree in one sitting, not carried forward.
+> - **Generated 2026-09-14 from `19beace`** (`dev`), against every canonical `SPEC/*.md`, `decisions.md`, `implementation-agent-tracker.md`, the sprint plans, `e2e/README.md`, and the code in `apps/` and `packages/`. §7 and §8 were re-derived 2026-09-29 at `e92ddde` by slice 134 (F5), again from the working tree in one sitting.
 > - **`Specs Overview.md`** is also derived (last reconciled 2026-08-06) and summarizes *rules*; this file answers *what the product is, who it is for, and what state each capability is in*, as user stories with acceptance criteria. Where the two disagree this one is newer; the canonical spec beats both.
 
 ---
@@ -144,14 +144,14 @@ Why: a Site Admin is not a member of the organization, so a member's position �
 | 7 | Custom Fields & Idea Types | 7 | **Built** (D5) | `20-feature-user-defined-fields.md`, `20-feature-idea-type-fields.md` |
 | 8 | Administration & View As | 6 | **Built** (D7 — Wave D closed) | `20-feature-view-as.md` |
 | 9 | AI Idea Assist | 8 | **Built** (D6 — Wave D closed) | `20-feature-ai-idea-assist.md` |
-| 10 | Issues & Delivery | 10 | **Slice 1 built** — phase model, promotion gate, sprints and tasks, 18 routes. **Slice 2 (Outcomes) unbuilt** — no `outcomes` model, no `Idea.outcomeId`, no roadmap route | `20-feature-issues-and-delivery.md` |
+| 10 | Issues & Delivery | 10 | **Slice 1 built** — phase model, promotion gate, sprints and tasks, 19 routes. **Slice 2 (Outcomes) unbuilt** — no `outcomes` model, no `Idea.outcomeId`, no roadmap route | `20-feature-issues-and-delivery.md` |
 | 11 | Notifications & Audit | 4 | **Partial** — domain, application and tables exist; **no HTTP surface, by design** | `20-feature-notifications.md` |
 | — | OAuth (Entra ID) | 6 | **Deferred — Phase 2** | `20-feature-oauth.md` |
 | — | SAML 2.0 | 4 | **Deferred — post-OAuth** | `20-feature-saml.md` |
 | — | Reporting | 4 | **Deferred — post-MVP** | `20-feature-reporting.md` |
 
 - **80 stories across 14 areas.** Every epic through 9 is behind a real HTTP endpoint on the Nest host; `apps/web` reads the API rather than fixtures, with a documented residue in §7.
-- **Five capabilities remain contracted-but-unbuilt, each deliberately** — listed in §8 item 3; the `ai-key` pair is `PUT`/`DELETE /organizations/{id}/ai-key`.
+- **Six contracted routes and two capabilities remain unbuilt, each deliberately** — listed in §8 item 3; the `ai-key` pair is `PUT`/`DELETE /organizations/{id}/ai-key`.
 
 ---
 
@@ -541,7 +541,7 @@ Locked decisions: model **`claude-sonnet-5`** at **`low` effort** · adaptive th
 *Canonical: `20-feature-issues-and-delivery.md`.*
 
 **State: Slice 1 is built; Slice 2 is not.**
-- Slice 1: the schema amendment landed the delivery facets on `ideas` (`phase`, `effort`, `delivery_status`, `sprint_id`, and the promotion snapshot) plus the `sprints` and `issue_tasks` tables; **18 routes** are live across three controllers — `delivery` (5), `sprints` (7), `issue-tasks` (6). `packages/domain/src` and `packages/application/src` both carry `sprints` and `issue-tasks`.
+- Slice 1: the schema amendment landed the delivery facets on `ideas` (`phase`, `effort`, `delivery_status`, `sprint_id`, and the promotion snapshot) plus the `sprints` and `issue_tasks` tables; **19 routes** are live across three controllers — `delivery` (6, the single-Issue read `GET /ideas/{ideaId}/delivery` added 2026-09-28), `sprints` (7), `issue-tasks` (6). `packages/domain/src` and `packages/application/src` both carry `sprints` and `issue-tasks`.
 - **Slice 2 — Outcomes and the Roadmap — is unbuilt**: no `outcomes` model, no `ideas.outcome_id` column, no roadmap route. The single-parent decision of 2026-09-02 is settled and comped but not yet migrated. `apps/web/app/(desk)/delivery/roadmap` renders without a backing API.
 
 **The core decision: an Issue is not a new object.** An Idea is an item in `Discovery` phase; an Issue is **the same item, same row**, in `Delivery` phase. A separate Issue entity is an explicit non-goal — *"a parallel object would reintroduce the provenance-loss problem this feature exists to solve."*
@@ -730,61 +730,68 @@ Reading a replay run: the per-scenario `failed` column counts steps that **did n
 
 ## 7. Delivery State
 
-**Verified 2026-09-14 against `a2bbbc3`** (`dev`), counted from the working tree in one sitting, not carried forward. `dev` moves fast — it advanced by more than two hundred commits during this document's own drafting — so every figure here is pinned to that commit; re-derive before any planning claim. `SPEC/implementation-agent-tracker.md` remains the authoritative live record.
+**Verified 2026-09-29 against `e92ddde`** (`dev`), counted from the working tree in one sitting by slice 134 (F5), not carried forward. The 2026-09-14 count at `a2bbbc3` it replaces is in git history. Every figure is pinned to that commit; re-derive before any planning claim. `SPEC/implementation-agent-tracker.md` remains the authoritative live record.
 
 | | |
 |---|---|
 | **MVP epics** | T001–T067 merged. Foundation → Hardening, User-Defined Fields, Idea-Type Fields. Done. |
-| **Sprints** | 1–7 complete · 7.5 closed · **8 cancelled** (nothing ever deployed to Azure) · **9, the conversion, is essentially delivered**. |
-| **The conversion** | Waves A, 0, B, C, D and E are **merged — Wave D closed with D6 and D7**. **F6 has landed:** the .NET solution is deleted. **Wave G is cut** (2026-09-08), revisited after cutover. |
-| **API surface** | **101 route decorators across 20 controllers** — 98 product routes plus a health check and two development-only demo-seed routes. Every epic through 9 is served. |
-| **Client** | 38 pages across the `(auth)`, `(desk)`, delivery and settings groups, reading the API rather than fixtures. **No fixture residue** since slice 132 (2026-09-29): `apps/web/lib/mock.ts` is deleted, and Home and the three AI settings screens read the API. Home's *Open ideas*, *Awaiting review* and *Completed · 30d* tiles and its *Recent activity* feed have no route behind them and render as not tracked yet (tracker, slice 132). |
-| **Golden corpus** | Stopped gating 2026-09-11; see §6.4. A regression detector, not the specification (`SPEC/decisions.md`): shipping for feedback outranks fidelity to the deleted app, so a diff is a question — fix it, accept and record it, or deliberately do better. A fixed record alongside `tools/golden/inventory.json`. |
-| **Database** | Rebuilt rather than migrated: `dropdb` → `db:migrate` → `db:seed`, three migrations, under four seconds. The seed includes a **delivery** module alongside organizations, boards and statuses, users, ideas and upvotes, and comments. Idempotent — ids derive from stable names, so two seeded databases agree about every id. |
+| **Sprints** | 1–7 complete · 7.5 closed · **8 cancelled** (nothing ever deployed to Azure) · **9, the conversion, is down to two slices** · 12 (the prompt-eval runner) has slice 116, the v1 baseline, left. |
+| **The conversion** | Waves A, 0, B, C, D and E are **merged**. Wave F: **F6** (the .NET solution deleted, 2026-09-13), **F2** (the Playwright suite on the TypeScript stack, 38/38) and **F5** (this reconciliation) are closed; **F3** has nothing to transform, since the target is seeded fresh (`SPEC/decisions.md` 2026-09-09 "The drifted database is rebuilt, not migrated"). **F1** (triaging the golden replay's differences) and **F4** (the cutover runbook) remain. **Wave G is cut** (2026-09-08), revisited after cutover. |
+| **API surface** | **108 route decorators across 20 controllers** — 105 product routes, the health check, and the two demo-seed routes (refused unless `COLLEGA_ALLOW_DEMO_SEED` is set). Every route but the two demo-seed ones has a contract in `SPEC/contracts/` (§8 item 7); every contracted route is served except six that are marked deferred or withdrawn (§8 item 3). |
+| **Client** | **39 pages** across the `(auth)` and `(desk)` groups — desk, delivery and settings — reading the API. **No fixture residue** since slice 132 (2026-09-29): `apps/web/lib/mock.ts` is deleted, and Home and the three AI administration screens (Settings → AI assist, AI prompt, API usage) read the API. The three Outcome readers answer empty because Outcomes have no backend (§4, Epic 10). Home's *Open ideas*, *Awaiting review* and *Completed · 30d* tiles and its *Recent activity* feed have no route behind them and render as not tracked yet (tracker, slice 132). |
+| **E2E** | **38/38** from one `pnpm test:e2e` run on a fresh worktree against a scratch database, production rate limits in place. |
+| **Golden corpus** | Stopped gating 2026-09-11; see §6.4. A regression detector, not the specification (`SPEC/decisions.md`): a diff is a question — fix it, accept and record it, or deliberately do better. A fixed record alongside `tools/golden/inventory.json`. Its last full replay (slice 122, 2026-09-29): 360 of 447 match, 52 accepted, **35 unexplained**, and 69 stale entries in `tools/golden/src/accepted.ts` — F1's work. |
+| **Database** | Rebuilt rather than migrated: drop → `db:migrate` → `db:seed`. **Seven migrations** — the baseline, then delivery and sprints, delivery notification events, board description, structured idea fields, board archive and tag colour. The demo seed's modules are in `packages/infrastructure/src/demo-seed/modules/`: organizations, users, boards and statuses, ideas and upvotes, idea details, comments, delivery, and scenario. Idempotent — ids derive from stable names, so two seeded databases agree about every id. |
 | **Deleted** | `src/Collega.*`, `tests/`, `Collega.sln` and `global.json` went in slice **F6** (2026-09-13). A reference to a `dotnet` command, a `.csproj`, or a path under `src/Collega.*` anywhere in this repository is stale — report it rather than following it. F6 kept `SPEC/`, the golden corpus, and the AI-assist evaluation corpus in `tools/prompt-eval`. |
 | **Hosting** | Vercel is the canonical target; the Azure workflows were deleted. |
 
-### Test suite — counted 2026-09-14 at `a2bbbc3`
+### Test suite — counted 2026-09-29 at `e92ddde`
 
-**826 passing, 0 skipped**, from one `pnpm test --force` run: 14 of 14 tasks successful, nothing cached.
+**1,660 passing, 91 skipped, 0 failing**, from one `pnpm test --force` run: 16 of 16 tasks successful, nothing cached.
 
 | Package | Tests |
 |---|---:|
-| `packages/application` | 423 |
-| `apps/web` | 116 |
-| `apps/api` | 107 |
-| `tools/golden` | 74 |
-| `packages/domain` | 38 |
+| `packages/application` | 590 |
+| `apps/web` | 303 |
+| `packages/design-system` | 186 |
+| `apps/api` | 158 |
+| `tools/prompt-eval` | 151 |
+| `packages/domain` | 117 |
+| `tools/golden` | 80 |
+| `packages/infrastructure` | 32 passing, 91 skipped |
 | boundaries (Biome layer rules) | 30 |
-| `packages/infrastructure` | 28 |
-| `packages/design-system` | 8 |
-| arch | 2 |
+| `tools/local` | 10 |
+| arch | 3 |
 
-`packages/infrastructure` shows **28 passing with no skips** only because this session had a seeded database: the live-database suite is guarded by `skipIf(!DATABASE_URL)` and skips wherever that variable is absent. **CI must continue not to set it** — present but pointing at no database, the suite runs and fails.
+The 91 skips are `packages/infrastructure`'s live-database suite, guarded by `skipIf(!DATABASE_URL)`: this run had no `DATABASE_URL`, as CI must not (present but pointing at no database, the suite runs and fails). The 2026-09-14 count had a seeded database and so showed no skips.
 
 ### The quality gap that used to be here — now closed
 
 - An earlier draft recorded coverage as *"inverted against risk"*: `packages/application` was the largest package, carried authorization, and had **35 tests** while `apps/web` had 94 — the layer where a mistake means one organization reads another's data, and the only layer of consequence with no independent QA pass.
-- **That slice has landed: `packages/application` now has 423 tests**, the largest suite in the workspace by a wide margin, written by an agent that had not touched the source, per the repository rule that an author does not test their own code. Triage items it raised were fixed separately (`fix/triage-application-guards`), including an unreachable Site Admin branch and a missing organization-existence check.
+- **That slice has landed: `packages/application` had 423 tests by 2026-09-14** (590 at `e92ddde`), the largest suite in the workspace by a wide margin, written by an agent that had not touched the source, per the repository rule that an author does not test their own code. Triage items it raised were fixed separately (`fix/triage-application-guards`), including an unreachable Site Admin branch and a missing organization-existence check.
 - The pattern is proven three times: Wave E's QA slice produced 102 tests and **verified every rule by breaking it — 21 mutations, 21 caught**; D1's took `apps/api` from 26 to 87 and found two divergences neither implementer nor reviewer had spotted; this one took `packages/application` from 35 to 423.
 
 ---
 
 ## 8. Appendix — Discrepancies Found
 
-Defects in the canonical specs, surfaced by this reconciliation and **reported rather than fixed**: canonical files are edited deliberately, first, and with the user's agreement. Each needs a decision.
+Defects in the canonical specs, surfaced by reconciliation and **reported rather than fixed** unless they were pure staleness: canonical files are edited deliberately, first, and with the user's agreement. Re-walked 2026-09-29 by slice 134 (F5).
 
 **1. Resolved.** `30-Contracts.md` carried `## Idea Field Option Contracts` twice, and the copies disagreed on the reorder method (`POST` vs `PUT`) and on the Business Impact default. The copies were merged into `contracts/idea-field-options.md` on 2026-09-28, following the code (`POST`); the default was decided on 2026-09-29 — the first active option for both collections, preselected by the form (`decisions.md` 2026-09-29 "Spec contradictions resolved"). See §3.
 
-**2. The six `field-definitions` routes are built and still undocumented.** `30-Contracts.md` contains no mention of them; their contracts live in `20-feature-user-defined-fields.md` instead. *(The View As, AI-assist and delivery routes were undocumented when this reconciliation began and have since been added — only `field-definitions` remains.)*
+**2. Resolved 2026-09-29.** The six `field-definitions` routes were built and undocumented in the contract set; slice 124 wrote them from the code into `contracts/field-definitions.md` (`decisions.md` 2026-09-29 "Contracts and wording written from the code"). With that, the Definition of Done's Contracts clause is no longer violated on this count.
 
-**3. Five capabilities are contracted or specified but unbuilt, each deliberately.** Two `password-reset` routes (Post-MVP); two `ai-key` routes (unimplemented per AI rule 30 — *a future agent reading those contracts must not build them*); `ai-draft` / `ai-polish` (no implementation ever existed); a notification read API (MVP is database writes only); and Outcomes.
-
-*Item 2 means the Definition of Done's own Contracts clause — "implementation and tests remain aligned with canonical SPEC docs" — is currently violated by `30-Contracts.md`. Slice **F5** owns spec reconciliation and is the natural home for the fix.*
+**3. Six contracted routes, and two capabilities, are unbuilt — each deliberately, and each marked so where it is contracted.** The two `password-reset` routes (Post-MVP); the two `ai-key` routes (deferred per AI rule 30 — *a future agent reading those contracts must not build them*); `ai-draft` / `ai-polish` (withdrawn 2026-09-27, never built); a notification read API (MVP is database writes only; no route is contracted); and Outcomes.
 
 **4. Resolved 2026-09-29.** The Idea Type decision table's "Option appearance" row, which said label and sort order only, is marked superseded by rule #9 (a color **and** icon).
 
-**5. Source typos worth not propagating.** In `20-feature-ideas-and-engagement.md`: the Upvotes rule uses `4,` where it means `4.`, and the file ends with a stray backtick. In `20-feature-auth.md`: requirement numbering **skips #3** (it runs 1, 2, 4, 5…).
+**5. Source typos.** The two in `20-feature-ideas-and-engagement.md` — `4,` for `4.` in the Upvotes rules and a stray trailing backtick — are gone. `20-feature-auth.md`'s requirement numbering still **skips #3** (1, 2, 4, 5…); it stays, because other specs cite those requirements by number.
+
+**6. Resolved 2026-09-29 (slice 134).** Three served routes had no contract: `POST /ai-assist/prompt/reset`, `DELETE /organizations/{organizationId}/logo` and `GET /health`, all recorded by the golden corpus. They were written from the code, and `PUT /organizations/{organizationId}/logo`, which described a `multipart/form-data` upload neither stack accepted, now describes the JSON body and response the corpus records.
+
+**7. Open — needs a decision.** `POST /demo-seed` and `POST /demo-seed/reset` (Settings → Demo data, 2026-09-14) let a Site Admin seed and reset the demo data on a deployment where `COLLEGA_ALLOW_DEMO_SEED` is set. No canonical spec describes them, and `90-definition-of-done.md` says a non-Development runtime is validated so that the demo seed *does not run*. Either the Definition of Done gains the opt-in exception and the routes get a contract, or the routes go.
+
+**8. Specified, not yet built — open work, not deliberate.** The browser idle deadline (`20-feature-auth.md` requirements 38–42: the 30-minute idle expiry, its warning, and the cross-tab sync); and the web client's column reorder, which `20-feature-client-ui.md` says calls `POST /boards/{boardId}/swimlanes/reorder` — the route is built, nothing in `apps/web` calls it.
 
 ---
 

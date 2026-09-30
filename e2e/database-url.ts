@@ -40,11 +40,13 @@ export function loadRepositoryEnv(): void {
 /**
  * The suite's connection string: its own schema inside whatever database is configured.
  *
- * `COLLEGA_E2E_DATABASE_URL` overrides it outright, for CI with a database of its own.
+ * `COLLEGA_E2E_DATABASE_URL` overrides it outright, for CI with a database of its own. Either way
+ * the answer is refused unless it is disposable, and refused here rather than in global setup:
+ * the config calls this as it loads, so a bad URL stops the run before any server starts.
  */
 export function e2eDatabaseUrl(): string {
   const explicit = process.env.COLLEGA_E2E_DATABASE_URL?.trim()
-  if (explicit) return explicit
+  if (explicit) return refuseIfNotDisposable(explicit)
 
   const base = process.env.DATABASE_URL?.trim()
   if (!base) {
@@ -57,5 +59,37 @@ export function e2eDatabaseUrl(): string {
 
   const url = new URL(base)
   url.searchParams.set('schema', 'collega_e2e')
-  return url.toString()
+  return refuseIfNotDisposable(url.toString())
+}
+
+/**
+ * Refuses to hand out anything a developer is using, and returns the URL otherwise.
+ *
+ * Global setup drops the schema it is given, so pointing it at the wrong string is not a failed
+ * test run, it is a lost afternoon. Two things are checked: the schema must be the suite's own, and
+ * the host must be this machine. The second is the same rule `tools/local/start.ts` applies for the
+ * same reason, and there is deliberately no opt-out here — a remote database is never the right
+ * target for a suite whose first act is to drop the schema.
+ */
+function refuseIfNotDisposable(url: string): string {
+  const parsed = new URL(url)
+  const schema = parsed.searchParams.get('schema')
+  if (schema !== 'collega_e2e') {
+    throw new Error(
+      `The E2E database URL names schema "${schema ?? 'public'}", not "collega_e2e".\n\n` +
+        'Global setup drops the schema it is given. Point COLLEGA_E2E_DATABASE_URL at a URL carrying\n' +
+        '?schema=collega_e2e, or unset it and let DATABASE_URL be adapted.',
+    )
+  }
+
+  const host = parsed.hostname
+  const local = host === 'localhost' || host === '[::1]' || host.startsWith('127.')
+  if (!local) {
+    throw new Error(
+      `The E2E database is at ${host}, which is not this machine.\n\n` +
+        'The suite drops and rebuilds its schema on every run. It will not do that to a host it\n' +
+        'cannot see is yours.',
+    )
+  }
+  return url
 }
