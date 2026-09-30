@@ -34,7 +34,7 @@ data rather than from whatever the last run left. Nothing needs to be running or
 
 **The database is a schema, not a second database.** `collega_e2e` inside whatever `DATABASE_URL`
 names, so `public` — where `pnpm dev` keeps your demo data — is untouched, and no CREATE DATABASE
-privilege is needed. `COLLEGA_E2E_DATABASE_URL` overrides it for CI. The setup **refuses** any URL
+privilege is needed. `COLLEGA_E2E_DATABASE_URL` overrides it for CI. The suite **refuses** any URL
 that is not a local `collega_e2e`: it drops the schema it is given, and that is not a mistake worth
 making once.
 
