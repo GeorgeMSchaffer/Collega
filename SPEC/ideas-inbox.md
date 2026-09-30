@@ -170,6 +170,17 @@ Admin, defaulted for the seeded five, and served on the statuses routes — a sc
 cheaper partial alternative is a server-side `open` filter on the idea lists, defined as not in a
 board's last lane; it answers *Open ideas* but not *Awaiting review*.
 
+## Status-change times — a read route for when ideas moved
+
+> Raised 2026-09-30 by slice 132. **User decision 2026-09-30:** Home's *Completed · 30d* tile, the
+> "a week without moving" filter and *Recent activity* stay as "not tracked yet" placeholders for
+> now; this is the later fix.
+
+All three need to know when an idea's status changed. Only `audit_events` records that
+(`IdeaStatusChanged`), and no route reads it. The idea: a read-only route over those events, scoped
+to the caller's organization and role, that Home can ask for recent moves and for ideas unmoved
+since a date. It overlaps the Loop's org activity feed above; build one route that serves both.
+
 ## Portals — seatless employee submissions via public links
 
 *Refined 2026-09-28 in an ideation session. Comp: `mockups/comp-s-portal-form.html` (branded-shell mode, Terrazzo).*
