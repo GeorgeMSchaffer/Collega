@@ -1,7 +1,7 @@
 'use client'
 
 import { Alert, EffortBar, TagChip } from '@collega/design-system'
-import { useMemo, useState, useTransition } from 'react'
+import { useMemo, useOptimistic, useState, useTransition } from 'react'
 import {
   type Column,
   ConfirmDialog,
@@ -14,13 +14,14 @@ import {
   ViewSwitch,
 } from '@/components/list'
 import { engagementDenial, mayDeleteIdeas, mayEditIdeaContent, writeDenial } from '@/lib/roles'
+import { reorderLanes } from '@/lib/server/board-actions'
 import { deleteIdea } from '@/lib/server/idea-actions'
 import { useCurrentUser } from '@/lib/session-client'
 import type { BoardRef, Idea, IdeaDetail, IdeaFormOptions, Status, TagRef } from '@/lib/types'
 import { People, PriorityMarker, StatusMarker, TagList } from './idea-chips'
 import { type DrawerMode, IdeaDrawer } from './idea-drawer'
 import { BOARD_LIST, IDEAS_LIST, PRIORITIES } from './idea-list-config'
-import { Lane } from './lane'
+import { Lane, type LaneReorder } from './lane'
 import { useDrawerUrl } from './use-drawer-url'
 
 type BoardContext = {
@@ -30,6 +31,8 @@ type BoardContext = {
   isArchived: boolean
   /** The role and the board's `allowUserStatusUpdate`, decided by the page. */
   canMove: boolean
+  /** Whether the lane headers carry move left / right: an Org Admin's, hidden for other roles. */
+  canReorder: boolean
 }
 
 type Removing = { id: string; title: string; boardId: string }
@@ -73,6 +76,39 @@ export function IdeaWorkspace({
   const [removing, setRemoving] = useState<Removing | null>(null)
   const [removeError, setRemoveError] = useState<string | null>(null)
   const [deleting, startDelete] = useTransition()
+
+  // The lane order as last saved, or as the reorder in flight has it. A refusal ends the transition
+  // with `board.lanes` unchanged, so the columns fall back on their own; a save revalidates the
+  // page and `board.lanes` arrives in the new order.
+  const [lanes, setLanes] = useOptimistic(board?.lanes ?? [])
+  const [reorderError, setReorderError] = useState<string | null>(null)
+  const [reordering, startReorder] = useTransition()
+  // What the polite live region last said about a lane move; screen readers hear the new position.
+  const [reorderNews, setReorderNews] = useState('')
+
+  // The lane being dragged by its header, and the lane it is over; both null outside a drag.
+  const [draggingLane, setDraggingLane] = useState<string | null>(null)
+  const [overLane, setOverLane] = useState<string | null>(null)
+
+  const moveLane = (from: number, to: number) => {
+    if (!board || from === to) return
+    const next = [...lanes]
+    const [moved] = next.splice(from, 1)
+    if (moved === undefined) return
+    next.splice(to, 0, moved)
+    setReorderNews('')
+    startReorder(async () => {
+      setLanes(next)
+      const result = await reorderLanes(
+        board.id,
+        next.map((lane) => lane.id),
+      )
+      setReorderError(result.error)
+      if (!result.error) {
+        setReorderNews(`${moved.name} moved to position ${to + 1} of ${next.length}`)
+      }
+    })
+  }
 
   const boardsById = useMemo(() => new Map(boards.map((b) => [b.id, b])), [boards])
   const statusById = useMemo(() => new Map(statuses.map((s) => [s.id, s])), [statuses])
@@ -245,6 +281,21 @@ export function IdeaWorkspace({
 
       {state.view === 'lanes' && board ? (
         <>
+          {board.canReorder ? (
+            <p role="status" className="sr-only">
+              {reorderNews}
+            </p>
+          ) : null}
+          {board.canReorder && board.isArchived ? (
+            <p id="why-reorder-lanes" className="m-0 text-xs italic text-muted-foreground">
+              This board is archived, so its lanes keep their order until it is unarchived.
+            </p>
+          ) : null}
+          {reorderError ? (
+            <Alert variant="destructive" role="alert">
+              <span>{reorderError}</span>
+            </Alert>
+          ) : null}
           {total > rows.length ? (
             <p className="m-0 text-sm text-muted-foreground">
               Showing the first {rows.length} of {total} ideas. Filter to narrow the board, or
@@ -252,21 +303,51 @@ export function IdeaWorkspace({
             </p>
           ) : null}
           <div
+            aria-busy={reordering || undefined}
             className="grid gap-2.5 overflow-x-auto pb-3"
-            style={{ gridTemplateColumns: `repeat(${board.lanes.length}, minmax(200px, 1fr))` }}
+            style={{ gridTemplateColumns: `repeat(${lanes.length}, minmax(200px, 1fr))` }}
           >
-            {board.lanes.map((status, index) => (
+            {lanes.map((status, index) => (
               <Lane
                 key={status.id}
                 status={status}
                 boardId={board.id}
                 ideas={rows.filter((idea) => idea.statusId === status.id)}
-                previousStatusId={board.lanes[index - 1]?.id ?? null}
-                nextStatusId={board.lanes[index + 1]?.id ?? null}
+                previousStatusId={lanes[index - 1]?.id ?? null}
+                nextStatusId={lanes[index + 1]?.id ?? null}
                 canMove={board.canMove}
                 upvoteDenial={engagement}
                 selectedId={selectedId}
                 onOpen={view}
+                reorder={
+                  board.canReorder
+                    ? ({
+                        denialId: board.isArchived ? 'why-reorder-lanes' : null,
+                        pending: reordering,
+                        onMove: (delta) => moveLane(index, index + delta),
+                        dragging: draggingLane === status.id,
+                        over: draggingLane !== null && overLane === status.id,
+                        onDragStart: () => setDraggingLane(status.id),
+                        onDragEnd: () => {
+                          setDraggingLane(null)
+                          setOverLane(null)
+                        },
+                        onDragOver: () => {
+                          if (draggingLane === null) return false
+                          setOverLane(status.id)
+                          return true
+                        },
+                        onDragLeave: () =>
+                          setOverLane((current) => (current === status.id ? null : current)),
+                        onDrop: () => {
+                          const from = lanes.findIndex((lane) => lane.id === draggingLane)
+                          setDraggingLane(null)
+                          setOverLane(null)
+                          if (from >= 0) moveLane(from, index)
+                        },
+                      } satisfies LaneReorder)
+                    : null
+                }
               />
             ))}
           </div>

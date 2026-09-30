@@ -2,6 +2,7 @@
 
 import { cn, Denied } from '@collega/design-system'
 import { useActionState } from 'react'
+import { Icon } from '@/components/list/icons'
 import type { Idea } from '@/lib/data'
 import { type ActionState, moveIdea, toggleUpvote } from '@/lib/server/idea-actions'
 
@@ -11,7 +12,7 @@ const CHIP =
   'inline-flex items-center gap-1 rounded-md border bg-background px-2 py-0.5 text-xs font-medium text-muted-foreground'
 
 const ARROW =
-  'inline-flex size-6 items-center justify-center rounded-md border bg-background text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-40'
+  'inline-flex size-6 items-center justify-center rounded-md border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-40'
 
 /**
  * The two writes a card carries: toggle the upvote, move it one lane left or right.
@@ -108,7 +109,7 @@ export function CardActions({
             aria-label={`Move ${idea.title} one lane left`}
             className={ARROW}
           >
-            <span aria-hidden="true">←</span>
+            <Icon name="prev" className="size-3.5" />
           </button>
           <button
             type="submit"
@@ -118,7 +119,7 @@ export function CardActions({
             aria-label={`Move ${idea.title} one lane right`}
             className={ARROW}
           >
-            <span aria-hidden="true">→</span>
+            <Icon name="next" className="size-3.5" />
           </button>
         </form>
       ) : null}
