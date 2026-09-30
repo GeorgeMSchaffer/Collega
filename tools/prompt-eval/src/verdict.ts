@@ -3,8 +3,8 @@ import type { RunData } from './run-file.ts'
 
 /**
  * The threshold verdict of SPEC/20-feature-prompt-eval-runner.md rules 30-32, and the
- * like-with-like check of rule 34. The thresholds are provisional until the first v1 baseline
- * (slice 116) shows the real rates.
+ * like-with-like check of rule 34. The thresholds were confirmed against the first v1 baseline
+ * (slice 116, SPEC/decisions.md 2026-09-30).
  */
 
 export const EXIT_PASS = 0
