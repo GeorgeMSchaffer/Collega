@@ -122,7 +122,9 @@ Columns" as written: a lane is reordered by dragging its column header, saved im
   lanes at either end are `aria-disabled` rather than `disabled`, so the pressed button keeps its
   focus.
 
-The route is the one "Spec contradictions resolved" item 8 chose; that decision stands.
+The route is the one "Spec contradictions resolved" item 8 chose; that decision stands. This
+entry retires item 8's "`apps/web` does not call the reorder route yet" line, which is left as
+written with a status note under it.
 
 ---
 
@@ -266,6 +268,8 @@ Where a spec keeps history the old text stays, marked superseded; elsewhere it w
 8. **Columns reorder with `POST /boards/{boardId}/swimlanes/reorder`**, not the nonexistent
    `PUT /boards/{boardId}/statuses/{statusId}` that `20-feature-client-ui.md` named. `apps/web`
    does not call the reorder route yet: column drag is unbuilt.
+   > *Status note 2026-09-29: slice 130 builds the web caller — see "Board lanes reorder by dragging
+   > the header, with buttons as the fallback".*
 9. **An idea's details open in the drawer at `/ideas?idea={id}`**, not a `/ideas/{id}/edit` route
    (`20-feature-client-ui-revisions.md`).
 10. **Idea Type options carry a colour and icon** (Fields rule 9); the ideas spec's decision-table
