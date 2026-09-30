@@ -83,6 +83,8 @@ export function IdeaWorkspace({
   const [lanes, setLanes] = useOptimistic(board?.lanes ?? [])
   const [reorderError, setReorderError] = useState<string | null>(null)
   const [reordering, startReorder] = useTransition()
+  // What the polite live region last said about a lane move; screen readers hear the new position.
+  const [reorderNews, setReorderNews] = useState('')
 
   const moveLane = (index: number, delta: -1 | 1) => {
     if (!board) return
@@ -90,6 +92,7 @@ export function IdeaWorkspace({
     const [moved] = next.splice(index, 1)
     if (moved === undefined) return
     next.splice(index + delta, 0, moved)
+    setReorderNews('')
     startReorder(async () => {
       setLanes(next)
       const result = await reorderLanes(
@@ -97,6 +100,9 @@ export function IdeaWorkspace({
         next.map((lane) => lane.id),
       )
       setReorderError(result.error)
+      if (!result.error) {
+        setReorderNews(`${moved.name} moved to position ${index + delta + 1} of ${next.length}`)
+      }
     })
   }
 
@@ -271,6 +277,11 @@ export function IdeaWorkspace({
 
       {state.view === 'lanes' && board ? (
         <>
+          {board.canReorder ? (
+            <p role="status" className="sr-only">
+              {reorderNews}
+            </p>
+          ) : null}
           {board.canReorder && board.isArchived ? (
             <p id="why-reorder-lanes" className="m-0 text-xs italic text-muted-foreground">
               This board is archived, so its lanes keep their order until it is unarchived.
@@ -288,6 +299,7 @@ export function IdeaWorkspace({
             </p>
           ) : null}
           <div
+            aria-busy={reordering || undefined}
             className="grid gap-2.5 overflow-x-auto pb-3"
             style={{ gridTemplateColumns: `repeat(${lanes.length}, minmax(200px, 1fr))` }}
           >

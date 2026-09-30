@@ -1,15 +1,21 @@
+'use client'
+
+import { useLayoutEffect, useRef } from 'react'
+import { Icon } from '@/components/list/icons'
 import type { Idea, Status } from '@/lib/types'
 import { IdeaCard } from './idea-card'
 
 const ARROW =
-  'inline-flex size-6 items-center justify-center rounded-md border border-current/25 text-xs hover:bg-background/60 aria-disabled:cursor-not-allowed aria-disabled:opacity-40'
+  'inline-flex size-6 items-center justify-center rounded-md border border-current/25 hover:bg-background/60 aria-disabled:cursor-not-allowed aria-disabled:opacity-40'
 
 /**
  * The lane header's move left / move right, for an Org Admin. `null` hides them, which is every
  * other role's view (the row-actions exception to the Denied rule). `denialId` names the element
  * holding why they are refused — an archived board. Every refused arrow, the board's ends included,
  * is `aria-disabled` rather than `disabled`: a lane moved to an end would otherwise have the button
- * just pressed drop out of the tab order, and keyboard focus with it.
+ * just pressed drop out of the tab order, and keyboard focus with it. While a save is `pending` the
+ * arrows are `aria-disabled` too, and ignore a press. After a move the lane puts focus back on the
+ * arrow that was pressed (see `Lane`).
  */
 export type LaneReorder = {
   denialId: string | null
@@ -47,6 +53,29 @@ export function Lane({
   onOpen: (ideaId: string, trigger: HTMLButtonElement) => void
   reorder?: LaneReorder | null
 }) {
+  const leftRef = useRef<HTMLButtonElement>(null)
+  const rightRef = useRef<HTMLButtonElement>(null)
+  const refocus = useRef<-1 | 1 | null>(null)
+
+  // Lanes are keyed by status, so a move reorders DOM nodes rather than re-rendering them in place,
+  // and React moves whichever node its list diff says is out of place - for a swap, the one that
+  // went right. Moving a node that holds focus drops focus to <body>. The neighbours change in the
+  // commit that moves the lane, and a layout effect runs after that DOM move and before paint, so
+  // the pressed arrow gets focus back before anyone sees it gone. The flag stays up until the save
+  // settles, so a refusal that moves the lane back is covered too.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the neighbours are the trigger, not an input
+  useLayoutEffect(() => {
+    const target =
+      refocus.current === -1 ? leftRef.current : refocus.current === 1 ? rightRef.current : null
+    const active = document.activeElement
+    if (target && (active === null || active === document.body)) target.focus()
+  }, [previousStatusId, nextStatusId])
+
+  const pending = reorder?.pending ?? false
+  useLayoutEffect(() => {
+    if (!pending) refocus.current = null
+  }, [pending])
+
   const arrow = (delta: -1 | 1, end: boolean) => {
     const endId = `lane-${delta < 0 ? 'first' : 'last'}-${status.id}`
     const refusal = reorder?.denialId ?? (end ? endId : null)
@@ -58,18 +87,20 @@ export function Lane({
           </span>
         ) : null}
         <button
+          ref={delta < 0 ? leftRef : rightRef}
           type="button"
           className={ARROW}
-          aria-disabled={refusal ? 'true' : undefined}
+          aria-disabled={refusal || pending ? 'true' : undefined}
           aria-describedby={refusal ?? undefined}
           aria-label={`Move the ${status.name} lane ${delta < 0 ? 'left' : 'right'}`}
           onClick={() => {
             // aria-disabled is advisory - the click still arrives, so the guard lives here.
-            if (refusal || reorder?.pending) return
+            if (refusal || pending) return
+            refocus.current = delta
             reorder?.onMove(delta)
           }}
         >
-          <span aria-hidden="true">{delta < 0 ? '←' : '→'}</span>
+          <Icon name={delta < 0 ? 'prev' : 'next'} className="size-3.5" />
         </button>
       </>
     )
