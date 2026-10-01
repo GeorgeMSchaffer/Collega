@@ -107,8 +107,13 @@ export function FollowButton({
 
   if (denial) {
     return (
-      <Denied reason={denial} id="why-follow">
-        <Button variant="outline" size="sm" aria-disabled="true" aria-describedby="why-follow">
+      <Denied reason={denial} id={`why-follow-${ideaId}`}>
+        <Button
+          variant="outline"
+          size="sm"
+          aria-disabled="true"
+          aria-describedby={`why-follow-${ideaId}`}
+        >
           <Icon name="bell" />
           Follow · {followerCount}
           <span className="sr-only">, {followers(followerCount)}</span>
