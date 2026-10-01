@@ -111,6 +111,7 @@ contract states nothing for that item, and the conventions above apply.
 | AI Idea Assist Contracts | [`contracts/ai-assist.md`](contracts/ai-assist.md) | `/boards/{boardId}/idea-assist/turns`, `/ai-assist/*` (availability, prompt, usage), `/organizations/{organizationId}/ai-assist/*` (settings, usage) |
 | Notification Event Contract | [`contracts/notifications.md`](contracts/notifications.md) | No route: the internal notification event types and payload |
 | Health Contract | [`contracts/health.md`](contracts/health.md) | `/health`. Written from the code 2026-09-29. |
+| Demo Seed Contracts | [`contracts/demo-seed.md`](contracts/demo-seed.md) | `/demo-seed`, `/demo-seed/reset`. Written from the code 2026-10-01; opt-in through `COLLEGA_ALLOW_DEMO_SEED` |
 
 ## Notes
 - API routes, request/response schemas, and validation rules should be defined here.

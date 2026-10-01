@@ -1,6 +1,6 @@
 # Sprint 11 — Comp R iteration
 
-**Status:** Not started (planned 2026-09-28; questions answered 2026-09-28).
+**Status:** Complete (2026-09-28). Slices 104–112 are merged into `dev`; slice 112, the QA follow-ups, merged on 2026-09-28. *(Planned 2026-09-28; questions answered the same day.)*
 
 **Goal:** the 2026-09-28 iteration of comp R (`SPEC/mockups/comp-r-portico-prototype.html`) in the
 product: Graphite as the dark theme, the denser form and control layout in every theme, tags with a
