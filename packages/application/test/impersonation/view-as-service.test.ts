@@ -541,4 +541,59 @@ describe('ViewAsService.listCandidates', () => {
 
     await expect(service.listCandidates(null)).rejects.toThrow(ForbiddenError)
   })
+
+  describe('order', () => {
+    // The repository delivers the candidates grouped by organization and ordered inside each; the
+    // service decides who stays, not where they sit (slice 137).
+    const grouped = () => [
+      user({ id: 'a-1', organizationId: ORG_A }),
+      user({ id: 'a-2', organizationId: ORG_A }),
+      user({ id: 'b-1', organizationId: ORG_B }),
+      user({ id: 'sa', organizationId: null, role: Role.SiteAdmin }),
+      user({ id: 'b-2', organizationId: ORG_B }),
+    ]
+    const both = [organization(), organization({ id: ORG_B, title: 'Bolt' })]
+
+    it("keeps the repository's order and groups, and names each member's organization", async () => {
+      const { service } = harness({
+        currentUser: siteAdmin(),
+        users: [SITE_ADMIN],
+        organizations: both,
+        searchResult: grouped(),
+      })
+
+      const result = await service.listCandidates(null)
+
+      expect(result.map((c) => [c.userId, c.organizationName])).toEqual([
+        ['a-1', 'Acme'],
+        ['a-2', 'Acme'],
+        ['b-1', 'Bolt'],
+        ['b-2', 'Bolt'],
+      ])
+    })
+
+    it('does not re-sort a list whose order the repository chose', async () => {
+      const { service } = harness({
+        currentUser: siteAdmin(),
+        users: [SITE_ADMIN],
+        organizations: both,
+        searchResult: [
+          user({ id: 'z', organizationId: ORG_B, lastName: 'Zed' }),
+          user({ id: 'a', organizationId: ORG_A, lastName: 'Abe' }),
+        ],
+      })
+
+      expect((await service.listCandidates(null)).map((c) => c.userId)).toEqual(['z', 'a'])
+    })
+
+    it('returns nothing, and does not fail, when every row is excluded', async () => {
+      const { service } = harness({
+        currentUser: siteAdmin(),
+        users: [SITE_ADMIN],
+        searchResult: [user({ id: 'sa', organizationId: null, role: Role.SiteAdmin })],
+      })
+
+      expect(await service.listCandidates(null)).toEqual([])
+    })
+  })
 })
