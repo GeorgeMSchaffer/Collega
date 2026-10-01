@@ -44,7 +44,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-28 | The Idea Field Option contract follows the code | active | full below |
 | 2026-09-28 | The v2 corpus format, as built | active | full below |
 | 2026-09-28 | The prompt-eval runner's provisional limits stand for the first baseline | active | full below |
-| 2026-09-28 | `compare` refuses to judge an invalid run | active | full below |
+| 2026-09-28 | `compare` refuses to judge an invalid run | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | The prompt-eval runner's fixture hash for `compare` is the catalog hash | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | The Anthropic client reads no credential or endpoint from the environment | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | The prompt-eval runner's open questions are answered | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
@@ -505,13 +505,3 @@ judged with the provisional values in `20-feature-prompt-eval-runner.md`: a run 
 errored trials is not valid (rule 30), and a pair whose refusal rates differ by less than 0.5 is
 flagged "scope statement may be ignored" (rule 14). Both are revisited with the user against the
 real rates once that baseline exists (rule 32), not before it.
-
----
-
-## 2026-09-28 — `compare` refuses to judge an invalid run
-
-**Decided by the user** on review of slice 115. `compare` exits 2, printing the reasons, when
-either run is itself not valid under `20-feature-prompt-eval-runner.md` rules 30–31 — aborted,
-more than 10% errored trials, or an errored `refuse-*` trial — rather than comparing it. A
-regression or a clean result against a run that could not be judged on its own would be a verdict
-about nothing. Recorded in rule 30.
