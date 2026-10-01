@@ -249,6 +249,86 @@ function revalidateIdeaTypes(): void {
 }
 
 /**
+ * What the custom-field create form renders back: the API's messages keyed by field so each can sit
+ * beside its control, plus the typed values so a refusal does not blank them (React resets an
+ * uncontrolled form once its action resolves).
+ */
+export type CreateFieldState = {
+  error: string | null
+  errors: Readonly<Record<string, string>>
+  name: string
+  description: string
+  fieldType: string
+  required: boolean
+  created: boolean
+}
+
+/**
+ * Adds a custom field to the organization's schema (`POST /organizations/{orgId}/field-definitions`).
+ *
+ * Every type goes through here. Only Dropdown and MultiSelect send options; the API refuses
+ * options on any other type, so a Text field whose option rows were typed in and then hidden by
+ * changing the type must not send them. Blank labels are dropped, as on edit. No `displayOrder`:
+ * absent places the field last, which is where a new one belongs.
+ *
+ * Whether the options are enough (at least one, unique) is the service's call, and its refusal
+ * comes back keyed `fieldDefinition`.
+ */
+export async function createFieldDefinition(
+  _previous: CreateFieldState,
+  form: FormData,
+): Promise<CreateFieldState> {
+  const echo = {
+    name: String(form.get('name') ?? ''),
+    description: String(form.get('description') ?? ''),
+    fieldType: String(form.get('fieldType') ?? ''),
+    required: form.get('isRequired') === 'on',
+  }
+
+  const organizationId = await actingOrganizationId()
+  if (organizationId === null) {
+    return { ...echo, error: NO_ORGANIZATION, errors: {}, created: false }
+  }
+
+  const options = ['Dropdown', 'MultiSelect'].includes(echo.fieldType)
+    ? form
+        .getAll('optionLabel')
+        .map((label) => String(label).trim())
+        .filter((label) => label !== '')
+        .map((label, index) => ({ label, displayOrder: index }))
+    : []
+
+  try {
+    await apiPost(apiPath`/organizations/${organizationId}/field-definitions`, {
+      name: echo.name,
+      description: echo.description,
+      fieldType: echo.fieldType,
+      isRequired: echo.required,
+      options,
+    })
+  } catch (error) {
+    const message = refusal(error)
+    return {
+      ...echo,
+      error: message,
+      errors: error instanceof ApiError ? error.errors : {},
+      created: false,
+    }
+  }
+
+  revalidateFields()
+  return {
+    error: null,
+    errors: {},
+    name: '',
+    description: '',
+    fieldType: 'Text',
+    required: false,
+    created: true,
+  }
+}
+
+/**
  * Edits one custom field (`PUT /organizations/{orgId}/field-definitions/{id}`).
  *
  * **The options are the dangerous part, and the reason this action is longer than the others.**
