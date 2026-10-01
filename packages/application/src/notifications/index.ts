@@ -2,4 +2,5 @@
 
 export * from './models.js'
 export * from './notification.service.js'
+export * from './notification-inbox.service.js'
 export * from './ports.js'

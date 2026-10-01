@@ -178,6 +178,25 @@ export const ideasAndUpvotesSeed: SeedModule = {
             })
           }
 
+          // The author and every assignee follow, as creating the idea through the application
+          // would make them (SPEC/20-feature-idea-following.md rules 4-5 and 39).
+          const followerIds = new Set([authorUserId])
+          for (let offset = 1; offset <= relatedCount; offset++) {
+            followerIds.add(contributorIds[(i + offset) % contributorIds.length] as string)
+          }
+          for (const userId of followerIds) {
+            await prisma.idea_followers.upsert({
+              where: { idea_id_user_id: { idea_id: ideaId, user_id: userId } },
+              update: {},
+              create: {
+                id: seedId('follower', ideaId, userId),
+                idea_id: ideaId,
+                user_id: userId,
+                created_at_utc: createdAt,
+              },
+            })
+          }
+
           for (let offset = 0; offset < relatedCount; offset++) {
             const tagName = board.tagNames[(i + offset) % board.tagNames.length] as string
             const tagId = tagIdsByName.get(tagName) as string

@@ -252,6 +252,19 @@ model idea_types {
   @@index([organization_id, sort_order], map: "ix_idea_types_organization_id_sort_order")
 }
 
+/// Who follows an idea (SPEC/20-feature-idea-following.md rule 36), shaped like `idea_upvotes`.
+model idea_followers {
+  id             String   @id(map: "PK_idea_followers") @db.Uuid
+  idea_id        String   @db.Uuid
+  user_id        String   @db.Uuid
+  created_at_utc DateTime @db.Timestamptz(6)
+  ideas          ideas    @relation(fields: [idea_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_idea_followers_ideas_idea_id")
+  users          users    @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "FK_idea_followers_users_user_id")
+
+  @@unique([idea_id, user_id], map: "ux_idea_followers_idea_id_user_id")
+  @@index([user_id], map: "IX_idea_followers_user_id")
+}
+
 model idea_upvotes {
   id             String   @id(map: "PK_idea_upvotes") @db.Uuid
   idea_id        String   @db.Uuid
@@ -298,6 +311,7 @@ model ideas {
   comments                  comments[]
   idea_assignees            idea_assignees[]
   idea_field_values         idea_field_values[]
+  idea_followers            idea_followers[]
   idea_mentions             idea_mentions[]
   idea_tags                 idea_tags[]
   idea_upvotes              idea_upvotes[]
@@ -365,10 +379,14 @@ model notification_events {
   recipient_user_id String                @db.Uuid
   link              String                @db.VarChar(200)
   occurred_at_utc   DateTime              @db.Timestamptz(6)
+  /// `NULL` is unread (SPEC/20-feature-idea-following.md rule 37).
+  read_at_utc       DateTime?             @db.Timestamptz(6)
+  /// The new status's name for the two status events, captured when the event is written.
+  status_name       String?               @db.VarChar(100)
 
   @@index([idea_id], map: "ix_notification_events_idea_id")
   @@index([occurred_at_utc], map: "ix_notification_events_occurred_at_utc")
-  @@index([recipient_user_id], map: "ix_notification_events_recipient_user_id")
+  @@index([recipient_user_id, occurred_at_utc(sort: Desc)], map: "ix_notification_events_recipient_user_id_occurred_at_utc")
 }
 
 model organizations {
@@ -483,6 +501,7 @@ model users {
   updated_by_user_id                                                  String?                  @db.Uuid
   comment_mentions                                                    comment_mentions[]
   idea_assignees                                                      idea_assignees[]
+  idea_followers                                                      idea_followers[]
   idea_mentions                                                       idea_mentions[]
   idea_upvotes                                                        idea_upvotes[]
   impersonation_sessions_impersonation_sessions_real_user_idTousers   impersonation_sessions[] @relation("impersonation_sessions_real_user_idTousers")
@@ -588,6 +607,7 @@ enum NotificationEventType {
   IdeaPromoted // 4
   IssueDeliveryStatusChanged // 5
   IssueTaskAssigned // 6
+  IdeaEdited // 7
 }
 
 enum Priority {

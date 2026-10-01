@@ -72,8 +72,8 @@ Collega already records (`20-feature-notifications.md`) gain a reader.
     changes other than assignment, and soft deletion.
 15. **Commenting does not make the commenter follow.** The decision names only the author and assignees.
     *(answered, Q4.)*
-16. **Followers are read when the event is written**, in the same unit of work as the change that
-    caused it, as notifications are today.
+16. **Followers are read when the event is written**, in the same request as the change that caused
+    it, right after that change commits, as notifications are today.
 17. **No event is written for a soft-deleted idea** — none of the triggering actions is possible on one.
 
 ### One row per person
@@ -84,6 +84,10 @@ Collega already records (`20-feature-notifications.md`) gain a reader.
 19. **Self-notifications stay suppressed:** nobody is notified of their own action, whether or not they
     follow. Under View As, "own" means the target, the identity the action is recorded as
     (`20-feature-view-as.md` rule 15).
+
+19a. **A deactivated account is notified of nothing** — not as a follower, not when mentioned, not as a
+    task's assignee. Its follow rows stay; reactivated, it is notified again from then on, and nothing
+    written while it was inactive is backfilled. *(Owner decision 2026-10-01.)*
 
 ### The inbox
 
@@ -142,7 +146,7 @@ its specification.
     |---|---|---|
     | `id` | `UUID` | primary key `PK_idea_followers` |
     | `idea_id` | `UUID NOT NULL` | `FK_idea_followers_ideas_idea_id` → `ideas(id)` **`ON DELETE CASCADE`** |
-    | `user_id` | `UUID NOT NULL` | `FK_idea_followers_users_user_id` → `users(id)`, no action, as its siblings |
+    | `user_id` | `UUID NOT NULL` | `FK_idea_followers_users_user_id` → `users(id)` **`ON DELETE RESTRICT`**, matching `idea_upvotes` and `idea_assignees` |
     | `created_at_utc` | `TIMESTAMPTZ(6) NOT NULL` | when they started following, from the injected clock |
 
     - Unique `ux_idea_followers_idea_id_user_id` on (`idea_id`, `user_id`): one row per person per idea,
@@ -296,3 +300,6 @@ answer; Q13 does not.
     tab is visible.
 15. **Q15 — Unread colour:** an ink dot and bold text, no hue. No bend of the colour rule.
 16. **Q16 — Follower count:** the toggle shows the count only (*Following · 4*); names are not listed.
+
+Added after the build slice's review, also 2026-10-01: **deactivated users get no notifications**
+(rule 19a). Follow rows stay, and a reactivated user is notified again from that point on.

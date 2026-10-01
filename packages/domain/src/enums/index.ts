@@ -73,6 +73,7 @@ export enum NotificationEventType {
   IdeaPromoted = 'IdeaPromoted',
   IssueDeliveryStatusChanged = 'IssueDeliveryStatusChanged',
   IssueTaskAssigned = 'IssueTaskAssigned',
+  IdeaEdited = 'IdeaEdited',
 }
 
 export enum AiCallOutcome {

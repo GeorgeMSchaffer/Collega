@@ -8,7 +8,7 @@
 
 import type { AiPromptVersion } from '@collega/domain/ai'
 import { ORGANIZATION_CATALOG_PLACEHOLDER, SCOPE_STATEMENT_PLACEHOLDER } from '@collega/domain/ai'
-import { NotificationEventType, Role } from '@collega/domain/enums'
+import { NotificationEventType, Role, UserStatus } from '@collega/domain/enums'
 import type { NotificationEvent } from '@collega/domain/notifications'
 import { describe, expect, it } from 'vitest'
 import { AiPromptService } from '../../src/ai/ai-prompt.service.js'
@@ -396,7 +396,12 @@ describe('NotificationService', () => {
         written.push(event)
       },
     }
-    return { service: new NotificationService(repository, fixedClock()), written }
+    const recipients = {
+      async getById() {
+        return { status: UserStatus.Active }
+      },
+    }
+    return { service: new NotificationService(repository, recipients, fixedClock()), written }
   }
 
   const input = {

@@ -87,6 +87,7 @@ export async function resetDemoSeed(prisma: PrismaClient): Promise<number> {
   await remove(prisma.idea_assignees.deleteMany({ where: byIdea }))
   await remove(prisma.idea_mentions.deleteMany({ where: byIdea }))
   await remove(prisma.idea_upvotes.deleteMany({ where: byIdea }))
+  await remove(prisma.idea_followers.deleteMany({ where: byIdea }))
   await remove(prisma.idea_tags.deleteMany({ where: byIdea }))
   await remove(prisma.idea_field_values.deleteMany({ where: byIdea }))
   await remove(prisma.issue_tasks.deleteMany({ where: byIdea }))
