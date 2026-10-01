@@ -1,6 +1,6 @@
 # Sprint 13 — MVP release
 
-**Status:** Not started (planned 2026-09-30; scope questions answered the same day).
+**Status:** In progress — slices 136–139 and 141 merged 2026-10-01 (141 recorded the View As order and closed F1); 140, the cutover, remains, waiting on the owner steps in `SPEC/50-cutover-runbook.md` §1. *(Planned 2026-09-30.)*
 
 **Goal:** close the last code and spec gaps, then cut the TypeScript stack over to Vercel
 production. Every feature epic is merged; what remains is a QA debt, one contract defect, the golden

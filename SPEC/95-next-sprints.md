@@ -49,7 +49,7 @@ Note: the Site Admin seed-reset flag bundled into Sprint 2 has no cross-sprint d
 | 10 | Comp R, phase 1 — themes, the list and detail pattern on Boards, a board and Ideas, structured idea fields, board archive | `SPEC/sprints/archive/sprint-10-comp-r-phase-1.md` | **Complete (2026-09-27)** — slices 099–103 merged | Large |
 | 11 | Comp R iteration — Graphite and the denser controls, tag colours and Settings → Tags, the effort bar, the Sprint board and the Roadmap | `SPEC/sprints/archive/sprint-11-comp-r-iteration.md` | **Complete (2026-09-28)** — slices 104–112 merged | Large |
 | 12 | Prompt-eval runner — the TypeScript replacement for the runner F6 deleted; measures v1, commits a baseline, and gates idea assistant v2 | `SPEC/sprints/archive/sprint-12-prompt-eval-runner.md` | **Complete (2026-09-30)** — slices 113–118 merged; the v1 baseline is committed | Medium |
-| 13 | MVP release — QA debt, the View As grouping fix, F1 closed, spec bookkeeping, then the cutover (F4) | `SPEC/sprints/sprint-13-mvp-release.md` | Not started (planned 2026-09-30; scope answered the same day) | Medium |
+| 13 | MVP release — QA debt, the View As grouping fix, F1 closed, spec bookkeeping, then the cutover (F4) | `SPEC/sprints/sprint-13-mvp-release.md` | **In progress** — 136–139 and 141 merged 2026-10-01; 140, the cutover, remains | Medium |
 
 **Cutover** (Sprint 9, Wave F slice F4) follows `SPEC/50-cutover-runbook.md`: its go/no-go checklist
 gates the release of the conversion onto `main`.
