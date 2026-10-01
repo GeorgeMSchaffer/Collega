@@ -19,6 +19,10 @@ export type NotificationEvent = {
   readonly actorUserId: string
   readonly recipientUserId: string
   readonly link: string
+  /** The new status's name for the two status events, captured when the event is written so a
+   * later rename does not rewrite what the person was told (SPEC/20-feature-idea-following.md
+   * rule 37). `null` for every other type. */
+  readonly statusName: string | null
   readonly occurredAtUtc: Date
 }
 
@@ -33,6 +37,7 @@ export type CreateNotificationEventProps = {
   readonly ideaTitle: string
   readonly actorUserId: string
   readonly recipientUserId: string
+  readonly statusName?: string | null
   readonly occurredAtUtc: Date
 }
 
@@ -79,6 +84,7 @@ export function createNotificationEvent(props: CreateNotificationEventProps): No
     actorUserId: props.actorUserId,
     recipientUserId,
     link: buildIdeaLink(ideaId),
+    statusName: props.statusName ?? null,
     occurredAtUtc: props.occurredAtUtc,
   }
 }
