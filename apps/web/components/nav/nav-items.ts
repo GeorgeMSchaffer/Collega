@@ -9,15 +9,24 @@
  * request from `lib/data/`; a module-level read would freeze them at import and would tie this
  * module to a fixture that Wave D deletes. What stays here is the shape.
  */
+import { hasInbox, type Role } from '@/lib/roles'
+
 export type NavItem = {
   href: string
   label: string
-  icon: 'home' | 'boards' | 'ideas' | 'sprint' | 'backlog' | 'roadmap' | 'settings'
+  icon: 'home' | 'inbox' | 'boards' | 'ideas' | 'sprint' | 'backlog' | 'roadmap' | 'settings'
   count?: number
   slice?: string
 }
 
 export type NavGroup = { label: string; items: NavItem[] }
+
+export const INBOX_HREF = '/inbox'
+
+/** A Site Admin acting as themselves has no inbox, so neither the sidebar nor the palette offers it. */
+export function navItemVisible(item: NavItem, role: Role): boolean {
+  return item.href !== INBOX_HREF || hasInbox(role)
+}
 
 export type NavCounts = { boards: number; ideas: number; backlog: number }
 
@@ -29,6 +38,8 @@ const NAV_SHAPE: { label: string; items: NavShapeItem[] }[] = [
     label: 'Workspace',
     items: [
       { href: '/home', label: 'Home', icon: 'home' },
+      // Its unread badge is live rather than a count from here: `inbox-link.tsx`.
+      { href: INBOX_HREF, label: 'Inbox', icon: 'inbox' },
       { href: '/boards', label: 'Boards', icon: 'boards', countKey: 'boards' },
       { href: '/ideas', label: 'Ideas', icon: 'ideas', countKey: 'ideas' },
     ],

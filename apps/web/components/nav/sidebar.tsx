@@ -1,4 +1,6 @@
-import { getNavCounts } from '@/lib/data'
+import { getNavCounts, getUnreadCount } from '@/lib/data'
+import { hasInbox } from '@/lib/roles'
+import { currentUser } from '@/lib/session'
 import { navGroupsWith } from './nav-items'
 import { SidebarNav } from './sidebar-nav'
 
@@ -11,7 +13,10 @@ import { SidebarNav } from './sidebar-nav'
  * with no props.
  */
 export async function Sidebar() {
-  const counts = await getNavCounts()
+  const [counts, unread] = await Promise.all([
+    getNavCounts(),
+    hasInbox(currentUser().role) ? getUnreadCount() : 0,
+  ])
 
-  return <SidebarNav groups={navGroupsWith(counts)} />
+  return <SidebarNav groups={navGroupsWith(counts)} unread={unread} />
 }
