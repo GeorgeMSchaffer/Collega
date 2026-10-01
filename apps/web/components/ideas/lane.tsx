@@ -34,6 +34,23 @@ export type LaneReorder = {
 }
 
 /**
+ * Moving a card by its handle: the board's card-drag state, seen from one lane. `active` is true
+ * while any card is being dragged, which makes the lane a card drop target instead of a lane one;
+ * `onDragOver` answers whether *this* lane accepts the drop (not the card's own), and `over` is that
+ * lane lit up. Null when the role may not move cards.
+ */
+export type CardDrag = {
+  active: boolean
+  draggingId: string | null
+  over: boolean
+  onDragStart: (ideaId: string) => void
+  onDragEnd: () => void
+  onDragOver: () => boolean
+  onDragLeave: () => void
+  onDrop: () => void
+}
+
+/**
  * One swimlane (comp R `.lane`): a quiet full-height column with a soft ground and hairline border,
  * headed in its status's own colour, so a board reads as lanes rather than loose cards.
  *
@@ -51,6 +68,7 @@ export function Lane({
   selectedId,
   onOpen,
   reorder = null,
+  cardDrag = null,
 }: {
   status: Status
   ideas: Idea[]
@@ -62,6 +80,7 @@ export function Lane({
   selectedId: string | null
   onOpen: (ideaId: string, trigger: HTMLButtonElement) => void
   reorder?: LaneReorder | null
+  cardDrag?: CardDrag | null
 }) {
   const leftRef = useRef<HTMLButtonElement>(null)
   const rightRef = useRef<HTMLButtonElement>(null)
@@ -122,17 +141,28 @@ export function Lane({
     <section
       aria-label={status.name}
       onDragOver={(event: DragEvent) => {
-        if (reorder?.onDragOver()) event.preventDefault()
+        // A card drag and a lane drag are told apart by whose state is set, never by the payload.
+        if (cardDrag?.active) {
+          if (cardDrag.onDragOver()) event.preventDefault()
+        } else if (reorder?.onDragOver()) event.preventDefault()
       }}
-      onDragLeave={() => reorder?.onDragLeave()}
+      onDragLeave={() => {
+        cardDrag?.onDragLeave()
+        reorder?.onDragLeave()
+      }}
       onDrop={(event: DragEvent) => {
-        if (!reorder) return
-        event.preventDefault()
-        reorder.onDrop()
+        if (cardDrag?.active) {
+          event.preventDefault()
+          cardDrag.onDrop()
+        } else if (reorder) {
+          event.preventDefault()
+          reorder.onDrop()
+        }
       }}
       className={cn(
         'flex min-h-[min(62vh,560px)] min-w-0 flex-col gap-2 rounded-[14px] border border-border/70 bg-muted/55 px-1.5 pt-1.5 pb-3',
-        reorder?.over && 'border-primary',
+        (reorder?.over || cardDrag?.over) && 'border-primary',
+        cardDrag?.over && 'bg-accent/40 outline-2 -outline-offset-2 outline-primary/50',
         reorder?.dragging && 'opacity-60',
       )}
     >
@@ -184,6 +214,9 @@ export function Lane({
             upvoteDenial={upvoteDenial}
             selected={idea.id === selectedId}
             onOpen={(trigger) => onOpen(idea.id, trigger)}
+            dragging={cardDrag?.draggingId === idea.id}
+            onDragStart={() => cardDrag?.onDragStart(idea.id)}
+            onDragEnd={() => cardDrag?.onDragEnd()}
           />
         ))
       )}

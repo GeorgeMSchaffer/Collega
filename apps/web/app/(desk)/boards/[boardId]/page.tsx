@@ -106,7 +106,7 @@ export default async function BoardPage({
               {board.isArchived
                 ? null
                 : moveDenial === null
-                  ? 'Move a card between lanes with the arrows on it.'
+                  ? 'Drag a card by its handle to another lane, or use the arrows on it.'
                   : `${moveDenial}, so cards here stay where they are.`}
             </>
           }
