@@ -39,13 +39,9 @@ All ten previously open items were promoted into `SPEC/sprints/sprint-07.5-acces
 
 From the owner's ad-hoc testing on 2026-10-01, taken one at a time:
 
-6. **An idea's assignees cannot be chosen.** `20-feature-ideas-and-engagement.md` (field list and
-   rules 12–13) gives an idea zero to five assignees from its organization, and the API accepts
-   `assigneeUserIds`, but the idea form has no picker: it resends the idea's existing assignees.
-   Slice 147.
 7. **The tags input does not suggest or confirm.** `20-feature-ideas-and-engagement.md` rules 2–5:
    select existing organization tags or create new ones, autocomplete from two characters, an
    unmatched tag created on save. The form is a comma-separated text box. The owner adds: when nothing
-   matches, offer to create the tag rather than creating it silently. Slice 148, after 147, reusing
-   its picker.
+   matches, offer to create the tag rather than creating it silently. Slice 148. (Slice 147's
+   assignee picker is a native select, so the tag input needs its own type-ahead.)
 
