@@ -118,6 +118,12 @@ inbox; only opening a row, or Mark all read, marks read; under View As it is the
 count refreshes on navigation and every 60 s; unread is ink and bold, no hue; the toggle shows the count
 only.
 
+**Addendum, 2026-10-01 (owner):** each inbox row shows its board name, as the approved comp does (*You
+follow this idea · Opportunities*). This supersedes the contract's "no board name is sent". The name is
+the idea's **current** board, read at query time through `ideas.board_id`, not captured on the event
+(unlike `status_name`, which is history); no schema change. Feature rule 23a; `boardName` in
+`contracts/notifications.md`.
+
 **Q13 differs:** a status row **names the new status** (*moved {idea} to In Review*). That needs
 `notification_events.status_name`, added to the amendment below, captured at write time.
 

@@ -271,7 +271,9 @@ function InboxRow({
           </span>
           {tail}
         </span>
-        <span className="block text-xs text-muted-foreground">{why}</span>
+        <span className="block text-xs text-muted-foreground">
+          {item.boardName ? `${why} · ${item.boardName}` : why}
+        </span>
       </span>
       <time
         dateTime={item.occurredAtUtc}

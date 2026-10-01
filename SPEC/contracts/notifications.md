@@ -70,6 +70,8 @@ List the caller's notifications, newest first.
     `IssueDeliveryStatusChanged` (the delivery status), as it was named when the event was written;
     `null` for every other type and for status events written before the column existed (answered
     2026-10-01, feature rule 37)
+  - `boardName` string, or `null` — the idea's **current** board name (answered 2026-10-01, feature
+    rule 23a); `null` only when the board cannot be resolved
   - `occurredAtUtc` timestamp
   - `readAtUtc` timestamp, or `null` when unread
 - **Errors:** —
@@ -78,8 +80,14 @@ List the caller's notifications, newest first.
     sort and no filter.
   - `actor` is `null` only when no user row exists for `actor_user_id`, which has no foreign key: data
     damage, as for a comment's `author`.
-  - `statusName` is captured at write time: renaming the status later does not change it. No board name
-    is sent; the event stores none.
+  - `statusName` is captured at write time: renaming the status later does not change it. ~~No board name
+    is sent; the event stores none.~~ *Superseded 2026-10-01 (owner's decision, `decisions.md` "The
+    follow and inbox questions are answered", addendum): each row sends `boardName`.*
+  - `boardName` is **not** captured at write time: it is read at query time from the idea's current
+    `board_id`, so it follows the idea if it moves board. This differs from `statusName` on purpose: a
+    status name is part of what happened (*moved to In Review*), so it is history; the board is where
+    the idea lives now, which is where opening the row takes the reader. The event's own `board_id` is
+    not used for it.
 
 ### `GET /api/v1/notifications/unread-count`
 Count the caller's unread notifications, for the sidebar badge.
