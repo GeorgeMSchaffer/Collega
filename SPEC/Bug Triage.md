@@ -39,9 +39,4 @@ All ten previously open items were promoted into `SPEC/sprints/sprint-07.5-acces
 
 From the owner's ad-hoc testing on 2026-10-01, taken one at a time:
 
-7. **The tags input does not suggest or confirm.** `20-feature-ideas-and-engagement.md` rules 2–5:
-   select existing organization tags or create new ones, autocomplete from two characters, an
-   unmatched tag created on save. The form is a comma-separated text box. The owner adds: when nothing
-   matches, offer to create the tag rather than creating it silently. Slice 148. (Slice 147's
-   assignee picker is a native select, so the tag input needs its own type-ahead.)
 
