@@ -127,6 +127,8 @@ export function IdeaForm({
   const id = useId()
   const [draft, setDraft] = useState(() => initialDraft(idea, boardId, options))
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({})
+  // Lifted out of the tag field so a save can see text that was typed and never chosen.
+  const [tagText, setTagText] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
@@ -161,6 +163,9 @@ export function IdeaForm({
     if (!draft.impactRationale.trim()) found.impactRationale = required('Impact Rationale')
     if (!draft.businessImpactId) found.businessImpactId = required('Business Impact')
     if (!draft.ideaTypeId) found.ideaTypeId = required('Idea Type')
+    if (tagText.trim()) {
+      found.tagNames = `Pick a tag or choose Create for '${tagText.trim()}'.`
+    }
     for (const field of customFields) {
       if (field.required && !draft.fields[field.id]?.trim())
         found[field.name] = required(field.name)
@@ -409,6 +414,8 @@ export function IdeaForm({
         tags={draft.tags}
         catalog={options.tags}
         error={errors.tagNames}
+        text={tagText}
+        onTextChange={setTagText}
         onChange={(tags) => set('tags', tags)}
       />
 
@@ -480,15 +487,18 @@ function TagsField({
   tags,
   catalog,
   error,
+  text,
+  onTextChange: setText,
   onChange,
 }: {
   id: string
   tags: ChosenTag[]
   catalog: TagRef[]
   error: string | undefined
+  text: string
+  onTextChange: (text: string) => void
   onChange: (tags: ChosenTag[]) => void
 }) {
-  const [text, setText] = useState('')
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(-1)
   const listId = `${id}-list`
@@ -609,6 +619,8 @@ function TagsField({
             setActive(-1)
           }}
           onKeyDown={onKeyDown}
+          // Also how a refused save shows the options: it moves focus here.
+          onFocus={() => setOpen(true)}
           onBlur={() => {
             setOpen(false)
             setActive(-1)
