@@ -409,7 +409,7 @@ describe('DI wiring of the following and inbox modules', () => {
     const providers = (Reflect.getMetadata('providers', module as object) ?? []) as {
       provide?: unknown
     }[]
-    return new Set(providers.map((p) => p.provide))
+    return new Set(providers.map((p) => p.provide).filter((token) => token !== undefined))
   }
 
   /** String tokens, plus any that came out undefined (a mistyped `PORT_TOKENS.x`). */

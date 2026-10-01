@@ -69,7 +69,7 @@ describe.skipIf(!DATABASE_URL)('Demo seed re-run against a live database', () =>
     )
   }, 60_000)
 
-  it('keeps the idea followers identical on a re-run, and equal to each idea’s author and assignees', async () => {
+  it('rebuilds the same idea followers from nothing, equal to each idea’s author and assignees', async () => {
     const organizationIds = DEMO_ORGANIZATIONS.map((org) => seedId('organization', org.slug))
     const read = () =>
       prisma.$queryRaw<{ follower_id: string; idea_id: string; user_id: string }[]>`
@@ -80,6 +80,11 @@ describe.skipIf(!DATABASE_URL)('Demo seed re-run against a live database', () =>
         ORDER BY f.id`
 
     const before = await read()
+    // Cleared first, so what is compared is what the seed itself makes, not rows an earlier seed left.
+    await prisma.$executeRaw`
+      DELETE FROM idea_followers f USING ideas i
+      WHERE i.id = f.idea_id AND i.organization_id = ANY(${organizationIds}::uuid[])`
+    expect(await read()).toEqual([])
     await runDemoSeed(prisma)
     const after = await read()
 

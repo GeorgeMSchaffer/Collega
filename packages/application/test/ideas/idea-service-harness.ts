@@ -331,6 +331,7 @@ export function harness(options: {
   ]
   const businessImpacts: readonly BusinessImpactSummary[] = [
     { id: IMPACT_A, organizationId: ORG_A, name: 'Medium', color: '#888', isDeleted: false },
+    { id: 'impact-a2', organizationId: ORG_A, name: 'High', color: '#888', isDeleted: false },
     { id: 'impact-b', organizationId: ORG_B, name: 'Beta Impact', color: '#888', isDeleted: false },
   ]
 

@@ -393,6 +393,24 @@ describe('IdeaService writes IdeaEdited once per real change', () => {
     expect(h.notifications).toEqual([])
   })
 
+  it.each([
+    ['a tag added', { tagNames: ['one'] }],
+    ['a person newly mentioned', { mentionEmails: ['w1@acme.test'] }],
+    ['a changed business impact', { businessImpactId: 'impact-a2' }],
+    ['a changed problem statement', { problem: 'A different problem.' }],
+    ['a changed impact rationale', { impactRationale: 'A different rationale.' }],
+    ['an added proposed solution', { proposedSolutions: ['Cut the number of forms.', 'Another'] }],
+  ])('writes one IdeaEdited for %s', async (_label, change) => {
+    const existing = idea()
+    const h = harness({ ...edit(existing), tags: [{ id: 't1', name: 'one', color: '#000000' }] })
+
+    await h.service.update(existing.id, { ...updateFrom(existing), ...change })
+
+    expect(h.notifications.filter((n) => n.eventType === 'IdeaEdited')).toHaveLength(
+      change.mentionEmails ? 1 : 2,
+    )
+  })
+
   it('writes one for an effort change on an idea', async () => {
     const existing = idea()
     const h = harness(edit(existing))
@@ -592,5 +610,55 @@ describe('IdeaService detail carries the caller follow state', () => {
     })
 
     expect(detail).toMatchObject({ isFollowing: true, followerCount: 2 })
+  })
+})
+
+describe('IdeaService writes no notification for the actions rule 14 leaves out', () => {
+  const admin = orgAdmin(ORG_A, 'org-admin-1')
+
+  it('stays silent when an Issue returns to Discovery', async () => {
+    const issue = promotedIdea()
+    const h = harness({ currentUser: admin, ideas: [issue], followers: { [issue.id]: [WATCHER] } })
+
+    await h.service.returnToDiscovery(issue.id)
+
+    expect(h.notifications).toEqual([])
+  })
+
+  it('stays silent when an Issue is assigned to a sprint', async () => {
+    const issue = promotedIdea()
+    const h = harness({
+      currentUser: admin,
+      ideas: [issue],
+      followers: { [issue.id]: [WATCHER] },
+      sprints: [
+        {
+          id: 'sprint-1',
+          organizationId: ORG_A,
+          name: 'Sprint 1',
+          startDate: '2026-10-01',
+          endDate: '2026-10-14',
+          state: 'Planned' as never,
+          isDeleted: false,
+        },
+      ],
+    })
+
+    await h.service.assignToSprint(issue.id, { sprintId: 'sprint-1' })
+
+    expect(h.notifications).toEqual([])
+  })
+
+  it('stays silent when an idea is soft-deleted', async () => {
+    const existing = idea()
+    const h = harness({
+      currentUser: admin,
+      ideas: [existing],
+      followers: { [existing.id]: [WATCHER] },
+    })
+
+    await h.service.delete(existing.id)
+
+    expect(h.notifications).toEqual([])
   })
 })
