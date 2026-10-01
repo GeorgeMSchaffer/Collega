@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-01 | The View As candidate order, and F1 closes | active | full below |
 | 2026-09-30 | What the MVP release includes | active | full below |
 | 2026-09-30 | The prompt-eval thresholds stand, confirmed against the v1 baseline | active | full below |
 | 2026-09-29 | How the cutover is run | active | full below |
@@ -42,7 +43,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-28 | `compare` refuses to judge an invalid run | active | full below |
 | 2026-09-28 | The prompt-eval runner's fixture hash for `compare` is the catalog hash | active | full below |
 | 2026-09-28 | The Anthropic client reads no credential or endpoint from the environment | active | full below |
-| 2026-09-28 | The prompt-eval runner's open questions are answered | active | full below |
+| 2026-09-28 | The prompt-eval runner's open questions are answered | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | The prompt-eval runner: what existing decisions already settle | superseded in part | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | Starting a sprint, a single-Issue read, the Roadmap's sprint rows, and tag audit events | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | The comp R iteration's open questions are answered | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
@@ -98,6 +99,22 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-01 — The View As candidate order, and F1 closes
+
+**Decided by the user**, confirming the order slice 137 built and closing the conversion's replay.
+
+1. **`GET /auth/view-as/candidates` groups by organization**, as `contracts/view-as.md` requires, and
+   is ordered by organization title, then organization id, then last name, first name and email.
+   Accounts with no organization come last. The user confirmed this order on 2026-10-01.
+2. **The three cases that still differ are accepted as "deliberately do better"** (2026-09-11):
+   `auth.viewas.candidates.orgadmin`, `auth.viewas.candidates.siteadmin` and `auth.viewas.start`.
+   The recording holds the old ungrouped order, which was never specified. Each is recorded in
+   `tools/golden/src/accepted.ts`.
+3. **F1 closes.** Every difference in the replay is now fixed, accepted or recorded; none is
+   unexplained.
 
 ---
 
@@ -441,42 +458,3 @@ and a stray base URL would send the configured key to another host. Pinning both
 API or the prompt-eval runner was given, sent to Anthropic, is the only credential in play. The
 API's behaviour is otherwise unchanged — the same key, the same endpoint, and no client when the key
 is blank. Recorded in `20-feature-prompt-eval-runner.md` rule 37.
-
----
-
-## 2026-09-28 — The prompt-eval runner's open questions are answered
-
-**Decided by the user**, answering the eleven questions slice 113 left open, each with the
-recommended option. Each answer is written into `20-feature-prompt-eval-runner.md` and
-`SPEC/sprints/sprint-12-prompt-eval-runner.md`, and the *(pending answer)* markers are gone. This
-completes the entry below, which said which key and who pays were open.
-
-1. **Packaging:** a new workspace package, `@collega/prompt-eval`, in `tools/prompt-eval`, depending
-   on `@collega/application` and `@collega/infrastructure`, with no new third-party package. It is
-   the first `tools/` package allowed to depend on infrastructure, approved for this.
-2. **What a run drives:** the `IdeaDraftModel` port on the production `AnthropicIdeaDraftModel`, with
-   `sanitizeDraft` exported from the idea-assist service so the output is scored as the service
-   returns it. Not the whole service with fake ports, and not the HTTP API.
-3. **Model:** production's model and effort, read from the shared constant, with `--model` and
-   `--effort` overrides that the run header records and `compare` flags.
-4. **Key:** a dedicated evaluation key, never the production deployment key, supplied as
-   `ANTHROPIC_API_KEY` from the environment or the root `.env`. *The variable name is superseded by
-   answer 12.*
-5. **The scope gate's positive class is a refusal**, so recall is the security figure.
-6. **Defaults:** 5 repeats, `--max-calls 200`, `--max-tokens 1,000,000`, concurrency 1, and `--yes`
-   required when a run plans more than 100 calls.
-7. **Thresholds:** refusal recall of 1.0 on the `refuse-*` cases as an absolute floor; every other
-   metric judged against the committed baseline; a collapse in cache reads and a surviving locked
-   field fail outright. Revisited once the first baseline shows the real rates. The spec's 10%
-   errored-trial limit, above which a run is invalid, is provisional with these thresholds.
-8. **v1 and v2:** v1 is measured now and its baseline committed; the v2 case format and scorer are
-   built now; the live v2 run lands with v2.
-9. **Case format:** the optional `pair` and `assistant` keys are added.
-10. **Run outputs:** `runs/` is gitignored; only promoted baselines are committed.
-11. **No CI for now.** Runs are local, and the summary goes with the review of a prompt change.
-12. **The runner's key has its own name** (decided after the other eleven). The runner reads only
-    `PROMPT_EVAL_ANTHROPIC_API_KEY`, from the environment or the root `.env`, and refuses to run
-    without it. It never reads `ANTHROPIC_API_KEY`, so it cannot pick up the API's key by accident —
-    both would otherwise sit in the same `.env` under the same name. It passes the key to the
-    production adapter explicitly. This supersedes in part the entry below ("One key, under the name
-    already fixed") and answer 4's variable name.
