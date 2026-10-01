@@ -363,7 +363,7 @@ Reuses the existing audit-event and `NotificationWriter` patterns (`SPEC/20-feat
 
 - **Audit events** (new types): `IdeaPromotedToIssue`, `IssueReturnedToDiscovery`, `IssueDeliveryStatusChanged`, `IssueSprintAssignmentChanged`, `SprintCreated`, `SprintStarted`, `SprintCompleted`, `SprintUpdated`, `SprintDeleted`. Slice 2 adds `OutcomeCreated`, `OutcomeUpdated`, `OutcomeDeleted`, `IssueOutcomeGroupingChanged`.
 - **Task mutations are deliberately NOT audited** — a conscious asymmetry with every other mutation here. A checklist ticked a dozen times a day would drown the log that answers "who committed us to this work"; `CompletedAtUtc`/`CompletedByUserId` on the row are the only record that matters.
-- **Notification events** (new types, notify idea author + assignees): `IdeaPromoted` and `IssueDeliveryStatusChanged`. Stored canonical link `/ideas/{ideaId}` (drawer-addressable, the same item), per the notifications spec.
+- **Notification events** (new types, notify idea author + assignees): `IdeaPromoted` and `IssueDeliveryStatusChanged`. Stored canonical link `/ideas/{ideaId}` (drawer-addressable, the same item), per the notifications spec. *Superseded in part 2026-10-01 (`decisions.md`, "Following an idea, and an in-app notification inbox"): both notify the idea's **followers** instead — the author and assignees follow automatically (`20-feature-idea-following.md` rule 11; the delivery-status move to followers is confirmed there, Q3).*
 - **Task assignment notifies the new assignee only** (`IssueTaskAssigned`, self-suppressed, link `/ideas/{ideaId}`). No other task event notifies anyone — ticking a box must not page the room.
 
 ---

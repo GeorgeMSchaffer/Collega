@@ -28,6 +28,8 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-01 | The follow and inbox questions are answered | active | full below |
+| 2026-10-01 | The S0.2 schema freeze is amended a fifth time, for idea followers and read state | active | full below |
 | 2026-10-01 | Following an idea, and an in-app notification inbox | active | full below |
 | 2026-10-01 | The View As banner names only the target | active | full below |
 | 2026-10-01 | The View As candidate order, and F1 closes | active | full below |
@@ -43,8 +45,8 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-28 | The v2 corpus format, as built | active | full below |
 | 2026-09-28 | The prompt-eval runner's provisional limits stand for the first baseline | active | full below |
 | 2026-09-28 | `compare` refuses to judge an invalid run | active | full below |
-| 2026-09-28 | The prompt-eval runner's fixture hash for `compare` is the catalog hash | active | full below |
-| 2026-09-28 | The Anthropic client reads no credential or endpoint from the environment | active | full below |
+| 2026-09-28 | The prompt-eval runner's fixture hash for `compare` is the catalog hash | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
+| 2026-09-28 | The Anthropic client reads no credential or endpoint from the environment | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | The prompt-eval runner's open questions are answered | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | The prompt-eval runner: what existing decisions already settle | superseded in part | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | Starting a sprint, a single-Issue read, the Roadmap's sprint rows, and tag audit events | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
@@ -101,6 +103,51 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-01 — The follow and inbox questions are answered
+
+**Decided by the user**, answering the sixteen questions slice 149 left open in
+`20-feature-idea-following.md` (now its "Answered 2026-10-01" section, with each answer). Fifteen take
+the recommended default: a removed assignee keeps following; one new type, `IdeaEdited`; delivery-status
+moves go to followers; commenting does not follow; one row per person per action, the mention winning;
+a Site Admin as themselves cannot follow and has no inbox; nothing here is audited; the inbox shows 90
+days and keeps older rows; deleted ideas' notifications are hidden; a row opens the drawer over the
+inbox; only opening a row, or Mark all read, marks read; under View As it is the target's inbox; the
+count refreshes on navigation and every 60 s; unread is ink and bold, no hue; the toggle shows the count
+only.
+
+**Q13 differs:** a status row **names the new status** (*moved {idea} to In Review*). That needs
+`notification_events.status_name`, added to the amendment below, captured at write time.
+
+---
+
+## 2026-10-01 — The S0.2 schema freeze is amended a fifth time, for idea followers and read state
+
+**Follows from the user's decision below** ("The follower list needs a schema change, which amends the
+S0.2 freeze a fifth time"). Under the 2026-09-11 rule — the freeze stands, and each change to
+`schema.prisma` needs its own entry here — this is that entry, and it is not a general licence. The
+columns are slice 149's proposal (`20-feature-idea-following.md` rules 36–39), confirmed when the user
+reviews that slice; the build slice writes the migration.
+
+- **New table `idea_followers`** (`id`, `idea_id`, `user_id`, `created_at_utc`), shaped like
+  `idea_upvotes`: unique on (`idea_id`, `user_id`), indexed on `user_id`, `ON DELETE CASCADE` from
+  `ideas`, no action from `users`.
+- **`notification_events.status_name VARCHAR(100) NULL`** (added with the answers entry above): the new
+  status's name for the two status events, captured at write time, so a later rename does not rewrite
+  history. A narrow typed column rather than JSON metadata, because no other type needs a detail.
+- **`notification_events.read_at_utc TIMESTAMPTZ(6) NULL`**, `NULL` meaning unread, and an index on
+  (`recipient_user_id`, `occurred_at_utc` DESC) replacing the one on `recipient_user_id` alone.
+- **`NotificationEventType` gains `IdeaEdited`** (value 7).
+- **The migration backfills** the author and every assignee of each idea that is not soft-deleted as
+  followers, so today's recipients keep hearing.
+- **Not covered:** a general metadata column on `notification_events`, a follow source column, and any
+  purge of old notifications. Each would need its own amendment.
+
+**Golden corpus.** `GET /ideas/{ideaId}` and `PUT /ideas/{ideaId}` gain `isFollowing` and
+`followerCount`, so the replay will differ there. Those differences are accepted, and the backend
+slice records them in `tools/golden/src/accepted.ts`.
 
 ---
 
@@ -462,29 +509,3 @@ either run is itself not valid under `20-feature-prompt-eval-runner.md` rules 30
 more than 10% errored trials, or an errored `refuse-*` trial — rather than comparing it. A
 regression or a clean result against a run that could not be judged on its own would be a verdict
 about nothing. Recorded in rule 30.
-
----
-
-## 2026-09-28 — The prompt-eval runner's fixture hash for `compare` is the catalog hash
-
-**An implementation correction, not a user decision.** Found while building slice 114:
-`20-feature-prompt-eval-runner.md` rule 19 hashed each fixture's rendered system prompt, and rule 34
-said only the template hash should differ between a baseline and a candidate. A rendered prompt
-always changes with its template, so every prompt comparison would have warned on every fixture.
-Rule 19 now keeps that hash (`fixtureHashes`) and adds a catalog hash (`fixtureCatalogHashes`): the
-fixture rendered through a template of only the two placeholders, plus the response schema. Rule 34's
-like-with-like check uses the catalog hash. Rule 40 also now names `pnpm -C tools/prompt-eval eval`,
-because `pnpm --filter` reports every failure as exit 1.
-
----
-
-## 2026-09-28 — The Anthropic client reads no credential or endpoint from the environment
-
-**Decided by the user** on review of slice 114. `AnthropicIdeaDraftModel` constructs the SDK
-client with `apiKey` from configuration, `authToken: null`, and the SDK's default API URL
-(`https://api.anthropic.com`) as an explicit `baseURL`. Left unset, the SDK falls back to
-`ANTHROPIC_AUTH_TOKEN` and `ANTHROPIC_BASE_URL`: a stray token would ride along on every request,
-and a stray base URL would send the configured key to another host. Pinning both means the key the
-API or the prompt-eval runner was given, sent to Anthropic, is the only credential in play. The
-API's behaviour is otherwise unchanged — the same key, the same endpoint, and no client when the key
-is blank. Recorded in `20-feature-prompt-eval-runner.md` rule 37.

@@ -22,6 +22,8 @@ These mockups are static SVG artifacts based on the current Collega specs and sh
 
 It is the reference for `SPEC/20-feature-client-ui.md` "List and detail pattern", "Themes" and "Forms and controls", for `SPEC/20-feature-ai-idea-assist-v2.md`, and since 2026-09-28 for the Sprint board, the Roadmap and the effort bar (`SPEC/20-feature-issues-and-delivery.md` "Client UI") and Settings → Tags (`SPEC/20-feature-ideas-and-engagement.md` "Tags"). The 2026-09-28 iteration replaced the Notte dark theme with Graphite. Its sprint, outcome, issue-key and tag-colour data are samples; issue keys such as `IDE-01` have no column behind them (`SPEC/decisions.md` 2026-09-28). It supersedes comp P/Q's docked inspector and create column for Boards, boards and Ideas; comp P/Q remain the reference for every screen comp R does not draw. Structure is otherwise unchanged from comp P. The file is hand-written, not built by `_build/`.
 
+**`comp-r-inbox.html`** (2026-10-01, slice 149) — a throwaway comp on comp R's tokens for the notification inbox, the sidebar's Inbox item and unread badge, and the Follow / Following toggle in the idea drawer (`SPEC/20-feature-idea-following.md`). Awaiting the user's review; not a reference until approved.
+
 ## Full-App Comps (2026-07-30)
 
 Three interactive HTML comps covering every page (Login, First Login, Home, Admin Hub, Organizations, Users, Statuses, Board, Idea Detail, Change Password). Open in a browser and use the top tab bar to switch screens. Each explores a distinct direction inspired by Jira/Trello best practices while staying implementable with Fluent UI Blazor components.
