@@ -35,6 +35,7 @@ export class NotificationService implements NotificationWriter {
       ideaTitle: input.ideaTitle,
       actorUserId: input.actorUserId,
       recipientUserId: input.recipientUserId,
+      statusName: input.statusName ?? null,
       occurredAtUtc: this.clock.now(),
     })
 

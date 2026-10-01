@@ -19,6 +19,7 @@ import type {
   CommentsPort,
   IdeaClassificationPort,
   IdeaFieldValuesPort,
+  IdeaFollowersPort,
   IdeaListFilter,
   IdeaRepository,
   IdeaTypeSummary,
@@ -393,6 +394,29 @@ export function harness(options: {
     },
   }
 
+  // The author and assignees of a seeded idea follow it, as the migration's backfill makes true.
+  const followersByIdea = new Map(
+    [...ideasById.values()].map((i) => [i.id, new Set([i.authorUserId, ...i.assigneeUserIds])]),
+  )
+  const followers: IdeaFollowersPort = {
+    async add(rows) {
+      for (const row of rows) {
+        const set = followersByIdea.get(row.ideaId) ?? new Set<string>()
+        set.add(row.userId)
+        followersByIdea.set(row.ideaId, set)
+      }
+    },
+    async listFollowerIds(ideaId) {
+      return [...(followersByIdea.get(ideaId) ?? [])]
+    },
+    async countByIdea(ideaId) {
+      return followersByIdea.get(ideaId)?.size ?? 0
+    },
+    async isFollowing(ideaId, userId) {
+      return followersByIdea.get(ideaId)?.has(userId) ?? false
+    },
+  }
+
   const notificationsPort: NotificationsPort = {
     async notify(input) {
       notifications.push(input)
@@ -414,6 +438,7 @@ export function harness(options: {
       sprints,
       taskRollup,
       notificationsPort,
+      followers,
       countingUnitOfWork(),
       audit,
       options.currentUser,

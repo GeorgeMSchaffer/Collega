@@ -36,6 +36,7 @@ import type {
 } from './models.js'
 import type {
   CommentRepository,
+  IdeaFollowersPort,
   IdeaLookupPort,
   IdeaSummary,
   UserSummary,
@@ -58,6 +59,7 @@ export class CommentService {
   constructor(
     private readonly comments: CommentRepository,
     private readonly ideas: IdeaLookupPort,
+    private readonly followers: IdeaFollowersPort,
     private readonly users: UsersPort,
     private readonly notifications: NotificationWriter,
     private readonly unitOfWork: UnitOfWork,
@@ -117,7 +119,7 @@ export class CommentService {
       idea.id,
     )
 
-    // Notify mentioned users (trigger #2) and the idea author + assignees (trigger #3). Persisted
+    // Notify mentioned users (trigger #2) and the idea's followers (trigger #3). Persisted
     // only, never delivered (SPEC/20-feature-notifications.md).
     await this.notifyComment(idea, mentionedUserIds, authorId)
 
@@ -269,10 +271,9 @@ export class CommentService {
 
   /**
    * Emits notification events for a new comment: one `CommentMention` per mentioned user, and one
-   * `CommentAdded` per idea author or assignee. The two triggers are independent, so a user who is
-   * both mentioned and a follower may receive both (SPEC/20-feature-notifications.md
-   * "Recipients"). Self- and duplicate-recipient suppression is applied here and defensively
-   * again by `NotificationWriter`.
+   * `CommentAdded` per follower of the idea. A person who is both mentioned and a follower gets
+   * only the mention - one row per person per action (SPEC/20-feature-idea-following.md rule 18).
+   * Self-suppression is applied here and defensively again by `NotificationWriter`.
    */
   private async notifyComment(
     idea: IdeaSummary,
@@ -294,9 +295,13 @@ export class CommentService {
       })
     }
 
-    const followers = new Set([idea.authorUserId, ...idea.assigneeUserIds])
+    const followers = new Set(await this.followers.listFollowerIds(idea.id))
     for (const recipientId of followers) {
-      if (recipientId.length === 0 || recipientId === actorId) {
+      if (
+        recipientId.length === 0 ||
+        recipientId === actorId ||
+        mentionRecipients.has(recipientId)
+      ) {
         continue
       }
       await this.notifications.notify({

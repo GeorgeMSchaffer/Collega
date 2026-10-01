@@ -327,6 +327,9 @@ export type IdeaDetail = {
   readonly comments: readonly IdeaCommentDto[]
   readonly upvoteCount: number
   readonly hasUpvoted: boolean
+  /** The caller's own follow state (SPEC/contracts/ideas.md, added 2026-10-01). */
+  readonly isFollowing: boolean
+  readonly followerCount: number
   readonly commentCount: number
   readonly fieldValues: readonly IdeaFieldValueDto[]
   readonly formFields: readonly IdeaFormFieldDto[]

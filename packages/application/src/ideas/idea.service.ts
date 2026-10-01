@@ -8,6 +8,7 @@ import {
   SprintState,
   UserStatus,
 } from '@collega/domain/enums'
+import { createIdeaFollower } from '@collega/domain/followers'
 import type { Idea, IdeaFieldValueInput } from '@collega/domain/ideas'
 import {
   assignIdeaToSprint,
@@ -91,6 +92,7 @@ import type {
   CommentsPort,
   IdeaClassificationPort,
   IdeaFieldValuesPort,
+  IdeaFollowersPort,
   IdeaRepository,
   IdeaTypeSummary,
   IssueTaskRollupPort,
@@ -136,6 +138,7 @@ export class IdeaService {
     private readonly sprints: SprintLookupPort,
     private readonly taskRollup: IssueTaskRollupPort,
     private readonly notifications: NotificationsPort,
+    private readonly followers: IdeaFollowersPort,
     private readonly unitOfWork: UnitOfWork,
     private readonly auditEvents: AuditEventWriter,
     private readonly currentUser: CurrentUserContext,
@@ -314,6 +317,8 @@ export class IdeaService {
     idea = replaceIdeaFieldValues(idea, fieldValues, reconcileScope, now, authorId)
 
     await this.ideaRepository.add(idea)
+    // The author and each assignee follow automatically (SPEC/20-feature-idea-following.md 4-5).
+    await this.addFollowers(idea.id, [authorId, ...assigneeIds], now)
     await this.unitOfWork.saveChanges()
 
     await this.auditIdea('IdeaCreated', idea, authorId, `Idea '${idea.title}' created.`, now, {
@@ -367,6 +372,7 @@ export class IdeaService {
     const priority = parsePriority(command.priority)
     const dueDate = parseDueDate(command.dueDate)
 
+    const before = idea
     const existingAssignees = [...idea.assigneeUserIds]
     const existingMentions = new Set(idea.mentionedUserIds)
     const requestedAssignees = distinctNonEmpty(command.assigneeUserIds)
@@ -455,8 +461,16 @@ export class IdeaService {
     if (reconcileFieldValues) {
       idea = replaceIdeaFieldValues(idea, fieldValues, reconcileScope, now, actorId)
     }
+    const edited = ideaEdited(before, idea)
 
     await this.ideaRepository.update(idea)
+    // Only a NEWLY added assignee follows: someone who unfollowed and is still assigned stays
+    // unfollowed (feature rule 6).
+    await this.addFollowers(
+      idea.id,
+      assigneeIds.filter((id) => !existingAssignees.includes(id)),
+      now,
+    )
     await this.unitOfWork.saveChanges()
 
     await this.auditIdea('IdeaUpdated', idea, actorId, `Idea '${idea.title}' updated.`, now, null)
@@ -467,6 +481,11 @@ export class IdeaService {
     // Notify only newly added mentions so an edit does not re-notify people already mentioned.
     const newMentions = mentionIds.filter((id) => !existingMentions.has(id))
     await this.notifyMentions(idea, newMentions, actorId)
+    // One `IdeaEdited` per changing save, to followers - except anyone who just got the more
+    // specific mention row for this same save (feature rules 12 and 18).
+    if (edited) {
+      await this.notifyIdeaFollowers('IdeaEdited', idea, actorId, { exclude: newMentions })
+    }
 
     return this.projectDetail(idea)
   }
@@ -520,6 +539,8 @@ export class IdeaService {
       now,
       { fromIdeaTypeId: previousTypeId, toIdeaTypeId: ideaTypeId },
     )
+
+    await this.notifyIdeaFollowers('IdeaEdited', idea, actorId)
   }
 
   async changeStatus(ideaId: string, command: ChangeIdeaStatusCommand): Promise<void> {
@@ -568,8 +589,12 @@ export class IdeaService {
       { fromStatusId: previousStatusId, toStatusId: command.statusId },
     )
 
-    // Notify the idea author and assignees of the move (SPEC/20-feature-notifications.md trigger #4).
-    await this.notifyIdeaFollowers('IdeaStatusChanged', idea, actorId)
+    // Notify the idea's followers of the move (SPEC/20-feature-notifications.md trigger #4), naming
+    // the lane as it is called now (SPEC/20-feature-idea-following.md rule 37).
+    const statusInfo = await this.boards.getStatusInfo(idea.organizationId)
+    await this.notifyIdeaFollowers('IdeaStatusChanged', idea, actorId, {
+      statusName: statusInfo.get(command.statusId)?.name ?? null,
+    })
   }
 
   // Delivery (Issues-and-Delivery Slice 1) -----------------------------------------------------
@@ -713,7 +738,9 @@ export class IdeaService {
       { fromDeliveryStatus: previousDeliveryStatus, toDeliveryStatus: deliveryStatus },
     )
 
-    await this.notifyIdeaFollowers('IssueDeliveryStatusChanged', idea, actorId)
+    await this.notifyIdeaFollowers('IssueDeliveryStatusChanged', idea, actorId, {
+      statusName: deliveryStatus,
+    })
   }
 
   /** Pulls an Issue into a sprint, or back to the backlog with `null`. Admin-only in this slice. */
@@ -1157,6 +1184,7 @@ export class IdeaService {
       }
 
       await this.ideaRepository.add(idea)
+      await this.addFollowers(idea.id, [authorId], now)
       created++
       results.push({ rowNumber: row.rowNumber, title, outcome: 'Created', error: null })
     }
@@ -1345,6 +1373,8 @@ export class IdeaService {
     const upvoteCount = await this.upvoteCounts.countByIdea(idea.id)
     const currentUserId = this.requireAuthenticatedUserId()
     const upvoted = await this.upvoteCounts.getUpvotedIdeaIds(currentUserId, [idea.id])
+    const isFollowing = await this.followers.isFollowing(idea.id, currentUserId)
+    const followerCount = await this.followers.countByIdea(idea.id)
     const commentCount = await this.comments.countByIdea(idea.id)
 
     const ideaTypeForFields = ideaTypeLookup.get(idea.ideaTypeId) ?? null
@@ -1415,6 +1445,8 @@ export class IdeaService {
       comments: commentDtos,
       upvoteCount,
       hasUpvoted: upvoted.has(idea.id),
+      isFollowing,
+      followerCount,
       commentCount,
       fieldValues,
       formFields,
@@ -1888,14 +1920,21 @@ export class IdeaService {
     }
   }
 
+  /**
+   * One event per follower, read now - after the save committed, so an assignee the same save
+   * added is already one (SPEC/20-feature-idea-following.md rules 12 and 16). `exclude` is who
+   * already received a more specific row for this action (rule 18).
+   */
   private async notifyIdeaFollowers(
     eventType: NotificationEventType,
     idea: Idea,
     actorId: string,
+    options: { readonly statusName?: string | null; readonly exclude?: readonly string[] } = {},
   ): Promise<void> {
-    const recipients = new Set<string>([idea.authorUserId, ...idea.assigneeUserIds])
+    const excluded = new Set(options.exclude ?? [])
+    const recipients = new Set(await this.followers.listFollowerIds(idea.id))
     for (const recipientId of recipients) {
-      if (!recipientId || recipientId === actorId) {
+      if (!recipientId || recipientId === actorId || excluded.has(recipientId)) {
         continue
       }
       await this.notifications.notify({
@@ -1906,8 +1945,24 @@ export class IdeaService {
         ideaTitle: idea.title,
         actorUserId: actorId,
         recipientUserId: recipientId,
+        statusName: options.statusName ?? null,
       })
     }
+  }
+
+  /** Stages follow rows; the port leaves anyone who already follows as they are. */
+  private async addFollowers(
+    ideaId: string,
+    userIds: readonly string[],
+    nowUtc: Date,
+  ): Promise<void> {
+    const distinct = [...new Set(userIds.filter((id) => id.length > 0))]
+    if (distinct.length === 0) {
+      return
+    }
+    await this.followers.add(
+      distinct.map((userId) => createIdeaFollower({ id: randomUUID(), ideaId, userId, nowUtc })),
+    )
   }
 }
 
@@ -1993,6 +2048,32 @@ function structuredContentChanged(idea: Idea, command: UpdateIdeaCommand): boole
     (command.impactRationale ?? '').trim() !== idea.impactRationale ||
     solutions.length !== idea.proposedSolutions.length ||
     solutions.some((solution, index) => solution !== idea.proposedSolutions[index])
+  )
+}
+
+/**
+ * Whether a `PUT /ideas/{ideaId}` save changed any field it carries - content, priority, impact,
+ * due date, effort, assignees, tags, mentions or field values (SPEC/20-feature-idea-following.md
+ * rule 12). The type cannot change on this path. Collections compare as sets: order is no change.
+ */
+function ideaEdited(before: Idea, after: Idea): boolean {
+  const fieldValues = (idea: Idea) =>
+    new Set(idea.fieldValues.map((v) => JSON.stringify([v.fieldDefinitionId, v.value])))
+  return (
+    before.title !== after.title ||
+    before.description !== after.description ||
+    before.problem !== after.problem ||
+    before.impactRationale !== after.impactRationale ||
+    before.proposedSolutions.length !== after.proposedSolutions.length ||
+    before.proposedSolutions.some((solution, i) => solution !== after.proposedSolutions[i]) ||
+    before.priority !== after.priority ||
+    before.businessImpactId !== after.businessImpactId ||
+    before.dueDate !== after.dueDate ||
+    before.effort !== after.effort ||
+    !setsEqual(new Set(before.assigneeUserIds), new Set(after.assigneeUserIds)) ||
+    !setsEqual(new Set(before.tagIds), new Set(after.tagIds)) ||
+    !setsEqual(new Set(before.mentionedUserIds), new Set(after.mentionedUserIds)) ||
+    !setsEqual(fieldValues(before), fieldValues(after))
   )
 }
 

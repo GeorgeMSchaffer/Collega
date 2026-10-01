@@ -6,6 +6,7 @@ import type {
   SprintState,
   UserStatus,
 } from '@collega/domain/enums'
+import type { IdeaFollower } from '@collega/domain/followers'
 import type { Idea, IdeaFieldValueInput } from '@collega/domain/ideas'
 import type { PageRequest, SortDirection } from '../common/index.js'
 import type {
@@ -145,6 +146,7 @@ export type NotificationEventType =
   | 'IdeaStatusChanged'
   | 'IdeaPromoted'
   | 'IssueDeliveryStatusChanged'
+  | 'IdeaEdited'
 
 export type NotificationInput = {
   readonly eventType: NotificationEventType
@@ -154,12 +156,32 @@ export type NotificationInput = {
   readonly ideaTitle: string
   readonly actorUserId: string
   readonly recipientUserId: string
+  /** The new status's name, for the two status events only. */
+  readonly statusName?: string | null
 }
 
 /** Persists notification events (SPEC/20-feature-notifications.md), owned by B4. Self-notification
  * suppression is applied by the caller and, defensively, by the writer itself. */
 export interface NotificationsPort {
   notify(input: NotificationInput): Promise<void>
+}
+
+// Followers ---------------------------------------------------------------------------------
+//
+// `idea_followers` as Ideas needs it: the author and each newly added assignee follow
+// automatically (SPEC/20-feature-idea-following.md rules 4-5), the follower-based events go to the
+// followers read when the event is written (rule 16), and the detail carries the caller's follow
+// state and the count. The follow toggle itself belongs to the sibling `following` feature.
+
+export interface IdeaFollowersPort {
+  /** Stages the rows on the unit of work; a person who already follows is left as they are. */
+  add(followers: readonly IdeaFollower[]): Promise<void>
+
+  listFollowerIds(ideaId: string): Promise<readonly string[]>
+
+  countByIdea(ideaId: string): Promise<number>
+
+  isFollowing(ideaId: string, userId: string): Promise<boolean>
 }
 
 // Upvotes -----------------------------------------------------------------------------------

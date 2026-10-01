@@ -64,6 +64,12 @@ export interface IdeaLookupPort {
   getById(ideaId: string): Promise<IdeaSummary | null>
 }
 
+/** The idea's followers, read when a comment's notifications are written - they, not the author
+ * and assignees, receive `CommentAdded` (SPEC/20-feature-idea-following.md rules 10 and 16). */
+export interface IdeaFollowersPort {
+  listFollowerIds(ideaId: string): Promise<readonly string[]>
+}
+
 // Users (cross-partition, B1) -------------------------------------------------------------------
 //
 // Mention resolution and comment-author personas only - kept local rather than depending on Users'

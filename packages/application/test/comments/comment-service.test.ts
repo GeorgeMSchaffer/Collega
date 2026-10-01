@@ -151,6 +151,13 @@ function commentHarness(options: {
     service: new CommentService(
       comments,
       ideas,
+      {
+        // The author and assignees follow automatically, so they stand in for the followers.
+        async listFollowerIds(id) {
+          const found = ideasById.get(id)
+          return found ? [found.authorUserId, ...found.assigneeUserIds] : []
+        },
+      },
       users,
       {
         async notify(input) {
@@ -341,7 +348,7 @@ describe('CommentService notifications', () => {
     ])
   })
 
-  it('sends both a mention and a follower notification to someone who is both', async () => {
+  it('sends only the mention to someone who is both mentioned and a follower', async () => {
     const { service, notifications } = commentHarness({
       currentUser: member(ORG_A, 'commenter-1'),
       usersByEmail: { 'ann@acme.test': userSummary({ id: AUTHOR }) },
@@ -349,7 +356,9 @@ describe('CommentService notifications', () => {
 
     await service.create(IDEA_A, { body: 'Hi', mentionEmails: ['ann@acme.test'] })
 
-    expect(notifications.filter((n) => n.recipientUserId === AUTHOR)).toHaveLength(2)
+    expect(
+      notifications.filter((n) => n.recipientUserId === AUTHOR).map((n) => n.eventType),
+    ).toEqual([NotificationEventType.CommentMention])
   })
 
   it('does not notify the commenter when they are the idea author', async () => {
