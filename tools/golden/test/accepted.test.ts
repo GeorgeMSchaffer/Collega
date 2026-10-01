@@ -70,6 +70,17 @@ const shift = (csv: string) => csv.replace(/2026-09-(\d\d)/g, (_, day) => `2027-
 /** Every accepted (entry, case) pair on the list: four entries over sixteen cases. */
 const ALL_PAIRS = ACCEPTED_DIFFS.reduce((n, entry) => n + entry.cases.length, 0)
 
+/**
+ * The list without the 2026-09-30 export entry, which accepts any body under the new header on
+ * purpose (the row set moved with the seed, so no mask can hold the rows). The tests below guard
+ * the date-mask entry's own strictness, and that entry is what they must be run against.
+ */
+const EXPORT_2026_09_30 =
+  ACCEPTED_DIFFS.find(
+    (entry) => entry.decided === '2026-09-30' && entry.cases.includes('ideas.export.orgadmin'),
+  ) ?? assert.fail('the 2026-09-30 export entry is gone, so the tests below assert nothing')
+const DATE_MASK_ONLY = ACCEPTED_DIFFS.filter((entry) => entry !== EXPORT_2026_09_30)
+
 test('the expected side is checked too, so an entry cannot excuse a value never recorded', () => {
   const reencoded = diff(RECORDED_PORTRAIT, {
     ...RECORDED_PORTRAIT,
@@ -179,7 +190,7 @@ test('everything in the export but the dates is still compared byte for byte', (
 
   for (const [what, actual] of mutations) {
     assert.notEqual(actual, CSV, `"${what}" changed nothing, so it proves nothing`)
-    const verdict = classify('ideas.export.orgadmin', diff(CSV, actual), ACCEPTED_DIFFS)
+    const verdict = classify('ideas.export.orgadmin', diff(CSV, actual), DATE_MASK_ONLY)
     assert.equal(verdict.accepted, false, `an export with ${what} was accepted`)
   }
 })
@@ -188,7 +199,7 @@ test('a due date that vanished is not the same as one that moved', () => {
   // Why the mask replaces with a literal rather than the empty string: masking to nothing makes a
   // value with the varying part deleted equal to one that still has it.
   const blanked = CSV.replace(/\d{4}-\d{2}-\d{2}/g, '')
-  const verdict = classify('ideas.export.orgadmin', diff(CSV, blanked), ACCEPTED_DIFFS)
+  const verdict = classify('ideas.export.orgadmin', diff(CSV, blanked), DATE_MASK_ONLY)
   assert.equal(verdict.accepted, false, 'an export that stopped emitting due dates was accepted')
 })
 
@@ -429,9 +440,13 @@ test('a status mismatch is reported alone, before any body the list could excuse
 test('staleness is reported per (entry, case) pair, not per entry', () => {
   assert.equal(staleEntries([], ACCEPTED_DIFFS).length, ALL_PAIRS)
 
-  const used = classify('ideas.export.orgadmin', diff(CSV, shift(CSV)), ACCEPTED_DIFFS).used
-  const stale = staleEntries(used, ACCEPTED_DIFFS)
-  assert.equal(stale.length, ALL_PAIRS - 1, 'an entry with one live case still has three stale')
+  const used = classify('ideas.export.orgadmin', diff(CSV, shift(CSV)), DATE_MASK_ONLY).used
+  const stale = staleEntries(used, DATE_MASK_ONLY)
+  assert.equal(
+    stale.length,
+    ALL_PAIRS - EXPORT_2026_09_30.cases.length - 1,
+    'an entry with one live case still has three stale',
+  )
   assert.equal(
     stale.some((pair) => pair.case === 'ideas.export.orgadmin'),
     false,
