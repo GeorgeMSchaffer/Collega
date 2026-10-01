@@ -18,5 +18,7 @@ export async function Sidebar() {
     hasInbox(currentUser().role) ? getUnreadCount() : 0,
   ])
 
-  return <SidebarNav groups={navGroupsWith(counts)} unread={unread} />
+  // `at` marks this render: a revalidated layout carrying the same count must still win over a
+  // newer count the badge fetched since, which an equal number alone would not.
+  return <SidebarNav groups={navGroupsWith(counts)} unread={{ count: unread, at: Date.now() }} />
 }

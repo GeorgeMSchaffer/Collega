@@ -22,8 +22,8 @@ export function SidebarNav({
   unread,
 }: {
   groups: NavGroup[]
-  /** The inbox's unread count; undefined while the counts load. */
-  unread?: number
+  /** The inbox's unread count as the server rendered it; undefined while the counts load. */
+  unread?: { count: number; at: number }
 }) {
   const pathname = usePathname()
   // The principal the desk layout already resolved, handed across the boundary by

@@ -14,7 +14,7 @@ const REFRESH_MS = 60_000
  * There is no push channel on serverless, so the count is asked for: on every navigation and every
  * minute while the tab is visible. The layout that renders the sidebar is kept across navigations,
  * so the server's count alone would go stale; `initialUnread` is that count, and a mark-read action
- * that revalidates the layout hands down a fresh one.
+ * that revalidates the layout hands down a fresh one, which replaces whatever was fetched since.
  *
  * The badge is an ink pill, never a hue (rule 43) — the rail's own ink, so it holds on a dark rail.
  */
@@ -23,15 +23,18 @@ export function InboxLink({
   initialUnread,
 }: {
   className: string
-  /** Undefined while the sidebar's counts are still loading. */
-  initialUnread: number | undefined
+  /** The server's count and when it was rendered; undefined while the sidebar's counts load. */
+  initialUnread: { count: number; at: number } | undefined
 }) {
   const pathname = usePathname()
-  const [unread, setUnread] = useState(initialUnread ?? 0)
+  const [unread, setUnread] = useState(initialUnread?.count ?? 0)
+  const serverCount = initialUnread?.count
+  const serverAt = initialUnread?.at
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `serverAt` is the trigger, so an equal count re-applies
   useEffect(() => {
-    if (initialUnread !== undefined) setUnread(initialUnread)
-  }, [initialUnread])
+    if (serverCount !== undefined) setUnread(serverCount)
+  }, [serverCount, serverAt])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: the pathname is the trigger, not an input
   useEffect(() => {
