@@ -1,7 +1,14 @@
 'use client'
 
-import { Alert, Field, FieldRow, Input, Select, Textarea } from '@collega/design-system'
-import { type FormEvent, useEffect, useId, useState, useTransition } from 'react'
+import { Alert, Field, FieldRow, Input, Select, TagChip, Textarea } from '@collega/design-system'
+import {
+  type FormEvent,
+  type KeyboardEvent,
+  useEffect,
+  useId,
+  useState,
+  useTransition,
+} from 'react'
 import { Icon } from '@/components/list/icons'
 import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from '@/lib/limits'
 import { saveIdea } from '@/lib/server/idea-actions'
@@ -11,6 +18,7 @@ import type {
   IdeaFormField,
   IdeaFormOptions,
   MemberOption,
+  TagRef,
 } from '@/lib/types'
 import { PRIORITIES } from './idea-list-config'
 
@@ -24,6 +32,12 @@ const SOLUTION_MAX = 500
 const SOLUTIONS_MAX = 5
 const RATIONALE_MAX = 1000
 const ASSIGNEES_MAX = 5
+const TAGS_MAX = 10
+const TAG_MAX_LENGTH = 100
+const TAG_SUGGEST_FROM = 2
+
+/** A chosen tag. `color` is null for one that does not exist yet; the API picks it on save. */
+type ChosenTag = { name: string; color: string | null }
 
 type Draft = {
   boardId: string
@@ -36,7 +50,7 @@ type Draft = {
   ideaTypeId: string
   businessImpactId: string
   dueDate: string
-  tags: string
+  tags: ChosenTag[]
   assignees: MemberOption[]
   /** By field id; Dropdown is an option id, MultiSelect comma-separated option ids. */
   fields: Record<string, string>
@@ -63,7 +77,7 @@ function initialDraft(
     ideaTypeId: idea ? idea.ideaTypeId : (options.ideaTypes[0]?.id ?? ''),
     businessImpactId: idea ? idea.businessImpactId : (options.businessImpacts[0]?.id ?? ''),
     dueDate: idea?.dueDate ?? '',
-    tags: idea?.tags.map((tag) => tag.name).join(', ') ?? '',
+    tags: idea?.tags.map((tag) => ({ name: tag.name, color: tag.color })) ?? [],
     assignees: idea ? [...idea.assignees] : [],
     fields: Object.fromEntries(idea?.formFields.map((field) => [field.id, field.value]) ?? []),
   }
@@ -180,10 +194,7 @@ export function IdeaForm({
         ideaTypeId: draft.ideaTypeId,
         businessImpactId: draft.businessImpactId,
         dueDate: draft.dueDate,
-        tagNames: draft.tags
-          .split(',')
-          .map((tag) => tag.trim())
-          .filter(Boolean),
+        tagNames: draft.tags.map((tag) => tag.name),
         assigneeUserIds: draft.assignees.map((person) => person.id),
         mentionEmails: idea?.mentionEmails ?? [],
         fieldValues: customFields.map((field) => ({
@@ -393,20 +404,13 @@ export function IdeaForm({
         </Field>
       </FieldRow>
 
-      <Field
-        htmlFor={fid('tags')}
-        label="Tags (optional)"
-        hint="Comma-separated, up to 10."
+      <TagsField
+        id={fid('tags')}
+        tags={draft.tags}
+        catalog={options.tags}
         error={errors.tagNames}
-      >
-        <Input
-          id={fid('tags')}
-          data-error-key="tagNames"
-          value={draft.tags}
-          onChange={(event) => set('tags', event.target.value)}
-          aria-invalid={errors.tagNames ? true : undefined}
-        />
-      </Field>
+        onChange={(tags) => set('tags', tags)}
+      />
 
       <AssigneesField
         id={fid('assignee')}
@@ -459,6 +463,215 @@ export function IdeaForm({
         )}
       </fieldset>
     </form>
+  )
+}
+
+type TagOption = { kind: 'tag'; tag: TagRef } | { kind: 'create'; name: string }
+
+/**
+ * Tags (rules 2–8): pick from the organization's tags as you type, from two characters, or add a
+ * new one. A name nothing matches is offered as "Create tag", which is an explicit choice — Enter
+ * on unmatched text only highlights that option — and the tag is created when the idea is saved,
+ * through `tagNames`. The API enforces the limits and uniqueness; this field only offers.
+ * WAI-ARIA combobox with a listbox popup.
+ */
+function TagsField({
+  id,
+  tags,
+  catalog,
+  error,
+  onChange,
+}: {
+  id: string
+  tags: ChosenTag[]
+  catalog: TagRef[]
+  error: string | undefined
+  onChange: (tags: ChosenTag[]) => void
+}) {
+  const [text, setText] = useState('')
+  const [open, setOpen] = useState(false)
+  const [active, setActive] = useState(-1)
+  const listId = `${id}-list`
+  const messageId = `${id}-msg`
+
+  const full = tags.length >= TAGS_MAX
+  const query = text.trim().toLowerCase()
+  const chosen = new Set(tags.map((tag) => tag.name.toLowerCase()))
+  const searching = query.length >= TAG_SUGGEST_FROM
+  const options: TagOption[] = searching
+    ? catalog
+        .filter(
+          (tag) => tag.name.toLowerCase().startsWith(query) && !chosen.has(tag.name.toLowerCase()),
+        )
+        .map((tag) => ({ kind: 'tag', tag }))
+    : []
+  const exists = chosen.has(query) || catalog.some((tag) => tag.name.toLowerCase() === query)
+  if (searching && !exists) options.push({ kind: 'create', name: text.trim() })
+  const expanded = open && !full && options.length > 0
+  const optionId = (index: number) => `${id}-opt-${index}`
+
+  function choose(index: number) {
+    const option = options[index]
+    if (!option || full) return
+    onChange([
+      ...tags,
+      option.kind === 'tag'
+        ? { name: option.tag.name, color: option.tag.color }
+        : { name: option.name, color: null },
+    ])
+    setText('')
+    setActive(-1)
+  }
+
+  function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault()
+        setOpen(true)
+        if (options.length > 0) setActive((active + 1) % options.length)
+        break
+      case 'ArrowUp':
+        event.preventDefault()
+        setOpen(true)
+        if (options.length > 0) setActive(active <= 0 ? options.length - 1 : active - 1)
+        break
+      case 'Enter':
+        // Never submits the form from here, and never creates by itself: the first Enter on text
+        // with nothing highlighted highlights the first option, the second chooses it.
+        event.preventDefault()
+        if (!expanded) break
+        if (active < 0) setActive(0)
+        else choose(active)
+        break
+      case 'Escape':
+        if (expanded) {
+          event.preventDefault()
+          event.stopPropagation()
+          setOpen(false)
+          setActive(-1)
+        }
+        break
+      case 'Backspace':
+        if (text === '' && tags.length > 0) onChange(tags.slice(0, -1))
+        break
+    }
+  }
+
+  const remove = (tag: ChosenTag) => onChange(tags.filter((t) => t !== tag))
+
+  return (
+    <fieldset
+      className="m-0 mb-4 flex flex-col gap-1.5 border-0 p-0"
+      data-invalid={error ? '' : undefined}
+    >
+      <legend className="mb-[5px] text-[length:var(--label-size)] font-medium text-secondary-foreground">
+        <label htmlFor={id}>Tags (optional)</label>
+      </legend>
+      {tags.length > 0 ? (
+        <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
+          {tags.map((tag) => (
+            <li key={tag.name.toLowerCase()}>
+              {tag.color ? (
+                <TagChip color={tag.color} size="lg" className="gap-1 pr-1">
+                  {tag.name}
+                  <RemoveTag name={tag.name} onClick={() => remove(tag)} />
+                </TagChip>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-full border border-dashed bg-muted py-0.5 pl-3 pr-1 text-sm">
+                  {tag.name}
+                  <span className="text-xs text-muted-foreground">new</span>
+                  <RemoveTag name={tag.name} onClick={() => remove(tag)} />
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <div className="relative">
+        <Input
+          id={id}
+          data-error-key="tagNames"
+          role="combobox"
+          aria-expanded={expanded}
+          aria-controls={listId}
+          aria-autocomplete="list"
+          aria-activedescendant={expanded && active >= 0 ? optionId(active) : undefined}
+          aria-describedby={messageId}
+          aria-invalid={error ? true : undefined}
+          autoComplete="off"
+          maxLength={TAG_MAX_LENGTH}
+          readOnly={full}
+          placeholder={full ? '' : 'Type 2 letters to find a tag…'}
+          value={text}
+          onChange={(event) => {
+            setText(event.target.value)
+            setOpen(true)
+            setActive(-1)
+          }}
+          onKeyDown={onKeyDown}
+          onBlur={() => {
+            setOpen(false)
+            setActive(-1)
+          }}
+        />
+        <div
+          id={listId}
+          role="listbox"
+          aria-label="Matching tags"
+          hidden={!expanded}
+          className="absolute inset-x-0 top-full z-20 mt-1 max-h-56 overflow-auto rounded-md border bg-popover p-1 text-sm text-popover-foreground shadow-md"
+        >
+          {options.map((option, index) => (
+            // biome-ignore lint/a11y/useKeyWithClickEvents lint/a11y/useFocusableInteractive: focus stays in the combobox input, which carries every key (aria-activedescendant).
+            <div
+              key={option.kind === 'tag' ? option.tag.id : '__create'}
+              id={optionId(index)}
+              role="option"
+              aria-selected={index === active}
+              // Keeps focus in the input, so the blur above does not close the list first.
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => choose(index)}
+              onMouseEnter={() => setActive(index)}
+              className={`flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 ${
+                index === active ? 'bg-muted' : ''
+              }`}
+            >
+              {option.kind === 'tag' ? (
+                <TagChip color={option.tag.color}>{option.tag.name}</TagChip>
+              ) : (
+                <span>
+                  Create tag <strong className="font-semibold">&lsquo;{option.name}&rsquo;</strong>
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+      {error ? (
+        <span id={messageId} className="block text-xs font-semibold text-destructive">
+          {error}
+        </span>
+      ) : (
+        <span id={messageId} className="block text-xs text-muted-foreground">
+          {full
+            ? `An idea can have at most ${TAGS_MAX} tags. Remove one to add another.`
+            : `Up to ${TAGS_MAX}, ${TAG_MAX_LENGTH} characters each. A tag that does not exist yet is created when you save.`}
+        </span>
+      )}
+    </fieldset>
+  )
+}
+
+function RemoveTag({ name, onClick }: { name: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-label={`Remove ${name}`}
+      onClick={onClick}
+      className="inline-grid size-6 place-items-center rounded-full text-muted-foreground hover:bg-background hover:text-foreground"
+    >
+      <Icon name="x" />
+    </button>
   )
 }
 

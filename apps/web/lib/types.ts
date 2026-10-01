@@ -406,6 +406,8 @@ export type IdeaFormOptions = {
   businessImpacts: { id: string; name: string }[]
   /** The organization's active members, for the assignee picker. */
   members: MemberOption[]
+  /** The organization's tags, for the tag type-ahead. */
+  tags: TagRef[]
 }
 
 /**
