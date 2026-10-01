@@ -28,9 +28,10 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-01 | The Home comp is a visual guide; the spec wins | active | full below |
 | 2026-10-01 | The follow and inbox questions are answered | active | full below |
 | 2026-10-01 | The S0.2 schema freeze is amended a fifth time, for idea followers and read state | active | full below |
-| 2026-10-01 | The Home dashboard comp is approved as drawn | active | full below |
+| 2026-10-01 | The Home dashboard comp is approved as drawn | amended | full below |
 | 2026-10-01 | Following an idea, and an in-app notification inbox | active | full below |
 | 2026-10-01 | The View As banner names only the target | active | full below |
 | 2026-10-01 | The View As candidate order, and F1 closes | active | full below |
@@ -42,8 +43,8 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-29 | Removing a lane moves its ideas | active | full below |
 | 2026-09-29 | The test harnesses reuse sessions; the auth rate limits stay | active | full below |
 | 2026-09-29 | Spec contradictions resolved | active | full below |
-| 2026-09-28 | The Idea Field Option contract follows the code | active | full below |
-| 2026-09-28 | The v2 corpus format, as built | active | full below |
+| 2026-09-28 | The Idea Field Option contract follows the code | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
+| 2026-09-28 | The v2 corpus format, as built | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | The prompt-eval runner's provisional limits stand for the first baseline | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | `compare` refuses to judge an invalid run | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | The prompt-eval runner's fixture hash for `compare` is the catalog hash | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
@@ -104,6 +105,40 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-01 — The Home comp is a visual guide; the spec wins
+
+**Decided by the user**, amending "The Home dashboard comp is approved as drawn" below:
+`SPEC/mockups/comp-r-home-dashboard.html` is a visual guide, and where it differs from
+`20-feature-client-ui.md` § Home the spec wins — in particular *every number is a filtered query the
+viewer can open*, showing the same set it counts, and every KPI tile carries a one-line definition.
+Slice 156 aligns Home with that:
+
+- **Assigned to me** and **You created** open `/ideas?scope=assigned` and `/ideas?scope=created`, in
+  either phase as they count; Assigned's critical share opens `scope=assigned&priority=Critical`, and
+  the Assigned panel gains a *View all*. `/ideas` reads `scope` and `phase` from the URL and shows
+  them as removable toolbar chips.
+- **Critical & high** and the queue's *View all* add `phase=Ideas`, so the list no longer includes
+  Issues the count leaves out.
+- **The greeting's ideas** are the live boards' own counts, so an archived board's ideas are not
+  counted beside "0 boards", and the number opens `/ideas?phase=Ideas` (naming the live boards when one
+  is archived). Its boards open `/boards`.
+- **The greeting's delivery issues** are every Issue (`/ideas?phase=Issues`), which it links to. This
+  replaces the earlier entry's "in flight" figure (backlog plus Planned and Active sprints), which no
+  list shows; the words "in flight" go. The sprint panel's backlog figure links to the Backlog.
+- **The *Not tracked yet* tile** says in one line why its three figures are not counted.
+- **Site Admin:** *Ideas* is the live boards' counts, and the delivery issues every Issue, in each
+  organization, matching the member view. *Boards* and *Ideas* stay unlinked: no screen lists them
+  across organizations for that role, so they cannot meet the rule until one exists.
+
+- **Archived boards (decided by the user, answering slice 156's open question):** ideas on archived
+  boards are left out of every idea figure on Home — the queue, Critical & high, Most upvoted, Assigned
+  to me, You created and the critical share — and when any board is archived each link names the live
+  boards (`board=`), as the greeting's does, so every count still matches its list.
+
+The earlier entry's other answers stand.
 
 ---
 
@@ -469,43 +504,3 @@ none changes code: where a spec and the code differed, the answer was the code. 
 the specs now say more than the code does: the idea form preselects neither option yet (item 3),
 the browser idle deadline is unbuilt (item 1), and no client calls the swimlane reorder route
 (item 8).
-
----
-
-## 2026-09-28 — The Idea Field Option contract follows the code
-
-**Decided by the user.** Slice 119 merged the two sections of `30-Contracts.md` headed "Idea Field
-Option Contracts" into `SPEC/contracts/idea-field-options.md` and marked eight places where the two
-copies, or the text and the code, disagreed. All eight are resolved so the contract says what the
-code does today, with no code change — the code has shipped, and a contract the golden corpus pins
-should not describe an API that does not exist. For both Idea Types and Business Impacts:
-
-1. **The list** returns active options only unless `includeDeleted=true`, which any caller who may
-   read the list may pass (every member of the organization, and a Site Admin); ordered by
-   `sortOrder`, then `name`.
-2. **The Idea Type item** is the typed shape, including `effectiveFields`.
-3. **`sortOrder` on create** is optional: absent, the option goes at the end (the highest existing
-   `sortOrder` plus 10). There is no negative check.
-4. **`sortOrder` on update** is optional: absent, the option keeps its current value. Updating an
-   archived option answers `404`.
-5. **Reorder** is `POST …/reorder`, answering `204`.
-6. **Reorder must list every active option exactly once** ("The reorder must list every active
-   option exactly once."), and archived options are not listed. It sets no default: idea create
-   requires an active `ideaTypeId`.
-7. **A direct Site Admin is refused** on every mutation with `403` (`ensureNotDirectSiteAdmin`); View
-   As is the way in. Listing is unaffected.
-8. **Cross-organization access answers `404` "Organization not found."** — an Org Admin mutating
-   another organization's options (`ensureAdminScope`), a member reading another organization's list
-   (`ensureReadScope`). User and Read Only callers in their own organization still get `403`.
-
----
-
-## 2026-09-28 — The v2 corpus format, as built
-
-**An implementation note, not a user decision.** Slice 117 builds the provisional v2 case format of
-`20-feature-prompt-eval-runner.md` rule 4, and rule 4 now records the choices it made: typed fields
-in a separate `acme-v2` fixture so no v1 fixture hash moves; `lockedFields` and `nextStep` in the v2
-contract's field names; v2 keys only on `"assistant": "v2"` cases; `suggestions` outside the overall
-mapping accuracy. Rule 19 adds a v2 case's `draft` and `lockedFields` to its content hash, since
-they drive the run; they are absent from v1 cases, so no v1 hash changes. The format follows the v2
-turn contract as specified and changes with it when v2 is built.

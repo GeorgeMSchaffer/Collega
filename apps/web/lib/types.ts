@@ -437,6 +437,10 @@ export type IdeaListQuery = {
   sortDirection: 'asc' | 'desc'
   page: number
   pageSize: number
+  /** The organization list only: the reader's own ideas, authored or assigned. Absent is all. */
+  scope?: 'assigned' | 'created' | undefined
+  /** The organization list only: one phase. Absent is both. */
+  phase?: 'Ideas' | 'Issues' | undefined
 }
 
 /**
@@ -707,6 +711,8 @@ export type HomeKpi = {
   detailAlert?: boolean
   definition: string
   href: string | null
+  /** Where the detail's own number opens, when it has one (the critical share). */
+  detailHref?: string | undefined
 }
 
 /** An idea in one of Home's lists: the attention queue, Assigned to me, Most upvoted. */
@@ -723,7 +729,8 @@ export type HomeIdea = {
 }
 
 /** One of Home's lists: the first rows, and how many the query matched in all. */
-export type HomeIdeaList = { total: number; rows: HomeIdea[] }
+/** `href` is the `/ideas` query listing the same set `total` counts. */
+export type HomeIdeaList = { total: number; rows: HomeIdea[]; href: string }
 
 /** The running sprint on Home: its header, its issues by delivery status, and the backlog beside it. */
 export type HomeSprint = {
@@ -734,8 +741,10 @@ export type HomeSprint = {
 
 /** Home for a member of an organization — Org Admin, User or Read Only. */
 export type OrganizationHome = {
-  /** `issues` is in flight: the backlog plus the Planned and Active sprints' issues. */
+  /** `ideas` are the live boards' Discovery ideas; `issues` every Delivery-phase item. */
   counts: { ideas: number; boards: number; issues: number }
+  /** The `/ideas` query listing exactly the ideas `counts.ideas` counts; null when there are none. */
+  ideasHref: string | null
   statuses: Status[]
   kpis: HomeKpi[]
   attention: HomeIdeaList

@@ -24,7 +24,6 @@ const readers = vi.hoisted(() => ({
   getPlatformHome: vi.fn(),
 }))
 vi.mock('@/lib/data', () => ({
-  ATTENTION_HREF: '/ideas?priority=Critical&priority=High',
   ...readers,
 }))
 vi.mock('@/lib/server/current-user', () => ({ requireCurrentUser: async () => undefined }))
@@ -73,6 +72,7 @@ function board(over: Partial<BoardOverview> = {}): BoardOverview {
 function orgHome(over: Partial<OrganizationHome> = {}): OrganizationHome {
   return {
     counts: { ideas: 41, boards: 2, issues: 1 },
+    ideasHref: '/ideas?phase=Ideas',
     statuses: [
       { id: 's1', name: 'New', color: '#111' },
       { id: 's2', name: 'In Review', color: '#222' },
@@ -85,19 +85,33 @@ function orgHome(over: Partial<OrganizationHome> = {}): OrganizationHome {
         detail: '2 critical',
         detailAlert: true,
         definition: 'Assigned definition',
-        href: null,
+        href: '/ideas?scope=assigned&sort=priority&dir=desc',
       },
       {
         label: 'Critical & high',
         value: 12,
         detail: 'still on a board',
         definition: 'c',
-        href: '/ideas?priority=Critical&priority=High',
+        href: '/ideas?phase=Ideas&priority=Critical&priority=High',
       },
-      { label: 'You created', value: 5, detail: 'ideas and issues', definition: 'y', href: null },
+      {
+        label: 'You created',
+        value: 5,
+        detail: 'ideas and issues',
+        definition: 'y',
+        href: '/ideas?scope=created',
+      },
     ],
-    attention: { total: 12, rows: [idea()] },
-    assigned: { total: 7, rows: [idea({ id: 'i-2', title: 'Guard rails', priority: 'High' })] },
+    attention: {
+      total: 12,
+      rows: [idea()],
+      href: '/ideas?phase=Ideas&priority=Critical&priority=High',
+    },
+    assigned: {
+      total: 7,
+      rows: [idea({ id: 'i-2', title: 'Guard rails', priority: 'High' })],
+      href: '/ideas?scope=assigned&sort=priority&dir=desc',
+    },
     topVoted: [idea({ id: 'i-3', title: 'Torque audit', upvotes: 9, hasUpvoted: true })],
     boards: [board()],
     sprint: {
@@ -196,7 +210,7 @@ describe('Home for a member of an organization', () => {
       expect(screen.getByRole('heading', { level: 1 }).textContent).toMatch(/^Good to see you, /)
       const text = document.body.textContent ?? ''
       expect(text).toContain('Here’s what needs you today.')
-      expect(text).toContain('41 ideas across 2 boards and 1 delivery issue in flight')
+      expect(text).toContain('41 ideas across 2 boards and 1 delivery issue —')
       expect(readers.getPlatformHome).not.toHaveBeenCalled()
     },
   )
@@ -226,13 +240,15 @@ describe('Home for a member of an organization', () => {
     expect((tiles[0] as HTMLElement).textContent).toContain('2 critical')
   })
 
-  it('links Critical & high to the query it counts, and leaves unlinked what no screen shows', async () => {
+  it('links every tile to the query it counts', async () => {
     await renderHome('OrgAdmin')
     const tiles = screen.getByRole('list', { name: 'Your numbers' })
     expect(within(tiles).getByRole('link', { name: '12' }).getAttribute('href')).toBe(
-      '/ideas?priority=Critical&priority=High',
+      '/ideas?phase=Ideas&priority=Critical&priority=High',
     )
-    expect(within(tiles).queryByRole('link', { name: '7' })).toBeNull()
+    expect(within(tiles).getByRole('link', { name: '7' }).getAttribute('href')).toBe(
+      '/ideas?scope=assigned&sort=priority&dir=desc',
+    )
   })
 
   it('lists the attention queue with its board, type, status, priority and a link to the idea', async () => {
@@ -245,12 +261,14 @@ describe('Home for a member of an organization', () => {
     expect(row.textContent).toContain('New')
     expect(row.textContent).toContain('Critical')
     expect(within(queue).getByRole('link', { name: 'View all 12' }).getAttribute('href')).toBe(
-      '/ideas?priority=Critical&priority=High',
+      '/ideas?phase=Ideas&priority=Critical&priority=High',
     )
   })
 
   it('says nothing is waiting when the queue is empty', async () => {
-    readers.getOrganizationHome.mockResolvedValue(orgHome({ attention: { total: 0, rows: [] } }))
+    readers.getOrganizationHome.mockResolvedValue(
+      orgHome({ attention: { total: 0, rows: [], href: '/ideas' } }),
+    )
     await renderHome('OrgAdmin')
     expect(panel('Needs your attention').textContent).toContain(
       'Nothing critical or high priority is waiting on a board.',
@@ -269,7 +287,9 @@ describe('Home for a member of an organization', () => {
     ['User', 'When someone adds you'],
     ['ReadOnly', 'Ideas you’re named on will appear here.'],
   ] as const)('tells %s when nothing is assigned', async (role, copy) => {
-    readers.getOrganizationHome.mockResolvedValue(orgHome({ assigned: { total: 0, rows: [] } }))
+    readers.getOrganizationHome.mockResolvedValue(
+      orgHome({ assigned: { total: 0, rows: [], href: '/ideas' } }),
+    )
     await renderHome(role)
     const assigned = panel('Assigned to me 0')
     expect(assigned.textContent).toContain('Nothing is assigned to you.')

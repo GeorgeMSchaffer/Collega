@@ -46,6 +46,8 @@ function listParams(query: IdeaListQuery): URLSearchParams {
   for (const id of query.statusIds) params.append('statusId', id)
   for (const priority of query.priorities) params.append('priority', priority)
   for (const tag of query.tags) params.append('tag', tag)
+  if (query.scope) params.set('scope', query.scope)
+  if (query.phase) params.set('phase', query.phase)
   if (query.sortBy) {
     params.set('sortBy', query.sortBy)
     params.set('sortDirection', query.sortDirection)
@@ -100,7 +102,10 @@ export async function getBoardIdeaList(boardId: string, query: IdeaListQuery): P
   return toPage(
     await apiGet<WirePage<WireIdeaListItem>>(
       'getBoardIdeaList',
-      withQuery(apiPath`/boards/${boardId}/ideas`, listParams({ ...query, boardIds: [] })),
+      withQuery(
+        apiPath`/boards/${boardId}/ideas`,
+        listParams({ ...query, boardIds: [], scope: undefined, phase: undefined }),
+      ),
     ),
   )
 }

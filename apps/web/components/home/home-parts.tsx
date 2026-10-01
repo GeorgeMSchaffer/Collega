@@ -56,7 +56,13 @@ export function KpiRow({
               kpi.detailAlert ? 'font-semibold text-destructive' : 'text-muted-foreground',
             )}
           >
-            {kpi.detail}
+            {kpi.detailHref ? (
+              <Link href={kpi.detailHref} className="text-inherit">
+                {kpi.detail}
+              </Link>
+            ) : (
+              kpi.detail
+            )}
           </span>
           <p className="m-0 mt-1.5 text-xs text-muted-foreground">{kpi.definition}</p>
         </Tile>
@@ -82,6 +88,10 @@ export function UntrackedTile({ figures }: { figures: string[] }) {
           </li>
         ))}
       </ul>
+      <p className="m-0 mt-1.5 text-xs text-muted-foreground">
+        These need to know which status means in review or complete, and when an idea moved, which
+        Collega does not record yet.
+      </p>
     </Tile>
   )
 }

@@ -53,13 +53,13 @@ describe('getOrganizationHome', () => {
     }
   }
 
-  function wireBoard(boardId: string, name: string, isArchived: boolean) {
+  function wireBoard(boardId: string, name: string, isArchived: boolean, ideaCount = 0) {
     return {
       boardId,
       name,
       isArchived,
       description: null,
-      ideaCount: 0,
+      ideaCount,
       swimlaneCount: 0,
       createdAtUtc: '2026-08-01T00:00:00Z',
       createdBy: null,
@@ -100,12 +100,13 @@ describe('getOrganizationHome', () => {
       }
       if (p.get('scope') === 'assigned' && p.get('priority') === 'Critical') return page(2)
       if (p.get('scope') === 'created') return page(5)
+      if (p.get('phase') === 'Issues') return page(9)
       return page(41)
     })
     answer(/\/boards/, [
-      wireBoard('b-live', 'Assembly', false),
-      wireBoard('b-old', 'Old plant', true),
-      wireBoard('b-two', 'Packing', false),
+      wireBoard('b-live', 'Assembly', false, 30),
+      wireBoard('b-old', 'Old plant', true, 17),
+      wireBoard('b-two', 'Packing', false, 11),
     ])
     answer(/\/sprints/, sprints)
     answer(/\/statuses/, [
@@ -119,10 +120,11 @@ describe('getOrganizationHome', () => {
     actAs('SiteAdmin')
     expect(await getOrganizationHome()).toEqual({
       counts: { ideas: 0, boards: 0, issues: 0 },
+      ideasHref: null,
       statuses: [],
       kpis: [],
-      attention: { total: 0, rows: [] },
-      assigned: { total: 0, rows: [] },
+      attention: { total: 0, rows: [], href: '/ideas' },
+      assigned: { total: 0, rows: [], href: '/ideas' },
       topVoted: [],
       boards: [],
       sprint: null,
@@ -141,22 +143,13 @@ describe('getOrganizationHome', () => {
     }
   })
 
-  it('counts Discovery ideas, and in flight as the backlog plus Planned and Active sprints', async () => {
-    seed({
-      sprints: [
-        wireSprint({ sprintId: 'a', state: 'Active', issueCount: 3 }),
-        wireSprint({ sprintId: 'p', state: 'Planned', issueCount: 2 }),
-        wireSprint({ sprintId: 'c', state: 'Completed', issueCount: 8 }),
-      ],
-    })
+  it('counts the live boards’ ideas and every Issue, each with the list that shows it', async () => {
+    seed()
     actAs('OrgAdmin')
     const home = await getOrganizationHome()
-    expect(home.counts.ideas).toBe(41)
-    expect(home.counts.issues).toBe(4 + 3 + 2)
-    const discovery = requested().find(
-      (path) => path.includes('phase=Ideas') && path.includes('pageSize=1'),
-    )
-    expect(discovery).toBeDefined()
+    expect(home.counts.ideas).toBe(30 + 11)
+    expect(home.ideasHref).toBe('/ideas?phase=Ideas&board=b-live&board=b-two')
+    expect(home.counts.issues).toBe(9)
   })
 
   it('counts live boards only, but reads archived ones to name an attention row', async () => {
@@ -188,9 +181,18 @@ describe('getOrganizationHome', () => {
     actAs('OrgAdmin')
     const { kpis } = await getOrganizationHome()
     expect(kpis.map((kpi) => [kpi.label, kpi.value, kpi.href])).toEqual([
-      ['Assigned to me', 7, null],
-      ['Critical & high', 12, '/ideas?priority=Critical&priority=High'],
-      ['You created', 5, null],
+      // b-old is archived, so every link names the two live boards.
+      [
+        'Assigned to me',
+        7,
+        '/ideas?scope=assigned&sort=priority&dir=desc&board=b-live&board=b-two',
+      ],
+      [
+        'Critical & high',
+        12,
+        '/ideas?phase=Ideas&priority=Critical&priority=High&board=b-live&board=b-two',
+      ],
+      ['You created', 5, '/ideas?scope=created&board=b-live&board=b-two'],
     ])
   })
 
@@ -347,7 +349,7 @@ describe('getPlatformHome', () => {
           boardId,
           name,
           isArchived: false,
-          ideaCount: 0,
+          ideaCount: name === 'Assembly' ? 10 : name === 'Packing' ? 3 : 1,
           swimlaneCount: 0,
           createdAtUtc: '2026-08-01T00:00:00Z',
           laneCounts: [],
@@ -355,25 +357,23 @@ describe('getPlatformHome', () => {
         })
         return acme ? [board('b1', 'Assembly')] : [board('b2', 'Packing'), board('b3', 'Dock')]
       }
-      if (kind === 'ideas') return page(acme ? 10 : 4)
-      if (kind === 'delivery') return acme ? [{ ideaId: 'd' }] : [{ ideaId: 'e' }, { ideaId: 'f' }]
+      if (kind === 'ideas') return page(acme ? 1 : 2)
       return url.searchParams.get('status') === 'Inactive' ? page(acme ? 1 : 2) : page(acme ? 6 : 9)
     })
   }
 
   beforeEach(() => actAs('SiteAdmin'))
 
-  it('asks for the list of organizations once and fans out five reads per organization', async () => {
+  it('asks for the list of organizations once and fans out four reads per organization', async () => {
     seed()
     await getPlatformHome()
     const paths = requested()
     expect(paths.filter((p) => p.startsWith('/organizations?'))).toHaveLength(2)
     for (const id of ['o-acme', 'o-bolt']) {
       const mine = paths.filter((p) => p.startsWith(`/organizations/${id}/`))
-      expect(mine).toHaveLength(5)
+      expect(mine).toHaveLength(4)
       expect(mine.filter((p) => p.includes('/boards'))).toHaveLength(1)
-      expect(mine.filter((p) => p.includes('/delivery'))).toHaveLength(1)
-      expect(mine.filter((p) => p.includes('/ideas') && p.includes('phase=Ideas'))).toHaveLength(1)
+      expect(mine.filter((p) => p.includes('/ideas') && p.includes('phase=Issues'))).toHaveLength(1)
       expect(mine.filter((p) => p.includes('/users?pageSize=1'))).toHaveLength(1)
       expect(mine.filter((p) => p.includes('status=Inactive'))).toHaveLength(1)
     }
