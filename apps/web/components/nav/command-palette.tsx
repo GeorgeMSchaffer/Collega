@@ -3,8 +3,9 @@
 import { Kbd } from '@collega/design-system'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCurrentUser } from '@/lib/session-client'
 import { NavIcon } from './icons'
-import { allNavItems } from './nav-items'
+import { allNavItems, navItemVisible } from './nav-items'
 
 /**
  * Ctrl/Cmd+K jump-to. Comp P calls the keyboard path a product property rather than a convenience,
@@ -14,13 +15,16 @@ import { allNavItems } from './nav-items'
  */
 export function CommandPalette() {
   const router = useRouter()
+  const { role } = useCurrentUser()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const matches = allNavItems.filter((item) =>
-    item.label.toLowerCase().includes(query.trim().toLowerCase()),
+  // The same items the sidebar offers this role: no Inbox for a Site Admin acting as themselves.
+  const matches = allNavItems.filter(
+    (item) =>
+      navItemVisible(item, role) && item.label.toLowerCase().includes(query.trim().toLowerCase()),
   )
 
   useEffect(() => {
