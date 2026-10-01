@@ -28,6 +28,7 @@ const RECORDED = (
   JSON.parse(readFileSync(path.join(FIXTURES, 'ideas.export.orgadmin.json'), 'utf8')) as Fixture
 ).normalized.body as string
 
+const BOM = String.fromCharCode(0xfeff)
 const OLD_HEADER = 'Title,Description,Priority,Idea Type,Business Impact,Status,Due Date,Tags'
 const NEW_HEADER =
   'Title,Description,Problem,Proposed Solutions,Impact Rationale,Priority,Idea Type,Business Impact,Status,Due Date,Tags'
@@ -79,6 +80,11 @@ test('rejects an empty body', () => {
 test('rejects a header with no data rows, under either header', () => {
   assert.equal(accepted(`${NEW_HEADER}\r\n`), false)
   assert.equal(accepted(`${OLD_HEADER}\r\n`), false)
+})
+
+test('rejects a header followed only by a blank line', () => {
+  assert.equal(accepted(`${NEW_HEADER}\r\n\r\n`), false)
+  assert.equal(accepted(`${OLD_HEADER}\r\n\r\n`), false)
 })
 
 test('rejects a header with no rows and no line ending', () => {
@@ -145,6 +151,15 @@ test('rejects a header that reordered columns', () => {
   }
 })
 
+test('rejects a header with a column name cut short or padded by one character', () => {
+  for (const column of NEW_HEADER.split(',')) {
+    for (const changed of [column.slice(0, -1), `${column}x`]) {
+      const header = NEW_HEADER.replace(column, changed)
+      assert.equal(accepted(`${header}\r\n${NEW_ROWS}`), false, `${column} as ${changed}`)
+    }
+  }
+})
+
 test('rejects a header with only some of the three new columns', () => {
   assert.equal(
     accepted(
@@ -168,7 +183,7 @@ test('rejects a header with a column added at either end', () => {
 })
 
 test('rejects a header preceded by a byte order mark or a blank line', () => {
-  assert.equal(accepted(`﻿${NEW_BODY}`), false)
+  assert.equal(accepted(`${BOM}${NEW_BODY}`), false)
   assert.equal(accepted(`\r\n${NEW_BODY}`), false)
 })
 

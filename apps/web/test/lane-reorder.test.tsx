@@ -215,22 +215,70 @@ describe('lane arrows', () => {
     await answer({ error: null })
   })
 
-  it('keep focus on the arrow that was pressed after the lane moves', async () => {
+  // A browser drops focus to the body when the focused node is moved in the DOM; jsdom does not.
+  // Without this, no assertion about focus could fail, whatever the component did.
+  function dropFocusWhenAFocusedNodeMoves() {
+    for (const method of ['insertBefore', 'appendChild'] as const) {
+      const original = Node.prototype[method] as (...args: unknown[]) => Node
+      vi.spyOn(Node.prototype, method).mockImplementation(function (
+        this: Node,
+        ...args: unknown[]
+      ) {
+        const node = args[0] as Node
+        const active = document.activeElement as HTMLElement | null
+        const moving =
+          node.parentNode !== null &&
+          active !== null &&
+          active !== document.body &&
+          node.contains(active)
+        const result = original.apply(this, args)
+        if (moving) active?.blur()
+        return result
+      })
+    }
+  }
+
+  it('keep focus on the arrow that was pressed after its lane moves', async () => {
+    dropFocusWhenAFocusedNodeMoves()
     renderBoard()
     const answer = deferredSave()
-    const pressed = arrow('Doing', 'left')
-    await press(pressed)
+    await press(arrow('Review', 'right'))
+    expect(laneOrder()).toEqual(['New', 'Doing', 'Review', 'Done'])
+    expect(document.activeElement).toBe(arrow('Review', 'right'))
+    await answer({ error: null })
+    expect(document.activeElement).toBe(arrow('Review', 'right'))
+  })
+
+  it('keep focus on the arrow that was pressed when its lane moves left', async () => {
+    dropFocusWhenAFocusedNodeMoves()
+    renderBoard()
+    const answer = deferredSave()
+    await press(arrow('Doing', 'left'))
     expect(document.activeElement).toBe(arrow('Doing', 'left'))
     await answer({ error: null })
     expect(document.activeElement).toBe(arrow('Doing', 'left'))
   })
 
-  it('keep focus on the pressed arrow when the save is refused and the lane moves back', async () => {
+  it('keep focus on the pressed arrow when the save is refused and the lanes move back', async () => {
+    dropFocusWhenAFocusedNodeMoves()
     renderBoard()
     const answer = deferredSave()
-    await press(arrow('Doing', 'right'))
+    await press(arrow('Review', 'right'))
     await answer({ error: 'Refused' })
-    expect(document.activeElement).toBe(arrow('Doing', 'right'))
+    expect(laneOrder()).toEqual(['New', 'Review', 'Doing', 'Done'])
+    expect(document.activeElement).toBe(arrow('Review', 'right'))
+  })
+
+  it('stop restoring focus once the save has settled, so later focus is the reader’s own', async () => {
+    dropFocusWhenAFocusedNodeMoves()
+    renderBoard()
+    await press(arrow('Review', 'right'))
+    const elsewhere = arrow('Done', 'left')
+    elsewhere.focus()
+    elsewhere.blur()
+    expect(document.activeElement).toBe(document.body)
+    await press(arrow('Review', 'left'))
+    expect(document.activeElement).toBe(arrow('Review', 'left'))
   })
 
   it('announce the new position politely once the save succeeds', async () => {
@@ -241,6 +289,15 @@ describe('lane arrows', () => {
     expect(live.textContent).toBe('')
     await answer({ error: null })
     expect(live.textContent).toBe('Doing moved to position 2 of 4')
+  })
+
+  it('clear the last announcement when the next move is refused', async () => {
+    renderBoard()
+    await press(arrow('Doing', 'left'))
+    expect(screen.getByRole('status').textContent).toBe('Doing moved to position 2 of 4')
+    save.mockResolvedValueOnce({ error: 'Refused' })
+    await press(arrow('Review', 'right'))
+    expect(screen.getByRole('status').textContent).toBe('')
   })
 
   it('announce nothing when the save is refused', async () => {

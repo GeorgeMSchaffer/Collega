@@ -68,7 +68,7 @@ describe('getOrganizationHome', () => {
       { statusId: 's-new', name: 'New', color: '#111111' },
       { statusId: 's-done', name: 'Complete', color: '#222222' },
     ])
-    answer(/\/delivery/, [{ ideaId: 'd1' }, { ideaId: 'd2' }, { ideaId: 'd3' }])
+    answer(/\/delivery/, [{ ideaId: 'd1' }, { ideaId: 'd2' }, { ideaId: 'd3' }, { ideaId: 'd4' }])
   }
 
   it('answers empty, and asks the API nothing, for a Site Admin who has no organization', async () => {
@@ -98,7 +98,7 @@ describe('getOrganizationHome', () => {
     actAs('OrgAdmin')
     const home = await getOrganizationHome()
     expect(home.counts.ideas).toBe(41)
-    expect(home.counts.issues).toBe(3)
+    expect(home.counts.issues).toBe(4)
     const discovery = requested().find(
       (path) => path.includes('phase=Ideas') && path.includes('pageSize=1'),
     )

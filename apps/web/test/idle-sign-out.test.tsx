@@ -229,6 +229,14 @@ describe('IdleSignOut warning', () => {
     expect(screen.getByRole('alertdialog').textContent).toContain('signed out in 0:10')
   })
 
+  it('rounds a partial second up, so the countdown never reads zero before the deadline', () => {
+    mount()
+    advance(500)
+    activity() // the idle clock now runs half a second behind the one-second ticks
+    advance(28 * MIN + 1000)
+    expect(screen.getByRole('alertdialog').textContent).toContain('signed out in 2:00')
+  })
+
   it('announces to screen readers every thirty seconds, not every second', () => {
     mount()
     advance(28 * MIN)
@@ -257,10 +265,31 @@ describe('IdleSignOut warning', () => {
     const signOutButton = screen.getByRole('button', { name: 'Sign out' })
     const stay = screen.getByRole('button', { name: 'Stay signed in' })
     stay.focus()
-    fireEvent.keyDown(stay, { key: 'Tab' })
+    // fireEvent returns false when the handler called preventDefault, which is what stops the
+    // browser's own Tab moving focus out of the dialog as well.
+    expect(fireEvent.keyDown(stay, { key: 'Tab' })).toBe(false)
     expect(document.activeElement).toBe(signOutButton)
-    fireEvent.keyDown(signOutButton, { key: 'Tab', shiftKey: true })
+    expect(fireEvent.keyDown(signOutButton, { key: 'Tab', shiftKey: true })).toBe(false)
     expect(document.activeElement).toBe(stay)
+  })
+
+  it('leaves Tab alone between the two buttons', () => {
+    mount()
+    advance(28 * MIN)
+    const signOutButton = screen.getByRole('button', { name: 'Sign out' })
+    const stay = screen.getByRole('button', { name: 'Stay signed in' })
+    signOutButton.focus()
+    expect(fireEvent.keyDown(signOutButton, { key: 'Tab' })).toBe(true)
+    stay.focus()
+    expect(fireEvent.keyDown(stay, { key: 'Tab', shiftKey: true })).toBe(true)
+  })
+
+  it('opens as a modal dialog, so the page behind it cannot be reached', () => {
+    const showModal = vi.spyOn(HTMLDialogElement.prototype, 'showModal')
+    mount()
+    expect(showModal).not.toHaveBeenCalled()
+    advance(28 * MIN)
+    expect(showModal).toHaveBeenCalledTimes(1)
   })
 
   it('cannot be cancelled by the browser', () => {

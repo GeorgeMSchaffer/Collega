@@ -586,6 +586,31 @@ describe('ViewAsService.listCandidates', () => {
       expect((await service.listCandidates(null)).map((c) => c.userId)).toEqual(['z', 'a'])
     })
 
+    it('excludes a Site Admin by role even if the record somehow names an organization', async () => {
+      const { service } = harness({
+        currentUser: siteAdmin(),
+        users: [SITE_ADMIN],
+        searchResult: [
+          user({ id: 'sa-with-org', organizationId: ORG_A, role: Role.SiteAdmin }),
+          user({ id: 'member', organizationId: ORG_A }),
+        ],
+      })
+
+      expect((await service.listCandidates(null)).map((c) => c.userId)).toEqual(['member'])
+    })
+
+    it('asks for every organization when a Site Admin lists, whatever organization their own record names', async () => {
+      const { service, searchCalls } = harness({
+        currentUser: siteAdmin(),
+        users: [user({ ...SITE_ADMIN, organizationId: ORG_A })],
+        searchResult: [],
+      })
+
+      await service.listCandidates(null)
+
+      expect(searchCalls).toEqual([{ organizationId: null, search: null }])
+    })
+
     it('returns nothing, and does not fail, when every row is excluded', async () => {
       const { service } = harness({
         currentUser: siteAdmin(),
