@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-01 | The View As banner names only the target | active | full below |
 | 2026-10-01 | The View As candidate order, and F1 closes | active | full below |
 | 2026-09-30 | What the MVP release includes | active | full below |
 | 2026-09-30 | The prompt-eval thresholds stand, confirmed against the v1 baseline | active | full below |
@@ -99,6 +100,16 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-01 — The View As banner names only the target
+
+**Decided by the user** during ad-hoc testing: the banner reads *Viewing as: {Name}*, smaller and in
+the theme's own tokens, with the Stop button. The acting admin's name leaves the visible text and
+stays in the banner's accessible text and a tooltip. This supersedes in part
+`20-feature-view-as.md` rule 22 (both identities named on screen, and the comp's wording); the banner
+stays persistent, non-dismissable and on every screen, and every action is still attributed to both.
 
 ---
 
