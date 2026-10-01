@@ -21,7 +21,7 @@ Canonical product and delivery specifications. This file is the index; the numbe
 | `20-feature-boards-and-statuses.md` | Boards, statuses, swimlanes | MVP |
 | `20-feature-ideas-and-engagement.md` | Idea CRUD, tags, mentions, comments, upvotes | MVP |
 | `20-feature-notifications.md` | Notification events; recipients are followers since 2026-10-01 | MVP |
-| `20-feature-idea-following.md` | Following an idea, and the in-app notification inbox | Specified 2026-10-01 (slice 149); **comp awaiting review** |
+| `20-feature-idea-following.md` | Following an idea, and the in-app notification inbox | Specified 2026-10-01 (slice 149); open questions answered 2026-10-01 |
 | `20-feature-client-ui.md` | Client UI spec — locked design direction | MVP |
 | `20-feature-client-ui-revisions.md` | Numbered client UI decisions (D1…) | MVP |
 | `20-feature-user-defined-fields.md` | User-defined fields | Pulled into MVP 2026-08-08 |
