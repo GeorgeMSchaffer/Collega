@@ -68,4 +68,41 @@ describe.skipIf(!DATABASE_URL)('Demo seed re-run against a live database', () =>
       lanes,
     )
   }, 60_000)
+
+  it('keeps the idea followers identical on a re-run, and equal to each idea’s author and assignees', async () => {
+    const organizationIds = DEMO_ORGANIZATIONS.map((org) => seedId('organization', org.slug))
+    const read = () =>
+      prisma.$queryRaw<{ follower_id: string; idea_id: string; user_id: string }[]>`
+        SELECT f.id::text AS follower_id, f.idea_id::text AS idea_id, f.user_id::text AS user_id
+        FROM idea_followers f
+        JOIN ideas i ON i.id = f.idea_id
+        WHERE i.organization_id = ANY(${organizationIds}::uuid[])
+        ORDER BY f.id`
+
+    const before = await read()
+    await runDemoSeed(prisma)
+    const after = await read()
+
+    expect(after).toEqual(before)
+    expect(before.length).toBeGreaterThan(0)
+
+    // The same pairs the migration's backfill would have made for these ideas.
+    const expected = await prisma.$queryRaw<{ idea_id: string; user_id: string }[]>`
+      SELECT i.id::text AS idea_id, i.author_user_id::text AS user_id
+      FROM ideas i
+      WHERE i.organization_id = ANY(${organizationIds}::uuid[]) AND i.is_deleted = FALSE
+      UNION
+      SELECT ia.idea_id::text, ia.user_id::text
+      FROM idea_assignees ia
+      JOIN ideas i ON i.id = ia.idea_id
+      WHERE i.organization_id = ANY(${organizationIds}::uuid[]) AND i.is_deleted = FALSE`
+    const live = await prisma.$queryRaw<{ idea_id: string }[]>`
+      SELECT i.id::text AS idea_id FROM ideas i
+      WHERE i.organization_id = ANY(${organizationIds}::uuid[]) AND i.is_deleted = FALSE`
+    const liveIds = new Set(live.map((row) => row.idea_id))
+    const key = (row: { idea_id: string; user_id: string }) => `${row.idea_id}|${row.user_id}`
+    expect(new Set(after.filter((row) => liveIds.has(row.idea_id)).map(key))).toEqual(
+      new Set(expected.map(key)),
+    )
+  }, 60_000)
 })
