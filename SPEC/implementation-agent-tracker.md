@@ -27,7 +27,7 @@ open work (the rows are in that file; each stays listed here until it closes):
 - **Slice 117:** its carry-over of rule 33's shared-case comparison.
 - **Sprint 13 — MVP release** (`SPEC/sprints/sprint-13-mvp-release.md`, planned 2026-09-30):
   slices 136–139 in parallel, then 140, the cutover. Scope: `SPEC/decisions.md` 2026-09-30.
-- **Sprint 12** (the prompt-eval runner, `SPEC/sprints/sprint-12-prompt-eval-runner.md`): complete;
+- **Sprint 12** (the prompt-eval runner, `SPEC/sprints/archive/sprint-12-prompt-eval-runner.md`): complete;
   slices 113-118 merged, the v1 baseline committed 2026-09-30.
 
 | Area | State | Detail / authority |

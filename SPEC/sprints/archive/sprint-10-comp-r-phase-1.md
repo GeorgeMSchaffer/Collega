@@ -1,5 +1,7 @@
 # Sprint 10 — Comp R, phase 1
 
+**Status:** Complete (2026-09-27). Slices 099–103 are merged into `dev`; slice 103, the QA slice, merged on 2026-09-27.
+
 **Goal:** Boards, a board and Ideas work the way comp R (`SPEC/mockups/comp-r-portico-prototype.html`)
 does, in the Terrazzo theme family, with ideas carrying Problem, Proposed solutions and Impact
 rationale. Authority: `SPEC/decisions.md` 2026-09-27 (three entries), `20-feature-client-ui.md`

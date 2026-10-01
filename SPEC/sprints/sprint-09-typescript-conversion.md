@@ -1,9 +1,9 @@
 # Sprint 9 — TypeScript Stack Conversion
 
-Status: **ACTIVE — this is the current sprint (2026-09-04).** Sprint 8 was cancelled and
-Sprint 7.5 closed the same day; .NET development has stopped. Wave 0 is unblocked — tickets
-`06` and `08` were decided 2026-09-04, and `08` was the last thing gating it.
-Written 2026-08-31, activated 2026-09-04.
+Status: **ACTIVE — Waves A through E are done; Wave F's F1 and F4 remain (2026-09-30).**
+Written 2026-08-31, activated 2026-09-04. F1 (the golden triage) closes with slice 138 and F4 (the
+cutover) is slice 140, both in Sprint 13 (`SPEC/sprints/sprint-13-mvp-release.md`). *(Updated
+2026-10-01; this said Wave 0 was the frontier, true on 2026-09-04.)*
 
 **Full plan, slice inventory, collision model, and estimate: `SPEC/50-typescript-migration.md`.**
 This file is the execution wrapper only — sequencing, role assignment, and the definition
