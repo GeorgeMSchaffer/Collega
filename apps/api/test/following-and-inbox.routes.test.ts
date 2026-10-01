@@ -412,13 +412,12 @@ describe('DI wiring of the following and inbox modules', () => {
     return new Set(providers.map((p) => p.provide))
   }
 
-  const injectedStringTokens = (module: unknown): string[] => {
+  /** String tokens, plus any that came out undefined (a mistyped `PORT_TOKENS.x`). */
+  const injectedTokens = (module: unknown): unknown[] => {
     const providers = (Reflect.getMetadata('providers', module as object) ?? []) as {
       inject?: unknown[]
     }[]
-    return providers.flatMap((p) =>
-      (p.inject ?? []).filter((t): t is string => typeof t === 'string'),
-    )
+    return providers.flatMap((p) => (p.inject ?? []).filter((t) => typeof t !== 'function'))
   }
 
   it.each([
@@ -428,7 +427,7 @@ describe('DI wiring of the following and inbox modules', () => {
     ['CommentsModule', CommentsModule],
   ])('%s injects only tokens the persistence module provides', (_name, module) => {
     const provided = providedTokens(PersistenceModule)
-    const missing = injectedStringTokens(module).filter((token) => !provided.has(token))
+    const missing = injectedTokens(module).filter((token) => !provided.has(token))
 
     expect(missing).toEqual([])
   })
