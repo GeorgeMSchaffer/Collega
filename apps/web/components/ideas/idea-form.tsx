@@ -5,7 +5,13 @@ import { type FormEvent, useEffect, useId, useState, useTransition } from 'react
 import { Icon } from '@/components/list/icons'
 import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from '@/lib/limits'
 import { saveIdea } from '@/lib/server/idea-actions'
-import type { BoardRef, IdeaDetail, IdeaFormField, IdeaFormOptions } from '@/lib/types'
+import type {
+  BoardRef,
+  IdeaDetail,
+  IdeaFormField,
+  IdeaFormOptions,
+  MemberOption,
+} from '@/lib/types'
 import { PRIORITIES } from './idea-list-config'
 
 /**
@@ -17,6 +23,7 @@ const PROBLEM_MAX = 2000
 const SOLUTION_MAX = 500
 const SOLUTIONS_MAX = 5
 const RATIONALE_MAX = 1000
+const ASSIGNEES_MAX = 5
 
 type Draft = {
   boardId: string
@@ -30,6 +37,7 @@ type Draft = {
   businessImpactId: string
   dueDate: string
   tags: string
+  assignees: MemberOption[]
   /** By field id; Dropdown is an option id, MultiSelect comma-separated option ids. */
   fields: Record<string, string>
 }
@@ -56,6 +64,7 @@ function initialDraft(
     businessImpactId: idea ? idea.businessImpactId : (options.businessImpacts[0]?.id ?? ''),
     dueDate: idea?.dueDate ?? '',
     tags: idea?.tags.map((tag) => tag.name).join(', ') ?? '',
+    assignees: idea ? [...idea.assignees] : [],
     fields: Object.fromEntries(idea?.formFields.map((field) => [field.id, field.value]) ?? []),
   }
 }
@@ -175,7 +184,7 @@ export function IdeaForm({
           .split(',')
           .map((tag) => tag.trim())
           .filter(Boolean),
-        assigneeUserIds: idea?.assignees.map((person) => person.id) ?? [],
+        assigneeUserIds: draft.assignees.map((person) => person.id),
         mentionEmails: idea?.mentionEmails ?? [],
         fieldValues: customFields.map((field) => ({
           fieldDefinitionId: field.id,
@@ -204,6 +213,7 @@ export function IdeaForm({
     'businessImpactId',
     'dueDate',
     'tagNames',
+    'assigneeUserIds',
     ...customFields.map((field) => field.name),
   ])
   const unplaced = Object.entries(errors).filter(([key]) => !placed.has(key))
@@ -398,6 +408,15 @@ export function IdeaForm({
         />
       </Field>
 
+      <AssigneesField
+        id={fid('assignee')}
+        assignees={draft.assignees}
+        members={options.members}
+        locked={contentLocked}
+        error={errors.assigneeUserIds}
+        onChange={(assignees) => set('assignees', assignees)}
+      />
+
       <Field
         htmlFor={fid('description')}
         label="Summary (optional)"
@@ -440,6 +459,106 @@ export function IdeaForm({
         )}
       </fieldset>
     </form>
+  )
+}
+
+/**
+ * Zero to five assignees (rule 12). The choices are the organization's active members, so an
+ * inactive person already assigned is shown and removable but never offered again. Locked for
+ * anyone but the author or an Org Admin, whose save would be refused; the list is still sent back
+ * unchanged.
+ */
+function AssigneesField({
+  id,
+  assignees,
+  members,
+  locked,
+  error,
+  onChange,
+}: {
+  id: string
+  assignees: MemberOption[]
+  members: IdeaFormOptions['members']
+  locked: boolean
+  error: string | undefined
+  onChange: (assignees: MemberOption[]) => void
+}) {
+  const messageId = `${id}-msg`
+  const full = assignees.length >= ASSIGNEES_MAX
+  const chosen = new Set(assignees.map((person) => person.id))
+  const available = members.filter((member) => !chosen.has(member.id))
+  const hint = locked
+    ? 'Only the author or an Org Admin can change this.'
+    : full
+      ? `An idea can have at most ${ASSIGNEES_MAX} assignees. Remove one to add another.`
+      : `Optional, up to ${ASSIGNEES_MAX}.`
+
+  return (
+    <fieldset
+      className="m-0 mb-4 flex flex-col gap-1.5 border-0 p-0"
+      data-invalid={error ? '' : undefined}
+    >
+      <legend className="mb-[5px] text-[length:var(--label-size)] font-medium text-secondary-foreground">
+        Assignees (optional)
+      </legend>
+      {assignees.length > 0 ? (
+        <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
+          {assignees.map((person) => (
+            <li
+              key={person.id}
+              className="inline-flex items-center gap-1 rounded-full border bg-muted py-0.5 pl-2.5 pr-1 text-sm"
+            >
+              {person.name}
+              {locked ? null : (
+                <button
+                  type="button"
+                  aria-label={`Remove ${person.name}`}
+                  onClick={() => onChange(assignees.filter((p) => p.id !== person.id))}
+                  className="inline-grid size-6 place-items-center rounded-full text-muted-foreground hover:bg-background hover:text-foreground"
+                >
+                  <Icon name="x" />
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {locked ? null : (
+        <Select
+          id={id}
+          data-error-key="assigneeUserIds"
+          aria-label="Add an assignee"
+          aria-describedby={messageId}
+          aria-invalid={error ? true : undefined}
+          disabled={full || available.length === 0}
+          value=""
+          onChange={(event) => {
+            const member = members.find((m) => m.id === event.target.value)
+            if (member && !full) {
+              onChange([...assignees, member])
+            }
+          }}
+        >
+          <option value="">
+            {available.length === 0 && !full ? 'No one else to add' : 'Add an assignee…'}
+          </option>
+          {available.map((member) => (
+            <option key={member.id} value={member.id}>
+              {member.name}
+            </option>
+          ))}
+        </Select>
+      )}
+      {error ? (
+        <span id={messageId} className="block text-xs font-semibold text-destructive">
+          {error}
+        </span>
+      ) : (
+        <span id={messageId} className="block text-xs text-muted-foreground">
+          {hint}
+        </span>
+      )}
+    </fieldset>
   )
 }
 
