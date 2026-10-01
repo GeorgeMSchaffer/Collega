@@ -1,8 +1,9 @@
 'use client'
 
 import { Button, cn, Denied } from '@collega/design-system'
-import { useActionState, useEffect, useState } from 'react'
-import { type ActionState, addComment, toggleUpvote } from '@/lib/server/idea-actions'
+import { useActionState, useEffect, useId, useOptimistic, useState, useTransition } from 'react'
+import { Icon } from '@/components/list/icons'
+import { type ActionState, addComment, setFollowing, toggleUpvote } from '@/lib/server/idea-actions'
 
 const IDLE: ActionState = { error: null }
 
@@ -74,6 +75,85 @@ export function UpvoteButton({
         </span>
       ) : null}
     </form>
+  )
+}
+
+const followers = (n: number) => `${n} ${n === 1 ? 'person follows' : 'people follow'} this idea`
+
+/**
+ * The Follow / Following toggle (`20-feature-idea-following.md` rules 45–46).
+ *
+ * Saves at once, with no confirmation: the new state and count show immediately and fall back to
+ * the detail's on a refusal, with the API's message beside the control. `denial` is
+ * `followDenial(role)` — Read Only follows; only a Site Admin acting as themselves is refused.
+ */
+export function FollowButton({
+  ideaId,
+  boardId,
+  isFollowing,
+  followerCount,
+  denial,
+}: {
+  ideaId: string
+  boardId: string
+  isFollowing: boolean
+  followerCount: number
+  denial: string | null
+}) {
+  const countId = useId()
+  const [state, setState] = useOptimistic({ isFollowing, followerCount })
+  const [error, setError] = useState<string | null>(null)
+  const [, startTransition] = useTransition()
+
+  if (denial) {
+    return (
+      <Denied reason={denial} id={`why-follow-${ideaId}`}>
+        <Button
+          variant="outline"
+          size="sm"
+          aria-disabled="true"
+          aria-describedby={`why-follow-${ideaId}`}
+        >
+          <Icon name="bell" />
+          Follow · {followerCount}
+          <span className="sr-only">, {followers(followerCount)}</span>
+        </Button>
+      </Denied>
+    )
+  }
+
+  const toggle = () => {
+    const follow = !state.isFollowing
+    setError(null)
+    startTransition(async () => {
+      setState({ isFollowing: follow, followerCount: state.followerCount + (follow ? 1 : -1) })
+      const result = await setFollowing(ideaId, boardId, follow)
+      setError(result.error)
+    })
+  }
+
+  return (
+    <span className="inline-flex items-center gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        aria-pressed={state.isFollowing}
+        aria-describedby={countId}
+        onClick={toggle}
+        className={cn(state.isFollowing && 'border-foreground/60 bg-muted text-foreground')}
+      >
+        <Icon name={state.isFollowing ? 'check' : 'bell'} />
+        {state.isFollowing ? 'Following' : 'Follow'} · {state.followerCount}
+      </Button>
+      <span id={countId} className="sr-only">
+        {followers(state.followerCount)}
+      </span>
+      {error ? (
+        <span role="status" className="text-xs font-medium text-destructive">
+          {error}
+        </span>
+      ) : null}
+    </span>
   )
 }
 

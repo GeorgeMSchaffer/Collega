@@ -30,6 +30,7 @@ export function IdeaDrawer({
   canDelete,
   contentLocked,
   engagementDenial,
+  followDenial,
   returnFocusTo,
   onEdit,
   onView,
@@ -49,6 +50,7 @@ export function IdeaDrawer({
   canDelete: boolean
   contentLocked: boolean
   engagementDenial: string | null
+  followDenial: string | null
   returnFocusTo: HTMLElement | null
   onEdit: () => void
   onView: () => void
@@ -129,7 +131,12 @@ export function IdeaDrawer({
           onPendingChange={setSaving}
         />
       ) : idea ? (
-        <IdeaView idea={idea} statusColor={statusColor} engagementDenial={engagementDenial} />
+        <IdeaView
+          idea={idea}
+          statusColor={statusColor}
+          engagementDenial={engagementDenial}
+          followDenial={followDenial}
+        />
       ) : null}
     </Drawer>
   )

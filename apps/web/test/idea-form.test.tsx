@@ -65,6 +65,8 @@ function idea(overrides: Partial<IdeaDetail> = {}): IdeaDetail {
     fieldValues: [],
     formFields: TYPE_FIELDS.map((field) => ({ ...field, value: '' })),
     comments: [],
+    isFollowing: false,
+    followerCount: 0,
     ...overrides,
   }
 }

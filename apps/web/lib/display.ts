@@ -77,3 +77,34 @@ export const DELIVERY_STATUSES: readonly DeliveryStatus[] = [
   { id: 'Review', name: 'Review', color: 'var(--pink)' },
   { id: 'Complete', name: 'Complete', color: 'var(--green)' },
 ]
+
+const DAY_MS = 86_400_000
+
+const SHORT_DATE = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  timeZone: 'UTC',
+})
+const LONG_DATE = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  timeZone: 'UTC',
+})
+
+/**
+ * An inbox row's time, as the comp writes it: "Just now", "12 min ago", "2 h ago", "Yesterday",
+ * "3 days ago", then a date — with the year only once it is not this year's.
+ */
+export function relativeTime(at: Date, now: Date): string {
+  const elapsed = Math.max(0, now.getTime() - at.getTime())
+  const minutes = Math.floor(elapsed / 60_000)
+  if (minutes < 1) return 'Just now'
+  if (minutes < 60) return `${minutes} min ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours} h ago`
+  const days = Math.floor(elapsed / DAY_MS)
+  if (days === 1) return 'Yesterday'
+  if (days < 7) return `${days} days ago`
+  return (at.getUTCFullYear() === now.getUTCFullYear() ? SHORT_DATE : LONG_DATE).format(at)
+}

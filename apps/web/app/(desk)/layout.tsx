@@ -43,7 +43,7 @@ export default async function DeskLayout({ children }: { children: ReactNode }) 
   return (
     <SessionProvider user={user}>
       <IdleSignOut sessionRemainingMs={await sessionRemainingMs()} {...devIdleTimings()} />
-      <div className="grid min-h-screen grid-cols-[256px_minmax(0,1fr)]">
+      <div className="grid min-h-screen grid-cols-[256px_minmax(0,1fr)] max-md:grid-cols-1 max-md:content-start">
         {/* Suspense here is load-bearing, not decoration. `Sidebar` awaits its counts, and an
             un-suspended await in a layout blocks the whole response: nothing flushes, so no page's
             own loading.tsx can ever render and the reader watches a blank document for the length of

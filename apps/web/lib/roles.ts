@@ -45,6 +45,20 @@ export function engagementDenial(role: Role): string | null {
 }
 
 /**
+ * Whether the role may follow an idea. Read Only may — following is a read; a Site Admin acting as
+ * themselves may not, and follows through View As (`20-feature-idea-following.md` rules 8, 46).
+ */
+export function followDenial(role: Role): string | null {
+  if (role === 'SiteAdmin') return 'Follow through View As.'
+  return null
+}
+
+/** A Site Admin acting as themselves is never a recipient, so has no inbox (rule 32). */
+export function hasInbox(role: Role): boolean {
+  return role !== 'SiteAdmin'
+}
+
+/**
  * Whether the role may reach the administration routes at all.
  *
  * This is a **page-level** gate, not a control-level one, and it reads differently on purpose: a

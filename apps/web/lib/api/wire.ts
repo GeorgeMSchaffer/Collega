@@ -345,6 +345,9 @@ export type WireIdeaDetail = {
   /** Nullable for the same reason a comment's author is. */
   author: WireIdeaAssignee | null
   createdAtUtc: string
+  /** The caller's own follow state, and how many follow (`contracts/following.md`). */
+  isFollowing: boolean
+  followerCount: number
 }
 
 export type WireIdeaFieldValue = {
@@ -411,6 +414,21 @@ export type WirePage<T> = {
   page: number
   pageSize: number
   totalCount: number
+}
+
+/** `GET /notifications` items (`contracts/notifications.md` "Notification Inbox Contracts"). */
+export type WireNotification = {
+  notificationId: string
+  eventType: string
+  ideaId: string
+  /** The title when the event was written, not the idea's current one. */
+  ideaTitle: string
+  link: string
+  actor: WireIdeaAssignee | null
+  /** The new lane or delivery status as named when written; null for every other type. */
+  statusName: string | null
+  occurredAtUtc: string
+  readAtUtc: string | null
 }
 
 /**
