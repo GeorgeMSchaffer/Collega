@@ -85,7 +85,7 @@ describe('BroadcastChannel transport', () => {
     const { subscribeSessionSignal } = await load('broadcast')
     const listener = vi.fn()
     const unsubscribe = subscribeSessionSignal(listener)
-    const [channel] = FakeChannel.instances
+    const channel = FakeChannel.instances[0] as FakeChannel
     for (const handler of channel.listeners) {
       handler({ data: { type: 'ended', notice: null } } as MessageEvent<SessionSignal>)
     }
