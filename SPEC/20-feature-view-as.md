@@ -76,7 +76,7 @@ Per the locked comp; `SPEC/20-feature-client-ui.md` governs general chrome.
 
 20. Entry: a right-aligned `View as…` control in the page header on every screen, plus a rail avatar-menu item (D-PLACE).
 21. The picker is a searchable **right slide-in drawer** using the shared `DrawerShell`, matching every other detail surface. Grouped by organization for Site Admin; own-organization only for Org Admin. Inactive users are shown but not selectable.
-22. While acting, a **persistent, non-dismissable banner** on every screen names both identities and offers one-click exit. The comp's wording: *"You're seeing exactly what they see. Anything you do is recorded as [real actor] acting as them."*
+22. *Superseded in part 2026-10-01 (`decisions.md`, "The View As banner names only the target"): the visible text is now **Viewing as: {Name}** with a small Stop button, in theme tokens; the acting admin and organization move to the accessible text and a tooltip. The banner stays persistent, non-dismissable and on every screen. The original follows.* While acting, a **persistent, non-dismissable banner** on every screen names both identities and offers one-click exit. The comp's wording: *"You're seeing exactly what they see. Anything you do is recorded as [real actor] acting as them."*
 23. The rail avatar swaps to the impersonated user, and the rail's role-scoped items reflect the target's role — the admin sees what the target sees.
 24. Mutating controls stay live. This is act-as, not preview (D-MODE).
 
