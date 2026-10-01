@@ -1,12 +1,21 @@
-import type { Clock } from '@collega/application/common'
-import type { NotificationEventRepository } from '@collega/application/notifications'
-import { NotificationService } from '@collega/application/notifications'
+import type { Clock, CurrentUserContext } from '@collega/application/common'
+import type {
+  NotificationEventRepository,
+  NotificationInboxRepository,
+} from '@collega/application/notifications'
+import { NotificationInboxService, NotificationService } from '@collega/application/notifications'
 import { Module } from '@nestjs/common'
+import { AuthModule } from '../auth/auth.module.js'
 import { PersistenceModule } from '../common/persistence/persistence.module.js'
 import { PORT_TOKENS } from '../common/tokens.js'
+import { NotificationsController } from './notifications.controller.js'
 
 /**
- * `NotificationService`, and nothing else - the one feature module in Wave D with no controller.
+ * `NotificationService`, the writer other features' mutations call, and - since 2026-10-01 - the
+ * inbox routes that read and mark the caller's own notifications (`NotificationsController`,
+ * `NotificationInboxService`, SPEC/contracts/notifications.md).
+ *
+ * The writer was first the one feature module in Wave D with no controller.
  *
  * Notifications is a write-only side effect of other features' mutations, so .NET gave it no
  * controller either (`packages/application/src/notifications/index.ts` says as much). It gets a
@@ -23,13 +32,27 @@ import { PORT_TOKENS } from '../common/tokens.js'
  * `NotificationEventRepository` directly.
  */
 @Module({
-  imports: [PersistenceModule],
+  imports: [PersistenceModule, AuthModule],
+  controllers: [NotificationsController],
   providers: [
     {
       provide: NotificationService,
       useFactory: (notifications: NotificationEventRepository, clock: Clock) =>
         new NotificationService(notifications, clock),
       inject: [PORT_TOKENS.NotificationEventRepository, PORT_TOKENS.Clock],
+    },
+    {
+      provide: NotificationInboxService,
+      useFactory: (
+        inbox: NotificationInboxRepository,
+        currentUser: CurrentUserContext,
+        clock: Clock,
+      ) => new NotificationInboxService(inbox, currentUser, clock),
+      inject: [
+        PORT_TOKENS.NotificationInboxRepository,
+        PORT_TOKENS.CurrentUserContext,
+        PORT_TOKENS.Clock,
+      ],
     },
   ],
   exports: [NotificationService],

@@ -65,6 +65,10 @@ export const PORT_TOKENS = {
   CommentRepository: 'CommentRepository',
   IdeaLookupPort: 'IdeaLookupPort',
   UsersPort: 'UsersPort',
+  IdeaFollowersPort: 'IdeaFollowersPort',
+
+  // Following (packages/application/src/following/ports.ts) --------------------------------------
+  IdeaFollowerRepository: 'IdeaFollowerRepository',
 
   // Fields (packages/application/src/fields/ports.ts) --------------------------------------------
   FieldDefinitionRepository: 'FieldDefinitionRepository',
@@ -95,6 +99,7 @@ export const PORT_TOKENS = {
 
   // Notifications (packages/application/src/notifications/ports.ts) ------------------------------
   NotificationEventRepository: 'NotificationEventRepository',
+  NotificationInboxRepository: 'NotificationInboxRepository',
 
   // Organizations (packages/application/src/organizations/ports.ts) ------------------------------
   OrganizationRepository: 'OrganizationRepository',

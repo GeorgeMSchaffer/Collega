@@ -1,4 +1,9 @@
-import type { CommentRepository, IdeaLookupPort, UsersPort } from '@collega/application/comments'
+import type {
+  CommentRepository,
+  IdeaFollowersPort,
+  IdeaLookupPort,
+  UsersPort,
+} from '@collega/application/comments'
 import { CommentService } from '@collega/application/comments'
 import type {
   AuditEventWriter,
@@ -46,6 +51,7 @@ import { CommentsController } from './comments.controller.js'
       useFactory: (
         comments: CommentRepository,
         ideas: IdeaLookupPort,
+        followers: IdeaFollowersPort,
         users: UsersPort,
         notifications: NotificationService,
         unitOfWork: UnitOfWork,
@@ -56,6 +62,7 @@ import { CommentsController } from './comments.controller.js'
         new CommentService(
           comments,
           ideas,
+          followers,
           users,
           notifications,
           unitOfWork,
@@ -66,6 +73,7 @@ import { CommentsController } from './comments.controller.js'
       inject: [
         PORT_TOKENS.CommentRepository,
         PORT_TOKENS.IdeaLookupPort,
+        PORT_TOKENS.IdeaFollowersPort,
         PORT_TOKENS.UsersPort,
         NotificationService,
         PORT_TOKENS.UnitOfWork,
