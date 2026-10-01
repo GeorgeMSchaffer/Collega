@@ -31,7 +31,8 @@ export type DemoSeedResult = {
  * `prisma/seed/index.ts` enforces that with a hard refusal on `NODE_ENV`. Exposing a button that
  * seeds a deployed environment contradicts that flatly, so it is not done quietly:
  *
- * - The route is **absent unless `COLLEGA_ALLOW_DEMO_SEED` is set**, and it is unset by default.
+ * - The route **answers 403 unless `COLLEGA_ALLOW_DEMO_SEED` is set** (see `ensureEnabled`), and the
+ *   variable is unset by default.
  *   Turning it on is a deliberate act in the Vercel dashboard, reversible by deleting the variable,
  *   and it leaves a record of the decision where the decision was made.
  * - `@Roles(Role.SiteAdmin)` narrows it to the one account that belongs to no organization, which
