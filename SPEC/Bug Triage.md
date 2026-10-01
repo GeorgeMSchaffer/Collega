@@ -39,5 +39,3 @@ All ten previously open items were promoted into `SPEC/sprints/sprint-07.5-acces
 
 From the owner's ad-hoc testing on 2026-10-01, taken one at a time:
 
-5. **A focused card does not move with ← →.** `20-feature-client-ui.md` § Idea Cards item 7 says it
-   does; only the card's arrow buttons move it. Found in slice 142's work.
