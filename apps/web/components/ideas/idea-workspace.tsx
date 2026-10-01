@@ -131,8 +131,8 @@ export function IdeaWorkspace({
   const keyMoveCard = (ideaId: string, toStatusId: string) => {
     const to = lanes.find((lane) => lane.id === toStatusId)
     const idea = laneRows.find((row) => row.id === ideaId)
-    // One move per keypress: a press while a save is in flight is dropped.
-    if (!board || !to || !idea || movingCard) return
+    // The card sits in its optimistic lane, so a press before the save settles moves it on from there.
+    if (!board || !to || !idea) return
     refocusCard.current = ideaId
     setCardNews('')
     moveCard(ideaId, board.id, to, idea.title)
