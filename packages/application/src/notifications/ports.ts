@@ -30,6 +30,8 @@ export type InboxRow = {
   /** `null` when no user row exists for `actor_user_id`, which has no foreign key. */
   readonly actor: InboxActor | null
   readonly statusName: string | null
+  /** The idea's current board, read at query time; `null` when it cannot be resolved. */
+  readonly boardName: string | null
   readonly occurredAtUtc: Date
   readonly readAtUtc: Date | null
 }

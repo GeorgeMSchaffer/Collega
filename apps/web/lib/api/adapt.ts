@@ -410,6 +410,7 @@ export function toInboxItem(wire: WireNotification, now: Date): InboxItem {
     ideaTitle: wire.ideaTitle,
     actor: toPerson(wire.actor),
     statusName: wire.statusName,
+    boardName: wire.boardName,
     occurredAtUtc: wire.occurredAtUtc,
     when: relativeTime(new Date(wire.occurredAtUtc), now),
     unread: wire.readAtUtc === null,

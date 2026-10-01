@@ -92,6 +92,7 @@ function toInboxItem(row: InboxRow): InboxItem {
         }
       : null,
     statusName: row.statusName,
+    boardName: row.boardName,
     occurredAtUtc: row.occurredAtUtc,
     readAtUtc: row.readAtUtc,
   }

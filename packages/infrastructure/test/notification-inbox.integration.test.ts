@@ -199,10 +199,12 @@ describe.skipIf(!DATABASE_URL)('The notification inbox, against a live database'
       })
 
       const [item] = (await listAll(me)).items
+      const board = await prisma.boards.findUniqueOrThrow({ where: { id: org.boardId } })
 
       expect(item).toMatchObject({
         id,
         eventType: 'IdeaStatusChanged',
+        boardName: board.name,
         ideaId,
         ideaTitle: 'Probe title',
         link: `/ideas/${ideaId}`,

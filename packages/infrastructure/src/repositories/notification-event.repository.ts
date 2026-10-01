@@ -33,6 +33,7 @@ type InboxSqlRow = {
   idea_title: string
   link: string
   status_name: string | null
+  board_name: string | null
   occurred_at_utc: Date
   read_at_utc: Date | null
   actor_id: string | null
@@ -91,6 +92,7 @@ export class PrismaNotificationEventRepository
         notification.idea_title,
         notification.link,
         notification.status_name,
+        board.name AS board_name,
         notification.occurred_at_utc,
         notification.read_at_utc,
         actor.id AS actor_id,
@@ -99,6 +101,8 @@ export class PrismaNotificationEventRepository
         actor.status::text AS actor_status
       FROM notification_events AS notification
       LEFT JOIN users AS actor ON actor.id = notification.actor_user_id
+      LEFT JOIN ideas AS idea ON idea.id = notification.idea_id
+      LEFT JOIN boards AS board ON board.id = idea.board_id
       WHERE ${where}
       ORDER BY notification.occurred_at_utc DESC, notification.id DESC
       LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}
@@ -168,6 +172,7 @@ function toInboxRow(row: InboxSqlRow): InboxRow {
           }
         : null,
     statusName: row.status_name,
+    boardName: row.board_name,
     occurredAtUtc: row.occurred_at_utc,
     readAtUtc: row.read_at_utc,
   }
