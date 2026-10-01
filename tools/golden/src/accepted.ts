@@ -529,6 +529,42 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
       'ideas.update.orgadmin',
       'ideas.update.user',
     ],
+    path: 'body.isFollowing',
+    decided: '2026-10-01',
+    reason:
+      'A deliberate change, not drift (SPEC/decisions.md 2026-10-01, "Following an idea, and an ' +
+      'in-app notification inbox"; SPEC/contracts/ideas.md and contracts/following.md). The detail ' +
+      "carries the caller's own follow state so the drawer's Follow toggle renders without a second " +
+      'request; `PUT /ideas/{ideaId}` answers the same detail, hence the update cases. Accepted as ' +
+      'the field appearing, and only that: every recorded field of the detail is still compared. ' +
+      'Not pinned to a shape - a boolean, and the recording has no such field.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'ideas.get.orgadmin',
+      'ideas.get.readonly',
+      'ideas.get.siteadmin',
+      'ideas.get.user',
+      'ideas.update.orgadmin',
+      'ideas.update.user',
+    ],
+    path: 'body.followerCount',
+    decided: '2026-10-01',
+    reason:
+      'The same change as `body.isFollowing` above, which carries the full reasoning: how many ' +
+      'people follow the idea, shown on the toggle. Accepted as the field appearing, and only that.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'ideas.get.orgadmin',
+      'ideas.get.readonly',
+      'ideas.get.siteadmin',
+      'ideas.get.user',
+      'ideas.update.orgadmin',
+      'ideas.update.user',
+    ],
     path: 'body.formFields',
     decided: '2026-09-27',
     reason:
