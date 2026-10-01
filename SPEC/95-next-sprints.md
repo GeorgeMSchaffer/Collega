@@ -16,7 +16,7 @@ Sprints run **strictly in order** — each builds on the previous sprint's merge
 
 **Paydown sprints take priority over feature sprints** (user decision, 2026-08-14, reaffirmed 2026-08-25). Sprint 6.5 was the first — 13 items, complete 2026-08-15. **Sprint 7.5** is the second. Both are given half-numbers rather than renumbering the sprints after them, so existing `sprint-07-*` and `sprint-08-*` cross-references stay valid.
 
-**Sprint 8 was cancelled on 2026-09-04** and the .NET stack is never deployed — everything goes to Vercel at the end of the TypeScript conversion (`SPEC/decisions.md`). **Sprint 9 is the next sprint.** Read the rows below with that in mind: several of them justify their sequencing by "must land before the first Azure deploy", and that deployment is not happening. They are left as written because they explain why the work landed in the order it did.
+**Sprint 8 was cancelled on 2026-09-04** and the .NET stack is never deployed — everything goes to Vercel at the end of the TypeScript conversion (`SPEC/decisions.md`). **Sprint 9 is down to F1 and F4, which Sprint 13 finishes.** Read the rows below with that in mind: several of them justify their sequencing by "must land before the first Azure deploy", and that deployment is not happening. They are left as written because they explain why the work landed in the order it did.
 
 | # | Blocked by | Why that dependency exists |
 |---|---|---|
