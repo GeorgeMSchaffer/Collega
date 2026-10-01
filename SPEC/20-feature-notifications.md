@@ -77,7 +77,7 @@ Each event persists a canonical link to the idea, stored in the `NotificationEve
 ### Infrastructure layer
 - `NotificationEventRepository` (`packages/infrastructure/src/repositories/notification-event.repository.ts`) persists the events.
 - Inserts one `NotificationEvent` row per recipient per event (no batching in MVP).
-- Fields populated: `RecipientUserId`, `EventType`, `IdeaId`, `IdeaTitle`, `OrgId`, `TriggeredByUserId`, `Link` (`/ideas/{ideaId}`), `OccurredAtUtc`. *Added 2026-10-01:* `ReadAtUtc`, `NULL` when written.
+- Fields populated: `RecipientUserId`, `EventType`, `IdeaId`, `IdeaTitle`, `OrgId`, `TriggeredByUserId`, `Link` (`/ideas/{ideaId}`), `OccurredAtUtc`. *Added 2026-10-01:* `ReadAtUtc`, `NULL` when written; `StatusName`, the new status's name for the two status events, captured at write time (`20-feature-idea-following.md` rule 37).
 - No SMTP, email client, or outbound HTTP — purely database writes.
 
 ### Test coverage
