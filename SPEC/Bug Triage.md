@@ -39,10 +39,6 @@ All ten previously open items were promoted into `SPEC/sprints/sprint-07.5-acces
 
 From the owner's ad-hoc testing on 2026-10-01, taken one at a time:
 
-1. **A board's cards cannot be dragged between lanes.** `20-feature-client-ui.md` § Idea Cards
-   specifies a drag handle that starts card movement; only the card's move arrows exist. Dropping a
-   card on another lane should show it there at once and change its status
-   (`POST /ideas/{ideaId}/status`), restoring it on refusal. Slice 142.
 2. **A custom field cannot be created.** Settings → Custom fields shows *Add the first field* and
    *Add New Field*, but neither does anything: `apps/web` has no create form or action, though the API
    serves `POST /organizations/{orgId}/field-definitions` (`contracts/field-definitions.md`). Slice 144.
