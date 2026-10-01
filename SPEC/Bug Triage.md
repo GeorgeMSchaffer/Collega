@@ -46,9 +46,6 @@ From the owner's ad-hoc testing on 2026-10-01, taken one at a time:
 2. **A custom field cannot be created.** Settings → Custom fields shows *Add the first field* and
    *Add New Field*, but neither does anything: `apps/web` has no create form or action, though the API
    serves `POST /organizations/{orgId}/field-definitions` (`contracts/field-definitions.md`). Slice 144.
-3. **The View As banner is loud and wordy.** Hard-coded amber classes instead of the theme's tokens,
-   and a sentence where a label will do. It reads *Viewing as: {Name}* with the Stop button
-   (`SPEC/decisions.md` 2026-10-01, "The View As banner names only the target"). Slice 143.
 4. **Statuses cannot be reordered by drag and drop** on Settings → Statuses. The API serves
    `POST /organizations/{organizationId}/statuses/reorder`. The shared table gains opt-in row reorder;
    only Statuses uses it for now. Slice 145.
