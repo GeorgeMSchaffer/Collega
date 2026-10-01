@@ -36,3 +36,12 @@ Keep entries short. A symptom, where it happens, and — if you know it — the 
 ## TODO
 
 All ten previously open items were promoted into `SPEC/sprints/sprint-07.5-accessibility-and-bug-paydown.md` on 2026-08-25 and deleted from here per the "Promote and delete" rule above — that sprint file is now their only home. They came from a live UI/UX pass against `dev` at `875b223` on 2026-08-16.
+
+From the owner's ad-hoc testing on 2026-10-01, taken one at a time:
+
+1. **A board's cards cannot be dragged between lanes.** `20-feature-client-ui.md` § Idea Cards
+   specifies a drag handle that starts card movement; only the card's move arrows exist. Dropping a
+   card on another lane should show it there at once and change its status
+   (`POST /ideas/{ideaId}/status`), restoring it on refusal. Slice 142.
+2. **Adding a custom field appears not to work** on Settings → Custom fields. Not yet reproduced;
+   may be unbuilt or broken.
