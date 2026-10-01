@@ -39,3 +39,8 @@ All ten previously open items were promoted into `SPEC/sprints/sprint-07.5-acces
 
 From the owner's ad-hoc testing on 2026-10-01, taken one at a time:
 
+6. **An idea's assignees cannot be chosen.** `20-feature-ideas-and-engagement.md` (field list and
+   rules 12–13) gives an idea zero to five assignees from its organization, and the API accepts
+   `assigneeUserIds`, but the idea form has no picker: it resends the idea's existing assignees.
+   Slice 147.
+
