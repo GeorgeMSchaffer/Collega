@@ -711,6 +711,8 @@ export type HomeKpi = {
   detailAlert?: boolean
   definition: string
   href: string | null
+  /** Where the detail's own number opens, when it has one (the critical share). */
+  detailHref?: string | undefined
 }
 
 /** An idea in one of Home's lists: the attention queue, Assigned to me, Most upvoted. */
@@ -738,8 +740,10 @@ export type HomeSprint = {
 
 /** Home for a member of an organization — Org Admin, User or Read Only. */
 export type OrganizationHome = {
-  /** `issues` is in flight: the backlog plus the Planned and Active sprints' issues. */
+  /** `ideas` are the live boards' Discovery ideas; `issues` every Delivery-phase item. */
   counts: { ideas: number; boards: number; issues: number }
+  /** The `/ideas` query listing exactly the ideas `counts.ideas` counts; null when there are none. */
+  ideasHref: string | null
   statuses: Status[]
   kpis: HomeKpi[]
   attention: HomeIdeaList

@@ -1,10 +1,12 @@
 /**
- * Home: what needs the reader now (`SPEC/20-feature-client-ui.md`, comp R
- * `SPEC/mockups/comp-r-home-dashboard.html`, approved as drawn 2026-10-01).
+ * Home: what needs the reader now (`SPEC/20-feature-client-ui.md` § Home; comp R
+ * `SPEC/mockups/comp-r-home-dashboard.html` is the visual guide, and the spec wins where they
+ * differ — decision 2026-10-01).
  *
  * Every figure is a count the API already answers — a `totalCount` from a short page, or the
- * length of a list the organization owns — so Home adds no route. The comp's annotations name each
- * panel's query, and these readers make those requests.
+ * length of a list the organization owns — so Home adds no route. **Every number is a filtered
+ * query the reader can open**, so each count is paired here with the `/ideas` link that lists the
+ * same set; the two are built side by side so they cannot drift apart.
  *
  * **What has no source yet is not computed.** "Open ideas" and "Awaiting review" need to know which
  * status means Complete and which means In Review, and a status carries no such marker. "Completed
@@ -42,7 +44,10 @@ export type {
 } from '../types'
 
 /** The attention queue as an `/ideas` filter — its "View all" and the Critical & high tile. */
-export const ATTENTION_HREF = '/ideas?priority=Critical&priority=High'
+export const ATTENTION_HREF = '/ideas?phase=Ideas&priority=Critical&priority=High'
+
+/** Assigned to me, in either phase, highest priority first as the panel lists it. */
+export const ASSIGNED_HREF = '/ideas?scope=assigned&sort=priority&dir=desc'
 
 /** How many rows each of Home's lists shows. */
 const LIST_ROWS = 5
@@ -90,6 +95,7 @@ export async function getOrganizationHome(): Promise<OrganizationHome> {
   if (scope === null) {
     return {
       counts: { ideas: 0, boards: 0, issues: 0 },
+      ideasHref: null,
       statuses: [],
       kpis: [],
       attention: { total: 0, rows: [] },
@@ -114,7 +120,7 @@ export async function getOrganizationHome(): Promise<OrganizationHome> {
     wireStatuses,
     backlog,
     sprints,
-    ideas,
+    issues,
     critical,
     created,
     attention,
@@ -130,7 +136,7 @@ export async function getOrganizationHome(): Promise<OrganizationHome> {
     // No sprintId: the backlog.
     apiGet<readonly WireDeliveryCard[]>(reader, apiPath`/organizations/${scope}/delivery`),
     apiGet<readonly WireSprint[]>(reader, apiPath`/organizations/${scope}/sprints`),
-    ideaCount(reader, scope, new URLSearchParams({ phase: 'Ideas' })),
+    ideaCount(reader, scope, new URLSearchParams({ phase: 'Issues' })),
     ideaCount(reader, scope, new URLSearchParams({ scope: 'assigned', priority: 'Critical' })),
     ideaCount(reader, scope, new URLSearchParams({ scope: 'created' })),
     ideaPage(reader, scope, attentionParams, LIST_ROWS),
@@ -175,10 +181,15 @@ export async function getOrganizationHome(): Promise<OrganizationHome> {
     hasUpvoted: idea.hasUpvoted,
   })
 
+  // The greeting's ideas are the live boards' own counts, so an archived board's ideas are not
+  // counted beside "0 boards". Its link names those boards only when one is archived — otherwise
+  // every board is live and the plain phase filter is already the same set.
   const liveBoards = boards.filter((board) => !board.isArchived)
-  const inSprints = sprints
-    .filter((sprint) => sprint.state === 'Planned' || sprint.state === 'Active')
-    .reduce((total, sprint) => total + sprint.issueCount, 0)
+  const ideas = liveBoards.reduce((total, board) => total + board.ideaCount, 0)
+  const ideasQuery = new URLSearchParams({ phase: 'Ideas' })
+  if (liveBoards.length < boards.length) {
+    for (const board of liveBoards) ideasQuery.append('board', board.boardId)
+  }
 
   const kpis: HomeKpi[] = [
     {
@@ -186,8 +197,9 @@ export async function getOrganizationHome(): Promise<OrganizationHome> {
       value: assigned.totalCount,
       detail: critical > 0 ? `${critical} critical` : 'none critical',
       detailAlert: critical > 0,
-      definition: 'Every idea with your name in Assigned, whatever its status.',
-      href: null,
+      definition: 'Every idea or issue with your name in Assigned, whatever its status.',
+      href: ASSIGNED_HREF,
+      detailHref: critical > 0 ? '/ideas?scope=assigned&priority=Critical' : undefined,
     },
     {
       label: 'Critical & high',
@@ -201,12 +213,13 @@ export async function getOrganizationHome(): Promise<OrganizationHome> {
       value: created,
       detail: 'ideas and issues',
       definition: 'Everything you authored, on any board, in either phase.',
-      href: null,
+      href: '/ideas?scope=created',
     },
   ]
 
   return {
-    counts: { ideas, boards: liveBoards.length, issues: backlog.length + inSprints },
+    counts: { ideas, boards: liveBoards.length, issues },
+    ideasHref: ideas > 0 ? `/ideas?${ideasQuery}` : null,
     statuses,
     kpis,
     attention: { total: attention.totalCount, rows: attention.items.map(toRow) },
@@ -245,16 +258,12 @@ export async function getPlatformHome(): Promise<PlatformHome> {
 
   const perOrganization = await Promise.all(
     organizations.map(async (organization) => {
-      const [boards, ideas, issues, users, inactive] = await Promise.all([
+      const [boards, issues, users, inactive] = await Promise.all([
         apiGet<readonly WireBoardListItem[]>(
           reader,
           apiPath`/organizations/${organization.id}/boards`,
         ),
-        ideaCount(reader, organization.id, new URLSearchParams({ phase: 'Ideas' })),
-        apiGet<readonly WireDeliveryCard[]>(
-          reader,
-          apiPath`/organizations/${organization.id}/delivery`,
-        ),
+        ideaCount(reader, organization.id, new URLSearchParams({ phase: 'Issues' })),
         apiGet<WirePage<WireUserListItem>>(
           reader,
           apiPath`/organizations/${organization.id}/users?pageSize=1`,
@@ -268,8 +277,9 @@ export async function getPlatformHome(): Promise<PlatformHome> {
         id: organization.id,
         name: organization.name,
         boards: boards.map(toBoardOverview),
-        ideas,
-        issues: issues.length,
+        // The live boards' own counts, the same ideas the board rows below add up to.
+        ideas: boards.reduce((total, board) => total + board.ideaCount, 0),
+        issues,
         users: users.totalCount,
         inactive: inactive.totalCount,
       }
@@ -301,7 +311,7 @@ export async function getPlatformHome(): Promise<PlatformHome> {
       label: 'Ideas',
       value: ideas,
       detail: `plus ${plural(issues, 'delivery issue', 'delivery issues')}`,
-      definition: 'Ideas still on a board, in every organization.',
+      definition: 'Ideas still on a live board, in every organization.',
       href: null,
     },
     {

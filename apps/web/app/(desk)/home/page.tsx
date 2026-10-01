@@ -25,6 +25,7 @@ import {
 } from '@/components/home/home-parts'
 import { Topbar } from '@/components/nav/topbar'
 import {
+  ASSIGNED_HREF,
   ATTENTION_HREF,
   getOrganizationHome,
   getPlatformHome,
@@ -38,9 +39,10 @@ import { currentUser } from '@/lib/session'
 export const metadata = { title: 'Home · Collega' }
 
 /**
- * Home answers *what needs me now*, not *what exists* (`SPEC/20-feature-client-ui.md`, comp R
- * `comp-r-home-dashboard.html`, approved as drawn 2026-10-01). A Site Admin has no "me" inside any
- * organization, so theirs is the platform roll-up.
+ * Home answers *what needs me now*, not *what exists* (`SPEC/20-feature-client-ui.md` § Home, with
+ * comp R `comp-r-home-dashboard.html` as the visual guide). Every number links to the list that
+ * shows what it counts. A Site Admin has no "me" inside any organization, so theirs is the platform
+ * roll-up.
  *
  * Two columns from 1100px: the organization's work on the left, the reader's own lists on the
  * right. Below that, one column with the reader's own work first — each column becomes `contents`
@@ -76,6 +78,11 @@ const ORDER = {
 
 const SMALL_BUTTON = buttonVariants({ variant: 'outline', size: 'sm' })
 
+/** A count in running text that opens its list; plain text when there is nothing to open. */
+function Count({ href, children }: { href: string | null; children: string }) {
+  return href ? <Link href={href}>{children}</Link> : <>{children}</>
+}
+
 function firstName(): string {
   return currentUser().displayName.split(' ')[0] ?? ''
 }
@@ -92,10 +99,13 @@ async function OrganizationHomeView() {
         description={
           <>
             {readOnly ? 'Here’s what’s moving today.' : 'Here’s what needs you today.'}{' '}
-            {organization} has {plural(home.counts.ideas, 'idea', 'ideas')} across{' '}
-            {plural(home.counts.boards, 'board', 'boards')} and{' '}
-            {plural(home.counts.issues, 'delivery issue', 'delivery issues')} in flight &mdash;
-            press <Kbd>Ctrl K</Kbd> to jump straight to any of them.
+            {organization} has{' '}
+            <Count href={home.ideasHref}>{plural(home.counts.ideas, 'idea', 'ideas')}</Count> across{' '}
+            <Count href="/boards">{plural(home.counts.boards, 'board', 'boards')}</Count> and{' '}
+            <Count href={home.counts.issues > 0 ? '/ideas?phase=Issues' : null}>
+              {plural(home.counts.issues, 'delivery issue', 'delivery issues')}
+            </Count>{' '}
+            &mdash; press <Kbd>Ctrl K</Kbd> to jump straight to any of them.
           </>
         }
       />
@@ -229,7 +239,7 @@ function OrganizationDashboard({ home }: { home: OrganizationHome }) {
                   : 'When someone adds you to an idea’s Assigned field, it lands here. Meanwhile, the queue on the left is a good place to pick something up.'}
               </EmptyNote>
             ) : (
-              <Rows>
+              <Rows footer={<Link href={ASSIGNED_HREF}>View all {home.assigned.total}</Link>}>
                 {home.assigned.rows.map((idea) => (
                   <IdeaRow key={idea.id} idea={idea} detail="priority" now={now} />
                 ))}
@@ -282,7 +292,9 @@ function CurrentSprint({ current, className }: { current: HomeSprint; className:
           <span>
             <b>{sprint.doneCount}</b> of {plural(sprint.issueCount, 'issue', 'issues')} done
           </span>
-          <span className="text-muted-foreground">{backlog} in the backlog</span>
+          <Link href="/delivery/backlog" className="text-muted-foreground">
+            {backlog} in the backlog
+          </Link>
         </div>
         <CountStrip segments={segments} />
         <CountLegend segments={segments} />
