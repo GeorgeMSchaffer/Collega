@@ -37,11 +37,12 @@ export function ViewAsBanner() {
       // `alert` rather than `status`: a screen reader should interrupt with this, because every
       // subsequent thing it reads out is about somebody else.
       role="alert"
-      title={detail}
       className="flex items-center justify-between gap-3 border-b border-warning/40 bg-accent px-3 py-1 text-xs text-accent-foreground"
     >
       <p className="m-0">
-        <strong className="font-semibold">Viewing as: {user.displayName}</strong>
+        <strong className="font-semibold" title={detail}>
+          Viewing as: {user.displayName}
+        </strong>
         <span className="sr-only">. {detail}</span>
       </p>
       <form action={endViewAs}>
