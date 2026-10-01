@@ -135,6 +135,8 @@ function ideaFor(item: Issue): IdeaDetail {
     fieldValues: [],
     formFields: [],
     comments: [],
+    isFollowing: false,
+    followerCount: 0,
   }
 }
 

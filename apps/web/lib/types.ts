@@ -498,7 +498,37 @@ export type IdeaDetail = Idea & {
   /** The idea's own custom fields for the edit form, each with its stored value in write form. */
   formFields: (IdeaFormField & { value: string })[]
   comments: Comment[]
+  /** The reader's own follow state, and the follower count the toggle shows. */
+  isFollowing: boolean
+  followerCount: number
 }
+
+/** `NotificationEventType`, as the inbox sends it. */
+export type NotificationEventType =
+  | 'IdeaMention'
+  | 'CommentMention'
+  | 'CommentAdded'
+  | 'IdeaStatusChanged'
+  | 'IdeaPromoted'
+  | 'IssueDeliveryStatusChanged'
+  | 'IssueTaskAssigned'
+  | 'IdeaEdited'
+
+/** One inbox row. `when` is already relative ("12 min ago"); `occurredAtUtc` is the instant. */
+export type InboxItem = {
+  id: string
+  eventType: NotificationEventType
+  ideaId: string
+  ideaTitle: string
+  /** Null only when the actor's user row is gone (data damage). */
+  actor: Person | null
+  statusName: string | null
+  occurredAtUtc: string
+  when: string
+  unread: boolean
+}
+
+export type InboxPage = { items: InboxItem[]; page: number; pageSize: number; totalCount: number }
 
 /**
  * The five fixed delivery statuses — `Pending`, `Scoping`, `Development`, `Review`, `Complete`.
