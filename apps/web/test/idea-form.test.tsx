@@ -29,6 +29,7 @@ const OPTIONS: IdeaFormOptions = {
   ],
   businessImpacts: [{ id: 'impact-med', name: 'Medium' }],
   members: [],
+  tags: [],
 }
 
 const TYPE_FIELDS = OPTIONS.ideaTypes[0]?.fields ?? []
@@ -301,6 +302,7 @@ describe('IdeaForm classification defaults', () => {
     ],
     businessImpacts: [{ id: 'impact-high', name: 'High' }, ...OPTIONS.businessImpacts],
     members: [],
+    tags: [],
   }
   const typeSelect = () => screen.getByLabelText('Idea type') as HTMLSelectElement
   const impactSelect = () => screen.getByLabelText('Business impact') as HTMLSelectElement
@@ -341,7 +343,7 @@ describe('IdeaForm classification defaults', () => {
   })
 
   it('leaves both unchosen when the catalogs are empty', () => {
-    renderForm(null, false, { ideaTypes: [], businessImpacts: [], members: [] })
+    renderForm(null, false, { ideaTypes: [], businessImpacts: [], members: [], tags: [] })
 
     expect(typeSelect().value).toBe('')
     expect(impactSelect().value).toBe('')

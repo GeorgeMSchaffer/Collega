@@ -23,6 +23,7 @@ import type {
 import type { IdeaDetail, IdeaFormOptions, IdeaListQuery, IdeaPage } from '../types'
 import { failIfRequested } from './latency'
 import { organizationScope } from './scope'
+import { getTagRefs } from './tags'
 
 export type {
   Comment,
@@ -112,9 +113,9 @@ export async function getIdeaFormOptions(): Promise<IdeaFormOptions> {
   failIfRequested('getIdeaFormOptions')
 
   const scope = organizationScope()
-  if (scope === null) return { ideaTypes: [], businessImpacts: [], members: [] }
+  if (scope === null) return { ideaTypes: [], businessImpacts: [], members: [], tags: [] }
 
-  const [ideaTypes, businessImpacts, members] = await Promise.all([
+  const [ideaTypes, businessImpacts, members, tags] = await Promise.all([
     apiGet<readonly WireIdeaType[]>(
       'getIdeaFormOptions',
       apiPath`/organizations/${scope}/idea-types`,
@@ -124,6 +125,7 @@ export async function getIdeaFormOptions(): Promise<IdeaFormOptions> {
       apiPath`/organizations/${scope}/business-impacts`,
     ),
     apiGet<readonly WireMember[]>('getIdeaFormOptions', apiPath`/organizations/${scope}/members`),
+    getTagRefs(),
   ])
 
   return {
@@ -137,6 +139,7 @@ export async function getIdeaFormOptions(): Promise<IdeaFormOptions> {
       name: impact.name,
     })),
     members: members.map(toMemberOption).sort((a, b) => a.name.localeCompare(b.name)),
+    tags,
   }
 }
 
