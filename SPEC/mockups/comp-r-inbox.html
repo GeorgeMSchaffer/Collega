@@ -97,9 +97,8 @@ button,input,select{font:inherit;color:inherit}
 .tag{display:inline-block;font-size:11px;font-weight:500;padding:1px 8px;border-radius:999px;background:var(--tag);color:var(--tag-ink);margin:1px 2px 1px 0}
 .sub{font-size:12px;color:var(--muted)}
 
-/* unread: ink by default (the colour rule); the accent bend only when the reviewer switches it on */
+/* unread: ink, never a hue (the colour rule; the accent variant was rejected 2026-10-01) */
 :root{--unread:var(--ink);--unread-ink:var(--card)}
-:root[data-unread="accent"]{--unread:var(--pri);--unread-ink:var(--pri-ink)}
 .badge{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--unread);color:var(--unread-ink);font:700 11px/20px var(--body);text-align:center;font-variant-numeric:tabular-nums}
 
 /* the inbox list */
@@ -171,10 +170,8 @@ th{font:600 12px var(--body);color:var(--muted);background:var(--thead)}
     <button data-screen="inbox" aria-pressed="true">Inbox</button><button data-screen="empty" aria-pressed="false">Inbox, empty</button><button data-screen="ideas" aria-pressed="false">Ideas (drawer)</button></div>
   <div class="grp" role="group" aria-label="Signed in as"><span class="lbl">Signed in as</span>
     <button data-role="member" aria-pressed="true">User</button><button data-role="readonly" aria-pressed="false">Read Only</button><button data-role="siteadmin" aria-pressed="false">Site Admin (as themselves)</button></div>
-  <div class="grp" role="group" aria-label="Unread marker"><span class="lbl">Unread marker</span>
-    <button data-unread="ink" aria-pressed="true">Ink (spec)</button><button data-unread="accent" aria-pressed="false">Accent (a bend — Q15)</button></div>
 </div>
-<div class="note"><p>Throwaway comp for slice 149 (<code>SPEC/20-feature-idea-following.md</code>), awaiting review. Open a row to mark it read and see the idea drawer with its Follow toggle. Unread is ink, not a hue (rule 43); the accent option shows the bend <code>ideas-inbox.md</code> describes. A Site Admin acting as themselves has no Inbox item and sees Follow disabled (rules 8, 32, 46). Edits live only in this page.</p></div>
+<div class="note"><p>Throwaway comp for slice 149 (<code>SPEC/20-feature-idea-following.md</code>), awaiting review. Open a row to mark it read and see the idea drawer with its Follow toggle. Unread is an ink dot and bold text, no hue (rule 43; the accent variant was rejected 2026-10-01). Status rows name the new status as it was when the event was written (rule 37). A Site Admin acting as themselves has no Inbox item and sees Follow disabled (rules 8, 32, 46). Edits live only in this page.</p></div>
 <div class="app">
   <aside class="side" aria-label="Main">
     <div class="brand"><span class="mark">CG</span><span><b>Collega</b><small id="org">Acme Robotics</small></span></div>
@@ -229,17 +226,17 @@ const IDEAS = {
 const SEED = [
   { id: 'n1', type: 'CommentMention', actor: 'dana', idea: 'i1', when: '12 min ago', read: false },
   { id: 'n2', type: 'CommentAdded', actor: 'marco', idea: 'i1', when: '40 min ago', read: false },
-  { id: 'n3', type: 'IdeaStatusChanged', actor: 'olivia', idea: 'i2', when: '2 h ago', read: false },
+  { id: 'n3', type: 'IdeaStatusChanged', actor: 'olivia', idea: 'i2', status: 'In Progress', when: '2 h ago', read: false },
   { id: 'n4', type: 'IdeaEdited', actor: 'marco', idea: 'i1', when: 'Yesterday', read: false },
   { id: 'n5', type: 'IssueTaskAssigned', actor: 'sam', idea: 'i2', when: 'Yesterday', read: true },
   { id: 'n6', type: 'IdeaPromoted', actor: 'olivia', idea: 'i4', when: '3 days ago', read: true },
-  { id: 'n7', type: 'IssueDeliveryStatusChanged', actor: 'marco', idea: 'i4', when: 'Sep 26', read: true },
+  { id: 'n7', type: 'IssueDeliveryStatusChanged', actor: 'marco', idea: 'i4', status: 'Review', when: 'Sep 26', read: true },
   { id: 'n8', type: 'IdeaMention', actor: 'olivia', idea: 'i3', when: 'Sep 24', read: true },
 ];
 const WORDS = {
   IdeaMention: ['mentioned you in', 'You were mentioned'], CommentMention: ['mentioned you in a comment on', 'You were mentioned'],
-  CommentAdded: ['commented on', 'You follow this idea'], IdeaStatusChanged: ['changed the status of', 'You follow this idea'],
-  IdeaPromoted: ['promoted', 'You follow this idea', 'to an issue'], IssueDeliveryStatusChanged: ['changed the delivery status of', 'You follow this idea'],
+  CommentAdded: ['commented on', 'You follow this idea'], IdeaStatusChanged: ['moved', 'You follow this idea', 'to {s}'],
+  IdeaPromoted: ['promoted', 'You follow this idea', 'to an issue'], IssueDeliveryStatusChanged: ['moved', 'You follow this idea', 'to {s} in delivery'],
   IssueTaskAssigned: ['assigned you a task on', 'Assigned to you'], IdeaEdited: ['edited', 'You follow this idea'],
 };
 
@@ -265,7 +262,7 @@ function row(n) {
   const w = WORDS[n.type], who = PEOPLE[n.actor][0], t = IDEAS[n.idea].title;
   return `<li><button class="nrow${n.read ? '' : ' unread'}" data-open="${n.id}">
     <span class="mk" aria-hidden="true"></span>${av(n.actor)}
-    <span><span class="what">${n.read ? '' : '<span class="vh">Unread: </span>'}<b>${esc(who)}</b> ${w[0]} <span class="t">${esc(t)}</span>${w[2] ? ' ' + w[2] : ''}</span>
+    <span><span class="what">${n.read ? '' : '<span class="vh">Unread: </span>'}<b>${esc(who)}</b> ${w[0]} <span class="t">${esc(t)}</span>${w[2] ? ' ' + w[2].replace('{s}', `<b>${esc(n.status)}</b>`) : ''}</span>
       <span class="sub" style="display:block">${w[1]} · ${esc(IDEAS[n.idea].board)}</span></span>
     <span class="when">${n.when}</span></button></li>`;
 }
@@ -324,7 +321,6 @@ document.addEventListener('click', (e) => {
   if (t.dataset.role) { role = t.dataset.role; document.querySelectorAll('[data-role]').forEach((b) => b.setAttribute('aria-pressed', b === t));
     if (role === 'siteadmin' && screen !== 'ideas') { screen = 'ideas'; document.querySelectorAll('[data-screen]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.screen === 'ideas')); }
     render(); return; }
-  if (t.dataset.unread) { document.documentElement.dataset.unread = t.dataset.unread; document.querySelectorAll('[data-unread]').forEach((b) => b.setAttribute('aria-pressed', b === t)); return; }
   if (t.dataset.go) { screen = t.dataset.go; document.querySelectorAll('[data-screen]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.screen === screen)); render(); return; }
   if (t.dataset.open) { const n = items.find((x) => x.id === t.dataset.open); n.read = true; render();
     openIdea(n.idea, work.querySelector(`[data-open="${n.id}"]`)); return; }
