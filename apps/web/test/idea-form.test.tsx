@@ -28,6 +28,7 @@ const OPTIONS: IdeaFormOptions = {
     },
   ],
   businessImpacts: [{ id: 'impact-med', name: 'Medium' }],
+  members: [],
 }
 
 const TYPE_FIELDS = OPTIONS.ideaTypes[0]?.fields ?? []
@@ -227,14 +228,14 @@ describe('IdeaForm API errors', () => {
     saveIdea.mockResolvedValue({
       ok: false,
       error: 'This board is archived. Unarchive it first.',
-      errors: { assigneeUserIds: 'An idea can have at most 5 assignees.' },
+      errors: { statusId: 'That status is not available.' },
     })
     const { form } = renderForm(idea())
     submit(form)
 
     const alert = await screen.findByRole('alert')
     expect(alert.textContent).toContain('This board is archived. Unarchive it first.')
-    expect(alert.textContent).toContain('An idea can have at most 5 assignees.')
+    expect(alert.textContent).toContain('That status is not available.')
   })
 
   it('does not call the API while a required structured field is empty', () => {
@@ -299,6 +300,7 @@ describe('IdeaForm classification defaults', () => {
       ...OPTIONS.ideaTypes,
     ],
     businessImpacts: [{ id: 'impact-high', name: 'High' }, ...OPTIONS.businessImpacts],
+    members: [],
   }
   const typeSelect = () => screen.getByLabelText('Idea type') as HTMLSelectElement
   const impactSelect = () => screen.getByLabelText('Business impact') as HTMLSelectElement
@@ -339,7 +341,7 @@ describe('IdeaForm classification defaults', () => {
   })
 
   it('leaves both unchosen when the catalogs are empty', () => {
-    renderForm(null, false, { ideaTypes: [], businessImpacts: [] })
+    renderForm(null, false, { ideaTypes: [], businessImpacts: [], members: [] })
 
     expect(typeSelect().value).toBe('')
     expect(impactSelect().value).toBe('')

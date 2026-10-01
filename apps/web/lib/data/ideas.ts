@@ -10,13 +10,14 @@
  * the ten rows that happened to arrive.
  */
 
-import { toIdea, toIdeaDetail, toIdeaFormField } from '../api/adapt'
+import { toIdea, toIdeaDetail, toIdeaFormField, toMemberOption } from '../api/adapt'
 import { apiGet, apiPath, isApiStatus, withQuery } from '../api/client'
 import type {
   WireBusinessImpact,
   WireIdeaDetail,
   WireIdeaListItem,
   WireIdeaType,
+  WireMember,
   WirePage,
 } from '../api/wire'
 import type { IdeaDetail, IdeaFormOptions, IdeaListQuery, IdeaPage } from '../types'
@@ -111,9 +112,9 @@ export async function getIdeaFormOptions(): Promise<IdeaFormOptions> {
   failIfRequested('getIdeaFormOptions')
 
   const scope = organizationScope()
-  if (scope === null) return { ideaTypes: [], businessImpacts: [] }
+  if (scope === null) return { ideaTypes: [], businessImpacts: [], members: [] }
 
-  const [ideaTypes, businessImpacts] = await Promise.all([
+  const [ideaTypes, businessImpacts, members] = await Promise.all([
     apiGet<readonly WireIdeaType[]>(
       'getIdeaFormOptions',
       apiPath`/organizations/${scope}/idea-types`,
@@ -122,6 +123,7 @@ export async function getIdeaFormOptions(): Promise<IdeaFormOptions> {
       'getIdeaFormOptions',
       apiPath`/organizations/${scope}/business-impacts`,
     ),
+    apiGet<readonly WireMember[]>('getIdeaFormOptions', apiPath`/organizations/${scope}/members`),
   ])
 
   return {
@@ -134,6 +136,7 @@ export async function getIdeaFormOptions(): Promise<IdeaFormOptions> {
       id: impact.businessImpactId,
       name: impact.name,
     })),
+    members: members.map(toMemberOption).sort((a, b) => a.name.localeCompare(b.name)),
   }
 }
 

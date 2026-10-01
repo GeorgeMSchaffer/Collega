@@ -404,6 +404,8 @@ export type IdeaPage = {
 export type IdeaFormOptions = {
   ideaTypes: { id: string; name: string; fields: IdeaFormField[] }[]
   businessImpacts: { id: string; name: string }[]
+  /** The organization's active members, for the assignee picker. */
+  members: MemberOption[]
 }
 
 /**
