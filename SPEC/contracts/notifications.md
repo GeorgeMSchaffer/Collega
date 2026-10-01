@@ -66,6 +66,10 @@ List the caller's notifications, newest first.
   - `link` string, `/ideas/{ideaId}`
   - `actor` object using the board-list assignee item shape (`userId`, `firstName`, `lastName`,
     `displayName`, `isActive`), or `null`
+  - `statusName` string, or `null` — the new status's name for `IdeaStatusChanged` (the lane) and
+    `IssueDeliveryStatusChanged` (the delivery status), as it was named when the event was written;
+    `null` for every other type and for status events written before the column existed (answered
+    2026-10-01, feature rule 37)
   - `occurredAtUtc` timestamp
   - `readAtUtc` timestamp, or `null` when unread
 - **Errors:** —
@@ -74,7 +78,8 @@ List the caller's notifications, newest first.
     sort and no filter.
   - `actor` is `null` only when no user row exists for `actor_user_id`, which has no foreign key: data
     damage, as for a comment's `author`.
-  - No board or status names: the event stores neither (feature rule 37).
+  - `statusName` is captured at write time: renaming the status later does not change it. No board name
+    is sent; the event stores none.
 
 ### `GET /api/v1/notifications/unread-count`
 Count the caller's unread notifications, for the sidebar badge.
