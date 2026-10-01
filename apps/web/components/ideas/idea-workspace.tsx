@@ -1,6 +1,6 @@
 'use client'
 
-import { Alert, EffortBar, TagChip } from '@collega/design-system'
+import { Alert, Button, EffortBar, TagChip } from '@collega/design-system'
 import { useLayoutEffect, useMemo, useOptimistic, useRef, useState, useTransition } from 'react'
 import {
   type Column,
@@ -13,6 +13,7 @@ import {
   useListState,
   ViewSwitch,
 } from '@/components/list'
+import { Icon } from '@/components/list/icons'
 import {
   engagementDenial,
   followDenial,
@@ -26,7 +27,7 @@ import { useCurrentUser } from '@/lib/session-client'
 import type { BoardRef, Idea, IdeaDetail, IdeaFormOptions, Status, TagRef } from '@/lib/types'
 import { People, PriorityMarker, StatusMarker, TagList } from './idea-chips'
 import { type DrawerMode, IdeaDrawer } from './idea-drawer'
-import { BOARD_LIST, IDEAS_LIST, PRIORITIES } from './idea-list-config'
+import { BOARD_LIST, IDEAS_LIST, PHASES, PRIORITIES, SCOPES } from './idea-list-config'
 import { type CardDrag, Lane, type LaneReorder } from './lane'
 import { useDrawerUrl } from './use-drawer-url'
 
@@ -337,6 +338,32 @@ export function IdeaWorkspace({
           selected={selectedTags}
           onChange={(next) => update({ filters: { ...state.filters, tag: next } })}
         />
+        {board
+          ? null
+          : (
+              [
+                ['scope', SCOPES],
+                ['phase', PHASES],
+              ] as const
+            ).map(([key, labels]) => {
+              const value = state.filters[key]?.[0]
+              const label =
+                value !== undefined && Object.hasOwn(labels, value)
+                  ? labels[value as keyof typeof labels]
+                  : null
+              return label ? (
+                <Button
+                  key={key}
+                  variant="secondary"
+                  size="sm"
+                  aria-label={`Remove filter: ${label}`}
+                  onClick={() => update({ filters: { ...state.filters, [key]: [] } })}
+                >
+                  {label}
+                  <Icon name="x" />
+                </Button>
+              ) : null
+            })}
       </ListToolbar>
 
       {removeError ? (

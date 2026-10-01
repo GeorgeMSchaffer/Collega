@@ -14,8 +14,16 @@ export const PRIORITIES = ['Low', 'Medium', 'High', 'Critical'] as const
 
 const BOARD_SORT_KEYS = ['title', 'status', 'priority', 'assignedTo', 'tags', 'upvoteCount']
 
+/**
+ * `scope` and `phase` are the organization list's two single-valued filters, kept in the URL with
+ * the rest so a link from Home (`/ideas?scope=assigned`, `/ideas?phase=Ideas`) opens the set it
+ * counted, and a later filter change keeps them. The toolbar shows them as removable chips.
+ */
+export const SCOPES = { assigned: 'Assigned to me', created: 'Created by me' } as const
+export const PHASES = { Ideas: 'Ideas only', Issues: 'Issues only' } as const
+
 export const IDEAS_LIST: ListConfig = {
-  filters: ['board', 'status', 'priority', 'tag'],
+  filters: ['board', 'status', 'priority', 'tag', 'scope', 'phase'],
   views: ['list', 'cards'],
   sortKeys: ['title', 'board', ...BOARD_SORT_KEYS.slice(1)],
 }
@@ -35,6 +43,12 @@ export const LANES_PAGE_SIZE = 100
  */
 export const DRAWER_PARAMS = { idea: 'idea', edit: 'edit', create: 'new' } as const
 
+/** The first value a single-valued filter carries, when it is one the API knows. */
+function oneOf<K extends string>(values: string[] | undefined, known: Record<K, string>) {
+  const value = values?.[0]
+  return value !== undefined && Object.hasOwn(known, value) ? (value as K) : undefined
+}
+
 export function toIdeaListQuery(state: ListState): IdeaListQuery {
   const lanes = state.view === 'lanes'
   return {
@@ -43,6 +57,8 @@ export function toIdeaListQuery(state: ListState): IdeaListQuery {
     statusIds: state.filters.status ?? [],
     priorities: state.filters.priority ?? [],
     tags: state.filters.tag ?? [],
+    scope: oneOf(state.filters.scope, SCOPES),
+    phase: oneOf(state.filters.phase, PHASES),
     sortBy: state.sort?.key ?? null,
     sortDirection: state.sort?.dir ?? 'asc',
     page: lanes ? 1 : state.page,

@@ -437,6 +437,10 @@ export type IdeaListQuery = {
   sortDirection: 'asc' | 'desc'
   page: number
   pageSize: number
+  /** The organization list only: the reader's own ideas, authored or assigned. Absent is all. */
+  scope?: 'assigned' | 'created' | undefined
+  /** The organization list only: one phase. Absent is both. */
+  phase?: 'Ideas' | 'Issues' | undefined
 }
 
 /**
