@@ -7,8 +7,7 @@
 
 import { randomUUID } from 'node:crypto'
 import { NotificationInboxService } from '@collega/application/notifications'
-import type { NotificationEventType } from '@collega/domain/enums'
-import { Role } from '@collega/domain/enums'
+import { NotificationEventType, Role } from '@collega/domain/enums'
 import { createNotificationEvent } from '@collega/domain/notifications'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { PrismaClient } from '../src/generated/prisma/index.js'
@@ -194,7 +193,7 @@ describe.skipIf(!DATABASE_URL)('The notification inbox, against a live database'
       const read = new Date('2026-09-28T08:00:00.000Z')
       const id = await write(me, {
         at: daysAgo(1),
-        eventType: 'IdeaStatusChanged',
+        eventType: NotificationEventType.IdeaStatusChanged,
         statusName: 'In Review',
         readAt: read,
       })
@@ -367,8 +366,8 @@ describe.skipIf(!DATABASE_URL)('The notification inbox, against a live database'
           statusName,
           occurredAtUtc: daysAgo(1),
         })
-      const status = make('IdeaStatusChanged' as NotificationEventType, 'In Review')
-      const edited = make('IdeaEdited' as NotificationEventType, null)
+      const status = make(NotificationEventType.IdeaStatusChanged, 'In Review')
+      const edited = make(NotificationEventType.IdeaEdited, null)
 
       await repository.add(status)
       await repository.add(edited)

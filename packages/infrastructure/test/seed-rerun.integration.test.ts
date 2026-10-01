@@ -79,17 +79,25 @@ describe.skipIf(!DATABASE_URL)('Demo seed re-run against a live database', () =>
         WHERE i.organization_id = ANY(${organizationIds}::uuid[])
         ORDER BY f.id`
 
-    const before = await read()
     // Cleared first, so what is compared is what the seed itself makes, not rows an earlier seed left.
-    await prisma.$executeRaw`
-      DELETE FROM idea_followers f USING ideas i
-      WHERE i.id = f.idea_id AND i.organization_id = ANY(${organizationIds}::uuid[])`
+    const clear = () =>
+      prisma.$executeRaw`
+        DELETE FROM idea_followers f USING ideas i
+        WHERE i.id = f.idea_id AND i.organization_id = ANY(${organizationIds}::uuid[])`
+    await clear()
     expect(await read()).toEqual([])
+    await runDemoSeed(prisma)
+    const first = await read()
+    // The ids come from the seed, not the clock: clearing and seeding again gives the same rows.
+    await clear()
+    await runDemoSeed(prisma)
+    expect(await read()).toEqual(first)
+    // And a re-run over rows that exist neither fails nor changes them.
     await runDemoSeed(prisma)
     const after = await read()
 
-    expect(after).toEqual(before)
-    expect(before.length).toBeGreaterThan(0)
+    expect(first.length).toBeGreaterThan(0)
+    expect(after).toEqual(first)
 
     // The same pairs the migration's backfill would have made for these ideas.
     const expected = await prisma.$queryRaw<{ idea_id: string; user_id: string }[]>`

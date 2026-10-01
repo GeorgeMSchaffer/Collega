@@ -407,7 +407,7 @@ describe('IdeaService writes IdeaEdited once per real change', () => {
     await h.service.update(existing.id, { ...updateFrom(existing), ...change })
 
     expect(h.notifications.filter((n) => n.eventType === 'IdeaEdited')).toHaveLength(
-      change.mentionEmails ? 1 : 2,
+      'mentionEmails' in change ? 1 : 2,
     )
   })
 
