@@ -13,7 +13,13 @@ import {
   useListState,
   ViewSwitch,
 } from '@/components/list'
-import { engagementDenial, mayDeleteIdeas, mayEditIdeaContent, writeDenial } from '@/lib/roles'
+import {
+  engagementDenial,
+  followDenial,
+  mayDeleteIdeas,
+  mayEditIdeaContent,
+  writeDenial,
+} from '@/lib/roles'
 import { reorderLanes } from '@/lib/server/board-actions'
 import { deleteIdea, moveIdea } from '@/lib/server/idea-actions'
 import { useCurrentUser } from '@/lib/session-client'
@@ -541,6 +547,7 @@ export function IdeaWorkspace({
           drawerIdea ? !mayEditIdeaContent(user.role, user.userId, drawerIdea.authorUserId) : false
         }
         engagementDenial={engagement}
+        followDenial={followDenial(user.role)}
         returnFocusTo={trigger}
         onEdit={() => drawerIdea && openDrawer({ edit: drawerIdea.id })}
         onView={() => drawerIdea && openDrawer({ view: drawerIdea.id })}

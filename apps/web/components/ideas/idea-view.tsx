@@ -1,7 +1,7 @@
 import { Avatar } from '@collega/design-system'
 import type { ReactNode } from 'react'
 import type { IdeaDetail } from '@/lib/types'
-import { CommentBox, UpvoteButton } from './engagement'
+import { CommentBox, FollowButton, UpvoteButton } from './engagement'
 import { People, PriorityMarker, StatusMarker, TagList } from './idea-chips'
 
 function Fact({ label, children }: { label: string; children: ReactNode }) {
@@ -28,18 +28,21 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 /**
  * The drawer's view mode (comp R): the facts, the three structured sections, the optional summary,
- * the Idea Type's custom fields, and the discussion the inspector carried — upvote, thread and
- * composer, which comp R omits and the spec keeps.
+ * the Idea Type's custom fields, and the discussion the inspector carried — upvote, follow, thread
+ * and composer, which comp R omits and the spec keeps.
  */
 export function IdeaView({
   idea,
   statusColor,
   engagementDenial,
+  followDenial,
   facts = true,
 }: {
   idea: IdeaDetail
   statusColor: string | undefined
   engagementDenial: string | null
+  /** `followDenial(role)`: not the engagement denial, though today both refuse only a Site Admin. */
+  followDenial: string | null
   /** False in the Issue drawer, which shows its delivery facts in their place. */
   facts?: boolean
 }) {
@@ -110,6 +113,13 @@ export function IdeaView({
               count={idea.upvotes}
               hasUpvoted={idea.hasUpvoted}
               denial={engagementDenial}
+            />
+            <FollowButton
+              ideaId={idea.id}
+              boardId={idea.boardId}
+              isFollowing={idea.isFollowing}
+              followerCount={idea.followerCount}
+              denial={followDenial}
             />
             <span className="text-xs text-muted-foreground">
               Raised {idea.createdOn}

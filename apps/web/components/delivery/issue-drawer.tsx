@@ -9,7 +9,13 @@ import { useDrawerUrl } from '@/components/ideas/use-drawer-url'
 import { Drawer } from '@/components/list'
 import { Icon } from '@/components/list/icons'
 import { DELIVERY_STATUSES } from '@/lib/display'
-import { engagementDenial, mayEditIdeaContent, mayWorkOnIssue, writeDenial } from '@/lib/roles'
+import {
+  engagementDenial,
+  followDenial,
+  mayEditIdeaContent,
+  mayWorkOnIssue,
+  writeDenial,
+} from '@/lib/roles'
 import { setDeliveryStatus } from '@/lib/server/delivery-actions'
 import { useCurrentUser } from '@/lib/session-client'
 import { IssueTasks } from './issue-tasks'
@@ -222,6 +228,7 @@ export function IssueDrawer({
             idea={idea}
             statusColor={undefined}
             engagementDenial={engagementDenial(user.role)}
+            followDenial={followDenial(user.role)}
             facts={false}
           />
         </>
