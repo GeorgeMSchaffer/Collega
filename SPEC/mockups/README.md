@@ -24,6 +24,10 @@ It is the reference for `SPEC/20-feature-client-ui.md` "List and detail pattern"
 
 **`comp-r-inbox.html`** (2026-10-01, slice 149) Ã¢â‚¬â€ a throwaway comp on comp R's tokens for the notification inbox, the sidebar's Inbox item and unread badge, and the Follow / Following toggle in the idea drawer (`SPEC/20-feature-idea-following.md`). Awaiting the user's review; not a reference until approved.
 
+## Comp R — Home dashboard (2026-10-01, slice 150, approved 2026-10-01)
+
+`comp-r-home-dashboard.html` is a throwaway review comp for Home in comp R's look (Terrazzo by default, the same theme picker and remembered choice). The dark bar switches the viewer (User, Org Admin, Read Only, Site Admin roll-up) and the data (populated, nothing assigned, no boards or no organizations); *Annotations* lists each panel's route and open question. Every panel reads a route the API already serves; the rest are marked "Needs" (status categories, status-change times, the slice 149 inbox). Not adopted until the user reviews it.
+
 ## Full-App Comps (2026-07-30)
 
 Three interactive HTML comps covering every page (Login, First Login, Home, Admin Hub, Organizations, Users, Statuses, Board, Idea Detail, Change Password). Open in a browser and use the top tab bar to switch screens. Each explores a distinct direction inspired by Jira/Trello best practices while staying implementable with Fluent UI Blazor components.

@@ -99,6 +99,10 @@ Collega already records (`20-feature-notifications.md`) gain a reader.
 23. **Each row** names the actor, what happened, the idea's title as it was when the event was written,
     when, and whether it is unread. **Status rows name the new status** — the lane, or the delivery
     status — as it was named when the event was written (rule 37). *(answered, Q13.)*
+23a. **A row names the idea's board.** The sub-line reads *{reason} · {board name}* (*You follow this
+    idea · Opportunities*), or just the reason when the board cannot be resolved. The name is the idea's
+    **current** board, read when the inbox is listed, not the board when the event was written, so it
+    stays correct after a move. No schema change: `ideas.board_id`. *(owner's decision, 2026-10-01.)*
 24. **The unread count** is the number of the caller's unread notifications within the window
     (rule 26). The sidebar shows it as a badge, capped at `99+`.
 25. **Marking read.** Opening a row marks that one read. **Mark all read** marks every unread

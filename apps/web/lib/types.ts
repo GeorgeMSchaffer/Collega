@@ -523,6 +523,7 @@ export type InboxItem = {
   /** Null only when the actor's user row is gone (data damage). */
   actor: Person | null
   statusName: string | null
+  boardName: string | null
   occurredAtUtc: string
   when: string
   unread: boolean

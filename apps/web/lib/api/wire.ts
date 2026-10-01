@@ -427,6 +427,8 @@ export type WireNotification = {
   actor: WireIdeaAssignee | null
   /** The new lane or delivery status as named when written; null for every other type. */
   statusName: string | null
+  /** The idea's current board, not the one when written; null when it cannot be resolved. */
+  boardName: string | null
   occurredAtUtc: string
   readAtUtc: string | null
 }

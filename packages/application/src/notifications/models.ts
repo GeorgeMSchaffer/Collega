@@ -51,6 +51,8 @@ export type InboxItem = {
   readonly link: string
   readonly actor: NotificationActorDto | null
   readonly statusName: string | null
+  /** The idea's current board, not the one at write time; `null` when it cannot be resolved. */
+  readonly boardName: string | null
   readonly occurredAtUtc: Date
   readonly readAtUtc: Date | null
 }

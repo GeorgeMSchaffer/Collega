@@ -30,6 +30,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 |---|---|---|---|
 | 2026-10-01 | The follow and inbox questions are answered | active | full below |
 | 2026-10-01 | The S0.2 schema freeze is amended a fifth time, for idea followers and read state | active | full below |
+| 2026-10-01 | The Home dashboard comp is approved as drawn | active | full below |
 | 2026-10-01 | Following an idea, and an in-app notification inbox | active | full below |
 | 2026-10-01 | The View As banner names only the target | active | full below |
 | 2026-10-01 | The View As candidate order, and F1 closes | active | full below |
@@ -43,8 +44,8 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-29 | Spec contradictions resolved | active | full below |
 | 2026-09-28 | The Idea Field Option contract follows the code | active | full below |
 | 2026-09-28 | The v2 corpus format, as built | active | full below |
-| 2026-09-28 | The prompt-eval runner's provisional limits stand for the first baseline | active | full below |
-| 2026-09-28 | `compare` refuses to judge an invalid run | active | full below |
+| 2026-09-28 | The prompt-eval runner's provisional limits stand for the first baseline | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
+| 2026-09-28 | `compare` refuses to judge an invalid run | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | The prompt-eval runner's fixture hash for `compare` is the catalog hash | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | The Anthropic client reads no credential or endpoint from the environment | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | The prompt-eval runner's open questions are answered | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
@@ -118,6 +119,12 @@ inbox; only opening a row, or Mark all read, marks read; under View As it is the
 count refreshes on navigation and every 60 s; unread is ink and bold, no hue; the toggle shows the count
 only.
 
+**Addendum, 2026-10-01 (owner):** each inbox row shows its board name, as the approved comp does (*You
+follow this idea · Opportunities*). This supersedes the contract's "no board name is sent". The name is
+the idea's **current** board, read at query time through `ideas.board_id`, not captured on the event
+(unlike `status_name`, which is history); no schema change. Feature rule 23a; `boardName` in
+`contracts/notifications.md`.
+
 **Q13 differs:** a status row **names the new status** (*moved {idea} to In Review*). That needs
 `notification_events.status_name`, added to the amendment below, captured at write time.
 
@@ -148,6 +155,19 @@ reviews that slice; the build slice writes the migration.
 **Golden corpus.** `GET /ideas/{ideaId}` and `PUT /ideas/{ideaId}` gain `isFollowing` and
 `followerCount`, so the replay will differ there. Those differences are accepted, and the backend
 slice records them in `tools/golden/src/accepted.ts`.
+
+---
+
+## 2026-10-01 — The Home dashboard comp is approved as drawn
+
+**Decided by the user**: build Home from `SPEC/mockups/comp-r-home-dashboard.html` (slice 150) as
+it stands. The comp's nine open questions take the comp's own answers: the greeting's "in flight"
+counts the backlog plus the Planned and Active sprints' `issueCount`; Complete-lane ideas count as
+"still on a board" until status categories exist; the new tiles and panels stay (You created,
+Assigned to me list, Most upvoted); the Assigned list keeps the default phase (Issues included); with
+two Active sprints the one ending first shows; Read Only keeps the Assigned tile and panel; the Site
+Admin fan-out stands; the Site Admin tile reads *Ideas* with the served total; no "Unread for you"
+panel for now. Panels marked "Needs" stay placeholders.
 
 ---
 
@@ -489,23 +509,3 @@ contract's field names; v2 keys only on `"assistant": "v2"` cases; `suggestions`
 mapping accuracy. Rule 19 adds a v2 case's `draft` and `lockedFields` to its content hash, since
 they drive the run; they are absent from v1 cases, so no v1 hash changes. The format follows the v2
 turn contract as specified and changes with it when v2 is built.
-
----
-
-## 2026-09-28 — The prompt-eval runner's provisional limits stand for the first baseline
-
-**Decided by the user** on review of slice 115. The first v1 baseline (slice 116) is recorded and
-judged with the provisional values in `20-feature-prompt-eval-runner.md`: a run with more than 10%
-errored trials is not valid (rule 30), and a pair whose refusal rates differ by less than 0.5 is
-flagged "scope statement may be ignored" (rule 14). Both are revisited with the user against the
-real rates once that baseline exists (rule 32), not before it.
-
----
-
-## 2026-09-28 — `compare` refuses to judge an invalid run
-
-**Decided by the user** on review of slice 115. `compare` exits 2, printing the reasons, when
-either run is itself not valid under `20-feature-prompt-eval-runner.md` rules 30–31 — aborted,
-more than 10% errored trials, or an errored `refuse-*` trial — rather than comparing it. A
-regression or a clean result against a run that could not be judged on its own would be a verdict
-about nothing. Recorded in rule 30.
