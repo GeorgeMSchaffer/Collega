@@ -729,7 +729,8 @@ export type HomeIdea = {
 }
 
 /** One of Home's lists: the first rows, and how many the query matched in all. */
-export type HomeIdeaList = { total: number; rows: HomeIdea[] }
+/** `href` is the `/ideas` query listing the same set `total` counts. */
+export type HomeIdeaList = { total: number; rows: HomeIdea[]; href: string }
 
 /** The running sprint on Home: its header, its issues by delivery status, and the backlog beside it. */
 export type HomeSprint = {

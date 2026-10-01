@@ -133,6 +133,11 @@ Slice 156 aligns Home with that:
   organization, matching the member view. *Boards* and *Ideas* stay unlinked: no screen lists them
   across organizations for that role, so they cannot meet the rule until one exists.
 
+- **Archived boards (decided by the user, answering slice 156's open question):** ideas on archived
+  boards are left out of every idea figure on Home — the queue, Critical & high, Most upvoted, Assigned
+  to me, You created and the critical share — and when any board is archived each link names the live
+  boards (`board=`), as the greeting's does, so every count still matches its list.
+
 The earlier entry's other answers stand.
 
 ---

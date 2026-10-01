@@ -123,8 +123,8 @@ describe('getOrganizationHome', () => {
       ideasHref: null,
       statuses: [],
       kpis: [],
-      attention: { total: 0, rows: [] },
-      assigned: { total: 0, rows: [] },
+      attention: { total: 0, rows: [], href: '/ideas' },
+      assigned: { total: 0, rows: [], href: '/ideas' },
       topVoted: [],
       boards: [],
       sprint: null,
@@ -181,9 +181,18 @@ describe('getOrganizationHome', () => {
     actAs('OrgAdmin')
     const { kpis } = await getOrganizationHome()
     expect(kpis.map((kpi) => [kpi.label, kpi.value, kpi.href])).toEqual([
-      ['Assigned to me', 7, '/ideas?scope=assigned&sort=priority&dir=desc'],
-      ['Critical & high', 12, '/ideas?phase=Ideas&priority=Critical&priority=High'],
-      ['You created', 5, '/ideas?scope=created'],
+      // b-old is archived, so every link names the two live boards.
+      [
+        'Assigned to me',
+        7,
+        '/ideas?scope=assigned&sort=priority&dir=desc&board=b-live&board=b-two',
+      ],
+      [
+        'Critical & high',
+        12,
+        '/ideas?phase=Ideas&priority=Critical&priority=High&board=b-live&board=b-two',
+      ],
+      ['You created', 5, '/ideas?scope=created&board=b-live&board=b-two'],
     ])
   })
 

@@ -43,12 +43,6 @@ export type {
   PlatformOrganization,
 } from '../types'
 
-/** The attention queue as an `/ideas` filter — its "View all" and the Critical & high tile. */
-export const ATTENTION_HREF = '/ideas?phase=Ideas&priority=Critical&priority=High'
-
-/** Assigned to me, in either phase, highest priority first as the panel lists it. */
-export const ASSIGNED_HREF = '/ideas?scope=assigned&sort=priority&dir=desc'
-
 /** How many rows each of Home's lists shows. */
 const LIST_ROWS = 5
 
@@ -98,8 +92,8 @@ export async function getOrganizationHome(): Promise<OrganizationHome> {
       ideasHref: null,
       statuses: [],
       kpis: [],
-      attention: { total: 0, rows: [] },
-      assigned: { total: 0, rows: [] },
+      attention: { total: 0, rows: [], href: '/ideas' },
+      assigned: { total: 0, rows: [], href: '/ideas' },
       topVoted: [],
       boards: [],
       sprint: null,
@@ -107,27 +101,9 @@ export async function getOrganizationHome(): Promise<OrganizationHome> {
   }
 
   const reader = 'getOrganizationHome'
-  const attentionParams = new URLSearchParams({
-    phase: 'Ideas',
-    sortBy: 'createdAt',
-    sortDirection: 'asc',
-  })
-  attentionParams.append('priority', 'Critical')
-  attentionParams.append('priority', 'High')
 
-  const [
-    boards,
-    wireStatuses,
-    backlog,
-    sprints,
-    issues,
-    critical,
-    created,
-    attention,
-    assigned,
-    voted,
-  ] = await Promise.all([
-    // Archived boards too: a row on one still needs its board's name.
+  const [boards, wireStatuses, backlog, sprints, issues] = await Promise.all([
+    // Archived boards too: to know which to leave out, and to name a board in a row.
     apiGet<readonly WireBoardListItem[]>(
       reader,
       apiPath`/organizations/${scope}/boards?includeArchived=true`,
@@ -137,23 +113,45 @@ export async function getOrganizationHome(): Promise<OrganizationHome> {
     apiGet<readonly WireDeliveryCard[]>(reader, apiPath`/organizations/${scope}/delivery`),
     apiGet<readonly WireSprint[]>(reader, apiPath`/organizations/${scope}/sprints`),
     ideaCount(reader, scope, new URLSearchParams({ phase: 'Issues' })),
-    ideaCount(reader, scope, new URLSearchParams({ scope: 'assigned', priority: 'Critical' })),
-    ideaCount(reader, scope, new URLSearchParams({ scope: 'created' })),
-    ideaPage(reader, scope, attentionParams, LIST_ROWS),
-    // The default phase, so a promoted Issue assigned to the reader is listed too.
-    ideaPage(
-      reader,
-      scope,
-      new URLSearchParams({ scope: 'assigned', sortBy: 'priority', sortDirection: 'desc' }),
-      LIST_ROWS,
-    ),
-    ideaPage(
-      reader,
-      scope,
-      new URLSearchParams({ phase: 'Ideas', sortBy: 'upvoteCount', sortDirection: 'desc' }),
-      LIST_ROWS,
-    ),
   ])
+
+  // **Ideas on archived boards are left out of every idea figure on Home** (decision 2026-10-01).
+  // The API cannot exclude archived boards, so when one is archived each request and each link
+  // names the live boards instead: `boardId` to the API, `board` to the `/ideas` URL, so every
+  // count still matches the list it opens. With every board live the plain query is the same set.
+  const liveBoards = boards.filter((board) => !board.isArchived)
+  const someArchived = liveBoards.length < boards.length
+  const onLiveBoards = (params: Record<string, string>, priorities: string[] = []) => {
+    const api = new URLSearchParams(params)
+    for (const priority of priorities) api.append('priority', priority)
+    if (someArchived) for (const board of liveBoards) api.append('boardId', board.boardId)
+    return api
+  }
+  const link = (params: Record<string, string>, priorities: string[] = []) => {
+    const url = new URLSearchParams(params)
+    for (const priority of priorities) url.append('priority', priority)
+    if (someArchived) for (const board of liveBoards) url.append('board', board.boardId)
+    return `/ideas?${url}`
+  }
+  const empty: WirePage<WireIdeaListItem> = { items: [], page: 1, pageSize: 1, totalCount: 0 }
+  // With no live board there is nothing to filter to, and the page shows "No boards yet".
+  const page = (params: URLSearchParams, rows: number) =>
+    liveBoards.length === 0 ? Promise.resolve(empty) : ideaPage(reader, scope, params, rows)
+
+  const urgent = ['Critical', 'High']
+  const [critical, created, attention, assigned, voted] = await Promise.all([
+    page(onLiveBoards({ scope: 'assigned' }, ['Critical']), 1).then((p) => p.totalCount),
+    page(onLiveBoards({ scope: 'created' }), 1).then((p) => p.totalCount),
+    page(
+      onLiveBoards({ phase: 'Ideas', sortBy: 'createdAt', sortDirection: 'asc' }, urgent),
+      LIST_ROWS,
+    ),
+    // The default phase, so a promoted Issue assigned to the reader is listed too.
+    page(onLiveBoards({ scope: 'assigned', sortBy: 'priority', sortDirection: 'desc' }), LIST_ROWS),
+    page(onLiveBoards({ phase: 'Ideas', sortBy: 'upvoteCount', sortDirection: 'desc' }), LIST_ROWS),
+  ])
+  const attentionHref = link({ phase: 'Ideas' }, urgent)
+  const assignedHref = link({ scope: 'assigned', sort: 'priority', dir: 'desc' })
 
   const running = runningSprint(sprints)
   const sprintIssues = running
@@ -181,15 +179,8 @@ export async function getOrganizationHome(): Promise<OrganizationHome> {
     hasUpvoted: idea.hasUpvoted,
   })
 
-  // The greeting's ideas are the live boards' own counts, so an archived board's ideas are not
-  // counted beside "0 boards". Its link names those boards only when one is archived — otherwise
-  // every board is live and the plain phase filter is already the same set.
-  const liveBoards = boards.filter((board) => !board.isArchived)
+  // The greeting's ideas are the live boards' own counts, the same set its link lists.
   const ideas = liveBoards.reduce((total, board) => total + board.ideaCount, 0)
-  const ideasQuery = new URLSearchParams({ phase: 'Ideas' })
-  if (liveBoards.length < boards.length) {
-    for (const board of liveBoards) ideasQuery.append('board', board.boardId)
-  }
 
   const kpis: HomeKpi[] = [
     {
@@ -198,32 +189,36 @@ export async function getOrganizationHome(): Promise<OrganizationHome> {
       detail: critical > 0 ? `${critical} critical` : 'none critical',
       detailAlert: critical > 0,
       definition: 'Every idea or issue with your name in Assigned, whatever its status.',
-      href: ASSIGNED_HREF,
-      detailHref: critical > 0 ? '/ideas?scope=assigned&priority=Critical' : undefined,
+      href: assignedHref,
+      detailHref: critical > 0 ? link({ scope: 'assigned' }, ['Critical']) : undefined,
     },
     {
       label: 'Critical & high',
       value: attention.totalCount,
       detail: 'still on a board',
       definition: 'Critical or high-priority ideas not yet promoted, on any board you can see.',
-      href: ATTENTION_HREF,
+      href: attentionHref,
     },
     {
       label: 'You created',
       value: created,
       detail: 'ideas and issues',
       definition: 'Everything you authored, on any board, in either phase.',
-      href: '/ideas?scope=created',
+      href: link({ scope: 'created' }),
     },
   ]
 
   return {
     counts: { ideas, boards: liveBoards.length, issues },
-    ideasHref: ideas > 0 ? `/ideas?${ideasQuery}` : null,
+    ideasHref: ideas > 0 ? link({ phase: 'Ideas' }) : null,
     statuses,
     kpis,
-    attention: { total: attention.totalCount, rows: attention.items.map(toRow) },
-    assigned: { total: assigned.totalCount, rows: assigned.items.map(toRow) },
+    attention: {
+      total: attention.totalCount,
+      rows: attention.items.map(toRow),
+      href: attentionHref,
+    },
+    assigned: { total: assigned.totalCount, rows: assigned.items.map(toRow), href: assignedHref },
     topVoted: voted.items.map(toRow),
     boards: liveBoards.map(toBoardOverview),
     sprint: running

@@ -25,8 +25,6 @@ import {
 } from '@/components/home/home-parts'
 import { Topbar } from '@/components/nav/topbar'
 import {
-  ASSIGNED_HREF,
-  ATTENTION_HREF,
   getOrganizationHome,
   getPlatformHome,
   type HomeSprint,
@@ -149,7 +147,9 @@ function OrganizationDashboard({ home }: { home: OrganizationHome }) {
             {home.attention.rows.length === 0 ? (
               <EmptyNote>Nothing critical or high priority is waiting on a board.</EmptyNote>
             ) : (
-              <Rows footer={<Link href={ATTENTION_HREF}>View all {home.attention.total}</Link>}>
+              <Rows
+                footer={<Link href={home.attention.href}>View all {home.attention.total}</Link>}
+              >
                 {home.attention.rows.map((idea) => (
                   <IdeaRow key={idea.id} idea={idea} detail="age" now={now} />
                 ))}
@@ -239,7 +239,7 @@ function OrganizationDashboard({ home }: { home: OrganizationHome }) {
                   : 'When someone adds you to an idea’s Assigned field, it lands here. Meanwhile, the queue on the left is a good place to pick something up.'}
               </EmptyNote>
             ) : (
-              <Rows footer={<Link href={ASSIGNED_HREF}>View all {home.assigned.total}</Link>}>
+              <Rows footer={<Link href={home.assigned.href}>View all {home.assigned.total}</Link>}>
                 {home.assigned.rows.map((idea) => (
                   <IdeaRow key={idea.id} idea={idea} detail="priority" now={now} />
                 ))}

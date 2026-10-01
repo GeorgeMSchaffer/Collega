@@ -24,8 +24,6 @@ const readers = vi.hoisted(() => ({
   getPlatformHome: vi.fn(),
 }))
 vi.mock('@/lib/data', () => ({
-  ATTENTION_HREF: '/ideas?phase=Ideas&priority=Critical&priority=High',
-  ASSIGNED_HREF: '/ideas?scope=assigned&sort=priority&dir=desc',
   ...readers,
 }))
 vi.mock('@/lib/server/current-user', () => ({ requireCurrentUser: async () => undefined }))
@@ -104,8 +102,16 @@ function orgHome(over: Partial<OrganizationHome> = {}): OrganizationHome {
         href: '/ideas?scope=created',
       },
     ],
-    attention: { total: 12, rows: [idea()] },
-    assigned: { total: 7, rows: [idea({ id: 'i-2', title: 'Guard rails', priority: 'High' })] },
+    attention: {
+      total: 12,
+      rows: [idea()],
+      href: '/ideas?phase=Ideas&priority=Critical&priority=High',
+    },
+    assigned: {
+      total: 7,
+      rows: [idea({ id: 'i-2', title: 'Guard rails', priority: 'High' })],
+      href: '/ideas?scope=assigned&sort=priority&dir=desc',
+    },
     topVoted: [idea({ id: 'i-3', title: 'Torque audit', upvotes: 9, hasUpvoted: true })],
     boards: [board()],
     sprint: {
@@ -260,7 +266,9 @@ describe('Home for a member of an organization', () => {
   })
 
   it('says nothing is waiting when the queue is empty', async () => {
-    readers.getOrganizationHome.mockResolvedValue(orgHome({ attention: { total: 0, rows: [] } }))
+    readers.getOrganizationHome.mockResolvedValue(
+      orgHome({ attention: { total: 0, rows: [], href: '/ideas' } }),
+    )
     await renderHome('OrgAdmin')
     expect(panel('Needs your attention').textContent).toContain(
       'Nothing critical or high priority is waiting on a board.',
@@ -279,7 +287,9 @@ describe('Home for a member of an organization', () => {
     ['User', 'When someone adds you'],
     ['ReadOnly', 'Ideas you’re named on will appear here.'],
   ] as const)('tells %s when nothing is assigned', async (role, copy) => {
-    readers.getOrganizationHome.mockResolvedValue(orgHome({ assigned: { total: 0, rows: [] } }))
+    readers.getOrganizationHome.mockResolvedValue(
+      orgHome({ assigned: { total: 0, rows: [], href: '/ideas' } }),
+    )
     await renderHome(role)
     const assigned = panel('Assigned to me 0')
     expect(assigned.textContent).toContain('Nothing is assigned to you.')
