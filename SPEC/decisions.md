@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-01 | The S0.2 schema freeze is amended a fifth time, for idea followers and read state | active | full below |
 | 2026-10-01 | Following an idea, and an in-app notification inbox | active | full below |
 | 2026-10-01 | The View As banner names only the target | active | full below |
 | 2026-10-01 | The View As candidate order, and F1 closes | active | full below |
@@ -101,6 +102,32 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-01 — The S0.2 schema freeze is amended a fifth time, for idea followers and read state
+
+**Follows from the user's decision below** ("The follower list needs a schema change, which amends the
+S0.2 freeze a fifth time"). Under the 2026-09-11 rule — the freeze stands, and each change to
+`schema.prisma` needs its own entry here — this is that entry, and it is not a general licence. The
+columns are slice 149's proposal (`20-feature-idea-following.md` rules 36–39), confirmed when the user
+reviews that slice; the build slice writes the migration.
+
+- **New table `idea_followers`** (`id`, `idea_id`, `user_id`, `created_at_utc`), shaped like
+  `idea_upvotes`: unique on (`idea_id`, `user_id`), indexed on `user_id`, `ON DELETE CASCADE` from
+  `ideas`, no action from `users`.
+- **`notification_events.read_at_utc TIMESTAMPTZ(6) NULL`**, `NULL` meaning unread, and an index on
+  (`recipient_user_id`, `occurred_at_utc` DESC) replacing the one on `recipient_user_id` alone.
+- **`NotificationEventType` gains `IdeaEdited`** (value 7).
+- **The migration backfills** the author and every assignee of each idea that is not soft-deleted as
+  followers, so today's recipients keep hearing.
+- **Not covered:** a metadata column on `notification_events` (so a status row cannot name the new
+  status), a follow source column, and any purge of old notifications. Each would need its own
+  amendment.
+
+**Golden corpus.** `GET /ideas/{ideaId}` and `PUT /ideas/{ideaId}` gain `isFollowing` and
+`followerCount`, so the replay will differ there. Those differences are accepted, and the backend
+slice records them in `tools/golden/src/accepted.ts`.
 
 ---
 
