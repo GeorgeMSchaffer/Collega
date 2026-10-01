@@ -329,6 +329,7 @@ const PORT_ALIASES: Provider[] = [
     provide: PORT_TOKENS.NotificationInboxRepository,
     useExisting: PrismaNotificationEventRepository,
   },
+  { provide: PORT_TOKENS.NotificationRecipientsPort, useExisting: PrismaUserRepository },
 
   { provide: PORT_TOKENS.OrganizationRepository, useExisting: PrismaOrganizationRepository },
   { provide: PORT_TOKENS.InviteCodeGenerator, useExisting: RandomInviteCodeGenerator },

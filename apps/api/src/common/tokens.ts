@@ -100,6 +100,7 @@ export const PORT_TOKENS = {
   // Notifications (packages/application/src/notifications/ports.ts) ------------------------------
   NotificationEventRepository: 'NotificationEventRepository',
   NotificationInboxRepository: 'NotificationInboxRepository',
+  NotificationRecipientsPort: 'NotificationRecipientsPort',
 
   // Organizations (packages/application/src/organizations/ports.ts) ------------------------------
   OrganizationRepository: 'OrganizationRepository',

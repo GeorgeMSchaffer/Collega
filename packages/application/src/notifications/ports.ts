@@ -9,6 +9,11 @@ export interface NotificationEventRepository {
   add(event: NotificationEvent): Promise<void>
 }
 
+/** The recipient's account status, read when an event is written. `null` when no user row exists. */
+export interface NotificationRecipientsPort {
+  getById(userId: string): Promise<{ readonly status: UserStatus } | null>
+}
+
 export type InboxActor = {
   readonly userId: string
   readonly firstName: string

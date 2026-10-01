@@ -25,7 +25,8 @@ export type NotificationInput = {
 export interface NotificationWriter {
   /**
    * Writes one notification event for a single recipient. Self-notifications are suppressed:
-   * nothing is written when `recipientUserId` equals `actorUserId` or is empty. The canonical
+   * nothing is written when `recipientUserId` equals `actorUserId` or is empty, nor when the
+   * recipient's account is inactive or missing. The canonical
    * idea link is persisted on the row.
    */
   notify(input: NotificationInput): Promise<void>
