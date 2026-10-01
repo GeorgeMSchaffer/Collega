@@ -62,6 +62,15 @@ export function AdminTable({ summary, children }: { summary: string; children: R
   )
 }
 
+/** The leading header cell of a reorderable grid (`ReorderableBody`): named for assistive technology only. */
+export function ReorderTh() {
+  return (
+    <Th className="w-24">
+      <span className="sr-only">Order</span>
+    </Th>
+  )
+}
+
 export function Th({ children, className = '' }: { children?: ReactNode; className?: string }) {
   return (
     <th scope="col" className={`px-4 py-2.5 text-left font-medium ${className}`}>

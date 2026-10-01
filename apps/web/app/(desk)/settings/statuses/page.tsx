@@ -2,9 +2,11 @@ import { Button, buttonVariants, Dot, EmptyState, Marker } from '@collega/design
 import Link from 'next/link'
 import { GatedAction } from '@/components/common/gated-action'
 import { CrossOrgNote } from '@/components/settings/cross-org'
-import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
+import { ReorderableBody } from '@/components/settings/reorderable-body'
+import { AdminTable, ReorderTh, SettingsPage, Th } from '@/components/settings/settings-page'
 import { StatusForm } from '@/components/settings/status-form'
 import { getStatuses, getStatusesByOrganization } from '@/lib/data'
+import { reorderStatuses } from '@/lib/server/catalog-actions'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
@@ -54,6 +56,9 @@ export default async function StatusesPage() {
   await requireCurrentUser()
 
   const siteAdmin = currentUser().role === 'SiteAdmin'
+  // An Org Admin, or a Site Admin through View As (whose session reads as the Org Admin). The
+  // cross-organization view has no one organization whose order it could set.
+  const canReorder = currentUser().role === 'OrgAdmin'
 
   // Two genuinely different reads, not one filtered two ways: a Site Admin belongs to no
   // organization and reads every organization's catalog in turn, while everyone else reads the one
@@ -64,6 +69,39 @@ export default async function StatusesPage() {
 
   const rows = catalogs.flatMap((catalog) =>
     catalog.statuses.map((status) => ({ status, org: catalog.organization })),
+  )
+
+  const cells = (status: (typeof rows)[number]['status'], org: string) => (
+    <>
+      <td className="px-4 py-2.5 font-medium">{status.name}</td>
+      {siteAdmin ? <td className="px-4 py-2.5 text-muted-foreground">{org}</td> : null}
+      <td className="px-4 py-2.5">
+        <Marker>
+          <Dot color={status.color} />
+          {/* The hex itself, because a real status carries no colour name and one
+                            invented from `#64748B` would be a lookup table nobody maintains. */}
+          {status.colorName ?? status.color}
+        </Marker>
+      </td>
+      <td className="px-4 py-2.5 text-right">
+        {/* A Site Admin gets the disabled control rather than a link: every write
+                          behind it is refused for that role, so a page they could reach would only
+                          ever be a form that cannot save. */}
+        {siteAdmin ? (
+          <Button variant="outline" size="sm" disabled aria-label={`Manage ${status.name}`}>
+            Manage
+          </Button>
+        ) : (
+          <Link
+            href={`/settings/statuses/${status.id}`}
+            className={buttonVariants({ variant: 'outline', size: 'sm' })}
+            aria-label={`Edit ${status.name}`}
+          >
+            Edit
+          </Link>
+        )}
+      </td>
+    </>
   )
 
   return (
@@ -101,6 +139,7 @@ export default async function StatusesPage() {
             >
               <thead>
                 <tr className="border-b bg-muted/40">
+                  {canReorder ? <ReorderTh /> : null}
                   <Th>Name</Th>
                   {siteAdmin ? <Th className="w-56">Organization</Th> : null}
                   <Th className="w-44">Colour</Th>
@@ -109,47 +148,25 @@ export default async function StatusesPage() {
                   </Th>
                 </tr>
               </thead>
-              <tbody>
-                {rows.map(({ status, org }) => (
-                  <tr key={`${org}-${status.id}`} className="border-b last:border-0">
-                    <td className="px-4 py-2.5 font-medium">{status.name}</td>
-                    {siteAdmin ? (
-                      <td className="px-4 py-2.5 text-muted-foreground">{org}</td>
-                    ) : null}
-                    <td className="px-4 py-2.5">
-                      <Marker>
-                        <Dot color={status.color} />
-                        {/* The hex itself, because a real status carries no colour name and one
-                            invented from `#64748B` would be a lookup table nobody maintains. */}
-                        {status.colorName ?? status.color}
-                      </Marker>
-                    </td>
-                    <td className="px-4 py-2.5 text-right">
-                      {/* A Site Admin gets the disabled control rather than a link: every write
-                          behind it is refused for that role, so a page they could reach would only
-                          ever be a form that cannot save. */}
-                      {siteAdmin ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled
-                          aria-label={`Manage ${status.name}`}
-                        >
-                          Manage
-                        </Button>
-                      ) : (
-                        <Link
-                          href={`/settings/statuses/${status.id}`}
-                          className={buttonVariants({ variant: 'outline', size: 'sm' })}
-                          aria-label={`Edit ${status.name}`}
-                        >
-                          Edit
-                        </Link>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+              {canReorder ? (
+                <ReorderableBody
+                  columns={3}
+                  onReorder={reorderStatuses}
+                  rows={rows.map(({ status, org }) => ({
+                    id: status.id,
+                    label: status.name,
+                    cells: cells(status, org),
+                  }))}
+                />
+              ) : (
+                <tbody>
+                  {rows.map(({ status, org }) => (
+                    <tr key={`${org}-${status.id}`} className="border-b last:border-0">
+                      {cells(status, org)}
+                    </tr>
+                  ))}
+                </tbody>
+              )}
             </AdminTable>
           )}
         </div>

@@ -19,10 +19,8 @@
  *
  * ## What is not here
  *
- * Reorder, for either catalog (`POST …/statuses/reorder`, `POST …/idea-types/reorder`). Comp P puts
- * it behind drag-and-drop, which does not exist yet, and both routes replace the whole order at
- * once rather than moving one row — so there is nothing to call until something can express an
- * order. Also absent: an idea type's curated field selection and its badge appearance, which are
+ * Reordering idea types (`POST …/idea-types/reorder`): nothing expresses an order for that catalog
+ * yet. Statuses reorder below. Also absent: an idea type's curated field selection and its badge appearance, which are
  * separate routes and separate screens.
  *
  * Renaming and archiving both catalogs DO live here, on small pages of their own rather than in
@@ -99,6 +97,32 @@ export async function createStatus(
   revalidatePath('/settings/statuses')
   revalidatePath('/settings/boards')
   return { error: null, name: '' }
+}
+
+/**
+ * Replaces the organization's status order (`POST …/statuses/reorder`).
+ *
+ * The route takes the complete order of the active statuses, so the grid sends the whole list after
+ * every drop or move. A stale page, one missing a status added elsewhere, gets the API's refusal.
+ */
+export async function reorderStatuses(
+  orderedStatusIds: string[],
+): Promise<{ error: string | null }> {
+  const organizationId = await actingOrganizationId()
+  if (organizationId === null) return { error: NO_ORGANIZATION }
+
+  try {
+    await apiPost(apiPath`/organizations/${organizationId}/statuses/reorder`, { orderedStatusIds })
+  } catch (error) {
+    // A 400's title is generic; the reason is in the field message.
+    const detail = error instanceof ApiError ? Object.values(error.errors)[0] : undefined
+    return { error: detail ?? refusal(error) }
+  }
+
+  revalidatePath('/settings/statuses')
+  // The board form's swimlane picker offers statuses in this order.
+  revalidatePath('/settings/boards')
+  return { error: null }
 }
 
 /**
