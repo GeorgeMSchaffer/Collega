@@ -147,7 +147,7 @@ its specification.
 
     - Unique `ux_idea_followers_idea_id_user_id` on (`idea_id`, `user_id`): one row per person per idea,
       and the index the follower count and the fan-out read.
-    - Index `ix_idea_followers_user_id` on (`user_id`), for the foreign key.
+    - Index `IX_idea_followers_user_id` on (`user_id`), for the foreign key.
     - Unfollowing deletes the row. Ideas are only soft-deleted, so the cascade matters only to a hard
       delete such as a test reset.
 37. **`notification_events` gains two nullable columns:**
