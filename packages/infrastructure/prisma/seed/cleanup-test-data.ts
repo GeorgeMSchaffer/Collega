@@ -159,6 +159,7 @@ async function main(): Promise<void> {
       ['idea_assignees', () => prisma.idea_assignees.deleteMany({ where: byIdea })],
       ['idea_mentions', () => prisma.idea_mentions.deleteMany({ where: byIdea })],
       ['idea_upvotes', () => prisma.idea_upvotes.deleteMany({ where: byIdea })],
+      ['idea_followers', () => prisma.idea_followers.deleteMany({ where: byIdea })],
       ['idea_tags', () => prisma.idea_tags.deleteMany({ where: byIdea })],
       ['idea_field_values', () => prisma.idea_field_values.deleteMany({ where: byIdea })],
       ['issue_tasks', () => prisma.issue_tasks.deleteMany({ where: byIdea })],
