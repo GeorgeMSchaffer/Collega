@@ -128,7 +128,7 @@ describe('getUsage', () => {
     organizations: [row(), bolt],
     dailyTokenLimit: 100_000,
     tokensUsedToday: 1_765,
-    totals: { calls: 5, estimatedCost: 0.13 },
+    totals: { calls: 6, estimatedCost: 0.14 },
     ...over,
   })
 
@@ -167,8 +167,8 @@ describe('getUsage', () => {
     actAs('SiteAdmin')
     get.mockResolvedValue(report())
     const usage = await getUsage()
-    expect(usage.conversations).toBe(5)
-    expect(usage.estimatedCost).toBe(0.13)
+    expect(usage.conversations).toBe(6)
+    expect(usage.estimatedCost).toBe(0.14)
     expect(usage.tokens).toBe(1750 + 15)
   })
 
