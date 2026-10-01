@@ -15,13 +15,13 @@ import {
 } from '@/components/list'
 import { engagementDenial, mayDeleteIdeas, mayEditIdeaContent, writeDenial } from '@/lib/roles'
 import { reorderLanes } from '@/lib/server/board-actions'
-import { deleteIdea } from '@/lib/server/idea-actions'
+import { deleteIdea, moveIdea } from '@/lib/server/idea-actions'
 import { useCurrentUser } from '@/lib/session-client'
 import type { BoardRef, Idea, IdeaDetail, IdeaFormOptions, Status, TagRef } from '@/lib/types'
 import { People, PriorityMarker, StatusMarker, TagList } from './idea-chips'
 import { type DrawerMode, IdeaDrawer } from './idea-drawer'
 import { BOARD_LIST, IDEAS_LIST, PRIORITIES } from './idea-list-config'
-import { Lane, type LaneReorder } from './lane'
+import { type CardDrag, Lane, type LaneReorder } from './lane'
 import { useDrawerUrl } from './use-drawer-url'
 
 type BoardContext = {
@@ -89,6 +89,37 @@ export function IdeaWorkspace({
   // The lane being dragged by its header, and the lane it is over; both null outside a drag.
   const [draggingLane, setDraggingLane] = useState<string | null>(null)
   const [overLane, setOverLane] = useState<string | null>(null)
+
+  // The cards as last saved, or as the move in flight has them. A refusal ends the transition with
+  // `rows` unchanged, so the card falls back on its own; a save revalidates and `rows` arrives moved.
+  const [laneRows, setCardLane] = useOptimistic(
+    rows,
+    (current, move: { ideaId: string; statusId: string; statusName: string }) =>
+      current.map((idea) =>
+        idea.id === move.ideaId
+          ? { ...idea, statusId: move.statusId, statusName: move.statusName }
+          : idea,
+      ),
+  )
+  const [moveError, setMoveError] = useState<string | null>(null)
+  const [, startCardMove] = useTransition()
+  // The card being dragged by its handle, and the lane it is over; both null outside a drag.
+  const [draggingCard, setDraggingCard] = useState<{ id: string; statusId: string } | null>(null)
+  const [overCardLane, setOverCardLane] = useState<string | null>(null)
+
+  // The same `moveIdea` the card's arrows submit, so one rule decides what a move may do.
+  const moveCard = (ideaId: string, boardId: string, to: Status) => {
+    const form = new FormData()
+    form.set('boardId', boardId)
+    form.set('ideaId', ideaId)
+    form.set('statusId', to.id)
+    setMoveError(null)
+    startCardMove(async () => {
+      setCardLane({ ideaId, statusId: to.id, statusName: to.name })
+      const result = await moveIdea({ error: null }, form)
+      setMoveError(result.error)
+    })
+  }
 
   const moveLane = (from: number, to: number) => {
     if (!board || from === to) return
@@ -296,6 +327,11 @@ export function IdeaWorkspace({
               <span>{reorderError}</span>
             </Alert>
           ) : null}
+          {moveError ? (
+            <Alert variant="destructive" role="alert">
+              <span>{moveError}</span>
+            </Alert>
+          ) : null}
           {total > rows.length ? (
             <p className="m-0 text-sm text-muted-foreground">
               Showing the first {rows.length} of {total} ideas. Filter to narrow the board, or
@@ -312,13 +348,48 @@ export function IdeaWorkspace({
                 key={status.id}
                 status={status}
                 boardId={board.id}
-                ideas={rows.filter((idea) => idea.statusId === status.id)}
+                ideas={laneRows.filter((idea) => idea.statusId === status.id)}
                 previousStatusId={lanes[index - 1]?.id ?? null}
                 nextStatusId={lanes[index + 1]?.id ?? null}
                 canMove={board.canMove}
                 upvoteDenial={engagement}
                 selectedId={selectedId}
                 onOpen={view}
+                cardDrag={
+                  board.canMove
+                    ? ({
+                        active: draggingCard !== null,
+                        draggingId: draggingCard?.id ?? null,
+                        over: draggingCard !== null && overCardLane === status.id,
+                        onDragStart: (ideaId) => {
+                          const idea = laneRows.find((row) => row.id === ideaId)
+                          if (idea) setDraggingCard({ id: ideaId, statusId: idea.statusId })
+                        },
+                        onDragEnd: () => {
+                          setDraggingCard(null)
+                          setOverCardLane(null)
+                        },
+                        // A drop on the card's own lane does nothing, so it is not offered.
+                        onDragOver: () => {
+                          if (draggingCard === null || draggingCard.statusId === status.id) {
+                            return false
+                          }
+                          setOverCardLane(status.id)
+                          return true
+                        },
+                        onDragLeave: () =>
+                          setOverCardLane((current) => (current === status.id ? null : current)),
+                        onDrop: () => {
+                          const dragged = draggingCard
+                          setDraggingCard(null)
+                          setOverCardLane(null)
+                          if (dragged && dragged.statusId !== status.id) {
+                            moveCard(dragged.id, board.id, status)
+                          }
+                        },
+                      } satisfies CardDrag)
+                    : null
+                }
                 reorder={
                   board.canReorder
                     ? ({
