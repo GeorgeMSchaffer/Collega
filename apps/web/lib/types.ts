@@ -696,19 +696,21 @@ export type Usage = {
 }
 
 /**
- * One KPI tile on Home. `value` is null when the tile's figure cannot be computed from what the API
- * serves; the tile still renders its definition, so the reader learns what will be counted there.
+ * One KPI tile on Home. Every tile carries a one-line definition of what it counts, and its number
+ * links to that query where a screen can show it (`href`).
  */
 export type HomeKpi = {
   label: string
-  value: number | null
-  detail: string | null
+  value: number
+  detail: string
+  /** Draw the detail as a warning — the critical count on Assigned to me. */
+  detailAlert?: boolean
   definition: string
   href: string | null
 }
 
-/** A row of Home's attention queue. */
-export type AttentionItem = {
+/** An idea in one of Home's lists: the attention queue, Assigned to me, Most upvoted. */
+export type HomeIdea = {
   id: string
   title: string
   boardName: string | null
@@ -716,27 +718,50 @@ export type AttentionItem = {
   status: Status
   priority: Priority
   createdAtUtc: string
+  upvotes: number
+  hasUpvoted: boolean
+}
+
+/** One of Home's lists: the first rows, and how many the query matched in all. */
+export type HomeIdeaList = { total: number; rows: HomeIdea[] }
+
+/** The running sprint on Home: its header, its issues by delivery status, and the backlog beside it. */
+export type HomeSprint = {
+  sprint: Sprint
+  mix: { status: DeliveryStatus; count: number }[]
+  backlog: number
 }
 
 /** Home for a member of an organization — Org Admin, User or Read Only. */
 export type OrganizationHome = {
+  /** `issues` is in flight: the backlog plus the Planned and Active sprints' issues. */
   counts: { ideas: number; boards: number; issues: number }
   statuses: Status[]
   kpis: HomeKpi[]
-  attention: AttentionItem[]
+  attention: HomeIdeaList
+  assigned: HomeIdeaList
+  topVoted: HomeIdea[]
+  /** The organization's live boards, archived ones left out. */
+  boards: BoardOverview[]
+  /** The Active sprint ending first; null when none is Active. */
+  sprint: HomeSprint | null
 }
 
-/** A board on the Site Admin's roll-up, with the organization that owns it. */
-export type PlatformBoard = {
+/** One organization on the Site Admin's roll-up. */
+export type PlatformOrganization = {
   id: string
   name: string
-  organizationName: string
-  laneCount: number
+  ideas: number
+  issues: number
+  users: number
+  inactive: number
+  boards: BoardOverview[]
 }
 
 /** Home for a Site Admin: the platform roll-up. */
 export type PlatformHome = {
   counts: { organizations: number; ideas: number; issues: number }
   kpis: HomeKpi[]
-  boards: PlatformBoard[]
+  /** Largest first by ideas. */
+  organizations: PlatformOrganization[]
 }

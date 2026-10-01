@@ -2,13 +2,20 @@ import { render, screen, within } from '@testing-library/react'
 import { isValidElement, type ReactElement, type ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Role } from '@/lib/roles'
-import type { HomeKpi, OrganizationHome, PlatformHome } from '@/lib/types'
+import type {
+  BoardOverview,
+  HomeIdea,
+  OrganizationHome,
+  PlatformHome,
+  PlatformOrganization,
+} from '@/lib/types'
 import { actAs } from './support/acting-role'
 
 /**
- * What Home draws for each role (slice 132, `app/(desk)/home/page.tsx`, comp Q `s-home`): the
- * greeting's counts, the four tiles with the untracked ones saying so, the attention queue and its
- * empty state, the no-boards state and who may act on it, and the Site Admin's roll-up.
+ * What Home draws for each role (slices 132 and 155, `app/(desk)/home/page.tsx`, comp R
+ * `comp-r-home-dashboard.html`): the greeting's counts, the tiles with the untracked figures saying
+ * so, the attention queue, Assigned to me, the boards, the current sprint and Most upvoted, their
+ * empty states, the no-boards state and who may act on it, and the Site Admin's roll-up.
  *
  * The readers are the boundary and are replaced by what `home-reads.test.ts` proves they return.
  */
@@ -23,13 +30,45 @@ vi.mock('@/lib/data', () => ({
 vi.mock('@/lib/server/current-user', () => ({ requireCurrentUser: async () => undefined }))
 vi.mock('@/components/nav/topbar', () => ({ Topbar: () => null }))
 
-const untracked = (label: string): HomeKpi => ({
-  label,
-  value: null,
-  detail: 'Not tracked yet',
-  definition: `${label} definition`,
-  href: null,
-})
+const NEW = { id: 's1', name: 'New', color: '#111' }
+
+function idea(over: Partial<HomeIdea> = {}): HomeIdea {
+  return {
+    id: 'i-1',
+    title: 'Slow conveyor',
+    boardName: 'Assembly',
+    ideaType: 'Problem',
+    status: NEW,
+    priority: 'Critical',
+    createdAtUtc: '2026-09-01T10:00:00Z',
+    upvotes: 4,
+    hasUpvoted: false,
+    ...over,
+  }
+}
+
+function board(over: Partial<BoardOverview> = {}): BoardOverview {
+  return {
+    id: 'b1',
+    name: 'Assembly',
+    description: 'The assembly cells.',
+    ideaCount: 3,
+    laneCount: 2,
+    createdAtUtc: '2026-08-01T00:00:00Z',
+    createdOn: 'Aug 1, 2026',
+    createdBy: null,
+    lanes: [
+      { id: 's1', name: 'New', color: '#111', ideaCount: 2 },
+      { id: 's3', name: 'Complete', color: '#333', ideaCount: 1 },
+    ],
+    topTags: [{ name: 'safety', ideaCount: 2, color: '#B91C1C' }],
+    tagCount: 4,
+    userStatusMoves: true,
+    isArchived: false,
+    archivedOn: null,
+    ...over,
+  }
+}
 
 function orgHome(over: Partial<OrganizationHome> = {}): OrganizationHome {
   return {
@@ -40,28 +79,60 @@ function orgHome(over: Partial<OrganizationHome> = {}): OrganizationHome {
       { id: 's3', name: 'Complete', color: '#333' },
     ],
     kpis: [
-      untracked('Open ideas'),
-      untracked('Awaiting review'),
       {
         label: 'Assigned to me',
         value: 7,
         detail: '2 critical',
+        detailAlert: true,
         definition: 'Assigned definition',
         href: null,
       },
-      untracked('Completed · 30d'),
-    ],
-    attention: [
       {
-        id: 'i-1',
-        title: 'Slow conveyor',
-        boardName: 'Assembly',
-        ideaType: 'Problem',
-        status: { id: 's1', name: 'New', color: '#111' },
-        priority: 'Critical',
-        createdAtUtc: '2026-09-01T10:00:00Z',
+        label: 'Critical & high',
+        value: 12,
+        detail: 'still on a board',
+        definition: 'c',
+        href: '/ideas?priority=Critical&priority=High',
       },
+      { label: 'You created', value: 5, detail: 'ideas and issues', definition: 'y', href: null },
     ],
+    attention: { total: 12, rows: [idea()] },
+    assigned: { total: 7, rows: [idea({ id: 'i-2', title: 'Guard rails', priority: 'High' })] },
+    topVoted: [idea({ id: 'i-3', title: 'Torque audit', upvotes: 9, hasUpvoted: true })],
+    boards: [board()],
+    sprint: {
+      sprint: {
+        id: 'sp-1',
+        name: 'Sprint 14',
+        goal: 'Pilot remote diagnostics.',
+        startsOn: '22 Sept',
+        endsOn: '5 Oct 2026',
+        startDate: '2026-09-22',
+        endDate: '2026-10-05',
+        window: '22 SEP – 5 OCT',
+        state: 'Active',
+        issueCount: 9,
+        doneCount: 4,
+      },
+      mix: [
+        { status: { id: 'Pending', name: 'Pending', color: 'var(--ink-faint)' }, count: 5 },
+        { status: { id: 'Complete', name: 'Complete', color: 'var(--green)' }, count: 4 },
+      ],
+      backlog: 6,
+    },
+    ...over,
+  }
+}
+
+function organization(over: Partial<PlatformOrganization> = {}): PlatformOrganization {
+  return {
+    id: 'o-acme',
+    name: 'Acme',
+    ideas: 10,
+    issues: 1,
+    users: 6,
+    inactive: 1,
+    boards: [board()],
     ...over,
   }
 }
@@ -77,16 +148,13 @@ const platformHome: PlatformHome = {
       href: '/settings/organizations',
     },
     { label: 'Boards', value: 3, detail: 'across 2 organizations', definition: 'b', href: null },
-    {
-      label: 'Open ideas',
-      value: null,
-      detail: 'Not tracked yet · 14 in total',
-      definition: 'o',
-      href: null,
-    },
+    { label: 'Ideas', value: 14, detail: 'plus 3 delivery issues', definition: 'o', href: null },
     { label: 'Users', value: 15, detail: '3 inactive', definition: 'u', href: '/settings/users' },
   ],
-  boards: [{ id: 'b1', name: 'Assembly', organizationName: 'Acme', laneCount: 5 }],
+  organizations: [
+    organization(),
+    organization({ id: 'o-bolt', name: 'Bolt', ideas: 4, boards: [], inactive: 0 }),
+  ],
 }
 
 /** Calls the async server components in a returned tree and renders what they answer. */
@@ -111,6 +179,8 @@ async function renderHome(role: Role) {
   const tree = await resolveAsync(await HomePage())
   render(<div>{tree}</div>)
 }
+
+const panel = (name: string) => screen.getByRole('region', { name })
 
 beforeEach(() => {
   readers.getOrganizationHome.mockReset().mockResolvedValue(orgHome())
@@ -144,45 +214,112 @@ describe('Home for a member of an organization', () => {
     expect(document.body.textContent).toContain('1 idea across 1 board and 0 delivery issues')
   })
 
-  it('shows the four tiles, a dash and "Not tracked yet" for the three with no source', async () => {
+  it('shows the three tiles and a fourth naming what is not tracked yet, with a dash for each', async () => {
     await renderHome('OrgAdmin')
-    const tiles = within(screen.getByRole('list')).getAllByRole('listitem')
+    const tiles = screen.getByRole('list', { name: 'Your numbers' }).children
     expect(tiles).toHaveLength(4)
-    const byLabel = (label: string) =>
-      tiles.find((tile) => tile.textContent?.includes(label)) as HTMLElement
+    const untracked = tiles[3] as HTMLElement
+    expect(untracked.textContent).toContain('Not tracked yet')
     for (const label of ['Open ideas', 'Awaiting review', 'Completed · 30d']) {
-      const tile = byLabel(label)
-      expect(tile.textContent).toContain('Not tracked yet')
-      expect(tile.querySelector('.tabular-nums')?.textContent).toBe('—')
+      expect(untracked.textContent).toContain(label)
     }
-    expect(byLabel('Assigned to me').textContent).toContain('7')
-    expect(byLabel('Assigned to me').textContent).toContain('2 critical')
+    expect((tiles[0] as HTMLElement).textContent).toContain('2 critical')
+  })
+
+  it('links Critical & high to the query it counts, and leaves unlinked what no screen shows', async () => {
+    await renderHome('OrgAdmin')
+    const tiles = screen.getByRole('list', { name: 'Your numbers' })
+    expect(within(tiles).getByRole('link', { name: '12' }).getAttribute('href')).toBe(
+      '/ideas?priority=Critical&priority=High',
+    )
+    expect(within(tiles).queryByRole('link', { name: '7' })).toBeNull()
   })
 
   it('lists the attention queue with its board, type, status, priority and a link to the idea', async () => {
     await renderHome('OrgAdmin')
-    const link = screen.getByRole('link', { name: 'Slow conveyor' })
+    const queue = panel('Needs your attention')
+    const link = within(queue).getByRole('link', { name: 'Slow conveyor' })
     expect(link.getAttribute('href')).toBe('/ideas?idea=i-1')
-    const row = link.closest('tr') as HTMLElement
+    const row = link.closest('li') as HTMLElement
     expect(row.textContent).toContain('Assembly · Problem')
     expect(row.textContent).toContain('New')
     expect(row.textContent).toContain('Critical')
-  })
-
-  it('links View all to the critical and high ideas', async () => {
-    await renderHome('OrgAdmin')
-    expect(screen.getByRole('link', { name: 'View all' }).getAttribute('href')).toBe(
+    expect(within(queue).getByRole('link', { name: 'View all 12' }).getAttribute('href')).toBe(
       '/ideas?priority=Critical&priority=High',
     )
   })
 
   it('says nothing is waiting when the queue is empty', async () => {
-    readers.getOrganizationHome.mockResolvedValue(orgHome({ attention: [] }))
+    readers.getOrganizationHome.mockResolvedValue(orgHome({ attention: { total: 0, rows: [] } }))
     await renderHome('OrgAdmin')
-    expect(document.body.textContent).toContain(
+    expect(panel('Needs your attention').textContent).toContain(
       'Nothing critical or high priority is waiting on a board.',
     )
-    expect(screen.queryByRole('table')).toBeNull()
+  })
+
+  it('lists what is assigned to the reader, with its count', async () => {
+    await renderHome('User')
+    const assigned = panel('Assigned to me 7')
+    expect(within(assigned).getByRole('link', { name: 'Guard rails' }).getAttribute('href')).toBe(
+      '/ideas?idea=i-2',
+    )
+  })
+
+  it.each([
+    ['User', 'When someone adds you'],
+    ['ReadOnly', 'Ideas you’re named on will appear here.'],
+  ] as const)('tells %s when nothing is assigned', async (role, copy) => {
+    readers.getOrganizationHome.mockResolvedValue(orgHome({ assigned: { total: 0, rows: [] } }))
+    await renderHome(role)
+    const assigned = panel('Assigned to me 0')
+    expect(assigned.textContent).toContain('Nothing is assigned to you.')
+    expect(assigned.textContent).toContain(copy)
+  })
+
+  it('shows each board with its lane counts, top tags and figures', async () => {
+    await renderHome('User')
+    const boards = panel('Your boards')
+    expect(within(boards).getByRole('link', { name: 'Assembly' }).getAttribute('href')).toBe(
+      '/boards/b1',
+    )
+    expect(boards.textContent).toContain('2 New')
+    expect(boards.textContent).toContain('safety')
+    expect(boards.textContent).toContain('3 ideas')
+    expect(boards.textContent).toContain('4 tags')
+  })
+
+  it.each([
+    ['OrgAdmin', 'Manage boards', '/settings/boards'],
+    ['User', 'All boards', '/boards'],
+  ] as const)('gives %s the %s link', async (role, name, href) => {
+    await renderHome(role)
+    expect(within(panel('Your boards')).getByRole('link', { name }).getAttribute('href')).toBe(href)
+  })
+
+  it('shows the current sprint with its progress, backlog and delivery mix', async () => {
+    await renderHome('User')
+    const sprint = panel('Current sprint')
+    expect(sprint.textContent).toContain('Sprint 14')
+    expect(sprint.textContent).toContain('4 of 9 issues done')
+    expect(sprint.textContent).toContain('6 in the backlog')
+    expect(sprint.textContent).toContain('5 Pending')
+    expect(
+      within(sprint).getByRole('link', { name: 'Open sprint board' }).getAttribute('href'),
+    ).toBe('/delivery/sprint')
+  })
+
+  it('hides the current sprint when none is running', async () => {
+    readers.getOrganizationHome.mockResolvedValue(orgHome({ sprint: null }))
+    await renderHome('User')
+    expect(screen.queryByRole('region', { name: 'Current sprint' })).toBeNull()
+  })
+
+  it('lists the most upvoted ideas with their votes', async () => {
+    await renderHome('User')
+    const voted = panel('Most upvoted')
+    expect(within(voted).getByRole('link', { name: 'Torque audit' })).toBeTruthy()
+    expect(voted.textContent).toContain('9')
+    expect(voted.textContent).toContain('including yours')
   })
 
   it('names the organization’s own statuses in the first-run strip, in order', async () => {
@@ -193,15 +330,14 @@ describe('Home for a member of an organization', () => {
 
   it('keeps the recent-activity panel, saying it is not available yet', async () => {
     await renderHome('OrgAdmin')
-    expect(document.body.textContent).toContain('Recent activity')
-    expect(document.body.textContent).toContain('Not available yet.')
+    expect(panel('Recent activity').textContent).toContain('Not available yet.')
   })
 })
 
 describe('Home for an organization with no boards', () => {
   beforeEach(() => {
     readers.getOrganizationHome.mockResolvedValue(
-      orgHome({ counts: { ideas: 0, boards: 0, issues: 0 }, kpis: [], attention: [] }),
+      orgHome({ counts: { ideas: 0, boards: 0, issues: 0 }, boards: [] }),
     )
   })
 
@@ -224,7 +360,7 @@ describe('Home for an organization with no boards', () => {
     },
   )
 
-  it('shows no tiles and no attention queue', async () => {
+  it('shows no tiles and no panels', async () => {
     await renderHome('OrgAdmin')
     expect(screen.queryByRole('list')).toBeNull()
     expect(screen.queryByText('Needs your attention')).toBeNull()
@@ -240,41 +376,50 @@ describe('Home for a Site Admin', () => {
     )
   })
 
-  it('shows the four platform tiles with Open ideas untracked and the linked ones linked', async () => {
+  it('shows the four platform tiles with the linked ones linked', async () => {
     await renderHome('SiteAdmin')
-    const tiles = within(screen.getByRole('list')).getAllByRole('listitem')
-    expect(tiles.map((tile) => tile.textContent?.split(/\d|—/)[0])).toEqual([
+    const tiles = screen.getByRole('list', { name: 'Platform numbers' })
+    expect([...tiles.children].map((tile) => tile.textContent?.split(/\d/)[0])).toEqual([
       'Organizations',
       'Boards',
-      'Open ideas',
+      'Ideas',
       'Users',
     ])
-    expect(screen.getByRole('link', { name: '2' }).getAttribute('href')).toBe(
+    expect(within(tiles).getByRole('link', { name: '2' }).getAttribute('href')).toBe(
       '/settings/organizations',
     )
-    expect(screen.getByRole('link', { name: '15' }).getAttribute('href')).toBe('/settings/users')
-    expect(tiles[2]?.textContent).toContain('Not tracked yet · 14 in total')
+    expect(within(tiles).getByRole('link', { name: '15' }).getAttribute('href')).toBe(
+      '/settings/users',
+    )
+    expect(tiles.textContent).toContain('plus 3 delivery issues')
   })
 
-  it('lists every board with its organization and lane count', async () => {
+  it('lists each organization with its boards, users and figures', async () => {
     await renderHome('SiteAdmin')
-    const row = screen.getByRole('link', { name: 'Assembly' }).closest('tr') as HTMLElement
-    expect(row.textContent).toContain('Acme')
-    expect(row.textContent).toContain('5')
-    expect(screen.getByRole('link', { name: 'Assembly' }).getAttribute('href')).toBe('/boards/b1')
+    const orgs = panel('Organizations')
+    const acme = within(orgs).getByRole('link', { name: 'Acme' })
+    expect(acme.getAttribute('href')).toBe('/settings/organizations/o-acme')
+    const row = acme.closest('li') as HTMLElement
+    expect(row.textContent).toContain('1 board · 6 users (1 inactive)')
+    expect(row.textContent).toContain('10 ideas')
+    expect(row.textContent).toContain('1 issue')
   })
 
-  it('says no organization has a board when the list is empty', async () => {
-    readers.getPlatformHome.mockResolvedValue({ ...platformHome, boards: [] })
+  it('groups every board by organization, saying when one has none', async () => {
     await renderHome('SiteAdmin')
-    expect(document.body.textContent).toContain('No organization has a board yet.')
+    const boards = panel('All boards')
+    expect(within(boards).getByRole('link', { name: 'Assembly' }).getAttribute('href')).toBe(
+      '/boards/b1',
+    )
+    expect(boards.textContent).toContain('Bolt')
+    expect(boards.textContent).toContain('No boards yet')
   })
 
   it('offers to create the first organization when there are none', async () => {
     readers.getPlatformHome.mockResolvedValue({
       counts: { organizations: 0, ideas: 0, issues: 0 },
       kpis: [],
-      boards: [],
+      organizations: [],
     })
     await renderHome('SiteAdmin')
     expect(screen.getByRole('link', { name: 'Create an organization' }).getAttribute('href')).toBe(

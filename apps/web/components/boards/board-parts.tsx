@@ -1,43 +1,61 @@
 import { Badge, Dot, Tag, TagChip } from '@collega/design-system'
 import type { BoardOverview } from '@/lib/types'
 
+/** One counted segment of a strip and its legend: a lane, or a delivery status. */
+export type CountSegment = { id: string; name: string; color: string; count: number }
+
 /**
- * The board's ideas as one bar split by lane, in the board's lane order and status colours.
+ * Counts as one bar split by segment, in the order given — a board's lanes, a sprint's delivery
+ * statuses.
  *
  * Decorative: the same counts are always rendered as text beside it (the legend on a card, the
  * figures in a row), so a screen reader gets them once rather than twice.
  */
-export function LaneStrip({ board }: { board: BoardOverview }) {
+export function CountStrip({ segments }: { segments: readonly CountSegment[] }) {
   return (
     <div className="flex h-2 gap-0.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
-      {board.lanes
-        .filter((lane) => lane.ideaCount > 0)
-        .map((lane) => (
+      {segments
+        .filter((segment) => segment.count > 0)
+        .map((segment) => (
           <span
-            key={lane.id}
+            key={segment.id}
             className="h-full"
-            style={{ flexGrow: lane.ideaCount, background: lane.color }}
+            style={{ flexGrow: segment.count, background: segment.color }}
           />
         ))}
     </div>
   )
 }
 
-/** Every lane with its count. Empty lanes stay, dimmed, so two boards list the same lanes. */
-export function LaneLegend({ board }: { board: BoardOverview }) {
+/** Every segment with its count. Empty ones stay, dimmed, so two strips list the same segments. */
+export function CountLegend({ segments }: { segments: readonly CountSegment[] }) {
   return (
     <ul className="m-0 flex list-none flex-wrap gap-x-3 gap-y-1 p-0 text-xs text-muted-foreground tabular-nums">
-      {board.lanes.map((lane) => (
+      {segments.map((segment) => (
         <li
-          key={lane.id}
-          className={`inline-flex items-center gap-1.5 ${lane.ideaCount === 0 ? 'opacity-60' : ''}`}
+          key={segment.id}
+          className={`inline-flex items-center gap-1.5 ${segment.count === 0 ? 'opacity-60' : ''}`}
         >
-          <Dot color={lane.color} />
-          {lane.ideaCount} {lane.name}
+          <Dot color={segment.color} />
+          {segment.count} {segment.name}
         </li>
       ))}
     </ul>
   )
+}
+
+function laneSegments(board: BoardOverview): CountSegment[] {
+  return board.lanes.map((lane) => ({ ...lane, count: lane.ideaCount }))
+}
+
+/** The board's ideas as one bar split by lane, in the board's lane order and status colours. */
+export function LaneStrip({ board }: { board: BoardOverview }) {
+  return <CountStrip segments={laneSegments(board)} />
+}
+
+/** Every lane with its count. */
+export function LaneLegend({ board }: { board: BoardOverview }) {
+  return <CountLegend segments={laneSegments(board)} />
 }
 
 /** The most-used tags on the board's ideas, then how many more there are. */
