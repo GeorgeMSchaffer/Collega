@@ -52,7 +52,7 @@ throughput.
 | C | Infrastructure: repositories, integrations | 2 | **Complete — C1 `5df98cf`, C2 `f0c6797`, both 2026-09-06** |
 | D | API, mirroring B's partition | 7 | **Complete — D6 and D7 merged together (`15e3c56`), closing the 81.** *Status as of 2026-09-12, kept for its warning:* **D0-D5 merged; D6 (AI assist) and D7 (View As) owe the last 15 of the 81.** `apps/api` has 15 controllers and 85 route decorators (2026-09-12) — but 18 of those are the net-new delivery endpoints and one is health, so the count against the original target is **66 of 81**. Read it from the tree, not from here. This row said "D0 only, one controller, `FEATURE_MODULES` empty" until 2026-09-12, which was true on 2026-09-08 and four slices out of date by the time anyone read it. |
 | E | Web — **E0 design system first, alone** | 6 after E0 | **Complete through E7 (`2575b4f`, 2026-09-08)** — built against `lib/mock.ts`, since no D*n* exists to call |
-| F | Validation, data migration, cutover | 3 → 1 | **F6 done 2026-09-13; F2 and F5 closed 2026-09-29** (38/38; slice 134); F3 has nothing to transform. **F1 and F4 remain.** |
+| F | Validation, data migration, cutover | 3 → 1 | **F6 done 2026-09-13; F2 and F5 closed 2026-09-29** (38/38; slice 134); F3 has nothing to transform. **F1 closed pending slice 137** (slice 138 accepted 18 of the 21 unexplained replay differences; the 3 View As cases are fixed by 137, and F1 closes fully when it merges and the replay shows 0 unexplained); **F4 remains.** |
 
 D*n* does not wait for all of Wave B — it waits for **B*n***. The partitions are
 independent, so partition 3 can be in D while partition 5 is still in B.
