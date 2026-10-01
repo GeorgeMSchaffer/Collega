@@ -1,62 +1,85 @@
 /**
- * Home: what needs the reader now (`SPEC/20-feature-client-ui.md`, comp Q `s-home`).
+ * Home: what needs the reader now (`SPEC/20-feature-client-ui.md`, comp R
+ * `SPEC/mockups/comp-r-home-dashboard.html`, approved as drawn 2026-10-01).
  *
- * Every figure is a count the API already answers — a `totalCount` from a one-row page, or the
- * length of a list the organization owns — so Home adds no route and pulls no rows it does not show.
+ * Every figure is a count the API already answers — a `totalCount` from a short page, or the
+ * length of a list the organization owns — so Home adds no route. The comp's annotations name each
+ * panel's query, and these readers make those requests.
  *
- * **Three of comp Q's tiles have no source yet, and answer null rather than an approximation.**
- * "Open ideas" and "Awaiting review" need to know which status means Complete and which means In
- * Review, and a status carries no such marker: the catalog is organization-defined and names are
- * free text. "Completed · 30d" needs the moment an idea reached Complete, which only the audit log
- * records and no route reads. Guessing from a status name or from the right-most lane would be a
- * business rule written in the client, so the tiles render their definition and say the figure is
- * not tracked yet. The recent-activity feed is missing for the same reason as the third.
+ * **What has no source yet is not computed.** "Open ideas" and "Awaiting review" need to know which
+ * status means Complete and which means In Review, and a status carries no such marker. "Completed
+ * · 30d" and the activity feed need status-change times, which only the audit log records and no
+ * route reads. The page renders those as not tracked yet rather than as a guess.
  *
- * The attention queue is therefore narrower than comp Q's: critical and high-priority ideas still on
- * a board, oldest first. "Gone a week without moving" needs the same status-change time, and "open"
- * the same Complete marker. The page's standfirst says what it actually lists.
+ * So "still on a board" means the Discovery phase, Complete lane included, until status categories
+ * exist (decision 2026-10-01), and the attention queue is oldest by creation, not by time in lane.
  */
 
-import { toStatus } from '../api/adapt'
+import { toBoardOverview, toSprint, toStatus } from '../api/adapt'
 import { apiGet, apiPath, withQuery } from '../api/client'
 import type {
   WireBoardListItem,
   WireDeliveryCard,
   WireIdeaListItem,
   WirePage,
+  WireSprint,
   WireStatus,
   WireUserListItem,
 } from '../api/wire'
-import type { AttentionItem, HomeKpi, OrganizationHome, PlatformHome, Priority } from '../types'
+import { DELIVERY_STATUSES } from '../display'
+import type { HomeIdea, HomeKpi, OrganizationHome, PlatformHome, Priority } from '../types'
 import { failIfRequested } from './latency'
 import { everyOrganization, organizationScope } from './scope'
 
 export type {
-  AttentionItem,
+  HomeIdea,
+  HomeIdeaList,
   HomeKpi,
+  HomeSprint,
   OrganizationHome,
-  PlatformBoard,
   PlatformHome,
+  PlatformOrganization,
 } from '../types'
 
-/** How many rows the attention queue shows before "View all". */
-const ATTENTION_ROWS = 5
+/** The attention queue as an `/ideas` filter — its "View all" and the Critical & high tile. */
+export const ATTENTION_HREF = '/ideas?priority=Critical&priority=High'
 
-const NOT_TRACKED = 'Not tracked yet'
+/** How many rows each of Home's lists shows. */
+const LIST_ROWS = 5
 
 /** A status the catalog no longer lists — a deleted one still holding ideas — drawn neutral. */
 const UNKNOWN_STATUS_COLOR = 'var(--ink-faint)'
 
-function ideaCount(reader: string, organizationId: string, params: URLSearchParams) {
-  params.set('pageSize', '1')
+const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`
+
+function ideaPage(
+  reader: string,
+  organizationId: string,
+  params: URLSearchParams,
+  pageSize: number,
+): Promise<WirePage<WireIdeaListItem>> {
+  params.set('pageSize', String(pageSize))
   return apiGet<WirePage<WireIdeaListItem>>(
     reader,
     withQuery(apiPath`/organizations/${organizationId}/ideas`, params),
-  ).then((page) => page.totalCount)
+  )
+}
+
+function ideaCount(reader: string, organizationId: string, params: URLSearchParams) {
+  return ideaPage(reader, organizationId, params, 1).then((page) => page.totalCount)
 }
 
 function toPriority(value: string): Priority {
   return value === 'Critical' || value === 'High' || value === 'Medium' ? value : 'Low'
+}
+
+/** The Active sprint ending first, ties by name: the decision's answer for two at once. */
+function runningSprint(sprints: readonly WireSprint[]): WireSprint | null {
+  return (
+    sprints
+      .filter((sprint) => sprint.state === 'Active')
+      .sort((a, b) => a.endDate.localeCompare(b.endDate) || a.name.localeCompare(b.name))[0] ?? null
+  )
 }
 
 /** Home for a member of an organization. Empty for a Site Admin, who has none. */
@@ -65,7 +88,16 @@ export async function getOrganizationHome(): Promise<OrganizationHome> {
 
   const scope = organizationScope()
   if (scope === null) {
-    return { counts: { ideas: 0, boards: 0, issues: 0 }, statuses: [], kpis: [], attention: [] }
+    return {
+      counts: { ideas: 0, boards: 0, issues: 0 },
+      statuses: [],
+      kpis: [],
+      attention: { total: 0, rows: [] },
+      assigned: { total: 0, rows: [] },
+      topVoted: [],
+      boards: [],
+      sprint: null,
+    }
   }
 
   const reader = 'getOrganizationHome'
@@ -73,87 +105,124 @@ export async function getOrganizationHome(): Promise<OrganizationHome> {
     phase: 'Ideas',
     sortBy: 'createdAt',
     sortDirection: 'asc',
-    pageSize: String(ATTENTION_ROWS),
   })
   attentionParams.append('priority', 'Critical')
   attentionParams.append('priority', 'High')
-  const assignedCritical = new URLSearchParams({ scope: 'assigned', priority: 'Critical' })
 
-  const [boards, wireStatuses, issues, ideas, assigned, critical, attention] = await Promise.all([
-    // Archived boards too: an attention row on one still needs its board's name.
+  const [
+    boards,
+    wireStatuses,
+    backlog,
+    sprints,
+    ideas,
+    critical,
+    created,
+    attention,
+    assigned,
+    voted,
+  ] = await Promise.all([
+    // Archived boards too: a row on one still needs its board's name.
     apiGet<readonly WireBoardListItem[]>(
       reader,
       apiPath`/organizations/${scope}/boards?includeArchived=true`,
     ),
     apiGet<readonly WireStatus[]>(reader, apiPath`/organizations/${scope}/statuses`),
+    // No sprintId: the backlog.
     apiGet<readonly WireDeliveryCard[]>(reader, apiPath`/organizations/${scope}/delivery`),
-    // Discovery only: the greeting counts delivery issues separately.
+    apiGet<readonly WireSprint[]>(reader, apiPath`/organizations/${scope}/sprints`),
     ideaCount(reader, scope, new URLSearchParams({ phase: 'Ideas' })),
-    ideaCount(reader, scope, new URLSearchParams({ scope: 'assigned' })),
-    ideaCount(reader, scope, assignedCritical),
-    apiGet<WirePage<WireIdeaListItem>>(
+    ideaCount(reader, scope, new URLSearchParams({ scope: 'assigned', priority: 'Critical' })),
+    ideaCount(reader, scope, new URLSearchParams({ scope: 'created' })),
+    ideaPage(reader, scope, attentionParams, LIST_ROWS),
+    // The default phase, so a promoted Issue assigned to the reader is listed too.
+    ideaPage(
       reader,
-      withQuery(apiPath`/organizations/${scope}/ideas`, attentionParams),
+      scope,
+      new URLSearchParams({ scope: 'assigned', sortBy: 'priority', sortDirection: 'desc' }),
+      LIST_ROWS,
+    ),
+    ideaPage(
+      reader,
+      scope,
+      new URLSearchParams({ phase: 'Ideas', sortBy: 'upvoteCount', sortDirection: 'desc' }),
+      LIST_ROWS,
     ),
   ])
 
+  const running = runningSprint(sprints)
+  const sprintIssues = running
+    ? await apiGet<readonly WireDeliveryCard[]>(
+        reader,
+        apiPath`/organizations/${scope}/delivery?sprintId=${running.sprintId}`,
+      )
+    : []
+
   const statuses = wireStatuses.map(toStatus)
   const boardNames = new Map(boards.map((board) => [board.boardId, board.name]))
+  const toRow = (idea: WireIdeaListItem): HomeIdea => ({
+    id: idea.ideaId,
+    title: idea.title,
+    boardName: boardNames.get(idea.boardId) ?? null,
+    ideaType: idea.ideaTypeName,
+    status: statuses.find((status) => status.id === idea.statusId) ?? {
+      id: idea.statusId,
+      name: idea.statusName,
+      color: UNKNOWN_STATUS_COLOR,
+    },
+    priority: toPriority(idea.priority),
+    createdAtUtc: idea.createdAtUtc,
+    upvotes: idea.upvoteCount,
+    hasUpvoted: idea.hasUpvoted,
+  })
+
+  const liveBoards = boards.filter((board) => !board.isArchived)
+  const inSprints = sprints
+    .filter((sprint) => sprint.state === 'Planned' || sprint.state === 'Active')
+    .reduce((total, sprint) => total + sprint.issueCount, 0)
 
   const kpis: HomeKpi[] = [
     {
-      label: 'Open ideas',
-      value: null,
-      detail: NOT_TRACKED,
-      definition: 'Anything not yet Complete or Archived, on any board you can see.',
-      href: null,
-    },
-    {
-      label: 'Awaiting review',
-      value: null,
-      detail: NOT_TRACKED,
-      definition: 'Sitting in In Review, waiting on a decision from a person.',
-      href: null,
-    },
-    {
       label: 'Assigned to me',
-      value: assigned,
-      detail: `${critical} critical`,
-      definition: 'Every idea with your name in the Assigned field, whatever its status.',
+      value: assigned.totalCount,
+      detail: critical > 0 ? `${critical} critical` : 'none critical',
+      detailAlert: critical > 0,
+      definition: 'Every idea with your name in Assigned, whatever its status.',
       href: null,
     },
     {
-      label: 'Completed · 30d',
-      value: null,
-      detail: NOT_TRACKED,
-      definition: 'Reached Complete in the last 30 days, against the 30 days before it.',
+      label: 'Critical & high',
+      value: attention.totalCount,
+      detail: 'still on a board',
+      definition: 'Critical or high-priority ideas not yet promoted, on any board you can see.',
+      href: ATTENTION_HREF,
+    },
+    {
+      label: 'You created',
+      value: created,
+      detail: 'ideas and issues',
+      definition: 'Everything you authored, on any board, in either phase.',
       href: null,
     },
   ]
 
   return {
-    counts: {
-      ideas,
-      boards: boards.filter((board) => !board.isArchived).length,
-      issues: issues.length,
-    },
+    counts: { ideas, boards: liveBoards.length, issues: backlog.length + inSprints },
     statuses,
     kpis,
-    attention: attention.items.map(
-      (idea): AttentionItem => ({
-        id: idea.ideaId,
-        title: idea.title,
-        boardName: boardNames.get(idea.boardId) ?? null,
-        ideaType: idea.ideaTypeName,
-        status: statuses.find((status) => status.id === idea.statusId) ?? {
-          id: idea.statusId,
-          name: idea.statusName,
-          color: UNKNOWN_STATUS_COLOR,
-        },
-        priority: toPriority(idea.priority),
-        createdAtUtc: idea.createdAtUtc,
-      }),
-    ),
+    attention: { total: attention.totalCount, rows: attention.items.map(toRow) },
+    assigned: { total: assigned.totalCount, rows: assigned.items.map(toRow) },
+    topVoted: voted.items.map(toRow),
+    boards: liveBoards.map(toBoardOverview),
+    sprint: running
+      ? {
+          sprint: toSprint(running),
+          mix: DELIVERY_STATUSES.map((status) => ({
+            status,
+            count: sprintIssues.filter((issue) => issue.deliveryStatus === status.id).length,
+          })),
+          backlog: backlog.length,
+        }
+      : null,
   }
 }
 
@@ -163,7 +232,7 @@ export async function getOrganizationHome(): Promise<OrganizationHome> {
  * The same fan-out the cross-organization settings screens use (`everyOrganization`), because no
  * route counts across organizations: one request for the list, then one per organization per
  * figure, in parallel. A single organization failing fails the page, which is where comp P puts
- * that error.
+ * that error. A platform summary route would replace this if organizations grow.
  */
 export async function getPlatformHome(): Promise<PlatformHome> {
   failIfRequested('getPlatformHome')
@@ -196,12 +265,9 @@ export async function getPlatformHome(): Promise<PlatformHome> {
         ),
       ])
       return {
-        boards: boards.map((board) => ({
-          id: board.boardId,
-          name: board.name,
-          organizationName: organization.name,
-          laneCount: board.swimlaneCount,
-        })),
+        id: organization.id,
+        name: organization.name,
+        boards: boards.map(toBoardOverview),
         ideas,
         issues: issues.length,
         users: users.totalCount,
@@ -212,8 +278,8 @@ export async function getPlatformHome(): Promise<PlatformHome> {
 
   const sum = (pick: (row: (typeof perOrganization)[number]) => number) =>
     perOrganization.reduce((total, row) => total + pick(row), 0)
-  const boards = perOrganization.flatMap((row) => row.boards)
   const ideas = sum((row) => row.ideas)
+  const issues = sum((row) => row.issues)
   const archived = Math.max(0, everyIncludingArchived.totalCount - organizations.length)
 
   const kpis: HomeKpi[] = [
@@ -226,16 +292,16 @@ export async function getPlatformHome(): Promise<PlatformHome> {
     },
     {
       label: 'Boards',
-      value: boards.length,
-      detail: `across ${organizations.length} ${organizations.length === 1 ? 'organization' : 'organizations'}`,
-      definition: 'Every board anyone can reach; open one to read it.',
+      value: sum((row) => row.boards.length),
+      detail: `across ${plural(organizations.length, 'organization', 'organizations')}`,
+      definition: 'Every live board in every organization.',
       href: null,
     },
     {
-      label: 'Open ideas',
-      value: null,
-      detail: `${NOT_TRACKED} · ${ideas} in total`,
-      definition: 'Anything not yet Complete or Archived, in any organization.',
+      label: 'Ideas',
+      value: ideas,
+      detail: `plus ${plural(issues, 'delivery issue', 'delivery issues')}`,
+      definition: 'Ideas still on a board, in every organization.',
       href: null,
     },
     {
@@ -248,11 +314,8 @@ export async function getPlatformHome(): Promise<PlatformHome> {
   ]
 
   return {
-    counts: { organizations: organizations.length, ideas, issues: sum((row) => row.issues) },
+    counts: { organizations: organizations.length, ideas, issues },
     kpis,
-    boards,
+    organizations: [...perOrganization].sort((a, b) => b.ideas - a.ideas),
   }
 }
-
-/** Exported for the page's "View all" link: the attention queue as an `/ideas` filter. */
-export const ATTENTION_HREF = '/ideas?priority=Critical&priority=High'

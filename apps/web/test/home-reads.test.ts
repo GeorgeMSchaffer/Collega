@@ -4,9 +4,9 @@ import { getOrganizationHome, getPlatformHome } from '@/lib/data/home'
 import { actAs } from './support/acting-role'
 
 /**
- * Home's two readers (slice 132, `lib/data/home.ts`): which requests each makes, how the answers
- * become counts and tiles, the three tiles that deliberately say "not tracked yet", and the Site
- * Admin roll-up's per-organization fan-out. The API client is the boundary; every path it is asked
+ * Home's two readers (slices 132 and 155, `lib/data/home.ts`, comp R `comp-r-home-dashboard.html`):
+ * which requests each makes, how the answers become counts, tiles and lists, the running sprint,
+ * and the Site Admin roll-up's per-organization fan-out. The API client is the boundary; every path it is asked
  * for is recorded and answered from a table.
  */
 vi.mock('@/lib/api/client', async (original) => ({
@@ -47,23 +47,67 @@ describe('getOrganizationHome', () => {
       statusId: 's-new',
       statusName: 'New',
       createdAtUtc: '2026-09-01T10:00:00Z',
+      upvoteCount: 3,
+      hasUpvoted: false,
       ...over,
     }
   }
 
-  function seed({ attention = [wireIdea()] as unknown[] } = {}) {
+  function wireBoard(boardId: string, name: string, isArchived: boolean) {
+    return {
+      boardId,
+      name,
+      isArchived,
+      description: null,
+      ideaCount: 0,
+      swimlaneCount: 0,
+      createdAtUtc: '2026-08-01T00:00:00Z',
+      createdBy: null,
+      laneCounts: [],
+      topTags: [],
+      tagCount: 0,
+      allowUserStatusUpdate: true,
+      archivedAtUtc: null,
+    }
+  }
+
+  function wireSprint(over: Record<string, unknown> = {}) {
+    return {
+      sprintId: 'sp-1',
+      name: 'Sprint 14',
+      goal: null,
+      startDate: '2026-09-22',
+      endDate: '2026-10-05',
+      state: 'Active',
+      issueCount: 3,
+      doneCount: 1,
+      ...over,
+    }
+  }
+
+  function seed({
+    attention = [wireIdea()] as unknown[],
+    assigned = [wireIdea({ ideaId: 'i-2' })] as unknown[],
+    voted = [wireIdea({ ideaId: 'i-3', upvoteCount: 9, hasUpvoted: true })] as unknown[],
+    sprints = [] as unknown[],
+  } = {}) {
     answer(/\/ideas/, (url: URL) => {
       const p = url.searchParams
-      if (p.get('pageSize') === '5') return page(attention.length, attention)
+      if (p.get('pageSize') === '5') {
+        if (p.get('sortBy') === 'upvoteCount') return page(voted.length, voted)
+        if (p.get('scope') === 'assigned') return page(7, assigned)
+        return page(12, attention)
+      }
       if (p.get('scope') === 'assigned' && p.get('priority') === 'Critical') return page(2)
-      if (p.get('scope') === 'assigned') return page(7)
+      if (p.get('scope') === 'created') return page(5)
       return page(41)
     })
     answer(/\/boards/, [
-      { boardId: 'b-live', name: 'Assembly', isArchived: false },
-      { boardId: 'b-old', name: 'Old plant', isArchived: true },
-      { boardId: 'b-two', name: 'Packing', isArchived: false },
+      wireBoard('b-live', 'Assembly', false),
+      wireBoard('b-old', 'Old plant', true),
+      wireBoard('b-two', 'Packing', false),
     ])
+    answer(/\/sprints/, sprints)
     answer(/\/statuses/, [
       { statusId: 's-new', name: 'New', color: '#111111' },
       { statusId: 's-done', name: 'Complete', color: '#222222' },
@@ -77,7 +121,11 @@ describe('getOrganizationHome', () => {
       counts: { ideas: 0, boards: 0, issues: 0 },
       statuses: [],
       kpis: [],
-      attention: [],
+      attention: { total: 0, rows: [] },
+      assigned: { total: 0, rows: [] },
+      topVoted: [],
+      boards: [],
+      sprint: null,
     })
     expect(requested()).toEqual([])
   })
@@ -93,12 +141,18 @@ describe('getOrganizationHome', () => {
     }
   })
 
-  it('counts Discovery ideas (not delivery issues) in the greeting, issues from the delivery list', async () => {
-    seed()
+  it('counts Discovery ideas, and in flight as the backlog plus Planned and Active sprints', async () => {
+    seed({
+      sprints: [
+        wireSprint({ sprintId: 'a', state: 'Active', issueCount: 3 }),
+        wireSprint({ sprintId: 'p', state: 'Planned', issueCount: 2 }),
+        wireSprint({ sprintId: 'c', state: 'Completed', issueCount: 8 }),
+      ],
+    })
     actAs('OrgAdmin')
     const home = await getOrganizationHome()
     expect(home.counts.ideas).toBe(41)
-    expect(home.counts.issues).toBe(4)
+    expect(home.counts.issues).toBe(4 + 3 + 2)
     const discovery = requested().find(
       (path) => path.includes('phase=Ideas') && path.includes('pageSize=1'),
     )
@@ -110,7 +164,8 @@ describe('getOrganizationHome', () => {
     actAs('OrgAdmin')
     const home = await getOrganizationHome()
     expect(home.counts.boards).toBe(2)
-    expect(home.attention[0]?.boardName).toBe('Old plant')
+    expect(home.boards.map((board) => board.name)).toEqual(['Assembly', 'Packing'])
+    expect(home.attention.rows[0]?.boardName).toBe('Old plant')
     expect(requested().some((path) => path.includes('includeArchived=true'))).toBe(true)
   })
 
@@ -119,7 +174,7 @@ describe('getOrganizationHome', () => {
     actAs('OrgAdmin')
     await getOrganizationHome()
     const url = new URL(
-      requested().find((path) => path.includes('pageSize=5')) ?? '',
+      requested().find((path) => path.includes('pageSize=5') && path.includes('createdAt')) ?? '',
       'http://api.test',
     )
     expect(url.searchParams.get('phase')).toBe('Ideas')
@@ -128,38 +183,90 @@ describe('getOrganizationHome', () => {
     expect(url.searchParams.get('sortDirection')).toBe('asc')
   })
 
-  it('gives four tiles in order, three of them with no value and "Not tracked yet"', async () => {
+  it('gives Assigned to me, Critical & high and You created, in that order', async () => {
     seed()
     actAs('OrgAdmin')
     const { kpis } = await getOrganizationHome()
-    expect(kpis.map((kpi) => kpi.label)).toEqual([
-      'Open ideas',
-      'Awaiting review',
-      'Assigned to me',
-      'Completed · 30d',
+    expect(kpis.map((kpi) => [kpi.label, kpi.value, kpi.href])).toEqual([
+      ['Assigned to me', 7, null],
+      ['Critical & high', 12, '/ideas?priority=Critical&priority=High'],
+      ['You created', 5, null],
     ])
-    const untracked = kpis.filter((kpi) => kpi.value === null)
-    expect(untracked.map((kpi) => kpi.label)).toEqual([
-      'Open ideas',
-      'Awaiting review',
-      'Completed · 30d',
-    ])
-    for (const kpi of untracked) expect(kpi.detail).toBe('Not tracked yet')
   })
 
-  it('fills Assigned to me from the assigned count and its critical share', async () => {
+  it('details Assigned to me by its critical share, flagged only when there is one', async () => {
     seed()
     actAs('OrgAdmin')
-    const { kpis } = await getOrganizationHome()
-    const assigned = kpis.find((kpi) => kpi.label === 'Assigned to me')
-    expect(assigned?.value).toBe(7)
+    const assigned = (await getOrganizationHome()).kpis[0]
     expect(assigned?.detail).toBe('2 critical')
+    expect(assigned?.detailAlert).toBe(true)
+  })
+
+  it('lists what is assigned highest priority first, in either phase', async () => {
+    seed()
+    actAs('User')
+    const home = await getOrganizationHome()
+    expect(home.assigned.total).toBe(7)
+    expect(home.assigned.rows.map((row) => row.id)).toEqual(['i-2'])
+    const url = new URL(
+      requested().find((path) => path.includes('scope=assigned') && path.includes('pageSize=5')) ??
+        '',
+      'http://api.test',
+    )
+    expect(url.searchParams.get('sortBy')).toBe('priority')
+    expect(url.searchParams.get('sortDirection')).toBe('desc')
+    expect(url.searchParams.has('phase')).toBe(false)
+  })
+
+  it('lists the most upvoted Discovery ideas with the reader’s own vote', async () => {
+    seed()
+    actAs('User')
+    const [row] = (await getOrganizationHome()).topVoted
+    expect(row).toMatchObject({ id: 'i-3', upvotes: 9, hasUpvoted: true })
+    const url = new URL(
+      requested().find((path) => path.includes('sortBy=upvoteCount')) ?? '',
+      'http://api.test',
+    )
+    expect(url.searchParams.get('phase')).toBe('Ideas')
+    expect(url.searchParams.get('sortDirection')).toBe('desc')
+  })
+
+  it('has no current sprint, and reads no sprint issues, when none is Active', async () => {
+    seed({ sprints: [wireSprint({ state: 'Planned' })] })
+    actAs('User')
+    expect((await getOrganizationHome()).sprint).toBeNull()
+    expect(requested().some((path) => path.includes('sprintId='))).toBe(false)
+  })
+
+  it('shows the Active sprint ending first, with its issues by delivery status', async () => {
+    seed({
+      sprints: [
+        wireSprint({ sprintId: 'late', name: 'Late', endDate: '2026-10-20' }),
+        wireSprint({ sprintId: 'soon', name: 'Soon', endDate: '2026-10-05' }),
+      ],
+    })
+    answer(/sprintId=soon/, [
+      { ideaId: 'x', deliveryStatus: 'Development' },
+      { ideaId: 'y', deliveryStatus: 'Development' },
+      { ideaId: 'z', deliveryStatus: 'Complete' },
+    ])
+    actAs('User')
+    const { sprint } = await getOrganizationHome()
+    expect(sprint?.sprint.name).toBe('Soon')
+    expect(sprint?.backlog).toBe(4)
+    expect(sprint?.mix.map(({ status, count }) => [status.id, count])).toEqual([
+      ['Pending', 0],
+      ['Scoping', 0],
+      ['Development', 2],
+      ['Review', 0],
+      ['Complete', 1],
+    ])
   })
 
   it('maps an attention row, taking the status colour from the catalog', async () => {
     seed()
     actAs('OrgAdmin')
-    const [row] = (await getOrganizationHome()).attention
+    const [row] = (await getOrganizationHome()).attention.rows
     expect(row).toEqual({
       id: 'i-1',
       title: 'Slow conveyor',
@@ -168,20 +275,22 @@ describe('getOrganizationHome', () => {
       status: { id: 's-new', name: 'New', color: '#111111' },
       priority: 'Critical',
       createdAtUtc: '2026-09-01T10:00:00Z',
+      upvotes: 3,
+      hasUpvoted: false,
     })
   })
 
   it('draws a deleted status in the neutral colour under its own name', async () => {
     seed({ attention: [wireIdea({ statusId: 's-gone', statusName: 'Retired' })] })
     actAs('OrgAdmin')
-    const [row] = (await getOrganizationHome()).attention
+    const [row] = (await getOrganizationHome()).attention.rows
     expect(row?.status).toEqual({ id: 's-gone', name: 'Retired', color: 'var(--ink-faint)' })
   })
 
   it('leaves the board unnamed when it is not one of the organization’s boards', async () => {
     seed({ attention: [wireIdea({ boardId: 'b-unknown' })] })
     actAs('OrgAdmin')
-    expect((await getOrganizationHome()).attention[0]?.boardName).toBeNull()
+    expect((await getOrganizationHome()).attention.rows[0]?.boardName).toBeNull()
   })
 
   it.each([
@@ -193,7 +302,7 @@ describe('getOrganizationHome', () => {
   ])('reads a wire priority of %s as %s', async (wire, expected) => {
     seed({ attention: [wireIdea({ priority: wire })] })
     actAs('OrgAdmin')
-    expect((await getOrganizationHome()).attention[0]?.priority).toBe(expected)
+    expect((await getOrganizationHome()).attention.rows[0]?.priority).toBe(expected)
   })
 
   it('returns the organization’s statuses in the catalog’s order for the first-run strip', async () => {
@@ -234,12 +343,17 @@ describe('getPlatformHome', () => {
       if (id === failFor) throw new Error(`${id} failed`)
       const acme = id === 'o-acme'
       if (kind === 'boards') {
-        return acme
-          ? [{ boardId: 'b1', name: 'Assembly', swimlaneCount: 5 }]
-          : [
-              { boardId: 'b2', name: 'Packing', swimlaneCount: 3 },
-              { boardId: 'b3', name: 'Dock', swimlaneCount: 4 },
-            ]
+        const board = (boardId: string, name: string) => ({
+          boardId,
+          name,
+          isArchived: false,
+          ideaCount: 0,
+          swimlaneCount: 0,
+          createdAtUtc: '2026-08-01T00:00:00Z',
+          laneCounts: [],
+          topTags: [],
+        })
+        return acme ? [board('b1', 'Assembly')] : [board('b2', 'Packing'), board('b3', 'Dock')]
       }
       if (kind === 'ideas') return page(acme ? 10 : 4)
       if (kind === 'delivery') return acme ? [{ ideaId: 'd' }] : [{ ideaId: 'e' }, { ideaId: 'f' }]
@@ -274,38 +388,44 @@ describe('getPlatformHome', () => {
     })
   })
 
-  it('lists every board with the organization that owns it, in organization order', async () => {
+  it('lists each organization with its boards and figures, largest first by ideas', async () => {
     seed()
-    expect((await getPlatformHome()).boards).toEqual([
-      { id: 'b1', name: 'Assembly', organizationName: 'Acme', laneCount: 5 },
-      { id: 'b2', name: 'Packing', organizationName: 'Bolt', laneCount: 3 },
-      { id: 'b3', name: 'Dock', organizationName: 'Bolt', laneCount: 4 },
+    const { organizations } = await getPlatformHome()
+    expect(
+      organizations.map((o) => [
+        o.name,
+        o.boards.map((b) => b.name),
+        o.ideas,
+        o.issues,
+        o.users,
+        o.inactive,
+      ]),
+    ).toEqual([
+      ['Acme', ['Assembly'], 10, 1, 6, 1],
+      ['Bolt', ['Packing', 'Dock'], 4, 2, 9, 2],
     ])
   })
 
-  it('shows Organizations, Boards, Open ideas and Users tiles', async () => {
+  it('shows Organizations, Boards, Ideas and Users tiles', async () => {
     seed()
     const { kpis } = await getPlatformHome()
     expect(kpis.map((kpi) => [kpi.label, kpi.value, kpi.href])).toEqual([
       ['Organizations', 2, '/settings/organizations'],
       ['Boards', 3, null],
-      ['Open ideas', null, null],
+      ['Ideas', 14, null],
       ['Users', 15, '/settings/users'],
     ])
   })
 
-  it('details Organizations by how many are archived, and Users by how many are inactive', async () => {
+  it('details each tile: archived, organizations, delivery issues, inactive', async () => {
     seed()
     const { kpis } = await getPlatformHome()
-    expect(kpis[0]?.detail).toBe('1 archived')
-    expect(kpis[1]?.detail).toBe('across 2 organizations')
-    expect(kpis[3]?.detail).toBe('3 inactive')
-  })
-
-  it('says "not tracked yet" for Open ideas but still reports the total', async () => {
-    seed()
-    const open = (await getPlatformHome()).kpis[2]
-    expect(open?.detail).toBe('Not tracked yet · 14 in total')
+    expect(kpis.map((kpi) => kpi.detail)).toEqual([
+      '1 archived',
+      'across 2 organizations',
+      'plus 3 delivery issues',
+      '3 inactive',
+    ])
   })
 
   it('uses the singular for a single organization', async () => {
@@ -324,7 +444,7 @@ describe('getPlatformHome', () => {
     seed({ organizations: [], withArchived: 0 })
     const home = await getPlatformHome()
     expect(home.counts).toEqual({ organizations: 0, ideas: 0, issues: 0 })
-    expect(home.boards).toEqual([])
+    expect(home.organizations).toEqual([])
     expect(requested().filter((p) => p.startsWith('/organizations/'))).toEqual([])
   })
 
