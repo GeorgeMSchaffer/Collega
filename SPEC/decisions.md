@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-01 | Following an idea, and an in-app notification inbox | active | full below |
 | 2026-10-01 | The View As banner names only the target | active | full below |
 | 2026-10-01 | The View As candidate order, and F1 closes | active | full below |
 | 2026-09-30 | What the MVP release includes | active | full below |
@@ -100,6 +101,24 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-01 — Following an idea, and an in-app notification inbox
+
+**Decided by the user** during ad-hoc testing, answering the questions put before specifying it:
+
+1. **Anyone who can see an idea can follow or unfollow it for themselves**, Read Only included.
+   Following is a read and grants no access. Nobody adds or removes other people as followers.
+2. **The author and every assignee follow automatically** and can unfollow.
+3. **Followers are notified of** a new comment, a status change, promotion to an issue, and an edit or
+   reassignment (the last is a new event type). For comments and status changes this replaces the
+   "author + assignee" recipients in `20-feature-notifications.md`.
+4. **Delivery is an in-app inbox** — unread count and a list. Email comes later, once a provider is
+   configured; guaranteed delivery stays deferred.
+
+The inbox is a new screen, so it is comp-first. The follower list needs a schema change, which
+amends the S0.2 freeze a fifth time. Specified in slice 149, built after the user reviews the comp.
 
 ---
 
