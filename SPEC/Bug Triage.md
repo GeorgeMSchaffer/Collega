@@ -42,6 +42,5 @@ From the owner's ad-hoc testing on 2026-10-01, taken one at a time:
 2. **A custom field cannot be created.** Settings → Custom fields shows *Add the first field* and
    *Add New Field*, but neither does anything: `apps/web` has no create form or action, though the API
    serves `POST /organizations/{orgId}/field-definitions` (`contracts/field-definitions.md`). Slice 144.
-4. **Statuses cannot be reordered by drag and drop** on Settings → Statuses. The API serves
-   `POST /organizations/{organizationId}/statuses/reorder`. The shared table gains opt-in row reorder;
-   only Statuses uses it for now. Slice 145.
+5. **A focused card does not move with ← →.** `20-feature-client-ui.md` § Idea Cards item 7 says it
+   does; only the card's arrow buttons move it. Found in slice 142's work.
