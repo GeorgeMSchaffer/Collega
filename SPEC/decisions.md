@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-09-30 | What the MVP release includes | active | full below |
 | 2026-09-30 | The prompt-eval thresholds stand, confirmed against the v1 baseline | active | full below |
 | 2026-09-29 | How the cutover is run | active | full below |
 | 2026-09-29 | Board lanes reorder by dragging the header, with buttons as the fallback | active | full below |
@@ -42,7 +43,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-28 | The prompt-eval runner's fixture hash for `compare` is the catalog hash | active | full below |
 | 2026-09-28 | The Anthropic client reads no credential or endpoint from the environment | active | full below |
 | 2026-09-28 | The prompt-eval runner's open questions are answered | active | full below |
-| 2026-09-28 | The prompt-eval runner: what existing decisions already settle | superseded in part | full below |
+| 2026-09-28 | The prompt-eval runner: what existing decisions already settle | superseded in part | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | Starting a sprint, a single-Issue read, the Roadmap's sprint rows, and tag audit events | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | The comp R iteration's open questions are answered | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
 | 2026-09-28 | The S0.2 schema freeze is amended a fourth time, for tag colours | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
@@ -97,6 +98,27 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-09-30 — What the MVP release includes
+
+**Decided by the user**, answering the scope questions of the MVP release plan
+(`SPEC/sprints/sprint-13-mvp-release.md`).
+
+1. **The shared-store hardening is deferred past MVP.** The account-lockout denial of service and
+   the per-instance auth rate limiter stay as the tracker's "Known open risks" record them. Their
+   one fix, a shared store for both, is scheduled before the first real tenant onboards, not before
+   cutover: there are no production users yet, and the store is a new dependency.
+2. **The demo-seed routes stay, opt-in only.** `POST /demo-seed` and `/demo-seed/reset` get a
+   contract, and `90-definition-of-done.md` gains the exception: they answer only where
+   `COLLEGA_ALLOW_DEMO_SEED` is set, which Production never sets. Closes `05` §8 item 7.
+3. **F1's remaining non-contract differences are accepted** as deliberate: the export's three new
+   columns (4 cases) and the demo seed's delivery module moving ideas out of the Discovery board
+   list (14 cases), recorded in `tools/golden/src/accepted.ts`. The View As candidates' order and
+   grouping (3 cases) is **not** accepted — `contracts/view-as.md` requires grouping by
+   organization — and is fixed instead. With those, F1 closes (2026-09-11: fix, accept, or do
+   better).
 
 ---
 
@@ -458,38 +480,3 @@ completes the entry below, which said which key and who pays were open.
     both would otherwise sit in the same `.env` under the same name. It passes the key to the
     production adapter explicitly. This supersedes in part the entry below ("One key, under the name
     already fixed") and answer 4's variable name.
-
----
-
-## 2026-09-28 — The prompt-eval runner: what existing decisions already settle
-
-**Recorded, not newly decided.** Slice 113 specifies the runner (`20-feature-prompt-eval-runner.md`)
-as the phase the order of work below puts next. Each point here follows from text the user has
-already approved; everything else in that spec is marked *(pending answer)* until answered.
-
-- **It is TypeScript, and it gates v2.** v2 is not enabled until the runner reports, at minimum,
-  scope-gate precision/recall and field-mapping accuracy against the corpus extended with v2 cases
-  (2026-09-27 "Measurement comes first"; `20-feature-ai-idea-assist-v2.md` "Prerequisite:
-  measurement").
-- **The corpus is `tools/prompt-eval` as it stands, with its methodology**: repeats reported as
-  rates, only declared expectations scored, refused turns dropped mid-case, the coffee pair read
-  together, compare like with like (`tools/prompt-eval/README.md`, carried over by the 2026-09-13
-  F6 entry).
-- **It never runs in the hermetic gate.** Tests make no network call (`AGENTS.md`) and the provider
-  is never called from the test suite (`40-test-strategy.md` "AI Idea Assist"). A live run is a
-  separate command.
-- **One key, under the name already fixed.** `ANTHROPIC_API_KEY` (v1 rule 29); per-organization keys
-  stay unimplemented (tracker rule 30). Which key value it uses, and who pays, is open.
-  *Superseded in part 2026-09-28 (the answers entry above, answer 12): the runner reads its own
-  `PROMPT_EVAL_ANTHROPIC_API_KEY` and never `ANTHROPIC_API_KEY`. One key, and no per-organization
-  keys, still stand.*
-- **The `tools/*` conventions hold**: `node:test`, Node's own type stripping, no test framework
-  (`tools/arch/identity-chokepoint.test.ts` records why), and no new dependency without approval.
-
-## Earlier decisions
-
-Decisions made before this log existed are recorded in the documents they constrain —
-chiefly `SPEC/95-next-sprints.md` (sprint sequencing and the paydown-first rule),
-`SPEC/implementation-agent-tracker.md` (build state and standing rules), and the
-"Settled during charting" table in the conversion map. They are not restated here; this
-log starts 2026-08-31 and runs forward.
