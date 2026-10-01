@@ -50,6 +50,7 @@ export const BOARD_B = 'board-b'
 export const STATUS_1 = 'status-1'
 export const STATUS_2 = 'status-2'
 export const TYPE_A = 'type-a'
+export const TYPE_A2 = 'type-a2'
 export const IMPACT_A = 'impact-a'
 export const AUTHOR = 'author-1'
 
@@ -157,6 +158,8 @@ export type Harness = {
   added: Idea[]
   audit: ReturnType<typeof recordingAudit>
   notifications: NotificationInput[]
+  /** Who follows each idea; edit it to model an unfollow or a follower who is not the author. */
+  followersByIdea: Map<string, Set<string>>
   boardFilters: IdeaListFilter[]
   orgFilters: OrganizationIdeaListFilter[]
   /** Tags `getOrCreate` created, in order, with the colour the service picked for each. */
@@ -172,6 +175,10 @@ export function harness(options: {
   /** Tags that already exist; `getOrCreate` reuses them by case-insensitive name. */
   tags?: readonly TagSummary[]
   random?: RandomSource
+  /** Replaces the default followers (author and assignees) of the named ideas. */
+  followers?: Readonly<Record<string, readonly string[]>>
+  /** Overrides for the user-defined-field port, e.g. to make a save change a field value. */
+  fieldValues?: Partial<IdeaFieldValuesPort>
 }): Harness {
   const boardsById = new Map((options.boards ?? [board()]).map((b) => [b.boardId, b]))
   const ideasById = new Map((options.ideas ?? []).map((i) => [i.id, i]))
@@ -306,6 +313,14 @@ export function harness(options: {
       isDeleted: false,
     },
     {
+      id: TYPE_A2,
+      organizationId: ORG_A,
+      name: 'Experiment',
+      colorHex: null,
+      icon: null,
+      isDeleted: false,
+    },
+    {
       id: 'type-b',
       organizationId: ORG_B,
       name: 'Beta Type',
@@ -316,6 +331,7 @@ export function harness(options: {
   ]
   const businessImpacts: readonly BusinessImpactSummary[] = [
     { id: IMPACT_A, organizationId: ORG_A, name: 'Medium', color: '#888', isDeleted: false },
+    { id: 'impact-a2', organizationId: ORG_A, name: 'High', color: '#888', isDeleted: false },
     { id: 'impact-b', organizationId: ORG_B, name: 'Beta Impact', color: '#888', isDeleted: false },
   ]
 
@@ -334,7 +350,7 @@ export function harness(options: {
     },
   }
 
-  const fieldValues: IdeaFieldValuesPort = {
+  const baseFieldValues: IdeaFieldValuesPort = {
     async resolveAndValidate() {
       return []
     },
@@ -363,6 +379,8 @@ export function harness(options: {
       return { ok: true, stored: '' }
     },
   }
+
+  const fieldValues: IdeaFieldValuesPort = { ...baseFieldValues, ...options.fieldValues }
 
   const upvoteCounts: UpvoteCountsPort = {
     async countByIdea() {
@@ -396,7 +414,10 @@ export function harness(options: {
 
   // The author and assignees of a seeded idea follow it, as the migration's backfill makes true.
   const followersByIdea = new Map(
-    [...ideasById.values()].map((i) => [i.id, new Set([i.authorUserId, ...i.assigneeUserIds])]),
+    [...ideasById.values()].map((i) => [
+      i.id,
+      new Set(options.followers?.[i.id] ?? [i.authorUserId, ...i.assigneeUserIds]),
+    ]),
   )
   const followers: IdeaFollowersPort = {
     async add(rows) {
@@ -449,6 +470,7 @@ export function harness(options: {
     added,
     audit,
     notifications,
+    followersByIdea,
     boardFilters,
     orgFilters,
     createdTags,
