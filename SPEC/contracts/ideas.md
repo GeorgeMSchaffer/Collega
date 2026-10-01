@@ -236,6 +236,8 @@ Return full idea detail.
     `fieldValues` stays as the display projection (labels, `Yes`/`No`). Added 2026-09-27.
   - `upvoteCount`
   - `hasUpvoted` boolean for the current caller
+  - `isFollowing` boolean for the current caller (added 2026-10-01, [`contracts/following.md`](following.md))
+  - `followerCount` integer (added 2026-10-01)
   - `commentCount` integer
   - `author` object using the same assignee item shape, or `null` — who raised the idea
   - `createdAtUtc` timestamp
