@@ -1252,6 +1252,157 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
       'appeared still fails.',
     kind: 'value',
   },
+  {
+    cases: ['auth.viewas.candidates.siteadmin'],
+    path: 'body[].email',
+    decided: '2026-10-01',
+    reason:
+      'A deliberate improvement, not drift (SPEC/decisions.md 2026-10-01, "The View As ' +
+      'candidate order, and F1 closes"): `GET /auth/view-as/candidates` groups the Site ' +
+      "Admin's list by organization and orders it by organization title, organization id, " +
+      'last name, first name and email, as `SPEC/contracts/view-as.md` requires (slice 137). ' +
+      'The recording holds an ungrouped order nobody specified, so the candidate at a given ' +
+      'position is a different account. Accepted as the value at a position differing, which ' +
+      'is what `kind` says; the shape confines both sides to the seeded accounts, and a ' +
+      'candidate that went missing, changed type or came from nowhere in the seed still ' +
+      'fails. The list length is compared separately and still matches.',
+    shape: /^(orgadmin|user|user2|readonly)@(acme-robotics|blue-harbor)\.demo\.collega\.test$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.candidates.siteadmin'],
+    path: 'body[].firstName',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning: the ' +
+      'firstName of the candidate at each position. Accepted as that value differing, and ' +
+      'only that.',
+    shape: /^(Golden|Olivia|Maya|Rosa|Noah)$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.candidates.siteadmin'],
+    path: 'body[].lastName',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning: the ' +
+      'lastName of the candidate at each position. Accepted as that value differing, and only ' +
+      'that.',
+    shape: /^(Capture|Administer|Collaborator|Observer|Contributor)$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.candidates.siteadmin'],
+    path: 'body[].role',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning: the ' +
+      'role of the candidate at each position. Accepted as that value differing, and only ' +
+      'that.',
+    shape: /^(User|ReadOnly|OrgAdmin)$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.candidates.siteadmin'],
+    path: 'body[].organizationName',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning: the ' +
+      'organizationName of the candidate at each position. Accepted as that value differing, ' +
+      'and only that.',
+    shape: /^(Acme Robotics|Blue Harbor Logistics)$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.candidates.siteadmin'],
+    path: 'body[].organizationId',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning: the ' +
+      'organization id of the candidate at each position. Accepted as that value differing, ' +
+      'and only that. A GUID is labelled where it is first seen, so the placeholders move ' +
+      'with the accounts; the shape confines both sides to the labels this scenario mints for ' +
+      'an organization.',
+    shape:
+      /^<guid@(viewas\.candidates\.siteadmin\.body\[\d+\]\.organizationId|login\.orgadmin\.body\.user\.organizationId)>$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.candidates.orgadmin', 'auth.viewas.candidates.siteadmin'],
+    path: 'body[].userId',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning: the ' +
+      'user id of the candidate at each position. Accepted as that value differing, and only ' +
+      "that. The Org Admin's own list did not change order, but it is read after the Site " +
+      "Admin's, and a GUID is labelled where it is first seen, so its labels follow the Site " +
+      "Admin's new order; the shape confines both sides to the labels this scenario mints for " +
+      'a user.',
+    shape:
+      /^<guid@(viewas\.candidates\.siteadmin\.body\[\d+\]\.userId|me\.(user|readonly)\.body\.userId|login\.orgadmin\.body\.user\.userId)>$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.start'],
+    path: 'body.impersonating.email',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning, ' +
+      'reaching the View As start: the Site Admin impersonates the first candidate, which is ' +
+      'now the Org Admin of Acme Robotics where the recording holds its User. This is that ' +
+      "account's email. Accepted as that value differing, and only that.",
+    shape: /^(orgadmin|user|user2|readonly)@(acme-robotics|blue-harbor)\.demo\.collega\.test$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.start'],
+    path: 'body.impersonating.firstName',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning, ' +
+      'reaching the View As start: the Site Admin impersonates the first candidate, which is ' +
+      'now the Org Admin of Acme Robotics where the recording holds its User. This is that ' +
+      "account's firstName. Accepted as that value differing, and only that.",
+    shape: /^(Golden|Olivia|Maya|Rosa|Noah)$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.start'],
+    path: 'body.impersonating.lastName',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning, ' +
+      'reaching the View As start: the Site Admin impersonates the first candidate, which is ' +
+      'now the Org Admin of Acme Robotics where the recording holds its User. This is that ' +
+      "account's lastName. Accepted as that value differing, and only that.",
+    shape: /^(Capture|Administer|Collaborator|Observer|Contributor)$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.start'],
+    path: 'body.impersonating.role',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning, ' +
+      'reaching the View As start: the Site Admin impersonates the first candidate, which is ' +
+      'now the Org Admin of Acme Robotics where the recording holds its User. This is that ' +
+      "account's role. Accepted as that value differing, and only that.",
+    shape: /^(User|ReadOnly|OrgAdmin)$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.start'],
+    path: 'body.impersonating.userId',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning, ' +
+      'reaching the View As start: the Site Admin impersonates the first candidate, which is ' +
+      'now the Org Admin of Acme Robotics where the recording holds its User. This is that ' +
+      "account's userId. Accepted as that value differing, and only that.",
+    shape:
+      /^<guid@(viewas\.candidates\.siteadmin\.body\[\d+\]\.userId|me\.(user|readonly)\.body\.userId|login\.orgadmin\.body\.user\.userId)>$/,
+    kind: 'value',
+  },
 ]
 
 /** One entry as it applies to one of its cases - the unit staleness is reported at. */
