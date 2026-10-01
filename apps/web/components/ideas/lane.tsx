@@ -69,6 +69,7 @@ export function Lane({
   onOpen,
   reorder = null,
   cardDrag = null,
+  onKeyMove,
 }: {
   status: Status
   ideas: Idea[]
@@ -81,6 +82,7 @@ export function Lane({
   onOpen: (ideaId: string, trigger: HTMLButtonElement) => void
   reorder?: LaneReorder | null
   cardDrag?: CardDrag | null
+  onKeyMove?: ((ideaId: string, statusId: string) => void) | undefined
 }) {
   const leftRef = useRef<HTMLButtonElement>(null)
   const rightRef = useRef<HTMLButtonElement>(null)
@@ -217,6 +219,7 @@ export function Lane({
             dragging={cardDrag?.draggingId === idea.id}
             onDragStart={() => cardDrag?.onDragStart(idea.id)}
             onDragEnd={() => cardDrag?.onDragEnd()}
+            onKeyMove={onKeyMove ? (statusId) => onKeyMove(idea.id, statusId) : undefined}
           />
         ))
       )}

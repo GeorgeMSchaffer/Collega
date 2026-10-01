@@ -17,6 +17,9 @@ const CARD_DRAG_TYPE = 'application/x-collega-idea'
  * (`canMove`), and the drag image is the whole card so it reads as the card being carried. A
  * draggable card would swallow clicks on the title, the upvote and the arrows.
  *
+ * **The title is the card's keyboard focus target.** With it focused, ← → move the card one lane;
+ * the arrows act only there, so the card's other controls keep their own keys.
+ *
  * **The title is the button, not the whole card.** A card carries its own buttons, and a button
  * inside a button is invalid HTML that browsers repair by breaking one of the two.
  */
@@ -32,6 +35,7 @@ export function IdeaCard({
   dragging = false,
   onDragStart,
   onDragEnd,
+  onKeyMove,
 }: {
   idea: Idea
   boardId: string
@@ -44,6 +48,8 @@ export function IdeaCard({
   dragging?: boolean
   onDragStart?: () => void
   onDragEnd?: () => void
+  /** ← → on the focused title: the lane to move to. Absent where the card may not move. */
+  onKeyMove?: ((statusId: string) => void) | undefined
 }) {
   return (
     <div
@@ -78,7 +84,17 @@ export function IdeaCard({
         ) : null}
         <button
           type="button"
+          data-idea-title={idea.id}
           onClick={(event) => onOpen(event.currentTarget)}
+          onKeyDown={(event) => {
+            if (!canMove || !onKeyMove) return
+            if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
+            if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+            event.preventDefault()
+            // At the board's ends there is no lane that way, and the key does nothing.
+            const target = event.key === 'ArrowLeft' ? previousStatusId : nextStatusId
+            if (target && !event.repeat) onKeyMove(target)
+          }}
           className="text-left text-[13px] leading-snug font-semibold hover:text-accent-foreground hover:underline"
         >
           {idea.title}

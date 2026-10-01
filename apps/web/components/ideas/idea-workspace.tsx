@@ -1,7 +1,7 @@
 'use client'
 
 import { Alert, EffortBar, TagChip } from '@collega/design-system'
-import { useMemo, useOptimistic, useState, useTransition } from 'react'
+import { useLayoutEffect, useMemo, useOptimistic, useRef, useState, useTransition } from 'react'
 import {
   type Column,
   ConfirmDialog,
@@ -102,13 +102,19 @@ export function IdeaWorkspace({
       ),
   )
   const [moveError, setMoveError] = useState<string | null>(null)
-  const [, startCardMove] = useTransition()
+  const [movingCard, startCardMove] = useTransition()
+  // What the polite live region last said about a card move.
+  const [cardNews, setCardNews] = useState('')
+  // The card a keypress moved. It lands in another lane's list, so React remounts it and focus
+  // drops to <body>; the layout effect puts focus back on its title before paint. The flag stays up
+  // until the save settles, so a refusal that moves the card back is covered too.
+  const refocusCard = useRef<string | null>(null)
   // The card being dragged by its handle, and the lane it is over; both null outside a drag.
   const [draggingCard, setDraggingCard] = useState<{ id: string; statusId: string } | null>(null)
   const [overCardLane, setOverCardLane] = useState<string | null>(null)
 
   // The same `moveIdea` the card's arrows submit, so one rule decides what a move may do.
-  const moveCard = (ideaId: string, boardId: string, to: Status) => {
+  const moveCard = (ideaId: string, boardId: string, to: Status, announce?: string) => {
     const form = new FormData()
     form.set('boardId', boardId)
     form.set('ideaId', ideaId)
@@ -118,8 +124,31 @@ export function IdeaWorkspace({
       setCardLane({ ideaId, statusId: to.id, statusName: to.name })
       const result = await moveIdea({ error: null }, form)
       setMoveError(result.error)
+      if (announce && !result.error) setCardNews(`${announce} moved to ${to.name}`)
     })
   }
+
+  const keyMoveCard = (ideaId: string, toStatusId: string) => {
+    const to = lanes.find((lane) => lane.id === toStatusId)
+    const idea = laneRows.find((row) => row.id === ideaId)
+    // One move per keypress: a press while a save is in flight is dropped.
+    if (!board || !to || !idea || movingCard) return
+    refocusCard.current = ideaId
+    setCardNews('')
+    moveCard(ideaId, board.id, to, idea.title)
+  }
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the rows are the trigger, not an input
+  useLayoutEffect(() => {
+    const id = refocusCard.current
+    const active = document.activeElement
+    if (id && (active === null || active === document.body)) {
+      document.querySelector<HTMLButtonElement>(`[data-idea-title="${CSS.escape(id)}"]`)?.focus()
+    }
+  }, [laneRows])
+  useLayoutEffect(() => {
+    if (!movingCard) refocusCard.current = null
+  }, [movingCard])
 
   const moveLane = (from: number, to: number) => {
     if (!board || from === to) return
@@ -317,6 +346,11 @@ export function IdeaWorkspace({
               {reorderNews}
             </p>
           ) : null}
+          {board.canMove ? (
+            <p aria-live="polite" className="sr-only">
+              {cardNews}
+            </p>
+          ) : null}
           {board.canReorder && board.isArchived ? (
             <p id="why-reorder-lanes" className="m-0 text-xs italic text-muted-foreground">
               This board is archived, so its lanes keep their order until it is unarchived.
@@ -355,6 +389,7 @@ export function IdeaWorkspace({
                 upvoteDenial={engagement}
                 selectedId={selectedId}
                 onOpen={view}
+                onKeyMove={board.canMove ? keyMoveCard : undefined}
                 cardDrag={
                   board.canMove
                     ? ({
