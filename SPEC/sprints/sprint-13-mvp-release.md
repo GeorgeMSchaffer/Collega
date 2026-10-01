@@ -13,8 +13,7 @@ they are merged. Bug Triage `TODO` is empty (checked 2026-09-30).
 
 **Out of this sprint** (decided 2026-09-30, or already deferred): the shared store behind the auth
 rate limiter and the account lockout (before the first real tenant, not before cutover); the
-registration enumeration fix; Outcomes' backend; slice 116, the v1 prompt baseline (blocked on the
-evaluation key); status categories and status-change times (Home's "not tracked yet" tiles,
+registration enumeration fix; Outcomes' backend; idea assistant v2 (Sprint 12's baseline now gates it); status categories and status-change times (Home's "not tracked yet" tiles,
 `SPEC/ideas-inbox.md`); Wave G; anything in `SPEC/ideas-inbox.md`.
 
 **No UI/UX work.** No slice changes a screen.
