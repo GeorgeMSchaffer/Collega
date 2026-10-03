@@ -21,7 +21,7 @@ open work (the rows are in that file; each stays listed here until it closes):
 
 - **Sprint 9 — the conversion:** Wave F — **F1** closed 2026-10-01 (slice 141) and **F4** (cutover runbook) open; F2 and F5 closed 2026-09-29 (slice 134).
 - **Deployment (Vercel)** and **Branch inventory:** owner-side steps still owed.
-- **Authentication hardening:** tests written in slice 133, awaiting review.
+- **Authentication hardening:** tests merged in slice 133 (2026-09-30).
 - **Issues & Delivery:** Slice 2 (Outcomes, Roadmap) has no backend.
 - **Schema drift:** awaiting someone with access to run the three rebuild commands.
 - **Slice 117:** its carry-over of rule 33's shared-case comparison.
