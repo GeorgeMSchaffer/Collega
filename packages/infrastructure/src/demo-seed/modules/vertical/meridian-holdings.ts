@@ -1,3 +1,4 @@
+import { EFFORT_FIELD } from '../fields-scenario.js'
 import type { DemoOrganizationScenario } from '../scenario.js'
 
 export const MERIDIAN_HOLDINGS: DemoOrganizationScenario = {
@@ -5,6 +6,74 @@ export const MERIDIAN_HOLDINGS: DemoOrganizationScenario = {
   slug: 'meridian-holdings',
   description:
     'Diversified corporation running Project Lighthouse, its company-wide business-improvement programme.',
+  extraIdeaTypes: ['Quick Win'],
+  fieldConfig: {
+    fields: [
+      EFFORT_FIELD,
+      { name: 'Estimated annual saving', type: 'Number' },
+      { name: 'Process owner', type: 'Text' },
+      {
+        name: 'Change impact',
+        type: 'Dropdown',
+        options: ['Low', 'Moderate', 'High', 'Transformational'],
+      },
+      {
+        name: 'Business unit',
+        type: 'MultiSelect',
+        options: ['Finance', 'Operations', 'HR', 'IT', 'Procurement'],
+      },
+    ],
+    fieldsets: [
+      {
+        name: 'Sizing',
+        description: 'Effort and the saving it should buy.',
+        fields: ['Effort', 'Estimated annual saving'],
+      },
+      {
+        name: 'Business case',
+        description: 'Ownership and reach of the change.',
+        fields: ['Process owner', 'Change impact', 'Business unit'],
+      },
+    ],
+    typeFields: [
+      {
+        ideaType: 'Continuous Improvement',
+        fieldsets: ['Business case'],
+        fields: [{ name: 'Estimated annual saving', required: true }],
+      },
+      { ideaType: 'Process Revision', fieldsets: ['Sizing', 'Business case'], fields: [] },
+    ],
+    fieldValues: [
+      {
+        ideaIndex: 0,
+        values: {
+          'Estimated annual saving': '120000',
+          'Process owner': 'Dana Whitfield',
+          'Change impact': 'Moderate',
+          'Business unit': ['Finance', 'Procurement'],
+        },
+      },
+      {
+        ideaIndex: 1,
+        values: {
+          Effort: 'L',
+          'Estimated annual saving': '340000.50',
+          'Process owner': 'Priya Raman',
+          'Change impact': 'High',
+          'Business unit': ['Operations', 'IT', 'HR'],
+        },
+      },
+      { ideaIndex: 2, values: { 'Estimated annual saving': '45000', 'Change impact': 'Low' } },
+      {
+        ideaIndex: 3,
+        values: { Effort: 'XL', 'Change impact': 'Transformational', 'Business unit': ['IT'] },
+      },
+      {
+        ideaIndex: 4,
+        values: { 'Estimated annual saving': '78000', 'Process owner': 'Tom Ekwueme' },
+      },
+    ],
+  },
   sprintGoal:
     'Cut invoice exception handling time by 30% and land the vendor consolidation business case before the Q4 steering committee.',
   accounts: [

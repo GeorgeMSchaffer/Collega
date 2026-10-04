@@ -1,9 +1,69 @@
+import { EFFORT_FIELD } from '../fields-scenario.js'
 import type { DemoOrganizationScenario } from '../scenario.js'
 
 export const PINECONE_LABS: DemoOrganizationScenario = {
   title: 'Pinecone Labs',
   slug: 'pinecone-labs',
   description: 'B2B SaaS product team building a workflow automation platform for ops teams.',
+  extraIdeaTypes: ['Spike'],
+  fieldConfig: {
+    fields: [
+      EFFORT_FIELD,
+      { name: 'Story points', type: 'Number' },
+      { name: 'Customer-requested', type: 'Boolean' },
+      { name: 'Release target', type: 'Date' },
+      {
+        name: 'Affected component',
+        type: 'Dropdown',
+        options: ['API', 'Web app', 'Mobile app', 'Workflow engine', 'Billing'],
+      },
+      { name: 'Spec link', type: 'Url' },
+    ],
+    fieldsets: [
+      {
+        name: 'Sizing',
+        description: 'Effort and story points for planning.',
+        fields: ['Effort', 'Story points'],
+      },
+      {
+        name: 'Delivery details',
+        description: 'Where the change lands and when.',
+        fields: ['Release target', 'Affected component', 'Spec link'],
+      },
+    ],
+    typeFields: [
+      {
+        ideaType: 'Continuous Improvement',
+        fieldsets: ['Sizing'],
+        fields: [{ name: 'Customer-requested', required: true }],
+      },
+      { ideaType: 'Process Revision', fieldsets: ['Sizing', 'Delivery details'], fields: [] },
+    ],
+    fieldValues: [
+      { ideaIndex: 0, values: { Effort: 'M', 'Story points': '5', 'Customer-requested': 'true' } },
+      {
+        ideaIndex: 1,
+        values: {
+          Effort: 'L',
+          'Story points': '8',
+          'Release target': '2026-11-20',
+          'Affected component': 'Workflow engine',
+          'Spec link': 'https://docs.pinecone-labs.example/specs/run-history',
+        },
+      },
+      { ideaIndex: 2, values: { Effort: 'S', 'Story points': '3', 'Customer-requested': 'false' } },
+      {
+        ideaIndex: 3,
+        values: {
+          Effort: 'XL',
+          'Story points': '13',
+          'Release target': '2027-01-15',
+          'Affected component': 'API',
+        },
+      },
+      { ideaIndex: 4, values: { Effort: 'XS', 'Story points': '2', 'Customer-requested': 'true' } },
+    ],
+  },
   sprintGoal:
     'Let a customer admin connect their identity provider and invite a first teammate without contacting support.',
   accounts: [

@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import type { DemoFieldsScenario } from './fields-scenario.js'
 import { BRIGHTLINE_CREATIVE } from './vertical/brightline-creative.js'
 import { MERIDIAN_HOLDINGS } from './vertical/meridian-holdings.js'
 import { PINECONE_LABS } from './vertical/pinecone-labs.js'
@@ -104,6 +105,10 @@ export type DemoOrganizationScenario = {
   readonly accounts?: readonly DemoAccount[]
   /** Goal of the current sprint; absent, a generic goal built from the first board's focus. */
   readonly sprintGoal?: string
+  /** Idea types beyond `DEFAULT_IDEA_TYPES`; no scenario idea uses them, and they stay on all active fields. */
+  readonly extraIdeaTypes?: readonly string[]
+  /** Custom fields, fieldsets and which idea types use them; absent, the organization has none. */
+  readonly fieldConfig?: DemoFieldsScenario
 }
 
 /** The second demo board every organization gets, alongside the default `Ideas` board. */

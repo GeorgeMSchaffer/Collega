@@ -1,3 +1,4 @@
+import { EFFORT_FIELD } from '../fields-scenario.js'
 import type { DemoOrganizationScenario } from '../scenario.js'
 
 export const BRIGHTLINE_CREATIVE: DemoOrganizationScenario = {
@@ -5,6 +6,66 @@ export const BRIGHTLINE_CREATIVE: DemoOrganizationScenario = {
   slug: 'brightline-creative',
   description:
     'Full-service marketing agency covering brand, content, paid media and social for about twelve client accounts.',
+  extraIdeaTypes: ['Pitch'],
+  fieldConfig: {
+    fields: [
+      EFFORT_FIELD,
+      { name: 'Client', type: 'Text' },
+      {
+        name: 'Channel',
+        type: 'MultiSelect',
+        options: ['Email', 'Social', 'Paid search', 'Events', 'Print'],
+      },
+      { name: 'Budget', type: 'Number' },
+      { name: 'Campaign brief', type: 'Url' },
+    ],
+    fieldsets: [
+      {
+        name: 'Sizing',
+        description: 'Effort and budget for scoping.',
+        fields: ['Effort', 'Budget'],
+      },
+      {
+        name: 'Client context',
+        description: 'Who it is for and where it runs.',
+        fields: ['Client', 'Channel', 'Campaign brief'],
+      },
+    ],
+    typeFields: [
+      {
+        ideaType: 'Continuous Improvement',
+        fieldsets: ['Client context'],
+        fields: [{ name: 'Effort', required: true }],
+      },
+      { ideaType: 'Process Revision', fieldsets: ['Sizing', 'Client context'], fields: [] },
+    ],
+    fieldValues: [
+      {
+        ideaIndex: 0,
+        values: {
+          Effort: 'M',
+          Client: 'Northwind Outfitters',
+          Channel: ['Email', 'Social'],
+          'Campaign brief': 'https://briefs.brightline.example/northwind-spring',
+        },
+      },
+      {
+        ideaIndex: 1,
+        values: {
+          Effort: 'L',
+          Budget: '18500',
+          Client: 'Harlow & Finch',
+          Channel: ['Paid search', 'Events', 'Print'],
+        },
+      },
+      { ideaIndex: 2, values: { Effort: 'S', Client: 'Oakridge Dental', Channel: ['Email'] } },
+      {
+        ideaIndex: 3,
+        values: { Effort: 'XL', Budget: '42000', Channel: ['Social', 'Paid search'] },
+      },
+      { ideaIndex: 4, values: { Effort: 'XS', Client: 'Bramble Coffee Co.' } },
+    ],
+  },
   sprintGoal:
     'Cut first-round creative approval turnaround to two business days on the five largest retainers.',
   accounts: [
