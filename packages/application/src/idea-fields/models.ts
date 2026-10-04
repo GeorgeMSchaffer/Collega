@@ -1,6 +1,8 @@
 // Wire-facing read models and commands for Idea Type administration
 // (SPEC/30-Contracts.md "Idea Field Option Contracts", "Idea-Type Field Contracts").
 
+import type { EffectiveFieldSource } from '@collega/domain/idea-fields'
+
 /** One field in an Idea Type's curated selection. */
 export type IdeaTypeFieldItem = {
   readonly fieldDefinitionId: string
@@ -22,6 +24,7 @@ export type EffectiveFieldItem = {
   readonly fieldType: string
   readonly isRequired: boolean
   readonly options: readonly EffectiveFieldOptionItem[]
+  readonly source: EffectiveFieldSource
 }
 
 /** An Idea Type as returned by the admin surface. `fieldMode` is `AllActiveFields` or `Curated`;
@@ -37,6 +40,9 @@ export type IdeaTypeItem = {
   readonly icon: string | null
   readonly fieldMode: string
   readonly fields: readonly IdeaTypeFieldItem[]
+  /** Attached fieldsets, in attach order; `fieldsetIds` and `fieldsets` list the same sets. */
+  readonly fieldsetIds: readonly string[]
+  readonly fieldsets: readonly { readonly id: string; readonly name: string }[]
   readonly effectiveFields: readonly EffectiveFieldItem[]
 }
 

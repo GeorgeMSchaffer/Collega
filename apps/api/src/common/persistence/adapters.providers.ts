@@ -21,6 +21,7 @@ import {
   PrismaBusinessImpactRepository,
   PrismaCommentRepository,
   PrismaFieldDefinitionRepository,
+  PrismaFieldsetRepository,
   PrismaIdeaFieldValuesRepository,
   PrismaIdeaFollowerRepository,
   PrismaIdeaRepository,
@@ -92,6 +93,12 @@ const CONCRETE_ADAPTERS: Provider[] = [
     provide: PrismaFieldDefinitionRepository,
     useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
       new PrismaFieldDefinitionRepository(prisma, uow),
+    inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
+  },
+  {
+    provide: PrismaFieldsetRepository,
+    useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
+      new PrismaFieldsetRepository(prisma, uow),
     inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
   },
   {
@@ -300,6 +307,8 @@ const PORT_ALIASES: Provider[] = [
   { provide: PORT_TOKENS.IdeaFollowerRepository, useExisting: PrismaIdeaFollowerRepository },
 
   { provide: PORT_TOKENS.FieldDefinitionRepository, useExisting: PrismaFieldDefinitionRepository },
+
+  { provide: PORT_TOKENS.FieldsetRepository, useExisting: PrismaFieldsetRepository },
 
   { provide: PORT_TOKENS.IdeaTypeRepository, useExisting: PrismaIdeaTypeRepository },
 

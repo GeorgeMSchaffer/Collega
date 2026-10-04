@@ -44,7 +44,7 @@ type IdeaTypeFieldSelectionBody = {
   isRequired?: unknown
 }
 
-type SetIdeaTypeFieldsBody = { fields?: unknown }
+type SetIdeaTypeFieldsBody = { fields?: unknown; fieldsetIds?: unknown }
 
 type SetIdeaTypeAppearanceBody = {
   colorHex?: unknown
@@ -103,6 +103,22 @@ function fieldSelection(body: SetIdeaTypeFieldsBody): readonly IdeaTypeFieldSele
     displayOrder: optionalInt32(entry?.displayOrder) ?? 0,
     isRequired: entry?.isRequired === true,
   }))
+}
+
+/**
+ * `fieldsetIds` is optional like `fields`: omitted and an explicit `null` mean none. Anything
+ * else that is not an array is refused with the request-shape `400` rather than read as none,
+ * since that would detach every fieldset. A member that is not a GUID becomes the empty GUID, which
+ * the service refuses as an unknown fieldset.
+ */
+function fieldsetSelection(body: SetIdeaTypeFieldsBody): readonly string[] {
+  if (body.fieldsetIds === undefined || body.fieldsetIds === null) {
+    return []
+  }
+  if (!Array.isArray(body.fieldsetIds)) {
+    throw new RequestValidationError({ fieldsetIds: ['Fieldset Ids must be a list of GUIDs.'] })
+  }
+  return body.fieldsetIds.map(guidOrEmpty)
 }
 
 /**
@@ -172,8 +188,8 @@ export class IdeaTypesController {
   }
 
   /**
-   * Replaces the type's User-Defined Field selection. A non-empty list switches it to `Curated`;
-   * an empty list clears it back to `AllActiveFields`.
+   * Replaces the type's User-Defined Field and fieldset selection. Either list non-empty switches
+   * it to `Curated`; both empty clears it back to `AllActiveFields`.
    */
   @Put('organizations/:organizationId/idea-types/:ideaTypeId/fields')
   @HttpCode(204)
@@ -182,7 +198,12 @@ export class IdeaTypesController {
     @Param('ideaTypeId', UuidParamPipe) ideaTypeId: string,
     @Body() body: SetIdeaTypeFieldsBody,
   ): Promise<void> {
-    await this.ideaTypes.setFieldSelection(organizationId, ideaTypeId, fieldSelection(body))
+    await this.ideaTypes.setFieldSelection(
+      organizationId,
+      ideaTypeId,
+      fieldSelection(body),
+      fieldsetSelection(body),
+    )
   }
 
   /**

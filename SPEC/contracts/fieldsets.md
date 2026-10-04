@@ -101,7 +101,9 @@ Replace the fieldset's members and their order.
 - **Response:** `200`, the item shape.
 - **Errors:** `400` `fieldDefinitionIds` `"Field Definition Ids is required."` when absent or an
   explicit `null`; `400` `fieldDefinitionIds` when an id is not a GUID, is repeated, or names a field
-  definition that does not exist, is archived, or belongs to another organization; `401`; `403` as
+  definition that does not exist, is archived, or belongs to another organization (a malformed id
+  is read as one that does not exist), with `detail` `"A field may appear at most once in a fieldset."` for a
+  repeat and `"'<id>' is not an active custom field in this organization."` for the rest; `401`; `403` as
   under Roles; `404` `"Fieldset not found."`.
 - **Rules:**
   - The array is authoritative: listed fields are added or reordered, and a stored member left out

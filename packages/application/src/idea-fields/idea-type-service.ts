@@ -13,6 +13,7 @@
 import { randomUUID } from 'node:crypto'
 import { Role } from '@collega/domain/enums'
 import type { FieldDefinition } from '@collega/domain/fields'
+import type { Fieldset } from '@collega/domain/fieldsets'
 import {
   createIdeaType,
   type IdeaType,
@@ -38,6 +39,7 @@ import {
   ValidationError,
 } from '../common/index.js'
 import type { FieldDefinitionRepository } from '../fields/index.js'
+import type { FieldsetRepository } from '../fieldsets/index.js'
 import { toEffectiveFieldItem } from './effective-field-item.js'
 import type {
   CreateIdeaTypeCommand,
@@ -53,6 +55,7 @@ export class IdeaTypeService {
   constructor(
     private readonly ideaTypes: IdeaTypeRepository,
     private readonly fieldDefinitions: FieldDefinitionRepository,
+    private readonly fieldsets: FieldsetRepository,
     private readonly organizations: OrganizationExistenceLookup,
     private readonly unitOfWork: UnitOfWork,
     private readonly auditEvents: AuditEventWriter,
@@ -64,11 +67,11 @@ export class IdeaTypeService {
     this.ensureReadScope(organizationId)
     await this.ensureOrganizationExists(organizationId)
 
-    const [options, activeFields] = await Promise.all([
+    const [options, resolution] = await Promise.all([
       this.ideaTypes.listByOrganization(organizationId, includeDeleted),
-      this.fieldDefinitions.listByOrganization(organizationId, false),
+      this.loadResolutionInputs(organizationId),
     ])
-    return options.map((option) => toItem(option, activeFields))
+    return options.map((option) => toItem(option, resolution))
   }
 
   async create(organizationId: string, command: CreateIdeaTypeCommand): Promise<IdeaTypeItem> {
@@ -103,7 +106,7 @@ export class IdeaTypeService {
       now,
     )
 
-    return toItem(ideaType, await this.fieldDefinitions.listByOrganization(organizationId, false))
+    return toItem(ideaType, await this.loadResolutionInputs(organizationId))
   }
 
   async update(ideaTypeId: string, command: UpdateIdeaTypeCommand): Promise<IdeaTypeItem> {
@@ -141,10 +144,7 @@ export class IdeaTypeService {
       now,
     )
 
-    return toItem(
-      ideaType,
-      await this.fieldDefinitions.listByOrganization(ideaType.organizationId, false),
-    )
+    return toItem(ideaType, await this.loadResolutionInputs(ideaType.organizationId))
   }
 
   /**
@@ -219,14 +219,16 @@ export class IdeaTypeService {
     )
   }
 
-  /** Replaces an Idea Type's User-Defined Field selection (SPEC/20-feature-idea-type-fields.md).
-   * A non-empty selection switches the type to `Curated`; an empty selection clears it back to
-   * `AllActiveFields`. Every field must be active and in the same organization (else `400`); no
-   * field may repeat. `404` when the type does not exist in the organization. */
+  /** Replaces an Idea Type's User-Defined Field and fieldset selection
+   * (SPEC/20-feature-idea-type-fields.md). Either list non-empty switches the type to `Curated`;
+   * both empty clears it back to `AllActiveFields`. Every field must be active and in the same
+   * organization, every fieldset must exist in it (else `400`); none may repeat. `404` when the
+   * type does not exist in the organization. */
   async setFieldSelection(
     organizationId: string,
     ideaTypeId: string,
     fields: readonly IdeaTypeFieldSelectionInput[],
+    fieldsetIds: readonly string[] = [],
   ): Promise<void> {
     this.ensureAdminScope(organizationId)
 
@@ -260,6 +262,27 @@ export class IdeaTypeService {
       }
     }
 
+    const seenFieldsets = new Set<string>()
+    for (const fieldsetId of fieldsetIds) {
+      if (seenFieldsets.has(fieldsetId)) {
+        throw new ValidationError('One or more fields are invalid.', {
+          fieldsetIds: ['A fieldset may appear at most once in the selection.'],
+        })
+      }
+      seenFieldsets.add(fieldsetId)
+    }
+    const found = await this.fieldsets.getManyByIds(fieldsetIds)
+    const inOrganization = new Set(
+      found.filter((f) => f.organizationId === organizationId).map((f) => f.id),
+    )
+    for (const fieldsetId of fieldsetIds) {
+      if (!inOrganization.has(fieldsetId)) {
+        throw new ValidationError('One or more fields are invalid.', {
+          fieldsetIds: [`'${fieldsetId}' is not a fieldset in this organization.`],
+        })
+      }
+    }
+
     const now = this.clock.now()
     const links = selection.map((f) => ({
       id: randomUUID(),
@@ -273,6 +296,11 @@ export class IdeaTypeService {
       links,
       now,
       this.currentUser.userId,
+      fieldsetIds.map((fieldsetId, index) => ({
+        id: randomUUID(),
+        fieldsetId,
+        displayOrder: (index + 1) * SORT_ORDER_STEP,
+      })),
     )
 
     await this.ideaTypes.save(ideaType)
@@ -320,6 +348,14 @@ export class IdeaTypeService {
       `Idea Type '${ideaType.name}' appearance updated.`,
       now,
     )
+  }
+
+  private async loadResolutionInputs(organizationId: string): Promise<ResolutionInputs> {
+    const [activeFields, fieldsets] = await Promise.all([
+      this.fieldDefinitions.listByOrganization(organizationId, false),
+      this.fieldsets.listByOrganization(organizationId),
+    ])
+    return { activeFields, fieldsetsById: new Map(fieldsets.map((f) => [f.id, f] as const)) }
   }
 
   private async ensureOrganizationExists(organizationId: string): Promise<void> {
@@ -390,7 +426,21 @@ export class IdeaTypeService {
   }
 }
 
-function toItem(ideaType: IdeaType, activeFields: readonly FieldDefinition[]): IdeaTypeItem {
+type ResolutionInputs = {
+  readonly activeFields: readonly FieldDefinition[]
+  readonly fieldsetsById: ReadonlyMap<string, Fieldset>
+}
+
+function toItem(
+  ideaType: IdeaType,
+  { activeFields, fieldsetsById }: ResolutionInputs,
+): IdeaTypeItem {
+  const attached = [...ideaType.fieldsets]
+    .sort((a, b) => a.displayOrder - b.displayOrder)
+    .flatMap((link) => {
+      const fieldset = fieldsetsById.get(link.fieldsetId)
+      return fieldset ? [{ id: fieldset.id, name: fieldset.name }] : []
+    })
   return {
     ideaTypeId: ideaType.id,
     organizationId: ideaType.organizationId,
@@ -407,7 +457,11 @@ function toItem(ideaType: IdeaType, activeFields: readonly FieldDefinition[]): I
         displayOrder: f.displayOrder,
         isRequired: f.isRequired,
       })),
-    effectiveFields: resolveEffectiveFields(ideaType, activeFields).map(toEffectiveFieldItem),
+    fieldsetIds: attached.map((f) => f.id),
+    fieldsets: attached,
+    effectiveFields: resolveEffectiveFields(ideaType, activeFields, fieldsetsById).map(
+      toEffectiveFieldItem,
+    ),
   }
 }
 

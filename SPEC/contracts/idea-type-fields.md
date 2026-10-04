@@ -20,7 +20,7 @@ Replace the Idea Type's field selection.
   - `fields` array of `{ fieldDefinitionId (GUID), displayOrder (int), isRequired (bool) }`; every `fieldDefinitionId` must be an active field definition in the org, and each may appear at most once.
   - `fieldsetIds` optional array of fieldset GUIDs, in the order they apply; every id must name a fieldset in the org, each at most once. Omitted or `null` means none (so an existing request keeps its meaning). *(Added 2026-10-04.)*
 - **Response:** `204 No Content`.
-- **Errors:** `400` on unknown/archived field or duplicate field in the selection, and on an unknown (or other-organization) or duplicate fieldset id; `404` when the Idea Type does not exist in the organization.
+- **Errors:** `400` on unknown/archived field or duplicate field in the selection, and on an unknown (or other-organization) or duplicate fieldset id, keyed `fieldsetIds` (`"A fieldset may appear at most once in the selection."`, `"'<id>' is not a fieldset in this organization."`; a malformed id is read as unknown), and on a `fieldsetIds` that is present but not an array (`"Fieldset Ids must be a list of GUIDs."`, request-shape envelope); `404` when the Idea Type does not exist in the organization.
 - **Rules:**
   - Supplying a non-empty `fields` or `fieldsetIds` switches the type to `Curated`; both empty or absent clears it back to `AllActiveFields`.
   - The arrays are authoritative — omitted fields and fieldsets are removed, new ones added, existing ones updated in place. Detaching a fieldset keeps stored idea values.

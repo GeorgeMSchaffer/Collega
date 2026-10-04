@@ -5,6 +5,7 @@ import type {
   UnitOfWork,
 } from '@collega/application/common'
 import type { FieldDefinitionRepository } from '@collega/application/fields'
+import type { FieldsetRepository } from '@collega/application/fieldsets'
 import type {
   IdeaTypeRepository,
   OrganizationExistenceLookup,
@@ -20,8 +21,8 @@ import { IdeaTypesController } from './idea-types.controller.js'
  * D5's Idea Type surface: the org-scoped list, create, reorder, field selection and appearance,
  * plus update and soft-delete.
  *
- * `FieldDefinitionsModule` is not imported for the `FieldDefinitionRepository` this service needs
- * to check a curated selection - that is a persistence port `PersistenceModule` already provides,
+ * `FieldDefinitionsModule` is not imported for the `FieldDefinitionRepository` (nor `FieldsetsModule`
+ * for the `FieldsetRepository`) this service needs to check a curated selection - that is a persistence port `PersistenceModule` already provides,
  * not `FieldDefinitionService`. The two feature modules need each other's REPOSITORIES, never each
  * other's services, so neither imports the other (see `statuses.module.ts` on `BoardRepository`).
  */
@@ -34,6 +35,7 @@ import { IdeaTypesController } from './idea-types.controller.js'
       useFactory: (
         ideaTypes: IdeaTypeRepository,
         fieldDefinitions: FieldDefinitionRepository,
+        fieldsets: FieldsetRepository,
         organizations: OrganizationExistenceLookup,
         unitOfWork: UnitOfWork,
         auditEvents: AuditEventWriter,
@@ -43,6 +45,7 @@ import { IdeaTypesController } from './idea-types.controller.js'
         new IdeaTypeService(
           ideaTypes,
           fieldDefinitions,
+          fieldsets,
           organizations,
           unitOfWork,
           auditEvents,
@@ -52,6 +55,7 @@ import { IdeaTypesController } from './idea-types.controller.js'
       inject: [
         PORT_TOKENS.IdeaTypeRepository,
         PORT_TOKENS.FieldDefinitionRepository,
+        PORT_TOKENS.FieldsetRepository,
         PORT_TOKENS.OrganizationExistenceLookup,
         PORT_TOKENS.UnitOfWork,
         PORT_TOKENS.AuditEventWriter,
