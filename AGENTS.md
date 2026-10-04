@@ -171,7 +171,8 @@ to verify more, not less.
 **Comp P**, locked 2026-08-31 and made canonical 2026-09-03 (`SPEC/decisions.md`). Structure is
 locked. **Comp R** (`SPEC/mockups/comp-r-portico-prototype.html`, 2026-09-27) supersedes it for
 the list and detail pattern (drawer, list toolbar, row actions), the idea assistant, and the
-palette: **Terrazzo** by default, with a theme picker remembered per browser. Built on Tailwind v4 and
+palette: five themes with a picker remembered per browser — **Graphite** (dark) by default since
+2026-10-04, Terrazzo the bare `:root`. Built on Tailwind v4 and
 shadcn/ui used as intended — comp Q (`SPEC/mockups/comp-q-*.html`) is the reference rendering,
 and `SPEC/mockups/_build/build_q.py` carries the component map. The theme lives in `packages/design-system/src/globals.css`, carried
 over from `_build/q.css`; `apps/web/app/globals.css` only imports it and declares the app's

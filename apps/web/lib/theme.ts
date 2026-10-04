@@ -15,7 +15,8 @@ export const THEMES = [
 
 export type Theme = (typeof THEMES)[number]['value']
 
-export const DEFAULT_THEME: Theme = 'terrazzo'
+/** Graphite since 2026-10-04 (`SPEC/decisions.md`); a browser that picked a theme keeps it. */
+export const DEFAULT_THEME: Theme = 'graphite'
 
 export const THEME_COOKIE = 'collega-theme'
 
