@@ -164,7 +164,7 @@ export function IdeaForm({
     if (!draft.businessImpactId) found.businessImpactId = required('Business Impact')
     if (!draft.ideaTypeId) found.ideaTypeId = required('Idea Type')
     if (tagText.trim()) {
-      found.tagNames = `Pick a tag or choose Create for '${tagText.trim()}'.`
+      found.tagNames = `Press Enter in Tags to add '${tagText.trim()}', or clear the text.`
     }
     for (const field of customFields) {
       if (field.required && !draft.fields[field.id]?.trim())
@@ -477,9 +477,10 @@ type TagOption = { kind: 'tag'; tag: TagRef } | { kind: 'create'; name: string }
 
 /**
  * Tags (rules 2–8): pick from the organization's tags as you type, from two characters, or add a
- * new one. A name nothing matches is offered as "Create tag", which is an explicit choice — Enter
- * on unmatched text only highlights that option — and the tag is created when the idea is saved,
- * through `tagNames`. The API enforces the limits and uniqueness; this field only offers.
+ * new one. A name nothing matches is offered as "Create tag"; Enter adds the highlighted option, or
+ * the first one when nothing is highlighted, so one Enter turns typed text into a chip (decided
+ * 2026-10-04: the earlier highlight-first Enter left people saving with text they thought was
+ * added). The tag is created when the idea is saved, through `tagNames`. The API enforces the limits and uniqueness; this field only offers.
  * WAI-ARIA combobox with a listbox popup.
  */
 function TagsField({
@@ -546,12 +547,11 @@ function TagsField({
         if (options.length > 0) setActive(active <= 0 ? options.length - 1 : active - 1)
         break
       case 'Enter':
-        // Never submits the form from here, and never creates by itself: the first Enter on text
-        // with nothing highlighted highlights the first option, the second chooses it.
+        // Never submits the form from here. With nothing highlighted, Enter takes the first option:
+        // an existing tag when one matches, otherwise "Create tag".
         event.preventDefault()
         if (!expanded) break
-        if (active < 0) setActive(0)
-        else choose(active)
+        choose(active < 0 ? 0 : active)
         break
       case 'Escape':
         if (expanded) {
