@@ -5,15 +5,19 @@
 
 import type { IdeaTypeRepository } from '@collega/application/idea-fields'
 import type { IdeaTypeFieldMode } from '@collega/domain/enums'
-import type { IdeaType, IdeaTypeField } from '@collega/domain/idea-fields'
+import type { IdeaType, IdeaTypeField, IdeaTypeFieldset } from '@collega/domain/idea-fields'
 import type {
   idea_type_fields as IdeaTypeFieldRow,
+  idea_type_fieldsets as IdeaTypeFieldsetRow,
   idea_types as IdeaTypeRow,
 } from '../generated/prisma/index.js'
 import type { PrismaClient } from '../persistence/prisma-client.js'
 import type { PrismaUnitOfWork } from '../persistence/unit-of-work.js'
 
-type IdeaTypeRowWithFields = IdeaTypeRow & { idea_type_fields: IdeaTypeFieldRow[] }
+type IdeaTypeRowWithFields = IdeaTypeRow & {
+  idea_type_fields: IdeaTypeFieldRow[]
+  idea_type_fieldsets: IdeaTypeFieldsetRow[]
+}
 
 function fieldFromRow(row: IdeaTypeFieldRow): IdeaTypeField {
   return {
@@ -22,6 +26,15 @@ function fieldFromRow(row: IdeaTypeFieldRow): IdeaTypeField {
     fieldDefinitionId: row.field_definition_id,
     displayOrder: row.display_order,
     isRequired: row.is_required,
+  }
+}
+
+function fieldsetFromRow(row: IdeaTypeFieldsetRow): IdeaTypeFieldset {
+  return {
+    id: row.id,
+    ideaTypeId: row.idea_type_id,
+    fieldsetId: row.fieldset_id,
+    displayOrder: row.display_order,
   }
 }
 
@@ -38,6 +51,9 @@ function fromRow(row: IdeaTypeRowWithFields): IdeaType {
     fields: [...row.idea_type_fields]
       .sort((a, b) => a.display_order - b.display_order)
       .map(fieldFromRow),
+    fieldsets: [...row.idea_type_fieldsets]
+      .sort((a, b) => a.display_order - b.display_order)
+      .map(fieldsetFromRow),
     createdAtUtc: row.created_at_utc,
     updatedAtUtc: row.updated_at_utc,
     createdByUserId: row.created_by_user_id,
@@ -54,7 +70,7 @@ export class PrismaIdeaTypeRepository implements IdeaTypeRepository {
   async getById(ideaTypeId: string): Promise<IdeaType | null> {
     const row = await this.prisma.idea_types.findUnique({
       where: { id: ideaTypeId },
-      include: { idea_type_fields: true },
+      include: { idea_type_fields: true, idea_type_fieldsets: true },
     })
     return row ? fromRow(row) : null
   }
@@ -68,7 +84,7 @@ export class PrismaIdeaTypeRepository implements IdeaTypeRepository {
         organization_id: organizationId,
         ...(includeDeleted ? {} : { is_deleted: false }),
       },
-      include: { idea_type_fields: true },
+      include: { idea_type_fields: true, idea_type_fieldsets: true },
       orderBy: [{ sort_order: 'asc' }, { name: 'asc' }],
     })
     return rows.map(fromRow)
@@ -86,6 +102,13 @@ export class PrismaIdeaTypeRepository implements IdeaTypeRepository {
       this.unitOfWork.enqueue(
         this.prisma.idea_type_fields.createMany({
           data: ideaType.fields.map((f) => this.fieldWriteData(ideaType.id, f)),
+        }),
+      )
+    }
+    if (ideaType.fieldsets.length > 0) {
+      this.unitOfWork.enqueue(
+        this.prisma.idea_type_fieldsets.createMany({
+          data: ideaType.fieldsets.map((f) => this.fieldsetWriteData(ideaType.id, f)),
         }),
       )
     }
@@ -108,12 +131,36 @@ export class PrismaIdeaTypeRepository implements IdeaTypeRepository {
       }),
     )
 
-    const existing = await this.prisma.idea_type_fields.findMany({
-      where: { idea_type_id: ideaType.id },
-      select: { id: true },
-    })
+    // Deletes go first: a replaced selection arrives with fresh link ids for fields that stay, and
+    // the create would otherwise hit the unique (idea_type_id, field/fieldset) pair before the old
+    // row is gone.
+    const [existing, existingFieldsets] = await Promise.all([
+      this.prisma.idea_type_fields.findMany({
+        where: { idea_type_id: ideaType.id },
+        select: { id: true },
+      }),
+      this.prisma.idea_type_fieldsets.findMany({
+        where: { idea_type_id: ideaType.id },
+        select: { id: true },
+      }),
+    ])
     const existingIds = new Set(existing.map((f) => f.id))
     const nextIds = new Set(ideaType.fields.map((f) => f.id))
+    const existingFieldsetIds = new Set(existingFieldsets.map((f) => f.id))
+    const nextFieldsetIds = new Set(ideaType.fieldsets.map((f) => f.id))
+
+    for (const existingId of existingIds) {
+      if (!nextIds.has(existingId)) {
+        this.unitOfWork.enqueue(this.prisma.idea_type_fields.delete({ where: { id: existingId } }))
+      }
+    }
+    for (const existingId of existingFieldsetIds) {
+      if (!nextFieldsetIds.has(existingId)) {
+        this.unitOfWork.enqueue(
+          this.prisma.idea_type_fieldsets.delete({ where: { id: existingId } }),
+        )
+      }
+    }
 
     for (const field of ideaType.fields) {
       const data = this.fieldWriteData(ideaType.id, field)
@@ -125,10 +172,14 @@ export class PrismaIdeaTypeRepository implements IdeaTypeRepository {
         this.unitOfWork.enqueue(this.prisma.idea_type_fields.create({ data }))
       }
     }
-
-    for (const existingId of existingIds) {
-      if (!nextIds.has(existingId)) {
-        this.unitOfWork.enqueue(this.prisma.idea_type_fields.delete({ where: { id: existingId } }))
+    for (const fieldset of ideaType.fieldsets) {
+      const data = this.fieldsetWriteData(ideaType.id, fieldset)
+      if (existingFieldsetIds.has(fieldset.id)) {
+        this.unitOfWork.enqueue(
+          this.prisma.idea_type_fieldsets.update({ where: { id: fieldset.id }, data }),
+        )
+      } else {
+        this.unitOfWork.enqueue(this.prisma.idea_type_fieldsets.create({ data }))
       }
     }
   }
@@ -157,6 +208,14 @@ export class PrismaIdeaTypeRepository implements IdeaTypeRepository {
       field_definition_id: field.fieldDefinitionId,
       display_order: field.displayOrder,
       is_required: field.isRequired,
+    }
+  }
+  private fieldsetWriteData(ideaTypeId: string, link: IdeaTypeFieldset) {
+    return {
+      id: link.id,
+      idea_type_id: ideaTypeId,
+      fieldset_id: link.fieldsetId,
+      display_order: link.displayOrder,
     }
   }
 }
