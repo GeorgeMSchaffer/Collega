@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation'
 import { IdeaTypeEditForm } from '@/components/settings/idea-type-edit-form'
+import { IdeaTypeFieldsPicker } from '@/components/settings/idea-type-fields-picker'
 import { SettingsPage } from '@/components/settings/settings-page'
-import { getIdeaTypes } from '@/lib/data'
+import { getFieldDefinitions, getFieldsets, getIdeaTypes } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 
 export const metadata = { title: 'Edit idea type · Collega' }
@@ -22,17 +23,30 @@ export default async function EditIdeaTypePage({
   await requireCurrentUser()
 
   const { ideaTypeId } = await params
-  const ideaType = (await getIdeaTypes()).find((candidate) => candidate.id === ideaTypeId)
+  const [ideaTypes, fields, fieldsets] = await Promise.all([
+    getIdeaTypes(),
+    getFieldDefinitions(),
+    getFieldsets(),
+  ])
+  const ideaType = ideaTypes.find((candidate) => candidate.id === ideaTypeId)
   if (!ideaType) notFound()
 
   return (
     <SettingsPage
       title={`Edit ${ideaType.name}`}
       gate="idea-types"
-      lead="Renaming a type renames it everywhere it has been used. Which fields it asks for is set separately."
+      lead="Renaming a type renames it everywhere it has been used. Below it, choose which fields its ideas ask for."
     >
-      <div className="max-w-md">
-        <IdeaTypeEditForm ideaType={ideaType} />
+      <div className="flex flex-col gap-8">
+        <div className="max-w-md">
+          <IdeaTypeEditForm ideaType={ideaType} />
+        </div>
+        <section aria-labelledby="idea-type-fields" className="flex flex-col gap-3 border-t pt-6">
+          <h2 id="idea-type-fields" className="m-0 text-base font-semibold">
+            Fields on this type
+          </h2>
+          <IdeaTypeFieldsPicker ideaType={ideaType} fields={fields} fieldsets={fieldsets} />
+        </section>
       </div>
     </SettingsPage>
   )

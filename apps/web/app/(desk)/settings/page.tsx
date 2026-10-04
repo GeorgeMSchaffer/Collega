@@ -87,6 +87,11 @@ function sectionsFor(role: Role): Section[] {
         blurb: 'Extra questions attached to an idea type.',
       },
       {
+        href: '/settings/fieldsets',
+        title: 'Fieldsets',
+        blurb: 'Reusable groups of custom fields that idea types can share.',
+      },
+      {
         href: '/settings/tags',
         title: 'Tags',
         blurb: 'Every organization’s tags and their colours, read-only.',
@@ -132,6 +137,11 @@ function sectionsFor(role: Role): Section[] {
       href: '/settings/fields',
       title: 'Custom fields',
       blurb: 'Extra questions attached to an idea type.',
+    },
+    {
+      href: '/settings/fieldsets',
+      title: 'Fieldsets',
+      blurb: 'Reusable groups of custom fields that idea types can share.',
     },
     {
       href: '/settings/tags',
