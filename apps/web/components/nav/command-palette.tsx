@@ -21,7 +21,8 @@ export function CommandPalette() {
   const [active, setActive] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // The same items the sidebar offers this role: no Inbox for a Site Admin acting as themselves.
+  // The same items the sidebar offers this role: a Site Admin acting as themselves gets no Inbox
+  // and no organization workspace (`navItemVisible`).
   const matches = allNavItems.filter(
     (item) =>
       navItemVisible(item, role) && item.label.toLowerCase().includes(query.trim().toLowerCase()),

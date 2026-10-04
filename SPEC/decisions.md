@@ -122,9 +122,10 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 > Supersedes in part `20-feature-client-ui-revisions.md`'s "Site Admin … Boards, Ideas … list views
 > aggregate all organizations".
 
-**Decided by the user.** An App Admin (Site Admin) acting as themselves reaches boards, ideas and
-delivery only through View As, so the sidebar and the command palette no longer offer them Boards,
-Ideas, Sprint board, Backlog or Roadmap — those showed a 0 count and an empty screen. A group left
+**Decided by the user.** An App Admin (Site Admin) acting as themselves changes boards, ideas and
+delivery only through View As, and their own lists of them were empty, so the sidebar and the
+command palette no longer offer them Boards, Ideas, Sprint board, Backlog or Roadmap — those showed
+a 0 count and an empty screen. Home's platform roll-up still links to each board for reading. A group left
 empty (Delivery) loses its heading. Under View As the role is the target's, so the links return.
 The routes themselves are unchanged.
 
