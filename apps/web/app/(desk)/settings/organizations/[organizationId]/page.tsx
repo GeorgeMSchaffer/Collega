@@ -10,7 +10,7 @@ import {
 import Link from 'next/link'
 import { OrganizationEditForm } from '@/components/settings/organization-edit-form'
 import { SettingsPage } from '@/components/settings/settings-page'
-import { getMembersForOrganization, getOrganizationDetail } from '@/lib/data'
+import { getOrgAdminsForOrganization, getOrganizationDetail } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import type { Member } from '@/lib/types'
 
@@ -37,11 +37,10 @@ export default async function EditOrganizationPage({
   await requireCurrentUser()
 
   const { organizationId } = await params
-  const [organization, members] = await Promise.all([
+  const [organization, admins] = await Promise.all([
     getOrganizationDetail(organizationId),
-    getMembersForOrganization(organizationId),
+    getOrgAdminsForOrganization(organizationId),
   ])
-  const admins = members.filter((member) => member.role === 'OrgAdmin')
 
   return (
     <SettingsPage

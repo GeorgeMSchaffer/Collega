@@ -75,7 +75,7 @@ function refusalText(error: unknown): string {
  * **The organization is still created if the administrator fails.** They are two requests and the
  * API offers no transaction across them, so the alternative would be discarding a good organization
  * because an email was taken. The message says exactly that, and the organization is on the list
- * with an Add user control ready - which is the recoverable half of the two.
+ * with Add Org Admin on its page - which is the recoverable half of the two.
  */
 export async function createOrganization(
   _previous: CreateState,

@@ -35,10 +35,10 @@ const IDLE: CreateState = { error: null }
  * this form asks for what it must and leaves the rest to `OrganizationEditForm`, reached from the
  * list's Manage control. Until 2026-09-14 that form did not exist and this comment claimed it did.
  *
- * **The first administrator is asked for, and that is the important half.** A Site Admin cannot add
- * people to an organization they are not in, and View as can only target an existing member — so an
- * organization created empty cannot be populated by anybody. Offering the administrator here is
- * what keeps that state from being reachable; `createOrganization` explains the loop in full.
+ * **The first Org Admin is required** (2026-10-04): a Site Admin reaches organization content only
+ * through View As, which needs a member to act as, so an organization is never created without one.
+ * If an organization still ends up without an active admin, its page offers Add Org Admin;
+ * `createOrganization` explains the loop in full.
  */
 export function CreateOrganizationForm() {
   const [state, action, pending] = useActionState(createOrganization, IDLE)
