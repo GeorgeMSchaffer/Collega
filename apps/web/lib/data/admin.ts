@@ -137,6 +137,21 @@ export async function getMembers(): Promise<Member[]> {
 }
 
 /**
+ * An organization's Org Admins, filtered by the API (`role=OrgAdmin`) rather than here, so an
+ * organization with more users than one page is not misread as having none.
+ */
+export async function getOrgAdminsForOrganization(organizationId: string): Promise<Member[]> {
+  failIfRequested('getOrgAdminsForOrganization')
+
+  const page = await apiGet<WirePage<WireUserListItem>>(
+    'getOrgAdminsForOrganization',
+    apiPath`/organizations/${organizationId}/users?role=OrgAdmin&pageSize=${String(API_MAX_PAGE_SIZE)}`,
+  )
+
+  return page.items.map((item) => toMember(item, null))
+}
+
+/**
  * One organization's accounts, with their role and status.
  *
  * `/users` and not `/members`: the latter is the assignee picker's id-name-email view, open to every

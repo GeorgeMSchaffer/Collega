@@ -35,10 +35,10 @@ const IDLE: CreateState = { error: null }
  * this form asks for what it must and leaves the rest to `OrganizationEditForm`, reached from the
  * list's Manage control. Until 2026-09-14 that form did not exist and this comment claimed it did.
  *
- * **The first administrator is asked for, and that is the important half.** A Site Admin cannot add
- * people to an organization they are not in, and View as can only target an existing member — so an
- * organization created empty cannot be populated by anybody. Offering the administrator here is
- * what keeps that state from being reachable; `createOrganization` explains the loop in full.
+ * **The first Org Admin is required** (2026-10-04): a Site Admin reaches organization content only
+ * through View As, which needs a member to act as, so an organization is never created without one.
+ * If an organization still ends up without an active admin, its page offers Add Org Admin;
+ * `createOrganization` explains the loop in full.
  */
 export function CreateOrganizationForm() {
   const [state, action, pending] = useActionState(createOrganization, IDLE)
@@ -80,15 +80,10 @@ export function CreateOrganizationForm() {
           <fieldset className="m-0 flex flex-col gap-4 border-0 border-t p-0 pt-5">
             <legend className="sr-only">First administrator</legend>
             <div className="flex flex-col gap-1">
-              <h3 className="m-0 text-sm font-semibold">Its first administrator</h3>
+              <h3 className="m-0 text-sm font-semibold">Its first Org Admin</h3>
               <p className="m-0 text-sm text-muted-foreground">
-                Strongly recommended, and close to required in practice.{' '}
-                <strong className="font-semibold">
-                  You cannot add people to an organization you are not in
-                </strong>{' '}
-                — a Site Admin reaches organization content through View as, and View as can only
-                target somebody who is already a member. An organization created empty has nobody to
-                become that first member.
+                Required. You manage an organization&rsquo;s users, tags and fields by acting as its
+                Org Admin, so every organization starts with one.
               </p>
             </div>
 
@@ -99,6 +94,7 @@ export function CreateOrganizationForm() {
                   name="adminFirstName"
                   maxLength={PERSON_NAME_MAX_LENGTH}
                   autoComplete="off"
+                  required
                 />
               </Field>
               <Field htmlFor="admin-last-name" label="Last name">
@@ -107,16 +103,13 @@ export function CreateOrganizationForm() {
                   name="adminLastName"
                   maxLength={PERSON_NAME_MAX_LENGTH}
                   autoComplete="off"
+                  required
                 />
               </Field>
             </div>
 
-            <Field
-              htmlFor="admin-email"
-              label="Email"
-              hint="Leave blank to create the organization on its own. Everything else here is ignored if you do."
-            >
-              <Input id="admin-email" name="adminEmail" type="email" autoComplete="off" />
+            <Field htmlFor="admin-email" label="Email">
+              <Input id="admin-email" name="adminEmail" type="email" autoComplete="off" required />
             </Field>
 
             <Field
@@ -124,7 +117,13 @@ export function CreateOrganizationForm() {
               label="Initial password"
               hint="They are asked to change it the first time they sign in."
             >
-              <Input id="admin-password" name="adminPassword" type="text" autoComplete="off" />
+              <Input
+                id="admin-password"
+                name="adminPassword"
+                type="text"
+                autoComplete="off"
+                required
+              />
             </Field>
           </fieldset>
 
