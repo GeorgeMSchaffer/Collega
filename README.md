@@ -404,6 +404,18 @@ so a database holding this data must never be one that matters.
 | `user@blue-harbor.demo.collega.test` | `Abc123!` | Noah Contributor | User | Blue Harbor Logistics |
 | `user2@blue-harbor.demo.collega.test` | `Abc123!` | Maya Collaborator | User | Blue Harbor Logistics |
 | `readonly@blue-harbor.demo.collega.test` | `Abc123!` | Rosa Observer | Read Only | Blue Harbor Logistics |
+| `orgadmin@pinecone-labs.demo.collega.test` | `Abc123!` | Priya Raman | Org Admin | Pinecone Labs |
+| `user@pinecone-labs.demo.collega.test` | `Abc123!` | Daniel Okafor | User | Pinecone Labs |
+| `user2@pinecone-labs.demo.collega.test` | `Abc123!` | Hannah Lindqvist | User | Pinecone Labs |
+| `readonly@pinecone-labs.demo.collega.test` | `Abc123!` | Marcus Bell | Read Only | Pinecone Labs |
+| `orgadmin@brightline-creative.demo.collega.test` | `Abc123!` | Camille Durand | Org Admin | Brightline Creative |
+| `user@brightline-creative.demo.collega.test` | `Abc123!` | Dana Whitfield | User | Brightline Creative |
+| `user2@brightline-creative.demo.collega.test` | `Abc123!` | Theo Lindqvist | User | Brightline Creative |
+| `readonly@brightline-creative.demo.collega.test` | `Abc123!` | Julian Ellery | Read Only | Brightline Creative |
+| `orgadmin@meridian-holdings.demo.collega.test` | `Abc123!` | Elena Vasquez | Org Admin | Meridian Holdings |
+| `user@meridian-holdings.demo.collega.test` | `Abc123!` | Tomas Reyes | User | Meridian Holdings |
+| `user2@meridian-holdings.demo.collega.test` | `Abc123!` | Grace Nakamura | User | Meridian Holdings |
+| `readonly@meridian-holdings.demo.collega.test` | `Abc123!` | Henry Osei | Read Only | Meridian Holdings |
 
 ¹ The **configured Site Admin**, created from `SITE_ADMIN_EMAIL` / `SITE_ADMIN_PASSWORD` in `.env`
 (the values above are `.env.example`'s). Unlike the others it must change its password at first

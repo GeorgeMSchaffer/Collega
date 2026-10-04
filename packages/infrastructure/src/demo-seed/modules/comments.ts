@@ -49,8 +49,8 @@ export const commentsSeed: SeedModule = {
       )
 
       for (const board of scenario.boards) {
-        for (const entry of THREAD) {
-          const ideaScenario = IDEA_SCENARIOS[entry.ideaIndex]
+        for (const [threadIndex, entry] of THREAD.entries()) {
+          const ideaScenario = (board.ideas ?? IDEA_SCENARIOS)[entry.ideaIndex]
           if (ideaScenario === undefined) {
             throw new Error(`The demo thread references idea ${entry.ideaIndex}, which is absent.`)
           }
@@ -67,7 +67,7 @@ export const commentsSeed: SeedModule = {
               id,
               idea_id: ideaId,
               author_user_id: authorUserId,
-              body: entry.body,
+              body: board.commentBodies?.[threadIndex] ?? entry.body,
               created_at_utc: createdAt,
               updated_at_utc: createdAt,
             },

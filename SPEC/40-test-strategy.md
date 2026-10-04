@@ -32,8 +32,8 @@
 - post-MVP reset confirmation treats invalid, expired, superseded, and used tokens identically
 - post-MVP successful reset consumes the token, revokes all existing sessions, and does not issue a new session
 - post-MVP reset responses, logs, audit events, and analytics do not expose tokens or plaintext passwords
-- Development startup auto-seeds exactly 2 demo organizations
-- each demo organization includes one Org Admin and two User accounts initialized to `Abc123!` without forced password change; the global Site Admin remains organization-independent
+- Development startup auto-seeds 5 demo organizations (the fixture pair, Acme Robotics and Blue Harbor Logistics, plus three vertical ones)
+- each demo organization includes one Org Admin, two User accounts and one Read Only account initialized to `Abc123!` without forced password change; the global Site Admin remains organization-independent
 - each demo organization has exactly two seeded boards; every board has 11 ideas distributed `3/2/2/1/3` in canonical status order, with organization-consistent authors, assignees, tags, comments, and upvotes
 - organization CRUD follows Site Admin and Org Admin role boundaries
 - user CRUD is limited to the correct organization scope
