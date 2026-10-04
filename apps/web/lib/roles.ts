@@ -35,6 +35,16 @@ export function boardAdminDenial(role: Role): string | null {
 }
 
 /**
+ * Whether the role may create a board: an Org Admin or a User (`SPEC/decisions.md` 2026-10-04).
+ * Editing, archiving and lane configuration stay `boardAdminDenial`.
+ */
+export function boardCreateDenial(role: Role): string | null {
+  if (role === 'OrgAdmin' || role === 'User') return null
+  if (role === 'SiteAdmin') return 'Act as a member'
+  return 'Read-only account'
+}
+
+/**
  * Whether the role may engage - vote and comment - which is a different question from whether it
  * may edit. A Read Only account deliberately keeps engagement; a Site Admin has neither, being
  * outside the organization entirely.

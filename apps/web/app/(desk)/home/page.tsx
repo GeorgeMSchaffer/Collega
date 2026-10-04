@@ -32,7 +32,7 @@ import {
   type PlatformOrganization,
 } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
-import { currentUser } from '@/lib/session'
+import { boardCreateDenial, currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Home · Collega' }
 
@@ -309,22 +309,19 @@ function CurrentSprint({ current, className }: { current: HomeSprint; className:
 }
 
 /**
- * An organization with no boards. An Org Admin may create one; everyone else gets the same
- * explanation with the action shown and refused, per the "Denied is shown" rule.
+ * An organization with no boards. An Org Admin or a User may create one (2026-10-04); everyone else
+ * gets the same explanation with the action shown and refused, per the "Denied is shown" rule.
  */
 function NoBoards() {
-  const admin = currentUser().role === 'OrgAdmin'
+  const denial = boardCreateDenial(currentUser().role)
+  const admin = denial === null
   return (
     <EmptyState
       heading="No boards yet"
       action={
-        <GatedAction
-          id="why-create-board"
-          label="Create a board"
-          denial={admin ? null : 'Administrators only'}
-        >
+        <GatedAction id="why-create-board" label="Create a board" denial={denial}>
           {admin ? (
-            <Link href="/settings/boards/new" className={buttonVariants()}>
+            <Link href="/boards?board=new" className={buttonVariants()}>
               Create a board
             </Link>
           ) : undefined}
@@ -334,7 +331,7 @@ function NoBoards() {
       Your organization doesn&rsquo;t have any boards to show.{' '}
       {admin
         ? 'Create one to start collecting ideas: it comes with your organization’s statuses as its lanes, and you can change them later.'
-        : 'An Org Admin can create boards from Settings.'}
+        : 'An Org Admin or a contributor can create one from Boards.'}
     </EmptyState>
   )
 }

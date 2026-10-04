@@ -128,7 +128,7 @@ export class BoardService {
   }
 
   async create(organizationId: string, command: CreateBoardCommand): Promise<CreateBoardResult> {
-    this.ensureAdminScope(organizationId)
+    this.ensureCreateScope(organizationId)
     await this.ensureOrganizationExists(organizationId)
 
     const statusLookup = await this.loadStatusLookup(organizationId)
@@ -435,6 +435,22 @@ export class BoardService {
       return
     }
     throw new NotFoundError('Board not found.')
+  }
+
+  /**
+   * Who may create a board: an Org Admin or a User of that organization (`SPEC/decisions.md`
+   * 2026-10-04). Editing, archiving and reordering an existing board stay `ensureAdminScope`.
+   */
+  private ensureCreateScope(organizationId: string): void {
+    const role = this.requireAuthenticatedRole()
+    ensureNotDirectSiteAdmin(this.currentUser)
+
+    if (role === Role.OrgAdmin || role === Role.User) {
+      if (this.currentUser.organizationId === organizationId) return
+      throw new NotFoundError('Board not found.')
+    }
+
+    throw new ForbiddenError('You are not allowed to create boards in this organization.')
   }
 
   private ensureAdminScope(organizationId: string): void {
