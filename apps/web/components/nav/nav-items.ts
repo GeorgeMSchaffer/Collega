@@ -9,7 +9,7 @@
  * request from `lib/data/`; a module-level read would freeze them at import and would tie this
  * module to a fixture that Wave D deletes. What stays here is the shape.
  */
-import { hasInbox, type Role } from '@/lib/roles'
+import { hasInbox, hasOrgWorkspace, type Role } from '@/lib/roles'
 
 export type NavItem = {
   href: string
@@ -23,9 +23,23 @@ export type NavGroup = { label: string; items: NavItem[] }
 
 export const INBOX_HREF = '/inbox'
 
-/** A Site Admin acting as themselves has no inbox, so neither the sidebar nor the palette offers it. */
+/** Organization content: a Site Admin acting as themselves reaches it only through View As. */
+const ORG_WORKSPACE = new Set([
+  '/boards',
+  '/ideas',
+  '/delivery/sprint',
+  '/delivery/backlog',
+  '/delivery/roadmap',
+])
+
+/**
+ * Whether the sidebar and the palette offer `item` to `role`. A Site Admin acting as themselves has
+ * no inbox and no organization workspace, so they see Home and Settings only.
+ */
 export function navItemVisible(item: NavItem, role: Role): boolean {
-  return item.href !== INBOX_HREF || hasInbox(role)
+  if (item.href === INBOX_HREF) return hasInbox(role)
+  if (ORG_WORKSPACE.has(item.href)) return hasOrgWorkspace(role)
+  return true
 }
 
 export type NavCounts = { boards: number; ideas: number; backlog: number }

@@ -69,6 +69,15 @@ export function hasInbox(role: Role): boolean {
 }
 
 /**
+ * Whether the role works inside an organization's boards, ideas and delivery. A Site Admin acting
+ * as themselves does not — they reach that content through View As, where the role is the target's
+ * — so the workspace links are not offered to them (`SPEC/decisions.md` 2026-10-04).
+ */
+export function hasOrgWorkspace(role: Role): boolean {
+  return role !== 'SiteAdmin'
+}
+
+/**
  * Whether the role may reach the administration routes at all.
  *
  * This is a **page-level** gate, not a control-level one, and it reads differently on purpose: a

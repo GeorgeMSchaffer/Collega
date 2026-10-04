@@ -27,7 +27,9 @@
 
 ## NAVIGATION
 
-**Sidebar.** A **fixed left sidebar** (248px) on every signed-in screen, grouped:
+**Sidebar.** A **fixed left sidebar** (248px) on every signed-in screen, grouped. *Superseded in part
+2026-10-04 (`decisions.md` "The App Admin's sidebar offers Home and Settings only"): a Site Admin acting as
+themselves sees Home and Settings only — no Boards, Ideas or Delivery group.*
 - **Workspace** — Home, Boards, Ideas.
 - **Delivery** — Sprint board, Backlog, Roadmap (specified in `20-feature-issues-and-delivery.md`;
   *reconciled 2026-09-28:* the Sprint board and Backlog are built on the Slice 1 API, and the Sprint

@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-04 | The App Admin's sidebar offers Home and Settings only | active | full below |
 | 2026-10-04 | The Site Admin role is shown as App Admin | active | full below |
 | 2026-10-04 | An organization is created with its first Org Admin | active | full below |
 | 2026-10-04 | Three vertical demo organizations join Acme and Blue Harbor | active | full below |
@@ -46,7 +47,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-30 | What the MVP release includes | active | full below |
 | 2026-09-30 | The prompt-eval thresholds stand, confirmed against the v1 baseline | active | full below |
 | 2026-09-29 | How the cutover is run | active | full below |
-| 2026-09-29 | Board lanes reorder by dragging the header, with buttons as the fallback | active | full below |
+| 2026-09-29 | Board lanes reorder by dragging the header, with buttons as the fallback | active | [2026-09-29 to 2026-09-29](decisions/archive-2026-09-29-to-2026-09-29.md) |
 | 2026-09-29 | Contracts and wording written from the code | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-29 | Removing a lane moves its ideas | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-29 | The test harnesses reuse sessions; the auth rate limits stay | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
@@ -113,6 +114,20 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-04 — The App Admin's sidebar offers Home and Settings only
+
+> Supersedes in part `20-feature-client-ui-revisions.md`'s "Site Admin … Boards, Ideas … list views
+> aggregate all organizations".
+
+**Decided by the user.** An App Admin (Site Admin) acting as themselves changes boards, ideas and
+delivery only through View As, and their own lists of them were empty, so the sidebar and the
+command palette no longer offer them Boards, Ideas, Sprint board, Backlog or Roadmap — those showed
+a 0 count and an empty screen. Home's platform roll-up still links to each board for reading. A group left
+empty (Delivery) loses its heading. Under View As the role is the target's, so the links return.
+The routes themselves are unchanged.
 
 ---
 
@@ -481,33 +496,3 @@ taken now.
    domain is a later, separate change; `api.collega-ai.com` is not current.
 5. **A release goes through a sync branch**, as pull requests #22–#27 did: `dev`'s tip is pushed as
    `sync/<date>`, and pull requests from it go into `dev` and into `main`.
-
----
-
-## 2026-09-29 — Board lanes reorder by dragging the header, with buttons as the fallback
-
-**Decided by the user** (slice 130), keeping `20-feature-client-ui.md` "Drag-and-Drop: Reordering
-Columns" as written: a lane is reordered by dragging its column header, saved immediately on drop.
-
-- **Header drag is the control.** An Org Admin drags a lane by its header onto another lane; the
-  drop sends one `POST /boards/{boardId}/swimlanes/reorder` naming every lane with a dense `order`.
-  It uses native HTML drag and drop, as the Sprint board's cards do; no dependency is added.
-- **Left / right buttons on the header are the accessible fallback**, for the keyboard and screen
-  readers, matching the arrows that move a card one lane over. They need no new shortcut (answer
-  10 of "The comp R iteration's open questions are answered" rules shortcuts out). After a button
-  move, focus stays on the pressed arrow.
-- **Both paths behave the same:** the new order shows at once, the lane rail is `aria-busy` and
-  the arrows `aria-disabled` while the save is in flight, a polite live region announces the lane's
-  new position, and a refusal puts the lanes back with the API's message above them.
-- **Who sees them.** An Org Admin, and a Site Admin through View As. The arrows are **hidden** and
-  the header does not drag for other roles, under the Denied rule's per-row exception
-  (`20-feature-client-ui.md` "Denied is shown, not hidden"): the board page's *Edit board* is still
-  shown, disabled with its reason, so the capability is announced once at page level.
-- **On an archived board** the header does not drag, and the arrows are shown `aria-disabled`,
-  described by a visible line saying the lanes keep their order until the board is unarchived. The
-  lanes at either end are `aria-disabled` rather than `disabled`, so the pressed button keeps its
-  focus.
-
-The route is the one "Spec contradictions resolved" item 8 chose; that decision stands. This
-entry retires item 8's "`apps/web` does not call the reorder route yet" line, which is left as
-written with a status note under it.

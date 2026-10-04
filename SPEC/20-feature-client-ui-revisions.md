@@ -96,6 +96,9 @@ Client layout and interaction details should align to the mockup set in `SPEC/mo
 - The Settings landing page shows:
   - **My Profile** (all authenticated users): view/update personal info. The change-password form is embedded as an inline section — no standalone `/change-password` nav link or route is needed.
   - Role-scoped admin links — Site Admin: Organizations, Users, Boards & Statuses. Org Admin: Users and Boards & Statuses, own organization only. Member: My Profile only; no admin links rendered.
+- *Superseded in part 2026-10-04 (`decisions.md` "The App Admin's sidebar offers Home and Settings only"): a Site
+  Admin acting as themselves is no longer offered Boards, Ideas or the Delivery screens; they reach that content
+  through View As. The Users, Statuses and fields lists below still aggregate.*
 - Site Admin is not organization-owned. Its Boards, Ideas, Users, Statuses, and User-Defined Fields list views aggregate all organizations and identify each row's owning organization; no synthetic or selected organization membership is required for read access. Mutations remain target-organization scoped.
 - Link visibility is a UI convenience only; the API remains the authority for authorization.
 
