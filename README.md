@@ -174,7 +174,8 @@ That reports `0 cached` and is the only form worth quoting as evidence.
 
 Prisma owns the schema
 ([`packages/infrastructure/prisma/schema.prisma`](packages/infrastructure/prisma/schema.prisma)) —
-25 models, 9 enums, frozen at conversion slice S0.2.
+28 models, 14 enums. Frozen at conversion slice S0.2, and changed since only by the amendments
+recorded in [`SPEC/decisions.md`](SPEC/decisions.md).
 
 ```bash
 pnpm --filter @collega/infrastructure db:generate   # regenerate the client from the schema
@@ -349,8 +350,9 @@ tools/
   local/start.ts           `pnpm start` — database, API and web in one command
   golden                   Capture/replay harness — the conversion's regression detector
   boundaries               Architecture tests over the layer rules
+  arch                     Architecture assertions lint cannot express (the identity chokepoint)
   demo-shots               Screenshots the demo deck is built from
-  prompt-eval              The AI-assist evaluation corpus (data only; its runner is gone)
+  prompt-eval              The AI-assist evaluation corpus, its runner and the v1 baseline
 SPEC/                      Canonical specs — the source of truth
 SPEC/mockups/              UI comps; comp-q-*.html is the locked reference rendering
 ```
@@ -369,10 +371,11 @@ Business rules live in `domain` and `application` — never in controllers or Re
 ## Design
 
 The UI is locked to **comp P**, rendered as **comp Q** on Tailwind v4 + shadcn/ui. Structure is
-settled; the palette is open. `SPEC/mockups/comp-q-*.html` are self-contained pages you can open in
-a browser — they are the reference, and the theme in
-[`apps/web/app/globals.css`](apps/web/app/globals.css) is carried over from
-`SPEC/mockups/_build/q.css`. Change the palette in both or the comps stop being a reference.
+settled; the palette is five themes with a picker, **Graphite** (dark) by default.
+`SPEC/mockups/comp-q-*.html` are self-contained pages you can open in a browser — they are the
+reference, and the theme in
+[`packages/design-system/src/globals.css`](packages/design-system/src/globals.css) is carried over
+from `SPEC/mockups/_build/q.css`; `apps/web/app/globals.css` only imports it. Change the palette in both or the comps stop being a reference.
 
 If a page's layout is not settled, produce a throwaway comp in `SPEC/mockups/` for review before
 writing production React against an undecided design.
@@ -381,18 +384,30 @@ writing production React against an undecided design.
 
 ## Accounts
 
-`pnpm start` seeds two organizations with one account per role each, all sharing the same
-development-only password — `DEMO_PASSWORD` in
-[`packages/infrastructure/src/demo-seed/modules/scenario.ts`](packages/infrastructure/src/demo-seed/modules/scenario.ts).
-The three worth signing in as:
+`pnpm start` seeds two organizations with one account per role each. Sign in at
+http://localhost:3000/login.
 
-| | |
-|---|---|
-| `orgadmin@acme-robotics.demo.collega.test` | Creates, moves and administers |
-| `user@acme-robotics.demo.collega.test` | Creates and moves, subject to the board's own setting |
-| `readonly@acme-robotics.demo.collega.test` | Reads and upvotes; authoring is refused, with the reason shown |
+**Every demo account's password is `Abc123!`**, and none is asked to change it. It is development
+only and published here on purpose — `DEMO_PASSWORD` in
+[`packages/infrastructure/src/demo-seed/modules/scenario.ts`](packages/infrastructure/src/demo-seed/modules/scenario.ts) —
+so a database holding this data must never be one that matters.
 
-The full roster — every address, display name and role — is [`demo.md`](demo.md).
+| Role | Email | What it can do |
+|---|---|---|
+| Org Admin | `orgadmin@acme-robotics.demo.collega.test` | Creates, edits, moves and administers |
+| User | `user@acme-robotics.demo.collega.test` | Creates, edits and moves, subject to the board's own setting |
+| User | `user2@acme-robotics.demo.collega.test` | As above, a second contributor |
+| Read Only | `readonly@acme-robotics.demo.collega.test` | Reads, comments and upvotes; authoring is refused, with the reason shown |
+| Site Admin | `siteadmin@demo.collega.test` | Every organization; creates organizations and users directly, and changes org content only through View As |
+
+The second organization, Blue Harbor Logistics, has the same four roles at
+`@blue-harbor.demo.collega.test` (`orgadmin@`, `user@`, `user2@`, `readonly@`), same password.
+
+`pnpm start` also creates the **configured Site Admin** from `SITE_ADMIN_EMAIL` and
+`SITE_ADMIN_PASSWORD` in `.env` — `admin@collega.local` / `Ch4ngeMe!Now` with the example values.
+Unlike the demo accounts, it must change its password at first sign-in.
+
+The full roster — every address, display name and organization — is [`demo.md`](demo.md).
 
 ---
 

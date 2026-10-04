@@ -23,6 +23,6 @@ services:
     restart: unless-stopped
 
 # The database is the only service here. The API and the web app run on the host
-# under `pnpm start`, against `COLLEGA_DATABASE_URL` pointing at this container.
+# under `pnpm start`, against `DATABASE_URL` pointing at this container.
 volumes:
   postgres-data:
