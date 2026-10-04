@@ -25,9 +25,21 @@ Every account in the table below uses the password **`Abc123!`**, and none is fo
 | User | `user@blue-harbor.demo.collega.test` | Noah Contributor | Blue Harbor Logistics |
 | User | `user2@blue-harbor.demo.collega.test` | Maya Collaborator | Blue Harbor Logistics |
 | Read Only | `readonly@blue-harbor.demo.collega.test` | Rosa Observer | Blue Harbor Logistics |
+| Org Admin | `orgadmin@pinecone-labs.demo.collega.test` | Priya Raman | Pinecone Labs |
+| User | `user@pinecone-labs.demo.collega.test` | Daniel Okafor | Pinecone Labs |
+| User | `user2@pinecone-labs.demo.collega.test` | Hannah Lindqvist | Pinecone Labs |
+| Read Only | `readonly@pinecone-labs.demo.collega.test` | Marcus Bell | Pinecone Labs |
+| Org Admin | `orgadmin@brightline-creative.demo.collega.test` | Camille Durand | Brightline Creative |
+| User | `user@brightline-creative.demo.collega.test` | Dana Whitfield | Brightline Creative |
+| User | `user2@brightline-creative.demo.collega.test` | Theo Lindqvist | Brightline Creative |
+| Read Only | `readonly@brightline-creative.demo.collega.test` | Julian Ellery | Brightline Creative |
+| Org Admin | `orgadmin@meridian-holdings.demo.collega.test` | Elena Vasquez | Meridian Holdings |
+| User | `user@meridian-holdings.demo.collega.test` | Tomas Reyes | Meridian Holdings |
+| User | `user2@meridian-holdings.demo.collega.test` | Grace Nakamura | Meridian Holdings |
+| Read Only | `readonly@meridian-holdings.demo.collega.test` | Henry Osei | Meridian Holdings |
 
-Both organizations reuse the same four display names, so the email domain is the only thing telling
-two accounts called "Olivia Administer" apart. All four product roles are covered once per
+Acme and Blue Harbor reuse the same four display names, so the email domain is the only thing telling
+two accounts called "Olivia Administer" apart; the three vertical organizations have their own names. All four product roles are covered once per
 organization, which is the point — every permission perspective is reachable.
 
 Web at http://localhost:3000, API at http://localhost:3001 — or the next free ports, which `pnpm start`
@@ -57,12 +69,15 @@ resets an existing one.
 
 ## What the demo data contains
 
-Two organizations, each provisioned with the default statuses, idea types and business impacts:
+Five organizations, each provisioned with the default statuses, idea types and business impacts. Acme and Blue Harbor are the fixtures the golden corpus and E2E suite pin by slug; the other three are written for a market, with their own ideas, tags, comments, sprint and checklists:
 
 | Organization | Boards |
 |---|---|
 | Acme Robotics — *industrial robotics and automation manufacturer* | `Ideas` (assembly cell reliability), `Opportunities` (field service enablement) |
 | Blue Harbor Logistics — *regional freight and warehousing operator* | `Ideas` (warehouse throughput), `Opportunities` (route and delivery performance) |
+| Pinecone Labs — *an Agile software product team* | `Ideas` (product backlog), `Opportunities` (engineering health) |
+| Brightline Creative — *a marketing agency* | `Ideas` (client campaigns), `Opportunities` (agency operations) |
+| Meridian Holdings — *a corporate business-improvement programme, "Project Lighthouse"* | `Ideas` (process improvement), `Opportunities` (cost and change management) |
 
 Every board holds **11 ideas** spread `3/2/2/1/3` across the five swimlanes in canonical status order,
 with tags, priorities, due dates, assignees, mentions and upvotes varied across them. Three comments

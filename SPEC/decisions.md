@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-04 | Three vertical demo organizations join Acme and Blue Harbor | active | full below |
 | 2026-10-04 | The sign-in pitch shows the product, not the primary colour | active | full below |
 | 2026-10-04 | Users create boards; managing them stays Org Admin | active | full below |
 | 2026-10-04 | One Enter adds a tag on the idea form | active | full below |
@@ -109,6 +110,26 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-04 — Three vertical demo organizations join Acme and Blue Harbor
+
+**Decided by the user.** The generic demo data (the same eleven scenarios on every board, prefixed
+with the board's focus) is too thin to demo to a market. The seed now also creates three
+organizations written for a vertical: **Pinecone Labs** (an Agile software team), **Brightline
+Creative** (a marketing agency) and **Meridian Holdings** (a corporate business-improvement
+programme, "Project Lighthouse"). Each has two boards of 11 themed ideas (3/2/2/1/3 across the default
+statuses), themed tags, comments, a sprint with promoted issues and checklists, and one account per
+role - Org Admin, two Users, Read Only - on the same `orgadmin`/`user`/`user2`/`readonly` local parts.
+
+**Acme Robotics and Blue Harbor Logistics are kept unchanged** and stay first in the scenario: about
+60 golden fixtures, the E2E suite and `apps/web`'s test fixtures pin them by slug, and the corpus
+cannot be re-recorded. This **supersedes the "exactly 2 demo organizations" wording** in
+`10-requirements.md`, `20-feature-organizations-and-users.md` and `40-test-strategy.md`: the two
+fixture organizations keep that shape; the three verticals are additional demo data. Read Only
+accounts are seeded in every organization (they already were; the specs' "no Read Only account"
+wording was stale).
 
 ---
 

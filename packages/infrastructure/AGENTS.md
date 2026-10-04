@@ -15,7 +15,7 @@ ports declared in `packages/application/src/*/ports.ts`. May import `@collega/do
 | `src/generated/` | Prisma Client output — **generated, git-ignored, never edited** |
 | `prisma/schema.prisma` | The schema, frozen at S0.2 |
 | `prisma/migrations/` | Applied migrations |
-| `prisma/seed/` | `index.ts`, `compose.ts`, and `modules/` — the demo data, as code |
+| `src/demo-seed/` | `index.ts`, `compose.ts`, and `modules/` — the demo data, as code (`prisma/seed/` holds only the CLI wrappers) |
 | `test/` | Vitest, mirroring `src/` |
 
 ## Commands

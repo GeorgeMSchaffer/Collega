@@ -31,7 +31,7 @@ Users can securely access the application using organization-scoped accounts.
    - Any missing or blank required setting makes the host write a human-readable banner naming every missing key to stderr and exit with a non-zero code (no stack trace), rather than failing later inside the ORM or the seeder.
    - Stated in ASP.NET configuration-key terms until slice F6; the requirement is unchanged, only the mechanism's name.
 9. The seed Site Admin must be forced to change that initial credential on first login.
-10. In Development only, the startup seed must also create one Org Admin and two User accounts in each demo organization, each with demo password `Abc123!`. The global Site Admin remains outside all organizations.
+10. In Development only, the startup seed must also create one Org Admin, two User accounts and one Read Only account in each demo organization, each with demo password `Abc123!`. The global Site Admin remains outside all organizations.
     - Why `Abc123!`: it satisfies the password complexity policy in requirement #5. The earlier literal `abc123!` from `SPEC/10-requirements.md` had no uppercase character and was changed rather than exempted (`SPEC/60-spec-q-and-a-backlog.md` decision 16).
 11. Development demo users are not forced to change the demo password on first successful login.
 12. Password reset is required in P1 and uses admin-issued temporary passwords.
@@ -85,7 +85,7 @@ Users can securely access the application using organization-scoped accounts.
 - [ ] Seed Site Admin is created at first run
 - [ ] Seed Site Admin must change the environment-provided initial credential on first login
 - [ ] Startup fails fast with a clear error if `SITE_ADMIN_EMAIL` or `SITE_ADMIN_PASSWORD` is missing
-- [ ] Development startup seed creates one Org Admin and two User accounts per demo organization using `Abc123!`
+- [ ] Development startup seed creates one Org Admin, two User accounts and one Read Only account per demo organization using `Abc123!`
 - [ ] Development startup seeded demo users can log in with `Abc123!` without a forced password change
 - [ ] Admin-issued temporary password reset is implemented in P1
 - [ ] Temporary passwords are one-time display, expire after 24 hours, and force password change on first use
