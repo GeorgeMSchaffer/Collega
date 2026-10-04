@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-04 | The sign-in pitch shows the product, not the primary colour | active | full below |
 | 2026-10-04 | Users create boards; managing them stays Org Admin | active | full below |
 | 2026-10-04 | One Enter adds a tag on the idea form | active | full below |
 | 2026-10-04 | Graphite is the default theme | active | full below |
@@ -108,6 +109,18 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-04 — The sign-in pitch shows the product, not the primary colour
+
+**Decided by the user**, choosing option C of `SPEC/mockups/comp-login-alternatives.html`. The auth
+screens' left band was filled with the theme's primary; in Graphite, the default, that put a
+full-height block of bright amber beside a near-black form. The band now sits on the theme's
+**sidebar ground** with a hairline border, the primary is kept for the mark and the checkmarks, and
+**Sign in** adds a decorative **schematic board** (five lanes in status hues, placeholder cards,
+every colour a theme token). Register and the forced password change share the band without the
+board. The copy is unchanged.
 
 ---
 

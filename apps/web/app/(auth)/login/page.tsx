@@ -31,16 +31,13 @@ export default async function LoginPage({
   return (
     <>
       <AuthPitch
+        preview
         heading="Every idea your organization has, in one place."
         points={[
           'One account per person, scoped to your organization',
           'Boards, statuses and idea types you define yourself',
           <>
-            Keyboard-first: press{' '}
-            <Kbd className="border-primary-foreground/30 bg-primary-foreground/15 text-primary-foreground">
-              Ctrl K
-            </Kbd>{' '}
-            anywhere
+            Keyboard-first: press <Kbd>Ctrl K</Kbd> anywhere
           </>,
         ]}
       >
