@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { type DemoFieldsScenario, fixtureFields } from './fields-scenario.js'
+import type { DemoFieldsScenario } from './fields-scenario.js'
 import { BRIGHTLINE_CREATIVE } from './vertical/brightline-creative.js'
 import { MERIDIAN_HOLDINGS } from './vertical/meridian-holdings.js'
 import { PINECONE_LABS } from './vertical/pinecone-labs.js'
@@ -119,7 +119,6 @@ export const DEMO_ORGANIZATIONS: readonly DemoOrganizationScenario[] = [
     title: 'Acme Robotics',
     slug: 'acme-robotics',
     description: 'Industrial robotics and automation manufacturer.',
-    fieldConfig: fixtureFields('Safety related'),
     boards: [
       {
         name: 'Ideas',
@@ -141,7 +140,6 @@ export const DEMO_ORGANIZATIONS: readonly DemoOrganizationScenario[] = [
     title: 'Blue Harbor Logistics',
     slug: 'blue-harbor',
     description: 'Regional freight and warehousing operator.',
-    fieldConfig: fixtureFields('Customer impacting'),
     boards: [
       {
         name: 'Ideas',

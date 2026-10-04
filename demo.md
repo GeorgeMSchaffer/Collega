@@ -87,16 +87,15 @@ order is deterministic rather than a database tie-break.
 Authorship is limited to the Org Admin and the two `User` accounts — the Read Only account writes
 nothing, which is what makes it a genuine read-only perspective.
 
-Each organization also has custom fields and fieldsets (every one has a Dropdown **Effort**, XS to XL), attached to its idea types, with values on the first five ideas of the first board:
+The three vertical organizations also have custom fields and fieldsets (every one has a Dropdown **Effort**, XS to XL), attached to their idea types, with values on the first five ideas of the first board. Acme and Blue Harbor stay field-free, because the golden corpus pins them:
 
 | Organization | Fields | Fieldsets |
 |---|---|---|
-| Acme Robotics, Blue Harbor Logistics | Effort, Estimated hours, Target date, and a Boolean (Safety related / Customer impacting) | Sizing |
 | Pinecone Labs | Effort, Story points, Customer-requested, Release target, Affected component, Spec link | Sizing, Delivery details |
 | Brightline Creative | Effort, Client, Channel (multi-select), Budget, Campaign brief | Sizing, Client context |
 | Meridian Holdings | Effort, Estimated annual saving, Process owner, Change impact, Business unit (multi-select) | Sizing, Business case |
 
-Continuous Improvement uses a fieldset plus one direct field (required on the three vertical organizations, optional on Acme and Blue Harbor so the E2E suite can create ideas). On the verticals, Process Revision uses two fieldsets and a third idea type (Spike, Pitch, Quick Win) keeps all active fields, so the picker and the idea form show all three modes. Acme and Blue Harbor leave Process Revision on all active fields.
+Continuous Improvement uses a fieldset plus one required direct field. Process Revision uses two fieldsets, and a third idea type (Spike, Pitch, Quick Win) keeps all active fields, so the picker and the idea form show all three modes.
 
 ## Getting the data
 
