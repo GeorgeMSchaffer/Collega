@@ -112,17 +112,21 @@ function sortValue(board: BoardOverview, key: string): string | number {
  * `?board=new` to create — so a link opens what it names and Back closes it. The page reads the
  * same parameters to load the form's statuses when a form is open (`form`).
  *
- * Every permission here is a display decision from `adminDenial`; the API refuses on its own.
+ * Every permission here is a display decision from `adminDenial` (edit, archive) and
+ * `createDenial` (Add New Board); the API refuses on its own.
  */
 export function BoardsScreen({
   boards,
   adminDenial,
+  createDenial,
   form,
 }: {
   /** Every board, archived ones included: the Status filter is applied here. */
   boards: BoardOverview[]
   /** Why this role may not create, edit or archive boards, or null when it may. */
   adminDenial: string | null
+  /** Why this role may not create a board, or null when it may — a User may, unlike editing. */
+  createDenial: string | null
   /** The open form's seed values, loaded by the page; null when no form is open. */
   form: BoardFormData | null
 }) {
@@ -138,7 +142,8 @@ export function BoardsScreen({
 
   const requested = params.get('board')
   const open: { mode: DrawerMode; board: BoardOverview | null } | null = (() => {
-    if (requested === 'new') return isAdmin && form ? { mode: 'create', board: null } : null
+    if (requested === 'new')
+      return createDenial === null && form ? { mode: 'create', board: null } : null
     const board = boards.find((candidate) => candidate.id === requested)
     if (!board) return null
     // An archived board's settings are frozen (rule 13), so its edit link reads as its view.
@@ -192,7 +197,7 @@ export function BoardsScreen({
   )
 
   const addNew = (
-    <GatedAction id="why-new-board" label="Add New Board" denial={adminDenial}>
+    <GatedAction id="why-new-board" label="Add New Board" denial={createDenial}>
       <Button onClick={(event) => navigate('new', null, event.currentTarget)}>Add New Board</Button>
     </GatedAction>
   )
@@ -218,8 +223,8 @@ export function BoardsScreen({
 
       {boards.length === 0 ? (
         <EmptyState heading="No boards yet">
-          A new organization starts with one default board and five statuses. An organization
-          administrator adds more with Add New Board.
+          A new organization starts with one default board and five statuses. Org Admins and Users
+          add more with Add New Board.
         </EmptyState>
       ) : (
         <>

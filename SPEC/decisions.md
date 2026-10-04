@@ -28,6 +28,8 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-04 | Users create boards; managing them stays Org Admin | active | full below |
+| 2026-10-04 | One Enter adds a tag on the idea form | active | full below |
 | 2026-10-04 | Graphite is the default theme | active | full below |
 | 2026-10-01 | The Home comp is a visual guide; the spec wins | active | full below |
 | 2026-10-01 | The follow and inbox questions are answered | active | full below |
@@ -106,6 +108,37 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-04 — Users create boards; managing them stays Org Admin
+
+**Decided by the user**: everyone above Read Only in an organization may add ideas and boards. Ideas
+already worked that way. For boards, a **User** may now **create** one in their own organization;
+**editing, archiving, unarchiving and reordering lanes stay Org Admin only**. Creating includes
+the new board's first choices — its name, description, lanes and the user-moves setting — so a User
+makes those once, at creation; changing them afterwards is the Org Admin's. Read Only is refused as
+before. A Site Admin still creates boards and ideas only through View As (rule 25 stands; the user
+confirmed it the same day).
+
+The permission matrices in `05-product-definition.md` and `10-requirements.md` split *Create/manage
+boards* into *Create boards* and *Edit, archive and configure boards*. `contracts/boards.md` names no
+roles for the create route, so it is unchanged. The golden corpus recorded `boards.create.user` as
+403; it is now 201. The replay will report it as a status difference, and that is
+the intended record: `tools/golden/src/accepted.ts` refuses entries that excuse a status, because
+an authorization outcome must never be waved through silently.
+
+---
+
+## 2026-10-04 — One Enter adds a tag on the idea form
+
+**Decided by the user**, after typing a new tag, pressing Enter once and being refused on save.
+Slice 148 made Enter on unmatched text only *highlight* the *Create tag ‘…’* option, with a second
+Enter (or a click) to choose it; a highlighted option looks chosen, so the text stayed in the box
+and the save refused it. Now **Enter adds the highlighted option, or the first one when nothing is
+highlighted** — an existing tag when one matches by prefix, otherwise *Create tag* — as a chip at
+once. The save still refuses text left in the box (the owner's slice 148 decision stands), and its
+message now says to press Enter to add it or clear it.
 
 ---
 

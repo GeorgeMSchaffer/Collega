@@ -9,7 +9,7 @@ import {
   SWIMLANE_FLOOR,
 } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
-import { boardAdminDenial, currentUser } from '@/lib/session'
+import { boardAdminDenial, boardCreateDenial, currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Boards · Collega' }
 
@@ -66,10 +66,13 @@ export default async function BoardsPage({ searchParams }: { searchParams: Promi
 
   const search = await searchParams
   const adminDenial = boardAdminDenial(currentUser().role)
+  const createDenial = boardCreateDenial(currentUser().role)
   // One request for every board, archived ones included: the Status filter, sorting and paging all
   // happen in the client, and the lane counts, top tags and creator arrive on each list item.
   const boards = await getBoardOverviews({ includeArchived: true })
-  const form = adminDenial === null ? await formFor(search, boards) : null
+  // Creating is open to a User too; editing an existing board is not.
+  const formDenial = first(search.board) === 'new' ? createDenial : adminDenial
+  const form = formDenial === null ? await formFor(search, boards) : null
 
   return (
     <>
@@ -77,7 +80,12 @@ export default async function BoardsPage({ searchParams }: { searchParams: Promi
           an idea is always raised against a board. */}
       <Topbar title={<b>Boards</b>} />
       <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
-        <BoardsScreen boards={boards} adminDenial={adminDenial} form={form} />
+        <BoardsScreen
+          boards={boards}
+          adminDenial={adminDenial}
+          createDenial={createDenial}
+          form={form}
+        />
       </main>
     </>
   )

@@ -53,7 +53,8 @@ Collega is a collaboration and project management tool for submitting, tracking,
 | Manage users (all orgs) | ✓ | | | |
 | Manage users (own org) | ✓ | ✓ | | |
 | Import users by CSV (authorized orgs) | ✓ | ✓ | | |
-| Create/manage boards | ✓ | ✓ | | |
+| Create boards | ✓ | ✓ | ✓ | |
+| Edit, archive and configure boards | ✓ | ✓ | | |
 | Manage statuses | ✓ | ✓ | | |
 | Manage Idea Type and Business Impact options | ✓ | ✓ | | |
 | View boards and ideas | ✓ | ✓ | ✓ | ✓ |

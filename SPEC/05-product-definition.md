@@ -58,7 +58,8 @@ Canonical source: `SPEC/10-requirements.md`.
 | Manage users (all orgs) | ✓ | | | |
 | Manage users (own org) | ✓ | ✓ | | |
 | Import users by CSV | ✓ | ✓ | | |
-| Create/manage boards | ✓\* | ✓ | | |
+| Create boards | ✓\* | ✓ | ✓ | |
+| Edit, archive and configure boards | ✓\* | ✓ | | |
 | Manage statuses | ✓\* | ✓ | | |
 | Manage Idea Type / Business Impact options | ✓\* | ✓ | | |
 | Manage user-defined fields | ✓\* | ✓ | | |
