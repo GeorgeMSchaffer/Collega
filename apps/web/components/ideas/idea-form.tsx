@@ -480,7 +480,8 @@ type TagOption = { kind: 'tag'; tag: TagRef } | { kind: 'create'; name: string }
  * new one. A name nothing matches is offered as "Create tag"; Enter adds the highlighted option, or
  * the first one when nothing is highlighted, so one Enter turns typed text into a chip (decided
  * 2026-10-04: the earlier highlight-first Enter left people saving with text they thought was
- * added). The tag is created when the idea is saved, through `tagNames`. The API enforces the limits and uniqueness; this field only offers.
+ * added). The tag is created when the idea is saved, through `tagNames`.
+ * The API enforces the limits and uniqueness; this field only offers.
  * WAI-ARIA combobox with a listbox popup.
  */
 function TagsField({
@@ -550,7 +551,11 @@ function TagsField({
         // Never submits the form from here. With nothing highlighted, Enter takes the first option:
         // an existing tag when one matches, otherwise "Create tag".
         event.preventDefault()
-        if (!expanded) break
+        // A list closed with Escape reopens, so the refusal's "press Enter" always does something.
+        if (!expanded) {
+          setOpen(true)
+          break
+        }
         choose(active < 0 ? 0 : active)
         break
       case 'Escape':
