@@ -11,7 +11,9 @@
 > - **Decisions:** 2026-09-27 "The API sends the custom field list";
 >   2026-09-04 "The idea-type badge moves to the tag row on swimlane cards"
 
-> **Model note (2026-08-10 rewrite).** The reusable **Field Set** entity this spec once proposed as the indirection between idea types and fields was **superseded by direct type→field mapping** (interview-resolved — see Design Decisions): fields attach straight to an `IdeaType`, with no separate "field set" concept. Renamed from `20-feature-idea-type-field-sets.md`; all cross-references were updated. Where this document says "the type's fields," it means the type's directly-mapped field selection.
+> **Superseded 2026-10-04 (`SPEC/decisions.md`, "Fieldsets: reusable groups of fields, attached to idea types").** A reusable **fieldset** entity now exists: a type selects individual fields *and* fieldsets, as live references. The note below records the 2026-08-10 position and is kept for history; the table, Non-Goals and resolution algorithm in this document are updated to match.
+>
+> **Model note (2026-08-10 rewrite, superseded).** The reusable **Field Set** entity this spec once proposed as the indirection between idea types and fields was **superseded by direct type→field mapping** (interview-resolved — see Design Decisions): fields attach straight to an `IdeaType`, with no separate "field set" concept. Renamed from `20-feature-idea-type-field-sets.md`; all cross-references were updated. Where this document says "the type's fields," it means the type's directly-mapped field selection.
 
 ## Overview
 
@@ -30,7 +32,7 @@ Today every idea in an organization shows the *same* set of User-Defined Fields 
 |---|---|
 | Core pain being solved | **Form clutter** — hide UDFs irrelevant to the type. Not new type-specific fields, not scaffolding, not reporting. |
 | Vary fields on which axis | **Idea Type** (not board, not team) |
-| Field↔type wiring | **Direct mapping** — a new `IdeaTypeField` link attaches org fields straight to the type. No reusable "field set" intermediary. |
+| Field↔type wiring | **Direct mapping plus fieldsets** — an `IdeaTypeField` link attaches an org field straight to the type (with a per-type required flag), and an `IdeaTypeFieldset` link attaches a reusable **fieldset**, an ordered group of org fields, as a live reference. Fieldsets added 2026-10-04; the 2026-08-10 "no field-set intermediary" position is superseded. |
 | Do types own their own *new* fields? | **No** — mapping only *selects from* the existing org UDF pool. The pool stays single and shared. |
 | Idea type mutability | **Immutable at creation** for regular users. **Admin-only "reassign type"** break-glass (P1) rescues a mis-typed or stranded idea, reusing the archived-value mechanism. |
 | Type visual identity | Type gains **color + icon**, rendered as a badge on cards, the ideas list, and idea detail (reuses the status color picker). |
@@ -63,7 +65,7 @@ Today every idea in an organization shows the *same* set of User-Defined Fields 
 ## Non-Goals
 
 - **Types owning their own distinct *new* fields.** The org UDF pool stays single and shared; types only *select* from it. (Pain is clutter, not missing capture.)
-- **A reusable field-set entity.** Rejected in favor of direct mapping; the marginal reuse benefit didn't justify a second admin surface and a new concept. (Reuse of a *selection* across types is a possible P2 "copy fields from another type" convenience, not a shared entity.)
+- **Per-set overrides and nested sets.** *(Fieldsets themselves are in scope since 2026-10-04.)* A fieldset has no required override of its own and cannot contain another fieldset; the fields it contributes use each field's global `isRequired`.
 - **Description scaffolding / default field values / prefilled content.** Mapping controls visibility and required-ness only.
 - **Editable idea type after creation for regular users.** Immutability is a hard v1 constraint; the admin reassign hatch is the only exception.
 - **Type carrying a default board / workflow / assignees.** Type = field selection + badge. Not "workflow types."
@@ -142,16 +144,21 @@ The type↔field association, in the same file. **Per-type required-ness and ord
 One function — `ResolveEffectiveFields(ideaType) → IReadOnlyList<(FieldDefinition field, bool required)>` — is the single source of truth for the idea form, the validator, and the detail projection. It resolves an idea's `IdeaType` even if the *type* is soft-deleted (archiving the type doesn't change an existing idea's schema):
 
 1. **`FieldMode == AllActiveFields`** → effective fields = **all active** org `FieldDefinition`s, ordered by global `DisplayOrder` then `Name`, `required = FieldDefinition.IsRequired`.
-2. **`FieldMode == Curated`** → effective fields = the type's `IdeaTypeField` links **whose `FieldDefinition` is active**, ordered by `IdeaTypeField.DisplayOrder` then the field's `Name`, `required = IdeaTypeField.IsRequired`.
-3. A soft-deleted `FieldDefinition` never appears in either branch, even if a `Curated` link still references it (link retained, filtered at resolution).
+2. **`FieldMode == Curated`** → effective fields are, in this order: (a) the type's `IdeaTypeField` links **whose `FieldDefinition` is active**, ordered by `IdeaTypeField.DisplayOrder` then the field's `Name`, `required = IdeaTypeField.IsRequired`; then (b) for each `IdeaTypeFieldset` link in `DisplayOrder`, that fieldset's members in their `DisplayOrder` then the field's `Name`, skipping inactive fields, `required = FieldDefinition.IsRequired` (global; a fieldset has no per-type override). *(b added 2026-10-04.)*
+   - **Dedupe by field.** A field reached more than once appears once, at its first position. A direct field beats a fieldset and keeps its per-type required flag; between two fieldsets the earlier wins.
+   - **Mode.** A type is `Curated` iff it has any direct field or any attached fieldset; both empty → `AllActiveFields`. A type whose fieldsets resolve to zero active fields stays `Curated` (it shows no custom fields).
+   - **Live reference.** Resolution reads a fieldset's current membership, so editing a fieldset changes every type using it. Detaching a fieldset hides its fields and stops validating them; stored values are kept.
+   - Each effective item records its `source`: the field itself, or the fieldset that supplied it.
+3. A soft-deleted `FieldDefinition` never appears in either branch, even if a `Curated` link or a fieldset membership still references it (link retained, filtered at resolution).
 
 **Required-ness resolution table:**
 
 | Type field mode | Field source | `required` comes from |
 |---|---|---|
 | `AllActiveFields` | all active org fields | `FieldDefinition.IsRequired` (global) |
-| `Curated`, field mapped | type's active links | `IdeaTypeField.IsRequired` (per-type override) |
-| `Curated`, field *not* mapped | — (hidden for this type) | n/a — value submission for it is rejected `400` |
+| `Curated`, field mapped directly | type's active links | `IdeaTypeField.IsRequired` (per-type override) |
+| `Curated`, field via a fieldset | fieldset's active members | `FieldDefinition.IsRequired` (global) |
+| `Curated`, field neither mapped nor in an attached fieldset | — (hidden for this type) | n/a — value submission for it is rejected `400` |
 
 **Value scoping (write path):**
 - A submitted value is accepted only if its `fieldDefinitionId` is in the resolved set for the idea's type; otherwise `400`.

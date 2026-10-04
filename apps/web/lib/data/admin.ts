@@ -16,7 +16,14 @@
  * filters comp P specifies are what it is waiting on.
  */
 
-import { toFieldDefinition, toIdeaType, toMember, toOrganization, toProfile } from '../api/adapt'
+import {
+  toFieldDefinition,
+  toFieldset,
+  toIdeaType,
+  toMember,
+  toOrganization,
+  toProfile,
+} from '../api/adapt'
 import { apiGet, apiPath } from '../api/client'
 import type {
   WireAiAssistSettings,
@@ -26,6 +33,7 @@ import type {
   WireCurrentUser,
   WireFieldDefinition,
   WireFieldDefinitionDetail,
+  WireFieldset,
   WireIdeaType,
   WireOrganizationDetail,
   WireOrganizationListItem,
@@ -40,6 +48,7 @@ import type {
   AiPrompt,
   FieldDefinition,
   FieldDefinitionDetail,
+  Fieldset,
   IdeaType,
   Member,
   MemberDetail,
@@ -57,6 +66,7 @@ export type {
   AiAssistSettings,
   AiPrompt,
   FieldDefinition,
+  Fieldset,
   IdeaType,
   ImportOutcome,
   ImportRow,
@@ -487,4 +497,56 @@ export async function getUsageForOrganization(organizationId: string): Promise<U
   )
   const row = report.organizations[0]
   return row ? toUsageRow(row) : null
+}
+
+/**
+ * The organization's fieldsets, ordered by name as the API returns them (`contracts/fieldsets.md`).
+ * A Site Admin belongs to no organization, so this answers empty for one; the cross-organization
+ * list is `getFieldsetsByOrganization`.
+ */
+export async function getFieldsets(): Promise<Fieldset[]> {
+  failIfRequested('getFieldsets')
+
+  const scope = organizationScope()
+  if (scope === null) return []
+
+  return fieldsetsFor(scope, 'getFieldsets')
+}
+
+/** Every organization's fieldsets, for the cross-organization list a Site Admin reads. */
+export async function getFieldsetsByOrganization(): Promise<
+  { organization: string; fieldsets: Fieldset[] }[]
+> {
+  failIfRequested('getFieldsetsByOrganization')
+
+  const organizations = await everyOrganization('getFieldsetsByOrganization')
+  return Promise.all(
+    organizations.map(async (organization) => ({
+      organization: organization.name,
+      fieldsets: await fieldsetsFor(organization.id, 'getFieldsetsByOrganization'),
+    })),
+  )
+}
+
+async function fieldsetsFor(organizationId: string, reader: string): Promise<Fieldset[]> {
+  const wire = await apiGet<readonly WireFieldset[]>(
+    reader,
+    apiPath`/organizations/${organizationId}/fieldsets`,
+  )
+  return wire.map(toFieldset)
+}
+
+/** One fieldset, for the screen that edits it; `null` when the caller has no organization. */
+export async function getFieldset(fieldsetId: string): Promise<Fieldset | null> {
+  failIfRequested('getFieldset')
+
+  const scope = organizationScope()
+  if (scope === null) return null
+
+  return toFieldset(
+    await apiGet<WireFieldset>(
+      'getFieldset',
+      apiPath`/organizations/${scope}/fieldsets/${fieldsetId}`,
+    ),
+  )
 }

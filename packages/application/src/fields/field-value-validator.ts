@@ -40,7 +40,7 @@ export type FieldValueWrite = {
  * defined-fields.md). Absent on create, where every option must be current.
  */
 export function validateFieldValues(
-  effectiveFields: readonly EffectiveField[],
+  effectiveFields: readonly Pick<EffectiveField, 'field' | 'required'>[],
   submitted: readonly FieldValueWrite[] | null | undefined,
   knownFieldNames?: ReadonlyMap<string, string>,
   stored?: readonly FieldValueInput[],

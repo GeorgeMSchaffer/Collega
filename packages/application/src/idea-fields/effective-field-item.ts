@@ -15,5 +15,6 @@ export function toEffectiveFieldItem(effective: EffectiveField): EffectiveFieldI
           .sort((a, b) => a.displayOrder - b.displayOrder)
           .map((o) => ({ optionId: o.id, label: o.label }))
       : [],
+    source: effective.source,
   }
 }
