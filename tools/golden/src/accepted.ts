@@ -608,6 +608,74 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
   },
   {
     cases: [
+      'ideas.types',
+      'ideas.types2',
+      'ideatypes.list.orgadmin',
+      'ideatypes.list.readonly',
+      'ideatypes.list.siteadmin',
+      'ideatypes.list.user',
+      'ideatypes.relist',
+    ],
+    path: 'body[].fieldsetIds',
+    decided: '2026-10-04',
+    reason:
+      'A deliberate change, not drift (SPEC/decisions.md 2026-10-04, "Fieldsets: reusable groups of ' +
+      'fields, attached to idea types"; SPEC/contracts/idea-type-fields.md). An Idea Type item gains ' +
+      '`fieldsetIds` for the fieldsets attached to it, additively, so a client that predates fieldsets ' +
+      'keeps reading the same item. Every recorded type has none, so the value is empty here. ' +
+      'Accepted as the field appearing and only that, which is what `kind` says: every recorded ' +
+      'field and the array length are still compared.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'ideas.types',
+      'ideas.types2',
+      'ideatypes.list.orgadmin',
+      'ideatypes.list.readonly',
+      'ideatypes.list.siteadmin',
+      'ideatypes.list.user',
+      'ideatypes.relist',
+    ],
+    path: 'body[].fieldsets',
+    decided: '2026-10-04',
+    reason:
+      'A deliberate change, not drift (SPEC/decisions.md 2026-10-04, "Fieldsets: reusable groups of ' +
+      'fields, attached to idea types"; SPEC/contracts/idea-type-fields.md). An Idea Type item gains ' +
+      '`fieldsets` for the fieldsets attached to it, additively, so a client that predates fieldsets ' +
+      'keeps reading the same item. Every recorded type has none, so the value is empty here. ' +
+      'Accepted as the field appearing and only that, which is what `kind` says: every recorded ' +
+      'field and the array length are still compared.',
+    kind: 'extra',
+  },
+  {
+    cases: ['ideatypes.create.orgadmin', 'ideatypes.update.orgadmin'],
+    path: 'body.fieldsetIds',
+    decided: '2026-10-04',
+    reason:
+      'A deliberate change, not drift (SPEC/decisions.md 2026-10-04, "Fieldsets: reusable groups of ' +
+      'fields, attached to idea types"; SPEC/contracts/idea-type-fields.md). An Idea Type item gains ' +
+      '`fieldsetIds` for the fieldsets attached to it, additively, so a client that predates fieldsets ' +
+      'keeps reading the same item. Every recorded type has none, so the value is empty here. ' +
+      'Accepted as the field appearing and only that, which is what `kind` says: every recorded ' +
+      'field and the array length are still compared.',
+    kind: 'extra',
+  },
+  {
+    cases: ['ideatypes.create.orgadmin', 'ideatypes.update.orgadmin'],
+    path: 'body.fieldsets',
+    decided: '2026-10-04',
+    reason:
+      'A deliberate change, not drift (SPEC/decisions.md 2026-10-04, "Fieldsets: reusable groups of ' +
+      'fields, attached to idea types"; SPEC/contracts/idea-type-fields.md). An Idea Type item gains ' +
+      '`fieldsets` for the fieldsets attached to it, additively, so a client that predates fieldsets ' +
+      'keeps reading the same item. Every recorded type has none, so the value is empty here. ' +
+      'Accepted as the field appearing and only that, which is what `kind` says: every recorded ' +
+      'field and the array length are still compared.',
+    kind: 'extra',
+  },
+  {
+    cases: [
       'comments.list.orgadmin',
       'comments.list.readonly',
       'comments.list.siteadmin',
