@@ -51,8 +51,9 @@ before anything else works. Use `siteadmin@demo.collega.test` above instead — 
 the platform-admin perspective is testable without that secret and without the forced change.
 
 Locked yourself out of the configured account?
-`pnpm --filter @collega/infrastructure db:bootstrap-admin` recreates it from `SITE_ADMIN_EMAIL` and
-`SITE_ADMIN_PASSWORD`.
+`pnpm --filter @collega/infrastructure db:bootstrap-admin` creates it from `SITE_ADMIN_EMAIL` and
+`SITE_ADMIN_PASSWORD` only when no account with that email exists, so delete the row first; it never
+resets an existing one.
 
 ## What the demo data contains
 
