@@ -116,7 +116,7 @@ describe('getOrganizationHome', () => {
     answer(/\/delivery/, [{ ideaId: 'd1' }, { ideaId: 'd2' }, { ideaId: 'd3' }, { ideaId: 'd4' }])
   }
 
-  it('answers empty, and asks the API nothing, for a Site Admin who has no organization', async () => {
+  it('answers empty, and asks the API nothing, for an App Admin who has no organization', async () => {
     actAs('SiteAdmin')
     expect(await getOrganizationHome()).toEqual({
       counts: { ideas: 0, boards: 0, issues: 0 },

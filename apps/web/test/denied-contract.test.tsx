@@ -172,7 +172,7 @@ describe('commenting', () => {
     expectAllowedControl(screen.getByRole('button', { name: 'Comment' }))
   })
 
-  it('replaces the form with a reason for a Site Admin', () => {
+  it('replaces the form with a reason for an App Admin', () => {
     actAs('SiteAdmin')
     render(<CommentBox ideaId="idea-1" boardId="board-1" denial={engagementDenial('SiteAdmin')} />)
 

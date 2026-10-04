@@ -86,7 +86,7 @@ describe('Settings → Tags by role', () => {
     expect(data.getTagCatalogsByOrganization).not.toHaveBeenCalled()
   })
 
-  it('shows a Site Admin every organization read-only, with Add New Tag disabled and its reason', async () => {
+  it('shows an App Admin every organization read-only, with Add New Tag disabled and its reason', async () => {
     await renderPage('SiteAdmin')
     const add = screen.getByRole('button', { name: 'Add New Tag' })
     expect(add.getAttribute('aria-disabled')).toBe('true')
@@ -108,14 +108,14 @@ describe('Settings → Tags by role', () => {
     })
   }
 
-  it('opens a Site Admin’s ?mode=edit link as the view, never the form', () => {
+  it('opens an App Admin’s ?mode=edit link as the view, never the form', () => {
     search.params = new URLSearchParams('tag=t-b&mode=edit')
     render(<TagsScreen tags={CATALOG} denial="Act as…" usage={null} newColor="#E5484D" />)
     expect(screen.queryByLabelText(/^Tag/)).toBeNull()
     expect(screen.getByRole('heading', { name: 'bravo' })).toBeTruthy()
   })
 
-  it('does not open the create form for a Site Admin on ?tag=new', () => {
+  it('does not open the create form for an App Admin on ?tag=new', () => {
     search.params = new URLSearchParams('tag=new')
     render(<TagsScreen tags={CATALOG} denial="Act as…" usage={null} newColor="#E5484D" />)
     expect(screen.queryByRole('heading', { name: 'Add New Tag' })).toBeNull()

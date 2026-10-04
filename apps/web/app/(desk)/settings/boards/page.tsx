@@ -37,11 +37,11 @@ export default async function SettingsBoardsPage() {
     >
       {siteAdmin ? (
         <div className="flex flex-col items-start gap-3 rounded-lg border border-dashed bg-card px-6 py-8">
-          <h3 className="m-0 text-base font-semibold">This route has no Site Admin story</h3>
+          <h3 className="m-0 text-base font-semibold">This route has no App Admin story</h3>
           <p className="m-0 max-w-prose text-sm text-muted-foreground">
-            Board administration is scoped to one organization, and a Site Admin belongs to none, so
+            Board administration is scoped to one organization, and an App Admin belongs to none, so
             there is no organization to list here. The product agrees, and routes you elsewhere: the
-            Settings hub sends a Site Admin to the workspace boards list rather than here.
+            Settings hub sends an App Admin to the workspace boards list rather than here.
           </p>
           <Link href="/boards" className={buttonVariants({ variant: 'outline' })}>
             Go to the boards list

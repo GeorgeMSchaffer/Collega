@@ -42,7 +42,7 @@ describe('getAiAssist', () => {
     expect(await getAiAssist()).toEqual({ scopeStatement: '', available: false })
   })
 
-  it('asks nothing for a Site Admin, who has no organization', async () => {
+  it('asks nothing for an App Admin, who has no organization', async () => {
     actAs('SiteAdmin')
     expect(await getAiAssist()).toEqual({ scopeStatement: '', available: false })
     expect(get).not.toHaveBeenCalled()

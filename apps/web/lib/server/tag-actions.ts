@@ -58,7 +58,7 @@ export async function saveTag(tagId: string | null, form: FormData): Promise<Tag
       const organizationId = await actingOrganizationId()
       if (organizationId === null) {
         return {
-          error: 'A Site Admin belongs to no organization. Use View As to add a tag to one.',
+          error: 'An App Admin belongs to no organization. Use View As to add a tag to one.',
           errors: {},
           savedId: null,
         }
