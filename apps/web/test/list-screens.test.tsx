@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { BoardsScreen } from '@/components/boards/boards-screen'
 import { IdeaWorkspace } from '@/components/ideas/idea-workspace'
-import { boardAdminDenial, type Role } from '@/lib/roles'
+import { boardAdminDenial, boardCreateDenial, type Role } from '@/lib/roles'
 import { SessionProvider } from '@/lib/session-client'
 import type { BoardOverview, BoardRef, CurrentUser, Idea } from '@/lib/types'
 
@@ -155,7 +155,15 @@ function boardOverview(name: string, overrides: Partial<BoardOverview> = {}): Bo
 
 function renderBoards(role: Role, boards: BoardOverview[]) {
   render(
-    as(role, <BoardsScreen boards={boards} adminDenial={boardAdminDenial(role)} form={null} />),
+    as(
+      role,
+      <BoardsScreen
+        boards={boards}
+        adminDenial={boardAdminDenial(role)}
+        createDenial={boardCreateDenial(role)}
+        form={null}
+      />,
+    ),
   )
 }
 
