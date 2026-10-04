@@ -146,8 +146,9 @@ export async function getMembers(): Promise<Member[]> {
  * calls it renders its own organization's name from the principal rather than per row.
  *
  * An Org Admin naming another organization is answered 404, not 403, and that is the API declining
- * to confirm it exists. Nothing here catches it: the only call site passes the caller's own
- * organization id, taken from the resolved principal, so there is no id a reader could steer.
+ * to confirm it exists. Nothing here catches it: the Users screen passes the caller's own
+ * organization id, and the organization page (a Site Admin's, `siteAdminOnly`) passes the one it
+ * shows — the API authorizes both.
  */
 export async function getMembersForOrganization(organizationId: string): Promise<Member[]> {
   failIfRequested('getMembersForOrganization')

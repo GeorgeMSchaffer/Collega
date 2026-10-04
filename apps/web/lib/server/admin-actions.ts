@@ -82,6 +82,17 @@ export async function createOrganization(
   form: FormData,
 ): Promise<CreateState> {
   const adminEmail = String(form.get('adminEmail') ?? '').trim()
+  const admin = ['adminFirstName', 'adminLastName', 'adminPassword'].map((field) =>
+    String(form.get(field) ?? '').trim(),
+  )
+
+  // Required since 2026-10-04 (`SPEC/decisions.md`): an organization born without an Org Admin has
+  // nobody to act as. Checked before the organization is created, so a refusal leaves nothing behind.
+  if (adminEmail === '' || admin.some((value) => value === '')) {
+    return {
+      error: 'An organization needs its first Org Admin: fill in their name, email and password.',
+    }
+  }
 
   let organizationId: string
   try {
@@ -93,22 +104,19 @@ export async function createOrganization(
   } catch (error) {
     return { error: refusalText(error) }
   }
-
-  if (adminEmail !== '') {
-    try {
-      await apiPost(apiPath`/organizations/${organizationId}/users`, {
-        firstName: String(form.get('adminFirstName') ?? ''),
-        lastName: String(form.get('adminLastName') ?? ''),
-        email: adminEmail,
-        role: 'OrgAdmin',
-        initialPassword: String(form.get('adminPassword') ?? ''),
-      })
-    } catch (error) {
-      return {
-        error:
-          `The organization was created, but its administrator was not: ${refusalText(error)} ` +
-          'Add them from the people screen.',
-      }
+  try {
+    await apiPost(apiPath`/organizations/${organizationId}/users`, {
+      firstName: String(form.get('adminFirstName') ?? ''),
+      lastName: String(form.get('adminLastName') ?? ''),
+      email: adminEmail,
+      role: 'OrgAdmin',
+      initialPassword: String(form.get('adminPassword') ?? ''),
+    })
+  } catch (error) {
+    return {
+      error:
+        `The organization was created, but its administrator was not: ${refusalText(error)} ` +
+        'Add them with Add Org Admin on the organization’s page.',
     }
   }
 

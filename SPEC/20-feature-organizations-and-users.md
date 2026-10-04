@@ -19,7 +19,11 @@ Administrators manage organizations and users with clear role boundaries, in a d
 
 ## Organization Rules
 1. Organizations are the top-level ownership boundary for all business data.
-2. Only Site Admin can create organizations.
+2. Only Site Admin can create organizations, and **every organization is created with its first Org Admin**
+   (2026-10-04, `SPEC/decisions.md` "An organization is created with its first Org Admin"): the create
+   form requires their name, email and initial password, and is refused before anything is created when
+   one is missing. The organization's page lists its Org Admins, warns when none is active, and offers
+   **Add Org Admin** (Add New User preset to that organization and role).
 3. Creating an organization requires only a Title and Description; a Logo Address (URL) is optional.
 4. When an organization is created, the system automatically generates a unique Invite Code for that organization.
 5. The Invite Code is displayed in both the organization list view and the organization detail page.
@@ -134,7 +138,7 @@ User profile text fields are trimmed before validation and persistence.
 - **Read Only**: limited participant
 
 ## Acceptance Criteria
-- [ ] Site Admin can create organizations with only a Title, Description, and optional Logo Address
+- [ ] Site Admin can create organizations with a Title, Description, optional Logo Address, and the required first Org Admin
 - [ ] Org Admin cannot create organizations
 - [ ] A unique Invite Code is generated automatically when an organization is created
 - [ ] The Invite Code is visible in the organization list view and the organization detail page
