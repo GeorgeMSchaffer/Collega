@@ -9,7 +9,7 @@ function Check() {
       viewBox="0 0 20 20"
       fill="currentColor"
       aria-hidden="true"
-      className="mt-px shrink-0 text-primary"
+      className="mt-px shrink-0 text-sidebar-foreground/75"
     >
       <path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.8 6.8-6.8a1 1 0 0 1 1.4 0Z" />
     </svg>
@@ -58,8 +58,9 @@ function BoardPreview() {
 /**
  * The left column, on the sidebar's ground rather than the primary colour (sign-in comp
  * `SPEC/mockups/comp-login-alternatives.html`, option C, chosen 2026-10-04): a full-height block of
- * primary was half the screen in Graphite's amber beside a near-black form. The primary is kept for
- * the mark and the checks. `points` is optional — the password-change screen has none — and
+ * primary was half the screen in Graphite's amber beside a near-black form. Text takes the sidebar's
+ * own pair, because the rail is light in some themes and dark in others (Sera's is dark among the
+ * light themes); the primary is kept for the mark. `points` is optional — the password-change screen has none — and
  * `preview` adds the schematic board, which only the sign-in screen shows.
  */
 export function AuthPitch({
@@ -74,12 +75,12 @@ export function AuthPitch({
   preview?: boolean
 }) {
   return (
-    <div className="hidden flex-col justify-center border-r border-sidebar-border bg-sidebar px-14 py-16 text-foreground lg:flex">
+    <div className="hidden flex-col justify-center border-r border-sidebar-border bg-sidebar px-14 py-16 text-sidebar-foreground lg:flex">
       <div className="mb-6 flex size-9 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
         CG
       </div>
       <h2 className="mb-4 max-w-[17ch] text-2xl font-semibold tracking-tight">{heading}</h2>
-      <div className="mb-6 max-w-[48ch] text-base leading-relaxed text-muted-foreground [&_p]:m-0">
+      <div className="mb-6 max-w-[48ch] text-base leading-relaxed text-sidebar-foreground/75 [&_p]:m-0">
         {children}
       </div>
       {points ? (

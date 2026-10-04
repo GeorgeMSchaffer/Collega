@@ -117,7 +117,9 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 **Decided by the user**, choosing option C of `SPEC/mockups/comp-login-alternatives.html`. The auth
 screens' left band was filled with the theme's primary; in Graphite, the default, that put a
 full-height block of bright amber beside a near-black form. The band now sits on the theme's
-**sidebar ground** with a hairline border, the primary is kept for the mark and the checkmarks, and
+**sidebar ground** with a hairline border and the sidebar's own text pair (the rail is dark in Sera
+and Graphite, light in the others, so the page's foreground would vanish on Sera's), the primary is
+kept for the mark and the Sign in button, and
 **Sign in** adds a decorative **schematic board** (five lanes in status hues, placeholder cards,
 every colour a theme token). Register and the forced password change share the band without the
 board. The copy is unchanged.

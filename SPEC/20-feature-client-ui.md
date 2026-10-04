@@ -255,7 +255,7 @@ is deferred; the mobile view scrolls and status movement stays available through
 - **Board** offers List and Lanes; Lanes is the rail described above. **Single visual encoding**: type, status and priority all use one **marker** — an 8px dot with its label always beside it. No column or chip family shouts louder than another.
 - **Two copy voices, kept apart**: product copy lives inside the app frame and is written to ship; anything addressed to a reviewer lives in the chrome band outside it (`decisions.md` 2026-08-31).
 - **Auth screens** are a two-column split: a pitch band on the left, the form on the right. The band sits on the
-  theme's sidebar ground, never the primary colour, with the primary kept for the mark and the checks; Sign in
+  theme's sidebar ground and text pair, never the primary colour, with the primary kept for the mark; Sign in
   also shows a schematic board of lanes in status hues (2026-10-04, `decisions.md` "The sign-in pitch shows the
   product, not the primary colour"; comp `SPEC/mockups/comp-login-alternatives.html`, option C). Login, Register and the forced first-login change carry no sidebar; the forced change deliberately has no navigation escape (auth rule 32a).
 
