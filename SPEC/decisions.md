@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-04 | Graphite is the default theme | active | full below |
 | 2026-10-01 | The Home comp is a visual guide; the spec wins | active | full below |
 | 2026-10-01 | The follow and inbox questions are answered | active | full below |
 | 2026-10-01 | The S0.2 schema freeze is amended a fifth time, for idea followers and read state | active | full below |
@@ -54,7 +55,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-28 | Starting a sprint, a single-Issue read, the Roadmap's sprint rows, and tag audit events | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-28 | The comp R iteration's open questions are answered | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-28 | The S0.2 schema freeze is amended a fourth time, for tag colours | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
-| 2026-09-28 | Graphite replaces Notte as the dark theme | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-28 | Graphite replaces Notte as the dark theme | superseded in part | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-28 | The next comp R iteration is adopted: denser forms, Sprint board, Roadmap, tag colours and Settings → Tags | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-27 | The API sends the custom field list | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-27 | The idea assistant is rescoped as a co-author, and ideas gain structured fields | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
@@ -105,6 +106,25 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-04 — Graphite is the default theme
+
+> Supersedes in part 2026-09-27 "Terrazzo is the palette, with a theme picker" and 2026-09-28
+> "Graphite replaces Notte as the dark theme", both of which kept Terrazzo as the default.
+
+**Decided by the user.** The app's default theme is **Graphite**, the dark theme, instead of
+Terrazzo. A browser with no `collega-theme` cookie (or one the app does not recognise) is served
+Graphite on the first render; a browser that picked a theme in the picker keeps it, since the cookie
+is written only by a choice. The five themes, the picker, the per-browser cookie and the 4.5:1 rule
+are unchanged.
+
+Terrazzo stays the bare `:root` in `packages/design-system/src/globals.css`: the app always sets
+`data-theme`, so the bare block is only what a document with no attribute gets — the comps, and
+`global-error.tsx`, which deliberately renders without the design system. Moving the bare block
+would change every comp's reference rendering for no product gain. The comps' own pickers still open
+on Terrazzo; they are review artefacts, not the app.
 
 ---
 
