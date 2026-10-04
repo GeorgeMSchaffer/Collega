@@ -3,6 +3,7 @@ import { order } from './compose.js'
 import { boardsAndStatusesSeed } from './modules/boards-and-statuses.js'
 import { commentsSeed } from './modules/comments.js'
 import { deliverySeed } from './modules/delivery.js'
+import { fieldsSeed } from './modules/fields.js'
 import { ideasAndUpvotesSeed } from './modules/ideas-and-upvotes.js'
 import { organizationsSeed } from './modules/organizations.js'
 import { DEMO_ORGANIZATIONS, seedId } from './modules/scenario.js'
@@ -28,6 +29,7 @@ const MODULES: readonly SeedModule[] = [
   ideasAndUpvotesSeed,
   commentsSeed,
   deliverySeed,
+  fieldsSeed,
 ]
 
 export type SeedOutcome = {

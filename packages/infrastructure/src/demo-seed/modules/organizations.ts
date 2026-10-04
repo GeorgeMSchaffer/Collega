@@ -46,7 +46,14 @@ export const organizationsSeed: SeedModule = {
         },
       })
 
-      for (const ideaType of DEFAULT_IDEA_TYPES) {
+      const ideaTypes = [
+        ...DEFAULT_IDEA_TYPES,
+        ...(scenario.extraIdeaTypes ?? []).map((name, i) => ({
+          name,
+          sortOrder: (DEFAULT_IDEA_TYPES.length + 1 + i) * 10,
+        })),
+      ]
+      for (const ideaType of ideaTypes) {
         const id = seedId('idea-type', scenario.slug, ideaType.name)
         await prisma.idea_types.upsert({
           where: { id },
