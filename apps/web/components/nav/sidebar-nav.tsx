@@ -49,14 +49,16 @@ export function SidebarNav({
 
       <CommandPalette />
 
-      {groups.map((group) => (
-        <div key={group.label} className="max-md:contents">
-          <div className="flex h-8 items-center px-2 text-xs font-medium text-sidebar-foreground/70 max-md:hidden">
-            {group.label}
-          </div>
-          {group.items
-            .filter((item) => navItemVisible(item, user.role))
-            .map((item) =>
+      {groups.map((group) => {
+        const items = group.items.filter((item) => navItemVisible(item, user.role))
+        // A group with nothing to offer this role (Delivery, for a Site Admin) loses its heading too.
+        if (items.length === 0) return null
+        return (
+          <div key={group.label} className="max-md:contents">
+            <div className="flex h-8 items-center px-2 text-xs font-medium text-sidebar-foreground/70 max-md:hidden">
+              {group.label}
+            </div>
+            {items.map((item) =>
               item.href === INBOX_HREF ? (
                 <InboxLink key={item.href} className={NAV_CLASS} initialUnread={unread} />
               ) : (
@@ -74,8 +76,9 @@ export function SidebarNav({
                 </Link>
               ),
             )}
-        </div>
-      ))}
+          </div>
+        )
+      })}
 
       <div className="flex-1 max-md:hidden" />
 
