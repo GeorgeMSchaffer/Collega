@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 
 /**
- * Comp Q's two-column auth frame: the pitch on the left in primary, the form on the right on the
- * canvas. Each page supplies its own pitch copy, because the pitch is the screen's explanation of
+ * Comp Q's two-column auth frame: the pitch on the left on the sidebar ground (sign-in comp option
+ * C, 2026-10-04), the form on the right on the canvas. Each page supplies its own pitch copy, because the pitch is the screen's explanation of
  * itself — sign-in and forced password change say different things.
  */
 export default function AuthLayout({ children }: { children: ReactNode }) {
