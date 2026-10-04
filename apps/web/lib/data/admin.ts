@@ -137,19 +137,6 @@ export async function getMembers(): Promise<Member[]> {
 }
 
 /**
- * One organization's accounts, with their role and status.
- *
- * `/users` and not `/members`: the latter is the assignee picker's id-name-email view, open to every
- * member of the organization and carrying neither of the two columns this table exists to show.
- *
- * The name of the organization is not filled in — this reader does not fetch it, and the screen that
- * calls it renders its own organization's name from the principal rather than per row.
- *
- * An Org Admin naming another organization is answered 404, not 403, and that is the API declining
- * to confirm it exists. Nothing here catches it: the only call site passes the caller's own
- * organization id, taken from the resolved principal, so there is no id a reader could steer.
- */
-/**
  * An organization's Org Admins, filtered by the API (`role=OrgAdmin`) rather than here, so an
  * organization with more users than one page is not misread as having none.
  */
@@ -164,6 +151,19 @@ export async function getOrgAdminsForOrganization(organizationId: string): Promi
   return page.items.map((item) => toMember(item, null))
 }
 
+/**
+ * One organization's accounts, with their role and status.
+ *
+ * `/users` and not `/members`: the latter is the assignee picker's id-name-email view, open to every
+ * member of the organization and carrying neither of the two columns this table exists to show.
+ *
+ * The name of the organization is not filled in — this reader does not fetch it, and the screen that
+ * calls it renders its own organization's name from the principal rather than per row.
+ *
+ * An Org Admin naming another organization is answered 404, not 403, and that is the API declining
+ * to confirm it exists. Nothing here catches it: the only call site passes the caller's own
+ * organization id, taken from the resolved principal, so there is no id a reader could steer.
+ */
 export async function getMembersForOrganization(organizationId: string): Promise<Member[]> {
   failIfRequested('getMembersForOrganization')
 
