@@ -1,7 +1,7 @@
 # Demo accounts and data
 
 Everything below is created by the seed modules in
-[`packages/infrastructure/prisma/seed/`](packages/infrastructure/prisma/seed). It exists so you can
+[`packages/infrastructure/src/demo-seed/`](packages/infrastructure/src/demo-seed). It exists so you can
 sign in and click around without reading them.
 
 `pnpm start` runs the seed for you. It **refuses to run when `NODE_ENV=production`** — the passwords
@@ -30,10 +30,11 @@ Both organizations reuse the same four display names, so the email domain is the
 two accounts called "Olivia Administer" apart. All four product roles are covered once per
 organization, which is the point — every permission perspective is reachable.
 
-Client at http://localhost:5098, API at http://localhost:5103. Or straight against the API:
+Web at http://localhost:3000, API at http://localhost:3001 — or the next free ports, which `pnpm start`
+prints when 3000 or 3001 is taken. Or straight against the API:
 
 ```bash
-curl -s -X POST http://localhost:5103/api/v1/auth/login \
+curl -s -X POST http://localhost:3001/api/v1/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"orgadmin@acme-robotics.demo.collega.test","password":"Abc123!"}'
 ```
@@ -93,5 +94,5 @@ The Site Admin is a **separate** seed — `db:bootstrap-admin`, which reads `SIT
 
 ## Related
 
-- [`packages/infrastructure/prisma/seed/`](packages/infrastructure/prisma/seed) — the seed modules themselves; `modules/scenario.ts` holds every name, address and password in one place
+- [`packages/infrastructure/src/demo-seed/`](packages/infrastructure/src/demo-seed) — the seed modules themselves; `modules/scenario.ts` holds every name, address and password in one place
 - [`README.md`](README.md) — first-time setup

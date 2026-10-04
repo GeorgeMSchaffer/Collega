@@ -381,18 +381,30 @@ writing production React against an undecided design.
 
 ## Accounts
 
-`pnpm start` seeds two organizations with one account per role each, all sharing the same
-development-only password — `DEMO_PASSWORD` in
-[`packages/infrastructure/src/demo-seed/modules/scenario.ts`](packages/infrastructure/src/demo-seed/modules/scenario.ts).
-The three worth signing in as:
+`pnpm start` seeds two organizations with one account per role each. Sign in at
+http://localhost:3000/login.
 
-| | |
-|---|---|
-| `orgadmin@acme-robotics.demo.collega.test` | Creates, moves and administers |
-| `user@acme-robotics.demo.collega.test` | Creates and moves, subject to the board's own setting |
-| `readonly@acme-robotics.demo.collega.test` | Reads and upvotes; authoring is refused, with the reason shown |
+**Every demo account's password is `Abc123!`**, and none is asked to change it. It is development
+only and published here on purpose — `DEMO_PASSWORD` in
+[`packages/infrastructure/src/demo-seed/modules/scenario.ts`](packages/infrastructure/src/demo-seed/modules/scenario.ts) —
+so a database holding this data must never be one that matters.
 
-The full roster — every address, display name and role — is [`demo.md`](demo.md).
+| Role | Email | What it can do |
+|---|---|---|
+| Org Admin | `orgadmin@acme-robotics.demo.collega.test` | Creates, edits, moves and administers |
+| User | `user@acme-robotics.demo.collega.test` | Creates, edits and moves, subject to the board's own setting |
+| User | `user2@acme-robotics.demo.collega.test` | As above, a second contributor |
+| Read Only | `readonly@acme-robotics.demo.collega.test` | Reads, comments and upvotes; authoring is refused, with the reason shown |
+| Site Admin | `siteadmin@demo.collega.test` | Every organization, read-only; changes org content only through View As |
+
+The second organization, Blue Harbor Logistics, has the same four roles at
+`@blue-harbor.demo.collega.test` (`orgadmin@`, `user@`, `user2@`, `readonly@`), same password.
+
+`pnpm start` also creates the **configured Site Admin** from `SITE_ADMIN_EMAIL` and
+`SITE_ADMIN_PASSWORD` in `.env` — `admin@collega.local` / `Ch4ngeMe!Now` with the example values.
+Unlike the demo accounts, it must change its password at first sign-in.
+
+The full roster — every address, display name and organization — is [`demo.md`](demo.md).
 
 ---
 
