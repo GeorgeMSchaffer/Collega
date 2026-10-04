@@ -98,7 +98,6 @@ export function resolveEffectiveFields(
   return [...direct, ...fromFieldsets]
 }
 
-
 function compareIgnoreCase(a: string, b: string): number {
   const left = a.toLowerCase()
   const right = b.toLowerCase()
