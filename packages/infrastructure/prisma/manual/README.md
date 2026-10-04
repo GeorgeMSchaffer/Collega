@@ -18,7 +18,7 @@ is the exception, kept for a database someone would rather not lose.
 ```bash
 dropdb Collega && createdb Collega
 pnpm --filter @collega/infrastructure db:migrate   # baseline; creates all nine types correctly
-pnpm --filter @collega/infrastructure db:seed      # 2 orgs, 10 users, 4 boards, 44 ideas
+pnpm --filter @collega/infrastructure db:seed      # 5 orgs (2 fixture + 3 vertical), 110 ideas
 ```
 
 **Verified 2026-09-09: 3.7 seconds end to end**, `db:check-enums` reporting `0 of 9 columns need

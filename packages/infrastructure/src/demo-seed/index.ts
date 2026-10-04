@@ -55,7 +55,7 @@ export async function runDemoSeed(prisma: PrismaClient): Promise<readonly SeedOu
  * Deletes everything the seed owns, so the next run rebuilds it from nothing.
  *
  * **It can say what it owns because every seeded id is derived, not random.** `seedId` hashes the
- * organization's slug and the row's own name, so the two demo organizations and everything beneath
+ * organization's slug and the row's own name, so the demo organizations and everything beneath
  * them are identifiable without a marker column and without guessing at titles. That is what makes
  * a reset safe to expose: it cannot reach a row the seed did not create, so an organization
  * somebody made by hand survives a reset of the demo data sitting beside it.
