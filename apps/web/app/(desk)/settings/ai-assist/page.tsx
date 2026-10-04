@@ -56,7 +56,7 @@ function ActAsAMember() {
         Act as a member of an organization to configure its assistant
       </h3>
       <p className="m-0 max-w-prose text-sm text-muted-foreground">
-        A scope statement describes one organization&rsquo;s subject matter, and a Site Admin
+        A scope statement describes one organization&rsquo;s subject matter, and an App Admin
         belongs to none, so there is nothing for this page to load. Use{' '}
         <a href="/settings/view-as" className="underline">
           View as

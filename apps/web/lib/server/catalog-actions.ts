@@ -50,7 +50,7 @@ export type CreateCatalogItemState = { error: string | null; name: string }
  * to quote. Comp P routes the same role the same way on the board form.
  */
 const NO_ORGANIZATION =
-  'A Site Admin belongs to no organization, so there is no catalog to add to. Use View As to act ' +
+  'An App Admin belongs to no organization, so there is no catalog to add to. Use View As to act ' +
   'as an administrator of one.'
 
 /**

@@ -387,7 +387,7 @@ describe('Home for an organization with no boards', () => {
   })
 })
 
-describe('Home for a Site Admin', () => {
+describe('Home for an App Admin', () => {
   it('shows the platform roll-up and never reads an organization’s home', async () => {
     await renderHome('SiteAdmin')
     expect(readers.getOrganizationHome).not.toHaveBeenCalled()

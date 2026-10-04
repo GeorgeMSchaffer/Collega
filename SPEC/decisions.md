@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-04 | The Site Admin role is shown as App Admin | active | full below |
 | 2026-10-04 | An organization is created with its first Org Admin | active | full below |
 | 2026-10-04 | Three vertical demo organizations join Acme and Blue Harbor | active | full below |
 | 2026-10-04 | The sign-in pitch shows the product, not the primary colour | active | full below |
@@ -112,6 +113,17 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-04 — The Site Admin role is shown as App Admin
+
+**Decided by the user**, who names the four roles App Admin, Org Admin, User and Read Only. Every
+user-visible label and message in `apps/web` says **App Admin**. The role's value (`SiteAdmin`),
+the API, its contracts and error messages, the golden corpus, the specs and code comments keep
+"Site Admin": renaming those is a large, risky change for no user-facing gain, and the specs read
+"Site Admin" as the role's name. API error text a screen shows verbatim (the View As refusal) still
+says "Site Admin" until a later slice changes it.
 
 ---
 

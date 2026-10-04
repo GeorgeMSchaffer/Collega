@@ -57,9 +57,9 @@ export function SiteAdminOnly({ children }: { children: ReactNode }) {
   }
 
   return (
-    <RefusalPanel heading="Site Admins only">
+    <RefusalPanel heading="App Admins only">
       The list of organizations is deployment configuration, not an organization&rsquo;s own. This
-      route exists so a Site Admin can inspect an organization they do not belong to.
+      route exists so an App Admin can inspect an organization they do not belong to.
     </RefusalPanel>
   )
 }
@@ -87,8 +87,8 @@ export function BoardRefusal({ title, reading }: { title: string; reading: strin
         }
       />
       <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
-        <RefusalPanel heading="A Site Admin cannot create or change a board">
-          Boards are organization-owned content, and a Site Admin is refused every mutation of it.
+        <RefusalPanel heading="An App Admin cannot create or change a board">
+          Boards are organization-owned content, and an App Admin is refused every mutation of it.
           Reading {reading} is fine; saving is not, so the form is absent rather than present and
           doomed. Use{' '}
           <a href="/settings/view-as" className="underline">

@@ -83,7 +83,7 @@ export function isAdministrator(role: Role): boolean {
 
 /** The role as it is written in the UI. The wire spells it `OrgAdmin`; a person does not. */
 export function roleLabel(role: Role): string {
-  if (role === 'SiteAdmin') return 'Site Admin'
+  if (role === 'SiteAdmin') return 'App Admin'
   if (role === 'OrgAdmin') return 'Org Admin'
   if (role === 'ReadOnly') return 'Read Only'
   return 'User'

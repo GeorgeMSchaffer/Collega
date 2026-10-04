@@ -87,7 +87,7 @@ describe('a deployment-level settings route', () => {
     it(`refuses ${role}`, () => {
       renderSettingsPage(role, { siteAdminOnly: true })
       expect(shownContent()).toEqual([])
-      expect(screen.getByText('Site Admins only')).toBeTruthy()
+      expect(screen.getByText('App Admins only')).toBeTruthy()
     })
 
     it(`withholds the page action from ${role}`, () => {
