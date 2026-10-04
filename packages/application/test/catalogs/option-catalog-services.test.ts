@@ -29,6 +29,7 @@ import type { CurrentUserContext } from '../../src/common/index.js'
 import { ForbiddenError, NotFoundError, ValidationError } from '../../src/common/index.js'
 import { FieldDefinitionService } from '../../src/fields/field-definition-service.js'
 import type { FieldDefinitionRepository } from '../../src/fields/ports.js'
+import type { FieldsetRepository } from '../../src/fieldsets/ports.js'
 import { IdeaTypeService } from '../../src/idea-fields/idea-type-service.js'
 import type { IdeaTypeRepository } from '../../src/idea-fields/ports.js'
 import type { TagRepository } from '../../src/tags/ports.js'
@@ -110,6 +111,7 @@ function ideaTypeHarness(options: {
     service: new IdeaTypeService(
       ideaTypes,
       fieldDefinitions,
+      { listByOrganization: async () => [] } as unknown as FieldsetRepository,
       ORG_LOOKUP,
       countingUnitOfWork(),
       recordingAudit(),
