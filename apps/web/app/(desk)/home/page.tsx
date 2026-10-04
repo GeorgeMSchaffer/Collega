@@ -331,7 +331,7 @@ function NoBoards() {
       Your organization doesn&rsquo;t have any boards to show.{' '}
       {admin
         ? 'Create one to start collecting ideas: it comes with your organization’s statuses as its lanes, and you can change them later.'
-        : 'An Org Admin or a contributor can create one from Boards.'}
+        : 'An Org Admin or a User can create one from Boards.'}
     </EmptyState>
   )
 }

@@ -169,7 +169,7 @@ In order. Each step says what proves it worked; stop at the first that does not 
    6. **Register a user:** in a private window, `/register` with the invite code typed into the field
       (not in the URL). It returns to `/login` with *Your account was created*; sign in. *(anyone
       given the code)*
-   7. **Create a board:** as the Org Admin — or as the Site Admin through Settings → View As, since a
+   7. **Create a board:** as the Org Admin (a User may too, since 2026-10-04) — or as the Site Admin through Settings → View As, since a
       direct Site Admin cannot change organization content — Settings → Boards → New. *(Owner or the
       Org Admin)*
    8. **Create an idea** on that board as the registered user, and see it on the board. *(the

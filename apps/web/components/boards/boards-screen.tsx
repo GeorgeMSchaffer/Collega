@@ -223,8 +223,8 @@ export function BoardsScreen({
 
       {boards.length === 0 ? (
         <EmptyState heading="No boards yet">
-          A new organization starts with one default board and five statuses. An organization
-          administrator adds more with Add New Board.
+          A new organization starts with one default board and five statuses. Org Admins and Users
+          add more with Add New Board.
         </EmptyState>
       ) : (
         <>

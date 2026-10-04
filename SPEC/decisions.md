@@ -115,7 +115,9 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 **Decided by the user**: everyone above Read Only in an organization may add ideas and boards. Ideas
 already worked that way. For boards, a **User** may now **create** one in their own organization;
-**editing, archiving, unarchiving and reordering lanes stay Org Admin only**. Read Only is refused as
+**editing, archiving, unarchiving and reordering lanes stay Org Admin only**. Creating includes
+the new board's first choices — its name, description, lanes and the user-moves setting — so a User
+makes those once, at creation; changing them afterwards is the Org Admin's. Read Only is refused as
 before. A Site Admin still creates boards and ideas only through View As (rule 25 stands; the user
 confirmed it the same day).
 
