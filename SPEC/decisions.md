@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-04 | One Enter adds a tag on the idea form | active | full below |
 | 2026-10-04 | Graphite is the default theme | active | full below |
 | 2026-10-01 | The Home comp is a visual guide; the spec wins | active | full below |
 | 2026-10-01 | The follow and inbox questions are answered | active | full below |
@@ -106,6 +107,18 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-04 — One Enter adds a tag on the idea form
+
+**Decided by the user**, after typing a new tag, pressing Enter once and being refused on save.
+Slice 148 made Enter on unmatched text only *highlight* the *Create tag ‘…’* option, with a second
+Enter (or a click) to choose it; a highlighted option looks chosen, so the text stayed in the box
+and the save refused it. Now **Enter adds the highlighted option, or the first one when nothing is
+highlighted** — an existing tag when one matches by prefix, otherwise *Create tag* — as a chip at
+once. The save still refuses text left in the box (the owner's slice 148 decision stands), and its
+message now says to press Enter to add it or clear it.
 
 ---
 
