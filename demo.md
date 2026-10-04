@@ -42,8 +42,9 @@ curl -s -X POST http://localhost:3001/api/v1/auth/login \
 ### The configured Site Admin is not in that table
 
 A second Site Admin is seeded from `SITE_ADMIN_EMAIL` / `SITE_ADMIN_PASSWORD` — your own values, from
-the gitignored `.env`. Those are deployment
-credentials, so they are deliberately not written down here.
+the gitignored `.env`. Locally that is the `.env.example` default the README lists
+(`admin@collega.local`), and it must change its password at first sign-in; in a deployment those are
+real credentials, so they are not written down here.
 
 It is also created with `MustChangePassword: true`, so signing in as it forces a password change
 before anything else works. Use `siteadmin@demo.collega.test` above instead — it exists precisely so
