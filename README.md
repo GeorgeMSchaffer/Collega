@@ -384,28 +384,39 @@ writing production React against an undecided design.
 
 ## Accounts
 
-`pnpm start` seeds two organizations with one account per role each. Sign in at
-http://localhost:3000/login.
+`pnpm start` seeds these accounts. Sign in at http://localhost:3000/login (or the web port
+`pnpm start` prints, if 3000 was taken).
 
-**Every demo account's password is `Abc123!`**, and none is asked to change it. It is development
-only and published here on purpose — `DEMO_PASSWORD` in
+**Every seeded account's password is `Abc123!`.** It is development only and published here on
+purpose — `DEMO_PASSWORD` in
 [`packages/infrastructure/src/demo-seed/modules/scenario.ts`](packages/infrastructure/src/demo-seed/modules/scenario.ts) —
 so a database holding this data must never be one that matters.
 
-| Role | Email | What it can do |
-|---|---|---|
-| Org Admin | `orgadmin@acme-robotics.demo.collega.test` | Creates, edits, moves and administers |
-| User | `user@acme-robotics.demo.collega.test` | Creates, edits and moves, subject to the board's own setting |
-| User | `user2@acme-robotics.demo.collega.test` | As above, a second contributor |
-| Read Only | `readonly@acme-robotics.demo.collega.test` | Reads, comments and upvotes; authoring is refused, with the reason shown |
-| Site Admin | `siteadmin@demo.collega.test` | Every organization; creates organizations and users directly, and changes org content only through View As |
+| Email | Password | Name | Role | Organization |
+|---|---|---|---|---|
+| `siteadmin@demo.collega.test` | `Abc123!` | Sam Sitewide | Site Admin | *(none — every organization)* |
+| `admin@collega.local` | `Abc123!` ¹ | Site Administrator | Site Admin | *(none — every organization)* |
+| `orgadmin@acme-robotics.demo.collega.test` | `Abc123!` | Olivia Administer | Org Admin | Acme Robotics |
+| `user@acme-robotics.demo.collega.test` | `Abc123!` | Noah Contributor | User | Acme Robotics |
+| `user2@acme-robotics.demo.collega.test` | `Abc123!` | Maya Collaborator | User | Acme Robotics |
+| `readonly@acme-robotics.demo.collega.test` | `Abc123!` | Rosa Observer | Read Only | Acme Robotics |
+| `orgadmin@blue-harbor.demo.collega.test` | `Abc123!` | Olivia Administer | Org Admin | Blue Harbor Logistics |
+| `user@blue-harbor.demo.collega.test` | `Abc123!` | Noah Contributor | User | Blue Harbor Logistics |
+| `user2@blue-harbor.demo.collega.test` | `Abc123!` | Maya Collaborator | User | Blue Harbor Logistics |
+| `readonly@blue-harbor.demo.collega.test` | `Abc123!` | Rosa Observer | Read Only | Blue Harbor Logistics |
 
-The second organization, Blue Harbor Logistics, has the same four roles at
-`@blue-harbor.demo.collega.test` (`orgadmin@`, `user@`, `user2@`, `readonly@`), same password.
+¹ The **configured Site Admin**, created from `SITE_ADMIN_EMAIL` / `SITE_ADMIN_PASSWORD` in `.env`
+(the values above are `.env.example`'s). Unlike the others it must change its password at first
+sign-in. A `.env` copied before 2026-10-04 still says `Ch4ngeMe!Now`, and an account already
+created keeps the password it was created with — the seed never overwrites one.
 
-`pnpm start` also creates the **configured Site Admin** from `SITE_ADMIN_EMAIL` and
-`SITE_ADMIN_PASSWORD` in `.env` — `admin@collega.local` / `Ch4ngeMe!Now` with the example values.
-Unlike the demo accounts, it must change its password at first sign-in.
+What each role can do:
+
+- **Org Admin** — creates, edits, moves and administers everything in its organization.
+- **User** — creates and edits ideas, moves them subject to the board's own setting.
+- **Read Only** — reads, comments and upvotes; authoring is refused, with the reason shown.
+- **Site Admin** — every organization; creates organizations and users directly, and changes
+  organization content (boards, ideas) only through View As.
 
 The full roster — every address, display name and organization — is [`demo.md`](demo.md).
 
