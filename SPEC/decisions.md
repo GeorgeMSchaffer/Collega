@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-04 | Fieldsets: reusable groups of fields, attached to idea types | active | full below |
 | 2026-10-01 | The Home comp is a visual guide; the spec wins | active | full below |
 | 2026-10-01 | The follow and inbox questions are answered | active | full below |
 | 2026-10-01 | The S0.2 schema freeze is amended a fifth time, for idea followers and read state | active | full below |
@@ -105,6 +106,55 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-04 — Fieldsets: reusable groups of fields, attached to idea types
+
+**Decided by the user.** An Org Admin groups existing custom fields into a named **fieldset**, and an idea
+type selects individual fields *and* fieldsets. This **supersedes the 2026-08-10 model note** in
+`SPEC/20-feature-idea-type-fields.md` that dropped the reusable "Field Set" entity in favour of direct
+type-to-field mapping (that rewrite predates this log and was never an entry here, so it is marked
+superseded where it lives: the two feature specs and the contract).
+
+- **Live references.** A type points at a fieldset; it does not copy it. Editing a fieldset changes
+  every type that uses it, at once.
+- **Effective order** (`SPEC/20-feature-idea-type-fields.md`, "Effective-field resolution"): the type's
+  direct fields in their order, then each attached fieldset in its order with its members in their
+  order. A field reached twice appears once, at its first position; a direct field wins over a
+  fieldset and keeps its per-type required flag. A fieldset-sourced field uses the field's global
+  `is_required`. There is no per-set required override.
+- **Mode.** `Curated` when the type has any direct field or any attached fieldset, otherwise
+  `AllActiveFields`. A type whose fieldsets resolve to no active field stays `Curated`.
+- **Soft-deleted or inactive fields** are skipped by the resolver; the membership row survives.
+- **Deleting a fieldset is refused with `409` while any type uses it**; the UI shows "Used by N types".
+- **Detaching a fieldset** hides its fields and stops validating them; stored `idea_field_values` are
+  kept, as with any Curated edit today.
+- **Names** are unique per organization, case-insensitively.
+- **Permissions** as field definitions: an in-scope Org Admin writes, members read, a Site Admin acting
+  directly is refused with `403`.
+
+**The S0.2 schema freeze is amended a sixth time.** Under the 2026-09-11 rule — the freeze stands, and
+each change to `schema.prisma` needs its own entry here — this is that entry, and not a general licence.
+Additive, no backfill:
+
+- **New table `fieldsets`** (`id`, `organization_id`, `name`, `normalized_name`, `description`,
+  `display_order`, `created_at_utc`, `updated_at_utc`, `created_by_user_id`, `updated_by_user_id`),
+  unique on (`organization_id`, `normalized_name`), indexed on (`organization_id`, `display_order`).
+- **New table `fieldset_fields`** (`id`, `fieldset_id`, `field_definition_id`, `display_order`), unique
+  on (`fieldset_id`, `field_definition_id`), indexed on `field_definition_id`; `ON DELETE CASCADE` from
+  `fieldsets`, no action from `field_definitions`.
+- **New table `idea_type_fieldsets`** (`id`, `idea_type_id`, `fieldset_id`, `display_order`), unique on
+  (`idea_type_id`, `fieldset_id`), indexed on `fieldset_id`; `ON DELETE CASCADE` from `idea_types`, no
+  action from `fieldsets` (which makes the delete refusal a database guarantee too).
+- **Not covered:** a per-set required override, fieldset soft delete, and nested fieldsets.
+
+**Golden corpus.** Idea-type reads and effective-field items gain additive keys (`fieldsetIds`,
+`fieldsets`, `source`), and the fieldset routes are new, so the replay may differ there. The backend
+slice checks whether `tools/golden/src/diff.ts` tolerates additive keys and records anything else in
+`tools/golden/src/accepted.ts`. The corpus is not re-recorded.
+
+Contracts: `SPEC/contracts/fieldsets.md` (new) and `SPEC/contracts/idea-type-fields.md`.
 
 ---
 

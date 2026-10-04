@@ -386,7 +386,7 @@ A "Custom Fields" accordion section in the filter panel; each active definition 
 
 > **Reinterpreted (see `SPEC/20-feature-idea-type-fields.md`).** The original note imagined "templates" as *default field-value injectors*; that is **not** the v1 direction.
 > - v1 is **per-type field selection (direct mapping)**: an Idea Type maps an ordered selection of existing org UDFs (each required-or-optional for that type), and the idea form/validator/detail resolve fields by the idea's type.
-> - There is no separate reusable "field set" entity — fields attach straight to the type.
+> - *Superseded 2026-10-04 (`SPEC/decisions.md`):* a reusable **fieldset** entity now exists. A type attaches fields directly and/or fieldsets (live references); see `SPEC/20-feature-idea-type-fields.md` for the resolution rules and `SPEC/contracts/fieldsets.md`. This note previously said there was no field-set entity.
 > - Idea type is **immutable after creation** (with an admin-only reassignment exception that archives out-of-scope values), so the normal edit path has no value reconciliation.
 > - Default/prefilled values are a **P2 future consideration**, not part of v1.
 
