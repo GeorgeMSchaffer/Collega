@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-04 | An organization is created with its first Org Admin | active | full below |
 | 2026-10-04 | Three vertical demo organizations join Acme and Blue Harbor | active | full below |
 | 2026-10-04 | The sign-in pitch shows the product, not the primary colour | active | full below |
 | 2026-10-04 | Users create boards; managing them stays Org Admin | active | full below |
@@ -45,9 +46,9 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-30 | The prompt-eval thresholds stand, confirmed against the v1 baseline | active | full below |
 | 2026-09-29 | How the cutover is run | active | full below |
 | 2026-09-29 | Board lanes reorder by dragging the header, with buttons as the fallback | active | full below |
-| 2026-09-29 | Contracts and wording written from the code | active | full below |
-| 2026-09-29 | Removing a lane moves its ideas | active | full below |
-| 2026-09-29 | The test harnesses reuse sessions; the auth rate limits stay | active | full below |
+| 2026-09-29 | Contracts and wording written from the code | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-29 | Removing a lane moves its ideas | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-29 | The test harnesses reuse sessions; the auth rate limits stay | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-29 | Spec contradictions resolved | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-28 | The Idea Field Option contract follows the code | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-28 | The v2 corpus format, as built | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
@@ -111,6 +112,25 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-04 — An organization is created with its first Org Admin
+
+**Decided by the user.** The App Admin (the role the code calls Site Admin) reaches an
+organization's users, tags, custom fields, boards and ideas only by acting as a member (rule 25
+stands), so an organization with no active Org Admin is unreachable. The user chose to close that by
+construction rather than give the App Admin direct access:
+
+- **Creating an organization requires its first Org Admin** — name, email, initial password. The
+  form and the server action refuse before the organization is created when any is missing.
+- **The organization's page lists its Org Admins**, warns when none is active, and offers **Add Org
+  Admin**: Add New User preset to that organization and the Org Admin role (direct user
+  administration is rule 26's bootstrap exception). A deactivated admin is reactivated from their user
+  page.
+
+Rejected: letting the App Admin edit organization settings directly, which would reverse rule 25 and
+attribute organization changes to someone outside it.
 
 ---
 
@@ -479,104 +499,3 @@ Columns" as written: a lane is reordered by dragging its column header, saved im
 The route is the one "Spec contradictions resolved" item 8 chose; that decision stands. This
 entry retires item 8's "`apps/web` does not call the reorder route yet" line, which is left as
 written with a status note under it.
-
----
-
-## 2026-09-29 — Contracts and wording written from the code
-
-**An implementation record, not a user decision** (slice 124). Slice 121 listed routes the code
-serves and no contract describes, and spec lines the code contradicts. They were written from the
-code as it stands, with no code change, and checked against the golden corpus wherever it records
-the route. Nothing here changes behaviour; a reader who wants different behaviour needs a decision,
-not an edit to these contracts.
-
-- **New contracts:** the six `/organizations/{organizationId}/field-definitions` routes, in a new
-  `contracts/field-definitions.md` — reorder is `PUT …/reorder`, with no coverage check, unlike the
-  other catalogs' reorders; reads are open to any member of the organization, writes to an
-  in-scope Org Admin, and a direct Site Admin is refused. `PUT`/`DELETE /auth/me/portrait` in
-  `contracts/auth.md`. The `GET /users/{userId}` success shape, roles and errors in
-  `contracts/users.md`.
-- **Filled in:** the statuses list item carries `color` and `sortOrder`, the list takes
-  `includeDeleted`, and `PUT /statuses/{statusId}` answers the item. The organizations `sortBy`
-  sorts by `title` for any value but `createdAt` — so `companyName`, the contract's old spelling,
-  and `title`, the item's field, behave the same.
-- **Every fixture agrees** except in one field already known: the `profile.portrait.*` fixtures,
-  like `auth.me.*`, predate `organizationTitle`.
-- **Not written:** `GET /organizations/{organizationId}/users/import-template` appears only in the
-  derived `Specs Overview.md`. No code serves it and the corpus does not record it, so there is
-  nothing to describe.
-- **Decided by the user: the idea form preselects the first active Idea Type too.** The Defaults
-  row of `20-feature-ideas-and-engagement.md` and `contracts/idea-field-options.md` already said so,
-  but the form preselected neither. It now preselects both on a new idea, so the first type's custom
-  fields show at once. An edit keeps the idea's stored values, and "Choose…" stays in each select.
-- **Wording:** a required password change ends the session it was made in. The change regenerates
-  the user's `SecurityStamp`, and the web client deletes its cookie and returns to
-  `/login?passwordChanged=1`. `40-test-strategy.md`, `05-product-definition.md`,
-  `20-feature-auth.md` rule 32a and `contracts/auth.md` said the session carried on; each keeps
-  a dated note of what it said.
-
----
-
-## 2026-09-29 — Removing a lane moves its ideas
-
-**Decided by the user.** A board save that removes a lane still holding live ideas moves those ideas
-to another lane of the board. The admin picks the target in a confirm step, defaulting to the
-board's first remaining lane (*3 ideas are in In Review. Move them to: [New / Pending ▾]*). The API
-takes the targets in the save request, refuses a save that removes an occupied lane without one, and
-writes a status-change audit entry per moved idea. Archived boards still refuse the save (`409`).
-The moves send **no notification** (decided by the user the same day): they reconfigure a board
-rather than decide anything about one idea, so `20-feature-notifications.md` trigger 4 carries the
-exception.
-Applied in slice 123: `20-feature-boards-and-statuses.md` Board rule 14, `contracts/boards.md`
-`PUT /boards/{boardId}`, and the Boards header notes in `20-feature-client-ui.md`.
-
-**Why.** Until now the save was accepted and the ideas kept a status that was no longer a column, so
-they vanished from the board while still counting in its `ideaCount` (Bug Triage, found in the
-review of slice 097). The three answers were to refuse the save, move the ideas, or show them
-somewhere; refusing makes the admin move every card by hand first, and a "no column" bucket keeps
-the inconsistency and only labels it. Moving them is one decision the admin is already making.
-
-**Settled with it, by the slice** (the lane and status model decides each; none is a new product
-choice):
-
-- **Which ideas:** the lane's live `Discovery` ideas — what `ideaCount` and `laneCounts` count and
-  the board shows. A promoted Issue keeps its ideation status, which is frozen at promotion for
-  provenance; a soft-deleted idea keeps its, since restore is deferred and its row is a retained
-  record.
-- **Request shape:** `ideaMoves: [{ fromStatusId, toStatusId }]`, one target per removed lane rather
-  than one for the whole save, because the confirm step asks per lane and one-for-all is the
-  special case of it. The target may be a lane added in the same save.
-- **Audit:** `IdeaStatusChanged` in the shape a move on the board writes, and the `BoardUpdated`
-  entry records the moves with their counts.
-
----
-
-## 2026-09-29 — The test harnesses reuse sessions; the auth rate limits stay
-
-**Decided by the user**, closing the two Bug Triage items where the auth rate limiter broke the
-golden replay and the Playwright suite. Supersedes in part 2026-09-12 ("The rate limiter's
-collision with the golden replay is deferred, knowingly"). Slice 122 applied it.
-
-- **Production limits are unchanged**: login twenty a minute; the auth surface ten a minute and a
-  hundred an hour, per IP and per route (`AUTH_THROTTLERS`). The harnesses fit the limits, not
-  the other way round. Exempting a harness caller and raising the limits for one stay rejected,
-  for 2026-09-12's reasons.
-- **The golden replay signs each role in once and keeps the session across scenarios**
-  (`tools/golden/src/cli.ts`). It signs every role in afresh after a scenario that starts or ends
-  View As (today only `auth`), and drops the sessions of accounts a scenario created for itself
-  after every scenario (`profile` changes one's password, which ends its session anyway). About
-  sixty logins a run become twelve, three of them the corpus's own `POST /auth/login` cases.
-  2026-09-12's objection, that caching weakens the isolation `resetSessions` gave, does not hold on
-  Nest: a View As session is a server-side row keyed on the real user and the token is never
-  reissued, so a fresh sign-in lands in the same state. The corpus's own `DELETE /auth/view-as`
-  steps are what end it; the re-sign after View As is caution, not correctness.
-- **The Playwright suite signs each seeded role in once and reuses the cookie via `storageState`**
-  (`e2e/tests/auth.setup.ts`, in place since 2026-09-14; the last seeded sign-in outside it, in
-  `demo-path.spec.ts`, now uses the stored session). Specs that exist to test signing in
-  (`signs-in.spec.ts`, `journey.spec.ts`) and every sign-in as an account a spec just created stay
-  real. Fifteen sign-ins a run become fourteen, nine of them as created accounts.
-- **Verified 2026-09-29, limits intact, scratch databases:** the full Playwright suite passed
-  (38/38). The replay ran all fifteen scenarios to completion on a fresh seed: 360/447 match, 52
-  accepted, 35 unexplained, 69 stale accepted entries. The same corpus replayed with the old
-  per-scenario re-sign, paced under the limits (a 25-second pause after each scenario), produced
-  a byte-identical report, so reusing sessions changes no result.

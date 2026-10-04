@@ -19,7 +19,11 @@ export const metadata = { title: 'New user · Collega' }
  * So the organization is a field rather than an assumption. An Org Admin never sees it — theirs is
  * the only one they may write to, and asking would be a question the session has already answered.
  */
-export default async function NewUserPage() {
+export default async function NewUserPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ organization?: string; role?: string }>
+}) {
   // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
   await requireCurrentUser()
 
@@ -28,6 +32,12 @@ export default async function NewUserPage() {
   // Only a Site Admin needs the list, and only a Site Admin may read it.
   const organizations = siteAdmin ? await getOrganizations() : []
   const organizationId = siteAdmin ? null : currentUser().organizationId
+  // The organization page's Add Org Admin link names both; anything unrecognised is ignored.
+  const search = await searchParams
+  const defaultOrganizationId = organizations.some((o) => o.id === search.organization)
+    ? (search.organization ?? '')
+    : ''
+  const defaultRole = search.role === 'OrgAdmin' ? 'OrgAdmin' : 'User'
 
   return (
     <SettingsPage
@@ -38,6 +48,8 @@ export default async function NewUserPage() {
       <CreateUserForm
         organizationId={organizationId}
         organizations={organizations.map((o) => ({ id: o.id, name: o.name }))}
+        defaultOrganizationId={defaultOrganizationId}
+        defaultRole={defaultRole}
       />
     </SettingsPage>
   )

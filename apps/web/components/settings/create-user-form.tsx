@@ -45,11 +45,16 @@ const ROLES = ['OrgAdmin', 'User', 'ReadOnly'] as const
 export function CreateUserForm({
   organizationId,
   organizations,
+  defaultOrganizationId = '',
+  defaultRole = 'User',
 }: {
   /** The acting organization, or null for a Site Admin, who picks one below. */
   organizationId: string | null
   /** Every organization, for a Site Admin. Empty for anyone else, who may not read the list. */
   organizations: readonly { id: string; name: string }[]
+  /** Preselected from the URL — the organization page's Add Org Admin link. */
+  defaultOrganizationId?: string
+  defaultRole?: (typeof ROLES)[number]
 }) {
   const [state, action, pending] = useActionState(createUser, IDLE)
 
@@ -67,7 +72,12 @@ export function CreateUserForm({
               Org Admin's hidden value is. See admin-actions.ts's header. */}
           {organizationId === null ? (
             <Field htmlFor="user-organization" label="Organization">
-              <Select id="user-organization" name="organizationId" required defaultValue="">
+              <Select
+                id="user-organization"
+                name="organizationId"
+                required
+                defaultValue={defaultOrganizationId}
+              >
                 <option value="" disabled>
                   Choose an organization…
                 </option>
@@ -107,7 +117,7 @@ export function CreateUserForm({
           </Field>
 
           <Field htmlFor="user-role" label="Role">
-            <Select id="user-role" name="role" defaultValue="User" required>
+            <Select id="user-role" name="role" defaultValue={defaultRole} required>
               {ROLES.map((role) => (
                 <option key={role} value={role}>
                   {role}
