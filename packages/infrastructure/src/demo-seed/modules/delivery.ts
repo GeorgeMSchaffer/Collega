@@ -145,7 +145,9 @@ export const deliverySeed: SeedModule = {
           id: sprintId,
           organization_id: organizationId,
           name: 'Current sprint',
-          goal: `Move ${board.focus.toLowerCase()} forward with something measurable.`,
+          goal:
+            scenario.sprintGoal ??
+            `Move ${board.focus.toLowerCase()} forward with something measurable.`,
           start_date: dayUtc(now, -4),
           end_date: dayUtc(now, 10),
           owner_user_id: owner,
@@ -182,7 +184,7 @@ export const deliverySeed: SeedModule = {
       })
 
       for (const promotion of PROMOTIONS) {
-        const ideaScenario = IDEA_SCENARIOS[promotion.ideaIndex]
+        const ideaScenario = (board.ideas ?? IDEA_SCENARIOS)[promotion.ideaIndex]
         if (ideaScenario === undefined) {
           throw new Error(
             `The delivery seed references idea ${promotion.ideaIndex}, which is absent.`,
@@ -220,7 +222,8 @@ export const deliverySeed: SeedModule = {
       }
 
       for (const checklist of CHECKLISTS) {
-        const ideaScenario = IDEA_SCENARIOS[checklist.ideaIndex]
+        const items = board.checklists?.[checklist.ideaIndex] ?? checklist.items
+        const ideaScenario = (board.ideas ?? IDEA_SCENARIOS)[checklist.ideaIndex]
         if (ideaScenario === undefined) {
           throw new Error(
             `The delivery seed references idea ${checklist.ideaIndex}, which is absent.`,
@@ -229,7 +232,7 @@ export const deliverySeed: SeedModule = {
         const ideaId = seedId('idea', scenario.slug, board.name, ideaScenario.title)
 
         let sortOrder = 0
-        for (const item of checklist.items) {
+        for (const item of items) {
           const id = seedId('issue-task', ideaId, item.title)
           const completed = item.state === 'Done'
           const assignee = item.assignee === null ? null : (contributorIds[item.assignee] as string)

@@ -1,0 +1,217 @@
+<title>Collega Sign-in Alternatives</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: a review page with one sign-in screen on stage at a time (today + A/B/C), switched by
+   tabs, and a row of notes below. Committed to Graphite, the app's default dark theme, on purpose. */
+:root {
+  color-scheme: dark;
+  --bg: #0F1113;          /* Graphite --background */
+  --card: #16191C;        /* --card */
+  --rail: #121518;        /* --sidebar */
+  --well: #0F1113;        /* --field */
+  --fg: #E6E8EA;          /* --foreground */
+  --muted: #9BA3AB;       /* --muted-foreground */
+  --line: #22272C;        /* --border */
+  --input: #2C3238;       /* --input */
+  --amber: #F5A524;       /* --primary */
+  --amber-ink: #16120A;   /* --primary-foreground */
+  --cyan: #5CC8E0;        /* --suggest / --metric */
+  --page: #0A0B0D;
+  --st-new: #6B8AFD; --st-rev: #F5B456; --st-prog: #5CC8E0; --st-cli: #B392F0; --st-done: #58C781; --st-crit: #FF8A8E;
+  --sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+* { box-sizing: border-box }
+body { background: var(--page); color: var(--fg); font: 15px/1.55 var(--sans); padding-inline: 16px; padding-block: 28px 48px }
+.wrap { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px }
+header.top h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -.01em; text-wrap: balance }
+header.top p { margin: 6px 0 0; color: var(--muted); max-width: 68ch }
+.tabs { display: flex; flex-wrap: wrap; gap: 8px }
+.tabs > input { position: absolute; opacity: 0; pointer-events: none }
+.tabs > label { cursor: pointer; border: 1px solid var(--line); background: var(--card); color: var(--muted); border-radius: 999px; padding: 7px 14px; font-weight: 600; font-size: 13px }
+.tabs > label b { color: var(--fg); font-weight: 600 }
+.tabs > input:checked + label { border-color: var(--amber); color: var(--fg); box-shadow: 0 0 0 1px var(--amber) inset }
+.tabs > input:focus-visible + label { outline: 2px solid var(--cyan); outline-offset: 2px }
+.why { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px }
+.why > div { min-width: 0; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--card); font-size: 13.5px; color: var(--muted) }
+.why b { color: var(--fg) }
+.why .k { font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--amber); display: block; margin-bottom: 4px }
+code { font: 12.5px var(--mono); color: var(--fg) }
+
+.stage { flex-basis: 100%; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--bg) }
+.screen { display: none; min-height: 600px }
+#t-now:checked ~ .stage .s-now, #t-a:checked ~ .stage .s-a, #t-b:checked ~ .stage .s-b, #t-c:checked ~ .stage .s-c { display: flex }
+.caption { padding: 10px 14px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); background: var(--card) }
+.caption b { color: var(--fg) }
+
+.form { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 14px }
+.form h2 { margin: 0; font-size: 22px; font-weight: 600 }
+.form .lede { margin: -6px 0 4px; color: var(--muted); font-size: 14px }
+.field { display: flex; flex-direction: column; gap: 6px }
+.field label { font-size: 13px; font-weight: 500 }
+.field input { height: 38px; border-radius: 6px; border: 1px solid var(--input); background: var(--well); color: var(--fg); padding: 0 11px; font: inherit; font-size: 14px }
+.field input::placeholder { color: #6E7781 }
+.field input:focus-visible { outline: 2px solid var(--amber); outline-offset: 1px }
+.btn { height: 38px; border: 0; border-radius: 6px; background: var(--amber); color: var(--amber-ink); font: 600 14px var(--sans); cursor: pointer }
+.btn:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px }
+.small { font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 2px }
+.small a { color: var(--amber); text-decoration: none }
+.mark { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; font: 700 12px var(--sans); letter-spacing: .02em; background: var(--amber); color: var(--amber-ink) }
+.pitch h3 { margin: 18px 0 10px; font-size: 26px; line-height: 1.2; font-weight: 700; text-wrap: balance; max-width: 16ch }
+.pitch p { margin: 0; color: var(--muted); max-width: 44ch }
+.pitch ul { list-style: none; padding: 0; margin: 18px 0 0; display: flex; flex-direction: column; gap: 9px; font-size: 14px }
+.pitch li { display: flex; gap: 9px; align-items: baseline }
+.pitch li::before { content: ""; width: 6px; height: 6px; border-radius: 99px; background: var(--amber); flex: none; transform: translateY(-2px) }
+kbd { font: 500 11px var(--mono); border: 1px solid var(--input); border-radius: 4px; padding: 1px 5px; color: var(--fg) }
+.half { flex: 1; display: flex; align-items: center; padding: 48px; min-width: 0 }
+.form-side { justify-content: center }
+
+/* Today: the panel is filled with --primary */
+.s-now .brand { background: var(--amber); color: var(--amber-ink) }
+.s-now .brand .mark { background: rgba(0,0,0,.12); color: var(--amber-ink) }
+.s-now .brand p, .s-now .brand li { color: #3B2A06 }
+.s-now .brand li::before { background: var(--amber-ink) }
+.s-now .brand kbd { border-color: rgba(0,0,0,.25); color: var(--amber-ink) }
+
+/* A: Ember edge */
+.s-a .brand { position: relative; border-right: 1px solid var(--line);
+  background: radial-gradient(120% 70% at 0% 100%, rgba(245,165,36,.16), transparent 60%), var(--rail) }
+.s-a .brand::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(var(--amber), transparent 70%) }
+
+/* B: Single card */
+.s-b { align-items: center; justify-content: center; flex-direction: column; gap: 22px; padding: 48px 16px;
+  background: radial-gradient(60% 45% at 50% 0%, rgba(245,165,36,.10), transparent 70%), var(--bg) }
+.s-b .brandrow { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px }
+.s-b .card { width: 100%; max-width: 420px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 28px; display: flex; justify-content: center; box-shadow: 0 20px 50px rgba(0,0,0,.35) }
+.s-b .promise { color: var(--muted); font-size: 13.5px; text-align: center; max-width: 46ch; margin: 0 }
+
+/* C: Board preview */
+.s-c .brand { background: var(--rail); border-right: 1px solid var(--line); flex-direction: column; align-items: flex-start; justify-content: center; gap: 26px; overflow: hidden }
+.s-c .board { width: 100%; max-width: 520px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px }
+.s-c .lane { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px; display: flex; flex-direction: column; gap: 6px; min-height: 170px }
+.s-c .lh { display: flex; align-items: center; gap: 5px; font: 500 10px var(--mono); color: var(--muted); white-space: nowrap; overflow: hidden }
+.s-c .lh i { width: 6px; height: 6px; border-radius: 99px; flex: none }
+.s-c .kc { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 6px; display: flex; flex-direction: column; gap: 4px }
+.s-c .kc span { display: block; height: 5px; border-radius: 3px; background: #2A3036 }
+.s-c .kc span.w { width: 70% }
+.s-c .kc em { display: block; width: 26px; height: 4px; border-radius: 3px }
+
+@media (max-width: 820px) {
+  .screen { min-height: 0 }
+  .s-now, .s-a, .s-c { flex-direction: column }
+  .half { padding: 28px 20px }
+  .s-a .brand, .s-c .brand { border-right: 0; border-bottom: 1px solid var(--line) }
+  .s-c .board { grid-template-columns: repeat(3, minmax(0, 1fr)) }
+  .s-c .lane:nth-child(n+4) { display: none }
+  .pitch h3 { font-size: 22px }
+}
+@media (prefers-reduced-motion: no-preference) { .tabs > label { transition: border-color .15s, color .15s } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>The sign-in page, without the amber wall</h1>
+    <p>Today the left half is filled with Graphite's primary colour, so one eye gets bright amber and the other near-black. Each alternative keeps amber for the things you act on and gives the brand side the same dark ground as the form.</p>
+  </header>
+
+  <div class="tabs" role="radiogroup" aria-label="Design">
+    <input type="radio" name="t" id="t-now"><label for="t-now"><b>Today</b> · amber half</label>
+    <input type="radio" name="t" id="t-a" checked><label for="t-a"><b>A</b> · Ember edge</label>
+    <input type="radio" name="t" id="t-b"><label for="t-b"><b>B</b> · Single card</label>
+    <input type="radio" name="t" id="t-c"><label for="t-c"><b>C</b> · Board preview</label>
+
+    <div class="stage">
+      <div class="screen s-now">
+        <div class="half brand"><div class="pitch">
+          <span class="mark">CG</span>
+          <h3>Every idea your organization has, in one place.</h3>
+          <p>Collega tracks an idea from the first rough note through review, work, and delivery — with the people, comments, and history attached to it the whole way.</p>
+          <ul><li>One account per person, scoped to your organization</li><li>Boards, statuses and idea types you define yourself</li><li>Keyboard-first: press <kbd>Ctrl K</kbd> anywhere</li></ul>
+        </div></div>
+        <div class="half form-side"><form class="form" onsubmit="event.preventDefault()">
+          <h2>Sign in</h2><p class="lede">One email, one account. We’ll take you straight to your organization.</p>
+          <div class="field"><label for="now-e">Email</label><input id="now-e" placeholder="you@yourcompany.com"></div>
+          <div class="field"><label for="now-p">Password</label><input id="now-p" type="password"></div>
+          <button class="btn">Sign in</button>
+          <div class="small"><span>Have an invite code? <a href="#t-now">Create an account</a>.</span><span>Forgot your password? Ask your organization admin to reset it.</span></div>
+        </form></div>
+      </div>
+
+      <div class="screen s-a">
+        <div class="half brand"><div class="pitch">
+          <span class="mark">CG</span>
+          <h3>Every idea your organization has, in one place.</h3>
+          <p>Collega tracks an idea from the first rough note through review, work, and delivery — with the people, comments, and history attached to it the whole way.</p>
+          <ul><li>One account per person, scoped to your organization</li><li>Boards, statuses and idea types you define yourself</li><li>Keyboard-first: press <kbd>Ctrl K</kbd> anywhere</li></ul>
+        </div></div>
+        <div class="half form-side"><form class="form" onsubmit="event.preventDefault()">
+          <h2>Sign in</h2><p class="lede">One email, one account. We’ll take you straight to your organization.</p>
+          <div class="field"><label for="a-e">Email</label><input id="a-e" placeholder="you@yourcompany.com"></div>
+          <div class="field"><label for="a-p">Password</label><input id="a-p" type="password"></div>
+          <button class="btn">Sign in</button>
+          <div class="small"><span>Have an invite code? <a href="#t-a">Create an account</a>.</span><span>Forgot your password? Ask your organization admin to reset it.</span></div>
+        </form></div>
+      </div>
+
+      <div class="screen s-b">
+        <div class="brandrow"><span class="mark">CG</span>Collega</div>
+        <div class="card"><form class="form" onsubmit="event.preventDefault()">
+          <h2>Sign in</h2><p class="lede">One email, one account. We’ll take you straight to your organization.</p>
+          <div class="field"><label for="b-e">Email</label><input id="b-e" placeholder="you@yourcompany.com"></div>
+          <div class="field"><label for="b-p">Password</label><input id="b-p" type="password"></div>
+          <button class="btn">Sign in</button>
+          <div class="small"><span>Have an invite code? <a href="#t-b">Create an account</a>.</span><span>Forgot your password? Ask your organization admin to reset it.</span></div>
+        </form></div>
+        <p class="promise">Every idea your organization has, in one place — from the first rough note through review, work and delivery.</p>
+      </div>
+
+      <div class="screen s-c">
+        <div class="half brand">
+          <div class="pitch">
+            <span class="mark">CG</span>
+            <h3>Every idea your organization has, in one place.</h3>
+            <p>From the first rough note through review, work and delivery — on boards whose lanes you define.</p>
+          </div>
+          <div class="board" aria-hidden="true">
+            <div class="lane"><div class="lh"><i style="background:var(--st-new)"></i>New</div><div class="kc"><span></span><span class="w"></span><em style="background:var(--st-rev)"></em></div><div class="kc"><span class="w"></span><em style="background:var(--st-done)"></em></div><div class="kc"><span></span><span class="w"></span></div></div>
+            <div class="lane"><div class="lh"><i style="background:var(--st-rev)"></i>Review</div><div class="kc"><span></span><span class="w"></span><em style="background:var(--st-crit)"></em></div><div class="kc"><span class="w"></span></div></div>
+            <div class="lane"><div class="lh"><i style="background:var(--st-prog)"></i>Doing</div><div class="kc"><span></span><span class="w"></span><em style="background:var(--st-rev)"></em></div><div class="kc"><span></span></div></div>
+            <div class="lane"><div class="lh"><i style="background:var(--st-cli)"></i>Client</div><div class="kc"><span class="w"></span><em style="background:var(--st-crit)"></em></div></div>
+            <div class="lane"><div class="lh"><i style="background:var(--st-done)"></i>Done</div><div class="kc"><span></span><span class="w"></span></div><div class="kc"><span class="w"></span><em style="background:var(--st-done)"></em></div><div class="kc"><span></span></div></div>
+          </div>
+        </div>
+        <div class="half form-side"><form class="form" onsubmit="event.preventDefault()">
+          <h2>Sign in</h2><p class="lede">One email, one account. We’ll take you straight to your organization.</p>
+          <div class="field"><label for="c-e">Email</label><input id="c-e" placeholder="you@yourcompany.com"></div>
+          <div class="field"><label for="c-p">Password</label><input id="c-p" type="password"></div>
+          <button class="btn">Sign in</button>
+          <div class="small"><span>Have an invite code? <a href="#t-c">Create an account</a>.</span><span>Forgot your password? Ask your organization admin to reset it.</span></div>
+        </form></div>
+      </div>
+
+      <div class="caption" id="cap"></div>
+    </div>
+  </div>
+
+  <div class="why">
+    <div><span class="k">A · Ember edge</span><b>Smallest change.</b> Same split and copy; the panel takes the sidebar's dark ground, and amber shows only as a thin edge, a faint corner glow, the mark and the button. Reads as one surface.</div>
+    <div><span class="k">B · Single card</span><b>Calmest.</b> No split at all: one card centred on the page, the pitch reduced to a line under it. Nothing competes with the form, and it is the same on a phone.</div>
+    <div><span class="k">C · Board preview</span><b>Most product.</b> The left side shows what Collega is — a board of lanes in their status colours — instead of a block of colour. Amber is kept for the one button.</div>
+    <div><span class="k">Every theme</span>Each version paints the brand side with the theme's sidebar or background token instead of its primary, so the four light themes get the same calm treatment without a separate design.</div>
+  </div>
+</div>
+
+<script>
+const notes = {
+  now: '<b>Today.</b> The panel is filled with <code>--primary</code>: in Graphite, a full-height block of the brightest colour on the page.',
+  a: '<b>A · Ember edge.</b> Panel on <code>--sidebar</code>, a 3px amber edge fading down, and a faint amber glow from the bottom corner.',
+  b: '<b>B · Single card.</b> One centred card on <code>--background</code>, a soft amber halo from the top, the pitch as a single line.',
+  c: '<b>C · Board preview.</b> Panel on <code>--sidebar</code> with a schematic board in status colours; amber only on the Sign in button.',
+};
+const cap = document.getElementById('cap');
+function show() { cap.innerHTML = notes[document.querySelector('.tabs > input:checked').id.slice(2)]; }
+document.querySelectorAll('.tabs > input').forEach((i) => i.addEventListener('change', show));
+show();
+</script>

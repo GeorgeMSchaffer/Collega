@@ -7,13 +7,17 @@ import type {
   IdeaLookupPort as CommentsIdeaLookupPort,
   IdeaSummary,
 } from '@collega/application/comments'
+import type { IdeaLookupPort as FollowingIdeaLookupPort } from '@collega/application/following'
 import type { IdeaLookupPort as UpvotesIdeaLookupPort } from '@collega/application/upvotes'
 import type { PrismaClient } from '../persistence/prisma-client.js'
 
-export class IdeaLookupRepository implements CommentsIdeaLookupPort, UpvotesIdeaLookupPort {
+export class IdeaLookupRepository
+  implements CommentsIdeaLookupPort, UpvotesIdeaLookupPort, FollowingIdeaLookupPort
+{
   constructor(private readonly prisma: PrismaClient) {}
 
-  /** `comments.IdeaLookupPort.getById` - excludes soft-deleted ideas. */
+  /** `comments.IdeaLookupPort.getById` and `following.IdeaLookupPort.getById` - excludes
+   * soft-deleted ideas. */
   async getById(ideaId: string): Promise<IdeaSummary | null> {
     const row = await this.prisma.ideas.findFirst({
       where: { id: ideaId, is_deleted: false },

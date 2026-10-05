@@ -28,26 +28,46 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
-| 2026-09-29 | Contracts and wording written from the code | active | full below |
-| 2026-09-29 | Removing a lane moves its ideas | active | full below |
-| 2026-09-29 | The test harnesses reuse sessions; the auth rate limits stay | active | full below |
-| 2026-09-29 | Spec contradictions resolved | active | full below |
-| 2026-09-28 | The Idea Field Option contract follows the code | active | full below |
-| 2026-09-28 | The v2 corpus format, as built | active | full below |
-| 2026-09-28 | The prompt-eval runner's provisional limits stand for the first baseline | active | full below |
-| 2026-09-28 | `compare` refuses to judge an invalid run | active | full below |
-| 2026-09-28 | The prompt-eval runner's fixture hash for `compare` is the catalog hash | active | full below |
-| 2026-09-28 | The Anthropic client reads no credential or endpoint from the environment | active | full below |
-| 2026-09-28 | The prompt-eval runner's open questions are answered | active | full below |
-| 2026-09-28 | The prompt-eval runner: what existing decisions already settle | superseded in part | full below |
-| 2026-09-28 | Starting a sprint, a single-Issue read, the Roadmap's sprint rows, and tag audit events | active | full below |
-| 2026-09-28 | The comp R iteration's open questions are answered | active | full below |
-| 2026-09-28 | The S0.2 schema freeze is amended a fourth time, for tag colours | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
-| 2026-09-28 | Graphite replaces Notte as the dark theme | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
-| 2026-09-28 | The next comp R iteration is adopted: denser forms, Sprint board, Roadmap, tag colours and Settings → Tags | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
-| 2026-09-27 | The API sends the custom field list | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
-| 2026-09-27 | The idea assistant is rescoped as a co-author, and ideas gain structured fields | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
-| 2026-09-27 | The S0.2 schema freeze is amended a third time, for structured ideas and board archive | active | [2026-09-27 to 2026-09-28](decisions/archive-2026-09-27-to-2026-09-28.md) |
+| 2026-10-04 | The App Admin's sidebar offers Home and Settings only | active | full below |
+| 2026-10-04 | The Site Admin role is shown as App Admin | active | full below |
+| 2026-10-04 | An organization is created with its first Org Admin | active | full below |
+| 2026-10-04 | Three vertical demo organizations join Acme and Blue Harbor | active | full below |
+| 2026-10-04 | The sign-in pitch shows the product, not the primary colour | active | full below |
+| 2026-10-04 | Users create boards; managing them stays Org Admin | active | full below |
+| 2026-10-04 | One Enter adds a tag on the idea form | active | full below |
+| 2026-10-04 | Graphite is the default theme | active | full below |
+| 2026-10-04 | Fieldsets: reusable groups of fields, attached to idea types | active | full below |
+| 2026-10-01 | The Home comp is a visual guide; the spec wins | active | full below |
+| 2026-10-01 | The follow and inbox questions are answered | active | full below |
+| 2026-10-01 | The S0.2 schema freeze is amended a fifth time, for idea followers and read state | active | full below |
+| 2026-10-01 | The Home dashboard comp is approved as drawn | amended | full below |
+| 2026-10-01 | Following an idea, and an in-app notification inbox | active | full below |
+| 2026-10-01 | The View As banner names only the target | active | full below |
+| 2026-10-01 | The View As candidate order, and F1 closes | active | full below |
+| 2026-09-30 | What the MVP release includes | active | full below |
+| 2026-09-30 | The prompt-eval thresholds stand, confirmed against the v1 baseline | active | full below |
+| 2026-09-29 | How the cutover is run | active | full below |
+| 2026-09-29 | Board lanes reorder by dragging the header, with buttons as the fallback | active | [2026-09-29 to 2026-09-29](decisions/archive-2026-09-29-to-2026-09-29.md) |
+| 2026-09-29 | Contracts and wording written from the code | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-29 | Removing a lane moves its ideas | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-29 | The test harnesses reuse sessions; the auth rate limits stay | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-29 | Spec contradictions resolved | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-28 | The Idea Field Option contract follows the code | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-28 | The v2 corpus format, as built | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-28 | The prompt-eval runner's provisional limits stand for the first baseline | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-28 | `compare` refuses to judge an invalid run | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-28 | The prompt-eval runner's fixture hash for `compare` is the catalog hash | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-28 | The Anthropic client reads no credential or endpoint from the environment | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-28 | The prompt-eval runner's open questions are answered | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-28 | The prompt-eval runner: what existing decisions already settle | superseded in part | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-28 | Starting a sprint, a single-Issue read, the Roadmap's sprint rows, and tag audit events | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-28 | The comp R iteration's open questions are answered | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-28 | The S0.2 schema freeze is amended a fourth time, for tag colours | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-28 | Graphite replaces Notte as the dark theme | superseded in part | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-28 | The next comp R iteration is adopted: denser forms, Sprint board, Roadmap, tag colours and Settings → Tags | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-27 | The API sends the custom field list | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-27 | The idea assistant is rescoped as a co-author, and ideas gain structured fields | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-27 | The S0.2 schema freeze is amended a third time, for structured ideas and board archive | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-27 | Terrazzo is the palette, with a theme picker | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-27 | One list and detail pattern, and a drawer instead of the docked inspector | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
 | 2026-09-27 | The Boards screen has a card view and a list view | superseded in part | [2026-09-10 to 2026-09-27](decisions/archive-2026-09-10-to-2026-09-27.md) |
@@ -97,384 +117,382 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 ---
 
-## 2026-09-29 — Contracts and wording written from the code
+## 2026-10-04 — The App Admin's sidebar offers Home and Settings only
 
-**An implementation record, not a user decision** (slice 124). Slice 121 listed routes the code
-serves and no contract describes, and spec lines the code contradicts. They were written from the
-code as it stands, with no code change, and checked against the golden corpus wherever it records
-the route. Nothing here changes behaviour; a reader who wants different behaviour needs a decision,
-not an edit to these contracts.
+> Supersedes in part `20-feature-client-ui-revisions.md`'s "Site Admin … Boards, Ideas … list views
+> aggregate all organizations".
 
-- **New contracts:** the six `/organizations/{organizationId}/field-definitions` routes, in a new
-  `contracts/field-definitions.md` — reorder is `PUT …/reorder`, with no coverage check, unlike the
-  other catalogs' reorders; reads are open to any member of the organization, writes to an
-  in-scope Org Admin, and a direct Site Admin is refused. `PUT`/`DELETE /auth/me/portrait` in
-  `contracts/auth.md`. The `GET /users/{userId}` success shape, roles and errors in
-  `contracts/users.md`.
-- **Filled in:** the statuses list item carries `color` and `sortOrder`, the list takes
-  `includeDeleted`, and `PUT /statuses/{statusId}` answers the item. The organizations `sortBy`
-  sorts by `title` for any value but `createdAt` — so `companyName`, the contract's old spelling,
-  and `title`, the item's field, behave the same.
-- **Every fixture agrees** except in one field already known: the `profile.portrait.*` fixtures,
-  like `auth.me.*`, predate `organizationTitle`.
-- **Not written:** `GET /organizations/{organizationId}/users/import-template` appears only in the
-  derived `Specs Overview.md`. No code serves it and the corpus does not record it, so there is
-  nothing to describe.
-- **Decided by the user: the idea form preselects the first active Idea Type too.** The Defaults
-  row of `20-feature-ideas-and-engagement.md` and `contracts/idea-field-options.md` already said so,
-  but the form preselected neither. It now preselects both on a new idea, so the first type's custom
-  fields show at once. An edit keeps the idea's stored values, and "Choose…" stays in each select.
-- **Wording:** a required password change ends the session it was made in. The change regenerates
-  the user's `SecurityStamp`, and the web client deletes its cookie and returns to
-  `/login?passwordChanged=1`. `40-test-strategy.md`, `05-product-definition.md`,
-  `20-feature-auth.md` rule 32a and `contracts/auth.md` said the session carried on; each keeps
-  a dated note of what it said.
+**Decided by the user.** An App Admin (Site Admin) acting as themselves changes boards, ideas and
+delivery only through View As, and their own lists of them were empty, so the sidebar and the
+command palette no longer offer them Boards, Ideas, Sprint board, Backlog or Roadmap — those showed
+a 0 count and an empty screen. Home's platform roll-up still links to each board for reading. A group left
+empty (Delivery) loses its heading. Under View As the role is the target's, so the links return.
+The routes themselves are unchanged.
 
 ---
 
-## 2026-09-29 — Removing a lane moves its ideas
+## 2026-10-04 — The Site Admin role is shown as App Admin
 
-**Decided by the user.** A board save that removes a lane still holding live ideas moves those ideas
-to another lane of the board. The admin picks the target in a confirm step, defaulting to the
-board's first remaining lane (*3 ideas are in In Review. Move them to: [New / Pending ▾]*). The API
-takes the targets in the save request, refuses a save that removes an occupied lane without one, and
-writes a status-change audit entry per moved idea. Archived boards still refuse the save (`409`).
-The moves send **no notification** (decided by the user the same day): they reconfigure a board
-rather than decide anything about one idea, so `20-feature-notifications.md` trigger 4 carries the
-exception.
-Applied in slice 123: `20-feature-boards-and-statuses.md` Board rule 14, `contracts/boards.md`
-`PUT /boards/{boardId}`, and the Boards header notes in `20-feature-client-ui.md`.
-
-**Why.** Until now the save was accepted and the ideas kept a status that was no longer a column, so
-they vanished from the board while still counting in its `ideaCount` (Bug Triage, found in the
-review of slice 097). The three answers were to refuse the save, move the ideas, or show them
-somewhere; refusing makes the admin move every card by hand first, and a "no column" bucket keeps
-the inconsistency and only labels it. Moving them is one decision the admin is already making.
-
-**Settled with it, by the slice** (the lane and status model decides each; none is a new product
-choice):
-
-- **Which ideas:** the lane's live `Discovery` ideas — what `ideaCount` and `laneCounts` count and
-  the board shows. A promoted Issue keeps its ideation status, which is frozen at promotion for
-  provenance; a soft-deleted idea keeps its, since restore is deferred and its row is a retained
-  record.
-- **Request shape:** `ideaMoves: [{ fromStatusId, toStatusId }]`, one target per removed lane rather
-  than one for the whole save, because the confirm step asks per lane and one-for-all is the
-  special case of it. The target may be a lane added in the same save.
-- **Audit:** `IdeaStatusChanged` in the shape a move on the board writes, and the `BoardUpdated`
-  entry records the moves with their counts.
+**Decided by the user**, who names the four roles App Admin, Org Admin, User and Read Only. Every
+user-visible label and message in `apps/web` says **App Admin**. The role's value (`SiteAdmin`),
+the API, its contracts and error messages, the golden corpus, the specs and code comments keep
+"Site Admin": renaming those is a large, risky change for no user-facing gain, and the specs read
+"Site Admin" as the role's name. API error text a screen shows verbatim (the View As refusal) still
+says "Site Admin" until a later slice changes it.
 
 ---
 
-## 2026-09-29 — The test harnesses reuse sessions; the auth rate limits stay
+## 2026-10-04 — An organization is created with its first Org Admin
 
-**Decided by the user**, closing the two Bug Triage items where the auth rate limiter broke the
-golden replay and the Playwright suite. Supersedes in part 2026-09-12 ("The rate limiter's
-collision with the golden replay is deferred, knowingly"). Slice 122 applied it.
+**Decided by the user.** The App Admin (the role the code calls Site Admin) reaches an
+organization's users, tags, custom fields, boards and ideas only by acting as a member (rule 25
+stands), so an organization with no active Org Admin is unreachable. The user chose to close that by
+construction rather than give the App Admin direct access:
 
-- **Production limits are unchanged**: login twenty a minute; the auth surface ten a minute and a
-  hundred an hour, per IP and per route (`AUTH_THROTTLERS`). The harnesses fit the limits, not
-  the other way round. Exempting a harness caller and raising the limits for one stay rejected,
-  for 2026-09-12's reasons.
-- **The golden replay signs each role in once and keeps the session across scenarios**
-  (`tools/golden/src/cli.ts`). It signs every role in afresh after a scenario that starts or ends
-  View As (today only `auth`), and drops the sessions of accounts a scenario created for itself
-  after every scenario (`profile` changes one's password, which ends its session anyway). About
-  sixty logins a run become twelve, three of them the corpus's own `POST /auth/login` cases.
-  2026-09-12's objection, that caching weakens the isolation `resetSessions` gave, does not hold on
-  Nest: a View As session is a server-side row keyed on the real user and the token is never
-  reissued, so a fresh sign-in lands in the same state. The corpus's own `DELETE /auth/view-as`
-  steps are what end it; the re-sign after View As is caution, not correctness.
-- **The Playwright suite signs each seeded role in once and reuses the cookie via `storageState`**
-  (`e2e/tests/auth.setup.ts`, in place since 2026-09-14; the last seeded sign-in outside it, in
-  `demo-path.spec.ts`, now uses the stored session). Specs that exist to test signing in
-  (`signs-in.spec.ts`, `journey.spec.ts`) and every sign-in as an account a spec just created stay
-  real. Fifteen sign-ins a run become fourteen, nine of them as created accounts.
-- **Verified 2026-09-29, limits intact, scratch databases:** the full Playwright suite passed
-  (38/38). The replay ran all fifteen scenarios to completion on a fresh seed: 360/447 match, 52
-  accepted, 35 unexplained, 69 stale accepted entries. The same corpus replayed with the old
-  per-scenario re-sign, paced under the limits (a 25-second pause after each scenario), produced
-  a byte-identical report, so reusing sessions changes no result.
+- **Creating an organization requires its first Org Admin** — name, email, initial password. The
+  form and the server action refuse before the organization is created when any is missing.
+- **The organization's page lists its Org Admins**, warns when none is active, and offers **Add Org
+  Admin**: Add New User preset to that organization and the Org Admin role (direct user
+  administration is rule 26's bootstrap exception). A deactivated admin is reactivated from their user
+  page.
+
+Rejected: letting the App Admin edit organization settings directly, which would reverse rule 25 and
+attribute organization changes to someone outside it.
 
 ---
 
-## 2026-09-29 — Spec contradictions resolved
+## 2026-10-04 — Three vertical demo organizations join Acme and Blue Harbor
 
-**Decided by the user**, one question at a time, on the contradictions between canonical specs that
-the restructure's Phase 2 (slice 120) found. Slice 121 applied them; each is recorded here once.
-Where a spec keeps history the old text stays, marked superseded; elsewhere it was rewritten.
+**Decided by the user.** The generic demo data (the same eleven scenarios on every board, prefixed
+with the board's focus) is too thin to demo to a market. The seed now also creates three
+organizations written for a vertical: **Pinecone Labs** (an Agile software team), **Brightline
+Creative** (a marketing agency) and **Meridian Holdings** (a corporate business-improvement
+programme, "Project Lighthouse"). Each has two boards of 11 themed ideas (3/2/2/1/3 across the default
+statuses), themed tags, comments, a sprint with promoted issues and checklists, and one account per
+role - Org Admin, two Users, Read Only - on the same `orgadmin`/`user`/`user2`/`readonly` local parts.
 
-1. **Sessions are the httpOnly cookie Nest issues** (2026-09-04). The API sets `collega_session`,
-   a signed JWT, on login; `apps/web` re-issues it on its own origin and forwards it; no client
-   holds a bearer token. `contracts/auth.md` "Access Token Format and Session Revocation" and the
-   rotation gate, `20-feature-auth.md` requirements 33–35 and `20-feature-user-login.md` scenarios
-   9–11 now describe that. The browser idle deadline (auth requirements 38–42) is not built in
-   `apps/web`, and the contract says so. This supersedes 2026-09-04 decision `08` in part, on two
-   points where the code differs: Nest sets the cookie on login only — View As start and exit do
-   not touch it — and `apps/web` does hold it, re-issuing it on its own origin and deleting it on
-   sign-out; `08` said Nest sets and clears it on login and View As start/exit and Next holds no
-   session of its own.
-2. **A Site Admin changes organization content only while acting through View As**; organization
-   and user administration stay direct. This is the locked 2026-08-11 decision and what
-   `ensureNotDirectSiteAdmin` enforces from every service's `ensureAdminScope`. The boards and
-   statuses, ideas, and idea-type-fields specs and `contracts/idea-type-fields.md` said otherwise.
-3. **Business Impact defaults to the first active option**, like Idea Type: the idea form preselects
-   it and the API stores no default; a reorder makes the new first option the preselection. This
-   replaces the 2026-08-17 `Medium` default in `20-feature-ideas-and-engagement.md`, kept there as
-   superseded. Following 2026-09-28 "The Idea Field Option contract follows the code", the Idea
-   Type item in `contracts/idea-field-options.md` also gained the `colorHex`, `icon`, `fieldMode`
-   and `fields` the code returns, and the reorder routes their null-body `400` messages.
-4. **Lists page at 10 per page, with 25, 50 and 100** (comp R). The 25/50/100/250 rule in
-   `20-feature-client-ui-revisions.md` "Uniform List Conventions" is superseded.
-5. **Per-organization AI keys stay deferred and unbuilt** (tracker rule 30). Their text stays as
-   the specification for later, labelled "Deferred — not built" in `contracts/organizations.md`
-   and `20-feature-organizations-and-users.md`.
-6. **F1 is not a gate, deleting the .NET stack was not chained to F1, and Wave G waits until after
-   cutover** — 2026-09-08 and 2026-09-11, applied to `50-typescript-migration.md`, where the older
-   text is marked superseded.
-7. **A status colour is `#RRGGBB`**, as the API enforces (`20-feature-boards-and-statuses.md`
-   rule 9 said any hex/CSS colour).
-8. **Columns reorder with `POST /boards/{boardId}/swimlanes/reorder`**, not the nonexistent
-   `PUT /boards/{boardId}/statuses/{statusId}` that `20-feature-client-ui.md` named. `apps/web`
-   does not call the reorder route yet: column drag is unbuilt.
-9. **An idea's details open in the drawer at `/ideas?idea={id}`**, not a `/ideas/{id}/edit` route
-   (`20-feature-client-ui-revisions.md`).
-10. **Idea Type options carry a colour and icon** (Fields rule 9); the ideas spec's decision-table
-    row "label and sort order only" is superseded.
-11. **The technical plan's `ideas` outline drops `assignee_user_id`**, removed by Phase BE-1 for
-    `idea_assignees`. `priority` was listed for removal too, but BE-1 never removed it and it is a
-    live column (`Priority` enum in `schema.prisma`), so it stays — reported, not applied.
-12. **An unconfigured AI assistant answers `503`**, the same as an unavailable provider or an
-    exhausted budget (`20-feature-ai-idea-assist.md` rule 31, matching `contracts/ai-assist.md`).
-13. **`SITE_ADMIN_PASSWORD` stays in place** after the first login, because the API refuses to boot
-    without it; `50-vercel-deployment.md` §8 said it could be deleted. The guide also now counts
-    §11's seven candidates, not six.
-
-**Why record them together.** Each was a place where two canonical documents disagreed, which
-AGENTS.md says to ask about rather than pick. They were asked together and answered together, and
-none changes code: where a spec and the code differed, the answer was the code. Three gaps remain where
-the specs now say more than the code does: the idea form preselects neither option yet (item 3),
-the browser idle deadline is unbuilt (item 1), and no client calls the swimlane reorder route
-(item 8).
+**Acme Robotics and Blue Harbor Logistics are kept unchanged** and stay first in the scenario: about
+60 golden fixtures, the E2E suite and `apps/web`'s test fixtures pin them by slug, and the corpus
+cannot be re-recorded. This **supersedes the "exactly 2 demo organizations" wording** in
+`10-requirements.md`, `20-feature-organizations-and-users.md` and `40-test-strategy.md`: the two
+fixture organizations keep that shape; the three verticals are additional demo data. Read Only
+accounts are seeded in every organization (they already were; the specs' "no Read Only account"
+wording was stale).
 
 ---
 
-## 2026-09-28 — The Idea Field Option contract follows the code
+## 2026-10-04 — The sign-in pitch shows the product, not the primary colour
 
-**Decided by the user.** Slice 119 merged the two sections of `30-Contracts.md` headed "Idea Field
-Option Contracts" into `SPEC/contracts/idea-field-options.md` and marked eight places where the two
-copies, or the text and the code, disagreed. All eight are resolved so the contract says what the
-code does today, with no code change — the code has shipped, and a contract the golden corpus pins
-should not describe an API that does not exist. For both Idea Types and Business Impacts:
-
-1. **The list** returns active options only unless `includeDeleted=true`, which any caller who may
-   read the list may pass (every member of the organization, and a Site Admin); ordered by
-   `sortOrder`, then `name`.
-2. **The Idea Type item** is the typed shape, including `effectiveFields`.
-3. **`sortOrder` on create** is optional: absent, the option goes at the end (the highest existing
-   `sortOrder` plus 10). There is no negative check.
-4. **`sortOrder` on update** is optional: absent, the option keeps its current value. Updating an
-   archived option answers `404`.
-5. **Reorder** is `POST …/reorder`, answering `204`.
-6. **Reorder must list every active option exactly once** ("The reorder must list every active
-   option exactly once."), and archived options are not listed. It sets no default: idea create
-   requires an active `ideaTypeId`.
-7. **A direct Site Admin is refused** on every mutation with `403` (`ensureNotDirectSiteAdmin`); View
-   As is the way in. Listing is unaffected.
-8. **Cross-organization access answers `404` "Organization not found."** — an Org Admin mutating
-   another organization's options (`ensureAdminScope`), a member reading another organization's list
-   (`ensureReadScope`). User and Read Only callers in their own organization still get `403`.
+**Decided by the user**, choosing option C of `SPEC/mockups/comp-login-alternatives.html`. The auth
+screens' left band was filled with the theme's primary; in Graphite, the default, that put a
+full-height block of bright amber beside a near-black form. The band now sits on the theme's
+**sidebar ground** with a hairline border and the sidebar's own text pair (the rail is dark in Sera
+and Graphite, light in the others, so the page's foreground would vanish on Sera's), the primary is
+kept for the mark and the Sign in button, and
+**Sign in** adds a decorative **schematic board** (five lanes in status hues, placeholder cards,
+every colour a theme token). Register and the forced password change share the band without the
+board. The copy is unchanged.
 
 ---
 
-## 2026-09-28 — The v2 corpus format, as built
+## 2026-10-04 — Users create boards; managing them stays Org Admin
 
-**An implementation note, not a user decision.** Slice 117 builds the provisional v2 case format of
-`20-feature-prompt-eval-runner.md` rule 4, and rule 4 now records the choices it made: typed fields
-in a separate `acme-v2` fixture so no v1 fixture hash moves; `lockedFields` and `nextStep` in the v2
-contract's field names; v2 keys only on `"assistant": "v2"` cases; `suggestions` outside the overall
-mapping accuracy. Rule 19 adds a v2 case's `draft` and `lockedFields` to its content hash, since
-they drive the run; they are absent from v1 cases, so no v1 hash changes. The format follows the v2
-turn contract as specified and changes with it when v2 is built.
+**Decided by the user**: everyone above Read Only in an organization may add ideas and boards. Ideas
+already worked that way. For boards, a **User** may now **create** one in their own organization;
+**editing, archiving, unarchiving and reordering lanes stay Org Admin only**. Creating includes
+the new board's first choices — its name, description, lanes and the user-moves setting — so a User
+makes those once, at creation; changing them afterwards is the Org Admin's. Read Only is refused as
+before. A Site Admin still creates boards and ideas only through View As (rule 25 stands; the user
+confirmed it the same day).
 
----
-
-## 2026-09-28 — The prompt-eval runner's provisional limits stand for the first baseline
-
-**Decided by the user** on review of slice 115. The first v1 baseline (slice 116) is recorded and
-judged with the provisional values in `20-feature-prompt-eval-runner.md`: a run with more than 10%
-errored trials is not valid (rule 30), and a pair whose refusal rates differ by less than 0.5 is
-flagged "scope statement may be ignored" (rule 14). Both are revisited with the user against the
-real rates once that baseline exists (rule 32), not before it.
+The permission matrices in `05-product-definition.md` and `10-requirements.md` split *Create/manage
+boards* into *Create boards* and *Edit, archive and configure boards*. `contracts/boards.md` names no
+roles for the create route, so it is unchanged. The golden corpus recorded `boards.create.user` as
+403; it is now 201. The replay will report it as a status difference, and that is
+the intended record: `tools/golden/src/accepted.ts` refuses entries that excuse a status, because
+an authorization outcome must never be waved through silently.
 
 ---
 
-## 2026-09-28 — `compare` refuses to judge an invalid run
+## 2026-10-04 — One Enter adds a tag on the idea form
 
-**Decided by the user** on review of slice 115. `compare` exits 2, printing the reasons, when
-either run is itself not valid under `20-feature-prompt-eval-runner.md` rules 30–31 — aborted,
-more than 10% errored trials, or an errored `refuse-*` trial — rather than comparing it. A
-regression or a clean result against a run that could not be judged on its own would be a verdict
-about nothing. Recorded in rule 30.
-
----
-
-## 2026-09-28 — The prompt-eval runner's fixture hash for `compare` is the catalog hash
-
-**An implementation correction, not a user decision.** Found while building slice 114:
-`20-feature-prompt-eval-runner.md` rule 19 hashed each fixture's rendered system prompt, and rule 34
-said only the template hash should differ between a baseline and a candidate. A rendered prompt
-always changes with its template, so every prompt comparison would have warned on every fixture.
-Rule 19 now keeps that hash (`fixtureHashes`) and adds a catalog hash (`fixtureCatalogHashes`): the
-fixture rendered through a template of only the two placeholders, plus the response schema. Rule 34's
-like-with-like check uses the catalog hash. Rule 40 also now names `pnpm -C tools/prompt-eval eval`,
-because `pnpm --filter` reports every failure as exit 1.
+**Decided by the user**, after typing a new tag, pressing Enter once and being refused on save.
+Slice 148 made Enter on unmatched text only *highlight* the *Create tag ‘…’* option, with a second
+Enter (or a click) to choose it; a highlighted option looks chosen, so the text stayed in the box
+and the save refused it. Now **Enter adds the highlighted option, or the first one when nothing is
+highlighted** — an existing tag when one matches by prefix, otherwise *Create tag* — as a chip at
+once. The save still refuses text left in the box (the owner's slice 148 decision stands), and its
+message now says to press Enter to add it or clear it.
 
 ---
 
-## 2026-09-28 — The Anthropic client reads no credential or endpoint from the environment
+## 2026-10-04 — Graphite is the default theme
 
-**Decided by the user** on review of slice 114. `AnthropicIdeaDraftModel` constructs the SDK
-client with `apiKey` from configuration, `authToken: null`, and the SDK's default API URL
-(`https://api.anthropic.com`) as an explicit `baseURL`. Left unset, the SDK falls back to
-`ANTHROPIC_AUTH_TOKEN` and `ANTHROPIC_BASE_URL`: a stray token would ride along on every request,
-and a stray base URL would send the configured key to another host. Pinning both means the key the
-API or the prompt-eval runner was given, sent to Anthropic, is the only credential in play. The
-API's behaviour is otherwise unchanged — the same key, the same endpoint, and no client when the key
-is blank. Recorded in `20-feature-prompt-eval-runner.md` rule 37.
+> Supersedes in part 2026-09-27 "Terrazzo is the palette, with a theme picker" and 2026-09-28
+> "Graphite replaces Notte as the dark theme", both of which kept Terrazzo as the default.
 
----
+**Decided by the user.** The app's default theme is **Graphite**, the dark theme, instead of
+Terrazzo. A browser with no `collega-theme` cookie (or one the app does not recognise) is served
+Graphite on the first render; a browser that picked a theme in the picker keeps it, since the cookie
+is written only by a choice. The five themes, the picker, the per-browser cookie and the 4.5:1 rule
+are unchanged.
 
-## 2026-09-28 — The prompt-eval runner's open questions are answered
-
-**Decided by the user**, answering the eleven questions slice 113 left open, each with the
-recommended option. Each answer is written into `20-feature-prompt-eval-runner.md` and
-`SPEC/sprints/sprint-12-prompt-eval-runner.md`, and the *(pending answer)* markers are gone. This
-completes the entry below, which said which key and who pays were open.
-
-1. **Packaging:** a new workspace package, `@collega/prompt-eval`, in `tools/prompt-eval`, depending
-   on `@collega/application` and `@collega/infrastructure`, with no new third-party package. It is
-   the first `tools/` package allowed to depend on infrastructure, approved for this.
-2. **What a run drives:** the `IdeaDraftModel` port on the production `AnthropicIdeaDraftModel`, with
-   `sanitizeDraft` exported from the idea-assist service so the output is scored as the service
-   returns it. Not the whole service with fake ports, and not the HTTP API.
-3. **Model:** production's model and effort, read from the shared constant, with `--model` and
-   `--effort` overrides that the run header records and `compare` flags.
-4. **Key:** a dedicated evaluation key, never the production deployment key, supplied as
-   `ANTHROPIC_API_KEY` from the environment or the root `.env`. *The variable name is superseded by
-   answer 12.*
-5. **The scope gate's positive class is a refusal**, so recall is the security figure.
-6. **Defaults:** 5 repeats, `--max-calls 200`, `--max-tokens 1,000,000`, concurrency 1, and `--yes`
-   required when a run plans more than 100 calls.
-7. **Thresholds:** refusal recall of 1.0 on the `refuse-*` cases as an absolute floor; every other
-   metric judged against the committed baseline; a collapse in cache reads and a surviving locked
-   field fail outright. Revisited once the first baseline shows the real rates. The spec's 10%
-   errored-trial limit, above which a run is invalid, is provisional with these thresholds.
-8. **v1 and v2:** v1 is measured now and its baseline committed; the v2 case format and scorer are
-   built now; the live v2 run lands with v2.
-9. **Case format:** the optional `pair` and `assistant` keys are added.
-10. **Run outputs:** `runs/` is gitignored; only promoted baselines are committed.
-11. **No CI for now.** Runs are local, and the summary goes with the review of a prompt change.
-12. **The runner's key has its own name** (decided after the other eleven). The runner reads only
-    `PROMPT_EVAL_ANTHROPIC_API_KEY`, from the environment or the root `.env`, and refuses to run
-    without it. It never reads `ANTHROPIC_API_KEY`, so it cannot pick up the API's key by accident —
-    both would otherwise sit in the same `.env` under the same name. It passes the key to the
-    production adapter explicitly. This supersedes in part the entry below ("One key, under the name
-    already fixed") and answer 4's variable name.
+Terrazzo stays the bare `:root` in `packages/design-system/src/globals.css`: the app always sets
+`data-theme`, so the bare block is only what a document with no attribute gets — the comps, and
+`global-error.tsx`, which deliberately renders without the design system. Moving the bare block
+would change every comp's reference rendering for no product gain. The comps' own pickers still open
+on Terrazzo; they are review artefacts, not the app.
 
 ---
 
-## 2026-09-28 — The prompt-eval runner: what existing decisions already settle
+## 2026-10-04 — Fieldsets: reusable groups of fields, attached to idea types
 
-**Recorded, not newly decided.** Slice 113 specifies the runner (`20-feature-prompt-eval-runner.md`)
-as the phase the order of work below puts next. Each point here follows from text the user has
-already approved; everything else in that spec is marked *(pending answer)* until answered.
+**Decided by the user.** An Org Admin groups existing custom fields into a named **fieldset**, and an idea
+type selects individual fields *and* fieldsets. This **supersedes the 2026-08-10 model note** in
+`SPEC/20-feature-idea-type-fields.md` that dropped the reusable "Field Set" entity in favour of direct
+type-to-field mapping (that rewrite predates this log and was never an entry here, so it is marked
+superseded where it lives: the two feature specs and the contract).
 
-- **It is TypeScript, and it gates v2.** v2 is not enabled until the runner reports, at minimum,
-  scope-gate precision/recall and field-mapping accuracy against the corpus extended with v2 cases
-  (2026-09-27 "Measurement comes first"; `20-feature-ai-idea-assist-v2.md` "Prerequisite:
-  measurement").
-- **The corpus is `tools/prompt-eval` as it stands, with its methodology**: repeats reported as
-  rates, only declared expectations scored, refused turns dropped mid-case, the coffee pair read
-  together, compare like with like (`tools/prompt-eval/README.md`, carried over by the 2026-09-13
-  F6 entry).
-- **It never runs in the hermetic gate.** Tests make no network call (`AGENTS.md`) and the provider
-  is never called from the test suite (`40-test-strategy.md` "AI Idea Assist"). A live run is a
-  separate command.
-- **One key, under the name already fixed.** `ANTHROPIC_API_KEY` (v1 rule 29); per-organization keys
-  stay unimplemented (tracker rule 30). Which key value it uses, and who pays, is open.
-  *Superseded in part 2026-09-28 (the answers entry above, answer 12): the runner reads its own
-  `PROMPT_EVAL_ANTHROPIC_API_KEY` and never `ANTHROPIC_API_KEY`. One key, and no per-organization
-  keys, still stand.*
-- **The `tools/*` conventions hold**: `node:test`, Node's own type stripping, no test framework
-  (`tools/arch/identity-chokepoint.test.ts` records why), and no new dependency without approval.
+- **Live references.** A type points at a fieldset; it does not copy it. Editing a fieldset changes
+  every type that uses it, at once.
+- **Effective order** (`SPEC/20-feature-idea-type-fields.md`, "Effective-field resolution"): the type's
+  direct fields in their order, then each attached fieldset in its order with its members in their
+  order. A field reached twice appears once, at its first position; a direct field wins over a
+  fieldset and keeps its per-type required flag. A fieldset-sourced field uses the field's global
+  `is_required`. There is no per-set required override.
+- **Mode.** `Curated` when the type has any direct field or any attached fieldset, otherwise
+  `AllActiveFields`. A type whose fieldsets resolve to no active field stays `Curated`.
+- **Soft-deleted or inactive fields** are skipped by the resolver; the membership row survives.
+- **Deleting a fieldset is refused with `409` while any type uses it**; the UI shows "Used by N types".
+- **Detaching a fieldset** hides its fields and stops validating them; stored `idea_field_values` are
+  kept, as with any Curated edit today.
+- **Names** are unique per organization, case-insensitively.
+- **Permissions** as field definitions: an in-scope Org Admin writes, members read, a Site Admin acting
+  directly is refused with `403`.
+
+**The S0.2 schema freeze is amended a sixth time.** Under the 2026-09-11 rule — the freeze stands, and
+each change to `schema.prisma` needs its own entry here — this is that entry, and not a general licence.
+Additive, no backfill:
+
+- **New table `fieldsets`** (`id`, `organization_id`, `name`, `normalized_name`, `description`,
+  `display_order`, `created_at_utc`, `updated_at_utc`, `created_by_user_id`, `updated_by_user_id`),
+  unique on (`organization_id`, `normalized_name`), indexed on (`organization_id`, `display_order`).
+- **New table `fieldset_fields`** (`id`, `fieldset_id`, `field_definition_id`, `display_order`), unique
+  on (`fieldset_id`, `field_definition_id`), indexed on `field_definition_id`; `ON DELETE CASCADE` from
+  `fieldsets`, no action from `field_definitions`.
+- **New table `idea_type_fieldsets`** (`id`, `idea_type_id`, `fieldset_id`, `display_order`), unique on
+  (`idea_type_id`, `fieldset_id`), indexed on `fieldset_id`; `ON DELETE CASCADE` from `idea_types`, no
+  action from `fieldsets` (which makes the delete refusal a database guarantee too).
+- **Not covered:** a per-set required override, fieldset soft delete, and nested fieldsets.
+
+**Golden corpus.** Idea-type reads and effective-field items gain additive keys (`fieldsetIds`,
+`fieldsets`, `source`), and the fieldset routes are new, so the replay may differ there. The backend
+slice checks whether `tools/golden/src/diff.ts` tolerates additive keys and records anything else in
+`tools/golden/src/accepted.ts`. The corpus is not re-recorded.
+
+Contracts: `SPEC/contracts/fieldsets.md` (new) and `SPEC/contracts/idea-type-fields.md`.
 
 ---
 
-## 2026-09-28 — Starting a sprint, a single-Issue read, the Roadmap's sprint rows, and tag audit events
+## 2026-10-01 — The Home comp is a visual guide; the spec wins
 
-**Decided by the user**, answering the three points the answers entry below left open, and on review of this slice, the audit of tag changes.
+**Decided by the user**, amending "The Home dashboard comp is approved as drawn" below:
+`SPEC/mockups/comp-r-home-dashboard.html` is a visual guide, and where it differs from
+`20-feature-client-ui.md` § Home the spec wins — in particular *every number is a filtered query the
+viewer can open*, showing the same set it counts, and every KPI tile carries a one-line definition.
+Slice 156 aligns Home with that:
 
-- **Start sprint on the Sprint board.** When no sprint is `Active`, the board shows the next
-  `Planned` sprint (earliest start) with **Start sprint** behind a confirmation, on the existing
-  `POST /organizations/{orgId}/sprints/{sprintId}/start`, for the same roles as *Complete sprint*.
-  Without it a completed or newly planned sprint could never become the running one from the app.
-- **A single-Issue read, under the existing convention:** `GET /ideas/{ideaId}/delivery` returns one
-  Issue's delivery card. Same authorization as the delivery lists; `404` for another organization's
-  Issue, a Discovery idea, a deleted one or a malformed id. It replaces the web app's fan-out over
-  every sprint and the backlog, and serves the Issue drawer's deep link and
-  `/delivery/issues/{ideaId}`. Like every delivery route it addresses the idea by its id, so there
-  is still no `/issues` root.
-- **The Roadmap's sprint rows stay** as drafted; whether they stay once Outcomes exist is decided in
-  the Outcomes sprint.
-- **A tag rename and a tag delete each write one audit event** — `TagRenamed` and `TagDeleted`,
-  with the tag's id, its old and new name and the number of ideas affected. The ideas are not
-  touched: no per-idea events, and their `updatedAtUtc` stays. This replaces the adoption draft's
-  "no audit event" for tags (`20-feature-ideas-and-engagement.md` rule 15, `30-Contracts.md`).
+- **Assigned to me** and **You created** open `/ideas?scope=assigned` and `/ideas?scope=created`, in
+  either phase as they count; Assigned's critical share opens `scope=assigned&priority=Critical`, and
+  the Assigned panel gains a *View all*. `/ideas` reads `scope` and `phase` from the URL and shows
+  them as removable toolbar chips.
+- **Critical & high** and the queue's *View all* add `phase=Ideas`, so the list no longer includes
+  Issues the count leaves out.
+- **The greeting's ideas** are the live boards' own counts, so an archived board's ideas are not
+  counted beside "0 boards", and the number opens `/ideas?phase=Ideas` (naming the live boards when one
+  is archived). Its boards open `/boards`.
+- **The greeting's delivery issues** are every Issue (`/ideas?phase=Issues`), which it links to. This
+  replaces the earlier entry's "in flight" figure (backlog plus Planned and Active sprints), which no
+  list shows; the words "in flight" go. The sprint panel's backlog figure links to the Backlog.
+- **The *Not tracked yet* tile** says in one line why its three figures are not counted.
+- **Site Admin:** *Ideas* is the live boards' counts, and the delivery issues every Issue, in each
+  organization, matching the member view. *Boards* and *Ideas* stay unlinked: no screen lists them
+  across organizations for that role, so they cannot meet the rule until one exists.
+
+- **Archived boards (decided by the user, answering slice 156's open question):** ideas on archived
+  boards are left out of every idea figure on Home — the queue, Critical & high, Most upvoted, Assigned
+  to me, You created and the critical share — and when any board is archived each link names the live
+  boards (`board=`), as the greeting's does, so every count still matches its list.
+
+The earlier entry's other answers stand.
 
 ---
 
-## 2026-09-28 — The comp R iteration's open questions are answered
+## 2026-10-01 — The follow and inbox questions are answered
 
-**Decided by the user**, answering the ten questions left open by the adoption entry below, plus the
-order of work. Each answer is written into the spec where it applies, and the *(pending answer)*
-markers are gone.
+**Decided by the user**, answering the sixteen questions slice 149 left open in
+`20-feature-idea-following.md` (now its "Answered 2026-10-01" section, with each answer). Fifteen take
+the recommended default: a removed assignee keeps following; one new type, `IdeaEdited`; delivery-status
+moves go to followers; commenting does not follow; one row per person per action, the mention winning;
+a Site Admin as themselves cannot follow and has no inbox; nothing here is audited; the inbox shows 90
+days and keeps older rows; deleted ideas' notifications are hidden; a row opens the drawer over the
+inbox; only opening a row, or Mark all read, marks read; under View As it is the target's inbox; the
+count refreshes on navigation and every 60 s; unread is ink and bold, no hue; the toggle shows the count
+only.
 
-1. **Outcomes: the screen now, the backend later.** Sprint 11 restructures the Roadmap against the
-   data that exists — the Weeks / Months / Quarters axis, the TODAY rule, the organization's sprints
-   as rows, and an empty state where outcomes will go, with *Add New Outcome* disabled and its
-   reason given. Slice 2's backend (the `outcomes` table with its colour, `ideas.outcome_id`, the
-   routes and the roadmap read) is a gap for a later sprint, with its own schema amendment; the
-   fourth amendment covers `tags.color` only. Chosen over building Slice 2 now and over deferring
-   the whole Roadmap.
-2. **Bug Triage exception granted for Sprint 11, on one condition:** slice 106 also fixes the
-   `db:seed` `P2002` on `board_swimlanes` item, since it changes the seed anyway. The other four
-   `TODO` items stay queued.
-3. **Issue keys are left out of every screen for now**, and decided separately.
-4. **Colours are the palette plus a custom colour.** The picker offers ten swatches and a Custom
-   input; the API accepts any `#RRGGBB`. Because a custom colour can be anything, a chip's text
-   colour is computed per theme to clear 4.5:1 rather than fixed (`20-feature-client-ui.md` "Tag
-   colours and the effort bar"), and a test proves it over the palette and the extreme colours.
-   Outcome colours follow when Outcomes are built, with their bar label's contrast computed too.
-5. **Settings → Tags is Org Admins' only**, read-only for a Site Admin; members do not see it. The
-   tag catalog read stays open to members, because the Ideas Tags filter every role uses needs the
-   full set (`30-Contracts.md` says why).
-6. **The effort bar is on idea cards and rows too**, whenever an effort is set; idea list items carry
-   `effort`.
-7. **An Issue opens in the drawer** from the Sprint board, the Backlog and the Roadmap, with its
-   delivery facts — status selector, effort, sprint, outcome, provenance and tasks.
-8. **Plan next sprint opens an Add New Sprint form in the drawer** (name, goal, dates, owner) on the
-   existing `POST /organizations/{orgId}/sprints`.
-9. **The Roadmap's window is fixed and anchored on today:** Weeks shows 16 weeks from two weeks back,
-   Months 7 months from this month, Quarters 4 quarters from this quarter; no panning.
-10. **No keyboard shortcuts anywhere:** no *Ctrl ↵* save, no zoom keys, no key-hint chips. Escape
-    still closes the drawer and the dialogs.
-11. **Order of work:** Sprint 11 first, then the prompt-eval runner, then idea assistant v2.
+**Addendum, 2026-10-01 (owner):** each inbox row shows its board name, as the approved comp does (*You
+follow this idea · Opportunities*). This supersedes the contract's "no board name is sent". The name is
+the idea's **current** board, read at query time through `ideas.board_id`, not captured on the event
+(unlike `status_name`, which is history); no schema change. Feature rule 23a; `boardName` in
+`contracts/notifications.md`.
 
-## Earlier decisions
+**Q13 differs:** a status row **names the new status** (*moved {idea} to In Review*). That needs
+`notification_events.status_name`, added to the amendment below, captured at write time.
 
-Decisions made before this log existed are recorded in the documents they constrain —
-chiefly `SPEC/95-next-sprints.md` (sprint sequencing and the paydown-first rule),
-`SPEC/implementation-agent-tracker.md` (build state and standing rules), and the
-"Settled during charting" table in the conversion map. They are not restated here; this
-log starts 2026-08-31 and runs forward.
+---
+
+## 2026-10-01 — The S0.2 schema freeze is amended a fifth time, for idea followers and read state
+
+**Follows from the user's decision below** ("The follower list needs a schema change, which amends the
+S0.2 freeze a fifth time"). Under the 2026-09-11 rule — the freeze stands, and each change to
+`schema.prisma` needs its own entry here — this is that entry, and it is not a general licence. The
+columns are slice 149's proposal (`20-feature-idea-following.md` rules 36–39), confirmed when the user
+reviews that slice; the build slice writes the migration.
+
+- **New table `idea_followers`** (`id`, `idea_id`, `user_id`, `created_at_utc`), shaped like
+  `idea_upvotes`: unique on (`idea_id`, `user_id`), indexed on `user_id`, `ON DELETE CASCADE` from
+  `ideas`, no action from `users`.
+- **`notification_events.status_name VARCHAR(100) NULL`** (added with the answers entry above): the new
+  status's name for the two status events, captured at write time, so a later rename does not rewrite
+  history. A narrow typed column rather than JSON metadata, because no other type needs a detail.
+- **`notification_events.read_at_utc TIMESTAMPTZ(6) NULL`**, `NULL` meaning unread, and an index on
+  (`recipient_user_id`, `occurred_at_utc` DESC) replacing the one on `recipient_user_id` alone.
+- **`NotificationEventType` gains `IdeaEdited`** (value 7).
+- **The migration backfills** the author and every assignee of each idea that is not soft-deleted as
+  followers, so today's recipients keep hearing.
+- **Not covered:** a general metadata column on `notification_events`, a follow source column, and any
+  purge of old notifications. Each would need its own amendment.
+
+**Golden corpus.** `GET /ideas/{ideaId}` and `PUT /ideas/{ideaId}` gain `isFollowing` and
+`followerCount`, so the replay will differ there. Those differences are accepted, and the backend
+slice records them in `tools/golden/src/accepted.ts`.
+
+---
+
+## 2026-10-01 — The Home dashboard comp is approved as drawn
+
+**Decided by the user**: build Home from `SPEC/mockups/comp-r-home-dashboard.html` (slice 150) as
+it stands. The comp's nine open questions take the comp's own answers: the greeting's "in flight"
+counts the backlog plus the Planned and Active sprints' `issueCount`; Complete-lane ideas count as
+"still on a board" until status categories exist; the new tiles and panels stay (You created,
+Assigned to me list, Most upvoted); the Assigned list keeps the default phase (Issues included); with
+two Active sprints the one ending first shows; Read Only keeps the Assigned tile and panel; the Site
+Admin fan-out stands; the Site Admin tile reads *Ideas* with the served total; no "Unread for you"
+panel for now. Panels marked "Needs" stay placeholders.
+
+---
+
+## 2026-10-01 — Following an idea, and an in-app notification inbox
+
+**Decided by the user** during ad-hoc testing, answering the questions put before specifying it:
+
+1. **Anyone who can see an idea can follow or unfollow it for themselves**, Read Only included.
+   Following is a read and grants no access. Nobody adds or removes other people as followers.
+2. **The author and every assignee follow automatically** and can unfollow.
+3. **Followers are notified of** a new comment, a status change, promotion to an issue, and an edit or
+   reassignment (the last is a new event type). For comments and status changes this replaces the
+   "author + assignee" recipients in `20-feature-notifications.md`.
+4. **Delivery is an in-app inbox** — unread count and a list. Email comes later, once a provider is
+   configured; guaranteed delivery stays deferred.
+
+The inbox is a new screen, so it is comp-first. The follower list needs a schema change, which
+amends the S0.2 freeze a fifth time. Specified in slice 149, built after the user reviews the comp.
+
+---
+
+## 2026-10-01 — The View As banner names only the target
+
+**Decided by the user** during ad-hoc testing: the banner reads *Viewing as: {Name}*, smaller and in
+the theme's own tokens, with the Stop button. The acting admin's name leaves the visible text and
+stays in the banner's accessible text and a tooltip. This supersedes in part
+`20-feature-view-as.md` rule 22 (both identities named on screen, and the comp's wording); the banner
+stays persistent, non-dismissable and on every screen, and every action is still attributed to both.
+
+---
+
+## 2026-10-01 — The View As candidate order, and F1 closes
+
+**Decided by the user**, confirming the order slice 137 built and closing the conversion's replay.
+
+1. **`GET /auth/view-as/candidates` groups by organization**, as `contracts/view-as.md` requires, and
+   is ordered by organization title, then organization id, then last name, first name and email.
+   Accounts with no organization come last. The user confirmed this order on 2026-10-01.
+2. **The three cases that still differ are accepted as "deliberately do better"** (2026-09-11):
+   `auth.viewas.candidates.orgadmin`, `auth.viewas.candidates.siteadmin` and `auth.viewas.start`.
+   The recording holds the old ungrouped order, which was never specified. Each is recorded in
+   `tools/golden/src/accepted.ts`.
+3. **F1 closes.** Every difference in the replay is now fixed, accepted or recorded; none is
+   unexplained.
+
+---
+
+## 2026-09-30 — What the MVP release includes
+
+**Decided by the user**, answering the scope questions of the MVP release plan
+(`SPEC/sprints/sprint-13-mvp-release.md`).
+
+1. **The shared-store hardening is deferred past MVP.** The account-lockout denial of service and
+   the per-instance auth rate limiter stay as the tracker's "Known open risks" record them. Their
+   one fix, a shared store for both, is scheduled before the first real tenant onboards, not before
+   cutover: there are no production users yet, and the store is a new dependency.
+2. **The demo-seed routes stay, opt-in only.** `POST /demo-seed` and `/demo-seed/reset` get a
+   contract, and `90-definition-of-done.md` gains the exception: they answer only where
+   `COLLEGA_ALLOW_DEMO_SEED` is set, which Production never sets. Closes `05` §8 item 7.
+3. **F1's remaining non-contract differences are accepted** as deliberate: the export's three new
+   columns (4 cases) and the demo seed's delivery module moving ideas out of the Discovery board
+   list (14 cases), recorded in `tools/golden/src/accepted.ts`. The View As candidates' order and
+   grouping (3 cases) is **not** accepted — `contracts/view-as.md` requires grouping by
+   organization — and is fixed instead. With those, F1 closes (2026-09-11: fix, accept, or do
+   better).
+
+---
+
+## 2026-09-30 — The prompt-eval thresholds stand, confirmed against the v1 baseline
+
+**Decided by the user**, on the first live run of the v1 corpus (slice 116), as
+`SPEC/20-feature-prompt-eval-runner.md` rule 32 asked. Every threshold stays as specified:
+
+- **Refusal recall on `refuse-*` is 1.0** (rule 31). The run held it: 15 of 15.
+- **The pair margin is 0.5** (rule 14). The run showed 0.80 (`scope-coffee-narrowed` 5/5 refused,
+  `scope-coffee-unnarrowed` 1/5). Raising it was declined: at 5 repeats a half moves in steps of
+  0.2, so one noisy trial would cross a tighter margin.
+- **The 10% errored-trial limit and the interval rule for regressions** (rules 30 and 32). The run
+  had no errored trials.
+
+The baseline is `tools/prompt-eval/baselines/v1-default.json`, recorded at `6969336` with
+production's model and effort: 45 trials, overall mapping accuracy 0.95, cost about $0.16. Its weak
+spot, `impact-inference` at 2 of 5, is one case of five trials; its interval (0.12 to 0.77) is too
+wide for rule 32 to detect a regression there. More business-impact cases were offered and not
+taken now.
+
+---
+
+## 2026-09-29 — How the cutover is run
+
+**Decided by the user**, answering the five questions slice 135 left in the cutover runbook
+(`SPEC/50-cutover-runbook.md`, conversion slice F4). Each answer is written into the runbook.
+
+1. **A separate staging database comes first.** A staging Prisma Postgres database is provisioned
+   before cutover and Preview's `DATABASE_URL` points at it. Until then the release is a no-go —
+   today Preview points at the database holding the real Site Admin. An owner step.
+2. **Production starts on a new database, not a wiped one.** A new Prisma Postgres database is
+   created and Production's `DATABASE_URL` pointed at it; the release build migrates it and creates
+   the Site Admin. The old database is kept until the release is confirmed, then deleted — keeping
+   it is the rollback for that step, since the pre-release `collega-api` deployment still reads it.
+   An owner step. This settles *how* production is seeded fresh (2026-09-09).
+3. **`collega-api`'s `maxDuration` is 60 seconds**, set in project settings; `vercel.json` cannot
+   hold it.
+4. **Production's `COLLEGA_API_URL` is `collega-api`'s production `*.vercel.app` URL.** A custom API
+   domain is a later, separate change; `api.collega-ai.com` is not current.
+5. **A release goes through a sync branch**, as pull requests #22–#27 did: `dev`'s tip is pushed as
+   `sync/<date>`, and pull requests from it go into `dev` and into `main`.

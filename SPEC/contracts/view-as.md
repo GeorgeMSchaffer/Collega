@@ -55,6 +55,7 @@ The picker's list of users the caller may act as.
 - **Errors:**
   - `403` any role other than Site Admin or Org Admin
 - **Rules:**
+  - **Order:** organization title, then organization id, then last name, first name and email; accounts with no organization come last (`SPEC/decisions.md`, 2026-10-01, "The View As candidate order, and F1 closes").
   - `Inactive` users may be returned so the picker can show them greyed out, but are never valid targets for `POST /api/v1/auth/view-as`; the server refuses them regardless of what the list displayed.
 
 ### Effect on `GET /api/v1/auth/me`

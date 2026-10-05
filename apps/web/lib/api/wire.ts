@@ -226,6 +226,12 @@ export type WireIdeaType = {
   name: string
   fieldMode: string
   fields: readonly { fieldDefinitionId: string; displayOrder: number; isRequired: boolean }[]
+  /**
+   * The attached fieldsets, in attach order (`contracts/idea-type-fields.md` "Additive response
+   * keys"). Typed optional so a response from before the keys shipped still reads as none.
+   */
+  fieldsetIds?: readonly string[]
+  fieldsets?: readonly { id: string; name: string }[]
   effectiveFields: readonly WireEffectiveField[]
 }
 
@@ -236,6 +242,8 @@ export type WireEffectiveField = {
   fieldType: string
   isRequired: boolean
   options: readonly { optionId: string; label: string; isArchived?: true }[]
+  /** Where the field came from: mapped directly, or supplied by an attached fieldset. */
+  source?: { kind: 'field' } | { kind: 'fieldset'; fieldsetId: string; fieldsetName: string }
 }
 
 /**
@@ -277,6 +285,23 @@ export type WireFieldDefinitionDetail = {
   isRequired: boolean
   displayOrder: number
   options: readonly { optionId: string; label: string; displayOrder: number }[]
+}
+
+/** `GET /organizations/{id}/fieldsets` and `…/fieldsets/{id}` (`contracts/fieldsets.md`). */
+export type WireFieldset = {
+  fieldsetId: string
+  organizationId: string
+  name: string
+  description: string | null
+  displayOrder: number
+  usedByIdeaTypeCount: number
+  fields: readonly {
+    fieldDefinitionId: string
+    name: string
+    fieldType: string
+    isActive: boolean
+    displayOrder: number
+  }[]
 }
 
 /** `GET /organizations/{id}/business-impacts`, same default. */
@@ -345,6 +370,9 @@ export type WireIdeaDetail = {
   /** Nullable for the same reason a comment's author is. */
   author: WireIdeaAssignee | null
   createdAtUtc: string
+  /** The caller's own follow state, and how many follow (`contracts/following.md`). */
+  isFollowing: boolean
+  followerCount: number
 }
 
 export type WireIdeaFieldValue = {
@@ -411,6 +439,23 @@ export type WirePage<T> = {
   page: number
   pageSize: number
   totalCount: number
+}
+
+/** `GET /notifications` items (`contracts/notifications.md` "Notification Inbox Contracts"). */
+export type WireNotification = {
+  notificationId: string
+  eventType: string
+  ideaId: string
+  /** The title when the event was written, not the idea's current one. */
+  ideaTitle: string
+  link: string
+  actor: WireIdeaAssignee | null
+  /** The new lane or delivery status as named when written; null for every other type. */
+  statusName: string | null
+  /** The idea's current board, not the one when written; null when it cannot be resolved. */
+  boardName: string | null
+  occurredAtUtc: string
+  readAtUtc: string | null
 }
 
 /**
@@ -508,4 +553,50 @@ export type WireViewAsCandidate = {
   organizationId: string
   organizationName: string
   selectable: boolean
+}
+
+/** `GET /organizations/{id}/ai-assist/settings`. Never carries key material. */
+export type WireAiAssistSettings = {
+  aiAssistAvailable: boolean
+  scopeStatement: string | null
+}
+
+/** `GET /ai-assist/prompt` — the active template, its two redirects, and the history. */
+export type WireAiPromptSettings = {
+  body: string
+  outOfScopeRedirect: string
+  conversationClosedRedirect: string
+  version: number | null
+  isBuiltInDefault: boolean
+  versions: readonly {
+    version: number
+    createdAtUtc: string
+    createdByUserId: string | null
+    createdByDisplayName: string | null
+    isActive: boolean
+  }[]
+}
+
+export type WireAiUsageSummary = {
+  organizationId: string
+  organizationName: string
+  calls: number
+  inputTokens: number
+  outputTokens: number
+  cacheReadInputTokens: number
+  cacheCreationInputTokens: number
+  estimatedCost: number
+}
+
+/**
+ * `GET /ai-assist/usage` and `GET /organizations/{id}/ai-assist/usage`. The single-organization
+ * report answers the same envelope with at most one row, and the two ceiling fields null.
+ */
+export type WireAiUsageReport = {
+  fromUtc: string
+  toUtc: string
+  organizations: readonly WireAiUsageSummary[]
+  dailyTokenLimit: number | null
+  tokensUsedToday: number | null
+  totals: Omit<WireAiUsageSummary, 'organizationId' | 'organizationName'>
 }

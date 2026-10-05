@@ -238,7 +238,7 @@ run('pnpm', ['--filter', '@collega/infrastructure', 'db:migrate'], { DATABASE_UR
 run('pnpm', ['--filter', '@collega/infrastructure', 'db:seed'], {
   DATABASE_URL: databaseUrl,
   SITE_ADMIN_EMAIL: env.get('SITE_ADMIN_EMAIL') ?? 'admin@collega.local',
-  SITE_ADMIN_PASSWORD: env.get('SITE_ADMIN_PASSWORD') ?? 'Ch4ngeMe!Now',
+  SITE_ADMIN_PASSWORD: env.get('SITE_ADMIN_PASSWORD') ?? 'Abc123!',
 })
 
 // --- 5. Both halves, until Ctrl+C -----------------------------------------------------------------

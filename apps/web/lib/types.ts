@@ -12,9 +12,6 @@
  * on the list item and the board separately resolves colour from its swimlanes, while a card only
  * ever needed `statusId`. Adapting once, at the boundary, keeps that reconciliation in one file
  * instead of in every component.
- *
- * `lib/mock.ts` is typed against this module too, so a fixture-backed reader and a real one return
- * the same thing and a screen cannot tell which it got.
  */
 
 export type Role = 'SiteAdmin' | 'OrgAdmin' | 'User' | 'ReadOnly'
@@ -230,6 +227,25 @@ export type IdeaType = {
   id: string
   name: string
   curatedFieldCount: number | null
+  /** The directly selected fields in order, with this type's own required flag. */
+  fields: { fieldDefinitionId: string; isRequired: boolean }[]
+  /** The attached fieldsets, in attach order. */
+  fieldsets: { id: string; name: string }[]
+}
+
+/**
+ * A reusable, ordered group of custom fields, as the Fieldsets screens render it.
+ *
+ * A live reference: editing one changes every idea type that attaches it. `isActive` is false for a
+ * member that has since been archived — the membership is kept but the field is skipped wherever
+ * fields resolve, so the editor shows it as archived rather than hiding it.
+ */
+export type Fieldset = {
+  id: string
+  name: string
+  description: string | null
+  usedByIdeaTypeCount: number
+  fields: { id: string; name: string; fieldType: string; isActive: boolean }[]
 }
 
 /**
@@ -407,6 +423,10 @@ export type IdeaPage = {
 export type IdeaFormOptions = {
   ideaTypes: { id: string; name: string; fields: IdeaFormField[] }[]
   businessImpacts: { id: string; name: string }[]
+  /** The organization's active members, for the assignee picker. */
+  members: MemberOption[]
+  /** The organization's tags, for the tag type-ahead. */
+  tags: TagRef[]
 }
 
 /**
@@ -436,6 +456,10 @@ export type IdeaListQuery = {
   sortDirection: 'asc' | 'desc'
   page: number
   pageSize: number
+  /** The organization list only: the reader's own ideas, authored or assigned. Absent is all. */
+  scope?: 'assigned' | 'created' | undefined
+  /** The organization list only: one phase. Absent is both. */
+  phase?: 'Ideas' | 'Issues' | undefined
 }
 
 /**
@@ -497,7 +521,38 @@ export type IdeaDetail = Idea & {
   /** The idea's own custom fields for the edit form, each with its stored value in write form. */
   formFields: (IdeaFormField & { value: string })[]
   comments: Comment[]
+  /** The reader's own follow state, and the follower count the toggle shows. */
+  isFollowing: boolean
+  followerCount: number
 }
+
+/** `NotificationEventType`, as the inbox sends it. */
+export type NotificationEventType =
+  | 'IdeaMention'
+  | 'CommentMention'
+  | 'CommentAdded'
+  | 'IdeaStatusChanged'
+  | 'IdeaPromoted'
+  | 'IssueDeliveryStatusChanged'
+  | 'IssueTaskAssigned'
+  | 'IdeaEdited'
+
+/** One inbox row. `when` is already relative ("12 min ago"); `occurredAtUtc` is the instant. */
+export type InboxItem = {
+  id: string
+  eventType: NotificationEventType
+  ideaId: string
+  ideaTitle: string
+  /** Null only when the actor's user row is gone (data damage). */
+  actor: Person | null
+  statusName: string | null
+  boardName: string | null
+  occurredAtUtc: string
+  when: string
+  unread: boolean
+}
+
+export type InboxPage = { items: InboxItem[]; page: number; pageSize: number; totalCount: number }
 
 /**
  * The five fixed delivery statuses — `Pending`, `Scoping`, `Development`, `Review`, `Complete`.
@@ -603,3 +658,138 @@ export type MemberOption = { id: string; name: string }
  * `lib/data/delivery.ts` for why those readers answer empty rather than inventing rows.
  */
 export type Outcome = { id: string; name: string; color: string; quarter: string }
+
+/**
+ * An organization's assistant settings, as `/settings/ai-assist` renders them.
+ *
+ * No refusal wording: the fixed refusal is part of the deployment's prompt (rule 34), which only a
+ * Site Admin may read, and the organization's settings route does not carry it.
+ */
+export type AiAssistSettings = {
+  scopeStatement: string
+  available: boolean
+}
+
+/** One published version of the deployment's system prompt, newest first. */
+export type PromptVersion = {
+  version: number
+  publishedAt: string
+  author: string
+  active: boolean
+}
+
+/**
+ * The deployment's active system prompt and its two fixed redirects (rules 8, 10 and 34), plus the
+ * version history. `version` is null while the built-in default is in force.
+ */
+export type AiPrompt = {
+  text: string
+  outOfScopeRedirect: string
+  conversationClosedRedirect: string
+  version: number | null
+  isBuiltInDefault: boolean
+  versions: PromptVersion[]
+}
+
+/**
+ * One organization's AI assist consumption for a window (rules 28a-28e). Counts only.
+ *
+ * `cachedTokens` is both cache kinds together, and `totalTokens` is all four counts — the same sum
+ * the daily ceiling is measured in, so a row and the budget bar speak the same unit.
+ */
+export type UsageRow = {
+  organizationId: string
+  organizationName: string
+  conversations: number
+  inputTokens: number
+  outputTokens: number
+  cachedTokens: number
+  totalTokens: number
+  estimatedCost: number
+}
+
+/** Every organization's usage today, with the deployment's daily ceiling beside it. */
+export type Usage = {
+  rows: UsageRow[]
+  conversations: number
+  tokens: number
+  estimatedCost: number
+  dailyTokenLimit: number
+  tokensUsedToday: number
+}
+
+/**
+ * One KPI tile on Home. Every tile carries a one-line definition of what it counts, and its number
+ * links to that query where a screen can show it (`href`).
+ */
+export type HomeKpi = {
+  label: string
+  value: number
+  detail: string
+  /** Draw the detail as a warning — the critical count on Assigned to me. */
+  detailAlert?: boolean
+  definition: string
+  href: string | null
+  /** Where the detail's own number opens, when it has one (the critical share). */
+  detailHref?: string | undefined
+}
+
+/** An idea in one of Home's lists: the attention queue, Assigned to me, Most upvoted. */
+export type HomeIdea = {
+  id: string
+  title: string
+  boardName: string | null
+  ideaType: string
+  status: Status
+  priority: Priority
+  createdAtUtc: string
+  upvotes: number
+  hasUpvoted: boolean
+}
+
+/** One of Home's lists: the first rows, and how many the query matched in all. */
+/** `href` is the `/ideas` query listing the same set `total` counts. */
+export type HomeIdeaList = { total: number; rows: HomeIdea[]; href: string }
+
+/** The running sprint on Home: its header, its issues by delivery status, and the backlog beside it. */
+export type HomeSprint = {
+  sprint: Sprint
+  mix: { status: DeliveryStatus; count: number }[]
+  backlog: number
+}
+
+/** Home for a member of an organization — Org Admin, User or Read Only. */
+export type OrganizationHome = {
+  /** `ideas` are the live boards' Discovery ideas; `issues` every Delivery-phase item. */
+  counts: { ideas: number; boards: number; issues: number }
+  /** The `/ideas` query listing exactly the ideas `counts.ideas` counts; null when there are none. */
+  ideasHref: string | null
+  statuses: Status[]
+  kpis: HomeKpi[]
+  attention: HomeIdeaList
+  assigned: HomeIdeaList
+  topVoted: HomeIdea[]
+  /** The organization's live boards, archived ones left out. */
+  boards: BoardOverview[]
+  /** The Active sprint ending first; null when none is Active. */
+  sprint: HomeSprint | null
+}
+
+/** One organization on the Site Admin's roll-up. */
+export type PlatformOrganization = {
+  id: string
+  name: string
+  ideas: number
+  issues: number
+  users: number
+  inactive: number
+  boards: BoardOverview[]
+}
+
+/** Home for a Site Admin: the platform roll-up. */
+export type PlatformHome = {
+  counts: { organizations: number; ideas: number; issues: number }
+  kpis: HomeKpi[]
+  /** Largest first by ideas. */
+  organizations: PlatformOrganization[]
+}

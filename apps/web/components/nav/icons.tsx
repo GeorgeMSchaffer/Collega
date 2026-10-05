@@ -3,6 +3,8 @@ import type { NavItem } from './nav-items'
 // Carried verbatim from comp Q so the rendered sidebar matches the reference pixel for pixel.
 const PATHS: Record<NavItem['icon'], string> = {
   home: 'M10 2.6 2.8 8.3a1 1 0 0 0-.4.8V16a1.4 1.4 0 0 0 1.4 1.4h3.4v-4.6h5.6v4.6h3.4A1.4 1.4 0 0 0 17.6 16V9.1a1 1 0 0 0-.4-.8Z',
+  inbox:
+    'M10 2.5a5 5 0 0 0-5 5v3.6l-1.4 2.1a.8.8 0 0 0 .7 1.2h11.4a.8.8 0 0 0 .7-1.2L15 11.1V7.5a5 5 0 0 0-5-5Zm-2 13h4a2 2 0 0 1-4 0Z',
   boards:
     'M3 4.4A1.4 1.4 0 0 1 4.4 3h11.2A1.4 1.4 0 0 1 17 4.4v11.2a1.4 1.4 0 0 1-1.4 1.4H4.4A1.4 1.4 0 0 1 3 15.6Zm2 .6v10h3.2V5Zm5.2 0v6.4H15V5Z',
   ideas:

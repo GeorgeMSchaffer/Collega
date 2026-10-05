@@ -166,8 +166,52 @@ model field_definitions {
   organizations            organizations              @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_field_definitions_organizations_organization_id")
   idea_field_values        idea_field_values[]
   idea_type_fields         idea_type_fields[]
+  fieldset_fields          fieldset_fields[]
 
   @@index([organization_id, display_order], map: "ix_field_definitions_organization_id_display_order")
+}
+
+model fieldsets {
+  id                  String                @id(map: "PK_fieldsets") @db.Uuid
+  organization_id     String                @db.Uuid
+  name                String                @db.VarChar(100)
+  normalized_name     String                @db.VarChar(100)
+  description         String?               @db.VarChar(500)
+  display_order       Int
+  created_at_utc      DateTime              @db.Timestamptz(6)
+  updated_at_utc      DateTime              @db.Timestamptz(6)
+  created_by_user_id  String?               @db.Uuid
+  updated_by_user_id  String?               @db.Uuid
+  fieldset_fields     fieldset_fields[]
+  idea_type_fieldsets idea_type_fieldsets[]
+  organizations       organizations         @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_fieldsets_organizations_organization_id")
+
+  @@unique([organization_id, normalized_name], map: "ux_fieldsets_organization_id_normalized_name")
+  @@index([organization_id, display_order], map: "ix_fieldsets_organization_id_display_order")
+}
+
+model fieldset_fields {
+  id                  String            @id(map: "PK_fieldset_fields") @db.Uuid
+  fieldset_id         String            @db.Uuid
+  field_definition_id String            @db.Uuid
+  display_order       Int
+  field_definitions   field_definitions @relation(fields: [field_definition_id], references: [id], onUpdate: NoAction, map: "FK_fieldset_fields_field_definitions_field_definition_id")
+  fieldsets           fieldsets         @relation(fields: [fieldset_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_fieldset_fields_fieldsets_fieldset_id")
+
+  @@unique([fieldset_id, field_definition_id], map: "ux_fieldset_fields_fieldset_id_field_definition_id")
+  @@index([field_definition_id], map: "IX_fieldset_fields_field_definition_id")
+}
+
+model idea_type_fieldsets {
+  id            String     @id(map: "PK_idea_type_fieldsets") @db.Uuid
+  idea_type_id  String     @db.Uuid
+  fieldset_id   String     @db.Uuid
+  display_order Int
+  fieldsets     fieldsets  @relation(fields: [fieldset_id], references: [id], onUpdate: NoAction, map: "FK_idea_type_fieldsets_fieldsets_fieldset_id")
+  idea_types    idea_types @relation(fields: [idea_type_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_idea_type_fieldsets_idea_types_idea_type_id")
+
+  @@unique([idea_type_id, fieldset_id], map: "ux_idea_type_fieldsets_idea_type_id_fieldset_id")
+  @@index([fieldset_id], map: "IX_idea_type_fieldsets_fieldset_id")
 }
 
 model idea_assignees {
@@ -246,10 +290,24 @@ model idea_types {
   created_by_user_id String?            @db.Uuid
   updated_by_user_id String?            @db.Uuid
   idea_type_fields   idea_type_fields[]
+  idea_type_fieldsets idea_type_fieldsets[]
   organizations      organizations      @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_idea_types_organizations_organization_id")
   ideas              ideas[]
 
   @@index([organization_id, sort_order], map: "ix_idea_types_organization_id_sort_order")
+}
+
+/// Who follows an idea (SPEC/20-feature-idea-following.md rule 36), shaped like `idea_upvotes`.
+model idea_followers {
+  id             String   @id(map: "PK_idea_followers") @db.Uuid
+  idea_id        String   @db.Uuid
+  user_id        String   @db.Uuid
+  created_at_utc DateTime @db.Timestamptz(6)
+  ideas          ideas    @relation(fields: [idea_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_idea_followers_ideas_idea_id")
+  users          users    @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "FK_idea_followers_users_user_id")
+
+  @@unique([idea_id, user_id], map: "ux_idea_followers_idea_id_user_id")
+  @@index([user_id], map: "IX_idea_followers_user_id")
 }
 
 model idea_upvotes {
@@ -298,6 +356,7 @@ model ideas {
   comments                  comments[]
   idea_assignees            idea_assignees[]
   idea_field_values         idea_field_values[]
+  idea_followers            idea_followers[]
   idea_mentions             idea_mentions[]
   idea_tags                 idea_tags[]
   idea_upvotes              idea_upvotes[]
@@ -365,10 +424,14 @@ model notification_events {
   recipient_user_id String                @db.Uuid
   link              String                @db.VarChar(200)
   occurred_at_utc   DateTime              @db.Timestamptz(6)
+  /// `NULL` is unread (SPEC/20-feature-idea-following.md rule 37).
+  read_at_utc       DateTime?             @db.Timestamptz(6)
+  /// The new status's name for the two status events, captured when the event is written.
+  status_name       String?               @db.VarChar(100)
 
   @@index([idea_id], map: "ix_notification_events_idea_id")
   @@index([occurred_at_utc], map: "ix_notification_events_occurred_at_utc")
-  @@index([recipient_user_id], map: "ix_notification_events_recipient_user_id")
+  @@index([recipient_user_id, occurred_at_utc(sort: Desc)], map: "ix_notification_events_recipient_user_id_occurred_at_utc")
 }
 
 model organizations {
@@ -395,6 +458,7 @@ model organizations {
   boards                     boards[]
   business_impacts           business_impacts[]
   field_definitions          field_definitions[]
+  fieldsets                  fieldsets[]
   idea_types                 idea_types[]
   ideas                      ideas[]
   sprints                    sprints[]
@@ -483,6 +547,7 @@ model users {
   updated_by_user_id                                                  String?                  @db.Uuid
   comment_mentions                                                    comment_mentions[]
   idea_assignees                                                      idea_assignees[]
+  idea_followers                                                      idea_followers[]
   idea_mentions                                                       idea_mentions[]
   idea_upvotes                                                        idea_upvotes[]
   impersonation_sessions_impersonation_sessions_real_user_idTousers   impersonation_sessions[] @relation("impersonation_sessions_real_user_idTousers")
@@ -588,6 +653,7 @@ enum NotificationEventType {
   IdeaPromoted // 4
   IssueDeliveryStatusChanged // 5
   IssueTaskAssigned // 6
+  IdeaEdited // 7
 }
 
 enum Priority {

@@ -123,7 +123,7 @@ on. `SPEC/50-typescript-migration.md` §4 has the full mapping.
 | `tools/golden` | Capture/replay harness — a regression detector, not a gate |
 | `tools/boundaries`, `tools/arch` | Architecture tests |
 | `tools/local` | `pnpm dev`'s launcher |
-| `tools/prompt-eval` | The AI-assist evaluation corpus — data only, its runner is gone |
+| `tools/prompt-eval` | The AI-assist evaluation corpus, its runner and the committed v1 baseline |
 
 ## Source of Truth
 
@@ -171,7 +171,8 @@ to verify more, not less.
 **Comp P**, locked 2026-08-31 and made canonical 2026-09-03 (`SPEC/decisions.md`). Structure is
 locked. **Comp R** (`SPEC/mockups/comp-r-portico-prototype.html`, 2026-09-27) supersedes it for
 the list and detail pattern (drawer, list toolbar, row actions), the idea assistant, and the
-palette: **Terrazzo** by default, with a theme picker remembered per browser. Built on Tailwind v4 and
+palette: five themes with a picker remembered per browser — **Graphite** (dark) by default since
+2026-10-04, Terrazzo the bare `:root`. Built on Tailwind v4 and
 shadcn/ui used as intended — comp Q (`SPEC/mockups/comp-q-*.html`) is the reference rendering,
 and `SPEC/mockups/_build/build_q.py` carries the component map. The theme lives in `packages/design-system/src/globals.css`, carried
 over from `_build/q.css`; `apps/web/app/globals.css` only imports it and declares the app's
@@ -198,8 +199,8 @@ Two artefacts survive as **data, not patterns**:
   re-recorded against its original, so it is a fixed record now, frozen alongside `inventory.json`
   (the endpoint list used to be parsed from the controllers that F6 deleted).
 - `tools/prompt-eval` — the AI-assist evaluation corpus. Its batch runner was .NET and went with the
-  rest, so corpus-scale prompt evaluation currently has no tool, and changes to the scope gate — a
-  security control — are unmeasured. `SPEC/decisions.md` 2026-09-13 schedules the rescope.
+  rest; Sprint 12 replaced it with a TypeScript runner, and the v1 baseline it measures prompt
+  changes against was committed on 2026-09-30. `SPEC/decisions.md` 2026-09-13 schedules the rescope.
 
 The .NET test suite was **discarded**, not ported (ticket `10`). The database left the keep list on
 2026-09-09: the seed rebuilds it from committed code in about four seconds.

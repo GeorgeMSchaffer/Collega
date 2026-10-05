@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Comp R: the Home dashboard (slice 150, 2026-10-01). A throwaway review comp in comp R's look: the comp R
+     themes (Terrazzo by default, picker remembered per browser), comp P's Home structure. Every panel is
+     built from a route the API already serves, or is marked "Needs" with the missing route or decision.
+     Self-contained; open in a browser. Sample Acme Robotics data is inlined; "today" is fixed at 2026-10-01. -->
+<title>Collega Home Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&family=Figtree:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Sans:wght@400;500;600;700&family=Lexend:wght@500;600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=Schibsted+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Theme tokens: copied verbatim from comp-r-portico-prototype.html, so the two comps stay one palette. */
+:root,:root[data-proto-theme="portico"]{--suggest:#3B6E51;--suggest-tint:#E3EEE7;color-scheme:light;
+--bg:#F1F5F5;--ink:#16292E;--ink2:#2C4247;--muted:#56696D;--line:#DDE6E7;--line2:#C6D3D5;--card:#FFFFFF;--soft:#E8EFF0;--rowh:#F6FAFA;--thead:#F7FAFA;--facts:#F6FAFA;
+--pri:#1F6A80;--pri-h:#185769;--pri-t:#1B5F73;--pri-tint:#E1EEF1;--pri-ink:#FFFFFF;--vote:#F2B28A;--vote-ink:#16292E;
+--hot:#B64A34;--hot-t:#963B28;--hot-tint:#F6E1DB;--ok-t:#3B6E51;--ok-tint:#E3EEE7;--warn-t:#8E4A1F;--warn-tint:#FCEBDF;
+--side:#FFFFFF;--side-ink:#2C4247;--side-line:#DDE6E7;--side-hover:#EEF4F4;--side-on:#E1EEF1;--side-on-ink:#16292E;--bar:#16292E;--bar-ink:#E3EEF0;
+--tag:#E1EEF1;--tag-ink:#1B5566;--av1:#1F6A80;--av1i:#FFFFFF;--av2:#F2B28A;--av2i:#16292E;--av3:#7A5AA6;--av3i:#FFFFFF;--av4:#4F8A6A;--av4i:#FFFFFF;
+--shadow:22 41 46;--r:14px;--rs:10px;--display:"Outfit",ui-sans-serif,system-ui,sans-serif;--body:"Figtree",ui-sans-serif,system-ui,sans-serif;--mono:"DM Mono",ui-monospace,monospace;--h-weight:600}
+:root[data-proto-theme="sera"]{--suggest:#2E6E4C;--suggest-tint:#E1EFE7;--bg:#F3F4F7;--ink:#1C2236;--ink2:#343B52;--muted:#5C6378;--line:#E2E4EC;--line2:#CCD0DC;--soft:#ECEEF3;--rowh:#F7F8FB;--thead:#F7F8FB;--facts:#F5F6FA;
+--pri:#3450A8;--pri-h:#2A4290;--pri-t:#2E4799;--pri-tint:#E6EAF6;--vote:#E3B04B;--vote-ink:#1C2236;--hot:#B8553F;--hot-t:#94402D;--hot-tint:#F6E3DE;--ok-t:#2E6E4C;--ok-tint:#E1EFE7;--warn-t:#83590C;--warn-tint:#FAF0DA;
+--side:#1F2540;--side-ink:#CDD1E3;--side-line:#2D3454;--side-hover:#272E4D;--side-on:#2E3760;--side-on-ink:#FFFFFF;--bar:#0F1426;--bar-ink:#E6E9F5;--tag:#ECEEF3;--tag-ink:#343B52;
+--av1:#3450A8;--av1i:#FFFFFF;--av2:#E3B04B;--av2i:#1C2236;--av3:#B8553F;--av3i:#FFFFFF;--av4:#3E8A62;--av4i:#FFFFFF;--shadow:28 34 54;--r:16px;--display:"Bricolage Grotesque",ui-sans-serif,sans-serif;--body:"DM Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="lagoon"]{--suggest:#2F5F9E;--suggest-tint:#E3ECF8;--bg:#F3F4EF;--ink:#13302B;--ink2:#2A4640;--muted:#5A6B66;--line:#E1E5DF;--line2:#CBD3CB;--soft:#EAEFEA;--rowh:#F7F9F5;--thead:#F7F9F5;--facts:#F5F8F3;
+--pri:#0E6B5C;--pri-h:#0A5649;--pri-t:#0C6154;--pri-tint:#DCEFEA;--vote:#F08A6C;--vote-ink:#13302B;--hot:#C2412D;--hot-t:#9E3322;--hot-tint:#F9E1DA;--ok-t:#2F6B3F;--ok-tint:#E2F0E4;--warn-t:#7A5410;--warn-tint:#F8EDD3;
+--side:#FFFFFF;--side-ink:#2A4640;--side-line:#E1E5DF;--side-hover:#EFF3EE;--side-on:#DCEFEA;--side-on-ink:#13302B;--bar:#0F2A25;--bar-ink:#E2F0EC;--tag:#DCEFEA;--tag-ink:#0C5549;
+--av1:#0E6B5C;--av1i:#FFFFFF;--av2:#F08A6C;--av2i:#13302B;--av3:#3D6FB6;--av3i:#FFFFFF;--av4:#8C6A1F;--av4i:#FFFFFF;--shadow:19 48 43;--r:16px;--rs:12px;--display:"Lexend",ui-sans-serif,sans-serif;--body:"Nunito Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:600}
+:root[data-proto-theme="terrazzo"]{--suggest:#3F6B2E;--suggest-tint:#E6F2DF;--bg:#F5F6F8;--ink:#1E2733;--ink2:#36414F;--muted:#5E6978;--line:#E3E6EB;--line2:#CDD2DA;--soft:#EDF0F3;--rowh:#F8F9FB;--thead:#F8F9FB;--facts:#F6F7F9;
+--pri:#3D5A80;--pri-h:#324B6B;--pri-t:#35507A;--pri-tint:#E4EAF2;--vote:#F4C7C3;--vote-ink:#1E2733;--hot:#B84A4A;--hot-t:#963636;--hot-tint:#F7E2E2;--ok-t:#3F6B2E;--ok-tint:#E6F2DF;--warn-t:#7F5A12;--warn-tint:#F7EDD6;
+--side:#FFFFFF;--side-ink:#36414F;--side-line:#E3E6EB;--side-hover:#F1F3F6;--side-on:#E4EAF2;--side-on-ink:#1E2733;--bar:#1E2733;--bar-ink:#E8ECF2;--tag:#F4E4E1;--tag-ink:#7A3B34;
+--av1:#3D5A80;--av1i:#FFFFFF;--av2:#F4C7C3;--av2i:#1E2733;--av3:#4E7A40;--av3i:#FFFFFF;--av4:#7A5AA6;--av4i:#FFFFFF;--shadow:30 39 51;--r:8px;--rs:6px;--display:"Schibsted Grotesk",ui-sans-serif,sans-serif;--body:"Public Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="graphite"]{color-scheme:dark;--metric:#5CC8E0;--suggest:#5CC8E0;--suggest-tint:#0F1D21;--suggest-line:#2E6A78;
+--bg:#0F1113;--ink:#E6E8EA;--ink2:#C4CAD0;--muted:#9BA3AB;--line:#22272C;--line2:#2C3238;--card:#16191C;--soft:#1C2024;--rowh:#1A1E22;--thead:#121518;--facts:#1A1E22;--field:#0F1113;
+--pri:#F5A524;--pri-h:#FFC35C;--pri-t:#F5A524;--pri-tint:#2A2418;--pri-ink:#16120A;--vote:#2A2418;--vote-ink:#F3E3C3;--me:#2A2418;--me-ink:#F3E3C3;
+--hot:#E5484D;--hot-t:#FF8A8E;--hot-tint:#2E1719;--ok-t:#58C781;--ok-tint:#13241A;--warn-t:#F5B456;--warn-tint:#2A2418;
+--side:#121518;--side-ink:#AEB5BC;--side-line:#22272C;--side-hover:#1A1E22;--side-on:#1C2024;--side-on-ink:#E6E8EA;--bar:#0B0D0F;--bar-ink:#AEB5BC;--tag:#1C2024;--tag-ink:#C4CAD0;
+--av1:#2A2418;--av1i:#F5A524;--av2:#153038;--av2i:#5CC8E0;--av3:#262B30;--av3i:#C4CAD0;--av4:#1C2A20;--av4i:#58C781;--shadow:0 0 0;--r:8px;--rs:6px;
+--display:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;--h-weight:600}
+:root{--metric:var(--pri);--field:var(--card);--suggest-line:var(--suggest);--me:var(--pri);--me-ink:var(--pri-ink);--drawer:clamp(380px,28vw,520px);--drawer-wide:clamp(720px,62vw,1100px)}
+*,*::before,*::after{box-sizing:border-box}
+html,body{min-height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--body);display:flex;flex-direction:column;min-height:100vh}
+button,input,select{font:inherit;color:inherit}
+a{color:var(--pri-t)}
+:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.i{width:16px;height:16px;flex:none}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* review controls, outside the app (comp P: reviewer copy lives in the chrome band, never in the frame) */
+.proto{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:8px 16px;background:var(--bar);color:var(--bar-ink);font-size:13px;flex:none}
+.proto b{font-family:var(--display);font-weight:600}
+.proto .grp{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.proto .lbl{opacity:.7;margin-right:2px}
+.proto button{background:transparent;border:1px solid color-mix(in srgb,var(--bar-ink) 30%,transparent);border-radius:999px;padding:3px 10px;color:var(--bar-ink);cursor:pointer}
+.proto button[aria-pressed="true"]{background:var(--bar-ink);color:var(--bar);border-color:var(--bar-ink)}
+.proto button:disabled{opacity:.4;cursor:default}
+
+/* app shell, as comp R */
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);flex:1 0 auto}
+.side{background:var(--side);border-right:1px solid var(--side-line);padding:14px 10px;display:flex;flex-direction:column;gap:2px;color:var(--side-ink)}
+.brand{display:flex;gap:10px;align-items:center;padding:4px 6px 12px}
+.brand b{display:block;font:600 16px/1.1 var(--display)}.brand small{font-size:12px;opacity:.75}
+.mark{display:grid;place-items:center;width:30px;height:30px;border-radius:var(--rs);background:var(--pri);color:var(--pri-ink);font:600 12px var(--display);flex:none}
+.navlbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.7;padding:10px 8px 4px}
+.nav{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:var(--rs);color:var(--side-ink);border:0;background:none;width:100%;text-align:left;cursor:default}
+.nav[aria-current="page"]{background:var(--side-on);color:var(--side-on-ink);font-weight:600}
+.nav span{flex:1}
+.me{margin-top:auto;display:flex;gap:10px;align-items:center;padding:10px 6px 2px;border-top:1px solid var(--side-line)}
+.me b{display:block;font-size:13px}.me small{font-size:12px;opacity:.75}
+.av{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;font:700 10px var(--body);background:var(--av1);color:var(--av1i);flex:none}
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:8px;min-height:52px;padding:8px 24px;border-bottom:1px solid var(--line);background:var(--card);position:relative}
+.topbar .sp{flex:1}
+.topbar .mark{display:none}
+.crumb b{color:var(--ink)}
+.themepick{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.themepick select{border:1px solid var(--line2);border-radius:999px;padding:4px 10px;background:var(--card);color:var(--ink);cursor:pointer}
+.iconbtn{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;position:relative}
+.iconbtn:hover{background:var(--soft);color:var(--ink)}
+.bellpop{position:absolute;top:calc(100% - 2px);right:24px;z-index:30;width:min(320px,calc(100vw - 32px));background:var(--card);border:1px solid var(--line2);border-radius:var(--rs);box-shadow:0 12px 32px rgb(var(--shadow)/.18);padding:14px}
+.bellpop h2{margin:0 0 6px;font:var(--h-weight) 15px var(--display)}
+.work{padding:20px 24px 40px;display:flex;flex-direction:column;gap:20px;min-width:0;max-width:1320px;width:100%}
+
+.pghead h1{margin:0;font:var(--h-weight) 28px/1.15 var(--display);letter-spacing:-.02em}
+.pghead p{margin:6px 0 0;color:var(--muted);max-width:72ch}
+.kbd{font:500 10.5px var(--mono);color:var(--muted);border:1px solid var(--line2);border-bottom-width:2px;border-radius:4px;padding:0 5px;line-height:16px;background:var(--soft);display:inline-block}
+.btn{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13px;height:32px;padding:0 12px;border-radius:var(--rs);border:1px solid var(--line2);background:var(--card);color:var(--ink);cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn:hover{border-color:var(--pri)}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}.btn.pri:hover{background:var(--pri-h)}
+.btn.sm{height:28px;padding:0 10px;font-size:12px}
+.btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
+.why{font-size:12px;color:var(--muted);font-style:italic}
+
+/* KPI row: every tile says what it counts, and the number is a query the reader can open */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0;padding:0;list-style:none}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:2px;height:100%}
+.kpi .lb{font:500 10.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.kpi .val{font:var(--h-weight) 30px/1.15 var(--display);font-variant-numeric:tabular-nums;color:var(--ink);text-decoration:none;align-self:flex-start}
+a.val:hover{color:var(--pri-t);text-decoration:underline}
+.kpi .det{font-size:13px;color:var(--ink2)}
+.kpi .det .hot{color:var(--hot-t);font-weight:600}
+.kpi .def{margin:6px 0 0;font-size:12px;color:var(--muted)}
+.kpi.gap{background:transparent;border-style:dashed;border-color:var(--line2)}
+.kpi.gap ul{margin:4px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-size:13px}
+.kpi.gap li{display:flex;justify-content:space-between;gap:8px;color:var(--ink2)}
+.kpi.gap li span:last-child{color:var(--muted)}
+
+/* the dashboard grid: the work on the left, the reader's own lists on the right */
+.dash{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:24px;align-items:start}
+.col{display:flex;flex-direction:column;gap:24px;min-width:0}
+.panel{display:flex;flex-direction:column;gap:10px;min-width:0}
+.ph{display:flex;align-items:flex-start;gap:10px}
+.ph>div{flex:1;min-width:0}
+.ph h2{margin:0;font:var(--h-weight) 17px/1.3 var(--display);display:flex;align-items:center;gap:8px}
+.ph p{margin:2px 0 0;font-size:13px;color:var(--muted);max-width:68ch}
+.ph .count{font:500 12px var(--mono);color:var(--muted)}
+.box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+
+/* list rows wrap rather than scroll, so the queue reads at phone width without a table */
+.rows{margin:0;padding:0;list-style:none}
+.rows li{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:10px 16px;border-top:1px solid var(--line)}
+.rows li:first-child{border-top:0}
+.rows li:hover{background:var(--rowh)}
+.rows .t{flex:1 1 240px;min-width:0}
+.rows .t a{font-weight:600;color:var(--ink);text-decoration:none}
+.rows .t a:hover{color:var(--pri-t);text-decoration:underline}
+.rows .sub{display:block;font-size:12px;color:var(--muted)}
+.rows .m{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.age{font:500 12px var(--mono);color:var(--muted);min-width:34px;text-align:right}
+.mk{display:inline-flex;align-items:center;gap:6px;font-size:12px;white-space:nowrap;color:var(--ink2)}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.chip{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:1px 9px;border-radius:999px;white-space:nowrap}
+.prio-Low{background:var(--soft);color:var(--muted)}.prio-Medium{background:var(--pri-tint);color:var(--pri-t)}
+.prio-High{background:var(--warn-tint);color:var(--warn-t)}.prio-Critical{background:var(--hot-tint);color:var(--hot-t)}
+.votes{display:inline-flex;align-items:center;gap:3px;font-weight:600;font-size:12px;border-radius:999px;padding:0 8px 0 5px;background:var(--soft);color:var(--ink2);min-width:42px}
+.votes.has{background:var(--vote);color:var(--vote-ink)}
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:1px 8px;border-radius:999px;margin:1px 2px 1px 0;white-space:nowrap;background:color-mix(in srgb,var(--tc,var(--muted)) 16%,var(--card));color:color-mix(in srgb,var(--tc,var(--muted)) 62%,var(--ink));border:1px solid color-mix(in srgb,var(--tc,var(--muted)) 30%,transparent)}
+.more{padding:8px 16px;border-top:1px solid var(--line);font-size:13px;background:var(--thead)}
+
+/* board summaries: comp R's board card, with the lane mix spelled out beneath the strip */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:9px}
+.card h3{margin:0;font:var(--h-weight) 16px/1.3 var(--display)}
+.card h3 a{color:var(--ink);text-decoration:none}.card h3 a:hover{color:var(--pri-t);text-decoration:underline}
+.card .desc{font-size:13px;color:var(--muted)}
+.card .foot{margin-top:auto;border-top:1px solid var(--line);padding-top:8px;display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
+.lstrip{display:flex;gap:2px;height:8px;border-radius:999px;overflow:hidden;background:var(--soft)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;margin:0;padding:0;list-style:none;font-size:12px;color:var(--ink2)}
+.legend li{display:inline-flex;align-items:center;gap:5px}
+.legend b{font:500 12px var(--mono)}
+.legend .zero{color:var(--muted)}
+
+/* sprint */
+.spr{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.spr .hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.spr .hd b{font:var(--h-weight) 16px var(--display)}
+.spr .win{font:500 12px var(--mono);color:var(--muted)}
+.spr .goal{margin:0;font-size:13px;color:var(--ink2)}
+.meter{display:block;height:8px;border-radius:999px;background:var(--soft);overflow:hidden}
+.meter span{display:block;height:100%;background:var(--metric)}
+.spr .nums{display:flex;justify-content:space-between;font-size:13px;color:var(--ink2);flex-wrap:wrap;gap:4px}
+.badge{font:500 10.5px var(--mono);border:1px solid currentColor;border-radius:4px;padding:0 6px;line-height:18px;letter-spacing:.04em}
+.badge.ok{color:var(--ok-t)}
+
+/* empty and "needs" states */
+.empty{border:1px dashed var(--line2);border-radius:var(--r);padding:16px;color:var(--muted);font-size:13px;background:var(--card)}
+.empty b{display:block;color:var(--ink);font-size:14px;margin-bottom:2px}
+.emptyhero{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:28px 24px;display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.emptyhero h2{margin:0;font:var(--h-weight) 20px var(--display)}
+.emptyhero p{margin:0;color:var(--ink2);max-width:60ch}
+.emptyhero .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.needs{border:1px dashed var(--line2);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
+.ntag{display:inline-block;align-self:flex-start;font:500 10.5px var(--mono);letter-spacing:.04em;color:var(--warn-t);background:var(--warn-tint);border-radius:4px;padding:1px 6px}
+.ntag code{font:inherit}
+
+/* annotations: a numbered pin on each panel, and a panel listing each one's route and open question */
+.pin{display:none;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--ink);color:var(--bg);font:500 11px var(--mono);flex:none}
+body.notes .pin{display:inline-grid}
+.notes-panel{position:fixed;top:0;right:0;bottom:0;width:min(400px,100vw);background:var(--card);border-left:1px solid var(--line2);box-shadow:-18px 0 40px rgb(var(--shadow)/.16);z-index:50;display:none;flex-direction:column}
+body.notes .notes-panel{display:flex}
+@media (min-width:1280px){body.notes .app{margin-right:400px}}
+.notes-panel header{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.notes-panel header h2{margin:0;flex:1;font:var(--h-weight) 16px var(--display)}
+.notes-panel ol{margin:0;padding:8px 16px 24px;list-style:none;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.notes-panel li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;font-size:13px}
+.notes-panel li .pin{display:inline-grid;grid-row:span 3}
+.notes-panel li b{font-weight:600}
+.notes-panel code{font:500 11.5px/1.5 var(--mono);color:var(--ink2);word-break:break-word}
+.notes-panel .q{color:var(--warn-t)}
+.notes-panel .q::before{content:"Open question: ";font-weight:600}
+.notes-panel .gap{color:var(--warn-t)}
+.notes-panel .gap::before{content:"Needs: ";font-weight:600}
+
+@media (max-width:1100px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.dash{grid-template-columns:minmax(0,1fr)}
+  /* one column: the reader's own work first, then the organization's */
+  .col{display:contents}
+  [aria-labelledby=att-h]{order:1}[aria-labelledby=asg-h]{order:2}[aria-labelledby=spr-h]{order:3}[aria-labelledby=brd-h]{order:4}[aria-labelledby=vot-h]{order:5}[aria-labelledby=act-h]{order:6}}
+@media (max-width:900px){.app{grid-template-columns:1fr}.side{display:none}.topbar{padding:8px 16px}.topbar .mark{display:grid;width:26px;height:26px;font-size:11px}.work{padding:16px 16px 32px}.bellpop{right:16px}}
+@media (max-width:560px){.pghead h1{font-size:23px}.themepick .tl{display:none}.rows li{padding:10px 12px}.kpi .val{font-size:26px}}
+@media (max-width:380px){.kpis{grid-template-columns:minmax(0,1fr)}}
+</style>
+
+<div class="proto" role="region" aria-label="Review controls">
+  <b>Collega · Home dashboard comp</b>
+  <div class="grp" id="p-views" aria-label="Signed in as"><span class="lbl">Signed in as</span></div>
+  <div class="grp" id="p-states" aria-label="Data"><span class="lbl">Data</span></div>
+  <button id="p-notes" aria-pressed="false" aria-controls="notes">Annotations</button>
+</div>
+<div class="app">
+  <aside class="side" aria-label="Main">
+    <div class="brand"><span class="mark">CG</span><span><b>Collega</b><small id="org-name">Acme Robotics</small></span></div>
+    <div class="navlbl">Workspace</div>
+    <button class="nav" aria-current="page"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11 12 4l9 7v9h-6v-6H9v6H3z"/></svg><span>Home</span></button>
+    <button class="nav"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16"/></svg><span>Boards</span></button>
+    <button class="nav"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg><span>Ideas</span></button>
+    <div id="nav-delivery">
+      <div class="navlbl">Delivery</div>
+      <button class="nav"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h10M4 18h6"/></svg><span>Sprint board</span></button>
+      <button class="nav"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg><span>Roadmap</span></button>
+    </div>
+    <div class="navlbl">Configure</div>
+    <button class="nav"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg><span>Settings</span></button>
+    <div class="me"><span class="av" id="me-av">NC</span><span><b id="me-name">Noah Contributor</b><small id="me-role">User</small></span></div>
+  </aside>
+  <div class="main">
+    <div class="topbar"><span class="mark" aria-hidden="true">CG</span><span class="crumb"><b>Home</b></span><span class="sp"></span>
+      <span id="bell-slot"></span>
+      <label class="themepick" for="theme"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg><span class="tl">Theme</span>
+        <select id="theme"><optgroup label="Light"><option value="terrazzo">Terrazzo</option><option value="portico">Portico</option><option value="sera">Piazza Sera</option><option value="lagoon">Lagoon</option></optgroup><optgroup label="Dark"><option value="graphite">Graphite</option></optgroup></select></label>
+    </div>
+    <main class="work" id="work"></main>
+  </div>
+</div>
+<aside class="notes-panel" id="notes" aria-labelledby="notes-h" tabindex="-1">
+  <header><h2 id="notes-h">Data sources</h2><button class="iconbtn" id="notes-x" aria-label="Close annotations"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
+  <ol id="notes-list"></ol>
+</aside>
+
+<script>
+(function () {
+const TODAY = Date.UTC(2026, 9, 1); // fixed, so the comp renders the same on every open
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+const age = (d) => `${Math.round((TODAY - Date.parse(d)) / 864e5)}d`;
+const ICON = {
+  bell: '<path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+  up: '<path d="m6 14 6-6 6 6"/>',
+};
+const svg = (n) => `<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]}</svg>`;
+
+// ---------- sample data (Acme Robotics, as comp R) ----------
+const STATUSES = [['New / Pending', '#64748B'], ['In Review', '#D97706'], ['In Progress', '#2563EB'], ['Client Review', '#7C3AED'], ['Complete', '#16A34A']];
+const SCOLOR = Object.fromEntries(STATUSES);
+const DSTATUSES = [['Pending', '#64748B'], ['Scoping', '#D97706'], ['Development', '#2563EB'], ['Review', '#7C3AED'], ['Complete', '#16A34A']];
+const TAGC = { service: '#2563EB', diagnostics: '#7C3AED', 'customer-impact': '#D97706', automation: '#0E7490', quality: '#16A34A', safety: '#B91C1C' };
+const BOARDS = [
+  { name: 'Opportunities', desc: 'Field service and customer-facing improvements.', lanes: [4, 3, 2, 1, 1], tags: ['service', 'diagnostics', 'customer-impact'], tagCount: 6 },
+  { name: 'Ideas', desc: 'Assembly cell reliability: fewer stoppages, safer cells, shorter cycle times.', lanes: [2, 1, 2, 0, 1], tags: ['automation', 'quality', 'safety'], tagCount: 4 },
+];
+const ATTENTION = { total: 7, rows: [
+  { title: 'Remote fault diagnostics for field units', board: 'Opportunities', type: 'Continuous Improvement', status: 'In Review', priority: 'Critical', created: '2026-08-28' },
+  { title: 'Lockout checklist on the cell HMI', board: 'Ideas', type: 'Process Revision', status: 'New / Pending', priority: 'Critical', created: '2026-09-03' },
+  { title: 'Pre-stage parts kits for service calls', board: 'Opportunities', type: 'Process Revision', status: 'In Progress', priority: 'High', created: '2026-09-06' },
+  { title: 'Predictive alarm on spindle temperature', board: 'Ideas', type: 'Continuous Improvement', status: 'In Progress', priority: 'High', created: '2026-09-10' },
+  { title: 'Customer-visible repair status', board: 'Opportunities', type: 'Continuous Improvement', status: 'Client Review', priority: 'High', created: '2026-09-15' },
+] };
+const ASSIGNED = { total: 4, critical: 1, rows: [
+  { title: 'Remote fault diagnostics for field units', board: 'Opportunities', status: 'In Review', priority: 'Critical' },
+  { title: 'Pre-stage parts kits for service calls', board: 'Opportunities', status: 'In Progress', priority: 'High' },
+  { title: 'Shared playbook for cell changeovers', board: 'Ideas', status: 'New / Pending', priority: 'Medium' },
+  { title: 'Automate weekly reliability reporting', board: 'Ideas', status: 'In Progress', priority: 'Medium' },
+] };
+const CREATED = 5;
+const TOP_VOTED = [
+  { title: 'Customer-visible repair status', board: 'Opportunities', status: 'Client Review', votes: 9, mine: true },
+  { title: 'Remote fault diagnostics for field units', board: 'Opportunities', status: 'In Review', votes: 7, mine: true },
+  { title: 'Torque audit on every tenth unit', board: 'Ideas', status: 'Complete', votes: 6, mine: false },
+  { title: 'Offline service manuals on the tablet', board: 'Opportunities', status: 'New / Pending', votes: 4, mine: false },
+  { title: 'Predictive alarm on spindle temperature', board: 'Ideas', status: 'In Progress', votes: 3, mine: false },
+];
+const SPRINT = { name: 'Sprint 14', start: '2026-09-22', end: '2026-10-05', goal: 'Pilot remote diagnostics with two field teams.', issueCount: 9, doneCount: 4, mix: [1, 1, 2, 1, 4] };
+const BACKLOG = 6;
+const ORGS = [
+  { name: 'Acme Robotics', boards: [['Opportunities', [4, 3, 2, 1, 1]], ['Ideas', [2, 1, 2, 0, 1]]], ideas: 17, issues: 15, users: 4, inactive: 0 },
+  { name: 'Northwind Clinics', boards: [['Patient experience', [6, 2, 3, 1, 2]], ['Facilities', [3, 0, 1, 0, 1]], ['Scheduling', [2, 1, 1, 0, 0]]], ideas: 23, issues: 3, users: 12, inactive: 1 },
+  { name: 'Harbor Logistics', boards: [['Ideas', [0, 0, 0, 0, 0]]], ideas: 0, issues: 0, users: 1, inactive: 0 },
+];
+const ARCHIVED_ORGS = 1;
+const VIEWS = { User: ['Noah Contributor', 'NC', 'User'], OrgAdmin: ['Olivia Administer', 'OA', 'Org Admin'], ReadOnly: ['Rosa Observer', 'RO', 'Read Only'], SiteAdmin: ['Sam Siteadmin', 'SA', 'Site Admin'] };
+
+let S = { view: 'User', state: 'full', notes: false, bell: false };
+try { S.view = localStorage.getItem('collega-home-comp-view') || 'User'; if (!VIEWS[S.view]) S.view = 'User'; } catch {}
+
+// ---------- pieces ----------
+const marker = (name, color) => `<span class="mk"><span class="dot" style="background:${color}"></span>${esc(name)}</span>`;
+const prio = (p) => `<span class="chip prio-${p}">${p}</span>`;
+const pin = (n) => `<span class="pin" aria-hidden="true">${n}</span>`;
+const needs = (what) => `<span class="ntag">Needs: ${what}</span>`;
+function strip(counts, palette, label) {
+  const total = counts.reduce((a, b) => a + b, 0);
+  const desc = palette.map(([s], i) => `${counts[i]} ${s}`).join(', ');
+  return `<div class="lstrip" role="img" aria-label="${esc(label)}: ${esc(desc)}">${total ? palette.map(([, c], i) => (counts[i] ? `<span style="flex:${counts[i]};background:${c}"></span>` : '')).join('') : ''}</div>`;
+}
+const legend = (counts, palette) => `<ul class="legend" aria-hidden="true">${palette.map(([s, c], i) => `<li class="${counts[i] ? '' : 'zero'}"><span class="dot" style="background:${c}"></span>${esc(s)} <b>${counts[i]}</b></li>`).join('')}</ul>`;
+function panel(n, id, title, standfirst, body, action = '') {
+  return `<section class="panel" aria-labelledby="${id}"><div class="ph"><div><h2 id="${id}">${pin(n)}${title}</h2>${standfirst ? `<p>${standfirst}</p>` : ''}</div>${action}</div>${body}</section>`;
+}
+function kpi(n, label, value, detail, def, href) {
+  const v = href ? `<a class="val" href="${href}">${value}</a>` : `<span class="val">${value}</span>`;
+  return `<li><div class="kpi"><span class="lb">${pin(n)} ${label}</span>${v}<span class="det">${detail}</span><p class="def">${def}</p></div></li>`;
+}
+const ideaLink = (t) => `<a href="#" data-noop>${esc(t)}</a>`;
+
+// ---------- organization member's Home ----------
+function orgHome() {
+  const [name] = VIEWS[S.view];
+  const first = name.split(' ')[0];
+  const ro = S.view === 'ReadOnly', admin = S.view === 'OrgAdmin';
+  const empty = S.state === 'empty', unassigned = S.state === 'unassigned';
+  const ideas = empty ? 0 : 17, boards = empty ? 0 : 2, issues = empty ? 0 : SPRINT.issueCount + BACKLOG;
+
+  const head = `<header class="pghead"><h1>${pin(1)} Good to see you, ${esc(first)}.</h1>
+    <p>${ro ? 'Here’s what’s moving today.' : 'Here’s what needs you today.'} Acme Robotics has ${plural(ideas, 'idea', 'ideas')} across ${plural(boards, 'board', 'boards')} and ${plural(issues, 'delivery issue', 'delivery issues')} in flight — press <span class="kbd">Ctrl K</span> to jump straight to any of them.</p></header>`;
+
+  if (empty) {
+    const action = admin
+      ? `<a class="btn pri" href="#" data-noop>Create a board</a>`
+      : `<span class="row"><span class="btn pri" aria-disabled="true" aria-describedby="why-board">Create a board</span><span class="why" id="why-board">Administrators only</span></span>`;
+    return head + `<section class="emptyhero" aria-labelledby="nb-h"><h2 id="nb-h">${pin(13)} No boards yet</h2>
+      <p>Your organization doesn’t have any boards to show. ${admin ? 'Create one to start collecting ideas: it comes with your organization’s statuses as its lanes, and you can change them later.' : 'An Org Admin can create boards from Settings.'}</p>
+      <div class="row">${action}</div></section>`;
+  }
+
+  const a = unassigned ? { total: 0, critical: 0, rows: [] } : ASSIGNED;
+  const kpis = `<ul class="kpis" aria-label="Your numbers">
+    ${kpi(2, 'Assigned to me', a.total, a.critical ? `<span class="hot">${a.critical} critical</span>` : 'none critical', 'Every idea with your name in Assigned, whatever its status.', '#')}
+    ${kpi(3, 'Critical &amp; high', ATTENTION.total, 'still on a board', 'Critical or high-priority ideas not yet promoted, on any board you can see.', '#')}
+    ${kpi(4, 'You created', CREATED, 'ideas and issues', 'Everything you authored, on any board, in either phase.', '#')}
+    <li><div class="kpi gap"><span class="lb">${pin(5)} Not tracked yet</span>
+      <ul><li><span>Open ideas</span><span>—</span></li><li><span>Awaiting review</span><span>—</span></li><li><span>Completed · 30d</span><span>—</span></li></ul>
+      ${needs('status categories; status-change times')}</div></li></ul>`;
+
+  const attention = panel(6, 'att-h', 'Needs your attention',
+    'Critical and high-priority ideas still on a board, oldest first — the longer one waits, the more it needs a decision.',
+    `<div class="box"><ul class="rows">${ATTENTION.rows.map((r) => `<li><span class="t">${ideaLink(r.title)}<span class="sub">${esc(r.board)} · ${esc(r.type)}</span></span><span class="m">${marker(r.status, SCOLOR[r.status])}${prio(r.priority)}<span class="age" title="Created ${r.created}">${age(r.created)}</span></span></li>`).join('')}</ul>
+     <div class="more"><a href="#" data-noop>View all ${ATTENTION.total}</a></div></div>`);
+
+  const boardsPanel = panel(8, 'brd-h', 'Your boards', 'Ideas on each board by lane, left to right in lane order.',
+    `<div class="cards">${BOARDS.map((b) => { const n = b.lanes.reduce((x, y) => x + y, 0); return `<article class="card">
+      <h3><a href="#" data-noop>${esc(b.name)}</a></h3><span class="desc">${esc(b.desc)}</span>
+      ${strip(b.lanes, STATUSES, `${b.name} ideas by lane`)}${legend(b.lanes, STATUSES)}
+      <div>${b.tags.map((t) => `<span class="tag" style="--tc:${TAGC[t]}">${esc(t)}</span>`).join('')}</div>
+      <div class="foot"><span>${plural(n, 'idea', 'ideas')}</span><span>${plural(b.tagCount, 'tag', 'tags')}</span></div></article>`; }).join('')}</div>`,
+    admin ? `<a class="btn sm" href="#" data-noop>Manage boards</a>` : `<a class="btn sm" href="#" data-noop>All boards</a>`);
+
+  const activity = panel(11, 'act-h', 'Recent activity', 'What changed on boards you can see, newest first.',
+    `<div class="needs">${needs('a read route over status changes and edits')}<span>Not available yet. Moves, comments and edits will be listed here once the activity feed is switched on.</span></div>`);
+
+  const assigned = panel(7, 'asg-h', `Assigned to me <span class="count">${a.total}</span>`, 'Highest priority first.',
+    a.rows.length
+      ? `<div class="box"><ul class="rows">${a.rows.map((r) => `<li><span class="t">${ideaLink(r.title)}<span class="sub">${esc(r.board)}</span></span><span class="m">${marker(r.status, SCOLOR[r.status])}${prio(r.priority)}</span></li>`).join('')}</ul></div>`
+      : `<div class="empty"><b>Nothing is assigned to you.</b>${ro ? 'Ideas you’re named on will appear here.' : 'When someone adds you to an idea’s Assigned field, it lands here. Meanwhile, the queue on the left is a good place to pick something up.'}</div>`);
+
+  const sprint = panel(10, 'spr-h', 'Current sprint', '',
+    `<div class="box spr"><div class="hd"><b>${SPRINT.name}</b><span class="badge ok">ACTIVE</span></div>
+      <span class="win">22 Sep – 5 Oct · 4 days left</span>
+      <p class="goal">${esc(SPRINT.goal)}</p>
+      <div class="meter" role="progressbar" aria-label="Issues done" aria-valuemin="0" aria-valuemax="${SPRINT.issueCount}" aria-valuenow="${SPRINT.doneCount}"><span style="width:${(100 * SPRINT.doneCount) / SPRINT.issueCount}%"></span></div>
+      <div class="nums"><span><b>${SPRINT.doneCount}</b> of ${SPRINT.issueCount} issues done</span><span>${BACKLOG} in the backlog</span></div>
+      ${strip(SPRINT.mix, DSTATUSES, 'Sprint issues by delivery status')}${legend(SPRINT.mix, DSTATUSES)}
+      <div><a class="btn sm" href="#" data-noop>Open sprint board</a></div></div>`);
+
+  const voted = panel(9, 'vot-h', 'Most upvoted', 'Ideas on a board with the most upvotes.',
+    `<div class="box"><ul class="rows">${TOP_VOTED.map((r) => `<li><span class="t">${ideaLink(r.title)}<span class="sub">${esc(r.board)}</span></span><span class="m">${marker(r.status, SCOLOR[r.status])}<span class="votes ${r.mine ? 'has' : ''}" title="${r.mine ? 'You upvoted this' : 'Upvotes'}">${svg('up')}${r.votes}</span></span></li>`).join('')}</ul></div>`);
+
+  return head + kpis + `<div class="dash"><div class="col">${attention}${boardsPanel}${activity}</div><div class="col">${assigned}${sprint}${voted}</div></div>`;
+}
+
+// ---------- Site Admin's platform roll-up ----------
+function platformHome() {
+  const empty = S.state === 'empty';
+  const orgs = empty ? [] : ORGS;
+  const sum = (k) => orgs.reduce((t, o) => t + o[k], 0);
+  const boards = orgs.reduce((t, o) => t + o.boards.length, 0);
+  const head = `<header class="pghead"><h1>${pin(1)} Good to see you, Sam.</h1>
+    <p>Platform-wide, across every organization: ${plural(orgs.length, 'organization', 'organizations')}, ${plural(sum('ideas'), 'idea', 'ideas')}, ${plural(sum('issues'), 'delivery issue', 'delivery issues')}. You are not a member of any of them — to change what they own, act as one of their administrators.</p></header>`;
+  if (empty) {
+    return head + `<section class="emptyhero" aria-labelledby="no-h"><h2 id="no-h">${pin(13)} No organizations yet</h2>
+      <p>Nothing to show until an organization exists. Creating one provisions its default statuses and a first board.</p>
+      <div class="row"><a class="btn pri" href="#" data-noop>Create an organization</a></div></section>`;
+  }
+  const kpis = `<ul class="kpis" aria-label="Platform numbers">
+    ${kpi(2, 'Organizations', orgs.length, `${ARCHIVED_ORGS} archived`, 'Every organization on this deployment, archived ones excluded.', '#')}
+    ${kpi(3, 'Boards', boards, `across ${plural(orgs.length, 'organization', 'organizations')}`, 'Every live board in every organization.', null)}
+    ${kpi(4, 'Ideas', sum('ideas'), `plus ${sum('issues')} delivery issues`, 'Ideas still on a board, in every organization.', null)}
+    ${kpi(5, 'Users', sum('users'), `${sum('inactive')} inactive`, 'Every account in an organization, whatever its role.', '#')}</ul>`;
+  const max = Math.max(...orgs.map((o) => o.ideas), 1);
+  const orgPanel = panel(6, 'org-h', 'Organizations', 'Each organization’s size, largest first by ideas.',
+    `<div class="box"><ul class="rows">${[...orgs].sort((x, y) => y.ideas - x.ideas).map((o) => `<li><span class="t"><a href="#" data-noop>${esc(o.name)}</a><span class="sub">${plural(o.boards.length, 'board', 'boards')} · ${plural(o.users, 'user', 'users')}${o.inactive ? ` (${o.inactive} inactive)` : ''}</span></span>
+      <span class="m" style="flex:0 1 220px;min-width:160px"><span style="flex:1"><span class="meter" aria-hidden="true"><span style="width:${(100 * o.ideas) / max}%"></span></span></span><span class="age" style="min-width:64px">${plural(o.ideas, 'idea', 'ideas')}</span></span>
+      <span class="m"><span class="age" style="min-width:64px">${plural(o.issues, 'issue', 'issues')}</span></span></li>`).join('')}</ul></div>`);
+  const boardPanel = panel(7, 'pb-h', 'All boards', 'Every board, grouped by organization, with its ideas by lane. Open one to read it; to change it, act as one of its administrators.',
+    orgs.map((o) => `<div class="box"><ul class="rows"><li style="background:var(--thead)"><span class="t"><b>${esc(o.name)}</b></span></li>${o.boards.map(([n, lanes]) => { const c = lanes.reduce((x, y) => x + y, 0); return `<li><span class="t"><a href="#" data-noop>${esc(n)}</a><span class="sub">${plural(c, 'idea', 'ideas')}</span></span><span style="flex:0 1 220px;min-width:140px">${c ? strip(lanes, STATUSES, `${n} ideas by lane`) : '<span class="sub">No ideas yet</span>'}</span></li>`; }).join('')}</ul></div>`).join(''));
+  const activity = panel(8, 'pa-h', 'Recent activity', 'Everything anyone changed, in any organization, newest first.',
+    `<div class="needs">${needs('a read route over audit events, across organizations')}<span>Not available yet.</span></div>`);
+  return head + kpis + `<div class="dash"><div class="col">${orgPanel}${boardPanel}</div><div class="col">${activity}</div></div>`;
+}
+
+// ---------- annotations ----------
+const ORG = '/organizations/{org}';
+const NOTES_ORG = [
+  [1, 'Greeting', [`GET ${ORG}/ideas?phase=Ideas&pageSize=1 → totalCount`, `GET ${ORG}/boards → non-archived count`, `GET ${ORG}/delivery → backlog length`, `GET ${ORG}/sprints → issueCount of Planned and Active`], 'Today’s Home counts only GET /delivery, which is the backlog (no sprintId), and calls it “in flight”. This comp adds the sprints’ issueCount. Confirm.'],
+  [2, 'Assigned to me (tile)', [`GET ${ORG}/ideas?scope=assigned&pageSize=1`, `…&priority=Critical → the critical count`], null],
+  [3, 'Critical & high (tile)', [`GET ${ORG}/ideas?phase=Ideas&priority=Critical&priority=High&pageSize=1`], 'New tile; same query as the queue’s “View all”. “Still on a board” includes ideas sitting in the Complete lane until status categories exist.'],
+  [4, 'You created (tile)', [`GET ${ORG}/ideas?scope=created&pageSize=1`], 'New tile. Keep it, or leave three tiles?'],
+  [5, 'Not tracked yet (tile)', [], null, 'status categories for Open ideas and Awaiting review (ideas-inbox § Status categories); status-change times for Completed · 30d (§ Status-change times). User decision 2026-09-30: stays a placeholder.'],
+  [6, 'Needs your attention', [`GET ${ORG}/ideas?phase=Ideas&priority=Critical&priority=High&sortBy=createdAt&sortDirection=asc&pageSize=5`, `board names from GET ${ORG}/boards?includeArchived=true`], 'Unchanged from today’s Home. “Oldest” is by creation, not time in lane; “a week without moving” needs status-change times.'],
+  [7, 'Assigned to me (list)', [`GET ${ORG}/ideas?scope=assigned&sortBy=priority&sortDirection=desc&pageSize=5`], 'New panel. The default phase is All, so promoted Issues appear here too. Keep both, or pass phase=Ideas?'],
+  [8, 'Your boards', [`GET ${ORG}/boards → laneCounts, ideaCount, topTags, tagCount`], 'One request, no fan-out. Lane colours are the status colours. Archived boards are left out.'],
+  [9, 'Most upvoted', [`GET ${ORG}/ideas?phase=Ideas&sortBy=upvoteCount&sortDirection=desc&pageSize=5`], 'New panel. It includes Complete-lane ideas (status categories again). Is it worth the space on a “basic” Home?'],
+  [10, 'Current sprint', [`GET ${ORG}/sprints?state=Active`, `GET ${ORG}/sprints/{sprintId} → issues[].deliveryStatus`, `GET ${ORG}/delivery → backlog length`], 'Hidden when no sprint is Active. If two are Active at once, show the one ending first?'],
+  [11, 'Recent activity', [], null, 'a read route over audit_events (IdeaStatusChanged and edits), scoped to the caller — one route serving this and the Loop activity feed (ideas-inbox § Status-change times).'],
+  [12, 'Notifications (bell, top bar)', [], 'A slot only. Should Home also carry an “Unread for you” panel once the inbox exists?', 'the notification inbox, specified in slice 149 (decisions 2026-10-01, “Following an idea…”). Nothing here depends on it.'],
+  [13, 'Empty: no boards', [`GET ${ORG}/boards → []`], 'Creating an organization provisions a first board, so a member reaches this only after every board is archived. Org Admin gets the action; User and Read Only see it refused (“Denied is shown”).'],
+  [0, 'Roles', [], 'Read Only sees the same panels; the standfirst reads “what’s moving”, and no create action is offered. Can a Read Only user be assigned an idea? If not, hide their Assigned panel and tile.'],
+];
+const NOTES_SITE = [
+  [1, 'Greeting', ['the sums of panels 2–5'], null],
+  [2, 'Organizations (tile)', ['GET /organizations (every page)', 'GET /organizations?isArchived=true&pageSize=1 → archived = total − live'], null],
+  [3, 'Boards (tile)', [`GET ${ORG}/boards, per organization`], null],
+  [4, 'Ideas (tile)', [`GET ${ORG}/ideas?phase=Ideas&pageSize=1, per organization`, `GET ${ORG}/delivery, per organization`], 'Today’s tile reads “Open ideas — not tracked yet”; this comp shows the served total instead and calls it Ideas.'],
+  [5, 'Users (tile)', [`GET ${ORG}/users?pageSize=1 and ?status=Inactive&pageSize=1, per organization`], null],
+  [6, 'Organizations', ['the same per-organization reads'], 'Five requests per organization, fanned out. Fine at a handful; a platform summary route would replace it if organizations grow.'],
+  [7, 'All boards', [`GET ${ORG}/boards → laneCounts, per organization`], null],
+  [8, 'Recent activity', [], null, 'a cross-organization read over audit events.'],
+  [13, 'Empty: no organizations', ['GET /organizations → []'], null],
+];
+function notes() {
+  const list = S.view === 'SiteAdmin' ? NOTES_SITE : NOTES_ORG;
+  document.getElementById('notes-list').innerHTML = list.map(([n, t, routes, q, gap]) => `<li><span class="pin">${n || 'i'}</span><b>${esc(t)}</b>
+    <div>${routes.map((r) => `<code>${esc(r)}</code>`).join('<br>')}${gap ? `<div class="gap">${esc(gap)}</div>` : ''}</div>${q ? `<div class="q">${esc(q)}</div>` : '<div></div>'}</li>`).join('');
+}
+
+// ---------- render ----------
+function render() {
+  const [name, ini, role] = VIEWS[S.view];
+  const site = S.view === 'SiteAdmin';
+  if (site && S.state === 'unassigned') S.state = 'full';
+  document.getElementById('me-name').textContent = name;
+  document.getElementById('me-av').textContent = ini;
+  document.getElementById('me-role').textContent = role;
+  document.getElementById('org-name').textContent = site ? 'Platform' : 'Acme Robotics';
+  document.getElementById('nav-delivery').hidden = site;
+  document.getElementById('bell-slot').innerHTML = site ? '' : `<button class="iconbtn" id="bell" aria-label="Notifications" aria-expanded="${S.bell}" aria-controls="bellpop">${svg('bell')}</button><span class="pin" style="margin-left:-6px">12</span>
+    ${S.bell ? `<div class="bellpop" id="bellpop" role="dialog" aria-label="Notifications"><h2>Notifications</h2>${needs('the inbox from slice 149')}<p style="margin:8px 0 0;font-size:13px;color:var(--muted)">You’ll see new comments, status changes and reassignments on ideas you follow here.</p></div>` : ''}`;
+  document.getElementById('work').innerHTML = site ? platformHome() : orgHome();
+  document.body.classList.toggle('notes', S.notes);
+  document.getElementById('p-notes').setAttribute('aria-pressed', S.notes);
+  document.getElementById('p-views').innerHTML = '<span class="lbl">Signed in as</span>' + Object.entries(VIEWS).map(([k, [, , l]]) => `<button data-view="${k}" aria-pressed="${S.view === k}">${l}</button>`).join('');
+  const states = [['full', 'Populated'], ['unassigned', 'Nothing assigned'], ['empty', site ? 'No organizations' : 'No boards']];
+  document.getElementById('p-states').innerHTML = '<span class="lbl">Data</span>' + states.map(([k, l]) => `<button data-state="${k}" aria-pressed="${S.state === k}" ${site && k === 'unassigned' ? 'disabled' : ''}>${l}</button>`).join('');
+  notes();
+}
+
+document.querySelector('.proto').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.view) { S.view = b.dataset.view; try { localStorage.setItem('collega-home-comp-view', S.view); } catch {} }
+  if (b.dataset.state) S.state = b.dataset.state;
+  if (b.id === 'p-notes') { S.notes = !S.notes; render(); if (S.notes) document.getElementById('notes').focus(); return; }
+  render();
+});
+document.getElementById('notes-x').onclick = () => { S.notes = false; render(); document.getElementById('p-notes').focus(); };
+document.addEventListener('click', (e) => {
+  if (e.target.closest('[data-noop]')) e.preventDefault();
+  if (e.target.closest('#bell')) { S.bell = !S.bell; render(); document.getElementById('bell').focus(); }
+  else if (S.bell && !e.target.closest('#bellpop')) { S.bell = false; render(); }
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (S.bell) { S.bell = false; render(); document.getElementById('bell').focus(); }
+  else if (S.notes) { S.notes = false; render(); document.getElementById('p-notes').focus(); }
+});
+
+// The theme is remembered per browser, in a cookie in the product (here, localStorage, shared with comp R).
+const THEMES = ['terrazzo', 'portico', 'sera', 'lagoon', 'graphite'];
+const pt = document.getElementById('theme');
+function setTheme(k) { document.documentElement.dataset.protoTheme = k; pt.value = k; try { localStorage.setItem('collega-theme', k); } catch {} }
+let saved = 'terrazzo'; try { saved = localStorage.getItem('collega-theme') || 'terrazzo'; } catch {}
+setTheme(THEMES.includes(saved) ? saved : 'terrazzo');
+pt.onchange = () => setTheme(pt.value);
+render();
+})();
+</script>

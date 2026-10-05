@@ -1,12 +1,17 @@
 import { createHash } from 'node:crypto'
+import type { DemoFieldsScenario } from './fields-scenario.js'
+import { BRIGHTLINE_CREATIVE } from './vertical/brightline-creative.js'
+import { MERIDIAN_HOLDINGS } from './vertical/meridian-holdings.js'
+import { PINECONE_LABS } from './vertical/pinecone-labs.js'
 
 /**
  * The demo scenario, and the identifiers derived from it.
  *
  * Ported from the startup seeder in the stack this replaced, which was the only record of what the
  * demo data actually was. This file is now that record, and it rebuilds the data from scratch in
- * about four seconds. The shape is fixed by the definition of done: 2
- * organizations, 10 users, 4 boards, 44 ideas.
+ * about four seconds. Two organizations (Acme, Blue Harbor) are the fixtures the definition of done
+ * and the golden corpus describe - 4 boards, 44 ideas; three vertical organizations (software team,
+ * marketing agency, corporate improvement programme) are demo data on top of them.
  *
  * **Every upsert in these modules has an empty `update`.** A row that already exists is left
  * exactly as it is - the seed creates what is missing and mutates nothing. An earlier version
@@ -49,11 +54,46 @@ export function seedId(...parts: readonly string[]): string {
   ].join('-')
 }
 
+export type DemoIdeaScenario = { readonly title: string; readonly description: string }
+
+/** An idea written for one board, with its rule 2a fields. Eleven per board. */
+export type DemoVerticalIdea = DemoIdeaScenario & {
+  readonly problem: string
+  readonly proposedSolutions: readonly string[]
+  readonly impactRationale: string
+}
+
+export type DemoChecklistItem = {
+  readonly title: string
+  readonly state: 'NotStarted' | 'InProgress' | 'Done'
+  /** An index into CONTRIBUTOR_LOCAL_PARTS, or null for unassigned. */
+  readonly assignee: number | null
+}
+
 export type DemoBoardScenario = {
   readonly name: string
   readonly description: string
   readonly focus: string
   readonly tagNames: readonly string[]
+  /**
+   * Ideas written for this board. Absent, the board uses the generic `IDEA_SCENARIOS` with
+   * `IDEA_DETAILS_BY_FOCUS`; present, there are exactly `IDEA_SCENARIOS.length` of them.
+   */
+  readonly ideas?: readonly DemoVerticalIdea[]
+  /** Bodies of the three `THREAD` comments, in thread order. */
+  readonly commentBodies?: readonly [string, string, string]
+  /**
+   * Checklist items for the promoted ideas at index 0 and 1 (first board only is promoted).
+   */
+  readonly checklists?: readonly [readonly DemoChecklistItem[], readonly DemoChecklistItem[]]
+}
+
+export type DemoAccount = {
+  readonly firstName: string
+  readonly lastName: string
+  /** Local part; the domain is derived from the organization slug. */
+  readonly localPart: string
+  readonly role: 'OrgAdmin' | 'User' | 'ReadOnly'
 }
 
 export type DemoOrganizationScenario = {
@@ -61,6 +101,14 @@ export type DemoOrganizationScenario = {
   readonly slug: string
   readonly description: string
   readonly boards: readonly DemoBoardScenario[]
+  /** Absent, the organization gets `DEMO_ACCOUNTS`. */
+  readonly accounts?: readonly DemoAccount[]
+  /** Goal of the current sprint; absent, a generic goal built from the first board's focus. */
+  readonly sprintGoal?: string
+  /** Idea types beyond `DEFAULT_IDEA_TYPES`; no scenario idea uses them, and they stay on all active fields. */
+  readonly extraIdeaTypes?: readonly string[]
+  /** Custom fields, fieldsets and which idea types use them; absent, the organization has none. */
+  readonly fieldConfig?: DemoFieldsScenario
 }
 
 /** The second demo board every organization gets, alongside the default `Ideas` board. */
@@ -108,9 +156,12 @@ export const DEMO_ORGANIZATIONS: readonly DemoOrganizationScenario[] = [
       },
     ],
   },
+  // The vertical organizations come last so Acme and Blue Harbor keep their derived ids and order:
+  // the golden corpus and the E2E suite pin them by slug.
+  PINECONE_LABS,
+  BRIGHTLINE_CREATIVE,
+  MERIDIAN_HOLDINGS,
 ]
-
-export type DemoIdeaScenario = { readonly title: string; readonly description: string }
 
 /** Eleven per board, which is what the 3/2/2/1/3 status distribution below sums to. */
 export const IDEA_SCENARIOS: readonly DemoIdeaScenario[] = [
@@ -178,14 +229,6 @@ export const DEMO_PASSWORD = 'Abc123!'
  * perspective can be exercised without the configured secret.
  */
 export const DEMO_SITE_ADMIN_EMAIL = 'siteadmin@demo.collega.test'
-
-export type DemoAccount = {
-  readonly firstName: string
-  readonly lastName: string
-  /** Local part; the domain is derived from the organization slug. */
-  readonly localPart: string
-  readonly role: 'OrgAdmin' | 'User' | 'ReadOnly'
-}
 
 /**
  * One account per role per organization. The two `User` accounts exist because an idea needs an

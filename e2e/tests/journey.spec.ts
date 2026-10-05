@@ -191,39 +191,39 @@ test.describe
         .getByRole('textbox', { name: 'Description', exact: true })
         .fill('Created by the journey suite.')
 
-      // Deliberately left empty, so the next step still proves a Site Admin can add somebody to an
-      // organization that has nobody. The form offers a first administrator precisely so that state
-      // is avoidable - but avoidable is not the same as impossible, and the escape has to keep
-      // working for an organization created before the form asked.
+      // Required since 2026-10-04 (`SPEC/decisions.md`): an organization is never born without an
+      // Org Admin, because nobody could act as anyone inside it.
+      await page.getByLabel(/first name/i).fill('Journey')
+      await page.getByLabel(/last name/i).fill('Admin')
+      await page.getByLabel(/^email$/i).fill(world.adminEmail)
+      await page.getByLabel(/initial password/i).fill(world.adminPassword)
       await page.getByRole('button', { name: /create organization/i }).click()
 
       await expect(page).toHaveURL(/\/settings\/organizations$/, { timeout: 30_000 })
       await expect(page.getByText(world.organization)).toBeVisible({ timeout: 30_000 })
     })
 
-    test('2. the site admin creates an org admin inside it', async ({ page }) => {
+    test('2. the organization page shows its org admin and how to add another', async ({
+      page,
+    }) => {
       await signInAsSelf(page)
 
-      // **Reached by clicking, not by `goto`, and that is the point.** This step used to navigate
-      // straight to the URL, so it passed for weeks while the only link to that page was hidden from
-      // a Site Admin - the exact role the page exists for. A test that types the address cannot tell
-      // a working screen from an unreachable one. Found 2026-09-14, in production, by a person.
-      await page.goto('/settings/users')
-      await page.getByRole('link', { name: /add new user/i }).click()
-      await expect(page).toHaveURL(/\/settings\/users\/new$/, { timeout: 30_000 })
+      // **Reached by clicking, not by `goto`, and that is the point.** A test that types the address
+      // cannot tell a working screen from an unreachable one - this suite once passed for weeks while
+      // the only link to Add New User was hidden from the role the page exists for (2026-09-14).
+      await page.goto('/settings/organizations')
+      await page.getByRole('link', { name: `Manage ${world.organization}` }).click()
 
-      // A Site Admin belongs to no organization, so the form must ask which one. This is the step the
-      // page refused outright until 2026-09-14, sending them to View As instead — which does not exist.
-      await page.getByLabel(/organization/i).selectOption({ label: world.organization })
+      const admins = page.getByRole('heading', { name: 'Org Admins' }).locator('..').locator('..')
+      await expect(admins.getByText(world.adminEmail)).toBeVisible({ timeout: 30_000 })
 
-      await page.getByLabel(/first name/i).fill('Journey')
-      await page.getByLabel(/last name/i).fill('Admin')
-      await page.getByLabel(/^email$/i).fill(world.adminEmail)
-      await page.getByLabel(/role/i).selectOption('OrgAdmin')
-      await page.getByLabel(/initial password/i).fill(world.adminPassword)
-      await page.getByRole('button', { name: /create user/i }).click()
-
-      await expect(page).toHaveURL(/\/settings\/users$/, { timeout: 30_000 })
+      // The recovery path for an organization whose admins are gone: Add New User, preset.
+      await admins.getByRole('link', { name: 'Add Org Admin' }).click()
+      await expect(page).toHaveURL(/\/settings\/users\/new\?organization=.+&role=OrgAdmin$/, {
+        timeout: 30_000,
+      })
+      await expect(page.getByLabel(/role/i)).toHaveValue('OrgAdmin')
+      await expect(page.getByLabel(/organization/i)).not.toHaveValue('')
     })
 
     test('3. that org admin signs in and rotates the forced password', async ({ page }) => {

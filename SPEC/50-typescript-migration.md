@@ -277,14 +277,15 @@ goes through View As.**
 
 | Slice | Owns |
 |---|---|
-| **F1** Golden replay | Point A3 at Nest, diff all 81 endpoints × 4 roles, and resolve every diff: fix it, record it in `tools/golden/src/accepted.ts`, or deliberately do better. **Green means no unexplained diff**, not zero diffs — `SPEC/decisions.md` 2026-09-09. ~~**This is the gate.**~~ *Superseded 2026-09-29 — see `SPEC/decisions.md` "Spec contradictions resolved" and 2026-09-11 "The golden replay is not a gate, and never was meant to be one": the replay is a signal, not a gate; a failing or unrunnable replay blocks no merge, cutover or release. `pnpm check` is the gate.* |
-| **F2** E2E adaptation | `e2e/**` — the suite is kept in principle, but comp P is a redesign, so its selectors will not survive unchanged |
-| **F3** Data migration | The transform, plus an answer to whether it is reversible |
-| **F4** Cutover runbook | Sequence, rollback posture, the go/no-go checklist |
-| **F5** Spec reconciliation | Ticket `11` — `SPEC/*.md` updated to describe the shipped stack, including reconciling `20-feature-client-ui.md` against comp P |
+| **F1** Golden replay | Point A3 at Nest, diff all 81 endpoints × 4 roles, and resolve every diff: fix it, record it in `tools/golden/src/accepted.ts`, or deliberately do better. **Green means no unexplained diff**, not zero diffs — `SPEC/decisions.md` 2026-09-09. ~~**This is the gate.**~~ *Superseded 2026-09-29 — see `SPEC/decisions.md` "Spec contradictions resolved" and 2026-09-11 "The golden replay is not a gate, and never was meant to be one": the replay is a signal, not a gate; a failing or unrunnable replay blocks no merge, cutover or release. `pnpm check` is the gate.* **Closed 2026-10-01** (`SPEC/decisions.md` 2026-09-30, "What the MVP release includes", item 3, and 2026-10-01, "The View As candidate order, and F1 closes"): slice 138 accepted the export's three new columns and the delivery seed's cascade, slice 137 grouped the View As candidates, and slice 141 accepted the three cases that recording still differs on. Final replay: 360 match, 87 accepted, 0 unexplained. |
+| **F2** E2E adaptation | `e2e/**` — the suite is kept in principle, but comp P is a redesign, so its selectors will not survive unchanged. **Closed 2026-09-29:** 38/38 on a fresh worktree against a scratch database (slices 128 and 134); the harness starts both servers and seeds its own schema |
+| **F3** Data migration | The transform, plus an answer to whether it is reversible. *Nothing to transform: the target is seeded fresh (`SPEC/decisions.md` 2026-09-09 "The drifted database is rebuilt, not migrated"), so the rollback question belongs to F4.* |
+| **F4** Cutover runbook | Sequence, rollback posture, the go/no-go checklist — **`SPEC/50-cutover-runbook.md`** (slice 135) |
+| **F5** Spec reconciliation | Ticket `11` — `SPEC/*.md` updated to describe the shipped stack, including reconciling `20-feature-client-ui.md` against comp P. **Closed 2026-09-29** (slices 119–124 and 134): every served route has a contract except the two demo-seed routes, which await a decision (`05-product-definition.md` §8 item 7), and `05-product-definition.md` §7 is re-derived at `e92ddde` |
 | **F6** Delete the .NET solution | **Done 2026-09-13.** `src/Collega.*`, `tests/`, `Collega.sln`, `global.json`, `.config/dotnet-tools.json`, `tools/Collega.AiPlayground`, `deploy/azure`, `docker/proxy-ca`, `DOTNET.md`, the compose `api` and `web` services, and the launch config — 481 files. Plus a sweep of the stale pointers left behind and a rewritten `README.md`. Two things needed real work rather than deletion: `tools/golden` parsed the controllers for its endpoint inventory, so that is now a committed snapshot; and `tools/Collega.AiPlayground`'s evaluation corpus was moved to `tools/prompt-eval` because it outlives its runner |
 
 - F1, F2 and F3 parallelise. F4 needs all three. F5 and F6 land last.
+- **Remaining, 2026-10-01: F4** (the cutover runbook). F1 closed 2026-10-01 (360 match, 87 accepted, 0 unexplained); F2, F5 and F6 are closed.
 - **F6 is the only slice that may delete `src/` or `tests/`.** They were frozen on 2026-09-06
   (`SPEC/decisions.md`) — no features, no fixes, no tests — but kept on disk because re-recording a golden
   fixture needs the .NET API to boot, and Waves D and E are precisely where a missing or wrong fixture
@@ -366,7 +367,7 @@ that needs current per-model pricing checked rather than guessed.
 
 | Open ticket | If answered differently |
 |---|---|
-| `11` spec reconciliation | Lands as F5; does not gate earlier waves. **The only ticket still open.** |
+| `11` spec reconciliation | Lands as F5; does not gate earlier waves. ~~**The only ticket still open.**~~ *Closed 2026-09-29 with F5.* |
 
 - **Answered 2026-09-03** and no longer open (`SPEC/decisions.md`): `01` Question C — Loop, decision records,
   commitment strip and Triage Mode are in, as **Wave G**; `10` — the .NET suite is discarded in favour of the
@@ -457,4 +458,4 @@ Big-bang was chosen deliberately, so the rollback posture has to be explicit rat
 5. **Reconcile `SPEC/20-feature-client-ui.md`** against the comp P lock — done
    2026-09-03.
 
-The one ticket still open, `11` spec reconciliation, lands as F5 and gates nothing before it.
+~~The one ticket still open, `11` spec reconciliation, lands as F5 and gates nothing before it.~~ *Closed 2026-09-29 with F5 (slice 134); no ticket remains open.*

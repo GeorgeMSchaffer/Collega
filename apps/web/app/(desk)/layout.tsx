@@ -1,10 +1,25 @@
 import { type ReactNode, Suspense } from 'react'
+import { IdleSignOut } from '@/components/auth/idle-sign-out'
 import { navGroupsWithoutCounts } from '@/components/nav/nav-items'
 import { Sidebar } from '@/components/nav/sidebar'
 import { SidebarNav } from '@/components/nav/sidebar-nav'
 import { ViewAsBanner } from '@/components/nav/view-as-banner'
-import { requireCurrentUser } from '@/lib/server/current-user'
+import { requireCurrentUser, sessionRemainingMs } from '@/lib/server/current-user'
 import { SessionProvider } from '@/lib/session-client'
+
+/**
+ * Shorter idle timings for trying the warning and the sign-out by hand, in development only: a
+ * production build ignores both variables. Seconds until sign-out, and seconds of warning before it.
+ */
+function devIdleTimings(): { timeoutMs?: number; warningMs?: number } {
+  if (process.env.NODE_ENV !== 'development') return {}
+  const timeout = Number(process.env.COLLEGA_DEV_IDLE_TIMEOUT_SECONDS)
+  const warning = Number(process.env.COLLEGA_DEV_IDLE_WARNING_SECONDS)
+  return {
+    ...(timeout > 0 ? { timeoutMs: timeout * 1000 } : {}),
+    ...(warning > 0 ? { warningMs: warning * 1000 } : {}),
+  }
+}
 
 /**
  * The desk shell (comp Q `.shell`): a fixed 256px sidebar and a scrolling content column.
@@ -27,7 +42,8 @@ export default async function DeskLayout({ children }: { children: ReactNode }) 
 
   return (
     <SessionProvider user={user}>
-      <div className="grid min-h-screen grid-cols-[256px_minmax(0,1fr)]">
+      <IdleSignOut sessionRemainingMs={await sessionRemainingMs()} {...devIdleTimings()} />
+      <div className="grid min-h-screen grid-cols-[256px_minmax(0,1fr)] max-md:grid-cols-1 max-md:content-start">
         {/* Suspense here is load-bearing, not decoration. `Sidebar` awaits its counts, and an
             un-suspended await in a layout blocks the whole response: nothing flushes, so no page's
             own loading.tsx can ever render and the reader watches a blank document for the length of

@@ -2,6 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CloseOnEscape } from '@/components/inspector/close-on-escape'
 import { CommandPalette } from '@/components/nav/command-palette'
+import type { CurrentUser } from '@/lib/session'
+import { SessionProvider } from '@/lib/session-client'
 
 /**
  * The Escape collision.
@@ -25,6 +27,18 @@ vi.mock('next/navigation', () => ({
 afterEach(() => {
   push.mockClear()
 })
+
+// The palette reads the role to decide which items to offer, so it renders under a session.
+const MEMBER: CurrentUser = {
+  userId: 'user-1',
+  displayName: 'Noah Contributor',
+  initials: 'NC',
+  role: 'User',
+  roleLabel: 'User',
+  organizationId: 'org-1',
+  organizationName: 'Acme Robotics',
+  viewingAs: null,
+}
 
 function pressEscape(): void {
   fireEvent.keyDown(document.body, { key: 'Escape', code: 'Escape', bubbles: true })
@@ -92,10 +106,10 @@ describe('CloseOnEscape', () => {
 describe('the palette and the inspector on one page', () => {
   function renderBoth() {
     return render(
-      <>
+      <SessionProvider user={MEMBER}>
         <CommandPalette />
         <CloseOnEscape href="/ideas" />
-      </>,
+      </SessionProvider>,
     )
   }
 

@@ -1,12 +1,12 @@
 /**
  * The seam between `apps/web` and its data.
  *
- * Every reader here is async, and each one is either a `fetch` against `apps/api` or still a
- * fixture. The call sites cannot tell which, and that is the point of the indirection: converting
- * a reader replaces a body, never a signature. Before it existed, 37 files imported the fixture
+ * Every reader here is async and calls `apps/api`. Until slice 132 some still answered from a
+ * fixture, and the call sites could not tell which — that was the point of the indirection:
+ * converting a reader replaced a body, never a signature. Before it existed, 37 files imported the fixture
  * module directly, so wiring the API meant editing all 37.
  *
- * Converted so far: every board, idea, catalog, people and delivery reader. The idea surfaces
+ * Converted: every board, idea, catalog, people, delivery, AI settings and Home reader. The idea surfaces
  * (`getIdeaList`, `getBoardIdeaList`, `getIdeaFormOptions`, `getIdea`), the boards
  * (`getBoards`, `getBoard`, `getBoardAdmin`), the organization's statuses, idea types and custom
  * fields, and the accounts behind them (`getProfile`, `getOrganizations`, `getMembers`,
@@ -29,9 +29,13 @@
  *
  * There is no `getLastImport` and there cannot be: `lib/data/admin.ts` says why where it used to be.
  *
- * What still answers from `lib/mock.ts`: the two AI settings screens with their usage meter.
- * `lib/mock.ts` also still holds the seeded boards and ideas the unit tests are written against,
- * which is not a screen reading a fixture - no reader returns them.
+ * **Nothing answers from a fixture any more.** The AI settings screens and their usage meter were
+ * the last readers on `lib/mock.ts`, and Home the last screen whose content was invented; both read
+ * the API now, and the fixture module is gone. The unit tests' seeded identities live in
+ * `test/support/`, where no screen can reach them.
+ *
+ * Home is also where the API's gaps show most plainly: three of its tiles and its activity feed
+ * have no route to read, and `lib/data/home.ts` says why they answer null instead of a guess.
  *
  * **Delivery was the last whole module on the fixture, and converting it did not make every
  * delivery screen real.** Sprints and issues are; outcomes have no table, no service and no route
@@ -46,6 +50,8 @@
 export * from './admin'
 export * from './boards'
 export * from './delivery'
+export * from './home'
 export * from './ideas'
+export * from './inbox'
 export * from './tags'
 export * from './view-as'

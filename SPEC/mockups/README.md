@@ -16,21 +16,27 @@ These mockups are static SVG artifacts based on the current Collega specs and sh
 - `11-idea-detail-editorial-variant.svg`: alternate editorial visual direction for idea collaboration and activity rail
 - `12-idea-card-and-overlay.svg`: dedicated compact card plus detail overlay interaction mockup
 
-## Comp R — list and detail pattern, themes, idea assistant v2 (2026-09-27)
+## Comp R Ã¢â‚¬â€ list and detail pattern, themes, idea assistant v2 (2026-09-27)
 
-`comp-r-portico-prototype.html` is an **interactive** prototype, not a generated static set: open it in a browser and use the dark bar at the top to switch screen (Boards, Board: Opportunities, Ideas, Sprint board, Roadmap, Settings: Tags — the last three added in the 2026-09-28 iteration), role (Org Admin, User, Read Only) and the assistant's health (Healthy, Fails next turn, Unavailable). The theme picker sits in the product's own top bar. Seeded Acme Robotics ideas are inlined; edits live only in the page.
+`comp-r-portico-prototype.html` is an **interactive** prototype, not a generated static set: open it in a browser and use the dark bar at the top to switch screen (Boards, Board: Opportunities, Ideas, Sprint board, Roadmap, Settings: Tags Ã¢â‚¬â€ the last three added in the 2026-09-28 iteration), role (Org Admin, User, Read Only) and the assistant's health (Healthy, Fails next turn, Unavailable). The theme picker sits in the product's own top bar. Seeded Acme Robotics ideas are inlined; edits live only in the page.
 
-It is the reference for `SPEC/20-feature-client-ui.md` "List and detail pattern", "Themes" and "Forms and controls", for `SPEC/20-feature-ai-idea-assist-v2.md`, and since 2026-09-28 for the Sprint board, the Roadmap and the effort bar (`SPEC/20-feature-issues-and-delivery.md` "Client UI") and Settings → Tags (`SPEC/20-feature-ideas-and-engagement.md` "Tags"). The 2026-09-28 iteration replaced the Notte dark theme with Graphite. Its sprint, outcome, issue-key and tag-colour data are samples; issue keys such as `IDE-01` have no column behind them (`SPEC/decisions.md` 2026-09-28). It supersedes comp P/Q's docked inspector and create column for Boards, boards and Ideas; comp P/Q remain the reference for every screen comp R does not draw. Structure is otherwise unchanged from comp P. The file is hand-written, not built by `_build/`.
+It is the reference for `SPEC/20-feature-client-ui.md` "List and detail pattern", "Themes" and "Forms and controls", for `SPEC/20-feature-ai-idea-assist-v2.md`, and since 2026-09-28 for the Sprint board, the Roadmap and the effort bar (`SPEC/20-feature-issues-and-delivery.md` "Client UI") and Settings Ã¢â€ â€™ Tags (`SPEC/20-feature-ideas-and-engagement.md` "Tags"). The 2026-09-28 iteration replaced the Notte dark theme with Graphite. Its sprint, outcome, issue-key and tag-colour data are samples; issue keys such as `IDE-01` have no column behind them (`SPEC/decisions.md` 2026-09-28). It supersedes comp P/Q's docked inspector and create column for Boards, boards and Ideas; comp P/Q remain the reference for every screen comp R does not draw. Structure is otherwise unchanged from comp P. The file is hand-written, not built by `_build/`.
+
+**`comp-r-inbox.html`** (2026-10-01, slice 149) Ã¢â‚¬â€ a throwaway comp on comp R's tokens for the notification inbox, the sidebar's Inbox item and unread badge, and the Follow / Following toggle in the idea drawer (`SPEC/20-feature-idea-following.md`). Awaiting the user's review; not a reference until approved.
+
+## Comp R — Home dashboard (2026-10-01, slice 150, approved 2026-10-01)
+
+`comp-r-home-dashboard.html` is a throwaway review comp for Home in comp R's look (Terrazzo by default, the same theme picker and remembered choice). The dark bar switches the viewer (User, Org Admin, Read Only, Site Admin roll-up) and the data (populated, nothing assigned, no boards or no organizations); *Annotations* lists each panel's route and open question. Every panel reads a route the API already serves; the rest are marked "Needs" (status categories, status-change times, the slice 149 inbox). Not adopted until the user reviews it.
 
 ## Full-App Comps (2026-07-30)
 
 Three interactive HTML comps covering every page (Login, First Login, Home, Admin Hub, Organizations, Users, Statuses, Board, Idea Detail, Change Password). Open in a browser and use the top tab bar to switch screens. Each explores a distinct direction inspired by Jira/Trello best practices while staying implementable with Fluent UI Blazor components.
 
-**Selection (2026-07-30): Comp A "Command Center" is the chosen UI/UX layout for implementation**, restyled to use the typography and color palette from the SVG mockups (01–12): `"Segoe UI", Arial, sans-serif`, slate neutrals (`#0f172a`/`#334155`/`#64748b`), `#f8fafc` background, and `#1d4ed8`/`#1e3a8a` blue accent. See `SPEC/20-feature-client-ui.md` for the full design-direction spec. Comps B and C are retained as explored alternatives.
+**Selection (2026-07-30): Comp A "Command Center" is the chosen UI/UX layout for implementation**, restyled to use the typography and color palette from the SVG mockups (01Ã¢â‚¬â€œ12): `"Segoe UI", Arial, sans-serif`, slate neutrals (`#0f172a`/`#334155`/`#64748b`), `#f8fafc` background, and `#1d4ed8`/`#1e3a8a` blue accent. See `SPEC/20-feature-client-ui.md` for the full design-direction spec. Comps B and C are retained as explored alternatives.
 
-- `comp-a-command-center.html` — **Command Center** (Jira-inspired): persistent left nav rail with grouped sections, breadcrumbs, dense data tables with command bars, KPI dashboard, swimlane board with priority edge accents, and a two-pane idea overlay (content + metadata sidebar). Best for power users and admin-heavy workflows.
-- `comp-b-board-first.html` — **Board First** (Trello-inspired): top app bar only (no sidebar), board tiles on Home, full-bleed colored board canvas, card-based org management, and a Trello-style idea overlay with side action buttons. Best for approachability and collaboration-first orgs.
-- `comp-c-fluent-editorial.html` — **Fluent Editorial**: slim icon rail, large page headers with pivot tabs, list-style lanes (grouped rows instead of columns), and a full-page article-style idea detail with a facts rail. Best for readability, accessibility, and discussion-heavy usage.
+- `comp-a-command-center.html` Ã¢â‚¬â€ **Command Center** (Jira-inspired): persistent left nav rail with grouped sections, breadcrumbs, dense data tables with command bars, KPI dashboard, swimlane board with priority edge accents, and a two-pane idea overlay (content + metadata sidebar). Best for power users and admin-heavy workflows.
+- `comp-b-board-first.html` Ã¢â‚¬â€ **Board First** (Trello-inspired): top app bar only (no sidebar), board tiles on Home, full-bleed colored board canvas, card-based org management, and a Trello-style idea overlay with side action buttons. Best for approachability and collaboration-first orgs.
+- `comp-c-fluent-editorial.html` Ã¢â‚¬â€ **Fluent Editorial**: slim icon rail, large page headers with pivot tabs, list-style lanes (grouped rows instead of columns), and a full-page article-style idea detail with a facts rail. Best for readability, accessibility, and discussion-heavy usage.
 
 All three comps demonstrate spec behaviors: globally unique email sign-in (no org picker), lockout after 5 failed attempts, one-time temporary passwords, first-login forced password change with inline complexity checklist, soft-delete status retirement with minimum-lane guardrail, immediate-save reorder cues, compact cards (title, priority, assignee, upvote) with title-click detail, mention highlighting, and comment character-count feedback.
 
@@ -77,29 +83,29 @@ All three comps demonstrate spec behaviors: globally unique email sign-in (no or
 
 **These four comps are for a prospective stack conversion, not for the current Blazor app.** They exist to answer ticket `01` of the wayfinder map at `SPEC/typescript-conversion-map/map.md`, where Comp C "Fluent Editorial" is deliberately **unlocked** so the redesign can be argued on merit. Comp C remains the locked direction for the .NET client; nothing here changes that, and nothing here should be built against until ticket `01` is resolved.
 
-All four render identical seed content (Northwind Labs, 4 boards, 6 statuses, the same 12 ideas) across the same core surfaces — board, ideas list, idea detail, statuses admin, login — plus an app shell with board switcher, user menu, a toggleable View As banner, and an AI draft strip. Open in a browser; all interactions are live.
+All four render identical seed content (Northwind Labs, 4 boards, 6 statuses, the same 12 ideas) across the same core surfaces Ã¢â‚¬â€ board, ideas list, idea detail, statuses admin, login Ã¢â‚¬â€ plus an app shell with board switcher, user menu, a toggleable View As banner, and an AI draft strip. Open in a browser; all interactions are live.
 
-- `comp-k-material-workspace.html` — **Material Workspace** (Material Design 3 via CSS custom properties): navigation rail, rail-FAB, real MD3 color roles with independently correct light and dark schemes, five elevation levels, state layers and ripples. The argument that familiarity is a feature.
-- `comp-l-canvas-board.html` — **Canvas Board** (Bootstrap 5.3, heavily re-themed): warm bone/sand ground with a terracotta accent, cards as physical objects, working drag-and-drop between columns with a keyboard-equivalent "Move to" menu. The argument that idea tracking should feel inviting.
-- `comp-m-editorial-continuum.html` — **Editorial Continuum** (Tailwind): Comp C's typographic language carried forward and freed from Fluent's component constraints. Geist for chrome, Fraunces for content headings, hierarchy from type rather than containers, idea detail as a magazine article. Teal reserved exclusively for AI affordances.
-- `comp-n-decision-desk.html` — **Decision Desk** (Tailwind, light only): the odd one out, and deliberately so. Makes a *product* argument rather than a visual one — that the hard problem in an idea tracker is deciding, not displaying. Carries six new feature concepts (below).
+- `comp-k-material-workspace.html` Ã¢â‚¬â€ **Material Workspace** (Material Design 3 via CSS custom properties): navigation rail, rail-FAB, real MD3 color roles with independently correct light and dark schemes, five elevation levels, state layers and ripples. The argument that familiarity is a feature.
+- `comp-l-canvas-board.html` Ã¢â‚¬â€ **Canvas Board** (Bootstrap 5.3, heavily re-themed): warm bone/sand ground with a terracotta accent, cards as physical objects, working drag-and-drop between columns with a keyboard-equivalent "Move to" menu. The argument that idea tracking should feel inviting.
+- `comp-m-editorial-continuum.html` Ã¢â‚¬â€ **Editorial Continuum** (Tailwind): Comp C's typographic language carried forward and freed from Fluent's component constraints. Geist for chrome, Fraunces for content headings, hierarchy from type rather than containers, idea detail as a magazine article. Teal reserved exclusively for AI affordances.
+- `comp-n-decision-desk.html` Ã¢â‚¬â€ **Decision Desk** (Tailwind, light only): the odd one out, and deliberately so. Makes a *product* argument rather than a visual one Ã¢â‚¬â€ that the hard problem in an idea tracker is deciding, not displaying. Carries six new feature concepts (below).
 
 ### A retired comp
 
-`comp-j-command-deck.html` — **Command Deck**, dense and keyboard-first in the Linear/Height idiom, dark-by-default. **Rejected 2026-08-30**: a dark theme is not appropriate for a business application, and dark-first was integral to the direction rather than a setting on it, so the whole comp was retired rather than restyled. Recoverable from git history if the density argument is ever wanted again. Comp N replaced it.
+`comp-j-command-deck.html` Ã¢â‚¬â€ **Command Deck**, dense and keyboard-first in the Linear/Height idiom, dark-by-default. **Rejected 2026-08-30**: a dark theme is not appropriate for a business application, and dark-first was integral to the direction rather than a setting on it, so the whole comp was retired rather than restyled. Recoverable from git history if the density argument is ever wanted again. Comp N replaced it.
 
 ### Comp N's feature concepts
 
 Comp N proposes six things the product does not do today. They are the point of that comp, and they are separable from its visual direction:
 
-1. **Triage Mode** — a focused, one-idea-at-a-time review queue with a remaining count, momentum ordering, and decisive actions. Targets the real failure mode of an idea board: 200 ideas nobody grooms.
-2. **Duplicate clustering** — near-identical ideas grouped with a confidence badge and a merge flow that previews combined votes and comments.
-3. **Vote budget** — a finite number of votes per user per quarter, with a forced reclaim flow when exhausted, so upvotes carry signal instead of being free.
-4. **Decision records** — a written rationale required when declining or planning, which then lives on the idea permanently.
-5. **Momentum over totals** — upvote velocity sparklines and a sortable momentum column, so a fast-rising new idea can outrank a stale high total.
-6. **Commitment strip** — a roadmap band above the board tying it to what the org actually committed to this quarter.
+1. **Triage Mode** Ã¢â‚¬â€ a focused, one-idea-at-a-time review queue with a remaining count, momentum ordering, and decisive actions. Targets the real failure mode of an idea board: 200 ideas nobody grooms.
+2. **Duplicate clustering** Ã¢â‚¬â€ near-identical ideas grouped with a confidence badge and a merge flow that previews combined votes and comments.
+3. **Vote budget** Ã¢â‚¬â€ a finite number of votes per user per quarter, with a forced reclaim flow when exhausted, so upvotes carry signal instead of being free.
+4. **Decision records** Ã¢â‚¬â€ a written rationale required when declining or planning, which then lives on the idea permanently.
+5. **Momentum over totals** Ã¢â‚¬â€ upvote velocity sparklines and a sortable momentum column, so a fast-rising new idea can outrank a stale high total.
+6. **Commitment strip** Ã¢â‚¬â€ a roadmap band above the board tying it to what the org actually committed to this quarter.
 
-Assessed by their author for buildability: **decision records and the commitment strip are the strongest** — cheap, and they answer real organizational pain with no ML investment. **Triage Mode is the best structural idea** and is largely a filtered, ordered view over existing actions. **Momentum** needs a real velocity algorithm that resists gaming; the comp fakes it. **Duplicate clustering** is honest demo-ware — real similarity detection is the ML problem the spec already defers. **Vote budget is the most consequential and least free**, because it changes user behavior and needs policy decisions (reset timing, carryover, admin exemptions) before it is implementable.
+Assessed by their author for buildability: **decision records and the commitment strip are the strongest** Ã¢â‚¬â€ cheap, and they answer real organizational pain with no ML investment. **Triage Mode is the best structural idea** and is largely a filtered, ordered view over existing actions. **Momentum** needs a real velocity algorithm that resists gaming; the comp fakes it. **Duplicate clustering** is honest demo-ware Ã¢â‚¬â€ real similarity detection is the ML problem the spec already defers. **Vote budget is the most consequential and least free**, because it changes user behavior and needs policy decisions (reset timing, carryover, admin exemptions) before it is implementable.
 
 One critique from the same author worth keeping: requiring a rationale on **Plan** as well as Decline is probably more friction than it is worth. "Why did we reject this" is valuable; "why did we build this obviously good thing" much less so.
 
@@ -113,22 +119,27 @@ Comps K and N were verified by driving them in a real browser, which caught bugs
 
 ### A scope comp for Question C (2026-09-01)
 
-`comp-01c-scope.html` — **Scope Desk**. Not a visual direction; that question closed on 2026-09-01 when the user chose to
+`comp-01c-scope.html` Ã¢â‚¬â€ **Scope Desk**. Not a visual direction; that question closed on 2026-09-01 when the user chose to
 **carry Comp C "Fluent Editorial" forward** (Question B) and **rebuild it in Tailwind rather than adopt Fluent UI React**
 (Question D). K, L and N are not selected. This comp is drawn in that settled language.
 
-It exists to answer ticket `01`'s **Question C** — which net-new feature concepts go into the conversion plan. The first
+It exists to answer ticket `01`'s **Question C** Ã¢â‚¬â€ which net-new feature concepts go into the conversion plan. The first
 framing offered bundled tiers; that cut was invented for the convenience of asking rather than because the concepts group
 that way, so this comp drops it. All seven concepts toggle **independently** (Comp N's six, plus Comp H's "Loop", which is
 already in scope) and the whole app re-renders around each one: the commitment strip appears above the board, Triage Mode
 joins the nav, sparklines and a momentum sort appear on the list, duplicate markers appear on cards, the vote pill appears
-in the header, and the Decline flow gains — or loses — its required rationale.
+in the header, and the Decline flow gains Ã¢â‚¬â€ or loses Ã¢â‚¬â€ its required rationale.
 
 The scope readout is the real content. Each concept reports what it adds in **entities, endpoints, surfaces and rough
 agent-slices**, because a visual direction is re-expression work already inside the ~61,000-line baseline while every one
-of these is net-new work on top of a rewrite. Three concepts are flagged as carrying **unpriced risk** — momentum needs a
+of these is net-new work on top of a rewrite. Three concepts are flagged as carrying **unpriced risk** Ã¢â‚¬â€ momentum needs a
 gaming-resistant velocity algorithm, duplicate clustering needs the similarity detection SPEC already defers, and vote
 budget needs policy decided before it is implementable. Loop only totals 4 slices; everything totals 24.
 
 Browser-verified: driven in Chrome, all seven toggles, both Decline variants, the momentum re-sort, and the edge case where
 disabling Triage while viewing it falls back to the board rather than a blank page.
+### Connected SaaS workspace study (2026-10-01)
+
+`saas-patterns/first-board.html` is the entry to one connected, five-screen local mockup: Boards (first-use), Ideas (authoring), Sprint board, Inbox (following), and Settings (profile and Org Admin previews). Shared sidebar links connect every screen. The supplied SaaS UI article informs guided first use, contextual form help, inline validation, skeleton loading, and clear action feedback. Sprint and Settings use illustrative Acme Robotics data rather than live delivery or account records.
+
+From the repository root, run `python -m http.server 8765 --bind 127.0.0.1`, then open `http://127.0.0.1:8765/SPEC/mockups/saas-patterns/first-board.html`. Switch Light/Dark in the top bar; the choice persists in this browser via local storage. The default is light. Forms and board/inbox actions are local examples only; nothing contacts the API or edits an account. This compact, work-first direction takes inspiration from Linear's restraint, not its branding. It is exploratory and does **not** replace canonical Comp R or change `SPEC/*.md` behavior.

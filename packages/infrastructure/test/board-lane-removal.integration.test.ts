@@ -256,6 +256,50 @@ describe.skipIf(!DATABASE_URL)('Removing a lane that holds ideas, against a live
     ).toEqual([...moved].sort())
   })
 
+  it('notifies no one of the moves, and leaves the followers alone (the lane-removal exception)', async () => {
+    const boardId = await newBoard()
+    const moved = await newIdea(boardId, REVIEW)
+    const follower = randomUUID()
+    await prisma.users.create({
+      data: {
+        id: follower,
+        organization_id: organizationId,
+        first_name: 'Follower',
+        last_name: 'Probe',
+        email: `follower-${follower}@example.test`,
+        normalized_email: `FOLLOWER-${follower}@EXAMPLE.TEST`,
+        password_hash: 'not-a-real-hash',
+        role: 'User',
+        status: 'Active',
+        must_change_password: false,
+        failed_login_count: 0,
+        security_stamp: marker,
+        ...stamps,
+      },
+    })
+    await prisma.idea_followers.create({
+      data: { id: randomUUID(), idea_id: moved, user_id: follower, created_at_utc: CREATED },
+    })
+
+    await service().update(boardId, {
+      name: 'Lanes',
+      allowUserStatusUpdate: true,
+      swimlanes: [
+        { statusId: NEW, order: 0 },
+        { statusId: DONE, order: 1 },
+      ],
+      ideaMoves: [{ fromStatusId: REVIEW, toStatusId: DONE }],
+    })
+
+    expect(await statusOf(moved)).toBe(DONE)
+    expect(
+      await prisma.notification_events.count({ where: { organization_id: organizationId } }),
+    ).toBe(0)
+    expect(
+      (await prisma.idea_followers.findMany({ where: { idea_id: moved } })).map((r) => r.user_id),
+    ).toEqual([follower])
+  })
+
   it('leaves an idea moved out of the lane before the commit where it was put', async () => {
     const boardId = await newBoard()
     const stays = await newIdea(boardId, REVIEW)

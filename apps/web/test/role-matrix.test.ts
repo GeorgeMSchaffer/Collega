@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { members } from '@/lib/mock'
 import { engagementDenial, isAdministrator, type Role, writeDenial } from '@/lib/roles'
 import { currentUser, deliveryAdminDenial } from '@/lib/session'
 import { actAs } from './support/acting-role'
+import { members } from './support/seed-members'
 
 /**
  * The four-role gating matrix.
@@ -109,12 +109,12 @@ describe('the rules the matrix exists to protect', () => {
     expect(disagreeing).toEqual(['ReadOnly'])
   })
 
-  it('refuses a Site Admin both engagement and authorship, being outside the organization', () => {
+  it('refuses an App Admin both engagement and authorship, being outside the organization', () => {
     expect(writeDenial('SiteAdmin')).toBe('Act as a member')
     expect(engagementDenial('SiteAdmin')).toBe('Not a member of this organization')
   })
 
-  it('still treats a Site Admin as an administrator for the settings routes', () => {
+  it('still treats an App Admin as an administrator for the settings routes', () => {
     // Denied every member action and granted every administrator one is not a contradiction: the
     // two gates answer different questions, which is why one boolean cannot serve both.
     expect(writeDenial('SiteAdmin')).not.toBeNull()
@@ -129,12 +129,12 @@ describe('the rules the matrix exists to protect', () => {
     expect(deliveryAdminDenial('SiteAdmin')).not.toBeNull()
   })
 
-  it('makes an Org Admin an administrator without making them a Site Admin', () => {
+  it('makes an Org Admin an administrator without making them an App Admin', () => {
     expect(isAdministrator('OrgAdmin')).toBe(true)
     expect(MATRIX.OrgAdmin.siteAdministrator).toBe(false)
   })
 
-  it('gives a member and a Site Admin different reasons for the same delivery refusal', () => {
+  it('gives a member and an App Admin different reasons for the same delivery refusal', () => {
     // A Site Admin is offered the route back through View As; a member is told the scope. Wording
     // them alike would tell a Site Admin an action exists nowhere, which is false.
     actAs('SiteAdmin')
@@ -149,7 +149,7 @@ describe('the rules the matrix exists to protect', () => {
 })
 
 describe('the premise the role fixtures rest on', () => {
-  it('seeds no Site Admin into any organization', () => {
+  it('seeds no App Admin into any organization', () => {
     // A Site Admin belongs to no organization, which is why the test identity carries a null
     // organizationName. If the seed ever grows one, that fixture is wrong and this fails first.
     expect(members.filter((member) => member.role === 'SiteAdmin')).toEqual([])
@@ -160,7 +160,7 @@ describe('the premise the role fixtures rest on', () => {
     expect(currentUser().organizationName).toBe('Acme Robotics')
   })
 
-  it('gives a Site Admin no organization name to display', () => {
+  it('gives an App Admin no organization name to display', () => {
     actAs('SiteAdmin')
     expect(currentUser().organizationName).toBeNull()
     expect(currentUser().organizationId).toBeNull()

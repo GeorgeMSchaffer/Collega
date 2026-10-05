@@ -4,7 +4,7 @@
 // The target is the standard demo seed the .NET stack produces, and Sprint 9's definition of done
 // requires it to exist in the new stack: 2 organizations, 10 users, 4 boards, 44 ideas. Ten users
 // is 2 orgs x 4 accounts - one Org Admin, two User, one Read Only - plus the configured Site Admin
-// and the Development-only convenience Site Admin.
+// and the Development-only convenience Site Admin. Three vertical organizations sit on top of those.
 //
 // **This file is a wrapper and nothing else.** The seed itself lives in
 // `src/demo-seed/` so the API can run it for a Site Admin from the settings screen, which a
@@ -18,7 +18,8 @@
 // It imports the BUILT package rather than `src`, because `node` strips types here and a `.js`
 // specifier into `src/demo-seed` resolves to nothing - there is no emitted file beside the source.
 // So `dist/` must exist before this runs. Every caller already builds: `pnpm dev` through turbo,
-// `e2e/global-setup.ts` before it migrates, and the package's own `typecheck`. Building again here
+// the API's `webServer` command in `e2e/playwright.config.ts` before global setup runs, and the
+// package's own `typecheck`. Building again here
 // was tried and reverted - on Windows it collides with the build that just ran, over the generated
 // Prisma client's files.
 

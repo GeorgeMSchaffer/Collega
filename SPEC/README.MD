@@ -9,7 +9,7 @@ Canonical product and delivery specifications. This file is the index; the numbe
 - `10-requirements.md` — requirement set
 - `30-Contracts.md` — **canonical API route and payload contracts**; authoritative for endpoint and payload details. It holds the shared conventions and an index; each contract section lives in `contracts/<area>.md` under its original heading. Read the conventions and only the area file you need. The read-not-edited rule covers the whole set.
 - `Specs Overview.md` — **derived, non-canonical** single-document summary; useful for orientation only. Last reconciled 2026-08-06. **Do not implement from it**, and where it disagrees with a canonical spec, the canonical spec simply wins — that is precedence, not a conflict to escalate.
-- `05-product-definition.md` — **derived, non-canonical** consolidated product definition: what Collega is, the four roles and their boundaries, the domain model, **~80 epic-level user stories with acceptance criteria**, the completion criteria, and each capability's delivery state. Generated 2026-09-14 from `70e349e`. Same precedence rule as `Specs Overview.md`. Read it to onboard or to see the whole product at once; read the canonical spec before changing anything. Its appendix lists spec discrepancies found during reconciliation — **reported, not fixed**; slice F5 owns them.
+- `05-product-definition.md` — **derived, non-canonical** consolidated product definition: what Collega is, the four roles and their boundaries, the domain model, **~80 epic-level user stories with acceptance criteria**, the completion criteria, and each capability's delivery state. Generated 2026-09-14 from `70e349e`; its delivery state (§7) and appendix (§8) re-derived 2026-09-29 at `e92ddde` by F5. Same precedence rule as `Specs Overview.md`. Read it to onboard or to see the whole product at once; read the canonical spec before changing anything. Its appendix lists spec discrepancies found during reconciliation, which are resolved or awaiting a decision.
 
 ### Feature specs — `20-feature-*.md`
 
@@ -20,7 +20,8 @@ Canonical product and delivery specifications. This file is the index; the numbe
 | `20-feature-organizations-and-users.md` | Orgs, users, invite codes, CSV import | MVP |
 | `20-feature-boards-and-statuses.md` | Boards, statuses, swimlanes | MVP |
 | `20-feature-ideas-and-engagement.md` | Idea CRUD, tags, mentions, comments, upvotes | MVP |
-| `20-feature-notifications.md` | Notification events (persisted, not delivered) | MVP |
+| `20-feature-notifications.md` | Notification events; recipients are followers since 2026-10-01 | MVP |
+| `20-feature-idea-following.md` | Following an idea, and the in-app notification inbox | Specified 2026-10-01 (slice 149); open questions answered 2026-10-01 |
 | `20-feature-client-ui.md` | Client UI spec — locked design direction | MVP |
 | `20-feature-client-ui-revisions.md` | Numbered client UI decisions (D1…) | MVP |
 | `20-feature-user-defined-fields.md` | User-defined fields | Pulled into MVP 2026-08-08 |
@@ -51,7 +52,8 @@ The original epic/milestone/estimate planning documents (`70-delivery-backlog.md
 ## Technical and Deployment Plans
 
 - `50-technical-implementation-plan.md` — implementation plan across layers
-- `50-vercel-deployment.md` — **the deployment spec for the shipping stack.** The two Vercel projects and their settings, the environment matrix, where `prisma migrate deploy` runs, the preview/staging topology, how the first administrator is created, the rollback posture, and a handoff checklist for the account holder. Authoritative for anything about deploying `apps/web` or `apps/api`.
+- `50-vercel-deployment.md` — **the deployment spec for the shipping stack.** The two Vercel projects and their settings, the environment matrix, where `prisma migrate deploy` runs, the preview/staging topology, how the first administrator is created, the rollback posture, and a handoff checklist for the account holder. Authoritative for how deploying `apps/web` and `apps/api` works and why; where it and the cutover runbook differ on a procedure, the runbook and the code win.
+- `50-cutover-runbook.md` — **the release runbook** (conversion slice F4): the go/no-go checklist, the release sequence with owner-only steps marked, the rollback posture and the first-day checks. Operational: the deployment spec explains the reasoning; where it and this runbook differ on a procedure, the runbook and the code win.
 - `50-azure-deployment.md`, `50-azure-api-cicd.md` — **superseded**; the cancelled Azure target for the .NET stack, which was deleted in slice F6 on 2026-09-13 (Sprint 8; renumbered from 7 on 2026-08-11). Kept for the cost model and topology reasoning, not as build instructions.
 - `50-postgres-migration.md` — **done**; the Sprint 5 Postgres migration plan, written against EF Core. The migration landed; Prisma has since replaced the ORM it describes.
 - `50-kubernetes-deployment.md` — **superseded**; Kubernetes notes for the .NET stack, deleted in slice F6. Every path it names is gone.

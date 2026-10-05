@@ -80,9 +80,9 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
   },
   // Since 2026-09-27 the export also writes Problem, Proposed Solutions and Impact Rationale
   // (SPEC/decisions.md, rule 2a), so the header and every row differ and this entry no longer
-  // excuses these cases. That is left unexplained on purpose rather than accepted: the new cells
-  // hold arbitrary text, so no `shape` or `mask` could accept them without leaving the rest of the
-  // body unchecked - exactly the muting the header of this file warns against.
+  // excuses these cases. The 2026-09-30 entry for them, at the end of this list, accepts the new
+  // header and the seed change that took five ideas out of the export; it pins the header row only,
+  // because no `mask` could hold the rest to equality - see its reason.
   {
     cases: [
       'ideas.export.orgadmin',
@@ -529,6 +529,42 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
       'ideas.update.orgadmin',
       'ideas.update.user',
     ],
+    path: 'body.isFollowing',
+    decided: '2026-10-01',
+    reason:
+      'A deliberate change, not drift (SPEC/decisions.md 2026-10-01, "Following an idea, and an ' +
+      'in-app notification inbox"; SPEC/contracts/ideas.md and contracts/following.md). The detail ' +
+      "carries the caller's own follow state so the drawer's Follow toggle renders without a second " +
+      'request; `PUT /ideas/{ideaId}` answers the same detail, hence the update cases. Accepted as ' +
+      'the field appearing, and only that: every recorded field of the detail is still compared. ' +
+      'Not pinned to a shape - a boolean, and the recording has no such field.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'ideas.get.orgadmin',
+      'ideas.get.readonly',
+      'ideas.get.siteadmin',
+      'ideas.get.user',
+      'ideas.update.orgadmin',
+      'ideas.update.user',
+    ],
+    path: 'body.followerCount',
+    decided: '2026-10-01',
+    reason:
+      'The same change as `body.isFollowing` above, which carries the full reasoning: how many ' +
+      'people follow the idea, shown on the toggle. Accepted as the field appearing, and only that.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'ideas.get.orgadmin',
+      'ideas.get.readonly',
+      'ideas.get.siteadmin',
+      'ideas.get.user',
+      'ideas.update.orgadmin',
+      'ideas.update.user',
+    ],
     path: 'body.formFields',
     decided: '2026-09-27',
     reason:
@@ -568,6 +604,74 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
       'The same field as `body[].effectiveFields` above, on the single Idea Type item create and ' +
       'update answer - SPEC/30-Contracts.md gives both the list item shape. Listed separately ' +
       'because an entry names one path. The other role cases are 401/403s and are unaffected.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'ideas.types',
+      'ideas.types2',
+      'ideatypes.list.orgadmin',
+      'ideatypes.list.readonly',
+      'ideatypes.list.siteadmin',
+      'ideatypes.list.user',
+      'ideatypes.relist',
+    ],
+    path: 'body[].fieldsetIds',
+    decided: '2026-10-04',
+    reason:
+      'A deliberate change, not drift (SPEC/decisions.md 2026-10-04, "Fieldsets: reusable groups of ' +
+      'fields, attached to idea types"; SPEC/contracts/idea-type-fields.md). An Idea Type item gains ' +
+      '`fieldsetIds` for the fieldsets attached to it, additively, so a client that predates fieldsets ' +
+      'keeps reading the same item. Every recorded type has none, so the value is empty here. ' +
+      'Accepted as the field appearing and only that, which is what `kind` says: every recorded ' +
+      'field and the array length are still compared.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'ideas.types',
+      'ideas.types2',
+      'ideatypes.list.orgadmin',
+      'ideatypes.list.readonly',
+      'ideatypes.list.siteadmin',
+      'ideatypes.list.user',
+      'ideatypes.relist',
+    ],
+    path: 'body[].fieldsets',
+    decided: '2026-10-04',
+    reason:
+      'A deliberate change, not drift (SPEC/decisions.md 2026-10-04, "Fieldsets: reusable groups of ' +
+      'fields, attached to idea types"; SPEC/contracts/idea-type-fields.md). An Idea Type item gains ' +
+      '`fieldsets` for the fieldsets attached to it, additively, so a client that predates fieldsets ' +
+      'keeps reading the same item. Every recorded type has none, so the value is empty here. ' +
+      'Accepted as the field appearing and only that, which is what `kind` says: every recorded ' +
+      'field and the array length are still compared.',
+    kind: 'extra',
+  },
+  {
+    cases: ['ideatypes.create.orgadmin', 'ideatypes.update.orgadmin'],
+    path: 'body.fieldsetIds',
+    decided: '2026-10-04',
+    reason:
+      'A deliberate change, not drift (SPEC/decisions.md 2026-10-04, "Fieldsets: reusable groups of ' +
+      'fields, attached to idea types"; SPEC/contracts/idea-type-fields.md). An Idea Type item gains ' +
+      '`fieldsetIds` for the fieldsets attached to it, additively, so a client that predates fieldsets ' +
+      'keeps reading the same item. Every recorded type has none, so the value is empty here. ' +
+      'Accepted as the field appearing and only that, which is what `kind` says: every recorded ' +
+      'field and the array length are still compared.',
+    kind: 'extra',
+  },
+  {
+    cases: ['ideatypes.create.orgadmin', 'ideatypes.update.orgadmin'],
+    path: 'body.fieldsets',
+    decided: '2026-10-04',
+    reason:
+      'A deliberate change, not drift (SPEC/decisions.md 2026-10-04, "Fieldsets: reusable groups of ' +
+      'fields, attached to idea types"; SPEC/contracts/idea-type-fields.md). An Idea Type item gains ' +
+      '`fieldsets` for the fieldsets attached to it, additively, so a client that predates fieldsets ' +
+      'keeps reading the same item. Every recorded type has none, so the value is empty here. ' +
+      'Accepted as the field appearing and only that, which is what `kind` says: every recorded ' +
+      'field and the array length are still compared.',
     kind: 'extra',
   },
   {
@@ -671,6 +775,737 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
       'update cases. Accepted as the field appearing, and only that; every recorded field of the ' +
       'detail, `tagNames` included, is still compared.',
     kind: 'extra',
+  },
+  {
+    cases: [
+      'ideas.create.orgadmin',
+      'ideas.create.user',
+      'ideas.get.orgadmin',
+      'ideas.get.readonly',
+      'ideas.get.siteadmin',
+      'ideas.get.user',
+      'ideas.own-idea',
+      'ideas.update.orgadmin',
+      'ideas.update.user',
+    ],
+    path: 'body.statusId',
+    decided: '2026-09-29',
+    reason:
+      'Not a different status - a different label for the same one. The `ideas` scenario lists ' +
+      "the organization's boards before it lists its statuses, and since 2026-09-27 each board " +
+      'list item carries `laneCounts` (accepted above as `body[].laneCounts`), one entry per lane ' +
+      'with its `statusId`, in swimlane order. A GUID is labelled where it is first seen, so the ' +
+      'lane statuses are now first seen on the board list rather than on the statuses list, and ' +
+      'every later `statusId` in the scenario carries the lane label. The mask holds the relation: ' +
+      'both sides must name the same index once the two prefixes are masked, so an idea that ' +
+      'landed in the second status rather than the first still fails. The shape confines both ' +
+      'sides to those two sources, so a status id minted anywhere else is a different mismatch.',
+    shape: /^<guid@(statuses\.body|board\.body\[0\]\.laneCounts)\[\d+\]\.statusId>$/,
+    mask: /statuses\.body|board\.body\[0\]\.laneCounts/g,
+  },
+  {
+    cases: ['ideas.statuses'],
+    path: 'body[].statusId',
+    decided: '2026-09-29',
+    reason:
+      'The same labelling as `body.statusId` above, on the statuses list itself: each status is ' +
+      'first seen as a lane on the board list, so its label moves while its position does not. ' +
+      'The mask requires status N to carry the label of lane N, which is the order both lists ' +
+      'are in, so a reordered or substituted status still fails.',
+    shape: /^<guid@(statuses\.body|board\.body\[0\]\.laneCounts)\[\d+\]\.statusId>$/,
+    mask: /statuses\.body|board\.body\[0\]\.laneCounts/g,
+  },
+  {
+    cases: [
+      'aiassist.usage.org.orgadmin',
+      'aiassist.usage.org.siteadmin',
+      'aiassist.usage.platform.siteadmin',
+    ],
+    path: 'body.totals',
+    decided: '2026-09-13',
+    reason:
+      'Deliberately better (SPEC/decisions.md 2026-09-13, "The usage report returns the ' +
+      "contract's `totals`, not the frozen app's flat fields\"). Both usage reports return a " +
+      '`totals` object with the six summed fields `SPEC/contracts/ai-assist.md` specifies; the ' +
+      'recorded app returned three flat totals with no token breakdown. Accepted as the object ' +
+      'appearing, which is what `kind` says; every other recorded field, the organization rows ' +
+      'included, is still compared. Not pinned to a shape - it is an object.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'aiassist.usage.org.orgadmin',
+      'aiassist.usage.org.siteadmin',
+      'aiassist.usage.platform.siteadmin',
+    ],
+    path: 'body.totalCalls',
+    decided: '2026-09-13',
+    reason:
+      'The other half of `body.totals` above: the flat field it replaces is gone. Accepted as ' +
+      'an absence and only that, which is what `kind` says.',
+    kind: 'missing',
+  },
+  {
+    cases: [
+      'aiassist.usage.org.orgadmin',
+      'aiassist.usage.org.siteadmin',
+      'aiassist.usage.platform.siteadmin',
+    ],
+    path: 'body.totalTokens',
+    decided: '2026-09-13',
+    reason:
+      'The other half of `body.totals` above: the flat field it replaces is gone. Accepted as ' +
+      'an absence and only that, which is what `kind` says.',
+    kind: 'missing',
+  },
+  {
+    cases: [
+      'aiassist.usage.org.orgadmin',
+      'aiassist.usage.org.siteadmin',
+      'aiassist.usage.platform.siteadmin',
+    ],
+    path: 'body.totalEstimatedCost',
+    decided: '2026-09-13',
+    reason:
+      'The other half of `body.totals` above: the flat field it replaces is gone. Accepted as ' +
+      'an absence and only that, which is what `kind` says.',
+    kind: 'missing',
+  },
+  {
+    cases: ['auth.viewas.start', 'auth.viewas.start.orgadmin'],
+    path: 'body.impersonating.organizationTitle',
+    decided: '2026-09-10',
+    reason:
+      'The CurrentUserSummary field accepted above as `body.organizationTitle`, which carries the ' +
+      'full reasoning, on the summaries a View As start returns: `SPEC/contracts/view-as.md` gives ' +
+      '`impersonating` the same shape as `GET /auth/me`. Listed separately because an entry names ' +
+      'one path. Accepted as the field appearing, and only that.',
+    kind: 'extra',
+  },
+  {
+    cases: ['auth.viewas.start', 'auth.viewas.start.orgadmin'],
+    path: 'body.realUser.organizationTitle',
+    decided: '2026-09-10',
+    reason:
+      'The same field on `realUser`, which the contract also gives the `GET /auth/me` shape - ' +
+      '`null` for a Site Admin, the organization for an Org Admin. Accepted as the field ' +
+      'appearing, and only that.',
+    kind: 'extra',
+  },
+  {
+    cases: [
+      'ideas.export.orgadmin',
+      'ideas.export.readonly',
+      'ideas.export.siteadmin',
+      'ideas.export.user',
+    ],
+    path: 'body',
+    decided: '2026-09-30',
+    reason:
+      'Two deliberate changes, not drift (SPEC/decisions.md 2026-09-30, "What the MVP release ' +
+      'includes", item 3). The export gained Problem, Proposed Solutions and Impact Rationale ' +
+      'after Description (2026-09-27, "The idea assistant is rescoped as a co-author, and ideas ' +
+      'gain structured fields"), so the header and every row carry three more cells. And the demo ' +
+      "seed's delivery module (commit a1ddb39) promotes five ideas per first board to issues, " +
+      'which takes them out of the board list the export reads - eight data rows where the ' +
+      'recording holds thirteen. The cells hold arbitrary text and the row set moved, so no `mask` ' +
+      'could hold the rest of the body to equality without muting it; the shape pins what can be ' +
+      'pinned, on BOTH sides: the recorded header row or the new one, at least one data row and ' +
+      'the closing CRLF, so a truncated or empty body still fails. The date-mask entry for these cases (2026-09-09, above) no longer applies and is ' +
+      'left in place as the record of how the export used to match.',
+    shape:
+      /^Title,Description,(?:Problem,Proposed Solutions,Impact Rationale,)?Priority,Idea Type,Business Impact,Status,Due Date,Tags\r\n[\s\S]+\r\n$/,
+    kind: 'value',
+  },
+  {
+    cases: [
+      'comments.ideas',
+      'ideas.list.board.orgadmin',
+      'ideas.list.board.readonly',
+      'ideas.list.board.siteadmin',
+      'ideas.list.board.user',
+    ],
+    path: 'body.items',
+    decided: '2026-09-30',
+    reason:
+      'A deliberate seed change, not drift (SPEC/decisions.md 2026-09-30, "What the MVP release ' +
+      'includes", item 3). The demo seed\'s delivery module (commit a1ddb39) promotes five ideas ' +
+      'per first board to issues, and a promoted idea leaves the Discovery-only board list, so ' +
+      'the first board holds 6 ideas where the recording holds 11 and the ideas and comments ' +
+      'cases that list it answer a different set. The corpus was recorded before delivery ' +
+      "existed and cannot be re-recorded. Accepted as the list's length differing, which is " +
+      'what `kind` says; the fields each element carries are accepted by the entries that ' +
+      'follow, one per path, and every field not named in one is still compared.',
+    kind: 'length',
+  },
+  {
+    cases: [
+      'comments.ideas',
+      'ideas.list.board.orgadmin',
+      'ideas.list.board.readonly',
+      'ideas.list.board.siteadmin',
+      'ideas.list.board.user',
+    ],
+    path: 'body.items[].assignees',
+    decided: '2026-09-30',
+    reason:
+      "The same change as `body.items` above, which carries the full reasoning: the demo seed's " +
+      "delivery module promotes five ideas out of the first board's list, so the elements and " +
+      'the counts moved. This one is how many assignees an idea carries. Accepted as that value ' +
+      'differing, and only that - a field that went missing or appeared still fails.',
+    kind: 'length',
+  },
+  {
+    cases: [
+      'comments.ideas',
+      'ideas.list.board.orgadmin',
+      'ideas.list.board.readonly',
+      'ideas.list.board.siteadmin',
+      'ideas.list.board.user',
+      'ideas.list.org.orgadmin',
+      'ideas.list.org.readonly',
+      'ideas.list.org.siteadmin',
+      'ideas.list.org.user',
+    ],
+    path: 'body.items[].authorUserId',
+    decided: '2026-09-30',
+    reason:
+      "The same change as `body.items` above, which carries the full reasoning: the demo seed's " +
+      "delivery module promotes five ideas out of the first board's list, so the elements and " +
+      'the counts moved. This one is who authored the idea at that position (a placeholder ' +
+      'label bound earlier in the replay, so it moves with the idea). Accepted as that value ' +
+      'differing, and only that - a field that went missing or appeared still fails.',
+    kind: 'value',
+  },
+  {
+    cases: [
+      'comments.ideas',
+      'ideas.list.board.orgadmin',
+      'ideas.list.board.readonly',
+      'ideas.list.board.siteadmin',
+      'ideas.list.board.user',
+    ],
+    path: 'body.items[].businessImpactColor',
+    decided: '2026-09-30',
+    reason:
+      "The same change as `body.items` above, which carries the full reasoning: the demo seed's " +
+      "delivery module promotes five ideas out of the first board's list, so the elements and " +
+      "the counts moved. This one is the idea's business impact colour. Accepted as that value " +
+      'differing, and only that - a field that went missing or appeared still fails.',
+    kind: 'value',
+  },
+  {
+    cases: [
+      'comments.ideas',
+      'ideas.list.board.orgadmin',
+      'ideas.list.board.readonly',
+      'ideas.list.board.siteadmin',
+      'ideas.list.board.user',
+    ],
+    path: 'body.items[].businessImpactName',
+    decided: '2026-09-30',
+    reason:
+      "The same change as `body.items` above, which carries the full reasoning: the demo seed's " +
+      "delivery module promotes five ideas out of the first board's list, so the elements and " +
+      "the counts moved. This one is the idea's business impact name. Accepted as that value " +
+      'differing, and only that - a field that went missing or appeared still fails.',
+    kind: 'value',
+  },
+  {
+    cases: [
+      'comments.ideas',
+      'ideas.list.board.orgadmin',
+      'ideas.list.board.readonly',
+      'ideas.list.board.siteadmin',
+      'ideas.list.board.user',
+      'ideas.list.org.orgadmin',
+      'ideas.list.org.readonly',
+      'ideas.list.org.siteadmin',
+      'ideas.list.org.user',
+    ],
+    path: 'body.items[].commentCount',
+    decided: '2026-09-30',
+    reason:
+      "The same change as `body.items` above, which carries the full reasoning: the demo seed's " +
+      "delivery module promotes five ideas out of the first board's list, so the elements and " +
+      'the counts moved. This one is how many comments the idea has. Accepted as that value ' +
+      'differing, and only that - a field that went missing or appeared still fails.',
+    kind: 'value',
+  },
+  {
+    cases: ['comments.ideas', 'ideas.list.board.orgadmin', 'ideas.list.board.user'],
+    path: 'body.items[].hasUpvoted',
+    decided: '2026-09-30',
+    reason:
+      "The same change as `body.items` above, which carries the full reasoning: the demo seed's " +
+      "delivery module promotes five ideas out of the first board's list, so the elements and " +
+      'the counts moved. This one is whether the caller upvoted the idea. Accepted as that ' +
+      'value differing, and only that - a field that went missing or appeared still fails.',
+    kind: 'value',
+  },
+  {
+    cases: [
+      'comments.ideas',
+      'ideas.list.board.orgadmin',
+      'ideas.list.board.readonly',
+      'ideas.list.board.siteadmin',
+      'ideas.list.board.user',
+    ],
+    path: 'body.items[].ideaTypeName',
+    decided: '2026-09-30',
+    reason:
+      "The same change as `body.items` above, which carries the full reasoning: the demo seed's " +
+      "delivery module promotes five ideas out of the first board's list, so the elements and " +
+      "the counts moved. This one is the idea's type name. Accepted as that value differing, " +
+      'and only that - a field that went missing or appeared still fails.',
+    kind: 'value',
+  },
+  {
+    cases: [
+      'comments.ideas',
+      'ideas.list.board.orgadmin',
+      'ideas.list.board.readonly',
+      'ideas.list.board.siteadmin',
+      'ideas.list.board.user',
+    ],
+    path: 'body.items[].priority',
+    decided: '2026-09-30',
+    reason:
+      "The same change as `body.items` above, which carries the full reasoning: the demo seed's " +
+      "delivery module promotes five ideas out of the first board's list, so the elements and " +
+      "the counts moved. This one is the idea's priority. Accepted as that value differing, and " +
+      'only that - a field that went missing or appeared still fails.',
+    kind: 'value',
+  },
+  {
+    cases: [
+      'comments.ideas',
+      'ideas.list.board.orgadmin',
+      'ideas.list.board.readonly',
+      'ideas.list.board.siteadmin',
+      'ideas.list.board.user',
+      'ideas.list.org.orgadmin',
+      'ideas.list.org.readonly',
+      'ideas.list.org.siteadmin',
+      'ideas.list.org.user',
+    ],
+    path: 'body.items[].statusId',
+    decided: '2026-09-30',
+    reason:
+      "The same change as `body.items` above, which carries the full reasoning: the demo seed's " +
+      "delivery module promotes five ideas out of the first board's list, so the elements and " +
+      "the counts moved. This one is the idea's status, as a placeholder label bound earlier in " +
+      'the replay. Accepted as that value differing, and only that - a field that went missing ' +
+      'or appeared still fails.',
+    kind: 'value',
+  },
+  {
+    cases: [
+      'comments.ideas',
+      'ideas.list.board.orgadmin',
+      'ideas.list.board.readonly',
+      'ideas.list.board.siteadmin',
+      'ideas.list.board.user',
+    ],
+    path: 'body.items[].statusName',
+    decided: '2026-09-30',
+    reason:
+      "The same change as `body.items` above, which carries the full reasoning: the demo seed's " +
+      "delivery module promotes five ideas out of the first board's list, so the elements and " +
+      "the counts moved. This one is the idea's status name. Accepted as that value differing, " +
+      'and only that - a field that went missing or appeared still fails.',
+    kind: 'value',
+  },
+  {
+    cases: [
+      'comments.ideas',
+      'ideas.list.board.orgadmin',
+      'ideas.list.board.readonly',
+      'ideas.list.board.siteadmin',
+      'ideas.list.board.user',
+    ],
+    path: 'body.items[].tagNames',
+    decided: '2026-09-30',
+    reason:
+      "The same change as `body.items` above, which carries the full reasoning: the demo seed's " +
+      "delivery module promotes five ideas out of the first board's list, so the elements and " +
+      'the counts moved. This one is how many tags an idea carries. Accepted as that value ' +
+      'differing, and only that - a field that went missing or appeared still fails.',
+    kind: 'length',
+  },
+  {
+    cases: [
+      'comments.ideas',
+      'ideas.list.board.orgadmin',
+      'ideas.list.board.readonly',
+      'ideas.list.board.siteadmin',
+      'ideas.list.board.user',
+    ],
+    path: 'body.items[].title',
+    decided: '2026-09-30',
+    reason:
+      "The same change as `body.items` above, which carries the full reasoning: the demo seed's " +
+      "delivery module promotes five ideas out of the first board's list, so the elements and " +
+      "the counts moved. This one is the idea's title. Accepted as that value differing, and " +
+      'only that - a field that went missing or appeared still fails.',
+    kind: 'value',
+  },
+  {
+    cases: [
+      'comments.ideas',
+      'ideas.list.board.orgadmin',
+      'ideas.list.board.readonly',
+      'ideas.list.board.siteadmin',
+      'ideas.list.board.user',
+    ],
+    path: 'body.items[].upvoteCount',
+    decided: '2026-09-30',
+    reason:
+      "The same change as `body.items` above, which carries the full reasoning: the demo seed's " +
+      "delivery module promotes five ideas out of the first board's list, so the elements and " +
+      "the counts moved. This one is the idea's upvote count. Accepted as that value differing, " +
+      'and only that - a field that went missing or appeared still fails.',
+    kind: 'value',
+  },
+  {
+    cases: [
+      'comments.ideas',
+      'ideas.list.board.orgadmin',
+      'ideas.list.board.readonly',
+      'ideas.list.board.siteadmin',
+      'ideas.list.board.user',
+    ],
+    path: 'body.items[].assignees[].displayName',
+    decided: '2026-09-30',
+    reason:
+      "The same change as `body.items` above, which carries the full reasoning: the demo seed's " +
+      "delivery module promotes five ideas out of the first board's list, so the elements and " +
+      "the counts moved. This one is an assignee's display name. Accepted as that value " +
+      'differing, and only that - a field that went missing or appeared still fails.',
+    kind: 'value',
+  },
+  {
+    cases: [
+      'comments.ideas',
+      'ideas.list.board.orgadmin',
+      'ideas.list.board.readonly',
+      'ideas.list.board.siteadmin',
+      'ideas.list.board.user',
+    ],
+    path: 'body.items[].assignees[].firstName',
+    decided: '2026-09-30',
+    reason:
+      "The same change as `body.items` above, which carries the full reasoning: the demo seed's " +
+      "delivery module promotes five ideas out of the first board's list, so the elements and " +
+      "the counts moved. This one is an assignee's first name. Accepted as that value " +
+      'differing, and only that - a field that went missing or appeared still fails.',
+    kind: 'value',
+  },
+  {
+    cases: [
+      'comments.ideas',
+      'ideas.list.board.orgadmin',
+      'ideas.list.board.readonly',
+      'ideas.list.board.siteadmin',
+      'ideas.list.board.user',
+    ],
+    path: 'body.items[].assignees[].lastName',
+    decided: '2026-09-30',
+    reason:
+      "The same change as `body.items` above, which carries the full reasoning: the demo seed's " +
+      "delivery module promotes five ideas out of the first board's list, so the elements and " +
+      "the counts moved. This one is an assignee's last name. Accepted as that value differing, " +
+      'and only that - a field that went missing or appeared still fails.',
+    kind: 'value',
+  },
+  {
+    cases: [
+      'comments.ideas',
+      'ideas.list.board.orgadmin',
+      'ideas.list.board.readonly',
+      'ideas.list.board.siteadmin',
+      'ideas.list.board.user',
+      'ideas.list.org.orgadmin',
+      'ideas.list.org.readonly',
+      'ideas.list.org.siteadmin',
+      'ideas.list.org.user',
+    ],
+    path: 'body.items[].assignees[].userId',
+    decided: '2026-09-30',
+    reason:
+      "The same change as `body.items` above, which carries the full reasoning: the demo seed's " +
+      "delivery module promotes five ideas out of the first board's list, so the elements and " +
+      "the counts moved. This one is an assignee's id, as a placeholder label bound earlier in " +
+      'the replay. Accepted as that value differing, and only that - a field that went missing ' +
+      'or appeared still fails.',
+    kind: 'value',
+  },
+  {
+    cases: [
+      'comments.ideas',
+      'ideas.list.board.orgadmin',
+      'ideas.list.board.readonly',
+      'ideas.list.board.siteadmin',
+      'ideas.list.board.user',
+    ],
+    path: 'body.totalCount',
+    decided: '2026-09-30',
+    reason:
+      "The same change as `body.items` above, which carries the full reasoning: the demo seed's " +
+      "delivery module promotes five ideas out of the first board's list, so the elements and " +
+      'the counts moved. This one is the total the endpoint reports. Accepted as that value ' +
+      'differing, and only that - a field that went missing or appeared still fails.',
+    kind: 'value',
+  },
+  {
+    cases: [
+      'comments.list.orgadmin',
+      'comments.list.readonly',
+      'comments.list.siteadmin',
+      'comments.list.user',
+    ],
+    path: 'body.items',
+    decided: '2026-09-30',
+    reason:
+      'The same change as `body.items` above, reaching the comments endpoints: these cases read ' +
+      "the first idea of the first board's list (`$.body.items[0]`), and once the delivery " +
+      'module promotes five ideas out of that list the first idea is a different one - it has ' +
+      'no comments, where the recorded one has two. Accepted as that value differing, which is ' +
+      'what `kind` says; the comment fields themselves are still compared wherever there are ' +
+      'comments.',
+    kind: 'length',
+  },
+  {
+    cases: [
+      'comments.list.orgadmin',
+      'comments.list.readonly',
+      'comments.list.siteadmin',
+      'comments.list.user',
+    ],
+    path: 'body.totalCount',
+    decided: '2026-09-30',
+    reason:
+      'The same change as `body.items` above, reaching the comments endpoints: these cases read ' +
+      "the first idea of the first board's list (`$.body.items[0]`), and once the delivery " +
+      'module promotes five ideas out of that list the first idea is a different one - it has ' +
+      'no comments, where the recorded one has two. Accepted as that value differing, which is ' +
+      'what `kind` says; the comment fields themselves are still compared wherever there are ' +
+      'comments.',
+    kind: 'value',
+  },
+  {
+    cases: ['comments.update.user'],
+    path: 'body.authorUserId',
+    decided: '2026-09-30',
+    reason:
+      'The same change as `body.items` above, reaching the comments endpoints: these cases read ' +
+      "the first idea of the first board's list (`$.body.items[0]`), and once the delivery " +
+      'module promotes five ideas out of that list the first idea is a different one - so the ' +
+      'author id label bound from the idea list moved with it. Accepted as that value ' +
+      'differing, which is what `kind` says; the comment fields themselves are still compared ' +
+      'wherever there are comments.',
+    kind: 'value',
+  },
+  {
+    cases: [
+      'ideas.list.board.orgadmin',
+      'ideas.list.board.readonly',
+      'ideas.list.board.siteadmin',
+      'ideas.list.board.user',
+    ],
+    path: 'body.items[].businessImpactId',
+    decided: '2026-09-30',
+    reason:
+      "The same change as `body.items` above, which carries the full reasoning: the demo seed's " +
+      "delivery module promotes five ideas out of the first board's list, so the elements and " +
+      "the counts moved. This one is the idea's business impact id, as a placeholder label. " +
+      'Accepted as that value differing, and only that - a field that went missing or appeared ' +
+      'still fails.',
+    kind: 'value',
+  },
+  {
+    cases: [
+      'ideas.list.board.orgadmin',
+      'ideas.list.board.readonly',
+      'ideas.list.board.siteadmin',
+      'ideas.list.board.user',
+    ],
+    path: 'body.items[].ideaTypeId',
+    decided: '2026-09-30',
+    reason:
+      "The same change as `body.items` above, which carries the full reasoning: the demo seed's " +
+      "delivery module promotes five ideas out of the first board's list, so the elements and " +
+      "the counts moved. This one is the idea's type id, as a placeholder label. Accepted as " +
+      'that value differing, and only that - a field that went missing or appeared still fails.',
+    kind: 'value',
+  },
+  {
+    cases: [
+      'ideas.list.org.orgadmin',
+      'ideas.list.org.readonly',
+      'ideas.list.org.siteadmin',
+      'ideas.list.org.user',
+    ],
+    path: 'body.items[].ideaId',
+    decided: '2026-09-30',
+    reason:
+      "The same change as `body.items` above, which carries the full reasoning: the demo seed's " +
+      "delivery module promotes five ideas out of the first board's list, so the elements and " +
+      'the counts moved. This one is the id of the idea at that position, as a placeholder ' +
+      'label. Accepted as that value differing, and only that - a field that went missing or ' +
+      'appeared still fails.',
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.candidates.siteadmin'],
+    path: 'body[].email',
+    decided: '2026-10-01',
+    reason:
+      'A deliberate improvement, not drift (SPEC/decisions.md 2026-10-01, "The View As ' +
+      'candidate order, and F1 closes"): `GET /auth/view-as/candidates` groups the Site ' +
+      "Admin's list by organization and orders it by organization title, organization id, " +
+      'last name, first name and email, as `SPEC/contracts/view-as.md` requires (slice 137). ' +
+      'The recording holds an ungrouped order nobody specified, so the candidate at a given ' +
+      'position is a different account. Accepted as the value at a position differing, which ' +
+      'is what `kind` says; the shape confines both sides to the seeded accounts, and a ' +
+      'candidate that went missing, changed type or came from nowhere in the seed still ' +
+      'fails. The list length is compared separately and still matches.',
+    shape: /^(orgadmin|user|user2|readonly)@(acme-robotics|blue-harbor)\.demo\.collega\.test$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.candidates.siteadmin'],
+    path: 'body[].firstName',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning: the ' +
+      'firstName of the candidate at each position. Accepted as that value differing, and ' +
+      'only that.',
+    shape: /^(Golden|Olivia|Maya|Rosa|Noah)$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.candidates.siteadmin'],
+    path: 'body[].lastName',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning: the ' +
+      'lastName of the candidate at each position. Accepted as that value differing, and only ' +
+      'that.',
+    shape: /^(Capture|Administer|Collaborator|Observer|Contributor)$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.candidates.siteadmin'],
+    path: 'body[].role',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning: the ' +
+      'role of the candidate at each position. Accepted as that value differing, and only ' +
+      'that.',
+    shape: /^(User|ReadOnly|OrgAdmin)$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.candidates.siteadmin'],
+    path: 'body[].organizationName',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning: the ' +
+      'organizationName of the candidate at each position. Accepted as that value differing, ' +
+      'and only that.',
+    shape: /^(Acme Robotics|Blue Harbor Logistics)$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.candidates.siteadmin'],
+    path: 'body[].organizationId',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning: the ' +
+      'organization id of the candidate at each position. Accepted as that value differing, ' +
+      'and only that. A GUID is labelled where it is first seen, so the placeholders move ' +
+      'with the accounts; the shape confines both sides to the labels this scenario mints for ' +
+      'an organization.',
+    shape:
+      /^<guid@(viewas\.candidates\.siteadmin\.body\[\d+\]\.organizationId|login\.orgadmin\.body\.user\.organizationId)>$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.candidates.orgadmin', 'auth.viewas.candidates.siteadmin'],
+    path: 'body[].userId',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning: the ' +
+      'user id of the candidate at each position. Accepted as that value differing, and only ' +
+      "that. The Org Admin's own list did not change order, but it is read after the Site " +
+      "Admin's, and a GUID is labelled where it is first seen, so its labels follow the Site " +
+      "Admin's new order; the shape confines both sides to the labels this scenario mints for " +
+      'a user.',
+    shape:
+      /^<guid@(viewas\.candidates\.siteadmin\.body\[\d+\]\.userId|me\.(user|readonly)\.body\.userId|login\.orgadmin\.body\.user\.userId)>$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.start'],
+    path: 'body.impersonating.email',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning, ' +
+      'reaching the View As start: the Site Admin impersonates the first candidate, which is ' +
+      'now the Org Admin of Acme Robotics where the recording holds its User. This is that ' +
+      "account's email. Accepted as that value differing, and only that.",
+    shape: /^(orgadmin|user|user2|readonly)@(acme-robotics|blue-harbor)\.demo\.collega\.test$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.start'],
+    path: 'body.impersonating.firstName',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning, ' +
+      'reaching the View As start: the Site Admin impersonates the first candidate, which is ' +
+      'now the Org Admin of Acme Robotics where the recording holds its User. This is that ' +
+      "account's firstName. Accepted as that value differing, and only that.",
+    shape: /^(Golden|Olivia|Maya|Rosa|Noah)$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.start'],
+    path: 'body.impersonating.lastName',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning, ' +
+      'reaching the View As start: the Site Admin impersonates the first candidate, which is ' +
+      'now the Org Admin of Acme Robotics where the recording holds its User. This is that ' +
+      "account's lastName. Accepted as that value differing, and only that.",
+    shape: /^(Capture|Administer|Collaborator|Observer|Contributor)$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.start'],
+    path: 'body.impersonating.role',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning, ' +
+      'reaching the View As start: the Site Admin impersonates the first candidate, which is ' +
+      'now the Org Admin of Acme Robotics where the recording holds its User. This is that ' +
+      "account's role. Accepted as that value differing, and only that.",
+    shape: /^(User|ReadOnly|OrgAdmin)$/,
+    kind: 'value',
+  },
+  {
+    cases: ['auth.viewas.start'],
+    path: 'body.impersonating.userId',
+    decided: '2026-10-01',
+    reason:
+      'The same reordering as `body[].email` above, which carries the full reasoning, ' +
+      'reaching the View As start: the Site Admin impersonates the first candidate, which is ' +
+      'now the Org Admin of Acme Robotics where the recording holds its User. This is that ' +
+      "account's userId. Accepted as that value differing, and only that.",
+    shape:
+      /^<guid@(viewas\.candidates\.siteadmin\.body\[\d+\]\.userId|me\.(user|readonly)\.body\.userId|login\.orgadmin\.body\.user\.userId)>$/,
+    kind: 'value',
   },
 ]
 

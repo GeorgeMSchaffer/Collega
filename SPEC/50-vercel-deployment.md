@@ -6,6 +6,8 @@
 > - **Key rules:** web and api are two projects; the browser never calls the API, so never add CORS (§1, §4).
 > - The API build runs `prisma migrate deploy`, then `db:bootstrap-admin`; migrations stay additive (§5, §10).
 > - Scope Preview `DATABASE_URL` to staging only; never set it in CI; keep `turbo query affected` (§2, §6, §12).
+> - **Procedure:** `SPEC/50-cutover-runbook.md` is the release runbook. This spec explains the reasoning;
+>   where the two differ on a procedure, the runbook and the code win.
 > - **Contracts:** contracts/auth.md
 > - **Decisions:** 2026-09-10 "How the two Vercel projects are configured, and how production gets its first
 >   administrator"; 2026-09-03 "The conversion's remaining gates: net-new scope, the test suite, and where it
@@ -35,7 +37,7 @@ stack is never deployed.
 
 ## 1. Two projects, not one
 
-`apps/web` and `apps/api` deploy as **two separate Vercel projects from the same repository**.
+`apps/web` and `apps/api` deploy as **two separate Vercel projects from the same repository**. The web project is named `collega` — the pre-existing project, which still has to be repointed (§12 step 4) — and the API project `collega-api`. *(Corrected 2026-09-29: this named the web project `collega-web`, which never existed.)*
 
 - This is forced rather than preferred. Mounting Nest inside the Next app would mean `apps/web`
   importing `@collega/application` and `@collega/infrastructure`, which is a lint error enforced by
@@ -43,7 +45,7 @@ stack is never deployed.
   `SPEC/50-typescript-migration.md` §4.3 exists to preserve. Ticket `08` anticipated the cross-origin
   cost of two hosts and accepted it.
 
-| | `collega-web` | `collega-api` |
+| | `collega` (web) | `collega-api` |
 |---|---|---|
 | Root Directory | `apps/web` | `apps/api` |
 | Framework Preset | Next.js | Nest.js |
@@ -75,7 +77,7 @@ installCommand: cd ../.. && pnpm install --frozen-lockfile
   `postinstall` is the second belt on the same braces):
 
 ```
-collega-web   cd ../.. && pnpm turbo run build --filter=@collega/web
+collega       cd ../.. && pnpm turbo run build --filter=@collega/web
 collega-api   cd ../.. && pnpm turbo run build --filter=@collega/api
               && pnpm --filter @collega/infrastructure db:migrate
               && pnpm --filter @collega/infrastructure db:bootstrap-admin
@@ -139,63 +141,53 @@ Exit codes, verified against `turbo` 2.10.12 (the version the root `devDependenc
 
 ## 3. The API's entrypoint — `apps/api/server.js`
 
-- Vercel's Node runtime captures a server through its `listen()` call, and `apps/api/src/main.ts`
-  already ends in `await app.listen(config.server.port)` with `PORT` read from the environment
-  (`common/config/fragments/server.ts`). So the API needs no handler wrapper and no second copy of
-  the bootstrap — but it does need Vercel to run the **compiled** output.
+> *Corrected 2026-09-29 (slice 135): this section said `server.js` imported `dist/main.js`, that the
+> bootstrap was `src/main.ts`, and that a `functions` block in `apps/api/vercel.json` named
+> `server.js` with `maxDuration: 60`, with advice on fixing that glob. None of that is the code.
+> The bootstrap is `src/bootstrap.ts`, `server.js` imports `@nestjs/core` and then
+> `./dist/bootstrap.js`, and there is no `functions` block. `maxDuration` is a project setting,
+> 60 seconds (`SPEC/decisions.md` 2026-09-29, "How the cutover is run").*
+
+- Vercel's Node runtime captures a server through its `listen()` call, and
+  `apps/api/src/bootstrap.ts` ends in `await app.listen(config.server.port)` with `PORT` read from
+  the environment (`common/config/fragments/server.ts`). So the API needs no handler wrapper and no
+  second copy of the bootstrap — but it does need Vercel to run the **compiled** output.
 - **Why compiled and not the source.** Nest resolves constructor dependencies from
   `design:paramtypes` metadata, which only `tsc` with `emitDecoratorMetadata` emits.
   `apps/api/tsconfig.json` sets it; esbuild — what a bundler reaches for — does not implement it at
-  all. A deployment that compiled `src/main.ts` itself would look healthy and fail to resolve every
-  provider on the first request. This is the thing not to assume either way: `dist/main.js` is the
-  artifact that works, and reaching it is deliberate.
-- **Established:** Vercel's Node runtime captures `listen()`, and the `functions` glob in
-  `apps/api/vercel.json` must match a real serverless function or the build fails naming the
-  pattern.
-- **Expected, not documented:** that Vercel resolves an entrypoint named `app` / `index` / `server` /
-  `main` at the project root ahead of anything under `src/`. That ordering is how the presets are
-  observed to behave and it is why this file is named `server.js` and sits where it does, but no
-  Vercel document states it. Vercel publishes an entrypoint escape hatch for its **Python** presets
-  (`[tool.vercel] entrypoint = …`) and nothing equivalent for Node, so there is no setting to force
-  the matter either. Treat the file's placement as a well-founded expectation to be confirmed by
-  the first build log (§11), not as a guarantee.
+  all. A deployment that compiled the source itself would look healthy and fail to resolve every
+  provider on the first request. `dist/bootstrap.js` is the artifact that works, and reaching it is
+  deliberate.
 
 ```js
 // apps/api/server.js
-import './dist/main.js'
+import '@nestjs/core'
+
+import './dist/bootstrap.js'
 ```
 
-`apps/api/vercel.json` names `server.js` in its `functions` block (`maxDuration: 60`), which
-doubles as the assertion: if Vercel resolved a different entrypoint, the pattern matches nothing and
-the build says so rather than deploying the wrong file.
-
-### If the build says `server.js` matched no function
-
-```
-The pattern "server.js" defined in 'functions' doesn't match any Serverless Functions
-```
-
-- This is the expected first failure, and the likeliest cause is the most benign one: the `nestjs`
-  preset resolved `dist/main.js` directly, which exists because that is where Nest apps compile.
-  Nothing is wrong with the deployment except the glob.
-- **Point the glob at the entrypoint the log names. Do not rename `server.js` to match the glob,
-  and do not delete the `functions` block.** Renaming chases a moving target and can only be
-  confirmed by another failed build; deleting the block makes the error go away and takes
-  `maxDuration: 60` silently with it, leaving the API on the default timeout with nothing in the
-  diff to say so. Read the build log for the file Vercel chose, put that path in `functions`, keep
-  `maxDuration`, and — if the chosen entrypoint is already `dist/`-backed — `server.js` becomes dead
-  weight to delete in a follow-up rather than something to fix under pressure.
+- **The bootstrap's name is load-bearing.** Vercel's NestJS preset resolves an entrypoint in a fixed
+  order, and every `src/` candidate — `main`, `app`, `index`, `server` — outranks every root-level
+  one. While `src/main.ts` existed the preset compiled it with its own toolchain and `server.js` was
+  never consulted. Reintroducing `src/main.ts`, or renaming `server.js`, silently hands the
+  deployment back to a source-compiled artifact. The file's header comment says the same.
+- **The `@nestjs/core` import is what makes the preset accept the file.** The preset reads the
+  entrypoint's own imports to confirm the project is Nest and does not follow the import into
+  `dist/`; without it the build fails with "No entrypoint found which imports nestjs". Nest is
+  already loaded by the bootstrap, so it adds nothing at runtime.
+- **`maxDuration` is a project setting — 60 seconds — not a `vercel.json` key.** A `functions` block
+  is rejected before the build starts unless its patterns match source files inside an `api/`
+  directory, which this layout has none of. Nothing in the repository asserts the entrypoint
+  either; the build log is the evidence (§11).
 - **Do not set `framework` to `null`.** It was considered and rejected: with no preset, Vercel still
   needs some rule to turn `apps/api` into a function at all, and the "Other" preset has historically
-  meant static output — a deployment that produced no function would be a worse and more confusing
-  first result than a glob error that names its own fix. Keep `nestjs` for the first deploy and
-  change it only with a build log to justify it.
+  meant static output. Keep `nestjs`.
 
 ---
 
 ## 4. Cross-origin: there is none, and that is the design
 
-- **The browser never calls `apps/api`.** `apps/api/src/main.ts` calls no `enableCors()`, and
+- **The browser never calls `apps/api`.** `apps/api/src/bootstrap.ts` calls no `enableCors()`, and
   `apps/web` reaches the API server-side through `COLLEGA_API_URL` (`apps/web/lib/api/config.ts`),
   forwarding the session cookie and re-issuing it on its own origin.
 - `COLLEGA_API_URL` is deliberately **not** `NEXT_PUBLIC_`: that would inline the API's address into
@@ -252,7 +244,9 @@ step only**. Two qualifications, both of which have been read too generously bef
 - "Serialize" overstates what the lock does even for the migration. A waiter that does not get the
   lock inside Prisma's timeout fails with `P1002` rather than queueing behind the holder, so under
   real contention the second build errors out and needs a redeploy. Idempotent means the redeploy is
-  safe, not that it is unnecessary.
+  safe, not that it is unnecessary. A Redeploy works here, unlike after a variable change: the ignore
+  step diffs against `VERCEL_GIT_PREVIOUS_SHA`, the last *successful* deployment, which the failed
+  build is not, so the build's own change is still in range.
 
 Migrations are additive — see the rollback posture in §10 before writing one that is not.
 
@@ -328,11 +322,11 @@ every name for local development; nothing in this table belongs in a committed f
   32 characters in production; §12 step 3 already asks for 48 bytes of base64, so this only enforces
   the handoff.
 
-### `collega-web`
+### `collega` (web)
 
 | Variable | Environments | Required | What breaks without it |
 |---|---|---|---|
-| `COLLEGA_API_URL` | Production, Preview | **yes in deployment** | Falls back to `http://127.0.0.1:3001/api/v1` and every server-side call fails. Include the `/api/v1` prefix and no trailing slash. Production points at `api.collega-ai.com`, a custom domain bound to the API project; Preview at the staging API (§7). A custom domain covers production only, so Preview keeps the branch alias. |
+| `COLLEGA_API_URL` | Production, Preview | **yes in deployment** | Falls back to `http://127.0.0.1:3001/api/v1` and every server-side call fails. Include the `/api/v1` prefix and no trailing slash. Production points at `collega-api`'s production `*.vercel.app` URL; Preview at the staging API (§7). *Corrected 2026-09-29 (`SPEC/decisions.md` "How the cutover is run"): this said production pointed at `api.collega-ai.com`; a custom API domain is a later, separate change.* |
 
 Not `NEXT_PUBLIC_` — see §4.
 
@@ -348,9 +342,9 @@ Not `NEXT_PUBLIC_` — see §4.
 
 ## 7. Previews and staging
 
-- **Production** — `main`. `collega-web` production → `collega-api` production → production
+- **Production** — `main`. `collega` (web) production → `collega-api` production → production
   database.
-- **Preview** — every other branch, including `dev`. All previews of `collega-web` point at **one
+- **Preview** — every other branch, including `dev`. All previews of `collega` (web) point at **one
   shared staging API**, backed by **one shared staging database**.
 
 > **Unverified as of 2026-09-14: `api.collega-ai.com` does not resolve.** A DNS lookup fails
@@ -361,9 +355,16 @@ Not `NEXT_PUBLIC_` — see §4.
 > before quoting it. Recorded rather than corrected because guessing at the real value would be
 > worse than naming the gap. The two custom domains that *do* answer are `www.collega-ai.com`
 > (production web, public) and `dev.collega-ai.com` (staging web, behind Vercel SSO).
+>
+> *Resolved 2026-09-29 (`SPEC/decisions.md` "How the cutover is run"): production's
+> `COLLEGA_API_URL` is `collega-api`'s production `*.vercel.app` URL, and the custom API domain is a
+> later, separate change.*
 
-- **Production is a custom domain, `api.collega-ai.com`,** bound to the API project — decided
-  2026-09-10. Vercel's generated hostname is derived from the project name, so it changes if the
+- **Production uses `collega-api`'s production `*.vercel.app` URL** (`SPEC/decisions.md`
+  2026-09-29, "How the cutover is run"); a custom API domain is a later, separate change. *Corrected
+  2026-09-29: this bullet said production was the custom domain `api.collega-ai.com`, decided
+  2026-09-10, and the note above records that it never resolved.* The case for a custom domain
+  stands for when it is made: Vercel's generated hostname is derived from the project name, so it changes if the
   project is renamed or recreated, and the web app would keep pointing at a host that no longer
   answers. A domain we own removes that coupling. Nothing about the cookie changes: the browser
   never sees the API, because `apps/web` re-issues the session on its own origin (§4), so the API
@@ -385,7 +386,7 @@ COLLEGA_API_URL = https://collega-api-git-dev-<team-slug>.vercel.app/api/v1   (P
   where JSON was expected. The API authenticates its own callers; **turn Vercel Authentication off
   for `collega-api`**, or issue a Protection Bypass for Automation token and send it as
   `x-vercel-protection-bypass` (which would be a change to `apps/web/lib/api/client.ts`, currently
-  unwritten). Leave protection on for `collega-web` if you want previews private.
+  unwritten). Leave protection on for `collega` (web) if you want previews private.
 
 ---
 
@@ -462,8 +463,10 @@ pnpm --filter @collega/infrastructure db:bootstrap-admin
   `packages/infrastructure/src/security/pbkdf2-password-hasher.ts` produces together with
   `must_change_password = true` and a new `security_stamp` (changing the stamp is what invalidates
   any session the previous state left outstanding). Know that before the incident; the alternative
-  during one is to point `SITE_ADMIN_EMAIL` at a fresh address and redeploy, which does work and
-  leaves the broken account behind to clean up later.
+  during one is to point `SITE_ADMIN_EMAIL` at a fresh address and ship a commit that touches
+  `apps/api/` — a Redeploy is cancelled by the ignore step (`apps/web/AGENTS.md`) — which does work
+  and leaves the broken account behind to clean up later. *Corrected 2026-09-29: this said "and
+  redeploy".*
 
 ---
 
@@ -471,8 +474,12 @@ pnpm --filter @collega/infrastructure db:bootstrap-admin
 
 - §8 leaves a fresh deployment with **exactly one row**. The Site Admin belongs to no organization
   by design (`SPEC/20-feature-organizations-and-users.md` User Rule 7), so it signs in, changes its
-  password, and lands in an application with no organization, no board, and no catalogs — and cannot
-  create any of them, because `apps/web`'s only writes are sign-in/out and the three idea actions.
+  password, and lands in an application with no organization, no board, and no catalogs. It can
+  create an organization (Settings → Organizations → New, which provisions the defaults) and its
+  users (Settings → Users → New), and act inside it through Settings → View As; or this section's
+  script does the first two from a shell. *Corrected 2026-09-29 (slice 135): this said the Site
+  Admin could create none of them, because `apps/web`'s only writes were sign-in/out and the three
+  idea actions.*
 - The state is also circular: creating an idea needs an active idea type *and* an active business
   impact, so even a hand-made organization would not produce a usable board.
 
@@ -502,7 +509,8 @@ pnpm --filter @collega/infrastructure db:bootstrap-organization
   org-and-users requirement #4) and nothing promotes the first member, so the only route to an Org
   Admin is org-and-users "Direct creation by an admin" #1 — *Site Admin can add users to any
   organization*, choosing the role and issuing an initial password. That is
-  `POST /organizations/:id/users`, which has no UI yet, so setting `BOOTSTRAP_ORG_ADMIN_EMAIL`
+  `POST /organizations/:id/users` — in the UI, Settings → Users → New (*corrected 2026-09-29: this
+  said it had no UI yet*) — and setting `BOOTSTRAP_ORG_ADMIN_EMAIL`
   makes the script do the same thing against the same columns:
   role `OrgAdmin`, status `Active`, `must_change_password` set. Its password is generated by the
   domain's own `generateTemporaryPassword`, **printed once to the terminal and written nowhere** —
@@ -563,7 +571,7 @@ pnpm --filter @collega/infrastructure db:bootstrap-organization
                        │  https
                        ▼
           ┌────────────────────────┐
-          │  collega-web (Next)    │   apps/web  ·  no database
+          │  collega (Next)        │   apps/web  ·  no database
           │  session cookie on     │
           │  its own origin        │
           └───────────┬────────────┘
@@ -571,7 +579,7 @@ pnpm --filter @collega/infrastructure db:bootstrap-organization
                       │  forwards the session cookie
                       ▼
           ┌────────────────────────┐
-          │  collega-api (Nest)    │   apps/api  ·  server.js → dist/main.js
+          │  collega-api (Nest)    │   apps/api  ·  server.js → dist/bootstrap.js
           │  /api/v1/*             │   one function, listen() captured
           └───────────┬────────────┘
                       │  Prisma
@@ -589,7 +597,7 @@ settled this: the .NET stack was never deployed, so there is nothing to fall bac
 there is no .NET code either. What follows is that statement made operational.
 
 - **Code rolls back instantly and by itself.** Vercel keeps every deployment; Instant Rollback
-  repoints production at the previous one in seconds, per project. Roll back `collega-web` and
+  repoints production at the previous one in seconds, per project. Roll back `collega` (web) and
   `collega-api` **together** unless you know the pair is compatible.
 - **The database does not roll back with it.** A rollback restores code against a schema that has
   already moved. So: **every migration must be backward-compatible with the deployment before it**
@@ -617,17 +625,26 @@ fail-fast refusing to boot without a signing key and booting with one, `db:boots
 its create and its already-exists paths, a real login as the account it created returning
 `requiresPasswordChange: true`, and `pnpm check` at 23/23.
 
-**Nothing on Vercel has been verified**, because the session that wrote this had no access to the
-account. In rough order of how likely each is to be the thing that bites:
+~~**Nothing on Vercel has been verified**, because the session that wrote this had no access to the
+account.~~ *Corrected 2026-09-29 — some of it has, by probe rather than inferred from a build state
+(the Deployment (Vercel) row in `SPEC/tracker-history/2026-09-28-rows-part-1.md`):* on 2026-09-13
+`collega-api` was READY at `ebf604e`, answered `GET /api/v1/health` with `200`, and answered a wrong
+password on `POST /api/v1/auth/login` with a correctly shaped `401` carrying a `traceId` — which
+exercises routing, the database and the problem-details filter. So the API's entrypoint, its Node
+version, its Prisma query engine and its connection string all work; the rows below say
+which. The web project `collega` still carries the stale settings described below, and Preview's
+`DATABASE_URL` was confirmed from a build log to point at the database that holds the real Site
+Admin — the failure the preview row warns about. In rough order of how likely each is to be the
+thing that bites:
 
 | Unverified | How it would show up | What it takes |
 |---|---|---|
-| That Vercel resolves `server.js` as the entrypoint | Build error naming the `functions` pattern, or a deployment that 404s every route | The first API deployment's build log |
-| That `@vercel/nft` traces the Prisma query engine out of `packages/infrastructure/dist/generated/prisma/` | Runtime error about a missing query engine on the first database call | One request to any authenticated endpoint |
+| That Vercel resolves `server.js` as the entrypoint — **verified for `collega-api`, 2026-09-13** | "No entrypoint found which imports nestjs", or a deployment that 404s every route (§3) | The first API deployment's build log |
+| That `@vercel/nft` traces the Prisma query engine out of `packages/infrastructure/dist/generated/prisma/` — **verified 2026-09-13** (the login probe reaches the database) | Runtime error about a missing query engine on the first database call | One request to any authenticated endpoint |
 | That the `prisma+postgres://` URL works with the pinned client | Boot failure naming the datasource protocol | Swap to the direct `postgresql://` string (§5) |
-| Node 24 selection on the build image | `Invalid Node.js Version` during install | Set the project's Node.js Version to 24.x |
+| Node 24 selection on the build image — **verified for `collega-api`** (it builds) | `Invalid Node.js Version` during install | Set the project's Node.js Version to 24.x |
 | Deployment Protection on the API (§7) | Web previews receiving HTML from every API call | Turn Vercel Authentication off for `collega-api` |
-| That preview builds see Preview-scoped variables at build time | `db:migrate` failing or migrating the wrong database | The first preview build's log — **check which database it touched** (§12 step 10, required) |
+| That preview builds see Preview-scoped variables at build time — **observed wrong**: Preview's `DATABASE_URL` points at the database holding the real Site Admin | `db:migrate` failing or migrating the wrong database | The first preview build's log — **check which database it touched** (§12 step 10, required) |
 | **Observed, not hypothetical:** stale settings on a project repointed rather than created | Build fails asking you to remove the `public` output directory so the Next.js build output can be used | Clear the Output Directory override *and* set Root Directory — see below |
 
 ### Stale project settings on a repointed project
@@ -663,7 +680,7 @@ for deleting and recreating rather than repointing, if repointing turns into mor
 
 - Every row above announces itself. This one does not, and it is the reason §3 insists on
   `dist/`-backed output.
-- If Vercel's preset compiles `apps/api/src/main.ts` with its own toolchain instead of running the
+- If Vercel's preset compiles the TypeScript source with its own toolchain instead of running the
   `tsc` output, `emitDecoratorMetadata` is lost — esbuild does not implement it — and the build
   succeeds. The first request then 500s with:
 
@@ -676,8 +693,10 @@ Nest can't resolve dependencies of the IdeasController (?)
   import — the module graph is fine, the artifact is wrong.
 - Its build-log tell, visible before any request: a build that **succeeds without ever mentioning
   `server.js`**, plus a compile or bundle step appearing *after* the custom `buildCommand` has
-  already finished. Both mean the preset built its own thing. Fix it in §3's terms — point the
-  `functions` glob at whatever the log names, having confirmed it is `dist/`-backed.
+  already finished. Both mean the preset built its own thing. Fix it in §3's terms — check that no
+  `src/main.ts` (or other `src/` candidate) has appeared beside `src/bootstrap.ts`. *Corrected
+  2026-09-29 (slice 135): the fix here was to point a `functions` glob at the log's entrypoint;
+  there is no `functions` block (§3).*
 
 ---
 
@@ -693,12 +712,13 @@ database; step 10 is verification; steps 11–12 populate the deployment and get
    console offers both.
 3. **Generate two signing keys** — `openssl rand -base64 48`, once for production, once for
    staging. They are not interchangeable and neither is ever committed.
-4. **Create the web project.** New Project → this repository → **Root Directory `apps/web`** →
-   Framework **Next.js**. Do not override the build or install commands; `apps/web/vercel.json`
-   already sets them.
+4. **Repoint the web project, `collega`** — it exists, and is still owed this. *(Corrected
+   2026-09-29: this step read "Create the web project", with repointing as the alternative.)* For
+   a fresh project instead: New Project → this repository → **Root Directory `apps/web`** →
+   Framework **Next.js**, without overriding the build or install commands, which
+   `apps/web/vercel.json` already sets.
 
-   *Or repoint the existing one.* `georgemschaffers-projects/collega` has no Root Directory set,
-   which is why every push fails. It can become the web project, but **it carries settings a fresh
+   `georgemschaffers-projects/collega` has no Root Directory set, which is why every push fails. It can become the web project, but **it carries settings a fresh
    project would not have** — it was auto-detected as "Other" at the repository root, so its Output
    Directory is pinned to `public` and its build fails asking you to remove it. Fix all three:
    Root Directory → `apps/web`; Output Directory → override **off**
@@ -706,9 +726,10 @@ database; step 10 is verification; steps 11–12 populate the deployment and get
    Development Settings — `vercel.json` cannot express this); Framework then corrects itself from
    the file. §11 has the full symptom. Deleting it and creating fresh is the shorter path if you
    have no attachment to the project's history.
-5. **Create the API project.** New Project → the same repository → **Root Directory `apps/api`** →
-   Framework **Nest.js**. Same: the commands come from `apps/api/vercel.json`. Create this one
-   fresh — there is no existing project to repoint, and nothing to inherit.
+5. **The API project, `collega-api`, exists** — Root Directory `apps/api`, Framework **Nest.js**,
+   the commands from `apps/api/vercel.json` — and was READY and answering on 2026-09-13 (§11).
+   *(Corrected 2026-09-29: this step said to create it and that no API project existed.)* On a new
+   account, create it that way: New Project → the same repository → those two settings.
 6. **Turn Vercel Authentication off for the API project** (Settings → Deployment Protection).
    `apps/web` calls it server-side and cannot satisfy an SSO redirect.
 7. **Set the API project's variables:**
@@ -731,14 +752,15 @@ database; step 10 is verification; steps 11–12 populate the deployment and get
    > databases.** Save the production string with Production ticked and the other two clear, then
    > save the staging string with Preview ticked and the other two clear. Verify by reopening each
    > entry: the environment badges are shown on the row.
-8. **Deploy the API** (push, or Redeploy). The build runs the migration and creates the Site Admin;
-   the log ends with either `created Site Admin …` or `… already exists`. Note the deployment's
+8. **Deploy the API** by pushing a commit that touches `apps/api/` — a Redeploy is cancelled by the
+   ignore step (`apps/web/AGENTS.md`). *Corrected 2026-09-29: this said "push, or Redeploy".* The
+   build runs the migration and creates the Site Admin; the log ends with either `created Site Admin …` or `… already exists`. Note the deployment's
    hostname.
 9. **Set the web project's variables**, then deploy it:
 
    | Variable | Production | Preview |
    |---|---|---|
-   | `COLLEGA_API_URL` | `https://api.collega-ai.com/api/v1` | `https://collega-api-git-dev-<team>.vercel.app/api/v1` |
+   | `COLLEGA_API_URL` | `https://<collega-api production>.vercel.app/api/v1` | `https://collega-api-git-dev-<team>.vercel.app/api/v1` |
 
    No trailing slash, and keep the `/api/v1`.
 10. **Verify, in this order:**
@@ -751,8 +773,10 @@ database; step 10 is verification; steps 11–12 populate the deployment and get
       else — HTML, 404, a redirect — means §11's first two rows, not a code bug.
     - Open the web app, sign in as `SITE_ADMIN_EMAIL`. It must **force a password change**; that is
       requirement 9 working, not a bug.
-    - Change the password. The application is empty at this point and there is no admin write path
-      in the UI, so **do not** expect to create an organization here — that is step 11.
+    - Change the password. The application is empty at this point. An organization can be created
+      here, under Settings → Organizations → New, or by step 11's script. *Corrected 2026-09-29
+      (slice 135): this said there was no admin write path in the UI; Settings → Organizations →
+      New, Settings → Users → New and Settings → View As now exist.*
     - **Leave `SITE_ADMIN_PASSWORD` in place.** An earlier draft of this checklist said it could be
       deleted once the password had been changed. It cannot: the API refuses to boot without it, so
       deleting it works until the next cold start and then takes the deployment down. That the

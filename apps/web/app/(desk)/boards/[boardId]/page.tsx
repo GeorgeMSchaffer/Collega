@@ -106,7 +106,7 @@ export default async function BoardPage({
               {board.isArchived
                 ? null
                 : moveDenial === null
-                  ? 'Move a card between lanes with the arrows on it.'
+                  ? 'Move a card with drag, or focus its title and press ← →.'
                   : `${moveDenial}, so cards here stay where they are.`}
             </>
           }
@@ -140,6 +140,7 @@ export default async function BoardPage({
             lanes: board.lanes,
             isArchived: board.isArchived,
             canMove: moveDenial === null,
+            canReorder: user.role === 'OrgAdmin',
           }}
           drawer={drawer}
         />

@@ -1,6 +1,7 @@
 import { Kbd } from '@collega/design-system'
 import Link from 'next/link'
 import { LoginForm } from '@/components/auth/login-form'
+import { SessionEndedSignal } from '@/components/auth/session-ended-signal'
 import { AuthPitch } from '@/components/auth-pitch'
 
 export const metadata = { title: 'Sign in · Collega' }
@@ -30,16 +31,13 @@ export default async function LoginPage({
   return (
     <>
       <AuthPitch
+        preview
         heading="Every idea your organization has, in one place."
         points={[
           'One account per person, scoped to your organization',
           'Boards, statuses and idea types you define yourself',
           <>
-            Keyboard-first: press{' '}
-            <Kbd className="border-primary-foreground/30 bg-primary-foreground/15 text-primary-foreground">
-              Ctrl K
-            </Kbd>{' '}
-            anywhere
+            Keyboard-first: press <Kbd>Ctrl K</Kbd> anywhere
           </>,
         ]}
       >
@@ -57,6 +55,9 @@ export default async function LoginPage({
           </p>
 
           <LoginForm expired={expired} registered={registered} passwordChanged={passwordChanged} />
+          <SessionEndedSignal
+            notice={passwordChanged ? 'passwordChanged' : expired ? 'expired' : null}
+          />
 
           <p className="mt-4 text-sm text-muted-foreground">
             Have an invite code? <Link href="/register">Create an account</Link>.

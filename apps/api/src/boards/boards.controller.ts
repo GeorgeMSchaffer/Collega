@@ -109,7 +109,8 @@ function toIdeaMoves(moves: unknown): readonly IdeaMoveInput[] {
  * The golden corpus pins both, so a prefix here would move five routes.
  *
  * Authorization lives in `BoardService` throughout: read is open to any member of the
- * organization, create/update/reorder are Org Admin only, and a Site Admin acting directly is
+ * organization, create admits an Org Admin or a User, update/archive/reorder are Org Admin only,
+ * and a Site Admin acting directly is
  * refused in favour of View As. None of that is decided here, and nothing here reads a
  * credential - identity reaches the service through `CurrentUserContext`.
  */

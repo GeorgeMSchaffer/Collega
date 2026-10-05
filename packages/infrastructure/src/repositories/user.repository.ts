@@ -194,7 +194,16 @@ export class PrismaUserRepository
     }
     const rows = await this.prisma.users.findMany({
       where,
-      orderBy: [{ last_name: 'asc' }, { first_name: 'asc' }, { email: 'asc' }],
+      // Grouped by organization (contracts/view-as.md), so the order has to start there; the
+      // contract is silent on the rest, so members keep last name, first name, then email as the
+      // total-order tie-break. Done in the query so the 50-row cap cuts whole trailing groups.
+      orderBy: [
+        { organizations: { title: 'asc' } },
+        { organization_id: 'asc' },
+        { last_name: 'asc' },
+        { first_name: 'asc' },
+        { email: 'asc' },
+      ],
       take: 50,
     })
     return rows.map(fromRow)

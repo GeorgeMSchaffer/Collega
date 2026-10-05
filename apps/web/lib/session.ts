@@ -45,6 +45,7 @@ import type { CurrentUser, Role } from './types'
 
 export {
   boardAdminDenial,
+  boardCreateDenial,
   engagementDenial,
   isAdministrator,
   roleLabel,

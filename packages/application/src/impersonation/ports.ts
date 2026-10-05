@@ -42,7 +42,8 @@ export interface ImpersonationUsersPort {
   /** Users the View As picker may offer. `organizationId` is null for a Site Admin (every
    * organization) and set for an Org Admin, so the scope restriction is applied in the query
    * rather than filtered afterwards - an Org Admin's result set never contains a user they may
-   * not target. Mirrors .NET's `IUserRepository.SearchForImpersonationAsync`. */
+   * not target. Mirrors .NET's `IUserRepository.SearchForImpersonationAsync`.
+   * Ordered by organization (title, then id), then last name, first name, email. */
   searchForImpersonation(
     organizationId: string | null,
     search: string | null,

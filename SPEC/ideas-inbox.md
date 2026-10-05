@@ -155,36 +155,169 @@ Grouped by one thesis: *each is about the board still making sense to someone wh
 
 **The share link is the one proposal with a genuine security surface**, and the comp says so itself: an unauthenticated tokenized URL is a new way for organization-scoped data to leave the organization, and *the role model has no concept of "not a member."* It is deliberately **not** the Read Only role — Read Only is a member with an account; a share link is for someone who will never have one. Four choices in it are unconfirmed by design: token-only credential unless a passphrase is set, the 30-day default, people/comments defaulting off, and Org-Admin-only creation. This one needs a security decision before a spec, not after.
 
-## Portals — seatless employee submissions via public links
+## Status categories — mark which status means Complete or In Review
 
-*Refined 2026-09-28 in an ideation session. Comp: `mockups/comp-s-portal-form.html` (branded-shell mode, Terrazzo).*
+> Raised 2026-09-30 by slice 132. **User decision 2026-09-30:** Home's *Open ideas* and *Awaiting
+> review* tiles stay "not tracked yet" for now; this is the later fix.
 
-**How might we** let employees without a Collega seat submit ideas that arrive structured enough to triage without chasing the submitter, from a shareable or embeddable link, without turning an anonymous write endpoint into an abuse channel?
+Statuses are organization-defined and their names are free text, so nothing tells the client which
+one means Complete and which means In Review. Home (comp Q `s-home`) needs exactly that to count
+open ideas and ideas awaiting review. Guessing from the default names breaks on the first rename,
+and guessing from lane position would be a business rule written in the client.
 
-For **employees without seats** (an internal suggestion box), not customers or the public. Success is **quality, not volume**: submissions a triager can act on without a follow-up conversation.
+The idea: a category on each status (for example `Open`, `InReview`, `Complete`), set by an Org
+Admin, defaulted for the seeded five, and served on the statuses routes — a schema change. A
+cheaper partial alternative is a server-side `open` filter on the idea lists, defined as not in a
+board's last lane; it answers *Open ideas* but not *Awaiting review*.
 
-- **Portal.** An Org Admin creates one with a title, a slug, a target **idea type**, which of that type's fields to show (each visible/required, with portal-specific help text), an optional passphrase, and a display mode. The "form" is portal configuration over an existing idea type, not a new form-builder concept.
-- **URL: `/public/{orgSlug}/{slug}`.** The fixed `/public` prefix stays clear of app routes. Portal slugs are unique **per organization**. This needs a new `organizations.slug`, globally unique, derived from the title and editable at creation, then **immutable**, because every shared link depends on it.
-- **Display modes.** A **branded shell** (org name + `logo_url`, no desk navigation, since an unauthenticated visitor can't use it) or **embed** (form only, iframe-friendly).
+## Status-change times — a read route for when ideas moved
+
+> Raised 2026-09-30 by slice 132. **User decision 2026-09-30:** Home's *Completed · 30d* tile, the
+> "a week without moving" filter and *Recent activity* stay as "not tracked yet" placeholders for
+> now; this is the later fix.
+
+All three need to know when an idea's status changed. Only `audit_events` records that
+(`IdeaStatusChanged`), and no route reads it. The idea: a read-only route over those events, scoped
+to the caller's organization and role, that Home can ask for recent moves and for ideas unmoved
+since a date. It overlaps the Loop's org activity feed above; build one route that serves both.
+
+## Portals — public and seatless submissions via public links
+
+*Refined 2026-09-28 in an ideation session; audience widened and embed code added 2026-09-30. Comp: `mockups/comp-s-portal-form.html` (branded-shell mode, Terrazzo).*
+
+**How might we** let people without a Collega account (employees without a seat, or the general public) submit ideas that arrive structured enough to triage without chasing the submitter, from a shareable or embeddable link, without turning an anonymous write endpoint into an abuse channel?
+
+For **anyone without an account**. That includes an internal suggestion box for employees without seats, and a public one for customers, citizens or any outside audience. The mechanism is the same either way: a portal is publicly reachable by URL, and the org decides who gets the link and whether to add a passphrase. Success is **quality, not volume**: submissions a triager can act on without a follow-up conversation.
+
+- **Portal.** An Org Admin creates one with a title, a slug, a target **idea type**, which of that type's fields to show (each visible/required, with portal-specific help text), and an **optional** passphrase. The "form" is portal configuration over an existing idea type, not a new form-builder concept.
+- **URL: `{domain}/public/{orgSlug}/{slug}`, publicly reachable with no sign-in.** The fixed `/public` prefix stays clear of app routes, so no org slug needs reserving (2026-09-30: `/{orgSlug}/public/{slug}` was considered and rejected for that reason). Portal slugs are unique **per organization**. This needs a new `organizations.slug`, globally unique, derived from the title and editable at creation, then **immutable**, because every shared link depends on it.
+- **Two ways to present one portal.** The link opens a **branded shell** (org name + `logo_url`, no desk navigation, since an unauthenticated visitor can't use it). An **embed** variant of the same URL renders the form only, for iframes. Every portal offers both, so this isn't a per-portal setting.
+- **Embed code generator.** The portal's Settings page has a **Get embed code** action that produces a copyable snippet, for example `<iframe src="{domain}/public/{orgSlug}/{slug}?embed=1" title="{portal title}" width="100%" height="…" style="border:0" loading="lazy"></iframe>`, so an external party can paste it into their own site. The embed variant should report its content height to the parent page (`postMessage`), so a host page can size the frame without a scrollbar. The exact query parameter or path is settled at spec time.
 - **Guided form.** It follows the structured-idea shape (problem → proposed solutions → impact) with inline examples and a completeness meter. **Only the title is always required**; everything else is per-portal configuration. The meter, not validation, pushes for quality.
 - **Optional name and email**, so a triager can follow up. No account is created.
 - **Triage queue, not a board.** Submissions appear as a **tab or filter on the Ideas list**. **Org Admins only** accept or reject. Accepting means filling in what the submitter couldn't know (board, status, business impact, priority and any missing required fields); the accepter becomes the idea's author, and the submitter's name and email stay on the submission record and show on the idea. The queue is what makes this fit: `ideas` requires an author, board, status and impact, and keeping submissions separate until accepted avoids a nullable-author or placeholder-user hack.
-- **Passphrase** is a speed bump against casual outsiders, not access control. Entered once per browser session.
+- **Passphrase is optional.** It's off for a public portal and on for an internal one where casual outsiders should be kept out. It's a speed bump, not access control, and is entered once per browser session.
 
-**Settled in the session:** Org-Admin-only triage; queue on the Ideas list; title-only minimum; rejected submissions **soft-deleted and kept indefinitely**; **any site may embed**; a disabled portal keeps its slug (only deleting frees it); **no attachments** in the MVP.
+**Settled in the session:** Org-Admin-only triage; queue on the Ideas list; title-only minimum; rejected submissions **soft-deleted and kept indefinitely**; **any site may embed**; a disabled portal keeps its slug (only deleting frees it); **no attachments** in the MVP. **2026-09-30:** the general public is a supported audience, not just employees without seats; the passphrase is optional; one portal serves both the branded link and the embed; embed code is generated in Settings.
 
-**MVP scope:** portal CRUD in Settings; per-portal field overrides; passphrase; both display modes; a rate-limited anonymous submit endpoint; queue accept/reject; enable/disable. A schema amendment (`organizations.slug`, `portals`, `portal_fields`, `portal_submissions`) recorded in `SPEC/decisions.md`, and contracts in `SPEC/30-Contracts.md`.
+**MVP scope:** portal CRUD in Settings; per-portal field overrides; optional passphrase; branded shell and embed variant of every portal; embed-code generator; a rate-limited anonymous submit endpoint; queue accept/reject; enable/disable. A schema amendment (`organizations.slug`, `portals`, `portal_fields`, `portal_submissions`) recorded in `SPEC/decisions.md`, and contracts in `SPEC/30-Contracts.md`.
 
 **Not doing:** a reusable form builder (idea type + overrides covers it); AI-assisted intake (cost and prompt-injection surface on an anonymous endpoint, and the scope gate is currently unmeasurable); the full desk frame; email receipts or status notifications (outbound email is deferred); a submitter status page or receipt codes (closing the loop isn't the goal yet); captcha, SSO or domain-verified email; "similar ideas" suggestions while typing (would leak internal ideas to anonymous visitors); merging with read-only board share links above (same primitive family, separate scope).
 
-**Assumptions to validate:** guided prompts beat free text (run ~10 real ideas through the comp); Org Admins will actually work the queue (watch queue age); links stay internal, so a passphrase is enough; enough submitters leave an email to make follow-up real; one idea type per portal covers real use.
+**Assumptions to validate:** guided prompts beat free text (run ~10 real ideas through the comp); Org Admins will actually work the queue (watch queue age); a rate limit alone keeps a public, passphrase-free portal's queue workable; enough submitters leave an email to make follow-up real; one idea type per portal covers real use.
 
-**The anonymous write surface is the real risk, and it is new.** Every anonymous endpoint today is auth; this is the first that writes organization data. Its only bound is the auth rate limiter's design, which is per warm instance on serverless — the same limitation `SPEC/30-Contracts.md` already records. A spam run lands in a queue an admin must clear by hand. It belongs with the shared-store work the lockout and rate-limit items already wait on.
+**The anonymous write surface is the real risk, and it is new.** Every anonymous endpoint today is auth; this is the first that writes organization data. Its only bound is the auth rate limiter's design, which is per warm instance on serverless — the same limitation `SPEC/30-Contracts.md` already records. A spam run lands in a queue an admin must clear by hand. It belongs with the shared-store work the lockout and rate-limit items already wait on. **Supporting the general public sharpens this:** a public, passphrase-free portal embedded on a busy site will be found by bots, so "no captcha" in the Not doing list should be re-read before the spec. A honeypot field and a minimum fill time are cheap first steps that need no new dependency.
 
 **Three settled answers carry costs worth re-reading before a spec:**
-- **Indefinite retention of rejected submissions keeps personal data (name, email) with no purge.** Fine with no tenants; a first real tenant may need a retention period or an erase path.
+- **Indefinite retention of rejected submissions keeps personal data (name, email) with no purge.** Fine with no tenants; a first real tenant may need a retention period or an erase path. Public submitters make this more pressing, since they're members of the public and not employees under an existing agreement.
 - **Any site may embed** means a hostile page can frame the form. The blast radius is small (it only accepts submissions, and no session exists to hijack), but it rules out `frame-ancestors` as a defense later without a migration of existing embeds.
 - **A title-only minimum** works against the quality goal. The meter is the bet; if accepted submissions still need chasing, the fix is per-portal required fields, which the configuration already allows.
+
+## Goals — board key results with a closed loop to shipped ideas
+
+*Refined 2026-09-30 in an ideation session. Post-MVP; picked as the first of the 2026-09-30 batch because it is the differentiator from a generic idea board. No customer is pulling for it yet.*
+
+**How might we** tie a board's ideas to a measurable outcome ("improve X by Y") so triage asks "does this move the number?" and leaders can see shipped ideas beside the number's movement?
+
+**Recommended direction: a staged closed loop.**
+
+- **Stage 1: board key results.** A board carries one or more **Key Results**, each with a statement, unit, baseline, target and current value. The current value is updated by a manual **check-in log** (value, date, note, author) and drawn as a sparkline in the board header. Ideas link to one or more of their board's KRs.
+- **Stage 2: challenges.** A portal can target a KR. Its form leads with the goal ("Help us cut wait times from 14 → 10 min") and submissions arrive pre-linked. Idea-management tools sell this as campaigns or challenges, so it is table stakes there, but new for a board tool.
+- **Stage 3: the closed loop.** When a linked idea reaches a Complete-category status, the KR owner is prompted to check in, and the KR timeline marks the shipped idea beside the value.
+- **Org-level Objectives** are an optional parent for board KRs (OKR vocabulary), added later without migration.
+
+**The honest claim is correlation on one timeline, never per-idea attribution.** With hand-entered values, Collega can show that ideas shipped and the number moved. It cannot show that one caused the other.
+
+**Assumptions to validate:** KR owners check in on a cadence (pilot one program for 6 weeks and count check-ins); goal-framed portals yield better submissions than open ones (~10 real ideas through both framings); leaders value "shipped vs. the number" (a mocked timeline shown to 3 prospective buyers).
+
+**MVP scope (Stage 1):** KR CRUD on a board (Org Admin and board owner); check-in log; board-header sparkline and progress; idea ↔ KR links on the idea drawer; filter the Ideas list by KR. A schema amendment (`key_results`, `key_result_checkins`, `idea_key_results`) recorded in `SPEC/decisions.md`.
+
+**Not doing:** per-idea contribution percentages (manual data can't support causal attribution); automatic measurement from external systems (waits for the integration layer below); org-level Objectives in Stage 1 (the board level tests the bet); check-in reminders by email (outbound email is deferred, so reminders ride Loop's in-app inbox); goal-weighted idea scoring (a ranking model before we know KRs get maintained).
+
+**Stale numbers are the likeliest failure.** Hand-updated KRs rot within about a quarter without a cadence and a reminder. That makes Stage 3 depend on **Status categories** (for "Complete") and **Loop** (for the in-app prompt), both above and both unbuilt.
+
+**Open questions:** who owns a KR (one named user, or the board owner by default)? Schedule Status categories and Loop before Stage 3, or ship its prompt as a banner on the idea drawer? Do Read Only users see KR values?
+
+## Teams and private boards
+
+*Captured 2026-09-30. Not yet refined. Anticipated need, no customer pulling.*
+
+**How might we** let an org keep some boards visible only to the people who should see them, without making admins manage access one board and one person at a time?
+
+- **Lean direction: private boards before teams.** Add a board visibility setting of *Org* or *Private*, with a member list of users. A **Team** is then just a named group of users you can add to that list. Per-idea permissions are out.
+- **The cost is cross-cutting, not local.** Every read that lists or aggregates ideas has to filter by visibility: Home, search, mentions, member and assignee pickers, portal routing to a board, CSV import, audit views, and View As.
+- **Open:** do Org Admins always see private boards? Can a private board be the target of a public portal?
+
+## Integration suite
+
+*Captured 2026-09-30. Not yet refined. A major post-MVP goal: Jira, Zapier, ServiceDesk, Footprints and similar.*
+
+**How might we** add a new vendor integration in days rather than as a rewrite each time?
+
+- **Foundation first: webhooks + API tokens.** Build signed outbound webhooks from a domain-event outbox, plus org API tokens on the existing REST contracts. Zapier mostly works from that alone, and it covers the long tail of vendors.
+- **Then a connector port.** Native adapters (Jira first, when a customer pulls for one) implement one port that maps Collega events to vendor calls and back. Inbound sync lands in the intake-channel queue (see email intake below), not directly on a board.
+- **Open:** which direction matters first, pushing ideas out to delivery tools or pulling tickets in? Storing vendor credentials per org is the same problem tracker rule 30 deliberately left unsolved for AI credentials, so it needs its own decision.
+
+## Email submission
+
+*Captured 2026-09-30. Not yet refined.*
+
+**How might we** accept ideas from an inbox when the only reliable fields are subject and body?
+
+- **Treat email as a second intake channel for Portals**, not a separate feature. Each portal gets an inbound address. Subject maps to title, body to description, and sender to the submitter's name and email.
+- **Per-channel defaults** (board, status, assignee, business impact, priority, other required fields) prefill the accept form in the triage queue. An optional **auto-accept with defaults** switch serves trusted sources. The queue already solves the problem that `ideas` requires an author, board, status and impact.
+- **Open:** inbound mail provider (a new dependency and a new cost); how to handle attachments (Portals has none in the MVP); spoofed senders, since an email address is not identity; and whether replies to the same thread are ignored or attached as comments.
+
+## Act-As opt-out for sensitive organizations
+
+*Captured 2026-09-30. Not yet refined. Builds on `SPEC/20-feature-view-as.md`.*
+
+**How might we** let an org holding sensitive information keep the platform operator out of its data?
+
+- **Direction chosen 2026-09-30:** an org-level setting, owned by the Org Admin, that stops Site Admins from starting View As sessions for that org's users. If support is needed, the Org Admin turns it back on temporarily. Turning it on and off is audited.
+- **Word it honestly.** It stops operator access *through the product*, not database access, so the setting should read "Site Admins can't view as users in this org", not "your data is sealed".
+- **New-org setup depends on View As.** A Site Admin cannot write directly and fills a new org by acting as its Org Admin, so the setting should only be available once the org has an active Org Admin.
+- **Open:** does it also cover an Org Admin acting as users inside their own org? Is emergency access ever needed (a break-glass path, audited and notified), or is "the org turns it back on" enough?
+
+## Showcase demo organizations — one org per use case, for sales demos
+
+*Refined 2026-09-30 in an ideation session. Revisits the demo seed (`packages/infrastructure/src/demo-seed/`).*
+
+**How might we** show a prospect, in a few minutes, that one Collega fits very different kinds of team just through configuration (statuses, idea types, custom fields, tags and boards)?
+
+For **sales demos to prospects**: each org is a story a presenter walks someone through. Success is that each org feels like a different product. It has its own vocabulary, workflow and content, not the default catalog with a new name.
+
+**The five orgs:**
+
+| Org | Use case | Story |
+|---|---|---|
+| **Apex Manufacturing** | Business process improvement | A Lean/PDCA program, e.g. Identify → Analyze → Pilot → Standardize → Sustained |
+| **Beta Co** | General Trello-style boards | A small team running everything on simple boards: the "you don't have to configure anything" pitch |
+| **Rubicon Technology** | Product development | Discovery through release, with product-shaped idea types and fields |
+| **Gamma LLC** | Marketing agency | Client work and campaigns, with client and channel as fields or tags |
+| **Delta Inc** | Support queue | New → Triaged → In progress → Waiting on customer → Resolved, with a Severity field |
+
+"ACME Co" was renamed to **Apex Manufacturing** because **Acme Robotics** stays (below), and two Acmes in the org and View As pickers would confuse a demo.
+
+**Recommended direction.**
+
+- **A flagged showcase seed.** `db:seed` stays exactly as it is. A flag (e.g. `db:seed --showcase` or `SEED_SHOWCASE=1`) adds the five orgs on top. **Acme Robotics and Blue Harbor Logistics stay as the test fixture**: about 60 golden fixtures, the E2E suite and `apps/web`'s test fixtures reference them by slug, and the golden corpus cannot be re-recorded. Keeping the showcase out of the default seed also keeps it out of every test cycle, so demo content can change without breaking a test.
+- **Deep configuration per org.** Each org has its own statuses, idea types, custom fields and tags; 15–20 domain-credible ideas with comments and assignees; and users in every role from Org Admin to Read Only.
+- **A demo script per org**, kept beside its data (e.g. "sign in as Delta's agent, open the P1 that has been Waiting on customer longest, show the drawer, then act as the Read Only user"). The data is shaped so every beat of the script is true.
+- **Catalogs shaped to be liftable.** Each vertical's statuses, idea types, fields and tags are one named constant **inside the seed**, not in `@collega/application`. They are the natural content for **Org bootstrap templates** option B (above), but putting them in application code would commit the product to a feature that entry deliberately parked. Lifting them later is a file move.
+
+**Assumptions to validate:**
+
+- **A demo environment exists.** The seed refuses production by design, so a prospect demo needs a non-production deployment (a Vercel preview or staging environment with its own database) that someone seeds and keeps alive. No spec covers that yet, and without it the showcase is local-only. **This is the likeliest thing to sink the idea.**
+- **Scripts stay true.** One smoke test should seed the showcase and assert each script's key facts (the P1 exists and is the oldest waiting item, and so on), not just that seeding succeeds.
+- **Content quality is the product.** Generic ideas reused across five orgs would undercut the pitch. The writing, roughly 80–100 domain-credible ideas, is the real cost, not the code.
+
+**MVP scope:** the flag; five orgs with catalogs, users in every role, boards, ideas, comments and assignees; one demo script per org; a smoke test for seeding and each script's key facts. It needs no schema change and no new route.
+
+**Not doing:** replacing or renaming Acme Robotics and Blue Harbor (breaks the golden corpus); an org-template picker at org creation (Org bootstrap templates stays parked until its own trigger fires); moving catalogs into `@collega/application` (pre-commits to that feature); backdated, time-shaped activity (it needs an injected clock through the seed, so it comes later and matters most for Delta's ageing story); showcase content for unbuilt features such as Goals and Portals (add each as it ships, e.g. a key result on Apex).
+
+**Open questions:** where the demo environment lives and who re-seeds it; whether the Development-only guard should allow a named demo environment; how many boards each org needs (Gamma may want one per client; Beta should stay minimal); and the user naming scheme (today's `orgadmin@{slug}.demo.collega.test` with one shared password, or named personas per org).
+
 ## Comps D / E / F — alternate shells, not adopted
 
 *Recorded 2026-08-27. **Comp C "Fluent Editorial" remains locked** — these are not implementation targets.*

@@ -39,6 +39,14 @@ const PATHS = {
   desc: <path d="M8 10l4 4 4-4" />,
   prev: <path d="m15 6-6 6 6 6" />,
   next: <path d="m9 6 6 6-6 6" />,
+  bell: (
+    <>
+      <path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z" />
+      <path d="M10 20a2 2 0 0 0 4 0" />
+    </>
+  ),
+  check: <path d="m5 12 5 5 9-10" />,
+  grip: <path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01" strokeWidth="3" />,
 } as const
 
 export type IconName = keyof typeof PATHS

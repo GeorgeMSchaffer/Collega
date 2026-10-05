@@ -1,6 +1,6 @@
 # Sprint 12 — Prompt-eval runner
 
-**Status:** Slices 113–115, 117 and 118 are merged. Slice 116, the v1 baseline, remains, blocked on the dedicated evaluation key (`PROMPT_EVAL_ANTHROPIC_API_KEY`). *(Updated 2026-09-29; this said "Not started", planned 2026-09-28.)*
+**Status:** Complete. Slices 113–118 are merged; slice 116 recorded the v1 baseline on 2026-09-30 and the user confirmed the thresholds against it (`SPEC/decisions.md` 2026-09-30). *(Updated 2026-09-30; this said "Not started", planned 2026-09-28.)*
 
 **Goal:** a TypeScript runner for the `tools/prompt-eval` corpus that measures the live v1 idea
 assistant, commits a baseline, compares a candidate prompt against it, and is ready to measure v2

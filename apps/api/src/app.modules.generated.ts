@@ -8,6 +8,8 @@ import { BusinessImpactsModule } from './business-impacts/business-impacts.modul
 import { CommentsModule } from './comments/comments.module.js'
 import { DemoSeedModule } from './demo-seed/demo-seed.module.js'
 import { FieldDefinitionsModule } from './field-definitions/field-definitions.module.js'
+import { FieldsetsModule } from './fieldsets/fieldsets.module.js'
+import { FollowingModule } from './following/following.module.js'
 import { IdeaTypesModule } from './idea-types/idea-types.module.js'
 import { IdeasModule } from './ideas/ideas.module.js'
 import { IssueTasksModule } from './issue-tasks/issue-tasks.module.js'
@@ -28,6 +30,8 @@ export const FEATURE_MODULES = [
   CommentsModule,
   DemoSeedModule,
   FieldDefinitionsModule,
+  FieldsetsModule,
+  FollowingModule,
   IdeaTypesModule,
   IdeasModule,
   IssueTasksModule,

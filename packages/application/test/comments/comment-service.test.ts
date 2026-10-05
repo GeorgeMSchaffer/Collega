@@ -89,6 +89,8 @@ function commentHarness(options: {
   ideas?: readonly IdeaSummary[]
   comments?: readonly Comment[]
   usersByEmail?: Emails
+  /** Overrides who follows IDEA_A; by default the author and assignees do. */
+  followerIds?: readonly string[]
 }) {
   const ideasById = new Map((options.ideas ?? [ideaSummary()]).map((i) => [i.id, i]))
   const commentsById = new Map((options.comments ?? []).map((c) => [c.id, c]))
@@ -151,6 +153,15 @@ function commentHarness(options: {
     service: new CommentService(
       comments,
       ideas,
+      {
+        // The author and assignees follow automatically, so they stand in for the followers.
+        async listFollowerIds(id) {
+          const found = ideasById.get(id)
+          return (
+            options.followerIds ?? (found ? [found.authorUserId, ...found.assigneeUserIds] : [])
+          )
+        },
+      },
       users,
       {
         async notify(input) {
@@ -341,7 +352,7 @@ describe('CommentService notifications', () => {
     ])
   })
 
-  it('sends both a mention and a follower notification to someone who is both', async () => {
+  it('sends only the mention to someone who is both mentioned and a follower', async () => {
     const { service, notifications } = commentHarness({
       currentUser: member(ORG_A, 'commenter-1'),
       usersByEmail: { 'ann@acme.test': userSummary({ id: AUTHOR }) },
@@ -349,7 +360,9 @@ describe('CommentService notifications', () => {
 
     await service.create(IDEA_A, { body: 'Hi', mentionEmails: ['ann@acme.test'] })
 
-    expect(notifications.filter((n) => n.recipientUserId === AUTHOR)).toHaveLength(2)
+    expect(
+      notifications.filter((n) => n.recipientUserId === AUTHOR).map((n) => n.eventType),
+    ).toEqual([NotificationEventType.CommentMention])
   })
 
   it('does not notify the commenter when they are the idea author', async () => {
@@ -358,6 +371,89 @@ describe('CommentService notifications', () => {
     await service.create(IDEA_A, { body: 'Hi', mentionEmails: null })
 
     expect(notifications).toHaveLength(0)
+  })
+
+  it('notifies a follower who is neither author nor assignee, and not a non-following author', async () => {
+    const { service, notifications } = commentHarness({
+      currentUser: member(ORG_A, 'commenter-1'),
+      followerIds: ['watcher-1'],
+    })
+
+    await service.create(IDEA_A, { body: 'Hi', mentionEmails: null })
+
+    expect(notifications.map((n) => [n.eventType, n.recipientUserId])).toEqual([
+      [NotificationEventType.CommentAdded, 'watcher-1'],
+    ])
+  })
+
+  it('does not notify a commenter who follows the idea', async () => {
+    const { service, notifications } = commentHarness({
+      currentUser: member(ORG_A, 'commenter-1'),
+      followerIds: ['commenter-1', 'watcher-1'],
+    })
+
+    await service.create(IDEA_A, { body: 'Hi', mentionEmails: null })
+
+    expect(notifications.map((n) => n.recipientUserId)).toEqual(['watcher-1'])
+  })
+
+  it('writes one row per follower even if the follower list repeats them', async () => {
+    const { service, notifications } = commentHarness({
+      currentUser: member(ORG_A, 'commenter-1'),
+      followerIds: ['watcher-1', 'watcher-1'],
+    })
+
+    await service.create(IDEA_A, { body: 'Hi', mentionEmails: null })
+
+    expect(notifications).toHaveLength(1)
+  })
+
+  it('treats the View As target as the commenter: not notified, nor the administrator', async () => {
+    const { service, notifications } = commentHarness({
+      currentUser: impersonating({
+        targetUserId: 'target-1',
+        targetRole: Role.User,
+        targetOrganizationId: ORG_A,
+        realUserId: 'site-admin-1',
+      }),
+      followerIds: ['target-1', 'watcher-1'],
+    })
+
+    await service.create(IDEA_A, { body: 'Hi', mentionEmails: null })
+
+    expect(notifications.map((n) => [n.recipientUserId, n.actorUserId])).toEqual([
+      ['watcher-1', 'target-1'],
+    ])
+  })
+
+  it('carries the idea title, board and organization on each event', async () => {
+    const { service, notifications } = commentHarness({
+      currentUser: member(ORG_A, 'commenter-1'),
+      followerIds: ['watcher-1'],
+    })
+
+    await service.create(IDEA_A, { body: 'Hi', mentionEmails: null })
+
+    expect(notifications[0]).toMatchObject({
+      organizationId: ORG_A,
+      boardId: 'board-a',
+      ideaId: IDEA_A,
+      ideaTitle: 'An idea',
+    })
+  })
+
+  it('writes no notification when the comment is refused', async () => {
+    const { service, notifications } = commentHarness({
+      currentUser: member(ORG_A, 'commenter-1'),
+      ideas: [ideaSummary({ id: IDEA_B, organizationId: ORG_B })],
+      followerIds: ['watcher-1'],
+    })
+
+    await expect(service.create(IDEA_B, { body: 'Hi', mentionEmails: null })).rejects.toThrow(
+      NotFoundError,
+    )
+
+    expect(notifications).toEqual([])
   })
 })
 

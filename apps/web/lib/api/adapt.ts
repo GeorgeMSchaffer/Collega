@@ -9,7 +9,7 @@
  * identity — which is what makes it testable without a server.
  */
 
-import { DELIVERY_STATUSES } from '../display'
+import { DELIVERY_STATUSES, relativeTime } from '../display'
 import { roleLabel } from '../roles'
 import type {
   BoardOverview,
@@ -17,16 +17,19 @@ import type {
   CurrentUser,
   Effort,
   FieldDefinition,
+  Fieldset,
   Idea,
   IdeaDetail,
   IdeaFormField,
   IdeaType,
   ImportOutcome,
+  InboxItem,
   Issue,
   IssueTask,
   IssueTaskState,
   Member,
   MemberOption,
+  NotificationEventType,
   Organization,
   Person,
   PersonRef,
@@ -46,6 +49,7 @@ import type {
   WireDeliveryCard,
   WireEffectiveField,
   WireFieldDefinition,
+  WireFieldset,
   WireIdeaAssignee,
   WireIdeaComment,
   WireIdeaDetail,
@@ -54,6 +58,7 @@ import type {
   WireIdeaType,
   WireIssueTask,
   WireMember,
+  WireNotification,
   WireOrganizationListItem,
   WireSprint,
   WireStatus,
@@ -234,6 +239,30 @@ export function toIdeaType(wire: WireIdeaType): IdeaType {
     id: wire.ideaTypeId,
     name: wire.name,
     curatedFieldCount: wire.fieldMode === 'Curated' ? wire.fields.length : null,
+    fields: [...wire.fields]
+      .sort((a, b) => a.displayOrder - b.displayOrder)
+      .map((field) => ({
+        fieldDefinitionId: field.fieldDefinitionId,
+        isRequired: field.isRequired,
+      })),
+    fieldsets: (wire.fieldsets ?? []).map((set) => ({ id: set.id, name: set.name })),
+  }
+}
+
+export function toFieldset(wire: WireFieldset): Fieldset {
+  return {
+    id: wire.fieldsetId,
+    name: wire.name,
+    description: wire.description,
+    usedByIdeaTypeCount: wire.usedByIdeaTypeCount,
+    fields: [...wire.fields]
+      .sort((a, b) => a.displayOrder - b.displayOrder)
+      .map((field) => ({
+        id: field.fieldDefinitionId,
+        name: field.name,
+        fieldType: field.fieldType,
+        isActive: field.isActive,
+      })),
   }
 }
 
@@ -393,6 +422,24 @@ export function toIdeaDetail(wire: WireIdeaDetail): IdeaDetail {
       value: field.value ?? '',
     })),
     comments: wire.comments.map(toComment),
+    isFollowing: wire.isFollowing,
+    followerCount: wire.followerCount,
+  }
+}
+
+/** An inbox row, with its time made relative to `now` (injected, so it is testable). */
+export function toInboxItem(wire: WireNotification, now: Date): InboxItem {
+  return {
+    id: wire.notificationId,
+    eventType: wire.eventType as NotificationEventType,
+    ideaId: wire.ideaId,
+    ideaTitle: wire.ideaTitle,
+    actor: toPerson(wire.actor),
+    statusName: wire.statusName,
+    boardName: wire.boardName,
+    occurredAtUtc: wire.occurredAtUtc,
+    when: relativeTime(new Date(wire.occurredAtUtc), now),
+    unread: wire.readAtUtc === null,
   }
 }
 

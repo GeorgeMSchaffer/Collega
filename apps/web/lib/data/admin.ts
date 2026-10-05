@@ -2,11 +2,10 @@
  * The administration surfaces: organizations, members, idea types, fields, the profile, the user
  * import, and the two AI settings screens plus their usage meter.
  *
- * Organizations and members are real now; the catalogs and the AI screens are still fixtures.
+ * Every reader here calls the API.
  *
- * `getUsage` returns the rows and the totals together. The totals are derived from the rows, and
- * deriving them here rather than in each caller is what stops the budget card and the table footer
- * disagreeing — they render side by side on the same screen.
+ * `getUsage` returns the rows and the totals together, both as the API summed them, so the budget
+ * card and the table footer — side by side on the same screen — cannot disagree.
  *
  * ## One page, and no pager
  *
@@ -17,12 +16,24 @@
  * filters comp P specifies are what it is waiting on.
  */
 
-import { toFieldDefinition, toIdeaType, toMember, toOrganization, toProfile } from '../api/adapt'
+import {
+  toFieldDefinition,
+  toFieldset,
+  toIdeaType,
+  toMember,
+  toOrganization,
+  toProfile,
+} from '../api/adapt'
 import { apiGet, apiPath } from '../api/client'
 import type {
+  WireAiAssistSettings,
+  WireAiPromptSettings,
+  WireAiUsageReport,
+  WireAiUsageSummary,
   WireCurrentUser,
   WireFieldDefinition,
   WireFieldDefinitionDetail,
+  WireFieldset,
   WireIdeaType,
   WireOrganizationDetail,
   WireOrganizationListItem,
@@ -31,37 +42,40 @@ import type {
   WireUserListItem,
 } from '../api/wire'
 import { API_MAX_PAGE_SIZE } from '../limits'
-import * as fixture from '../mock'
 import { currentUser } from '../session'
 import type {
+  AiAssistSettings,
+  AiPrompt,
   FieldDefinition,
   FieldDefinitionDetail,
+  Fieldset,
   IdeaType,
   Member,
   MemberDetail,
   Organization,
   OrganizationDetail,
   Profile,
+  Usage,
+  UsageRow,
 } from '../types'
 import { failIfRequested, resolve } from './latency'
 import { everyOrganization, organizationScope } from './scope'
 
-export type { Probe, PromptVersion, UsageRow } from '../mock'
-export {
-  compactTokens,
-  DAILY_TOKEN_BUDGET,
-  SCOPE_STATEMENT_MAX,
-  SYSTEM_PROMPT_MAX,
-  totalTokens,
-} from '../mock'
+export { AI_REDIRECT_MAX, SCOPE_STATEMENT_MAX, SYSTEM_PROMPT_MAX } from '../limits'
 export type {
+  AiAssistSettings,
+  AiPrompt,
   FieldDefinition,
+  Fieldset,
   IdeaType,
   ImportOutcome,
   ImportRow,
   Member,
   Organization,
   Profile,
+  PromptVersion,
+  Usage,
+  UsageRow,
 } from '../types'
 
 /**
@@ -120,6 +134,21 @@ export async function getMembers(): Promise<Member[]> {
   return pages.flatMap((page, index) =>
     page.items.map((item) => toMember(item, organizations[index]?.name ?? null)),
   )
+}
+
+/**
+ * An organization's Org Admins, filtered by the API (`role=OrgAdmin`) rather than here, so an
+ * organization with more users than one page is not misread as having none.
+ */
+export async function getOrgAdminsForOrganization(organizationId: string): Promise<Member[]> {
+  failIfRequested('getOrgAdminsForOrganization')
+
+  const page = await apiGet<WirePage<WireUserListItem>>(
+    'getOrgAdminsForOrganization',
+    apiPath`/organizations/${organizationId}/users?role=OrgAdmin&pageSize=${String(API_MAX_PAGE_SIZE)}`,
+  )
+
+  return page.items.map((item) => toMember(item, null))
 }
 
 /**
@@ -376,44 +405,163 @@ export async function getProfile(): Promise<Profile> {
  * form's own state: see `lib/server/admin-actions.ts` and `components/settings/user-import.tsx`.
  */
 
-export async function getAiAssist(): Promise<typeof fixture.aiAssist> {
+/**
+ * The caller's own organization's scope statement, and whether assist is on for the deployment.
+ *
+ * Only an Org Admin's screen calls this — a Site Admin's `/settings/ai-assist` has no organization to
+ * load — so the scope is the principal's organization. An empty statement is the normal case, not a
+ * missing one: it means "no narrowing beyond the active idea types".
+ */
+export async function getAiAssist(): Promise<AiAssistSettings> {
   failIfRequested('getAiAssist')
-  return resolve(fixture.aiAssist)
+
+  const scope = organizationScope()
+  if (scope === null) return { scopeStatement: '', available: false }
+
+  const settings = await apiGet<WireAiAssistSettings>(
+    'getAiAssist',
+    apiPath`/organizations/${scope}/ai-assist/settings`,
+  )
+  return { scopeStatement: settings.scopeStatement ?? '', available: settings.aiAssistAvailable }
 }
 
-export async function getAiPrompt(): Promise<{
-  prompt: typeof fixture.aiPrompt
-  probes: fixture.Probe[]
-  versions: fixture.PromptVersion[]
-}> {
+const PUBLISHED_AT = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'UTC',
+})
+
+/**
+ * The deployment's active system prompt and its history. Site Admin only, which the one screen that
+ * calls this already gates on.
+ *
+ * **No probe results.** The probes run against a draft on demand (`POST /ai-assist/prompt/probe`)
+ * and nothing stores their outcome, so there is nothing to read back before someone runs them.
+ */
+export async function getAiPrompt(): Promise<AiPrompt> {
   failIfRequested('getAiPrompt')
-  return resolve({
-    prompt: fixture.aiPrompt,
-    probes: fixture.aiProbes,
-    versions: fixture.promptVersions,
-  })
+
+  const prompt = await apiGet<WireAiPromptSettings>('getAiPrompt', apiPath`/ai-assist/prompt`)
+  return {
+    text: prompt.body,
+    outOfScopeRedirect: prompt.outOfScopeRedirect,
+    conversationClosedRedirect: prompt.conversationClosedRedirect,
+    version: prompt.version,
+    isBuiltInDefault: prompt.isBuiltInDefault,
+    versions: prompt.versions.map((version) => ({
+      version: version.version,
+      publishedAt: `${PUBLISHED_AT.format(new Date(version.createdAtUtc))} UTC`,
+      author: version.createdByDisplayName ?? 'Unknown',
+      active: version.isActive,
+    })),
+  }
 }
 
-export async function getUsage(): Promise<{
-  rows: fixture.UsageRow[]
-  conversations: number
-  tokens: number
-  estimatedCost: number
-  pctOfBudget: number
-}> {
+function toUsageRow(wire: WireAiUsageSummary): UsageRow {
+  const cachedTokens = wire.cacheReadInputTokens + wire.cacheCreationInputTokens
+  return {
+    organizationId: wire.organizationId,
+    organizationName: wire.organizationName,
+    conversations: wire.calls,
+    inputTokens: wire.inputTokens,
+    outputTokens: wire.outputTokens,
+    cachedTokens,
+    totalTokens: wire.inputTokens + wire.outputTokens + cachedTokens,
+    estimatedCost: wire.estimatedCost,
+  }
+}
+
+/**
+ * The window the usage screen reports: the current UTC day, which is the day the ceiling is
+ * measured on (rule 28a). The API defaults to the month, so the start is sent explicitly.
+ */
+function todayUtc(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
+/** Every organization's assist usage today, and the deployment's ceiling. Site Admin only. */
+export async function getUsage(): Promise<Usage> {
   failIfRequested('getUsage')
-  return resolve({
-    rows: fixture.usageRows,
-    conversations: fixture.usageTotals.conversations,
-    tokens: fixture.usageTotals.tokens,
-    estimatedCost: fixture.usageTotals.estimatedCost,
-    pctOfBudget: fixture.usageTotals.pctOfBudget,
-  })
+
+  const report = await apiGet<WireAiUsageReport>(
+    'getUsage',
+    apiPath`/ai-assist/usage?fromUtc=${todayUtc()}`,
+  )
+  const rows = report.organizations.map(toUsageRow)
+
+  return {
+    rows,
+    conversations: report.totals.calls,
+    tokens: rows.reduce((sum, row) => sum + row.totalTokens, 0),
+    estimatedCost: report.totals.estimatedCost,
+    dailyTokenLimit: report.dailyTokenLimit ?? 0,
+    tokensUsedToday: report.tokensUsedToday ?? 0,
+  }
 }
 
-export async function getUsageForOrganization(
-  organizationId: string,
-): Promise<fixture.UsageRow | null> {
+/** One organization's assist usage today, or null when it has none. */
+export async function getUsageForOrganization(organizationId: string): Promise<UsageRow | null> {
   failIfRequested('getUsageForOrganization')
-  return resolve(fixture.usageForOrganization(organizationId) ?? null)
+
+  const report = await apiGet<WireAiUsageReport>(
+    'getUsageForOrganization',
+    apiPath`/organizations/${organizationId}/ai-assist/usage?fromUtc=${todayUtc()}`,
+  )
+  const row = report.organizations[0]
+  return row ? toUsageRow(row) : null
+}
+
+/**
+ * The organization's fieldsets, ordered by name as the API returns them (`contracts/fieldsets.md`).
+ * A Site Admin belongs to no organization, so this answers empty for one; the cross-organization
+ * list is `getFieldsetsByOrganization`.
+ */
+export async function getFieldsets(): Promise<Fieldset[]> {
+  failIfRequested('getFieldsets')
+
+  const scope = organizationScope()
+  if (scope === null) return []
+
+  return fieldsetsFor(scope, 'getFieldsets')
+}
+
+/** Every organization's fieldsets, for the cross-organization list a Site Admin reads. */
+export async function getFieldsetsByOrganization(): Promise<
+  { organization: string; fieldsets: Fieldset[] }[]
+> {
+  failIfRequested('getFieldsetsByOrganization')
+
+  const organizations = await everyOrganization('getFieldsetsByOrganization')
+  return Promise.all(
+    organizations.map(async (organization) => ({
+      organization: organization.name,
+      fieldsets: await fieldsetsFor(organization.id, 'getFieldsetsByOrganization'),
+    })),
+  )
+}
+
+async function fieldsetsFor(organizationId: string, reader: string): Promise<Fieldset[]> {
+  const wire = await apiGet<readonly WireFieldset[]>(
+    reader,
+    apiPath`/organizations/${organizationId}/fieldsets`,
+  )
+  return wire.map(toFieldset)
+}
+
+/** One fieldset, for the screen that edits it; `null` when the caller has no organization. */
+export async function getFieldset(fieldsetId: string): Promise<Fieldset | null> {
+  failIfRequested('getFieldset')
+
+  const scope = organizationScope()
+  if (scope === null) return null
+
+  return toFieldset(
+    await apiGet<WireFieldset>(
+      'getFieldset',
+      apiPath`/organizations/${scope}/fieldsets/${fieldsetId}`,
+    ),
+  )
 }

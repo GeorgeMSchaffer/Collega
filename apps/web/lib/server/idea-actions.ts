@@ -2,7 +2,7 @@
 
 /**
  * The writes an idea supports: create or save one from the drawer's form, delete one, move a card
- * between lanes, toggle an upvote, post a comment.
+ * between lanes, toggle an upvote, post a comment, follow or unfollow.
  *
  * ## Identity, and why none of these reads the principal
  *
@@ -205,5 +205,28 @@ export async function addComment(_previous: ActionState, form: FormData): Promis
   }
 
   revalidateIdeaScreens(boardId)
+  return { error: null }
+}
+
+/**
+ * Follow or stop following an idea, as the caller (`SPEC/contracts/following.md`). Both verbs are
+ * idempotent, so a double press cannot leave the state the other way round. The toggle shows the
+ * new state at once and re-reads it from the detail; `/inbox` is revalidated too, since its drawer
+ * carries the same control.
+ */
+export async function setFollowing(
+  ideaId: string,
+  boardId: string,
+  follow: boolean,
+): Promise<ActionState> {
+  try {
+    if (follow) await apiPut(apiPath`/ideas/${ideaId}/follow`)
+    else await apiDelete(apiPath`/ideas/${ideaId}/follow`)
+  } catch (error) {
+    return { error: refusal(error) }
+  }
+
+  revalidateIdeaScreens(boardId)
+  revalidatePath('/inbox')
   return { error: null }
 }

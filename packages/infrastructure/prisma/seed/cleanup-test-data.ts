@@ -159,6 +159,7 @@ async function main(): Promise<void> {
       ['idea_assignees', () => prisma.idea_assignees.deleteMany({ where: byIdea })],
       ['idea_mentions', () => prisma.idea_mentions.deleteMany({ where: byIdea })],
       ['idea_upvotes', () => prisma.idea_upvotes.deleteMany({ where: byIdea })],
+      ['idea_followers', () => prisma.idea_followers.deleteMany({ where: byIdea })],
       ['idea_tags', () => prisma.idea_tags.deleteMany({ where: byIdea })],
       ['idea_field_values', () => prisma.idea_field_values.deleteMany({ where: byIdea })],
       ['issue_tasks', () => prisma.issue_tasks.deleteMany({ where: byIdea })],
@@ -176,9 +177,15 @@ async function main(): Promise<void> {
       ],
       ['boards', () => prisma.boards.deleteMany({ where: { id: { in: boardIds } } })],
       [
+        'idea_type_fieldsets',
+        () => prisma.idea_type_fieldsets.deleteMany({ where: { idea_types: org } }),
+      ],
+      [
         'idea_type_fields',
         () => prisma.idea_type_fields.deleteMany({ where: { idea_types: org } }),
       ],
+      ['fieldset_fields', () => prisma.fieldset_fields.deleteMany({ where: { fieldsets: org } })],
+      ['fieldsets', () => prisma.fieldsets.deleteMany({ where: org })],
       [
         'field_definition_options',
         () => prisma.field_definition_options.deleteMany({ where: { field_definitions: org } }),

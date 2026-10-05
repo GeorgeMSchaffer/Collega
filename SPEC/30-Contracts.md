@@ -100,6 +100,7 @@ contract states nothing for that item, and the conventions above apply.
 | Idea Field Option Contracts | [`contracts/idea-field-options.md`](contracts/idea-field-options.md) | `/organizations/{organizationId}/idea-types`, `/idea-types/{ideaTypeId}`, `/organizations/{organizationId}/business-impacts`, `/business-impacts/{businessImpactId}`. Merged from two sections of this name; the differences between them were decided 2026-09-28 (`SPEC/decisions.md`). |
 | User-Defined Field Contracts | [`contracts/field-definitions.md`](contracts/field-definitions.md) | `/organizations/{organizationId}/field-definitions` (and `/{id}`, `/reorder`). Written from the code 2026-09-29 (`SPEC/decisions.md`). |
 | Idea-Type Field Contracts | [`contracts/idea-type-fields.md`](contracts/idea-type-fields.md) | `/organizations/{organizationId}/idea-types/{ideaTypeId}/fields` and `/appearance`, `/organizations/{organizationId}/ideas/{ideaId}/idea-type` |
+| Fieldset Contracts | [`contracts/fieldsets.md`](contracts/fieldsets.md) | `/organizations/{organizationId}/fieldsets` (and `/{id}`, `/{id}/fields`). Specified 2026-10-04 (`SPEC/decisions.md`), before the code. |
 | Board Contracts | [`contracts/boards.md`](contracts/boards.md) | `/organizations/{organizationId}/boards`, `/boards/{boardId}` (and `/archive`, `/unarchive`, `/swimlanes/reorder`) |
 | Idea Contracts | [`contracts/ideas.md`](contracts/ideas.md) | `/boards/{boardId}/ideas` (and `/export`, `/import`, `/ai-draft`, `/ai-polish`), `/organizations/{organizationId}/ideas`, `/ideas/{ideaId}` (and `/status`) |
 | Delivery Contracts | [`contracts/delivery.md`](contracts/delivery.md) | `/ideas/{ideaId}/promote`, `/return-to-discovery`, `/delivery-status`, `/sprint`, `/delivery`; `/organizations/{organizationId}/delivery` |
@@ -109,7 +110,10 @@ contract states nothing for that item, and the conventions above apply.
 | Comment Contracts | [`contracts/comments.md`](contracts/comments.md) | `/ideas/{ideaId}/comments`, `/comments/{commentId}` |
 | Upvote Contracts | [`contracts/upvotes.md`](contracts/upvotes.md) | `/ideas/{ideaId}/upvote/toggle` |
 | AI Idea Assist Contracts | [`contracts/ai-assist.md`](contracts/ai-assist.md) | `/boards/{boardId}/idea-assist/turns`, `/ai-assist/*` (availability, prompt, usage), `/organizations/{organizationId}/ai-assist/*` (settings, usage) |
-| Notification Event Contract | [`contracts/notifications.md`](contracts/notifications.md) | No route: the internal notification event types and payload |
+| Following Contracts | [`contracts/following.md`](contracts/following.md) | `/ideas/{ideaId}/follow`. Added 2026-10-01 |
+| Notification Event Contract | [`contracts/notifications.md`](contracts/notifications.md) | The internal notification event types and payload; since 2026-10-01 the inbox: `/notifications` (and `/unread-count`, `/{notificationId}/read`, `/read-all`). Subsection: Notification Inbox Contracts |
+| Health Contract | [`contracts/health.md`](contracts/health.md) | `/health`. Written from the code 2026-09-29. |
+| Demo Seed Contracts | [`contracts/demo-seed.md`](contracts/demo-seed.md) | `/demo-seed`, `/demo-seed/reset`. Written from the code 2026-10-01; opt-in through `COLLEGA_ALLOW_DEMO_SEED` |
 
 ## Notes
 - API routes, request/response schemas, and validation rules should be defined here.

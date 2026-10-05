@@ -98,7 +98,7 @@ export const ideasAndUpvotesSeed: SeedModule = {
         let statusIndex = 0
         let ideasInStatus = 0
 
-        for (const [i, ideaScenario] of IDEA_SCENARIOS.entries()) {
+        for (const [i, ideaScenario] of (board.ideas ?? IDEA_SCENARIOS).entries()) {
           if (ideasInStatus === IDEAS_PER_STATUS[statusIndex]) {
             statusIndex++
             ideasInStatus = 0
@@ -119,7 +119,7 @@ export const ideasAndUpvotesSeed: SeedModule = {
           const dueDate =
             i % 3 === 0 ? null : new Date(now.getTime() + (7 + i) * 24 * 60 * 60 * 1000)
 
-          const details = IDEA_DETAILS_BY_FOCUS[board.focus]?.[i]
+          const details = board.ideas?.[i] ?? IDEA_DETAILS_BY_FOCUS[board.focus]?.[i]
           if (details === undefined) {
             throw new Error(`No Problem/solutions/rationale for idea ${i + 1} of '${board.focus}'.`)
           }
@@ -137,8 +137,10 @@ export const ideasAndUpvotesSeed: SeedModule = {
               organization_id: organizationId,
               board_id: boardId,
               status_id: seedId('status', scenario.slug, status.name),
-              title: `${board.focus}: ${ideaScenario.title}`,
-              description: `${ideaScenario.description} This scenario supports ${board.focus.toLowerCase()} at ${scenario.title}.`,
+              title: board.ideas ? ideaScenario.title : `${board.focus}: ${ideaScenario.title}`,
+              description: board.ideas
+                ? ideaScenario.description
+                : `${ideaScenario.description} This scenario supports ${board.focus.toLowerCase()} at ${scenario.title}.`,
               ...structured,
               priority: PRIORITIES[i % PRIORITIES.length] as (typeof PRIORITIES)[number],
               idea_type_id: seedId(
@@ -175,6 +177,25 @@ export const ideasAndUpvotesSeed: SeedModule = {
               where: { idea_id_user_id: { idea_id: ideaId, user_id: userId } },
               update: {},
               create: { id: seedId('assignee', ideaId, userId), idea_id: ideaId, user_id: userId },
+            })
+          }
+
+          // The author and every assignee follow, as creating the idea through the application
+          // would make them (SPEC/20-feature-idea-following.md rules 4-5 and 39).
+          const followerIds = new Set([authorUserId])
+          for (let offset = 1; offset <= relatedCount; offset++) {
+            followerIds.add(contributorIds[(i + offset) % contributorIds.length] as string)
+          }
+          for (const userId of followerIds) {
+            await prisma.idea_followers.upsert({
+              where: { idea_id_user_id: { idea_id: ideaId, user_id: userId } },
+              update: {},
+              create: {
+                id: seedId('follower', ideaId, userId),
+                idea_id: ideaId,
+                user_id: userId,
+                created_at_utc: createdAt,
+              },
             })
           }
 

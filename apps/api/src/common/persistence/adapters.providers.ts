@@ -21,7 +21,9 @@ import {
   PrismaBusinessImpactRepository,
   PrismaCommentRepository,
   PrismaFieldDefinitionRepository,
+  PrismaFieldsetRepository,
   PrismaIdeaFieldValuesRepository,
+  PrismaIdeaFollowerRepository,
   PrismaIdeaRepository,
   PrismaIdeaTypeRepository,
   PrismaIdeaUpvoteRepository,
@@ -94,6 +96,12 @@ const CONCRETE_ADAPTERS: Provider[] = [
     inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
   },
   {
+    provide: PrismaFieldsetRepository,
+    useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
+      new PrismaFieldsetRepository(prisma, uow),
+    inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
+  },
+  {
     provide: IdeaClassificationRepository,
     useFactory: (prisma: PrismaClient) => new IdeaClassificationRepository(prisma),
     inject: [PORT_TOKENS.PrismaClient],
@@ -115,6 +123,12 @@ const CONCRETE_ADAPTERS: Provider[] = [
     provide: PrismaIdeaTypeRepository,
     useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
       new PrismaIdeaTypeRepository(prisma, uow),
+    inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
+  },
+  {
+    provide: PrismaIdeaFollowerRepository,
+    useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
+      new PrismaIdeaFollowerRepository(prisma, uow),
     inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
   },
   {
@@ -288,8 +302,13 @@ const PORT_ALIASES: Provider[] = [
   { provide: PORT_TOKENS.CommentRepository, useExisting: PrismaCommentRepository },
   { provide: PORT_TOKENS.IdeaLookupPort, useExisting: IdeaLookupRepository },
   { provide: PORT_TOKENS.UsersPort, useExisting: PrismaUserRepository },
+  { provide: PORT_TOKENS.IdeaFollowersPort, useExisting: PrismaIdeaFollowerRepository },
+
+  { provide: PORT_TOKENS.IdeaFollowerRepository, useExisting: PrismaIdeaFollowerRepository },
 
   { provide: PORT_TOKENS.FieldDefinitionRepository, useExisting: PrismaFieldDefinitionRepository },
+
+  { provide: PORT_TOKENS.FieldsetRepository, useExisting: PrismaFieldsetRepository },
 
   { provide: PORT_TOKENS.IdeaTypeRepository, useExisting: PrismaIdeaTypeRepository },
 
@@ -315,6 +334,11 @@ const PORT_ALIASES: Provider[] = [
     provide: PORT_TOKENS.NotificationEventRepository,
     useExisting: PrismaNotificationEventRepository,
   },
+  {
+    provide: PORT_TOKENS.NotificationInboxRepository,
+    useExisting: PrismaNotificationEventRepository,
+  },
+  { provide: PORT_TOKENS.NotificationRecipientsPort, useExisting: PrismaUserRepository },
 
   { provide: PORT_TOKENS.OrganizationRepository, useExisting: PrismaOrganizationRepository },
   { provide: PORT_TOKENS.InviteCodeGenerator, useExisting: RandomInviteCodeGenerator },

@@ -43,14 +43,24 @@ const API_PORT = process.env.COLLEGA_E2E_API_PORT?.trim() || '3001'
  * no API running they fail *at render*, so a spec written over any of them failed however carefully
  * it was written. That was the gate on every product spec, and this config is F2 removing it.
  *
- * `global-setup.ts` drops and rebuilds a schema of its own before either server starts, so a run
- * begins from the seeded state rather than from whatever the last run left. It refuses to do that
- * to anything but a local `collega_e2e` schema; read its comments before pointing it anywhere.
+ * **Order matters here, and it is not the order this file reads in.** Playwright starts both
+ * `webServer` entries in parallel and waits for each one's `url` to answer; only then does it run
+ * `globalSetup`, and only after that the tests. So:
  *
- * **Order matters here.** Playwright starts `webServer` entries in parallel, so the web app may be
- * ready before the API is - but the web app renders nothing that fetches until a test navigates,
- * and each entry's own `url` is polled until it answers. The API's is its health endpoint, which
- * depends on nothing, so it answers as soon as the host is listening.
+ * 1. Each server builds what it runs as part of its own command. Global setup is too late to build
+ *    anything a server needs - it runs after the servers are up, which is how a fresh checkout came
+ *    to fail with no `apps/api/dist` to start.
+ * 2. `global-setup.ts` then drops, migrates and seeds the suite's own schema while the API is
+ *    already listening. That is safe because nothing has touched the database yet: the Prisma
+ *    client connects lazily on its first query (the API never calls `$connect` and runs no query at
+ *    boot), the readiness probe below is a route that needs no database, and no test runs until
+ *    global setup returns. A query at boot would break that, so keep boot database-free.
+ *
+ * `e2eDatabaseUrl()` below refuses anything but a local `collega_e2e` schema, so a bad URL stops the
+ * run here, before either server starts; read `database-url.ts` before pointing it anywhere.
+ *
+ * The web app may be ready before the API is, which does not matter: it renders nothing that
+ * fetches until a test navigates.
  */
 export default defineConfig({
   testDir: './tests',
@@ -113,19 +123,21 @@ export default defineConfig({
   webServer: [
     {
       // Built output rather than a watcher, matching `tools/local/start.ts`: nothing in a test run
-      // edits the API, and `global-setup.ts` has already built it.
-      //
-      // The same string global setup rebuilds, from the same function, so the server cannot end up
-      // pointed at a different schema than the one that was just seeded.
-      command: 'node apps/api/dist/bootstrap.js',
+      // edits the API. Built here, before it starts, because this command is the first thing
+      // Playwright runs - see the order above - and `collega-e2e` depends on no workspace package,
+      // so turbo's `^build` for this task builds nothing. Turbo caches, so a warm run costs seconds.
+      command: 'pnpm exec turbo run build --filter=@collega/api && node apps/api/dist/bootstrap.js',
       cwd: '..',
       // Health depends on nothing, so it answers the moment the host is listening - which is what
       // makes it the right readiness probe rather than a route that needs the database.
       url: `http://localhost:${API_PORT}/api/v1/health`,
-      timeout: 120_000,
+      // Covers a cold build of the API and every package beneath it, Prisma generate included.
+      timeout: 240_000,
       reuseExistingServer: !process.env.CI,
       stdout: 'ignore',
       stderr: 'pipe',
+      // The same DATABASE_URL global setup rebuilds, from the same function, so the server cannot
+      // end up pointed at a different schema than the one that was just seeded.
       env: {
         PORT: API_PORT,
         DATABASE_URL,

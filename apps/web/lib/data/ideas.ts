@@ -10,18 +10,20 @@
  * the ten rows that happened to arrive.
  */
 
-import { toIdea, toIdeaDetail, toIdeaFormField } from '../api/adapt'
+import { toIdea, toIdeaDetail, toIdeaFormField, toMemberOption } from '../api/adapt'
 import { apiGet, apiPath, isApiStatus, withQuery } from '../api/client'
 import type {
   WireBusinessImpact,
   WireIdeaDetail,
   WireIdeaListItem,
   WireIdeaType,
+  WireMember,
   WirePage,
 } from '../api/wire'
 import type { IdeaDetail, IdeaFormOptions, IdeaListQuery, IdeaPage } from '../types'
 import { failIfRequested } from './latency'
 import { organizationScope } from './scope'
+import { getTagRefs } from './tags'
 
 export type {
   Comment,
@@ -44,6 +46,8 @@ function listParams(query: IdeaListQuery): URLSearchParams {
   for (const id of query.statusIds) params.append('statusId', id)
   for (const priority of query.priorities) params.append('priority', priority)
   for (const tag of query.tags) params.append('tag', tag)
+  if (query.scope) params.set('scope', query.scope)
+  if (query.phase) params.set('phase', query.phase)
   if (query.sortBy) {
     params.set('sortBy', query.sortBy)
     params.set('sortDirection', query.sortDirection)
@@ -98,7 +102,10 @@ export async function getBoardIdeaList(boardId: string, query: IdeaListQuery): P
   return toPage(
     await apiGet<WirePage<WireIdeaListItem>>(
       'getBoardIdeaList',
-      withQuery(apiPath`/boards/${boardId}/ideas`, listParams({ ...query, boardIds: [] })),
+      withQuery(
+        apiPath`/boards/${boardId}/ideas`,
+        listParams({ ...query, boardIds: [], scope: undefined, phase: undefined }),
+      ),
     ),
   )
 }
@@ -111,9 +118,9 @@ export async function getIdeaFormOptions(): Promise<IdeaFormOptions> {
   failIfRequested('getIdeaFormOptions')
 
   const scope = organizationScope()
-  if (scope === null) return { ideaTypes: [], businessImpacts: [] }
+  if (scope === null) return { ideaTypes: [], businessImpacts: [], members: [], tags: [] }
 
-  const [ideaTypes, businessImpacts] = await Promise.all([
+  const [ideaTypes, businessImpacts, members, tags] = await Promise.all([
     apiGet<readonly WireIdeaType[]>(
       'getIdeaFormOptions',
       apiPath`/organizations/${scope}/idea-types`,
@@ -122,6 +129,8 @@ export async function getIdeaFormOptions(): Promise<IdeaFormOptions> {
       'getIdeaFormOptions',
       apiPath`/organizations/${scope}/business-impacts`,
     ),
+    apiGet<readonly WireMember[]>('getIdeaFormOptions', apiPath`/organizations/${scope}/members`),
+    getTagRefs(),
   ])
 
   return {
@@ -134,6 +143,8 @@ export async function getIdeaFormOptions(): Promise<IdeaFormOptions> {
       id: impact.businessImpactId,
       name: impact.name,
     })),
+    members: members.map(toMemberOption).sort((a, b) => a.name.localeCompare(b.name)),
+    tags,
   }
 }
 

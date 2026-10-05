@@ -19,7 +19,11 @@ Administrators manage organizations and users with clear role boundaries, in a d
 
 ## Organization Rules
 1. Organizations are the top-level ownership boundary for all business data.
-2. Only Site Admin can create organizations.
+2. Only Site Admin can create organizations, and **every organization is created with its first Org Admin**
+   (2026-10-04, `SPEC/decisions.md` "An organization is created with its first Org Admin"): the create
+   form requires their name, email and initial password, and is refused before anything is created when
+   one is missing. The organization's page lists its Org Admins, warns when none is active, and offers
+   **Add Org Admin** (Add New User preset to that organization and role).
 3. Creating an organization requires only a Title and Description; a Logo Address (URL) is optional.
 4. When an organization is created, the system automatically generates a unique Invite Code for that organization.
 5. The Invite Code is displayed in both the organization list view and the organization detail page.
@@ -36,8 +40,8 @@ Administrators manage organizations and users with clear role boundaries, in a d
 16. Authenticated admin surfaces use a primary-blue header with a `150px` left brand zone and logo in the top-left.
 17. The header exposes a logout icon, and admin-authorized users also see a gear icon that navigates to the Admin homepage.
 18. Breadcrumb navigation is shown directly below the header.
-19. In Development, startup seed creates exactly 2 demo organizations with realistic profile data for walkthrough and validation.
-20. Each demo organization owns exactly one Org Admin and two User accounts. The single global Site Admin remains organization-independent and no Read Only account is included in the demo seed.
+19. In Development, startup seed creates 5 demo organizations (the fixture pair plus three vertical ones; `SPEC/decisions.md` 2026-10-04) with realistic profile data for walkthrough and validation.
+20. Each demo organization owns exactly one Org Admin, two User accounts and one Read Only account. The single global Site Admin remains organization-independent.
 
 ## Organization Fields
 - Title (required, max 200 characters)
@@ -114,7 +118,7 @@ Users can be added to an organization through three paths:
 9. Administrators handle password reset by issuing temporary passwords in P1.
 10. User accounts support `Active` and `Inactive` states only in MVP.
 11. Organization changes, user changes, role changes, account status changes, invite code regeneration, self-registrations, and CSV imports must be audited.
-12. Development startup seed creates one Org Admin and two User accounts in each seeded demo organization. The global Site Admin is not organization-owned and is not counted among those three organization users.
+12. Development startup seed creates one Org Admin, two User accounts and one Read Only account in each seeded demo organization. The global Site Admin is not organization-owned and is not counted among them.
 13. Every authenticated user can update their own First Name and Last Name; self-service profile editing cannot change Email, Role, Organization, or Status.
 
 ## User Fields
@@ -134,7 +138,7 @@ User profile text fields are trimmed before validation and persistence.
 - **Read Only**: limited participant
 
 ## Acceptance Criteria
-- [ ] Site Admin can create organizations with only a Title, Description, and optional Logo Address
+- [ ] Site Admin can create organizations with a Title, Description, optional Logo Address, and the required first Org Admin
 - [ ] Org Admin cannot create organizations
 - [ ] A unique Invite Code is generated automatically when an organization is created
 - [ ] The Invite Code is visible in the organization list view and the organization detail page
@@ -155,7 +159,7 @@ User profile text fields are trimmed before validation and persistence.
 - [ ] Board header displays the current organization logo with rendered height no greater than `150px`
 - [ ] Site Admin can manage users across organizations
 - [ ] Org Admin can manage users only in their organization
-- [ ] Development startup seed creates exactly 2 demo organizations
+- [ ] Development startup seed creates 5 demo organizations
 - [ ] Each demo organization includes exactly one seeded Org Admin and two seeded User accounts
 - [ ] Site Admin is not required to belong to an organization
 - [ ] User email is available for collaboration features that resolve mentions

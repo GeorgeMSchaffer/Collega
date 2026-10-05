@@ -1,7 +1,7 @@
 'use client'
 
-import { Alert, EffortBar, TagChip } from '@collega/design-system'
-import { useMemo, useState, useTransition } from 'react'
+import { Alert, Button, EffortBar, TagChip } from '@collega/design-system'
+import { useLayoutEffect, useMemo, useOptimistic, useRef, useState, useTransition } from 'react'
 import {
   type Column,
   ConfirmDialog,
@@ -13,14 +13,22 @@ import {
   useListState,
   ViewSwitch,
 } from '@/components/list'
-import { engagementDenial, mayDeleteIdeas, mayEditIdeaContent, writeDenial } from '@/lib/roles'
-import { deleteIdea } from '@/lib/server/idea-actions'
+import { Icon } from '@/components/list/icons'
+import {
+  engagementDenial,
+  followDenial,
+  mayDeleteIdeas,
+  mayEditIdeaContent,
+  writeDenial,
+} from '@/lib/roles'
+import { reorderLanes } from '@/lib/server/board-actions'
+import { deleteIdea, moveIdea } from '@/lib/server/idea-actions'
 import { useCurrentUser } from '@/lib/session-client'
 import type { BoardRef, Idea, IdeaDetail, IdeaFormOptions, Status, TagRef } from '@/lib/types'
 import { People, PriorityMarker, StatusMarker, TagList } from './idea-chips'
 import { type DrawerMode, IdeaDrawer } from './idea-drawer'
-import { BOARD_LIST, IDEAS_LIST, PRIORITIES } from './idea-list-config'
-import { Lane } from './lane'
+import { BOARD_LIST, IDEAS_LIST, PHASES, PRIORITIES, SCOPES } from './idea-list-config'
+import { type CardDrag, Lane, type LaneReorder } from './lane'
 import { useDrawerUrl } from './use-drawer-url'
 
 type BoardContext = {
@@ -30,6 +38,8 @@ type BoardContext = {
   isArchived: boolean
   /** The role and the board's `allowUserStatusUpdate`, decided by the page. */
   canMove: boolean
+  /** Whether the lane headers carry move left / right: an Org Admin's, hidden for other roles. */
+  canReorder: boolean
 }
 
 type Removing = { id: string; title: string; boardId: string }
@@ -73,6 +83,99 @@ export function IdeaWorkspace({
   const [removing, setRemoving] = useState<Removing | null>(null)
   const [removeError, setRemoveError] = useState<string | null>(null)
   const [deleting, startDelete] = useTransition()
+
+  // The lane order as last saved, or as the reorder in flight has it. A refusal ends the transition
+  // with `board.lanes` unchanged, so the columns fall back on their own; a save revalidates the
+  // page and `board.lanes` arrives in the new order.
+  const [lanes, setLanes] = useOptimistic(board?.lanes ?? [])
+  const [reorderError, setReorderError] = useState<string | null>(null)
+  const [reordering, startReorder] = useTransition()
+  // What the polite live region last said about a lane move; screen readers hear the new position.
+  const [reorderNews, setReorderNews] = useState('')
+
+  // The lane being dragged by its header, and the lane it is over; both null outside a drag.
+  const [draggingLane, setDraggingLane] = useState<string | null>(null)
+  const [overLane, setOverLane] = useState<string | null>(null)
+
+  // The cards as last saved, or as the move in flight has them. A refusal ends the transition with
+  // `rows` unchanged, so the card falls back on its own; a save revalidates and `rows` arrives moved.
+  const [laneRows, setCardLane] = useOptimistic(
+    rows,
+    (current, move: { ideaId: string; statusId: string; statusName: string }) =>
+      current.map((idea) =>
+        idea.id === move.ideaId
+          ? { ...idea, statusId: move.statusId, statusName: move.statusName }
+          : idea,
+      ),
+  )
+  const [moveError, setMoveError] = useState<string | null>(null)
+  const [movingCard, startCardMove] = useTransition()
+  // What the polite live region last said about a card move.
+  const [cardNews, setCardNews] = useState('')
+  // The card a keypress moved. It lands in another lane's list, so React remounts it and focus
+  // drops to <body>; the layout effect puts focus back on its title before paint. The flag stays up
+  // until the save settles, so a refusal that moves the card back is covered too.
+  const refocusCard = useRef<string | null>(null)
+  // The card being dragged by its handle, and the lane it is over; both null outside a drag.
+  const [draggingCard, setDraggingCard] = useState<{ id: string; statusId: string } | null>(null)
+  const [overCardLane, setOverCardLane] = useState<string | null>(null)
+
+  // The same `moveIdea` the card's arrows submit, so one rule decides what a move may do.
+  const moveCard = (ideaId: string, boardId: string, to: Status, announce?: string) => {
+    const form = new FormData()
+    form.set('boardId', boardId)
+    form.set('ideaId', ideaId)
+    form.set('statusId', to.id)
+    setMoveError(null)
+    startCardMove(async () => {
+      setCardLane({ ideaId, statusId: to.id, statusName: to.name })
+      const result = await moveIdea({ error: null }, form)
+      setMoveError(result.error)
+      if (announce && !result.error) setCardNews(`${announce} moved to ${to.name}`)
+    })
+  }
+
+  const keyMoveCard = (ideaId: string, toStatusId: string) => {
+    const to = lanes.find((lane) => lane.id === toStatusId)
+    const idea = laneRows.find((row) => row.id === ideaId)
+    // The card sits in its optimistic lane, so a press before the save settles moves it on from there.
+    if (!board || !to || !idea) return
+    refocusCard.current = ideaId
+    setCardNews('')
+    moveCard(ideaId, board.id, to, idea.title)
+  }
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the rows are the trigger, not an input
+  useLayoutEffect(() => {
+    const id = refocusCard.current
+    const active = document.activeElement
+    if (id && (active === null || active === document.body)) {
+      document.querySelector<HTMLButtonElement>(`[data-idea-title="${CSS.escape(id)}"]`)?.focus()
+    }
+  }, [laneRows])
+  useLayoutEffect(() => {
+    if (!movingCard) refocusCard.current = null
+  }, [movingCard])
+
+  const moveLane = (from: number, to: number) => {
+    if (!board || from === to) return
+    const next = [...lanes]
+    const [moved] = next.splice(from, 1)
+    if (moved === undefined) return
+    next.splice(to, 0, moved)
+    setReorderNews('')
+    startReorder(async () => {
+      setLanes(next)
+      const result = await reorderLanes(
+        board.id,
+        next.map((lane) => lane.id),
+      )
+      setReorderError(result.error)
+      if (!result.error) {
+        setReorderNews(`${moved.name} moved to position ${to + 1} of ${next.length}`)
+      }
+    })
+  }
 
   const boardsById = useMemo(() => new Map(boards.map((b) => [b.id, b])), [boards])
   const statusById = useMemo(() => new Map(statuses.map((s) => [s.id, s])), [statuses])
@@ -235,6 +338,32 @@ export function IdeaWorkspace({
           selected={selectedTags}
           onChange={(next) => update({ filters: { ...state.filters, tag: next } })}
         />
+        {board
+          ? null
+          : (
+              [
+                ['scope', SCOPES],
+                ['phase', PHASES],
+              ] as const
+            ).map(([key, labels]) => {
+              const value = state.filters[key]?.[0]
+              const label =
+                value !== undefined && Object.hasOwn(labels, value)
+                  ? labels[value as keyof typeof labels]
+                  : null
+              return label ? (
+                <Button
+                  key={key}
+                  variant="secondary"
+                  size="sm"
+                  aria-label={`Remove filter: ${label}`}
+                  onClick={() => update({ filters: { ...state.filters, [key]: [] } })}
+                >
+                  {label}
+                  <Icon name="x" />
+                </Button>
+              ) : null
+            })}
       </ListToolbar>
 
       {removeError ? (
@@ -245,6 +374,31 @@ export function IdeaWorkspace({
 
       {state.view === 'lanes' && board ? (
         <>
+          {board.canReorder ? (
+            <p role="status" className="sr-only">
+              {reorderNews}
+            </p>
+          ) : null}
+          {board.canMove ? (
+            <p aria-live="polite" className="sr-only">
+              {cardNews}
+            </p>
+          ) : null}
+          {board.canReorder && board.isArchived ? (
+            <p id="why-reorder-lanes" className="m-0 text-xs italic text-muted-foreground">
+              This board is archived, so its lanes keep their order until it is unarchived.
+            </p>
+          ) : null}
+          {reorderError ? (
+            <Alert variant="destructive" role="alert">
+              <span>{reorderError}</span>
+            </Alert>
+          ) : null}
+          {moveError ? (
+            <Alert variant="destructive" role="alert">
+              <span>{moveError}</span>
+            </Alert>
+          ) : null}
           {total > rows.length ? (
             <p className="m-0 text-sm text-muted-foreground">
               Showing the first {rows.length} of {total} ideas. Filter to narrow the board, or
@@ -252,21 +406,87 @@ export function IdeaWorkspace({
             </p>
           ) : null}
           <div
+            aria-busy={reordering || undefined}
             className="grid gap-2.5 overflow-x-auto pb-3"
-            style={{ gridTemplateColumns: `repeat(${board.lanes.length}, minmax(200px, 1fr))` }}
+            style={{ gridTemplateColumns: `repeat(${lanes.length}, minmax(200px, 1fr))` }}
           >
-            {board.lanes.map((status, index) => (
+            {lanes.map((status, index) => (
               <Lane
                 key={status.id}
                 status={status}
                 boardId={board.id}
-                ideas={rows.filter((idea) => idea.statusId === status.id)}
-                previousStatusId={board.lanes[index - 1]?.id ?? null}
-                nextStatusId={board.lanes[index + 1]?.id ?? null}
+                ideas={laneRows.filter((idea) => idea.statusId === status.id)}
+                previousStatusId={lanes[index - 1]?.id ?? null}
+                nextStatusId={lanes[index + 1]?.id ?? null}
                 canMove={board.canMove}
                 upvoteDenial={engagement}
                 selectedId={selectedId}
                 onOpen={view}
+                onKeyMove={board.canMove ? keyMoveCard : undefined}
+                cardDrag={
+                  board.canMove
+                    ? ({
+                        active: draggingCard !== null,
+                        draggingId: draggingCard?.id ?? null,
+                        over: draggingCard !== null && overCardLane === status.id,
+                        onDragStart: (ideaId) => {
+                          const idea = laneRows.find((row) => row.id === ideaId)
+                          if (idea) setDraggingCard({ id: ideaId, statusId: idea.statusId })
+                        },
+                        onDragEnd: () => {
+                          setDraggingCard(null)
+                          setOverCardLane(null)
+                        },
+                        // A drop on the card's own lane does nothing, so it is not offered.
+                        onDragOver: () => {
+                          if (draggingCard === null || draggingCard.statusId === status.id) {
+                            return false
+                          }
+                          setOverCardLane(status.id)
+                          return true
+                        },
+                        onDragLeave: () =>
+                          setOverCardLane((current) => (current === status.id ? null : current)),
+                        onDrop: () => {
+                          const dragged = draggingCard
+                          setDraggingCard(null)
+                          setOverCardLane(null)
+                          if (dragged && dragged.statusId !== status.id) {
+                            moveCard(dragged.id, board.id, status)
+                          }
+                        },
+                      } satisfies CardDrag)
+                    : null
+                }
+                reorder={
+                  board.canReorder
+                    ? ({
+                        denialId: board.isArchived ? 'why-reorder-lanes' : null,
+                        pending: reordering,
+                        onMove: (delta) => moveLane(index, index + delta),
+                        dragging: draggingLane === status.id,
+                        over: draggingLane !== null && overLane === status.id,
+                        onDragStart: () => setDraggingLane(status.id),
+                        onDragEnd: () => {
+                          setDraggingLane(null)
+                          setOverLane(null)
+                        },
+                        onDragOver: () => {
+                          if (draggingLane === null) return false
+                          setOverLane(status.id)
+                          return true
+                        },
+                        onDragLeave: () =>
+                          setOverLane((current) => (current === status.id ? null : current)),
+                        onDrop: () => {
+                          const from = lanes.findIndex((lane) => lane.id === draggingLane)
+                          setDraggingLane(null)
+                          setOverLane(null)
+                          if (from >= 0) moveLane(from, index)
+                        },
+                      } satisfies LaneReorder)
+                    : null
+                }
               />
             ))}
           </div>
@@ -354,6 +574,7 @@ export function IdeaWorkspace({
           drawerIdea ? !mayEditIdeaContent(user.role, user.userId, drawerIdea.authorUserId) : false
         }
         engagementDenial={engagement}
+        followDenial={followDenial(user.role)}
         returnFocusTo={trigger}
         onEdit={() => drawerIdea && openDrawer({ edit: drawerIdea.id })}
         onView={() => drawerIdea && openDrawer({ view: drawerIdea.id })}

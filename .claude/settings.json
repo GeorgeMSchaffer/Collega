@@ -1,141 +1,35 @@
 {
   "permissions": {
-    "allow": [
-      "Bash(command -v jq python3)",
-      "Bash(git checkout *)",
-      "Bash(set -e)",
-      "Bash(echo \"exit=$?\")",
-      "Bash(dropdb -h 127.0.0.1 *)",
-      "Bash(createdb -h 127.0.0.1 *)",
-      "Bash(docker compose *)",
-      "Bash(docker ps *)",
-      "Bash(docker logs *)",
-      "Bash(docker rm *)",
-      "Bash(docker stop *)",
-      "Bash(docker inspect *)",
-      "Bash(git add *)",
-      "Bash(git commit *)",
-      "Bash(git merge *)",
-      "Bash(git branch -d *)",
-      "Bash(git worktree add *)",
-      "Bash(git worktree remove *)",
-      "Bash(docker info *)",
-      "Bash(grep -oE '`\\(GET|POST|PUT|PATCH|DELETE\\) [^`]+`' SPEC/30-Contracts.md)",
-      "Bash(docker volume *)",
-      "Bash(grep -n \"^- \\\\`SPEC/\" CLAUDE.md)",
-      "Bash(git diff *)",
-      "Bash(grep -oE '\\\\-\\\\-[a-z0-9-]+:' SPEC/mockups/comp-c-review-06-lockin-v5-final.html)",
-      "Bash(python3 -c ' *)",
-      "Skill(claude-api)",
-      "Skill(claude-api:*)",
-      "PowerShell(Select-String *)",
-      "PowerShell(Get-Content *)",
-      "PowerShell(Get-Process *)",
-      "PowerShell(Test-Path *)",
-      "PowerShell(Get-CimInstance *)",
-      "PowerShell(docker ps *)",
-      "PowerShell(docker inspect *)",
-      "PowerShell(docker logs *)",
-      "Bash(git check-ignore *)",
-      "Bash(git grep *)",
-      "Bash(git ls-tree *)",
-      "Bash(git --no-pager log *)",
-      "Bash(git --no-pager diff *)",
-      "mcp__plugin_playwright_playwright__browser_take_screenshot",
-      "mcp__plugin_playwright_playwright__browser_navigate",
-      "mcp__plugin_playwright_playwright__browser_resize",
-      "mcp__plugin_playwright_playwright__browser_console_messages",
-      "mcp__claude-in-chrome__navigate",
-      "mcp__claude-in-chrome__tabs_context_mcp",
-      "mcp__claude-in-chrome__read_page",
-      "mcp__claude-in-chrome__get_page_text",
-      "mcp__claude-in-chrome__find",
-      "mcp__claude-in-chrome__read_console_messages",
-      "Bash(pnpm check)",
-      "Bash(pnpm build)",
-      "Bash(git fetch origin *)",
-      "Bash(git status *)",
-      "Bash(git branch *)",
-      "Bash(git log *)",
-      "Bash(git show *)",
-      "Bash(git rev-parse *)",
-      "Bash(git rev-list *)",
-      "Bash(git ls-files *)",
-      "Bash(git worktree list *)",
-      "mcp__github__pull_request_read",
-      "mcp__github__list_pull_requests",
-      "mcp__github__actions_list",
-      "mcp__github__get_job_logs",
-      "mcp__Vercel__search_vercel_documentation",
-      "mcp__Vercel__get_deployment_build_logs",
-      "mcp__Context7__query-docs",
-      "Bash(pnpm exec biome check *)",
-      "Bash(npx biome check *)",
-      "Bash(pnpm lint)",
-      "Bash(pnpm typecheck)",
-      "Bash(pnpm test)",
-      "Bash(pnpm --filter * test*)",
-      "Bash(pnpm --filter * typecheck)",
-      "Bash(pnpm --filter @collega/infrastructure db:*)",
-      "mcp__plugin_vercel_vercel__list_deployments",
-      "mcp__plugin_vercel_vercel__get_deployment",
-      "mcp__plugin_vercel_vercel__get_deployment_build_logs",
-      "mcp__plugin_vercel_vercel__get_runtime_errors",
-      "mcp__plugin_vercel_vercel__get_runtime_logs",
-      "mcp__plugin_vercel_vercel__search_vercel_documentation",
-      "mcp__plugin_vercel_vercel__list_teams",
-      "mcp__Claude_Browser__read_page",
-      "mcp__Claude_Browser__get_page_text",
-      "mcp__Claude_Browser__find",
-      "mcp__Claude_Browser__read_console_messages",
-      "mcp__Claude_Browser__read_network_requests",
-      "mcp__plugin_playwright_playwright__browser_snapshot",
-      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__take_screenshot",
-      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__take_snapshot",
-      "mcp__plugin_context7_context7__query-docs"
-    ],
     "deny": [
-      "Bash(git branch -D *)"
-    ]
-  },
-  "enabledPlugins": {
-    "agent-skills@addy-agent-skills": true,
-    "frontend-design@claude-plugins-official": true
-  },
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh",
-            "timeout": 900
-          }
-        ]
-      }
+      "Read(node_modules/**)",
+      "Read(dist/**)",
+      "Read(build/**)",
+      "Read(.next/**)",
+      "Read(coverage/**)",
+      "Read(.turbo/**)",
+      "Read(vendor/**)",
+      "Read(out/**)",
+      "Read(**/*.lock)",
+      "Read(**/*.log)",
+      "Read(**/*.map)",
+      "Read(**/*.min.js)",
+      "Read(**/*.min.css)",
+      "Read(.git/**)",
+      "Read(**/*.wasm)",
+      "Read(**/*.pb)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/*.env)"
     ],
-    "PreToolUse": [
-      {
-        "matcher": "Edit|Write|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-frozen.mjs\""
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/biome-format.mjs\"",
-            "timeout": 60
-          }
-        ]
-      }
+    "ask": [
+      "Read(**/*.png)",
+      "Read(**/*.jpg)",
+      "Read(**/*.jpeg)",
+      "Read(**/*.gif)",
+      "Read(**/*.svg)",
+      "Read(**/*.mp4)",
+      "Read(**/*.mp3)",
+      "Read(**/*.wav)"
     ]
   }
 }

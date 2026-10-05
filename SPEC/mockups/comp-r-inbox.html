@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Comp R: inbox and following. A throwaway comp for slice 149 (SPEC/20-feature-idea-following.md), awaiting the user's review.
+     Self-contained; open in a browser. Theme tokens are copied verbatim from comp-r-portico-prototype.html, so Terrazzo is the default
+     and the picker offers the same five themes. Not a reference rendering until approved. -->
+<title>Collega Inbox Comp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&family=Figtree:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Young+Serif&family=Instrument+Sans:wght@400;500;600;700&family=Lexend:wght@500;600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=Schibsted+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Theme tokens: verbatim from comp-r-portico-prototype.html.
+   Every colour the app uses is a token below, so a theme is only a block of values. */
+:root,:root[data-proto-theme="portico"]{--suggest:#3B6E51;--suggest-tint:#E3EEE7;color-scheme:light;
+--bg:#F1F5F5;--ink:#16292E;--ink2:#2C4247;--muted:#56696D;--line:#DDE6E7;--line2:#C6D3D5;--card:#FFFFFF;--soft:#E8EFF0;--rowh:#F6FAFA;--thead:#F7FAFA;--facts:#F6FAFA;
+--pri:#1F6A80;--pri-h:#185769;--pri-t:#1B5F73;--pri-tint:#E1EEF1;--pri-ink:#FFFFFF;--vote:#F2B28A;--vote-ink:#16292E;
+--hot:#B64A34;--hot-t:#963B28;--hot-tint:#F6E1DB;--ok-t:#3B6E51;--ok-tint:#E3EEE7;--warn-t:#8E4A1F;--warn-tint:#FCEBDF;
+--side:#FFFFFF;--side-ink:#2C4247;--side-line:#DDE6E7;--side-hover:#EEF4F4;--side-on:#E1EEF1;--side-on-ink:#16292E;--bar:#16292E;--bar-ink:#E3EEF0;
+--tag:#E1EEF1;--tag-ink:#1B5566;--av1:#1F6A80;--av1i:#FFFFFF;--av2:#F2B28A;--av2i:#16292E;--av3:#7A5AA6;--av3i:#FFFFFF;--av4:#4F8A6A;--av4i:#FFFFFF;
+--shadow:22 41 46;--r:14px;--rs:10px;--display:"Outfit",ui-sans-serif,system-ui,sans-serif;--body:"Figtree",ui-sans-serif,system-ui,sans-serif;--mono:"DM Mono",ui-monospace,monospace;--h-weight:600}
+:root[data-proto-theme="sera"]{--suggest:#2E6E4C;--suggest-tint:#E1EFE7;--bg:#F3F4F7;--ink:#1C2236;--ink2:#343B52;--muted:#5C6378;--line:#E2E4EC;--line2:#CCD0DC;--soft:#ECEEF3;--rowh:#F7F8FB;--thead:#F7F8FB;--facts:#F5F6FA;
+--pri:#3450A8;--pri-h:#2A4290;--pri-t:#2E4799;--pri-tint:#E6EAF6;--vote:#E3B04B;--vote-ink:#1C2236;--hot:#B8553F;--hot-t:#94402D;--hot-tint:#F6E3DE;--ok-t:#2E6E4C;--ok-tint:#E1EFE7;--warn-t:#83590C;--warn-tint:#FAF0DA;
+--side:#1F2540;--side-ink:#CDD1E3;--side-line:#2D3454;--side-hover:#272E4D;--side-on:#2E3760;--side-on-ink:#FFFFFF;--bar:#0F1426;--bar-ink:#E6E9F5;--tag:#ECEEF3;--tag-ink:#343B52;
+--av1:#3450A8;--av1i:#FFFFFF;--av2:#E3B04B;--av2i:#1C2236;--av3:#B8553F;--av3i:#FFFFFF;--av4:#3E8A62;--av4i:#FFFFFF;--shadow:28 34 54;--r:16px;--display:"Bricolage Grotesque",ui-sans-serif,sans-serif;--body:"DM Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="lagoon"]{--suggest:#2F5F9E;--suggest-tint:#E3ECF8;--bg:#F3F4EF;--ink:#13302B;--ink2:#2A4640;--muted:#5A6B66;--line:#E1E5DF;--line2:#CBD3CB;--soft:#EAEFEA;--rowh:#F7F9F5;--thead:#F7F9F5;--facts:#F5F8F3;
+--pri:#0E6B5C;--pri-h:#0A5649;--pri-t:#0C6154;--pri-tint:#DCEFEA;--vote:#F08A6C;--vote-ink:#13302B;--hot:#C2412D;--hot-t:#9E3322;--hot-tint:#F9E1DA;--ok-t:#2F6B3F;--ok-tint:#E2F0E4;--warn-t:#7A5410;--warn-tint:#F8EDD3;
+--side:#FFFFFF;--side-ink:#2A4640;--side-line:#E1E5DF;--side-hover:#EFF3EE;--side-on:#DCEFEA;--side-on-ink:#13302B;--bar:#0F2A25;--bar-ink:#E2F0EC;--tag:#DCEFEA;--tag-ink:#0C5549;
+--av1:#0E6B5C;--av1i:#FFFFFF;--av2:#F08A6C;--av2i:#13302B;--av3:#3D6FB6;--av3i:#FFFFFF;--av4:#8C6A1F;--av4i:#FFFFFF;--shadow:19 48 43;--r:16px;--rs:12px;--display:"Lexend",ui-sans-serif,sans-serif;--body:"Nunito Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:600}
+:root[data-proto-theme="terrazzo"]{--suggest:#3F6B2E;--suggest-tint:#E6F2DF;--bg:#F5F6F8;--ink:#1E2733;--ink2:#36414F;--muted:#5E6978;--line:#E3E6EB;--line2:#CDD2DA;--soft:#EDF0F3;--rowh:#F8F9FB;--thead:#F8F9FB;--facts:#F6F7F9;
+--pri:#3D5A80;--pri-h:#324B6B;--pri-t:#35507A;--pri-tint:#E4EAF2;--vote:#F4C7C3;--vote-ink:#1E2733;--hot:#B84A4A;--hot-t:#963636;--hot-tint:#F7E2E2;--ok-t:#3F6B2E;--ok-tint:#E6F2DF;--warn-t:#7F5A12;--warn-tint:#F7EDD6;
+--side:#FFFFFF;--side-ink:#36414F;--side-line:#E3E6EB;--side-hover:#F1F3F6;--side-on:#E4EAF2;--side-on-ink:#1E2733;--bar:#1E2733;--bar-ink:#E8ECF2;--tag:#F4E4E1;--tag-ink:#7A3B34;
+--av1:#3D5A80;--av1i:#FFFFFF;--av2:#F4C7C3;--av2i:#1E2733;--av3:#4E7A40;--av3i:#FFFFFF;--av4:#7A5AA6;--av4i:#FFFFFF;--shadow:30 39 51;--r:8px;--rs:6px;--display:"Schibsted Grotesk",ui-sans-serif,sans-serif;--body:"Public Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="graphite"]{color-scheme:dark;--metric:#5CC8E0;--suggest:#5CC8E0;--suggest-tint:#0F1D21;--suggest-line:#2E6A78;
+--bg:#0F1113;--ink:#E6E8EA;--ink2:#C4CAD0;--muted:#9BA3AB;--line:#22272C;--line2:#2C3238;--card:#16191C;--soft:#1C2024;--rowh:#1A1E22;--thead:#121518;--facts:#1A1E22;--field:#0F1113;
+--pri:#F5A524;--pri-h:#FFC35C;--pri-t:#F5A524;--pri-tint:#2A2418;--pri-ink:#16120A;--vote:#2A2418;--vote-ink:#F3E3C3;--me:#2A2418;--me-ink:#F3E3C3;
+--hot:#E5484D;--hot-t:#FF8A8E;--hot-tint:#2E1719;--ok-t:#58C781;--ok-tint:#13241A;--warn-t:#F5B456;--warn-tint:#2A2418;
+--side:#121518;--side-ink:#AEB5BC;--side-line:#22272C;--side-hover:#1A1E22;--side-on:#1C2024;--side-on-ink:#E6E8EA;--bar:#0B0D0F;--bar-ink:#AEB5BC;--tag:#1C2024;--tag-ink:#C4CAD0;
+--av1:#2A2418;--av1i:#F5A524;--av2:#153038;--av2i:#5CC8E0;--av3:#262B30;--av3i:#C4CAD0;--av4:#1C2A20;--av4i:#58C781;--shadow:0 0 0;--r:8px;--rs:6px;
+--display:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;--h-weight:600}
+:root{--metric:var(--pri);--field:var(--card);--suggest-line:var(--suggest);--me:var(--pri);--me-ink:var(--pri-ink);--drawer:clamp(380px,28vw,520px);--drawer-wide:clamp(720px,62vw,1100px)}
+*,*::before,*::after{box-sizing:border-box}
+html,body{min-height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--body);display:flex;flex-direction:column}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.i{width:16px;height:16px;flex:none}
+[hidden]{display:none!important}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* comp controls and reviewer notes: the chrome band, outside the app */
+.proto{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:8px 16px;background:var(--bar);color:var(--bar-ink);font-size:13px}
+.proto b{font-family:var(--display);font-weight:600}
+.proto .grp{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.proto .lbl{opacity:.7;margin-right:2px}
+.proto button{background:transparent;border:1px solid color-mix(in srgb,var(--bar-ink) 30%,transparent);border-radius:999px;padding:3px 10px;color:var(--bar-ink);cursor:pointer}
+.proto button[aria-pressed="true"]{background:var(--bar-ink);color:var(--bar);border-color:var(--bar-ink)}
+.note{padding:6px 16px 8px;background:var(--bar);color:var(--bar-ink);font-size:12px;opacity:.85;border-top:1px solid color-mix(in srgb,var(--bar-ink) 15%,transparent)}
+.note p{margin:0;max-width:110ch}
+
+/* app shell, as comp R */
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);flex:1 0 auto}
+.side{background:var(--side);border-right:1px solid var(--side-line);padding:14px 10px;display:flex;flex-direction:column;gap:2px;color:var(--side-ink)}
+.brand{display:flex;gap:10px;align-items:center;padding:4px 6px 12px}
+.brand b{display:block;font:600 16px/1.1 var(--display)}.brand small{font-size:12px;opacity:.75}
+.mark{display:grid;place-items:center;width:30px;height:30px;border-radius:var(--rs);background:var(--pri);color:var(--pri-ink);font:600 12px var(--display)}
+.navlbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.7;padding:10px 8px 4px}
+.nav{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:var(--rs);color:var(--side-ink);cursor:pointer;border:0;background:none;width:100%;text-align:left}
+.nav:hover{background:var(--side-hover)}
+.nav:disabled{opacity:.55;cursor:default}
+.nav[aria-current="page"]{background:var(--side-on);color:var(--side-on-ink);font-weight:600;box-shadow:inset 3px 0 0 var(--pri)}
+.nav span{flex:1}
+.me{margin-top:auto;display:flex;gap:10px;align-items:center;padding:10px 6px 2px;border-top:1px solid var(--side-line)}
+.me b{display:block;font-size:13px}.me small{font-size:12px;opacity:.75}
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:8px;min-height:52px;padding:8px 24px;border-bottom:1px solid var(--line);background:var(--card)}
+.topbar .sp{flex:1}
+.crumb{color:var(--muted)}.crumb b{color:var(--ink)}
+.themepick{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.themepick select{border:1px solid var(--line2);border-radius:999px;padding:4px 10px;background:var(--card);color:var(--ink);cursor:pointer}
+.work{padding:20px 24px 32px;display:flex;flex-direction:column;gap:16px;min-width:0;max-width:960px}
+.pghead{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.pghead h1{margin:0;font:var(--h-weight) 28px/1.15 var(--display);letter-spacing:-.02em}
+.pghead p{margin:4px 0 0;color:var(--muted);max-width:64ch}
+.denywrap{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.why{font-size:12px;color:var(--muted);font-style:italic}
+.btn{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13px;padding:8px 14px;border-radius:var(--rs);border:1px solid var(--line2);background:var(--card);cursor:pointer}
+.btn:hover{border-color:var(--pri)}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}.btn.pri:hover{background:var(--pri-h)}
+.btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
+.btn.sm{padding:4px 10px;font-size:12px}
+.iconbtn{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer}
+.iconbtn:hover{background:var(--soft);color:var(--ink)}
+.av{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;font:700 10px var(--body);flex:none}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:1px 8px;border-radius:999px;background:var(--tag);color:var(--tag-ink);margin:1px 2px 1px 0}
+.sub{font-size:12px;color:var(--muted)}
+
+/* unread: ink, never a hue (the colour rule; the accent variant was rejected 2026-10-01) */
+:root{--unread:var(--ink);--unread-ink:var(--card)}
+.badge{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--unread);color:var(--unread-ink);font:700 11px/20px var(--body);text-align:center;font-variant-numeric:tabular-nums}
+
+/* the inbox list */
+.inbox{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin:0;padding:0;list-style:none;overflow:hidden}
+.inbox li+li{border-top:1px solid var(--line)}
+.nrow{display:grid;grid-template-columns:10px 28px minmax(0,1fr) auto;gap:12px;align-items:start;width:100%;padding:12px 16px;border:0;background:none;text-align:left;cursor:pointer}
+.nrow:hover{background:var(--rowh)}
+.nrow .mk{width:8px;height:8px;border-radius:50%;margin-top:10px}
+.nrow.unread{box-shadow:inset 3px 0 0 var(--unread)}
+.nrow.unread .mk{background:var(--unread)}
+.nrow .what{color:var(--ink2)}
+.nrow .what b{color:var(--ink);font-weight:600}
+.nrow.unread .what{color:var(--ink)}
+.nrow.unread .what .t{font-weight:700}
+.nrow .what .t{font-weight:500;color:var(--ink)}
+.nrow .when{font-size:12px;color:var(--muted);white-space:nowrap;margin-top:2px}
+.nrow.unread .when{color:var(--ink2);font-weight:600}
+.pager{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px}
+.empty{background:var(--card);border:1px dashed var(--line2);border-radius:var(--r);padding:40px 24px;text-align:center}
+.empty h2{margin:8px 0 4px;font:var(--h-weight) 18px var(--display)}
+.empty p{margin:0 auto;color:var(--muted);max-width:48ch}
+.empty .big{width:36px;height:36px;color:var(--muted)}
+
+/* a minimal Ideas list, so the drawer can be opened outside the inbox */
+.tablewrap{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line)}
+tbody tr:last-child td{border-bottom:0}
+th{font:600 12px var(--body);color:var(--muted);background:var(--thead)}
+.ttl{font-weight:600;color:var(--ink);cursor:pointer;border:0;background:none;padding:0;text-align:left}
+.ttl:hover{color:var(--pri-t);text-decoration:underline}
+
+/* drawer, as comp R */
+.drawer{position:fixed;top:0;right:0;bottom:0;width:var(--drawer);max-width:100%;background:var(--card);border-left:1px solid var(--line2);box-shadow:-18px 0 40px rgb(var(--shadow)/.16);z-index:40;display:flex;flex-direction:column;transform:translateX(105%);transition:transform .22s ease;visibility:hidden}
+.drawer.open{transform:none;visibility:visible}
+.dhead{display:flex;align-items:flex-start;gap:8px;padding:16px 18px 10px;border-bottom:1px solid var(--line)}
+.dhead .eb{font:500 11px var(--mono);color:var(--muted);letter-spacing:.03em}
+.dhead h2{margin:2px 0 0;font:var(--h-weight) 19px/1.25 var(--display)}
+.dhead .x{margin-left:auto}
+.dbody{flex:1;overflow:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px;min-height:0}
+.dfoot{display:flex;gap:8px;align-items:center;padding:12px 18px;border-top:1px solid var(--line);background:var(--thead)}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:12px;background:var(--facts);border-radius:var(--rs);padding:12px;margin:0}
+.facts dt{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.facts dd{margin:3px 0 0;font-weight:500}
+.sect h3{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.sect p{margin:0}
+.engage{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.votes-on{background:var(--vote);color:var(--vote-ink);border-color:transparent}
+.follow[aria-pressed="true"]{background:var(--soft);border-color:var(--ink2);color:var(--ink)}
+.msg{background:var(--card);border:1px solid var(--line);border-radius:12px;border-top-left-radius:4px;padding:8px 12px;margin-bottom:6px}
+.composer{display:flex;gap:6px}.composer input{flex:1;border:1px solid var(--line2);border-radius:8px;padding:8px 10px;background:var(--field);color:var(--ink)}
+
+@media (max-width:760px){
+  .app{grid-template-columns:1fr}
+  .side{flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--side-line)}
+  .side .navlbl,.side .me,.brand small{display:none}
+  .nav{width:auto}
+  .topbar,.work{padding-left:16px;padding-right:16px}
+  .nrow{grid-template-columns:10px 28px minmax(0,1fr)}
+  .nrow .when{grid-column:3}
+  .facts{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="proto" role="region" aria-label="Comp controls">
+  <b>Collega · comp R — inbox and following</b>
+  <div class="grp" role="group" aria-label="Screen"><span class="lbl">Screen</span>
+    <button data-screen="inbox" aria-pressed="true">Inbox</button><button data-screen="empty" aria-pressed="false">Inbox, empty</button><button data-screen="ideas" aria-pressed="false">Ideas (drawer)</button></div>
+  <div class="grp" role="group" aria-label="Signed in as"><span class="lbl">Signed in as</span>
+    <button data-role="member" aria-pressed="true">User</button><button data-role="readonly" aria-pressed="false">Read Only</button><button data-role="siteadmin" aria-pressed="false">Site Admin (as themselves)</button></div>
+</div>
+<div class="note"><p>Throwaway comp for slice 149 (<code>SPEC/20-feature-idea-following.md</code>), awaiting review. Open a row to mark it read and see the idea drawer with its Follow toggle. Unread is an ink dot and bold text, no hue (rule 43; the accent variant was rejected 2026-10-01). Status rows name the new status as it was when the event was written (rule 37). A Site Admin acting as themselves has no Inbox item and sees Follow disabled (rules 8, 32, 46). Edits live only in this page.</p></div>
+<div class="app">
+  <aside class="side" aria-label="Main">
+    <div class="brand"><span class="mark">CG</span><span><b>Collega</b><small id="org">Acme Robotics</small></span></div>
+    <div class="navlbl">Workspace</div>
+    <button class="nav" disabled><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 11 12 4l9 7v9H3z"/></svg><span>Home</span></button>
+    <button class="nav" id="nav-inbox" data-go="inbox"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span>Inbox</span><span class="badge" id="badge" aria-hidden="true"></span></button>
+    <button class="nav" disabled><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16"/></svg><span>Boards</span></button>
+    <button class="nav" id="nav-ideas" data-go="ideas"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg><span>Ideas</span></button>
+    <div class="navlbl">Delivery</div>
+    <button class="nav" disabled><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h6"/></svg><span>Sprint board</span></button>
+    <button class="nav" disabled><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg><span>Roadmap</span></button>
+    <div class="navlbl">Configure</div>
+    <button class="nav" disabled><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg><span>Settings</span></button>
+    <div class="me"><span class="av" id="me-av" style="background:var(--av1);color:var(--av1i)">PN</span><span><b id="me-name">Priya Nair</b><small id="me-role">User</small></span></div>
+  </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb" id="crumb"></span><span class="sp"></span>
+      <label class="themepick" for="theme"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg>Theme
+        <select id="theme"><optgroup label="Light"><option value="terrazzo">Terrazzo</option><option value="portico">Portico</option><option value="sera">Piazza Sera</option><option value="lagoon">Lagoon</option></optgroup><optgroup label="Dark"><option value="graphite">Graphite</option></optgroup></select></label></div>
+    <main class="work" id="work"></main>
+  </div>
+</div>
+<aside class="drawer" id="drawer" aria-labelledby="d-title" tabindex="-1"></aside>
+<div class="vh" role="status" aria-live="polite" id="live"></div>
+<script>
+const ICON = {
+  x: '<path d="M6 6l12 12M18 6 6 18"/>', up: '<path d="m6 14 6-6 6 6"/>', check: '<path d="m5 12 5 5 9-10"/>',
+  bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+  edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/>', eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+};
+const svg = (n, c = 'i') => `<svg class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]}</svg>`;
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+const PEOPLE = {
+  priya: ['Priya Nair', 'PN', 'av1'], marco: ['Marco Bellini', 'MB', 'av2'], dana: ['Dana Whitfield', 'DW', 'av3'],
+  olivia: ['Olivia Administer', 'OA', 'av4'], sam: ['Sam Okafor', 'SO', 'av1'],
+};
+const av = (k) => { const p = PEOPLE[k]; return `<span class="av" style="background:var(--${p[2]});color:var(--${p[2]}i)" aria-hidden="true">${p[1]}</span>`; };
+
+const IDEAS = {
+  i1: { title: 'Self-serve demo environments for prospects', board: 'Opportunities', status: 'In Review', color: '#D97706', priority: 'High', author: 'marco', assignees: ['priya', 'dana'], tags: ['sales', 'onboarding'], followers: 4, following: true, votes: 7,
+        problem: 'Prospects wait two days for a sales engineer to stand up a demo.', thread: [['marco', 'Can we reuse the seed module for this?'], ['dana', 'Yes, with a reset per prospect.']] },
+  i2: { title: 'Gripper torque telemetry on the dashboard', board: 'Engineering', status: 'In Progress', color: '#2563EB', priority: 'Medium', author: 'priya', assignees: ['sam'], tags: ['telemetry'], followers: 3, following: true, votes: 4,
+        problem: 'Operators cannot see torque drift until a pick fails.', thread: [['sam', 'Spike done; numbers look stable.']] },
+  i3: { title: 'Quarterly customer advisory board', board: 'Opportunities', status: 'New / Pending', color: '#64748B', priority: 'Low', author: 'olivia', assignees: [], tags: ['customers'], followers: 2, following: true, votes: 2,
+        problem: 'Feedback arrives one account at a time and is hard to weigh.', thread: [] },
+  i4: { title: 'Battery swap station for AMR fleet', board: 'Engineering', status: 'Complete', color: '#16A34A', priority: 'Critical', author: 'dana', assignees: ['marco'], tags: ['hardware', 'fleet'], followers: 5, following: false, votes: 11,
+        problem: 'Robots idle for 40 minutes while charging during peak shifts.', thread: [['marco', 'Promoted — first sprint starts Monday.']] },
+};
+
+// Every event type once at least, unread and read mixed. Times are fixed, not live.
+const SEED = [
+  { id: 'n1', type: 'CommentMention', actor: 'dana', idea: 'i1', when: '12 min ago', read: false },
+  { id: 'n2', type: 'CommentAdded', actor: 'marco', idea: 'i1', when: '40 min ago', read: false },
+  { id: 'n3', type: 'IdeaStatusChanged', actor: 'olivia', idea: 'i2', status: 'In Progress', when: '2 h ago', read: false },
+  { id: 'n4', type: 'IdeaEdited', actor: 'marco', idea: 'i1', when: 'Yesterday', read: false },
+  { id: 'n5', type: 'IssueTaskAssigned', actor: 'sam', idea: 'i2', when: 'Yesterday', read: true },
+  { id: 'n6', type: 'IdeaPromoted', actor: 'olivia', idea: 'i4', when: '3 days ago', read: true },
+  { id: 'n7', type: 'IssueDeliveryStatusChanged', actor: 'marco', idea: 'i4', status: 'Review', when: 'Sep 26', read: true },
+  { id: 'n8', type: 'IdeaMention', actor: 'olivia', idea: 'i3', when: 'Sep 24', read: true },
+];
+const WORDS = {
+  IdeaMention: ['mentioned you in', 'You were mentioned'], CommentMention: ['mentioned you in a comment on', 'You were mentioned'],
+  CommentAdded: ['commented on', 'You follow this idea'], IdeaStatusChanged: ['moved', 'You follow this idea', 'to {s}'],
+  IdeaPromoted: ['promoted', 'You follow this idea', 'to an issue'], IssueDeliveryStatusChanged: ['moved', 'You follow this idea', 'to {s} in delivery'],
+  IssueTaskAssigned: ['assigned you a task on', 'Assigned to you'], IdeaEdited: ['edited', 'You follow this idea'],
+};
+
+const ROLES = { member: ['Priya Nair', 'PN', 'User', 'Acme Robotics'], readonly: ['Priya Nair', 'PN', 'Read Only', 'Acme Robotics'], siteadmin: ['Sam Site', 'SS', 'Site Admin', 'All organizations'] };
+let role = 'member', screen = 'inbox', items = SEED.map((n) => ({ ...n })), openId = null, returnFocus = null;
+const work = document.getElementById('work'), drawer = document.getElementById('drawer'), live = document.getElementById('live');
+const unread = () => items.filter((n) => !n.read).length;
+
+function renderSide() {
+  const r = ROLES[role];
+  document.getElementById('me-name').textContent = r[0]; document.getElementById('me-av').textContent = r[1];
+  document.getElementById('me-role').textContent = r[2]; document.getElementById('org').textContent = r[3];
+  const inbox = document.getElementById('nav-inbox'), badge = document.getElementById('badge'), n = unread();
+  inbox.hidden = role === 'siteadmin';
+  badge.hidden = n === 0; badge.textContent = n > 99 ? '99+' : n;
+  inbox.setAttribute('aria-label', n ? `Inbox, ${n} unread` : 'Inbox');
+  if (screen !== 'ideas') inbox.setAttribute('aria-current', 'page'); else inbox.removeAttribute('aria-current');
+  const ideas = document.getElementById('nav-ideas');
+  if (screen === 'ideas') ideas.setAttribute('aria-current', 'page'); else ideas.removeAttribute('aria-current');
+}
+
+function row(n) {
+  const w = WORDS[n.type], who = PEOPLE[n.actor][0], t = IDEAS[n.idea].title;
+  return `<li><button class="nrow${n.read ? '' : ' unread'}" data-open="${n.id}">
+    <span class="mk" aria-hidden="true"></span>${av(n.actor)}
+    <span><span class="what">${n.read ? '' : '<span class="vh">Unread: </span>'}<b>${esc(who)}</b> ${w[0]} <span class="t">${esc(t)}</span>${w[2] ? ' ' + w[2].replace('{s}', `<b>${esc(n.status)}</b>`) : ''}</span>
+      <span class="sub" style="display:block">${w[1]} · ${esc(IDEAS[n.idea].board)}</span></span>
+    <span class="when">${n.when}</span></button></li>`;
+}
+
+function renderInbox() {
+  document.getElementById('crumb').innerHTML = '<b>Inbox</b>';
+  const list = screen === 'empty' ? [] : items, n = screen === 'empty' ? 0 : unread();
+  const mark = n ? `<button class="btn" id="markall">${svg('check')}Mark all read</button>`
+    : `<span class="denywrap"><button class="btn" aria-disabled="true" aria-describedby="mark-why">${svg('check')}Mark all read</button><span class="why" id="mark-why">Nothing is unread.</span></span>`;
+  work.innerHTML = `<div class="pghead"><div><h1>Inbox</h1><p>Comments, status changes and edits on ideas you follow, and anything that mentions you — the last 90 days, newest first.</p></div>${mark}</div>
+    ${list.length ? `<ul class="inbox" role="list">${list.map(row).join('')}</ul><div class="pager"><span>1–${list.length} of ${list.length}</span><span>10 per page</span></div>`
+      : `<div class="empty">${svg('bell', 'big')}<h2>You're all caught up.</h2><p>Comments, status changes and edits on ideas you follow, and anything that mentions you, land here.</p></div>`}`;
+}
+
+function renderIdeas() {
+  document.getElementById('crumb').innerHTML = '<b>Ideas</b>';
+  work.innerHTML = `<div class="pghead"><div><h1>Ideas</h1><p>A stub of the Ideas list, so the drawer can be opened outside the inbox.</p></div></div>
+    <div class="tablewrap"><table><thead><tr><th>Title</th><th>Board</th><th>Status</th></tr></thead><tbody>
+    ${Object.entries(IDEAS).map(([k, i]) => `<tr><td><button class="ttl" data-idea="${k}">${esc(i.title)}</button></td><td>${esc(i.board)}</td><td><span class="chip" style="background:color-mix(in srgb,${i.color} 14%,var(--card));color:color-mix(in srgb,${i.color} 55%,var(--ink))"><span class="dot" style="background:${i.color}"></span>${esc(i.status)}</span></td></tr>`).join('')}
+    </tbody></table></div>`;
+}
+
+function render() { renderSide(); screen === 'ideas' ? renderIdeas() : renderInbox(); if (openId) renderDrawer(); }
+
+function followBtn(i) {
+  if (role === 'siteadmin') return `<span class="denywrap"><button class="btn sm follow" aria-disabled="true" aria-describedby="f-why">${svg('bell')}Follow · ${i.followers}</button><span class="why" id="f-why">Follow through View As.</span></span>`;
+  const n = i.followers;
+  return `<button class="btn sm follow" id="follow" aria-pressed="${i.following}" aria-describedby="f-count">${svg(i.following ? 'check' : 'bell')}${i.following ? 'Following' : 'Follow'} · ${n}</button><span class="vh" id="f-count">${n} ${n === 1 ? 'person follows' : 'people follow'} this idea</span>`;
+}
+
+function renderDrawer() {
+  const i = IDEAS[openId];
+  drawer.innerHTML = `<div class="dhead"><div><div class="eb">${esc(i.board)} · ${esc(i.status)}</div><h2 id="d-title" tabindex="-1">${esc(i.title)}</h2></div><button class="iconbtn x" data-close aria-label="Close">${svg('x')}</button></div>
+    <div class="dbody">
+      <dl class="facts"><div><dt>Status</dt><dd>${esc(i.status)}</dd></div><div><dt>Priority</dt><dd>${esc(i.priority)}</dd></div>
+      <div><dt>Assignees</dt><dd>${i.assignees.length ? i.assignees.map((p) => esc(PEOPLE[p][0])).join(', ') : 'Unassigned'}</dd></div><div><dt>Tags</dt><dd>${i.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</dd></div></dl>
+      <div class="sect"><h3>Problem</h3><p>${esc(i.problem)}</p></div>
+      <div class="sect"><h3>Discussion</h3>
+        <div class="engage"><button class="btn sm${role === 'siteadmin' ? '' : ' votes-on'}" ${role === 'siteadmin' ? 'aria-disabled="true"' : 'aria-pressed="true"'}>${svg('up')}Upvoted · ${i.votes}</button>${followBtn(i)}</div>
+        <p class="sub" style="margin-bottom:8px">raised by ${esc(PEOPLE[i.author][0])}</p>
+        ${i.thread.length ? i.thread.map(([p, t]) => `<div class="msg"><b>${esc(PEOPLE[p][0])}</b><br>${esc(t)}</div>`).join('') : '<p class="sub">No comments yet.</p>'}
+        ${role === 'siteadmin' ? '' : '<form class="composer" onsubmit="return false"><label class="vh" for="c-comment">Add a comment</label><input id="c-comment" placeholder="Add a comment… @ to mention"><button class="btn sm">Comment</button></form>'}
+      </div></div>
+    <div class="dfoot">${role === 'member' && i.author === 'priya' ? `<button class="btn pri">${svg('edit')}Edit</button>` : '<span class="sub">Sample idea</span>'}</div>`;
+}
+
+function openIdea(id, from) {
+  openId = id; returnFocus = from; renderDrawer(); drawer.classList.add('open');
+  document.getElementById('d-title').focus();
+}
+function closeDrawer() { drawer.classList.remove('open'); openId = null; if (returnFocus && document.body.contains(returnFocus)) returnFocus.focus(); }
+
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.screen) { screen = t.dataset.screen; document.querySelectorAll('[data-screen]').forEach((b) => b.setAttribute('aria-pressed', b === t)); closeDrawer(); render(); return; }
+  if (t.dataset.role) { role = t.dataset.role; document.querySelectorAll('[data-role]').forEach((b) => b.setAttribute('aria-pressed', b === t));
+    if (role === 'siteadmin' && screen !== 'ideas') { screen = 'ideas'; document.querySelectorAll('[data-screen]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.screen === 'ideas')); }
+    render(); return; }
+  if (t.dataset.go) { screen = t.dataset.go; document.querySelectorAll('[data-screen]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.screen === screen)); render(); return; }
+  if (t.dataset.open) { const n = items.find((x) => x.id === t.dataset.open); n.read = true; render();
+    openIdea(n.idea, work.querySelector(`[data-open="${n.id}"]`)); return; }
+  if (t.dataset.idea) { openIdea(t.dataset.idea, t); return; }
+  if (t.hasAttribute('data-close')) { closeDrawer(); return; }
+  if (t.id === 'markall') { items.forEach((n) => { n.read = true; }); render(); live.textContent = 'All notifications marked read.'; return; }
+  if (t.id === 'follow') { const i = IDEAS[openId]; i.following = !i.following; i.followers += i.following ? 1 : -1; renderDrawer();
+    document.getElementById('follow').focus(); live.textContent = i.following ? 'Following this idea.' : 'No longer following this idea.'; }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && openId) closeDrawer(); });
+
+// The theme is remembered per browser — a cookie in the product, localStorage here.
+const pt = document.getElementById('theme');
+function setTheme(k) { document.documentElement.dataset.protoTheme = k; pt.value = k; try { localStorage.setItem('collega-theme', k); } catch {} }
+let saved = 'terrazzo'; try { saved = localStorage.getItem('collega-theme') || 'terrazzo'; } catch {}
+if (saved === 'notte') saved = 'graphite';
+setTheme(['terrazzo', 'portico', 'sera', 'lagoon', 'graphite'].includes(saved) ? saved : 'terrazzo');
+pt.addEventListener('change', () => setTheme(pt.value));
+render();
+</script>
+</body>
+</html>

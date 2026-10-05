@@ -2,7 +2,7 @@ import { Button } from '@collega/design-system'
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { SettingsPage } from '@/components/settings/settings-page'
-import type { Role } from '@/lib/mock'
+import type { Role } from '@/lib/types'
 import { actAs } from './support/acting-role'
 
 /**
@@ -87,7 +87,7 @@ describe('a deployment-level settings route', () => {
     it(`refuses ${role}`, () => {
       renderSettingsPage(role, { siteAdminOnly: true })
       expect(shownContent()).toEqual([])
-      expect(screen.getByText('Site Admins only')).toBeTruthy()
+      expect(screen.getByText('App Admins only')).toBeTruthy()
     })
 
     it(`withholds the page action from ${role}`, () => {

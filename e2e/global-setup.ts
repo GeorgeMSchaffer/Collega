@@ -10,37 +10,6 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 // untouched. The derivation lives in `database-url.ts` because `playwright.config.ts` needs the
 // same answer at module-load time; read that file before changing where it points.
 
-/**
- * Refuses to reset anything a developer is using.
- *
- * `migrate reset` drops every table it can see, so pointing it at the wrong string is not a failed
- * test run, it is a lost afternoon. Two things are checked: the schema must be the suite's own, and
- * the host must be this machine. The second is the same rule `tools/local/start.ts` applies for the
- * same reason, and there is deliberately no opt-out here — a remote database is never the right
- * target for a suite whose first act is to drop the schema.
- */
-function refuseIfNotDisposable(url: string): void {
-  const parsed = new URL(url)
-  const schema = parsed.searchParams.get('schema')
-  if (schema !== 'collega_e2e') {
-    throw new Error(
-      `The E2E database URL names schema "${schema ?? 'public'}", not "collega_e2e".\n\n` +
-        'This setup drops the schema it is given. Point COLLEGA_E2E_DATABASE_URL at a URL carrying\n' +
-        '?schema=collega_e2e, or unset it and let DATABASE_URL be adapted.',
-    )
-  }
-
-  const host = parsed.hostname
-  const local = host === 'localhost' || host === '::1' || host.startsWith('127.')
-  if (!local) {
-    throw new Error(
-      `The E2E database is at ${host}, which is not this machine.\n\n` +
-        'The suite drops and rebuilds its schema on every run. It will not do that to a host it\n' +
-        'cannot see is yours.',
-    )
-  }
-}
-
 const DROP_AND_CREATE = 'DROP SCHEMA IF EXISTS collega_e2e CASCADE; CREATE SCHEMA collega_e2e;'
 
 /**
@@ -72,16 +41,15 @@ export default function globalSetup(): void {
   // process that has not evaluated the config - real environment variables win either way.
   loadRepositoryEnv()
 
+  // Refuses anything but a local `collega_e2e` schema - checked again here, not only when the config
+  // loaded, because this is the step that drops it.
   const databaseUrl = e2eDatabaseUrl()
-  refuseIfNotDisposable(databaseUrl)
 
-  // The API runs as built output, not under a watcher — the same shape `tools/local/start.ts` uses,
-  // and for the same reason: nothing in a test run edits it. Building it builds the packages
-  // beneath it, which is also what the seed imports. Turbo caches, so this is seconds after the
-  // first run.
-  run('pnpm', ['exec', 'turbo', 'run', 'build', '--filter=@collega/api'], {
-    DATABASE_URL: databaseUrl,
-  })
+  // Nothing is built here. This runs after both servers are up (see the order in
+  // `playwright.config.ts`), and the API's own `webServer` command has already built it and the
+  // packages beneath it, which are also what the seed imports. Rebuilding while the API runs is not
+  // just redundant: on Windows a rebuild that rewrites `packages/infrastructure/dist/generated`
+  // under the running API failed with the Prisma client "used by another process" (2026-09-29).
 
   // Dropped and rebuilt rather than migrated forward: the point is a known state, not an
   // incremental one. A spec that moves a card leaves the board changed, and the next run must not
@@ -90,7 +58,7 @@ export default function globalSetup(): void {
   // `DROP SCHEMA` rather than `prisma migrate reset`, and the difference is the blast radius.
   // `reset` drops everything the connection can see and is the wrong shape for a suite sharing a
   // database with a developer; this names `collega_e2e` in the SQL, so what is destroyed is visible
-  // at the call site and is the schema `refuseIfNotDisposable` has already insisted on.
+  // at the call site and is the schema `e2eDatabaseUrl` has already insisted on.
   run(
     'pnpm',
     [
@@ -123,8 +91,4 @@ export default function globalSetup(): void {
     DATABASE_URL: databaseUrl,
     NODE_ENV: 'test',
   })
-
-  // Read back by playwright.config.ts, so the API server starts against the same schema this just
-  // rebuilt rather than re-deriving it and risking a different answer.
-  process.env.COLLEGA_E2E_DATABASE_URL = databaseUrl
 }

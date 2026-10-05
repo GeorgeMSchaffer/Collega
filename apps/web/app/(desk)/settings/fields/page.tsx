@@ -2,6 +2,7 @@ import { Badge, Button, buttonVariants, EmptyState, Tag } from '@collega/design-
 import Link from 'next/link'
 import { GatedAction } from '@/components/common/gated-action'
 import { CrossOrgNote } from '@/components/settings/cross-org'
+import { FieldForm } from '@/components/settings/field-form'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
 import { getFieldDefinitions, getFieldDefinitionsByOrganization } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
@@ -33,7 +34,13 @@ function NoFields({ siteAdmin }: { siteAdmin: boolean }) {
   return (
     <EmptyState
       heading="No custom fields yet"
-      action={<GatedAction id="why-add-first-field" label="Add the first field" denial={null} />}
+      action={
+        <GatedAction id="why-add-first-field" label="Add the first field" denial={null}>
+          <a href="#add-field" className={buttonVariants()}>
+            Add the first field
+          </a>
+        </GatedAction>
+      }
     >
       Fields you define here become available to idea types, which choose the subset their ideas
       show. Nothing appears on an idea until a type picks it up.
@@ -64,85 +71,103 @@ export default async function FieldsPage() {
           ? 'Custom fields across every organization. Open an organization to change its fields.'
           : "Extra questions attached to an idea type. A field appears on an idea only when that idea's type asks for it."
       }
-      actions={siteAdmin ? undefined : <Button>Add New Field</Button>}
+      // An anchor rather than a button: the create form is a card on this page, so the header
+      // action's job is to reach it.
+      actions={
+        siteAdmin ? undefined : (
+          <a href="#add-field" className={buttonVariants()}>
+            Add New Field
+          </a>
+        )
+      }
     >
       {siteAdmin ? <CrossOrgNote what="A field" /> : null}
-      {rows.length === 0 ? (
-        <NoFields siteAdmin={siteAdmin} />
-      ) : (
-        <AdminTable
-          summary={
-            siteAdmin
-              ? `${rows.length} fields across ${catalogs.length} organizations.`
-              : `${rows.length} fields.`
-          }
-        >
-          <thead>
-            <tr className="border-b bg-muted/40">
-              <Th>Name</Th>
-              {siteAdmin ? <Th className="w-56">Organization</Th> : null}
-              <Th className="w-32">Type</Th>
-              <Th className="w-28">Required</Th>
-              <Th>Used by</Th>
-              <Th className="w-24">
-                <span className="sr-only">Actions</span>
-              </Th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(({ field, org }) => (
-              <tr key={`${org}-${field.id}`} className="border-b last:border-0">
-                <td className="px-4 py-2.5 font-medium">{field.name}</td>
-                {siteAdmin ? <td className="px-4 py-2.5 text-muted-foreground">{org}</td> : null}
-                <td className="px-4 py-2.5 text-muted-foreground">{field.fieldType}</td>
-                <td className="px-4 py-2.5">
-                  {field.required ? (
-                    <Badge variant="secondary">Required</Badge>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">Optional</span>
-                  )}
-                </td>
-                <td className="px-4 py-2.5">
-                  {field.usedBy.length === 0 ? (
-                    // Reachable, and not the same as "no types exist": every type in the
-                    // organization can be `Curated` and none of them have selected this field, so
-                    // it is defined and shown nowhere.
-                    <span className="text-xs text-muted-foreground">No idea type</span>
-                  ) : (
-                    <span className="flex flex-wrap gap-1.5">
-                      {field.usedBy.map((name) => (
-                        <Tag key={name}>{name}</Tag>
-                      ))}
-                    </span>
-                  )}
-                </td>
-                <td className="px-4 py-2.5 text-right">
-                  {/* Disabled for a Site Admin rather than linked: they belong to no organization,
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_356px]">
+        <div className="min-w-0">
+          {rows.length === 0 ? (
+            <NoFields siteAdmin={siteAdmin} />
+          ) : (
+            <AdminTable
+              summary={
+                siteAdmin
+                  ? `${rows.length} fields across ${catalogs.length} organizations.`
+                  : `${rows.length} fields.`
+              }
+            >
+              <thead>
+                <tr className="border-b bg-muted/40">
+                  <Th>Name</Th>
+                  {siteAdmin ? <Th className="w-56">Organization</Th> : null}
+                  <Th className="w-32">Type</Th>
+                  <Th className="w-28">Required</Th>
+                  <Th>Used by</Th>
+                  <Th className="w-24">
+                    <span className="sr-only">Actions</span>
+                  </Th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map(({ field, org }) => (
+                  <tr key={`${org}-${field.id}`} className="border-b last:border-0">
+                    <td className="px-4 py-2.5 font-medium">{field.name}</td>
+                    {siteAdmin ? (
+                      <td className="px-4 py-2.5 text-muted-foreground">{org}</td>
+                    ) : null}
+                    <td className="px-4 py-2.5 text-muted-foreground">{field.fieldType}</td>
+                    <td className="px-4 py-2.5">
+                      {field.required ? (
+                        <Badge variant="secondary">Required</Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Optional</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      {field.usedBy.length === 0 ? (
+                        // Reachable, and not the same as "no types exist": every type in the
+                        // organization can be `Curated` and none of them have selected this field, so
+                        // it is defined and shown nowhere.
+                        <span className="text-xs text-muted-foreground">No idea type</span>
+                      ) : (
+                        <span className="flex flex-wrap gap-1.5">
+                          {field.usedBy.map((name) => (
+                            <Tag key={name}>{name}</Tag>
+                          ))}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5 text-right">
+                      {/* Disabled for a Site Admin rather than linked: they belong to no organization,
                       so there is no scope for the request the page would make. */}
-                  {siteAdmin ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled
-                      aria-label={`Manage ${field.name}`}
-                    >
-                      Manage
-                    </Button>
-                  ) : (
-                    <Link
-                      href={`/settings/fields/${field.id}`}
-                      className={buttonVariants({ variant: 'outline', size: 'sm' })}
-                      aria-label={`Edit ${field.name}`}
-                    >
-                      Edit
-                    </Link>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </AdminTable>
-      )}
+                      {siteAdmin ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled
+                          aria-label={`Manage ${field.name}`}
+                        >
+                          Manage
+                        </Button>
+                      ) : (
+                        <Link
+                          href={`/settings/fields/${field.id}`}
+                          className={buttonVariants({ variant: 'outline', size: 'sm' })}
+                          aria-label={`Edit ${field.name}`}
+                        >
+                          Edit
+                        </Link>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </AdminTable>
+          )}
+        </div>
+
+        {/* No create column for a Site Admin: a field belongs to one organization, and the API
+            refuses that role organization-content writes outside View As. */}
+        {siteAdmin ? null : <FieldForm />}
+      </div>
     </SettingsPage>
   )
 }

@@ -16,7 +16,7 @@
 - Acceptance criteria are covered by tests.
 - Regression risk is covered by targeted tests.
 - Development-only demo seed behavior is validated, including idempotency and required seeded graph.
-- Non-Development runtime is validated to ensure demo seed does not run.
+- Non-Development runtime is validated to ensure demo seed does not run — **except** where `COLLEGA_ALLOW_DEMO_SEED` is set: `POST /demo-seed` and `POST /demo-seed/reset` (Site Admin only, `SPEC/contracts/demo-seed.md`) answer only there, and refuse with `403` everywhere else. Production never sets it (`SPEC/decisions.md` 2026-09-30).
 
 ## Delivery
 - A resolved triage item is removed from `TODO` and recorded once under `COMPLETED` with its completion date and verification note.

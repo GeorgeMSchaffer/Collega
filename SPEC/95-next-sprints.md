@@ -16,7 +16,7 @@ Sprints run **strictly in order** — each builds on the previous sprint's merge
 
 **Paydown sprints take priority over feature sprints** (user decision, 2026-08-14, reaffirmed 2026-08-25). Sprint 6.5 was the first — 13 items, complete 2026-08-15. **Sprint 7.5** is the second. Both are given half-numbers rather than renumbering the sprints after them, so existing `sprint-07-*` and `sprint-08-*` cross-references stay valid.
 
-**Sprint 8 was cancelled on 2026-09-04** and the .NET stack is never deployed — everything goes to Vercel at the end of the TypeScript conversion (`SPEC/decisions.md`). **Sprint 9 is the next sprint.** Read the rows below with that in mind: several of them justify their sequencing by "must land before the first Azure deploy", and that deployment is not happening. They are left as written because they explain why the work landed in the order it did.
+**Sprint 8 was cancelled on 2026-09-04** and the .NET stack is never deployed — everything goes to Vercel at the end of the TypeScript conversion (`SPEC/decisions.md`). **Sprint 9 is down to F4, which Sprint 13 finishes (F1 closed 2026-10-01).** Read the rows below with that in mind: several of them justify their sequencing by "must land before the first Azure deploy", and that deployment is not happening. They are left as written because they explain why the work landed in the order it did.
 
 | # | Blocked by | Why that dependency exists |
 |---|---|---|
@@ -45,15 +45,19 @@ Note: the Site Admin seed-reset flag bundled into Sprint 2 has no cross-sprint d
 | 7 | AI-assisted idea drafting (idea brainstorm chat; four design decisions locked 2026-08-11, `Anthropic` package approved) | `SPEC/sprints/archive/sprint-07-ai-idea-assist.md` | **Complete (2026-08-18)** — built and reviewed 2026-08-16; a follow-on batch on 2026-08-18 added the Site-Admin-managed versioned prompt, a prompt playground / eval harness, and `.http` call tracing | Medium |
 | 7.5 | Accessibility and bug paydown — the ten `Bug Triage.md` items from the 2026-08-16 browser pass | `SPEC/sprints/sprint-07.5-accessibility-and-bug-paydown.md` | **Closed 2026-09-04** — implemented, verification stood down when Sprint 8 was cancelled | Small–Medium |
 | 8 | ~~Azure deployment (provision + first deploy + CI/CD)~~ | `SPEC/sprints/sprint-08-azure-deployment.md` | **CANCELLED 2026-09-04** — never started. The .NET stack is never deployed; both apps and the database go to Vercel at the end of the conversion (`SPEC/decisions.md`). Its one product item, the rule 32c flash, moves to Wave E. | — |
-| 9 | TypeScript conversion — **the active sprint** | `SPEC/sprints/sprint-09-typescript-conversion.md` | **In Progress (2026-09-04)** — Wave A complete; Wave 0 is the frontier | Large |
-| 10 | Comp R, phase 1 — themes, the list and detail pattern on Boards, a board and Ideas, structured idea fields, board archive | `SPEC/sprints/sprint-10-comp-r-phase-1.md` | Not started (planned 2026-09-27) | Large |
-| 11 | Comp R iteration — Graphite and the denser controls, tag colours and Settings → Tags, the effort bar, the Sprint board and the Roadmap | `SPEC/sprints/sprint-11-comp-r-iteration.md` | Not started (planned 2026-09-28; questions answered the same day) | Large |
-| 12 | Prompt-eval runner — the TypeScript replacement for the runner F6 deleted; measures v1, commits a baseline, and gates idea assistant v2 | `SPEC/sprints/sprint-12-prompt-eval-runner.md` | Not started (planned 2026-09-28; slice 113's questions answered the same day) | Medium |
+| 9 | TypeScript conversion — **the active sprint** | `SPEC/sprints/sprint-09-typescript-conversion.md` | **In Progress** — Waves A through E done; Wave F's F1 closed 2026-10-01; F4 (slice 140, the cutover) remains, in Sprint 13 | Large |
+| 10 | Comp R, phase 1 — themes, the list and detail pattern on Boards, a board and Ideas, structured idea fields, board archive | `SPEC/sprints/archive/sprint-10-comp-r-phase-1.md` | **Complete (2026-09-27)** — slices 099–103 merged | Large |
+| 11 | Comp R iteration — Graphite and the denser controls, tag colours and Settings → Tags, the effort bar, the Sprint board and the Roadmap | `SPEC/sprints/archive/sprint-11-comp-r-iteration.md` | **Complete (2026-09-28)** — slices 104–112 merged | Large |
+| 12 | Prompt-eval runner — the TypeScript replacement for the runner F6 deleted; measures v1, commits a baseline, and gates idea assistant v2 | `SPEC/sprints/archive/sprint-12-prompt-eval-runner.md` | **Complete (2026-09-30)** — slices 113–118 merged; the v1 baseline is committed | Medium |
+| 13 | MVP release — QA debt, the View As grouping fix, F1 closed, spec bookkeeping, then the cutover (F4) | `SPEC/sprints/sprint-13-mvp-release.md` | **In progress** — 136–139 and 141 merged 2026-10-01; 140, the cutover, remains | Medium |
+
+**Cutover** (Sprint 9, Wave F slice F4) follows `SPEC/50-cutover-runbook.md`: its go/no-go checklist
+gates the release of the conversion onto `main`.
 
 **Comp R work (added 2026-09-27, `SPEC/decisions.md` "One list and detail pattern").** Three phases, in
 order: **phase 1** — themes, the list and detail pattern on Boards, a board and Ideas, the structured
 idea fields with their backfill, board archive and the two-`h1` fix — is **Sprint 10**,
-`SPEC/sprints/sprint-10-comp-r-phase-1.md` (Not started); **phase 2** is the TypeScript prompt-eval
+`SPEC/sprints/archive/sprint-10-comp-r-phase-1.md` (Complete 2026-09-27); **phase 2** is the TypeScript prompt-eval
 runner; **phase 3** is idea assistant v2 (`20-feature-ai-idea-assist-v2.md`). Settings and Delivery
 lists move to the pattern afterwards. The Bug Triage exception for this work is recorded in the same
 decision. *Superseded in part 2026-09-28 (`SPEC/decisions.md`, "The comp R iteration's open questions
@@ -61,7 +65,7 @@ are answered"): Sprint 11, the comp R iteration, goes first after phase 1; phase
 order after it; Settings → Tags and the Delivery screens move to the pattern in Sprint 11.*
 
 **Comp R's 2026-09-28 iteration** (`SPEC/decisions.md` 2026-09-28) is **Sprint 11**,
-`SPEC/sprints/sprint-11-comp-r-iteration.md`: Graphite replacing Notte, the denser form and control
+`SPEC/sprints/archive/sprint-11-comp-r-iteration.md`: Graphite replacing Notte, the denser form and control
 layout, tag colours with Settings → Tags, the effort bar, and the Sprint board and Roadmap on comp R.
 It runs first, then the prompt-eval runner, then idea assistant v2 (answered 2026-09-28). The
 Roadmap is built without its Outcomes backend, which is a later sprint's. Settings → Tags is the
@@ -69,7 +73,7 @@ first Settings entity on the pattern. The Bug Triage exception for it is conditi
 fixing the `db:seed` `P2002` swimlane item.
 
 **The prompt-eval runner** (phase 2 of the comp R work) is **Sprint 12**,
-`SPEC/sprints/sprint-12-prompt-eval-runner.md`, specified in `SPEC/20-feature-prompt-eval-runner.md`
+`SPEC/sprints/archive/sprint-12-prompt-eval-runner.md`, specified in `SPEC/20-feature-prompt-eval-runner.md`
 (slice 113): the runner core, metrics and compare, the v1 baseline, the v2 case format, and QA —
 slices 114–118. It follows Sprint 11 and precedes idea assistant v2, which it gates. Slice 113's open questions were
 answered 2026-09-28.
