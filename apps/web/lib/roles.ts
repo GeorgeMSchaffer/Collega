@@ -23,15 +23,25 @@ export function writeDenial(role: Role): string | null {
 }
 
 /**
- * Whether the role may create or configure boards. Not `writeDenial`: that answers whether a role
- * may author an idea, and a board is an administrator's write. A Site Admin is sent to View As as
- * an administrator, not a member: acting as a member (view-as rule 11 gives the target's role)
- * would still be refused.
+ * Whether the role may edit, archive or configure an existing board — an administrator's write;
+ * creating one is `boardCreateDenial`. A Site Admin is sent to View As as an administrator, not a
+ * member: acting as a member (view-as rule 11 gives the target's role) would still be refused.
  */
 export function boardAdminDenial(role: Role): string | null {
   if (role === 'OrgAdmin') return null
   if (role === 'SiteAdmin') return 'Act as an organization administrator'
   return 'Administrators only'
+}
+
+/**
+ * Whether the role may create a board: an Org Admin or a User (`SPEC/decisions.md` 2026-10-04).
+ * The same answer as `writeDenial` today, kept separate because the two rules are decided
+ * separately. Editing, archiving and lane configuration stay `boardAdminDenial`.
+ */
+export function boardCreateDenial(role: Role): string | null {
+  if (role === 'OrgAdmin' || role === 'User') return null
+  if (role === 'SiteAdmin') return 'Act as a member'
+  return 'Read-only account'
 }
 
 /**
@@ -59,6 +69,15 @@ export function hasInbox(role: Role): boolean {
 }
 
 /**
+ * Whether the role works inside an organization's boards, ideas and delivery. A Site Admin acting
+ * as themselves does not — they reach that content through View As, where the role is the target's
+ * — so the workspace links are not offered to them (`SPEC/decisions.md` 2026-10-04).
+ */
+export function hasOrgWorkspace(role: Role): boolean {
+  return role !== 'SiteAdmin'
+}
+
+/**
  * Whether the role may reach the administration routes at all.
  *
  * This is a **page-level** gate, not a control-level one, and it reads differently on purpose: a
@@ -73,7 +92,7 @@ export function isAdministrator(role: Role): boolean {
 
 /** The role as it is written in the UI. The wire spells it `OrgAdmin`; a person does not. */
 export function roleLabel(role: Role): string {
-  if (role === 'SiteAdmin') return 'Site Admin'
+  if (role === 'SiteAdmin') return 'App Admin'
   if (role === 'OrgAdmin') return 'Org Admin'
   if (role === 'ReadOnly') return 'Read Only'
   return 'User'

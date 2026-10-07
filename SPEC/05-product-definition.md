@@ -40,7 +40,7 @@ Two capabilities distinguish it from a generic board:
 
 | Role | Core responsibility | Notable limits |
 |---|---|---|
-| **Site Admin** | Global platform administration across all organizations | Belongs to **no** organization. Cannot be @mentioned. Cannot mutate organization content directly — see §2.2 |
+| **Site Admin** (shown as **App Admin** in the UI since 2026-10-04) | Global platform administration across all organizations | Belongs to **no** organization. Cannot be @mentioned. Cannot mutate organization content directly — see §2.2 |
 | **Org Admin** | Full administration within their own organization | Cannot administer any other organization |
 | **User** | Creates and edits ideas, collaborates | No administration. Some actions are author-only |
 | **Read Only** | Participates through comments and upvotes | Cannot edit idea content, create tags, or change board configuration |
@@ -58,7 +58,8 @@ Canonical source: `SPEC/10-requirements.md`.
 | Manage users (all orgs) | ✓ | | | |
 | Manage users (own org) | ✓ | ✓ | | |
 | Import users by CSV | ✓ | ✓ | | |
-| Create/manage boards | ✓\* | ✓ | | |
+| Create boards | ✓\* | ✓ | ✓ | |
+| Edit, archive and configure boards | ✓\* | ✓ | | |
 | Manage statuses | ✓\* | ✓ | | |
 | Manage Idea Type / Business Impact options | ✓\* | ✓ | | |
 | Manage user-defined fields | ✓\* | ✓ | | |

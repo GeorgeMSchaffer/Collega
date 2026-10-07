@@ -73,8 +73,10 @@
    its block — no component changes. Values are comp R's
    (SPEC/mockups/comp-r-portico-prototype.html), mapped onto the
    shadcn roles the components already use; every text pair clears
-   4.5:1. `data-theme` sits on <html>; Terrazzo is also the bare
-   default, so a document with no attribute is Terrazzo.
+   4.5:1. `data-theme` sits on <html>, and the app always sets it —
+   to Graphite unless the browser chose another (apps/web/lib/theme.ts).
+   Terrazzo is the bare :root, so a document with no attribute (a comp,
+   a test page) is Terrazzo.
 
    Fonts come from the one Google Fonts stylesheet in
    apps/web/app/layout.tsx; a new face must be added there too.

@@ -4,7 +4,7 @@
 // The target is the standard demo seed the .NET stack produces, and Sprint 9's definition of done
 // requires it to exist in the new stack: 2 organizations, 10 users, 4 boards, 44 ideas. Ten users
 // is 2 orgs x 4 accounts - one Org Admin, two User, one Read Only - plus the configured Site Admin
-// and the Development-only convenience Site Admin.
+// and the Development-only convenience Site Admin. Three vertical organizations sit on top of those.
 //
 // **This file is a wrapper and nothing else.** The seed itself lives in
 // `src/demo-seed/` so the API can run it for a Site Admin from the settings screen, which a

@@ -174,7 +174,8 @@ That reports `0 cached` and is the only form worth quoting as evidence.
 
 Prisma owns the schema
 ([`packages/infrastructure/prisma/schema.prisma`](packages/infrastructure/prisma/schema.prisma)) —
-25 models, 9 enums, frozen at conversion slice S0.2.
+28 models, 14 enums. Frozen at conversion slice S0.2, and changed since only by the amendments
+recorded in [`SPEC/decisions.md`](SPEC/decisions.md).
 
 ```bash
 pnpm --filter @collega/infrastructure db:generate   # regenerate the client from the schema
@@ -349,8 +350,9 @@ tools/
   local/start.ts           `pnpm start` — database, API and web in one command
   golden                   Capture/replay harness — the conversion's regression detector
   boundaries               Architecture tests over the layer rules
+  arch                     Architecture assertions lint cannot express (the identity chokepoint)
   demo-shots               Screenshots the demo deck is built from
-  prompt-eval              The AI-assist evaluation corpus (data only; its runner is gone)
+  prompt-eval              The AI-assist evaluation corpus, its runner and the v1 baseline
 SPEC/                      Canonical specs — the source of truth
 SPEC/mockups/              UI comps; comp-q-*.html is the locked reference rendering
 ```
@@ -369,10 +371,11 @@ Business rules live in `domain` and `application` — never in controllers or Re
 ## Design
 
 The UI is locked to **comp P**, rendered as **comp Q** on Tailwind v4 + shadcn/ui. Structure is
-settled; the palette is open. `SPEC/mockups/comp-q-*.html` are self-contained pages you can open in
-a browser — they are the reference, and the theme in
-[`apps/web/app/globals.css`](apps/web/app/globals.css) is carried over from
-`SPEC/mockups/_build/q.css`. Change the palette in both or the comps stop being a reference.
+settled; the palette is five themes with a picker, **Graphite** (dark) by default.
+`SPEC/mockups/comp-q-*.html` are self-contained pages you can open in a browser — they are the
+reference, and the theme in
+[`packages/design-system/src/globals.css`](packages/design-system/src/globals.css) is carried over
+from `SPEC/mockups/_build/q.css`; `apps/web/app/globals.css` only imports it. Change the palette in both or the comps stop being a reference.
 
 If a page's layout is not settled, produce a throwaway comp in `SPEC/mockups/` for review before
 writing production React against an undecided design.
@@ -381,18 +384,53 @@ writing production React against an undecided design.
 
 ## Accounts
 
-`pnpm start` seeds two organizations with one account per role each, all sharing the same
-development-only password — `DEMO_PASSWORD` in
-[`packages/infrastructure/src/demo-seed/modules/scenario.ts`](packages/infrastructure/src/demo-seed/modules/scenario.ts).
-The three worth signing in as:
+`pnpm start` seeds these accounts. Sign in at http://localhost:3000/login (or the web port
+`pnpm start` prints, if 3000 was taken).
 
-| | |
-|---|---|
-| `orgadmin@acme-robotics.demo.collega.test` | Creates, moves and administers |
-| `user@acme-robotics.demo.collega.test` | Creates and moves, subject to the board's own setting |
-| `readonly@acme-robotics.demo.collega.test` | Reads and upvotes; authoring is refused, with the reason shown |
+**Every seeded account's password is `Abc123!`.** It is development only and published here on
+purpose — `DEMO_PASSWORD` in
+[`packages/infrastructure/src/demo-seed/modules/scenario.ts`](packages/infrastructure/src/demo-seed/modules/scenario.ts) —
+so a database holding this data must never be one that matters.
 
-The full roster — every address, display name and role — is [`demo.md`](demo.md).
+| Email | Password | Name | Role | Organization |
+|---|---|---|---|---|
+| `siteadmin@demo.collega.test` | `Abc123!` | Sam Sitewide | Site Admin | *(none — every organization)* |
+| `admin@collega.local` | `Abc123!` ¹ | Site Administrator | Site Admin | *(none — every organization)* |
+| `orgadmin@acme-robotics.demo.collega.test` | `Abc123!` | Olivia Administer | Org Admin | Acme Robotics |
+| `user@acme-robotics.demo.collega.test` | `Abc123!` | Noah Contributor | User | Acme Robotics |
+| `user2@acme-robotics.demo.collega.test` | `Abc123!` | Maya Collaborator | User | Acme Robotics |
+| `readonly@acme-robotics.demo.collega.test` | `Abc123!` | Rosa Observer | Read Only | Acme Robotics |
+| `orgadmin@blue-harbor.demo.collega.test` | `Abc123!` | Olivia Administer | Org Admin | Blue Harbor Logistics |
+| `user@blue-harbor.demo.collega.test` | `Abc123!` | Noah Contributor | User | Blue Harbor Logistics |
+| `user2@blue-harbor.demo.collega.test` | `Abc123!` | Maya Collaborator | User | Blue Harbor Logistics |
+| `readonly@blue-harbor.demo.collega.test` | `Abc123!` | Rosa Observer | Read Only | Blue Harbor Logistics |
+| `orgadmin@pinecone-labs.demo.collega.test` | `Abc123!` | Priya Raman | Org Admin | Pinecone Labs |
+| `user@pinecone-labs.demo.collega.test` | `Abc123!` | Daniel Okafor | User | Pinecone Labs |
+| `user2@pinecone-labs.demo.collega.test` | `Abc123!` | Hannah Lindqvist | User | Pinecone Labs |
+| `readonly@pinecone-labs.demo.collega.test` | `Abc123!` | Marcus Bell | Read Only | Pinecone Labs |
+| `orgadmin@brightline-creative.demo.collega.test` | `Abc123!` | Camille Durand | Org Admin | Brightline Creative |
+| `user@brightline-creative.demo.collega.test` | `Abc123!` | Dana Whitfield | User | Brightline Creative |
+| `user2@brightline-creative.demo.collega.test` | `Abc123!` | Theo Lindqvist | User | Brightline Creative |
+| `readonly@brightline-creative.demo.collega.test` | `Abc123!` | Julian Ellery | Read Only | Brightline Creative |
+| `orgadmin@meridian-holdings.demo.collega.test` | `Abc123!` | Elena Vasquez | Org Admin | Meridian Holdings |
+| `user@meridian-holdings.demo.collega.test` | `Abc123!` | Tomas Reyes | User | Meridian Holdings |
+| `user2@meridian-holdings.demo.collega.test` | `Abc123!` | Grace Nakamura | User | Meridian Holdings |
+| `readonly@meridian-holdings.demo.collega.test` | `Abc123!` | Henry Osei | Read Only | Meridian Holdings |
+
+¹ The **configured Site Admin**, created from `SITE_ADMIN_EMAIL` / `SITE_ADMIN_PASSWORD` in `.env`
+(the values above are `.env.example`'s). Unlike the others it must change its password at first
+sign-in. A `.env` copied before 2026-10-04 still says `Ch4ngeMe!Now`, and an account already
+created keeps the password it was created with — the seed never overwrites one.
+
+What each role can do:
+
+- **Org Admin** — creates, edits, moves and administers everything in its organization.
+- **User** — creates and edits ideas, moves them subject to the board's own setting.
+- **Read Only** — reads, comments and upvotes; authoring is refused, with the reason shown.
+- **Site Admin** — every organization; creates organizations and users directly, and changes
+  organization content (boards, ideas) only through View As.
+
+The full roster — every address, display name and organization — is [`demo.md`](demo.md).
 
 ---
 

@@ -101,7 +101,7 @@ say "demo seed"
 pnpm exec turbo run build --filter=@collega/application >/dev/null
 DATABASE_URL="${DB_URL}" \
   SITE_ADMIN_EMAIL="${SITE_ADMIN_EMAIL:-admin@collega.local}" \
-  SITE_ADMIN_PASSWORD="${SITE_ADMIN_PASSWORD:-Ch4ngeMe!Now}" \
+  SITE_ADMIN_PASSWORD="${SITE_ADMIN_PASSWORD:-Abc123!}" \
   pnpm --filter @collega/infrastructure db:seed
 
 # --- 6. Session environment -----------------------------------------------------------------------

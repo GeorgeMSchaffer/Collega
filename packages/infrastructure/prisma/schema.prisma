@@ -166,8 +166,52 @@ model field_definitions {
   organizations            organizations              @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_field_definitions_organizations_organization_id")
   idea_field_values        idea_field_values[]
   idea_type_fields         idea_type_fields[]
+  fieldset_fields          fieldset_fields[]
 
   @@index([organization_id, display_order], map: "ix_field_definitions_organization_id_display_order")
+}
+
+model fieldsets {
+  id                  String                @id(map: "PK_fieldsets") @db.Uuid
+  organization_id     String                @db.Uuid
+  name                String                @db.VarChar(100)
+  normalized_name     String                @db.VarChar(100)
+  description         String?               @db.VarChar(500)
+  display_order       Int
+  created_at_utc      DateTime              @db.Timestamptz(6)
+  updated_at_utc      DateTime              @db.Timestamptz(6)
+  created_by_user_id  String?               @db.Uuid
+  updated_by_user_id  String?               @db.Uuid
+  fieldset_fields     fieldset_fields[]
+  idea_type_fieldsets idea_type_fieldsets[]
+  organizations       organizations         @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_fieldsets_organizations_organization_id")
+
+  @@unique([organization_id, normalized_name], map: "ux_fieldsets_organization_id_normalized_name")
+  @@index([organization_id, display_order], map: "ix_fieldsets_organization_id_display_order")
+}
+
+model fieldset_fields {
+  id                  String            @id(map: "PK_fieldset_fields") @db.Uuid
+  fieldset_id         String            @db.Uuid
+  field_definition_id String            @db.Uuid
+  display_order       Int
+  field_definitions   field_definitions @relation(fields: [field_definition_id], references: [id], onUpdate: NoAction, map: "FK_fieldset_fields_field_definitions_field_definition_id")
+  fieldsets           fieldsets         @relation(fields: [fieldset_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_fieldset_fields_fieldsets_fieldset_id")
+
+  @@unique([fieldset_id, field_definition_id], map: "ux_fieldset_fields_fieldset_id_field_definition_id")
+  @@index([field_definition_id], map: "IX_fieldset_fields_field_definition_id")
+}
+
+model idea_type_fieldsets {
+  id            String     @id(map: "PK_idea_type_fieldsets") @db.Uuid
+  idea_type_id  String     @db.Uuid
+  fieldset_id   String     @db.Uuid
+  display_order Int
+  fieldsets     fieldsets  @relation(fields: [fieldset_id], references: [id], onUpdate: NoAction, map: "FK_idea_type_fieldsets_fieldsets_fieldset_id")
+  idea_types    idea_types @relation(fields: [idea_type_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_idea_type_fieldsets_idea_types_idea_type_id")
+
+  @@unique([idea_type_id, fieldset_id], map: "ux_idea_type_fieldsets_idea_type_id_fieldset_id")
+  @@index([fieldset_id], map: "IX_idea_type_fieldsets_fieldset_id")
 }
 
 model idea_assignees {
@@ -246,6 +290,7 @@ model idea_types {
   created_by_user_id String?            @db.Uuid
   updated_by_user_id String?            @db.Uuid
   idea_type_fields   idea_type_fields[]
+  idea_type_fieldsets idea_type_fieldsets[]
   organizations      organizations      @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_idea_types_organizations_organization_id")
   ideas              ideas[]
 
@@ -413,6 +458,7 @@ model organizations {
   boards                     boards[]
   business_impacts           business_impacts[]
   field_definitions          field_definitions[]
+  fieldsets                  fieldsets[]
   idea_types                 idea_types[]
   ideas                      ideas[]
   sprints                    sprints[]

@@ -28,6 +28,15 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-04 | The App Admin's sidebar offers Home and Settings only | active | full below |
+| 2026-10-04 | The Site Admin role is shown as App Admin | active | full below |
+| 2026-10-04 | An organization is created with its first Org Admin | active | full below |
+| 2026-10-04 | Three vertical demo organizations join Acme and Blue Harbor | active | full below |
+| 2026-10-04 | The sign-in pitch shows the product, not the primary colour | active | full below |
+| 2026-10-04 | Users create boards; managing them stays Org Admin | active | full below |
+| 2026-10-04 | One Enter adds a tag on the idea form | active | full below |
+| 2026-10-04 | Graphite is the default theme | active | full below |
+| 2026-10-04 | Fieldsets: reusable groups of fields, attached to idea types | active | full below |
 | 2026-10-01 | The Home comp is a visual guide; the spec wins | active | full below |
 | 2026-10-01 | The follow and inbox questions are answered | active | full below |
 | 2026-10-01 | The S0.2 schema freeze is amended a fifth time, for idea followers and read state | active | full below |
@@ -38,10 +47,10 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-30 | What the MVP release includes | active | full below |
 | 2026-09-30 | The prompt-eval thresholds stand, confirmed against the v1 baseline | active | full below |
 | 2026-09-29 | How the cutover is run | active | full below |
-| 2026-09-29 | Board lanes reorder by dragging the header, with buttons as the fallback | active | full below |
-| 2026-09-29 | Contracts and wording written from the code | active | full below |
-| 2026-09-29 | Removing a lane moves its ideas | active | full below |
-| 2026-09-29 | The test harnesses reuse sessions; the auth rate limits stay | active | full below |
+| 2026-09-29 | Board lanes reorder by dragging the header, with buttons as the fallback | active | [2026-09-29 to 2026-09-29](decisions/archive-2026-09-29-to-2026-09-29.md) |
+| 2026-09-29 | Contracts and wording written from the code | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-29 | Removing a lane moves its ideas | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-29 | The test harnesses reuse sessions; the auth rate limits stay | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-29 | Spec contradictions resolved | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-28 | The Idea Field Option contract follows the code | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-28 | The v2 corpus format, as built | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
@@ -54,7 +63,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-28 | Starting a sprint, a single-Issue read, the Roadmap's sprint rows, and tag audit events | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-28 | The comp R iteration's open questions are answered | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-28 | The S0.2 schema freeze is amended a fourth time, for tag colours | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
-| 2026-09-28 | Graphite replaces Notte as the dark theme | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
+| 2026-09-28 | Graphite replaces Notte as the dark theme | superseded in part | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-28 | The next comp R iteration is adopted: denser forms, Sprint board, Roadmap, tag colours and Settings → Tags | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-27 | The API sends the custom field list | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-27 | The idea assistant is rescoped as a co-author, and ideas gain structured fields | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
@@ -105,6 +114,183 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-04 — The App Admin's sidebar offers Home and Settings only
+
+> Supersedes in part `20-feature-client-ui-revisions.md`'s "Site Admin … Boards, Ideas … list views
+> aggregate all organizations".
+
+**Decided by the user.** An App Admin (Site Admin) acting as themselves changes boards, ideas and
+delivery only through View As, and their own lists of them were empty, so the sidebar and the
+command palette no longer offer them Boards, Ideas, Sprint board, Backlog or Roadmap — those showed
+a 0 count and an empty screen. Home's platform roll-up still links to each board for reading. A group left
+empty (Delivery) loses its heading. Under View As the role is the target's, so the links return.
+The routes themselves are unchanged.
+
+---
+
+## 2026-10-04 — The Site Admin role is shown as App Admin
+
+**Decided by the user**, who names the four roles App Admin, Org Admin, User and Read Only. Every
+user-visible label and message in `apps/web` says **App Admin**. The role's value (`SiteAdmin`),
+the API, its contracts and error messages, the golden corpus, the specs and code comments keep
+"Site Admin": renaming those is a large, risky change for no user-facing gain, and the specs read
+"Site Admin" as the role's name. API error text a screen shows verbatim (the View As refusal) still
+says "Site Admin" until a later slice changes it.
+
+---
+
+## 2026-10-04 — An organization is created with its first Org Admin
+
+**Decided by the user.** The App Admin (the role the code calls Site Admin) reaches an
+organization's users, tags, custom fields, boards and ideas only by acting as a member (rule 25
+stands), so an organization with no active Org Admin is unreachable. The user chose to close that by
+construction rather than give the App Admin direct access:
+
+- **Creating an organization requires its first Org Admin** — name, email, initial password. The
+  form and the server action refuse before the organization is created when any is missing.
+- **The organization's page lists its Org Admins**, warns when none is active, and offers **Add Org
+  Admin**: Add New User preset to that organization and the Org Admin role (direct user
+  administration is rule 26's bootstrap exception). A deactivated admin is reactivated from their user
+  page.
+
+Rejected: letting the App Admin edit organization settings directly, which would reverse rule 25 and
+attribute organization changes to someone outside it.
+
+---
+
+## 2026-10-04 — Three vertical demo organizations join Acme and Blue Harbor
+
+**Decided by the user.** The generic demo data (the same eleven scenarios on every board, prefixed
+with the board's focus) is too thin to demo to a market. The seed now also creates three
+organizations written for a vertical: **Pinecone Labs** (an Agile software team), **Brightline
+Creative** (a marketing agency) and **Meridian Holdings** (a corporate business-improvement
+programme, "Project Lighthouse"). Each has two boards of 11 themed ideas (3/2/2/1/3 across the default
+statuses), themed tags, comments, a sprint with promoted issues and checklists, and one account per
+role - Org Admin, two Users, Read Only - on the same `orgadmin`/`user`/`user2`/`readonly` local parts.
+
+**Acme Robotics and Blue Harbor Logistics are kept unchanged** and stay first in the scenario: about
+60 golden fixtures, the E2E suite and `apps/web`'s test fixtures pin them by slug, and the corpus
+cannot be re-recorded. This **supersedes the "exactly 2 demo organizations" wording** in
+`10-requirements.md`, `20-feature-organizations-and-users.md` and `40-test-strategy.md`: the two
+fixture organizations keep that shape; the three verticals are additional demo data. Read Only
+accounts are seeded in every organization (they already were; the specs' "no Read Only account"
+wording was stale).
+
+---
+
+## 2026-10-04 — The sign-in pitch shows the product, not the primary colour
+
+**Decided by the user**, choosing option C of `SPEC/mockups/comp-login-alternatives.html`. The auth
+screens' left band was filled with the theme's primary; in Graphite, the default, that put a
+full-height block of bright amber beside a near-black form. The band now sits on the theme's
+**sidebar ground** with a hairline border and the sidebar's own text pair (the rail is dark in Sera
+and Graphite, light in the others, so the page's foreground would vanish on Sera's), the primary is
+kept for the mark and the Sign in button, and
+**Sign in** adds a decorative **schematic board** (five lanes in status hues, placeholder cards,
+every colour a theme token). Register and the forced password change share the band without the
+board. The copy is unchanged.
+
+---
+
+## 2026-10-04 — Users create boards; managing them stays Org Admin
+
+**Decided by the user**: everyone above Read Only in an organization may add ideas and boards. Ideas
+already worked that way. For boards, a **User** may now **create** one in their own organization;
+**editing, archiving, unarchiving and reordering lanes stay Org Admin only**. Creating includes
+the new board's first choices — its name, description, lanes and the user-moves setting — so a User
+makes those once, at creation; changing them afterwards is the Org Admin's. Read Only is refused as
+before. A Site Admin still creates boards and ideas only through View As (rule 25 stands; the user
+confirmed it the same day).
+
+The permission matrices in `05-product-definition.md` and `10-requirements.md` split *Create/manage
+boards* into *Create boards* and *Edit, archive and configure boards*. `contracts/boards.md` names no
+roles for the create route, so it is unchanged. The golden corpus recorded `boards.create.user` as
+403; it is now 201. The replay will report it as a status difference, and that is
+the intended record: `tools/golden/src/accepted.ts` refuses entries that excuse a status, because
+an authorization outcome must never be waved through silently.
+
+---
+
+## 2026-10-04 — One Enter adds a tag on the idea form
+
+**Decided by the user**, after typing a new tag, pressing Enter once and being refused on save.
+Slice 148 made Enter on unmatched text only *highlight* the *Create tag ‘…’* option, with a second
+Enter (or a click) to choose it; a highlighted option looks chosen, so the text stayed in the box
+and the save refused it. Now **Enter adds the highlighted option, or the first one when nothing is
+highlighted** — an existing tag when one matches by prefix, otherwise *Create tag* — as a chip at
+once. The save still refuses text left in the box (the owner's slice 148 decision stands), and its
+message now says to press Enter to add it or clear it.
+
+---
+
+## 2026-10-04 — Graphite is the default theme
+
+> Supersedes in part 2026-09-27 "Terrazzo is the palette, with a theme picker" and 2026-09-28
+> "Graphite replaces Notte as the dark theme", both of which kept Terrazzo as the default.
+
+**Decided by the user.** The app's default theme is **Graphite**, the dark theme, instead of
+Terrazzo. A browser with no `collega-theme` cookie (or one the app does not recognise) is served
+Graphite on the first render; a browser that picked a theme in the picker keeps it, since the cookie
+is written only by a choice. The five themes, the picker, the per-browser cookie and the 4.5:1 rule
+are unchanged.
+
+Terrazzo stays the bare `:root` in `packages/design-system/src/globals.css`: the app always sets
+`data-theme`, so the bare block is only what a document with no attribute gets — the comps, and
+`global-error.tsx`, which deliberately renders without the design system. Moving the bare block
+would change every comp's reference rendering for no product gain. The comps' own pickers still open
+on Terrazzo; they are review artefacts, not the app.
+
+---
+
+## 2026-10-04 — Fieldsets: reusable groups of fields, attached to idea types
+
+**Decided by the user.** An Org Admin groups existing custom fields into a named **fieldset**, and an idea
+type selects individual fields *and* fieldsets. This **supersedes the 2026-08-10 model note** in
+`SPEC/20-feature-idea-type-fields.md` that dropped the reusable "Field Set" entity in favour of direct
+type-to-field mapping (that rewrite predates this log and was never an entry here, so it is marked
+superseded where it lives: the two feature specs and the contract).
+
+- **Live references.** A type points at a fieldset; it does not copy it. Editing a fieldset changes
+  every type that uses it, at once.
+- **Effective order** (`SPEC/20-feature-idea-type-fields.md`, "Effective-field resolution"): the type's
+  direct fields in their order, then each attached fieldset in its order with its members in their
+  order. A field reached twice appears once, at its first position; a direct field wins over a
+  fieldset and keeps its per-type required flag. A fieldset-sourced field uses the field's global
+  `is_required`. There is no per-set required override.
+- **Mode.** `Curated` when the type has any direct field or any attached fieldset, otherwise
+  `AllActiveFields`. A type whose fieldsets resolve to no active field stays `Curated`.
+- **Soft-deleted or inactive fields** are skipped by the resolver; the membership row survives.
+- **Deleting a fieldset is refused with `409` while any type uses it**; the UI shows "Used by N types".
+- **Detaching a fieldset** hides its fields and stops validating them; stored `idea_field_values` are
+  kept, as with any Curated edit today.
+- **Names** are unique per organization, case-insensitively.
+- **Permissions** as field definitions: an in-scope Org Admin writes, members read, a Site Admin acting
+  directly is refused with `403`.
+
+**The S0.2 schema freeze is amended a sixth time.** Under the 2026-09-11 rule — the freeze stands, and
+each change to `schema.prisma` needs its own entry here — this is that entry, and not a general licence.
+Additive, no backfill:
+
+- **New table `fieldsets`** (`id`, `organization_id`, `name`, `normalized_name`, `description`,
+  `display_order`, `created_at_utc`, `updated_at_utc`, `created_by_user_id`, `updated_by_user_id`),
+  unique on (`organization_id`, `normalized_name`), indexed on (`organization_id`, `display_order`).
+- **New table `fieldset_fields`** (`id`, `fieldset_id`, `field_definition_id`, `display_order`), unique
+  on (`fieldset_id`, `field_definition_id`), indexed on `field_definition_id`; `ON DELETE CASCADE` from
+  `fieldsets`, no action from `field_definitions`.
+- **New table `idea_type_fieldsets`** (`id`, `idea_type_id`, `fieldset_id`, `display_order`), unique on
+  (`idea_type_id`, `fieldset_id`), indexed on `fieldset_id`; `ON DELETE CASCADE` from `idea_types`, no
+  action from `fieldsets` (which makes the delete refusal a database guarantee too).
+- **Not covered:** a per-set required override, fieldset soft delete, and nested fieldsets.
+
+**Golden corpus.** Idea-type reads and effective-field items gain additive keys (`fieldsetIds`,
+`fieldsets`, `source`), and the fieldset routes are new, so the replay may differ there. The backend
+slice checks whether `tools/golden/src/diff.ts` tolerates additive keys and records anything else in
+`tools/golden/src/accepted.ts`. The corpus is not re-recorded.
+
+Contracts: `SPEC/contracts/fieldsets.md` (new) and `SPEC/contracts/idea-type-fields.md`.
 
 ---
 
@@ -310,134 +496,3 @@ taken now.
    domain is a later, separate change; `api.collega-ai.com` is not current.
 5. **A release goes through a sync branch**, as pull requests #22–#27 did: `dev`'s tip is pushed as
    `sync/<date>`, and pull requests from it go into `dev` and into `main`.
-
----
-
-## 2026-09-29 — Board lanes reorder by dragging the header, with buttons as the fallback
-
-**Decided by the user** (slice 130), keeping `20-feature-client-ui.md` "Drag-and-Drop: Reordering
-Columns" as written: a lane is reordered by dragging its column header, saved immediately on drop.
-
-- **Header drag is the control.** An Org Admin drags a lane by its header onto another lane; the
-  drop sends one `POST /boards/{boardId}/swimlanes/reorder` naming every lane with a dense `order`.
-  It uses native HTML drag and drop, as the Sprint board's cards do; no dependency is added.
-- **Left / right buttons on the header are the accessible fallback**, for the keyboard and screen
-  readers, matching the arrows that move a card one lane over. They need no new shortcut (answer
-  10 of "The comp R iteration's open questions are answered" rules shortcuts out). After a button
-  move, focus stays on the pressed arrow.
-- **Both paths behave the same:** the new order shows at once, the lane rail is `aria-busy` and
-  the arrows `aria-disabled` while the save is in flight, a polite live region announces the lane's
-  new position, and a refusal puts the lanes back with the API's message above them.
-- **Who sees them.** An Org Admin, and a Site Admin through View As. The arrows are **hidden** and
-  the header does not drag for other roles, under the Denied rule's per-row exception
-  (`20-feature-client-ui.md` "Denied is shown, not hidden"): the board page's *Edit board* is still
-  shown, disabled with its reason, so the capability is announced once at page level.
-- **On an archived board** the header does not drag, and the arrows are shown `aria-disabled`,
-  described by a visible line saying the lanes keep their order until the board is unarchived. The
-  lanes at either end are `aria-disabled` rather than `disabled`, so the pressed button keeps its
-  focus.
-
-The route is the one "Spec contradictions resolved" item 8 chose; that decision stands. This
-entry retires item 8's "`apps/web` does not call the reorder route yet" line, which is left as
-written with a status note under it.
-
----
-
-## 2026-09-29 — Contracts and wording written from the code
-
-**An implementation record, not a user decision** (slice 124). Slice 121 listed routes the code
-serves and no contract describes, and spec lines the code contradicts. They were written from the
-code as it stands, with no code change, and checked against the golden corpus wherever it records
-the route. Nothing here changes behaviour; a reader who wants different behaviour needs a decision,
-not an edit to these contracts.
-
-- **New contracts:** the six `/organizations/{organizationId}/field-definitions` routes, in a new
-  `contracts/field-definitions.md` — reorder is `PUT …/reorder`, with no coverage check, unlike the
-  other catalogs' reorders; reads are open to any member of the organization, writes to an
-  in-scope Org Admin, and a direct Site Admin is refused. `PUT`/`DELETE /auth/me/portrait` in
-  `contracts/auth.md`. The `GET /users/{userId}` success shape, roles and errors in
-  `contracts/users.md`.
-- **Filled in:** the statuses list item carries `color` and `sortOrder`, the list takes
-  `includeDeleted`, and `PUT /statuses/{statusId}` answers the item. The organizations `sortBy`
-  sorts by `title` for any value but `createdAt` — so `companyName`, the contract's old spelling,
-  and `title`, the item's field, behave the same.
-- **Every fixture agrees** except in one field already known: the `profile.portrait.*` fixtures,
-  like `auth.me.*`, predate `organizationTitle`.
-- **Not written:** `GET /organizations/{organizationId}/users/import-template` appears only in the
-  derived `Specs Overview.md`. No code serves it and the corpus does not record it, so there is
-  nothing to describe.
-- **Decided by the user: the idea form preselects the first active Idea Type too.** The Defaults
-  row of `20-feature-ideas-and-engagement.md` and `contracts/idea-field-options.md` already said so,
-  but the form preselected neither. It now preselects both on a new idea, so the first type's custom
-  fields show at once. An edit keeps the idea's stored values, and "Choose…" stays in each select.
-- **Wording:** a required password change ends the session it was made in. The change regenerates
-  the user's `SecurityStamp`, and the web client deletes its cookie and returns to
-  `/login?passwordChanged=1`. `40-test-strategy.md`, `05-product-definition.md`,
-  `20-feature-auth.md` rule 32a and `contracts/auth.md` said the session carried on; each keeps
-  a dated note of what it said.
-
----
-
-## 2026-09-29 — Removing a lane moves its ideas
-
-**Decided by the user.** A board save that removes a lane still holding live ideas moves those ideas
-to another lane of the board. The admin picks the target in a confirm step, defaulting to the
-board's first remaining lane (*3 ideas are in In Review. Move them to: [New / Pending ▾]*). The API
-takes the targets in the save request, refuses a save that removes an occupied lane without one, and
-writes a status-change audit entry per moved idea. Archived boards still refuse the save (`409`).
-The moves send **no notification** (decided by the user the same day): they reconfigure a board
-rather than decide anything about one idea, so `20-feature-notifications.md` trigger 4 carries the
-exception.
-Applied in slice 123: `20-feature-boards-and-statuses.md` Board rule 14, `contracts/boards.md`
-`PUT /boards/{boardId}`, and the Boards header notes in `20-feature-client-ui.md`.
-
-**Why.** Until now the save was accepted and the ideas kept a status that was no longer a column, so
-they vanished from the board while still counting in its `ideaCount` (Bug Triage, found in the
-review of slice 097). The three answers were to refuse the save, move the ideas, or show them
-somewhere; refusing makes the admin move every card by hand first, and a "no column" bucket keeps
-the inconsistency and only labels it. Moving them is one decision the admin is already making.
-
-**Settled with it, by the slice** (the lane and status model decides each; none is a new product
-choice):
-
-- **Which ideas:** the lane's live `Discovery` ideas — what `ideaCount` and `laneCounts` count and
-  the board shows. A promoted Issue keeps its ideation status, which is frozen at promotion for
-  provenance; a soft-deleted idea keeps its, since restore is deferred and its row is a retained
-  record.
-- **Request shape:** `ideaMoves: [{ fromStatusId, toStatusId }]`, one target per removed lane rather
-  than one for the whole save, because the confirm step asks per lane and one-for-all is the
-  special case of it. The target may be a lane added in the same save.
-- **Audit:** `IdeaStatusChanged` in the shape a move on the board writes, and the `BoardUpdated`
-  entry records the moves with their counts.
-
----
-
-## 2026-09-29 — The test harnesses reuse sessions; the auth rate limits stay
-
-**Decided by the user**, closing the two Bug Triage items where the auth rate limiter broke the
-golden replay and the Playwright suite. Supersedes in part 2026-09-12 ("The rate limiter's
-collision with the golden replay is deferred, knowingly"). Slice 122 applied it.
-
-- **Production limits are unchanged**: login twenty a minute; the auth surface ten a minute and a
-  hundred an hour, per IP and per route (`AUTH_THROTTLERS`). The harnesses fit the limits, not
-  the other way round. Exempting a harness caller and raising the limits for one stay rejected,
-  for 2026-09-12's reasons.
-- **The golden replay signs each role in once and keeps the session across scenarios**
-  (`tools/golden/src/cli.ts`). It signs every role in afresh after a scenario that starts or ends
-  View As (today only `auth`), and drops the sessions of accounts a scenario created for itself
-  after every scenario (`profile` changes one's password, which ends its session anyway). About
-  sixty logins a run become twelve, three of them the corpus's own `POST /auth/login` cases.
-  2026-09-12's objection, that caching weakens the isolation `resetSessions` gave, does not hold on
-  Nest: a View As session is a server-side row keyed on the real user and the token is never
-  reissued, so a fresh sign-in lands in the same state. The corpus's own `DELETE /auth/view-as`
-  steps are what end it; the re-sign after View As is caution, not correctness.
-- **The Playwright suite signs each seeded role in once and reuses the cookie via `storageState`**
-  (`e2e/tests/auth.setup.ts`, in place since 2026-09-14; the last seeded sign-in outside it, in
-  `demo-path.spec.ts`, now uses the stored session). Specs that exist to test signing in
-  (`signs-in.spec.ts`, `journey.spec.ts`) and every sign-in as an account a spec just created stay
-  real. Fifteen sign-ins a run become fourteen, nine of them as created accounts.
-- **Verified 2026-09-29, limits intact, scratch databases:** the full Playwright suite passed
-  (38/38). The replay ran all fifteen scenarios to completion on a fresh seed: 360/447 match, 52
-  accepted, 35 unexplained, 69 stale accepted entries. The same corpus replayed with the old
-  per-scenario re-sign, paced under the limits (a 25-second pause after each scenario), produced
-  a byte-identical report, so reusing sessions changes no result.

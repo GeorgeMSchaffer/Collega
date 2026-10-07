@@ -44,21 +44,21 @@ function sectionsFor(role: Role): Section[] {
         href: '/settings/view-as',
         title: 'View as',
         blurb:
-          'Act as a member of an organization. The only way a Site Admin reaches organization content, which rule 25 refuses them directly.',
-        badge: 'Site Admin',
+          'Act as a member of an organization. The only way an App Admin reaches organization content, which rule 25 refuses them directly.',
+        badge: 'App Admin',
       },
       {
         href: '/settings/organizations',
         title: 'Organizations',
         blurb: 'Every organization on the deployment, and its size.',
-        badge: 'Site Admin',
+        badge: 'App Admin',
       },
       {
         href: '/settings/demo-data',
         title: 'Demo data',
         blurb:
           'Fill this deployment with the demo organizations, or reset them. A fresh deployment has nobody to view as until you do.',
-        badge: 'Site Admin',
+        badge: 'App Admin',
       },
       {
         href: '/settings/users',
@@ -87,6 +87,11 @@ function sectionsFor(role: Role): Section[] {
         blurb: 'Extra questions attached to an idea type.',
       },
       {
+        href: '/settings/fieldsets',
+        title: 'Fieldsets',
+        blurb: 'Reusable groups of custom fields that idea types can share.',
+      },
+      {
         href: '/settings/tags',
         title: 'Tags',
         blurb: 'Every organization’s tags and their colours, read-only.',
@@ -96,7 +101,7 @@ function sectionsFor(role: Role): Section[] {
         title: 'AI prompt',
         blurb:
           'The instructions every organization’s assistant runs under, and its version history.',
-        badge: 'Site Admin',
+        badge: 'App Admin',
       },
       {
         href: '/settings/api-usage',
@@ -132,6 +137,11 @@ function sectionsFor(role: Role): Section[] {
       href: '/settings/fields',
       title: 'Custom fields',
       blurb: 'Extra questions attached to an idea type.',
+    },
+    {
+      href: '/settings/fieldsets',
+      title: 'Fieldsets',
+      blurb: 'Reusable groups of custom fields that idea types can share.',
     },
     {
       href: '/settings/tags',

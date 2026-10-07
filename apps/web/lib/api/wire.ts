@@ -226,6 +226,12 @@ export type WireIdeaType = {
   name: string
   fieldMode: string
   fields: readonly { fieldDefinitionId: string; displayOrder: number; isRequired: boolean }[]
+  /**
+   * The attached fieldsets, in attach order (`contracts/idea-type-fields.md` "Additive response
+   * keys"). Typed optional so a response from before the keys shipped still reads as none.
+   */
+  fieldsetIds?: readonly string[]
+  fieldsets?: readonly { id: string; name: string }[]
   effectiveFields: readonly WireEffectiveField[]
 }
 
@@ -236,6 +242,8 @@ export type WireEffectiveField = {
   fieldType: string
   isRequired: boolean
   options: readonly { optionId: string; label: string; isArchived?: true }[]
+  /** Where the field came from: mapped directly, or supplied by an attached fieldset. */
+  source?: { kind: 'field' } | { kind: 'fieldset'; fieldsetId: string; fieldsetName: string }
 }
 
 /**
@@ -277,6 +285,23 @@ export type WireFieldDefinitionDetail = {
   isRequired: boolean
   displayOrder: number
   options: readonly { optionId: string; label: string; displayOrder: number }[]
+}
+
+/** `GET /organizations/{id}/fieldsets` and `…/fieldsets/{id}` (`contracts/fieldsets.md`). */
+export type WireFieldset = {
+  fieldsetId: string
+  organizationId: string
+  name: string
+  description: string | null
+  displayOrder: number
+  usedByIdeaTypeCount: number
+  fields: readonly {
+    fieldDefinitionId: string
+    name: string
+    fieldType: string
+    isActive: boolean
+    displayOrder: number
+  }[]
 }
 
 /** `GET /organizations/{id}/business-impacts`, same default. */

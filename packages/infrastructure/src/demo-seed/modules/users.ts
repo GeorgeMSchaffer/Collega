@@ -39,7 +39,7 @@ export const usersSeed: SeedModule = {
     for (const scenario of DEMO_ORGANIZATIONS) {
       const organizationId = seedId('organization', scenario.slug)
 
-      for (const account of DEMO_ACCOUNTS) {
+      for (const account of scenario.accounts ?? DEMO_ACCOUNTS) {
         const email = demoEmail(account.localPart, scenario.slug)
         await upsertUser(prisma, {
           id: seedId('user', scenario.slug, account.localPart),

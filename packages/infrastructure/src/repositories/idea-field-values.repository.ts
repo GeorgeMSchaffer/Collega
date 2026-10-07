@@ -24,19 +24,27 @@ import type {
 import { isReservedColumn } from '@collega/application/ideas'
 import { FieldType, type IdeaTypeFieldMode } from '@collega/domain/enums'
 import type { FieldDefinition } from '@collega/domain/fields'
+import type { Fieldset } from '@collega/domain/fieldsets'
 import type { EffectiveField, IdeaType } from '@collega/domain/idea-fields'
 import { resolveEffectiveFields } from '@collega/domain/idea-fields'
 import type { IdeaFieldValueInput } from '@collega/domain/ideas'
 import type {
   field_definitions as FieldDefinitionRow,
+  fieldset_fields as FieldsetFieldRow,
+  fieldsets as FieldsetRow,
   idea_type_fields as IdeaTypeFieldRow,
+  idea_type_fieldsets as IdeaTypeFieldsetRow,
   idea_types as IdeaTypeRow,
   field_definition_options as OptionRow,
 } from '../generated/prisma/index.js'
 import type { PrismaClient } from '../persistence/prisma-client.js'
 
 type FieldDefinitionRowWithOptions = FieldDefinitionRow & { field_definition_options: OptionRow[] }
-type IdeaTypeRowWithFields = IdeaTypeRow & { idea_type_fields: IdeaTypeFieldRow[] }
+type IdeaTypeRowWithFields = IdeaTypeRow & {
+  idea_type_fields: IdeaTypeFieldRow[]
+  idea_type_fieldsets: IdeaTypeFieldsetRow[]
+}
+type FieldsetRowWithFields = FieldsetRow & { fieldset_fields: FieldsetFieldRow[] }
 
 function fieldDefinitionFromRow(row: FieldDefinitionRowWithOptions): FieldDefinition {
   return {
@@ -83,6 +91,33 @@ function ideaTypeFromRow(row: IdeaTypeRowWithFields): IdeaType {
       displayOrder: f.display_order,
       isRequired: f.is_required,
     })),
+    fieldsets: row.idea_type_fieldsets.map((f) => ({
+      id: f.id,
+      ideaTypeId: f.idea_type_id,
+      fieldsetId: f.fieldset_id,
+      displayOrder: f.display_order,
+    })),
+    createdAtUtc: row.created_at_utc,
+    updatedAtUtc: row.updated_at_utc,
+    createdByUserId: row.created_by_user_id,
+    updatedByUserId: row.updated_by_user_id,
+  }
+}
+
+function fieldsetFromRow(row: FieldsetRowWithFields): Fieldset {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    name: row.name,
+    normalizedName: row.normalized_name,
+    description: row.description,
+    displayOrder: row.display_order,
+    fields: row.fieldset_fields.map((m) => ({
+      id: m.id,
+      fieldsetId: m.fieldset_id,
+      fieldDefinitionId: m.field_definition_id,
+      displayOrder: m.display_order,
+    })),
     createdAtUtc: row.created_at_utc,
     updatedAtUtc: row.updated_at_utc,
     createdByUserId: row.created_by_user_id,
@@ -114,21 +149,30 @@ export class PrismaIdeaFieldValuesRepository implements IdeaFieldValuesPort, AiI
     return row ? fieldDefinitionFromRow(row) : null
   }
 
+  private async loadFieldsets(organizationId: string): Promise<Map<string, Fieldset>> {
+    const rows = await this.prisma.fieldsets.findMany({
+      where: { organization_id: organizationId },
+      include: { fieldset_fields: true },
+    })
+    return new Map(rows.map((row) => [row.id, fieldsetFromRow(row)] as const))
+  }
+
   private async loadEffectiveFields(
     organizationId: string,
     ideaTypeId: string,
   ): Promise<readonly EffectiveField[]> {
-    const [ideaTypeRow, activeDefinitions] = await Promise.all([
+    const [ideaTypeRow, activeDefinitions, fieldsetsById] = await Promise.all([
       this.prisma.idea_types.findFirst({
         where: { id: ideaTypeId, organization_id: organizationId },
-        include: { idea_type_fields: true },
+        include: { idea_type_fields: true, idea_type_fieldsets: true },
       }),
       this.loadActiveFieldDefinitions(organizationId),
+      this.loadFieldsets(organizationId),
     ])
     if (!ideaTypeRow) {
       return []
     }
-    return resolveEffectiveFields(ideaTypeFromRow(ideaTypeRow), activeDefinitions)
+    return resolveEffectiveFields(ideaTypeFromRow(ideaTypeRow), activeDefinitions, fieldsetsById)
   }
 
   private renderStoredValue(definition: FieldDefinition, value: string): string {
@@ -479,18 +523,19 @@ export class PrismaIdeaFieldValuesRepository implements IdeaFieldValuesPort, AiI
       readonly fieldNames: readonly string[]
     }[]
   > {
-    const [ideaTypeRows, activeDefinitions] = await Promise.all([
+    const [ideaTypeRows, activeDefinitions, fieldsetsById] = await Promise.all([
       this.prisma.idea_types.findMany({
         where: { organization_id: organizationId, is_deleted: false },
-        include: { idea_type_fields: true },
+        include: { idea_type_fields: true, idea_type_fieldsets: true },
         orderBy: [{ sort_order: 'asc' }, { name: 'asc' }],
       }),
       this.loadActiveFieldDefinitions(organizationId),
+      this.loadFieldsets(organizationId),
     ])
 
     return ideaTypeRows.map((row) => {
       const ideaType = ideaTypeFromRow(row)
-      const effective = resolveEffectiveFields(ideaType, activeDefinitions)
+      const effective = resolveEffectiveFields(ideaType, activeDefinitions, fieldsetsById)
       return {
         id: ideaType.id,
         name: ideaType.name,

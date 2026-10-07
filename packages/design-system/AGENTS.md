@@ -20,8 +20,8 @@ roots — the theme itself is not duplicated there.
 ## Conventions
 
 - **Comp P's structure is locked; the palette is five themes** (`SPEC/decisions.md` 2026-09-27,
-  2026-09-28): Terrazzo (the default and the bare `:root`), Portico, Piazza Sera, Lagoon and
-  Graphite (which replaced Notte), each one
+  2026-09-28): Terrazzo (the bare `:root`), Portico, Piazza Sera, Lagoon and Graphite (which
+  replaced Notte, and is the app's default since 2026-10-04), each one
   self-contained `[data-theme]` block in `src/globals.css` — colours, fonts, radius, suggestion hue.
   Comp R (`SPEC/mockups/comp-r-portico-prototype.html`) holds the values; comp Q
   (`SPEC/mockups/comp-q-*.html`) is rendered in Terrazzo from `SPEC/mockups/_build/q.css`. Change a

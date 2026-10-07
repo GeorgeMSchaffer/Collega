@@ -52,7 +52,8 @@ Organizations can manage idea boards using configurable status swimlanes.
 3. A board must have at least 2 swimlanes.
 4. Each new organization starts with one default board.
 5. An in-scope Org Admin can — and a Site Admin only while acting through View As (corrected 2026-09-29):
-   - select statuses used by a board
+   - select statuses used by an existing board (when **creating** one, a User picks its first lanes
+     too — 2026-10-04, `SPEC/decisions.md` "Users create boards")
    - reorder swimlanes by drag-and-drop
    - bulk-import ideas from a CSV file
 6. Swimlane order changes are saved immediately when the drag-and-drop action completes.
@@ -61,7 +62,7 @@ Organizations can manage idea boards using configurable status swimlanes.
 9. User-facing copy uses `Board` or `Boards`, never `Workflow` or `Workflows`.
 10. Canonical client routes: `/boards` (board list) and `/board/{boardId}` (board detail). `/board`, `/workflow`, `/workflows`, and `/workflow/{boardId}` redirect to the corresponding canonical route.
 11. Internal application service and namespace names may retain `Workflow` where they are not user-visible.
-12. A board may carry an optional description of at most 500 characters, trimmed; a blank description is stored as none. An in-scope Org Admin sets it when creating or editing the board (added 2026-09-27, `SPEC/decisions.md`); a Site Admin only while acting through View As (corrected 2026-09-29).
+12. A board may carry an optional description of at most 500 characters, trimmed; a blank description is stored as none. An in-scope Org Admin sets it when creating or editing the board, and a User when creating one (2026-10-04) (added 2026-09-27, `SPEC/decisions.md`); a Site Admin only while acting through View As (corrected 2026-09-29).
 13. A board is **archived, not deleted** (added 2026-09-27, `decisions.md`; until then boards had no delete endpoint or action).
     - Only an Org Admin of its organization archives or unarchives it, after confirmation.
     - An archived board keeps its swimlanes and ideas, leaves the default board list and every board picker, and accepts no new ideas; its ideas stay reachable from the Ideas list.

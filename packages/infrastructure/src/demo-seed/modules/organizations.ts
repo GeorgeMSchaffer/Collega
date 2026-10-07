@@ -4,7 +4,7 @@ import type { SeedModule } from '../types.js'
 import { DEMO_ORGANIZATIONS, seedId } from './scenario.js'
 
 /**
- * Wave B1's contribution: the two demo organizations and the per-organization catalogs every
+ * Wave B1's contribution: the demo organizations and the per-organization catalogs every
  * organization is provisioned with (`SPEC/20-feature-boards-and-statuses.md`, and Phase 4 #9 of
  * `SPEC/50-technical-implementation-plan.md` for idea types).
  *
@@ -46,7 +46,14 @@ export const organizationsSeed: SeedModule = {
         },
       })
 
-      for (const ideaType of DEFAULT_IDEA_TYPES) {
+      const ideaTypes = [
+        ...DEFAULT_IDEA_TYPES,
+        ...(scenario.extraIdeaTypes ?? []).map((name, i) => ({
+          name,
+          sortOrder: (DEFAULT_IDEA_TYPES.length + 1 + i) * 10,
+        })),
+      ]
+      for (const ideaType of ideaTypes) {
         const id = seedId('idea-type', scenario.slug, ideaType.name)
         await prisma.idea_types.upsert({
           where: { id },

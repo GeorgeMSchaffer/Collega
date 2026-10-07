@@ -72,6 +72,21 @@ export type IdeaTypeFieldInput = {
   readonly isRequired: boolean
 }
 
+/** An attached fieldset (live reference): the type stores only the attachment and its order, the
+ * members come from the fieldset itself. At most one entry per `fieldsetId` within a type. */
+export type IdeaTypeFieldset = {
+  readonly id: string
+  readonly ideaTypeId: string
+  readonly fieldsetId: string
+  readonly displayOrder: number
+}
+
+export type IdeaTypeFieldsetInput = {
+  readonly id: string
+  readonly fieldsetId: string
+  readonly displayOrder: number
+}
+
 export type IdeaType = Auditable & {
   readonly id: string
   readonly organizationId: string
@@ -86,6 +101,8 @@ export type IdeaType = Auditable & {
   readonly fieldMode: IdeaTypeFieldMode
   /** The type's curated field selection; only consulted when `fieldMode` is `Curated`. */
   readonly fields: readonly IdeaTypeField[]
+  /** Fieldsets attached to the type; like `fields`, only consulted when `fieldMode` is `Curated`. */
+  readonly fieldsets: readonly IdeaTypeFieldset[]
 }
 
 function normalizeName(name: string): string {
@@ -118,6 +135,7 @@ export function createIdeaType(params: {
     icon: null,
     fieldMode: IdeaTypeFieldMode.AllActiveFields,
     fields: [],
+    fieldsets: [],
     ...markCreated(params.nowUtc, params.actorUserId),
   }
 }
@@ -198,19 +216,21 @@ export function setIdeaTypeAppearance(
 }
 
 /**
- * Replaces the type's field selection and switches it to `Curated`. A field appears at most once;
- * duplicates are rejected. An empty list is equivalent to `clearIdeaTypeFieldSelection`. Callers
- * validate that each field is active and in-org first.
+ * Replaces the type's field and fieldset selection and switches it to `Curated`. A field, and a
+ * fieldset, appears at most once; duplicates are rejected. Both lists empty is equivalent to
+ * `clearIdeaTypeFieldSelection`. Callers validate that each field is active and each fieldset
+ * exists, in-org, first.
  */
 export function setIdeaTypeFieldSelection(
   ideaType: IdeaType,
   links: readonly IdeaTypeFieldInput[],
   nowUtc: Date,
   actorUserId: string | null,
+  fieldsetLinks: readonly IdeaTypeFieldsetInput[] = [],
 ): IdeaType {
   ensureNotDeleted(ideaType)
 
-  if (links.length === 0) {
+  if (links.length === 0 && fieldsetLinks.length === 0) {
     return clearIdeaTypeFieldSelection(ideaType, nowUtc, actorUserId)
   }
 
@@ -233,8 +253,31 @@ export function setIdeaTypeFieldSelection(
     })
   }
 
+  const seenFieldsets = new Set<string>()
+  const fieldsetReplacement: IdeaTypeFieldset[] = []
+  for (const link of fieldsetLinks) {
+    if (seenFieldsets.has(link.fieldsetId)) {
+      throw new IdeaTypeDomainError(
+        'fieldsetIds',
+        `Fieldset '${link.fieldsetId}' is selected more than once.`,
+      )
+    }
+    seenFieldsets.add(link.fieldsetId)
+    fieldsetReplacement.push({
+      id: link.id,
+      ideaTypeId: ideaType.id,
+      fieldsetId: link.fieldsetId,
+      displayOrder: link.displayOrder,
+    })
+  }
+
   return markUpdated(
-    { ...ideaType, fields: replacement, fieldMode: IdeaTypeFieldMode.Curated },
+    {
+      ...ideaType,
+      fields: replacement,
+      fieldsets: fieldsetReplacement,
+      fieldMode: IdeaTypeFieldMode.Curated,
+    },
     nowUtc,
     actorUserId,
   )
@@ -248,7 +291,7 @@ export function clearIdeaTypeFieldSelection(
 ): IdeaType {
   ensureNotDeleted(ideaType)
   return markUpdated(
-    { ...ideaType, fields: [], fieldMode: IdeaTypeFieldMode.AllActiveFields },
+    { ...ideaType, fields: [], fieldsets: [], fieldMode: IdeaTypeFieldMode.AllActiveFields },
     nowUtc,
     actorUserId,
   )

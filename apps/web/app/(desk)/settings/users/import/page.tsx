@@ -31,7 +31,7 @@ export default async function ImportUsersPage() {
       {user.organizationId === null ? (
         <Alert variant="note" className="max-w-prose">
           <span>
-            An import creates accounts in one organization, and a Site Admin belongs to none — so
+            An import creates accounts in one organization, and an App Admin belongs to none — so
             there is no organization in scope here to import into. Open an organization and import
             from its own users screen.
           </span>

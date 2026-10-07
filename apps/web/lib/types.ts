@@ -227,6 +227,25 @@ export type IdeaType = {
   id: string
   name: string
   curatedFieldCount: number | null
+  /** The directly selected fields in order, with this type's own required flag. */
+  fields: { fieldDefinitionId: string; isRequired: boolean }[]
+  /** The attached fieldsets, in attach order. */
+  fieldsets: { id: string; name: string }[]
+}
+
+/**
+ * A reusable, ordered group of custom fields, as the Fieldsets screens render it.
+ *
+ * A live reference: editing one changes every idea type that attaches it. `isActive` is false for a
+ * member that has since been archived — the membership is kept but the field is skipped wherever
+ * fields resolve, so the editor shows it as archived rather than hiding it.
+ */
+export type Fieldset = {
+  id: string
+  name: string
+  description: string | null
+  usedByIdeaTypeCount: number
+  fields: { id: string; name: string; fieldType: string; isActive: boolean }[]
 }
 
 /**

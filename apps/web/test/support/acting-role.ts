@@ -29,7 +29,7 @@ const SITE_ADMIN: CurrentUser = {
   displayName: 'Sam Deployment',
   initials: 'SD',
   role: 'SiteAdmin',
-  roleLabel: 'Site Admin',
+  roleLabel: 'App Admin',
   organizationId: null,
   organizationName: null,
   viewingAs: null,

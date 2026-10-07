@@ -20,8 +20,8 @@
  * ## What is not here
  *
  * Reordering idea types (`POST …/idea-types/reorder`): nothing expresses an order for that catalog
- * yet. Statuses reorder below. Also absent: an idea type's curated field selection and its badge appearance, which are
- * separate routes and separate screens.
+ * yet. Statuses reorder below. Also absent: an idea type's badge appearance, a separate route and screen. The curated field and
+ * fieldset selection is `saveIdeaTypeFields` below, deliberately apart from the rename.
  *
  * Renaming and archiving both catalogs DO live here, on small pages of their own rather than in
  * comp P's docked inspector. That is a deliberate downgrade: the inspector is a larger piece of
@@ -50,7 +50,7 @@ export type CreateCatalogItemState = { error: string | null; name: string }
  * to quote. Comp P routes the same role the same way on the board form.
  */
 const NO_ORGANIZATION =
-  'A Site Admin belongs to no organization, so there is no catalog to add to. Use View As to act ' +
+  'An App Admin belongs to no organization, so there is no catalog to add to. Use View As to act ' +
   'as an administrator of one.'
 
 /**
@@ -266,6 +266,45 @@ export async function deleteIdeaType(
   redirect('/settings/idea-types')
 }
 
+/**
+ * Replaces one idea type's whole field selection (`PUT /organizations/{orgId}/idea-types/{id}/fields`).
+ *
+ * The picker posts its state as three parallel lists: `fieldDefinitionId` in display order,
+ * `fieldRequired` ("1"/"0") beside it, and `fieldsetId` in attach order. Both arrays are
+ * authoritative on the server, so an empty submission is not "nothing changed" but "clear the
+ * selection", which returns the type to every active field. That is the picker's own empty state, and
+ * why this is a separate form from the rename.
+ */
+export async function saveIdeaTypeFields(
+  _previous: EditCatalogItemState,
+  form: FormData,
+): Promise<EditCatalogItemState> {
+  const ideaTypeId = String(form.get('ideaTypeId') ?? '')
+
+  const organizationId = await actingOrganizationId()
+  if (organizationId === null) return { error: NO_ORGANIZATION }
+
+  const required = form.getAll('fieldRequired')
+  const fields = form.getAll('fieldDefinitionId').map((id, index) => ({
+    fieldDefinitionId: String(id),
+    displayOrder: (index + 1) * 10,
+    isRequired: required[index] === '1',
+  }))
+  const fieldsetIds = form.getAll('fieldsetId').map(String)
+
+  try {
+    await apiPut(apiPath`/organizations/${organizationId}/idea-types/${ideaTypeId}/fields`, {
+      fields,
+      fieldsetIds,
+    })
+  } catch (error) {
+    return { error: refusal(error) }
+  }
+
+  revalidateIdeaTypes()
+  redirect('/settings/idea-types')
+}
+
 /** The catalog screen, and the create-idea form whose type picker reads the same list. */
 function revalidateIdeaTypes(): void {
   revalidatePath('/settings/idea-types')
@@ -435,6 +474,116 @@ export async function deleteFieldDefinition(
 /** The field list, and the idea screens whose forms ask for these fields. */
 function revalidateFields(): void {
   revalidatePath('/settings/fields')
+  revalidatePath('/settings/fieldsets')
   revalidatePath('/settings/idea-types')
   revalidatePath('/ideas')
+}
+
+/**
+ * Fieldsets are live references, so a change reaches every idea type that attaches one and every
+ * idea form built from it.
+ */
+function revalidateFieldsets(): void {
+  revalidatePath('/settings/fieldsets')
+  revalidatePath('/settings/idea-types')
+  revalidatePath('/ideas')
+}
+
+/** What the fieldset create form renders back; `errors` is the API's messages keyed by field. */
+export type CreateFieldsetState = {
+  error: string | null
+  errors: Readonly<Record<string, string>>
+  name: string
+  description: string
+  created: boolean
+}
+
+/**
+ * Adds an empty fieldset (`POST /organizations/{orgId}/fieldsets`). Members are chosen on its edit
+ * screen: membership is a separate route, and a set with nothing in it is a legitimate state.
+ */
+export async function createFieldset(
+  _previous: CreateFieldsetState,
+  form: FormData,
+): Promise<CreateFieldsetState> {
+  const echo = {
+    name: String(form.get('name') ?? ''),
+    description: String(form.get('description') ?? ''),
+  }
+
+  const organizationId = await actingOrganizationId()
+  if (organizationId === null) {
+    return { ...echo, error: NO_ORGANIZATION, errors: {}, created: false }
+  }
+
+  try {
+    await apiPost(apiPath`/organizations/${organizationId}/fieldsets`, echo)
+  } catch (error) {
+    return {
+      ...echo,
+      error: refusal(error),
+      errors: error instanceof ApiError ? error.errors : {},
+      created: false,
+    }
+  }
+
+  revalidateFieldsets()
+  return { error: null, errors: {}, name: '', description: '', created: true }
+}
+
+/**
+ * Saves one fieldset: its name and description, then its members and their order
+ * (`PUT …/fieldsets/{id}` and `PUT …/fieldsets/{id}/fields`).
+ *
+ * Two requests, details first, so a duplicate name is refused before the membership is touched.
+ * `fieldDefinitionId` arrives in display order and is authoritative: a member left out is removed.
+ * `displayOrder` is not posted, so the stored value is kept.
+ */
+export async function updateFieldset(
+  _previous: EditCatalogItemState,
+  form: FormData,
+): Promise<EditCatalogItemState> {
+  const fieldsetId = String(form.get('fieldsetId') ?? '')
+
+  const organizationId = await actingOrganizationId()
+  if (organizationId === null) return { error: NO_ORGANIZATION }
+
+  try {
+    await apiPut(apiPath`/organizations/${organizationId}/fieldsets/${fieldsetId}`, {
+      name: String(form.get('name') ?? ''),
+      description: String(form.get('description') ?? ''),
+    })
+    await apiPut(apiPath`/organizations/${organizationId}/fieldsets/${fieldsetId}/fields`, {
+      fieldDefinitionIds: form.getAll('fieldDefinitionId').map(String),
+    })
+  } catch (error) {
+    return { error: refusal(error) }
+  }
+
+  revalidateFieldsets()
+  redirect('/settings/fieldsets')
+}
+
+/**
+ * Deletes one fieldset (`DELETE …/fieldsets/{id}`). Hard, and refused with 409 while any idea type
+ * has it attached; that message is the API's and is what the screen shows.
+ */
+export async function deleteFieldset(
+  _previous: EditCatalogItemState,
+  form: FormData,
+): Promise<EditCatalogItemState> {
+  const fieldsetId = String(form.get('fieldsetId') ?? '')
+
+  const organizationId = await actingOrganizationId()
+  if (organizationId === null) return { error: NO_ORGANIZATION }
+
+  try {
+    await apiDelete(apiPath`/organizations/${organizationId}/fieldsets/${fieldsetId}`)
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 409) return { error: error.detail }
+    return { error: refusal(error) }
+  }
+
+  revalidateFieldsets()
+  redirect('/settings/fieldsets')
 }

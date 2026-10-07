@@ -3,9 +3,10 @@
 >   structure, comp R list/detail, forms, tags, themes); Blazor surfaces are kept only as superseded.
 > - **Key rules:** denied shows disabled with a reason (row actions hidden); the drawer overlays, never
 >   modal; Site Admin mutates org content only via View As; tag text computed to 4.5:1 in every theme;
->   no keyboard shortcuts; colour never alone; Terrazzo default, Graphite dark, per-browser cookie.
+>   no keyboard shortcuts; colour never alone; Graphite (dark) the default, Terrazzo the bare `:root`,
+>   per-browser cookie.
 > - **Contracts:** contracts/boards.md, contracts/ideas.md, contracts/tags.md, contracts/auth.md
-> - **Decisions:** 2026-09-27 "One list and detail pattern, and a drawer instead of the docked inspector";
+> - **Decisions:** 2026-10-04 "Graphite is the default theme"; 2026-09-27 "One list and detail pattern, and a drawer instead of the docked inspector";
 >   2026-09-28 "Graphite replaces Notte as the dark theme"; 2026-09-27 "Terrazzo is the palette, with a
 >   theme picker"
 
@@ -26,7 +27,9 @@
 
 ## NAVIGATION
 
-**Sidebar.** A **fixed left sidebar** (248px) on every signed-in screen, grouped:
+**Sidebar.** A **fixed left sidebar** (248px) on every signed-in screen, grouped. *Superseded in part
+2026-10-04 (`decisions.md` "The App Admin's sidebar offers Home and Settings only"): a Site Admin acting as
+themselves sees Home and Settings only — no Boards, Ideas or Delivery group.*
 - **Workspace** — Home, Boards, Ideas.
 - **Delivery** — Sprint board, Backlog, Roadmap (specified in `20-feature-issues-and-delivery.md`;
   *reconciled 2026-09-28:* the Sprint board and Backlog are built on the Slice 1 API, and the Sprint
@@ -253,7 +256,10 @@ is deferred; the mobile view scrolls and status movement stays available through
 - **Settings hub** is a role map, not a menu: link cards per tool, a different set per role, a member seeing only Profile.
 - **Board** offers List and Lanes; Lanes is the rail described above. **Single visual encoding**: type, status and priority all use one **marker** — an 8px dot with its label always beside it. No column or chip family shouts louder than another.
 - **Two copy voices, kept apart**: product copy lives inside the app frame and is written to ship; anything addressed to a reviewer lives in the chrome band outside it (`decisions.md` 2026-08-31).
-- **Auth screens** are a two-column split: a pitch band in the secondary colour on the left, the form on the right. Login, Register and the forced first-login change carry no sidebar; the forced change deliberately has no navigation escape (auth rule 32a).
+- **Auth screens** are a two-column split: a pitch band on the left, the form on the right. The band sits on the
+  theme's sidebar ground and text pair, never the primary colour, with the primary kept for the mark; Sign in
+  also shows a schematic board of lanes in status hues (2026-10-04, `decisions.md` "The sign-in pitch shows the
+  product, not the primary colour"; comp `SPEC/mockups/comp-login-alternatives.html`, option C). Login, Register and the forced first-login change carry no sidebar; the forced change deliberately has no navigation escape (auth rule 32a).
 
 ### List and detail pattern (comp R — 2026-09-27)
 
@@ -476,6 +482,9 @@ Whichever palette is chosen must keep two rules:
 
 ### Themes (2026-09-27)
 
+> **Superseded in part 2026-10-04** (`decisions.md`, "Graphite is the default theme"): the default
+> is **Graphite**, not Terrazzo. Terrazzo stays a theme in the picker and the bare `:root`.
+>
 > **Superseded in part 2026-09-28** (`decisions.md`, "Graphite replaces Notte as the dark theme"):
 > the dark theme is **Graphite**, not Notte. The paragraph below is kept as decided on 2026-09-27;
 > the Graphite paragraph after it is the current rule.
@@ -495,6 +504,9 @@ assistant filled (`20-feature-ai-idea-assist-v2.md` Q5). Each theme also carries
 
 **Graphite (2026-09-28) — the dark theme, replacing Notte.**
 - The picker offers **Light:** Terrazzo, Portico, Piazza Sera, Lagoon, and **Dark:** Graphite.
+- **Graphite is the default (2026-10-04).** A browser with no `collega-theme` cookie, or one the
+  app does not recognise, is served Graphite; a browser that picked a theme keeps it. Terrazzo
+  remains the bare `:root`, so a document with no `data-theme` (a comp, a test page) is Terrazzo.
 - A near-black neutral ground (`#0F1113`, cards `#16191C`, fields a darker `#0F1113` well) with
   near-white ink (`#E6E8EA`), an **amber** primary (`#F5A524`, with dark text `#16120A` on it) and
   **cyan** (`#5CC8E0`) as both its suggestion hue and its metric colour, with red, green and amber

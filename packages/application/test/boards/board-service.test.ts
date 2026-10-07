@@ -268,11 +268,16 @@ describe('BoardService admin scope', () => {
     expect(added).toHaveLength(1)
   })
 
-  it.each([
-    ['User', member(ORG_A)],
-    ['ReadOnly', readOnly(ORG_A)],
-  ])('refuses %s board management in their own organization', async (_label, currentUser) => {
-    const { service } = harness({ currentUser })
+  it('lets a User create a board in their own organization, but not manage one (2026-10-04)', async () => {
+    const { service, added } = harness({ currentUser: member(ORG_A) })
+
+    await service.create(ORG_A, CREATE)
+    expect(added).toHaveLength(1)
+    await expect(service.update('board-a', UPDATE)).rejects.toThrow(ForbiddenError)
+  })
+
+  it('refuses ReadOnly board creation and management in their own organization', async () => {
+    const { service } = harness({ currentUser: readOnly(ORG_A) })
 
     await expect(service.create(ORG_A, CREATE)).rejects.toThrow(ForbiddenError)
     await expect(service.update('board-a', UPDATE)).rejects.toThrow(ForbiddenError)

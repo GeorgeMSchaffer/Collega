@@ -98,7 +98,7 @@ async function create(form: FormData): Promise<{ boardId: string } | { error: st
   if (organizationId === null) {
     return {
       error:
-        'A Site Admin belongs to no organization, so there is no organization to create a board ' +
+        'An App Admin belongs to no organization, so there is no organization to create a board ' +
         'in. Use View As to act as an administrator of one.',
     }
   }

@@ -3,6 +3,7 @@ import { order } from './compose.js'
 import { boardsAndStatusesSeed } from './modules/boards-and-statuses.js'
 import { commentsSeed } from './modules/comments.js'
 import { deliverySeed } from './modules/delivery.js'
+import { fieldsSeed } from './modules/fields.js'
 import { ideasAndUpvotesSeed } from './modules/ideas-and-upvotes.js'
 import { organizationsSeed } from './modules/organizations.js'
 import { DEMO_ORGANIZATIONS, seedId } from './modules/scenario.js'
@@ -28,6 +29,7 @@ const MODULES: readonly SeedModule[] = [
   ideasAndUpvotesSeed,
   commentsSeed,
   deliverySeed,
+  fieldsSeed,
 ]
 
 export type SeedOutcome = {
@@ -55,7 +57,7 @@ export async function runDemoSeed(prisma: PrismaClient): Promise<readonly SeedOu
  * Deletes everything the seed owns, so the next run rebuilds it from nothing.
  *
  * **It can say what it owns because every seeded id is derived, not random.** `seedId` hashes the
- * organization's slug and the row's own name, so the two demo organizations and everything beneath
+ * organization's slug and the row's own name, so the demo organizations and everything beneath
  * them are identifiable without a marker column and without guessing at titles. That is what makes
  * a reset safe to expose: it cannot reach a row the seed did not create, so an organization
  * somebody made by hand survives a reset of the demo data sitting beside it.
@@ -95,7 +97,10 @@ export async function resetDemoSeed(prisma: PrismaClient): Promise<number> {
   await remove(prisma.ideas.deleteMany({ where: org }))
   await remove(prisma.board_swimlanes.deleteMany({ where: { boards: org } }))
   await remove(prisma.boards.deleteMany({ where: org }))
+  await remove(prisma.idea_type_fieldsets.deleteMany({ where: { idea_types: org } }))
   await remove(prisma.idea_type_fields.deleteMany({ where: { idea_types: org } }))
+  await remove(prisma.fieldset_fields.deleteMany({ where: { fieldsets: org } }))
+  await remove(prisma.fieldsets.deleteMany({ where: org }))
   await remove(prisma.field_definition_options.deleteMany({ where: { field_definitions: org } }))
   await remove(prisma.field_definitions.deleteMany({ where: org }))
   await remove(prisma.idea_types.deleteMany({ where: org }))

@@ -361,24 +361,24 @@ describe('Home for an organization with no boards', () => {
     )
   })
 
-  it('offers an Org Admin the Create a board link', async () => {
-    await renderHome('OrgAdmin')
-    expect(screen.getByRole('link', { name: 'Create a board' }).getAttribute('href')).toBe(
-      '/settings/boards/new',
-    )
-  })
-
-  it.each([['User'], ['ReadOnly']] as const)(
-    'shows %s the refused action with its reason, not a link',
+  it.each([['OrgAdmin'], ['User']] as const)(
+    'offers %s the Create a board link (2026-10-04)',
     async (role) => {
       await renderHome(role)
-      expect(screen.queryByRole('link', { name: 'Create a board' })).toBeNull()
-      expect(
-        screen.getByRole('button', { name: 'Create a board' }).getAttribute('aria-disabled'),
-      ).toBe('true')
-      expect(document.body.textContent).toContain('Administrators only')
+      expect(screen.getByRole('link', { name: 'Create a board' }).getAttribute('href')).toBe(
+        '/boards?board=new',
+      )
     },
   )
+
+  it('shows ReadOnly the refused action with its reason, not a link', async () => {
+    await renderHome('ReadOnly')
+    expect(screen.queryByRole('link', { name: 'Create a board' })).toBeNull()
+    expect(
+      screen.getByRole('button', { name: 'Create a board' }).getAttribute('aria-disabled'),
+    ).toBe('true')
+    expect(document.body.textContent).toContain('Read-only account')
+  })
 
   it('shows no tiles and no panels', async () => {
     await renderHome('OrgAdmin')
@@ -387,7 +387,7 @@ describe('Home for an organization with no boards', () => {
   })
 })
 
-describe('Home for a Site Admin', () => {
+describe('Home for an App Admin', () => {
   it('shows the platform roll-up and never reads an organization’s home', async () => {
     await renderHome('SiteAdmin')
     expect(readers.getOrganizationHome).not.toHaveBeenCalled()

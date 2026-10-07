@@ -22,10 +22,9 @@ const NAME_MAX = 100
  * are separate Server Functions with separate refusals, and sharing one `useActionState` would
  * render the archive's failure above the name field.
  *
- * **The curated field count is shown and not editable.** Which fields a type asks for is
- * `PUT …/{id}/fields`, it replaces the whole selection at once, and putting it on this form would
- * mean a rename could quietly turn a curated type back into "every active field". Saying what the
- * current selection is, and where it is not changed, beats a control that looks complete.
+ * **The field selection is not on this form.** It is `PUT …/{id}/fields`, which replaces the whole
+ * selection at once, so it has its own form (`IdeaTypeFieldsPicker`) and its own Save: a rename
+ * must not be able to turn a curated type back into "every active field".
  */
 export function IdeaTypeEditForm({ ideaType }: { ideaType: IdeaType }) {
   const [saveState, save, saving] = useActionState(updateIdeaType, IDLE)
@@ -55,12 +54,6 @@ export function IdeaTypeEditForm({ ideaType }: { ideaType: IdeaType }) {
             defaultValue={ideaType.name}
           />
         </Field>
-
-        <p className="m-0 max-w-prose text-sm text-muted-foreground">
-          {ideaType.curatedFieldCount === null
-            ? 'Shows every active custom field. Which fields a type asks for is set on its own screen, not here.'
-            : `Shows ${String(ideaType.curatedFieldCount)} chosen fields. That selection is set on its own screen, not here.`}
-        </p>
 
         <div className="mt-2 flex items-center gap-3">
           <Button type="submit" disabled={saving}>

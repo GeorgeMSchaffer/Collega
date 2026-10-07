@@ -177,9 +177,15 @@ async function main(): Promise<void> {
       ],
       ['boards', () => prisma.boards.deleteMany({ where: { id: { in: boardIds } } })],
       [
+        'idea_type_fieldsets',
+        () => prisma.idea_type_fieldsets.deleteMany({ where: { idea_types: org } }),
+      ],
+      [
         'idea_type_fields',
         () => prisma.idea_type_fields.deleteMany({ where: { idea_types: org } }),
       ],
+      ['fieldset_fields', () => prisma.fieldset_fields.deleteMany({ where: { fieldsets: org } })],
+      ['fieldsets', () => prisma.fieldsets.deleteMany({ where: org })],
       [
         'field_definition_options',
         () => prisma.field_definition_options.deleteMany({ where: { field_definitions: org } }),

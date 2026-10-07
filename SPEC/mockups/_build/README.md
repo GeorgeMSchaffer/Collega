@@ -29,7 +29,7 @@ reviewer trust that a comp matches its sources.
 | `extra.css` | Component and layout CSS built on those tokens. |
 | `build_p.py` | Assembles comp P. Substitutes the `@@…@@` tokens below, inlines the CSS, appends the screen-switching script. Importable: `build_q.py` reuses it. |
 | `build_q.py` | Assembles **comp Q** — the same fragments on Tailwind CSS v4 + shadcn/ui. Holds the **component registry** (semantic class → the shadcn component and the utilities it renders), expands every class, then compiles Tailwind over the output and inlines it. |
-| `q.css` | Comp Q's stylesheet in the shape of a shadcn `globals.css`: the theme block, the theme variables (Terrazzo, the default theme since 2026-09-27: `--radius: 6px`, Schibsted Grotesk and Public Sans), a base layer, and the few layout rules the framework has no component for. |
+| `q.css` | Comp Q's stylesheet in the shape of a shadcn `globals.css`: the theme block, the theme variables (Terrazzo, the comps' theme and the bare `:root`; the app defaults to Graphite since 2026-10-04 — `--radius: 6px`, Schibsted Grotesk and Public Sans), a base layer, and the few layout rules the framework has no component for. |
 | `tw/` | The pinned Tailwind toolchain (`package.json` + lockfile). `npm ci` here once; `node_modules` and the compiled CSS are ignored. |
 | `p_core.frag`, `p_auth.frag`, `p_admin.frag`, `p_delivery.frag` | Comp P's screen markup, one fragment per output file. |
 | `build.py` | Assembles the three comp O files from the fragments below. |
