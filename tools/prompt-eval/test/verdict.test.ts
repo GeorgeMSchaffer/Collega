@@ -317,6 +317,47 @@ test('compare exits 2 when either run is itself invalid, and says why', () => {
   }
 })
 
+test('compare judges only the cases both runs share, and names the ones it left out', () => {
+  // The candidate adds happy-c, every trial of it mapped wrong: judged whole, ideaType regresses.
+  const withExtra = makeRun({ ...CASES, 'happy-c': CASES['happy-b'] }, [
+    ...run().trials,
+    ...Array.from({ length: 20 }, (_, i) =>
+      trial('happy-c', i, turn({ draft: { ideaTypeId: 'type-pr' } })),
+    ),
+  ])
+  assert.equal(judged(withExtra, run()).exitCode, 1, 'the whole run does regress')
+
+  const { text, exitCode } = compared(run(), withExtra)
+  assert.equal(exitCode, 0)
+  assert.match(text, /case selection differs; candidate only: happy-c/)
+  assert.match(
+    text,
+    /Judged on the 2 case\(s\) both runs share \(rule 33\); excluded:\n\s+- candidate only: happy-c/,
+  )
+  assert.doesNotMatch(text, /^happy-c/m)
+  assert.match(text, /No regression\./)
+
+  // A regression in a shared case still fails, and a baseline-only case is excluded the same way.
+  const fewer = makeRun({ 'happy-b': CASES['happy-b'] }, run(10).trials.slice(10))
+  const narrowed = compared(run(), fewer)
+  assert.equal(narrowed.exitCode, 1)
+  assert.match(narrowed.text, /Judged on the 1 case\(s\)[^\n]*\n\s+- baseline only: refuse-a\n/)
+  assert.match(narrowed.text, /Regressed \(2\):\n\s+x ideaType accuracy/)
+})
+
+test('compare refuses to judge runs that share no case: exit 2', () => {
+  const onlyRefuse = makeRun({ 'refuse-a': CASES['refuse-a'] }, refusals('refuse-a', 10, 10))
+  const onlyHappy = makeRun({ 'happy-b': CASES['happy-b'] }, run().trials.slice(10))
+  const { text, exitCode } = compared(onlyRefuse, onlyHappy)
+  assert.equal(exitCode, 2)
+  assert.match(text, /Not judged: the runs share no case \(exit 2\)\./)
+  assert.doesNotMatch(text, /No regression|Regressed/)
+})
+
+test('compare on the same case set reports no exclusions', () => {
+  assert.doesNotMatch(compared(run(18), run(19)).text, /excluded|share/)
+})
+
 // --- Summary ------------------------------------------------------------------------------------
 
 test('the summary carries the verdict, the scope gate, flaky cases with their note, and spend', () => {

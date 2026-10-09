@@ -53,7 +53,8 @@ pnpm -C tools/prompt-eval eval dump-prompt --fixture hostile-catalog            
 
 Exit codes: **0** pass, **1** a threshold failed or `compare` found a regression, **2** the run is not
 valid (aborted by a ceiling, more than 10% errored trials, any errored `refuse-*` trial, or an
-invalid corpus or configuration). Call `node src/cli.ts` directly when the exit code matters, since
+invalid corpus or configuration; for `compare`, also two runs that share no case). `compare` judges
+only the cases both runs share and lists the ones it left out. Call `node src/cli.ts` directly when the exit code matters, since
 `pnpm --filter` reports every failure as 1.
 
 ## Thresholds
