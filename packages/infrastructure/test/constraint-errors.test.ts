@@ -56,6 +56,36 @@ describe('translateWriteError', () => {
     )
   })
 
+  // Not captured live: an ordinary unique index with the same column-list shape as the
+  // field_definitions case above. fieldsets.integration.test.ts is the live counterpart.
+  it('translates fieldsets.(organization_id, normalized_name), order-independent', () => {
+    const result = translateWriteError(p2002('fieldsets', ['normalized_name', 'organization_id']))
+    expect(result).toBeInstanceOf(ConflictError)
+    expect((result as ConflictError).message).toBe(
+      'A fieldset with this name already exists in this organization.',
+    )
+  })
+
+  it('keeps the fieldset and field messages apart for the same column set', () => {
+    const columns = ['organization_id', 'normalized_name']
+    expect((translateWriteError(p2002('fieldsets', columns)) as ConflictError).message).not.toBe(
+      (translateWriteError(p2002('field_definitions', columns)) as ConflictError).message,
+    )
+  })
+
+  it('does NOT translate the fieldset membership or attachment pair violations', () => {
+    // fieldset_fields and idea_type_fieldsets are ordinary unique pairs the services guard before
+    // saving; the database refusal is meant to surface raw.
+    for (const [model, columns] of [
+      ['fieldset_fields', ['fieldset_id', 'field_definition_id']],
+      ['idea_type_fieldsets', ['idea_type_id', 'fieldset_id']],
+      ['fieldsets', ['organization_id']],
+    ] as const) {
+      const error = p2002(model, columns)
+      expect(translateWriteError(error)).toBe(error)
+    }
+  })
+
   it('preserves the original Prisma error as .cause', () => {
     const original = p2002('ai_prompt_versions', ['is_active'])
     const result = translateWriteError(original) as ConflictError
