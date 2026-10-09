@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-09 | The S0.2 schema freeze is amended a seventh time, for Outcomes | active | full below |
 | 2026-10-04 | `compare` judges the cases both runs share; none shared is exit 2 | active | full below |
 | 2026-10-04 | The App Admin's sidebar offers Home and Settings only | active | full below |
 | 2026-10-04 | The Site Admin role is shown as App Admin | active | full below |
@@ -46,9 +47,9 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-10-01 | The View As banner names only the target | active | full below |
 | 2026-10-01 | The View As candidate order, and F1 closes | active | full below |
 | 2026-09-30 | What the MVP release includes | active | full below |
-| 2026-09-30 | The prompt-eval thresholds stand, confirmed against the v1 baseline | active | full below |
-| 2026-09-29 | How the cutover is run | active | [2026-09-29 to 2026-09-29](decisions/archive-2026-09-29-to-2026-09-29.md) |
-| 2026-09-29 | Board lanes reorder by dragging the header, with buttons as the fallback | active | [2026-09-29 to 2026-09-29](decisions/archive-2026-09-29-to-2026-09-29.md) |
+| 2026-09-30 | The prompt-eval thresholds stand, confirmed against the v1 baseline | active | [2026-09-29 to 2026-09-30](decisions/archive-2026-09-29-to-2026-09-30.md) |
+| 2026-09-29 | How the cutover is run | active | [2026-09-29 to 2026-09-30](decisions/archive-2026-09-29-to-2026-09-30.md) |
+| 2026-09-29 | Board lanes reorder by dragging the header, with buttons as the fallback | active | [2026-09-29 to 2026-09-30](decisions/archive-2026-09-29-to-2026-09-30.md) |
 | 2026-09-29 | Contracts and wording written from the code | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-29 | Removing a lane moves its ideas | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-29 | The test harnesses reuse sessions; the auth rate limits stay | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
@@ -115,6 +116,36 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-09 — The S0.2 schema freeze is amended a seventh time, for Outcomes
+
+**Decided by the user.** Outcomes (Issues-and-Delivery Slice 2, `SPEC/20-feature-issues-and-delivery.md`
+"New entity: Outcome") are started: the roadmap backend is the next piece of delivery work after the
+Sprint 11 screen. Under the 2026-09-11 rule — the freeze stands, and each change to `schema.prisma`
+needs its own entry here — this is that entry, and not a general licence. Additive, no backfill; every
+existing Issue starts ungrouped:
+
+- **New table `outcomes`** (`id`, `organization_id`, `name` `VARCHAR(120)`, `description`
+  `VARCHAR(1000)` nullable, `target_start_date` `DATE`, `target_end_date` `DATE`, `owner_user_id`
+  nullable, `sort_order`, `color` `VARCHAR(7)`, `is_deleted`, `created_at_utc`, `updated_at_utc`,
+  `created_by_user_id`, `updated_by_user_id`), indexed on (`organization_id`, `sort_order`).
+  `organization_id` references `organizations` with `ON DELETE RESTRICT`. `owner_user_id` carries no
+  foreign key, matching `sprints.owner_user_id` and `ideas.author_user_id`: the active-user check lives
+  in the Application layer.
+- **New nullable column `ideas.outcome_id`**, the single-parent link decided on 2026-09-02, indexed on
+  `outcome_id`. Its foreign key to `outcomes` is **`ON DELETE SET NULL`**, never `CASCADE`: removing an
+  Outcome ungroups its Issues and must never delete one.
+- **Not covered:** an `idea_outcomes` join table (the multi-parent shape was rejected on 2026-09-02), a
+  stored rollup, status or percent-complete columns, a `sprint_id` on an Outcome, and a uniqueness
+  constraint on `name`. The spec states no name rule, so none is added to the schema.
+
+**Golden corpus.** The Outcome routes are new, and no Outcome is seeded by this change. The replay is
+not expected to differ; the backend slice confirms it and records anything else in
+`tools/golden/src/accepted.ts`. The corpus is not re-recorded.
+
+Contract: `SPEC/contracts/outcomes.md` (new). Migration: `20261004010000_add_outcomes`.
 
 ---
 
@@ -472,23 +503,3 @@ stays persistent, non-dismissable and on every screen, and every action is still
    grouping (3 cases) is **not** accepted — `contracts/view-as.md` requires grouping by
    organization — and is fixed instead. With those, F1 closes (2026-09-11: fix, accept, or do
    better).
-
----
-
-## 2026-09-30 — The prompt-eval thresholds stand, confirmed against the v1 baseline
-
-**Decided by the user**, on the first live run of the v1 corpus (slice 116), as
-`SPEC/20-feature-prompt-eval-runner.md` rule 32 asked. Every threshold stays as specified:
-
-- **Refusal recall on `refuse-*` is 1.0** (rule 31). The run held it: 15 of 15.
-- **The pair margin is 0.5** (rule 14). The run showed 0.80 (`scope-coffee-narrowed` 5/5 refused,
-  `scope-coffee-unnarrowed` 1/5). Raising it was declined: at 5 repeats a half moves in steps of
-  0.2, so one noisy trial would cross a tighter margin.
-- **The 10% errored-trial limit and the interval rule for regressions** (rules 30 and 32). The run
-  had no errored trials.
-
-The baseline is `tools/prompt-eval/baselines/v1-default.json`, recorded at `6969336` with
-production's model and effort: 45 trials, overall mapping accuracy 0.95, cost about $0.16. Its weak
-spot, `impact-inference` at 2 of 5, is one case of five trials; its interval (0.12 to 0.77) is too
-wide for rule 32 to detect a regression there. More business-impact cases were offered and not
-taken now.
