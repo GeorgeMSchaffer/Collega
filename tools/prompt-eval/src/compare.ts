@@ -1,4 +1,4 @@
-import type { Proportion, RunMetrics } from './metrics.ts'
+import { computeMetrics, type Proportion, type RunMetrics } from './metrics.ts'
 import type { RunData } from './run-file.ts'
 import { proportion } from './summary.ts'
 import {
@@ -22,21 +22,22 @@ export interface ComparedRun {
 /**
  * Rule 34: both values and the delta per metric and per case, after any like-with-like warning,
  * then rule 32. Unlike runs warn and never fail on their own; a run that is itself invalid under
- * rules 30-31 makes the comparison invalid (exit 2).
+ * rules 30-31 makes the comparison invalid (exit 2). Every figure is computed over the cases both
+ * runs share (rule 33); validity is judged on each whole run, and no shared case is exit 2.
  */
 export function compareRuns(
-  baseline: ComparedRun,
-  candidate: ComparedRun,
+  wholeBaseline: ComparedRun,
+  wholeCandidate: ComparedRun,
 ): { text: string; exitCode: 0 | 1 | 2 } {
   const out: string[] = []
-  out.push(`Baseline   ${baseline.path}`)
-  out.push(`Candidate  ${candidate.path}`)
+  out.push(`Baseline   ${wholeBaseline.path}`)
+  out.push(`Candidate  ${wholeCandidate.path}`)
   out.push(
-    `Templates  ${baseline.run.header.prompt.templateSha256.slice(0, 12)} -> ${candidate.run.header.prompt.templateSha256.slice(0, 12)}`,
+    `Templates  ${wholeBaseline.run.header.prompt.templateSha256.slice(0, 12)} -> ${wholeCandidate.run.header.prompt.templateSha256.slice(0, 12)}`,
   )
 
   const invalid = (['baseline', 'candidate'] as const).flatMap((side) => {
-    const { run, metrics } = side === 'baseline' ? baseline : candidate
+    const { run, metrics } = side === 'baseline' ? wholeBaseline : wholeCandidate
     return judge(run, metrics, null).invalidReasons.map((reason) => `${side}: ${reason}`)
   })
   if (invalid.length > 0) {
@@ -45,12 +46,31 @@ export function compareRuns(
     for (const reason of invalid) out.push(`  x ${reason}`)
   }
 
-  const warnings = unlikeRuns(baseline.run, candidate.run)
+  const warnings = unlikeRuns(wholeBaseline.run, wholeCandidate.run)
   if (warnings.length > 0) {
     out.push('')
     out.push('Warning: these runs are not like with like.')
     for (const w of warnings) out.push(`  ! ${w}`)
   }
+
+  const candidateCases = new Set(wholeCandidate.run.header.cases)
+  const shared = wholeBaseline.run.header.cases.filter((c) => candidateCases.has(c))
+  const baselineOnly = wholeBaseline.run.header.cases.filter((c) => !shared.includes(c))
+  const candidateOnly = wholeCandidate.run.header.cases.filter((c) => !shared.includes(c))
+  if (shared.length === 0) {
+    out.push('')
+    out.push('Not judged: the runs share no case (exit 2).')
+    return { text: out.join('\n'), exitCode: EXIT_INVALID }
+  }
+  const restrict = baselineOnly.length > 0 || candidateOnly.length > 0
+  if (restrict) {
+    out.push('')
+    out.push(`Judged on the ${shared.length} case(s) both runs share (rule 33); excluded:`)
+    if (baselineOnly.length > 0) out.push(`  - baseline only: ${baselineOnly.join(', ')}`)
+    if (candidateOnly.length > 0) out.push(`  - candidate only: ${candidateOnly.join(', ')}`)
+  }
+  const baseline = restrict ? onShared(wholeBaseline, shared) : wholeBaseline
+  const candidate = restrict ? onShared(wholeCandidate, shared) : wholeCandidate
 
   const rows: [string, Proportion | undefined, Proportion | undefined][] = []
   const before = new Map(gatedMetrics(baseline.metrics))
@@ -137,6 +157,18 @@ export function compareRuns(
     for (const r of found) out.push(`  x ${r.metric}: ${r.detail}`)
   }
   return { text: out.join('\n'), exitCode: found.length === 0 ? EXIT_PASS : EXIT_THRESHOLDS_FAILED }
+}
+
+/** The run with only the given cases' trials, and its metrics recomputed over them. */
+function onShared(side: ComparedRun, cases: readonly string[]): ComparedRun {
+  const keep = new Set(cases)
+  const run: RunData = {
+    ...side.run,
+    header: { ...side.run.header, cases },
+    cases: Object.fromEntries(Object.entries(side.run.cases).filter(([id]) => keep.has(id))),
+    trials: side.run.trials.filter((t) => keep.has(t.caseId)),
+  }
+  return { ...side, run, metrics: computeMetrics(run) }
 }
 
 function cell(p: Proportion | undefined): string {

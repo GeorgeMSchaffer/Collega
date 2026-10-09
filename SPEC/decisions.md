@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-04 | `compare` judges the cases both runs share; none shared is exit 2 | active | full below |
 | 2026-10-04 | The App Admin's sidebar offers Home and Settings only | active | full below |
 | 2026-10-04 | The Site Admin role is shown as App Admin | active | full below |
 | 2026-10-04 | An organization is created with its first Org Admin | active | full below |
@@ -46,7 +47,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-10-01 | The View As candidate order, and F1 closes | active | full below |
 | 2026-09-30 | What the MVP release includes | active | full below |
 | 2026-09-30 | The prompt-eval thresholds stand, confirmed against the v1 baseline | active | full below |
-| 2026-09-29 | How the cutover is run | active | full below |
+| 2026-09-29 | How the cutover is run | active | [2026-09-29 to 2026-09-29](decisions/archive-2026-09-29-to-2026-09-29.md) |
 | 2026-09-29 | Board lanes reorder by dragging the header, with buttons as the fallback | active | [2026-09-29 to 2026-09-29](decisions/archive-2026-09-29-to-2026-09-29.md) |
 | 2026-09-29 | Contracts and wording written from the code | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-29 | Removing a lane moves its ideas | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
@@ -114,6 +115,23 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-04 — `compare` judges the cases both runs share; none shared is exit 2
+
+**An implementation reading, approved by the user 2026-10-09** (slice 174), settling what
+`20-feature-prompt-eval-runner.md` rule 33 ("for the cases both share") leaves open for `compare`:
+
+- **Every figure is computed over the shared case ids**, both runs restricted to them before the
+  metrics, the rule 32 regressions, the cache guard and the locked-field check. The cases left out
+  of each side are listed. Identical case sets compare exactly as before.
+- **Validity stays a property of each whole run.** An aborted run, more than 10% errored trials or
+  an errored `refuse-*` trial anywhere still makes `compare` exit 2 (2026-09-28, "`compare` refuses
+  to judge an invalid run"): excluding a case cannot repair a run that was not valid.
+- **No shared case is exit 2**, not 0: there is nothing to judge, and a pass would be a verdict about
+  nothing — the same reasoning as the 2026-09-28 entry.
+- **The case-selection warning stays** (rule 34): a different selection is still not like with like.
 
 ---
 
@@ -474,25 +492,3 @@ production's model and effort: 45 trials, overall mapping accuracy 0.95, cost ab
 spot, `impact-inference` at 2 of 5, is one case of five trials; its interval (0.12 to 0.77) is too
 wide for rule 32 to detect a regression there. More business-impact cases were offered and not
 taken now.
-
----
-
-## 2026-09-29 — How the cutover is run
-
-**Decided by the user**, answering the five questions slice 135 left in the cutover runbook
-(`SPEC/50-cutover-runbook.md`, conversion slice F4). Each answer is written into the runbook.
-
-1. **A separate staging database comes first.** A staging Prisma Postgres database is provisioned
-   before cutover and Preview's `DATABASE_URL` points at it. Until then the release is a no-go —
-   today Preview points at the database holding the real Site Admin. An owner step.
-2. **Production starts on a new database, not a wiped one.** A new Prisma Postgres database is
-   created and Production's `DATABASE_URL` pointed at it; the release build migrates it and creates
-   the Site Admin. The old database is kept until the release is confirmed, then deleted — keeping
-   it is the rollback for that step, since the pre-release `collega-api` deployment still reads it.
-   An owner step. This settles *how* production is seeded fresh (2026-09-09).
-3. **`collega-api`'s `maxDuration` is 60 seconds**, set in project settings; `vercel.json` cannot
-   hold it.
-4. **Production's `COLLEGA_API_URL` is `collega-api`'s production `*.vercel.app` URL.** A custom API
-   domain is a later, separate change; `api.collega-ai.com` is not current.
-5. **A release goes through a sync branch**, as pull requests #22–#27 did: `dev`'s tip is pushed as
-   `sync/<date>`, and pull requests from it go into `dev` and into `main`.
