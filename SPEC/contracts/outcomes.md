@@ -146,7 +146,7 @@ Set or clear an Issue's single Outcome.
   - Grouping is a **move**, not an add: a new Outcome replaces any existing grouping, and `null`
     leaves the Issue ungrouped.
   - An Issue's sprint and its Outcome are independent: changing one never changes the other.
-  - Audit events and notifications: question 11.
+  - Audit events (named in the spec; payloads open) and notifications: question 11.
 
 ### `GET /api/v1/organizations/{orgId}/roadmap`
 The roadmap read.
@@ -190,7 +190,9 @@ resolved by this file.
    or as one grouping `PUT` per Issue (`contracts/delivery.md` leaves this to the Outcomes slice).
 10. **Site Admin reads.** Whether a Site Admin acting directly may read every route here, as for
     sprints; the Permissions table ticks the roadmap for every role.
-11. **Audit and notifications.** The spec lists no Outcome audit event and no notification.
+11. **Audit and notifications.** The spec names the audit events (`OutcomeCreated`, `OutcomeUpdated`,
+    `OutcomeDeleted`, `IssueOutcomeGroupingChanged`) but not their payloads, and not whether a
+    no-op grouping audits. It lists no Outcome notification.
 12. **Grouping validation.** Behaviour for an `outcomeId` that does not exist, is soft-deleted or
     belongs to another organization, for a `Discovery`-phase idea, and for grouping an Issue under
     the Outcome it already has (a no-op?).
