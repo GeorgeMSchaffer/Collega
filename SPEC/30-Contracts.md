@@ -106,6 +106,7 @@ contract states nothing for that item, and the conventions above apply.
 | Delivery Contracts | [`contracts/delivery.md`](contracts/delivery.md) | `/ideas/{ideaId}/promote`, `/return-to-discovery`, `/delivery-status`, `/sprint`, `/delivery`; `/organizations/{organizationId}/delivery` |
 | Sprint Contracts | [`contracts/sprints.md`](contracts/sprints.md) | `/organizations/{organizationId}/sprints` (and `/{sprintId}`, `/start`, `/complete`) |
 | Issue Task Contracts | [`contracts/issue-tasks.md`](contracts/issue-tasks.md) | `/ideas/{ideaId}/tasks` (and `/{taskId}`, `/{taskId}/state`, `/order`) |
+| Outcome Contracts | [`contracts/outcomes.md`](contracts/outcomes.md) | `/organizations/{orgId}/outcomes` (and `/{id}`, `/order`), `/organizations/{orgId}/roadmap`, `/ideas/{ideaId}/outcomes`. Specified 2026-10-09 (`SPEC/decisions.md`), before the code; ends with the questions the spec leaves open. |
 | Tag Contracts | [`contracts/tags.md`](contracts/tags.md) | `/organizations/{organizationId}/tags` (and `/catalog`), `/tags/{tagId}`. Subsection: Tag colour and management |
 | Comment Contracts | [`contracts/comments.md`](contracts/comments.md) | `/ideas/{ideaId}/comments`, `/comments/{commentId}` |
 | Upvote Contracts | [`contracts/upvotes.md`](contracts/upvotes.md) | `/ideas/{ideaId}/upvote/toggle` |
