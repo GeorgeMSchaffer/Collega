@@ -137,6 +137,35 @@ function ideaBodyRules(body: CreateIdeaBody): Record<string, FieldRules> {
   }
 }
 
+/** The create fields the board route and the pool route share. */
+function newIdeaFields(body: CreateIdeaBody) {
+  return {
+    title: body.title ?? '',
+    description: optional(body.description),
+    problem: body.problem ?? '',
+    proposedSolutions: stringList('proposedSolutions', body.proposedSolutions) ?? [],
+    impactRationale: body.impactRationale ?? '',
+    priority: body.priority ?? '',
+    ideaTypeId: guidOrEmpty(body.ideaTypeId),
+    businessImpactId: guidOrEmpty(body.businessImpactId),
+    dueDate: optional(body.dueDate),
+    assigneeUserIds: guidList(body.assigneeUserIds),
+    tagNames: stringList('tagNames', body.tagNames),
+    mentionEmails: stringList('mentionEmails', body.mentionEmails),
+    fieldValues: fieldValues(body.fieldValues),
+  }
+}
+
+/** The organization list's repeatable `boardId`: GUIDs, and the literal `none` for no board. */
+function boardFilter(value: unknown): { boardIds: readonly string[]; includeNoBoard: boolean } {
+  const values = queryList(value)
+  const isNone = (entry: string) => entry.toLowerCase() === 'none'
+  return {
+    boardIds: values.filter((entry) => !isNone(entry)).map(guidOrEmpty),
+    includeNoBoard: values.some(isNone),
+  }
+}
+
 /**
  * `fieldFilters[<fieldDefinitionId>]=<value>` (T059), read straight off the query string.
  *
@@ -179,7 +208,7 @@ function parseFieldFilters(query: Record<string, unknown>): ReadonlyMap<string, 
 /**
  * Idea lifecycle and upvotes (`SPEC/30-Contracts.md` "Idea Contracts" and "Upvote Contracts").
  *
- * **No controller prefix, deliberately.** These eleven routes span three roots - `boards/...`,
+ * **No controller prefix, deliberately.** These thirteen routes span three roots - `boards/...`,
  * `organizations/...` and `ideas/...` - because the .NET controller declared each path in full
  * rather than sharing one, and the golden corpus pins every one of them. A `@Controller('ideas')`
  * with relative paths would move six of the eleven.
@@ -230,7 +259,7 @@ export class IdeasController {
       sortBy: optional(query.sortBy),
       sortDirection: optional(query.sortDirection),
       fieldFilters: parseFieldFilters(query),
-      boardIds: guidQueryList(query.boardId),
+      ...boardFilter(query.boardId),
       statusIds: guidQueryList(query.statusId),
       priorities: queryList(query.priority),
       tags: queryList(query.tag),
@@ -248,23 +277,24 @@ export class IdeasController {
     validateFields(ideaBodyRules(body))
 
     return this.ideas.create(boardId, {
-      title: body.title ?? '',
-      description: optional(body.description),
-      problem: body.problem ?? '',
-      proposedSolutions: stringList('proposedSolutions', body.proposedSolutions) ?? [],
-      impactRationale: body.impactRationale ?? '',
-      priority: body.priority ?? '',
-      ideaTypeId: guidOrEmpty(body.ideaTypeId),
-      businessImpactId: guidOrEmpty(body.businessImpactId),
-      dueDate: optional(body.dueDate),
-      assigneeUserIds: guidList(body.assigneeUserIds),
+      ...newIdeaFields(body),
       // `Guid?` here, not `Guid`: omitting it means "the board's left-most swimlane", which is not
       // the same request as naming a status that does not exist.
       statusId: optionalGuid(body.statusId),
-      tagNames: stringList('tagNames', body.tagNames),
-      mentionEmails: stringList('mentionEmails', body.mentionEmails),
-      fieldValues: fieldValues(body.fieldValues),
     })
+  }
+
+  /** An idea with no board. The body is the board create's minus `statusId`, which is ignored if
+   * sent: the status is the organization's first active one. */
+  @Post('organizations/:organizationId/ideas')
+  @HttpCode(201)
+  async createInPool(
+    @Param('organizationId', UuidParamPipe) organizationId: string,
+    @Body() body: CreateIdeaBody,
+  ): Promise<CreateIdeaResult> {
+    validateFields(ideaBodyRules(body))
+
+    return this.ideas.createInPool(organizationId, newIdeaFields(body))
   }
 
   @Get('ideas/:ideaId')
@@ -314,6 +344,13 @@ export class IdeasController {
     @Body() body: ChangeIdeaStatusBody,
   ): Promise<void> {
     await this.ideas.changeStatus(ideaId, { statusId: guidOrEmpty(body.statusId) })
+  }
+
+  /** Removes an idea from its board; it joins the organization's pool. Idempotent. */
+  @Delete('ideas/:ideaId/board')
+  @HttpCode(204)
+  async detachFromBoard(@Param('ideaId', UuidParamPipe) ideaId: string): Promise<void> {
+    await this.ideas.detachFromBoard(ideaId)
   }
 
   /** Soft delete. Administrative even for the idea's own author - the corpus pins that. */
