@@ -57,7 +57,8 @@ export type IdeaFieldValueRecord = {
 export type Idea = Auditable & {
   readonly id: string
   readonly organizationId: string
-  readonly boardId: string
+  /** `null` for an idea in the organization's pool (SPEC/20-feature-board-pull-in.md). */
+  readonly boardId: string | null
   /**
    * The ideation status. Frozen at its last Discovery value on promotion and never cleared:
    * ideation `Complete` and delivery `Complete` are distinct terminal states, and an item in
@@ -100,7 +101,8 @@ export type CreateIdeaProps = {
    * not generate ids (SPEC/decisions.md). */
   readonly id: string
   readonly organizationId: string
-  readonly boardId: string
+  /** `null` creates the idea in the pool. */
+  readonly boardId: string | null
   readonly statusId: string
   readonly title: string
   readonly description: string | null
@@ -252,7 +254,10 @@ export function createIdea(props: CreateIdeaProps): Idea {
     props.organizationId,
     'Organization id is required.',
   )
-  const boardId = assertRequiredId('boardId', props.boardId, 'Board id is required.')
+  const boardId =
+    props.boardId === null
+      ? null
+      : assertRequiredId('boardId', props.boardId, 'Board id is required.')
   const statusId = assertRequiredId('statusId', props.statusId, 'Status id is required.')
   const authorUserId = assertRequiredId(
     'authorUserId',
@@ -363,6 +368,23 @@ export function changeIdeaStatus(
     nowUtc,
     actorUserId,
   )
+}
+
+/**
+ * Removes a Discovery idea from its board, leaving it in the pool. Status, tags and the rest are
+ * untouched. An Issue is refused (return it to Discovery first); an idea already in the pool is
+ * returned as is, so the caller can tell there is nothing to save.
+ */
+export function detachIdeaFromBoard(idea: Idea, nowUtc: Date, actorUserId: string | null): Idea {
+  if (idea.phase !== IdeaPhase.Discovery) {
+    throw new IdeaPhaseConflictError(
+      'An issue cannot be removed from its board; return it to discovery first.',
+    )
+  }
+  if (idea.boardId === null) {
+    return idea
+  }
+  return markUpdated({ ...idea, boardId: null }, nowUtc, actorUserId)
 }
 
 /**
