@@ -6,14 +6,12 @@
 >
 > **Promotion path:** idea → user discussion → canonical spec (`SPEC/20-feature-*.md`) → sprint plan (`SPEC/sprints/`). Once an idea is promoted, delete it here — the spec becomes its home.
 
-## Move an idea to another board, and add pool ideas to an existing board
+## Move one idea to another board
 
-> Raised 2026-10-13, out of scope for Sprint 14 (`SPEC/20-feature-board-pull-in.md` Q3). Pulling items
-> onto a board happens only while creating it, so a board-less idea can reach a board only through a
-> new one. Two small follow-ups would close that: a single-idea *Move to another board* action on the
-> drawer, and the same *Add existing items* step on an existing board's edit form. Both reuse the
-> re-board primitive slice 178 builds. Unrefined: who may do it on someone else's idea, and whether a
-> move notifies followers, are open.
+> Raised 2026-10-13, out of scope for Sprint 14 (`SPEC/20-feature-board-pull-in.md` "Out of scope").
+> Sprint 14 pulls items onto a board from the board's own form, in bulk. A single-idea *Move to
+> another board* action on the idea drawer would reuse the re-board primitive slice 178 builds.
+> Unrefined: who may move someone else's idea, and whether a move notifies followers, are open.
 
 ## Chat assistant: ingestion, and refining ideas that already exist (needs a spec)
 

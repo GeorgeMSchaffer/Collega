@@ -137,10 +137,17 @@ delivery backlog (Issues with no sprint). The user chose all three readings. Spe
 4. **Who pulls.** An Org Admin pulls anything eligible; a User only Discovery ideas they authored.
    Backlog Issues stay Org Admin only, because Return to Discovery already is.
 
-Pulling happens only in the save that creates the board, in one commit, with no notification. Six
-defaults the user has not yet confirmed (archived-board detach, promoting a pool idea, pulling into an
-existing board, where pool ideas surface, the 100-item cap, and import and the assistant staying
-board-scoped) are marked *(proposed)* and listed as Q1–Q6 in that spec.
+Pulling happens in the save that creates or edits a board, in one commit, with no notification. The
+user answered the six open questions the same day (`SPEC/20-feature-board-pull-in.md`, "Answered
+questions"):
+
+- **Q1.** An Org Admin may detach an idea from an archived board; a User may not.
+- **Q2.** A board-less idea can be promoted; the Issue has no board.
+- **Q3.** The pull step is on **existing** boards' edit form as well as the create form.
+- **Q4.** Home shows an Org Admin a *Needs a board* count of the pool, linking to the Ideas list
+  filtered to *No board*.
+- **Q5.** At most 100 items per save.
+- **Q6.** CSV import and the idea assistant stay board-scoped and create no pool ideas.
 
 **The S0.2 schema freeze is amended an eighth time**, under the 2026-09-11 rule that each change to
 `schema.prisma` needs its own entry. Additive, no backfill, no new foreign key: `ideas.board_id` and

@@ -1,24 +1,26 @@
 # Feature: Pulling Existing Items onto a New Board, and Ideas with No Board
 
 > **At a glance** (added 2026-10-13; the text below wins where they differ)
-> - **Scope:** when an admin or a User creates a board, an optional step pulls existing items onto it
+> - **Scope:** when a board is created or edited, an optional step pulls existing items onto it
 >   from three sources: Discovery ideas sitting on other boards, **Issues in the delivery backlog**
 >   (returned to Discovery), and a new pool of **ideas that belong to no board**. Ideas may now be
 >   created without a board, and detached from one later.
 > - **Key rules:** an idea may have no board (1–3); an idea is created without a board, or detached
->   from one by its author or an Org Admin (4–6); pulling happens only while creating a board, in the
->   same save (9–10); Org Admin pulls anything eligible, a User only their own Discovery ideas
->   (11–12); each item keeps its status if the new board has that lane, else lands in the leftmost
->   lane (13); one commit, all or nothing (16).
-> - **Contracts:** to be written in slice 177 (`contracts/boards.md` `POST`, `contracts/ideas.md`
->   create, the list filter and the detach route); proposed shapes are under "Contract changes".
+>   from one by its author or an Org Admin (4–6); pool ideas show on the Ideas list and as a *Needs a
+>   board* tile on Home (7); pulling happens in the save that creates or edits a board (9–10); Org
+>   Admin pulls anything eligible, a User only their own Discovery ideas (11–12); each item keeps its
+>   status if the board has that lane, else lands in the leftmost lane (13); one commit, all or
+>   nothing (16); at most 100 items a save (17).
+> - **Contracts:** to be written in slices 177 and 178 (`contracts/boards.md` `POST` and `PUT`,
+>   `contracts/ideas.md` create, the list filter and the detach route); proposed shapes are under
+>   "Contract changes".
 > - **Decisions:** 2026-10-13 "Boards can pull in existing items, and ideas can have no board"; the
 >   same entry records the **eighth** S0.2 schema freeze amendment (`ideas.board_id` nullable).
-> - **Comp:** none yet. New flows are comp-first (`AGENTS.md`); slice 180 draws it, and the UI is not
->   built until the user approves it.
+> - **Comp:** none yet. New flows are comp-first (`AGENTS.md`); slice 180 draws it, with the Home
+>   tile, and the UI is not built until the user approves it.
 > - **Answered by the user 2026-10-13:** the scope (all three sources), how ideas enter the pool (both
->   ways), where a pulled item lands, and who may pull. Everything marked *(proposed)* below is a
->   default for the user to confirm; "Open questions" lists them.
+>   ways), where a pulled item lands, who may pull, and Q1–Q6 ("Answered questions" below). Only the
+>   few details still marked *(proposed)* are defaults to confirm.
 
 ## Outcome
 
@@ -32,7 +34,7 @@ board where it now belongs.
 | Term | Meaning |
 |---|---|
 | **Pool** | The ideas of an organization with no board (`board_id` is null). |
-| **Pull** | Move an existing item onto the board being created, in the save that creates it. |
+| **Pull** | Move an existing item onto a board in the save that creates or edits that board. |
 | **Backlog Issue** | An Issue (`Delivery` phase) with no sprint (`SPEC/20-feature-issues-and-delivery.md`, "Delivery backlog"). Issues in a sprint are not pullable. |
 | **Detach** | Remove a Discovery idea from its board, leaving it in the pool. |
 
@@ -54,31 +56,37 @@ board where it now belongs.
 4. **Create without a board.** The idea form's Board field is optional; leaving it empty creates the
    idea in the pool, through a new organization-level create route (today idea creation exists only
    under a board). **CSV import and the idea assistant stay board-scoped**: both are written around
-   one board's lanes, and neither creates pool ideas. *(proposed; Q6)* The author still follows
+   one board's lanes, and neither creates pool ideas. *(answered, Q6)* The author still follows
    automatically (following rule 4).
 5. **Detach.** The author of a Discovery idea, or an Org Admin, may remove it from its board. The idea
    keeps its status, tags, comments, upvotes and followers and joins the pool. An **Issue cannot be
    detached**: return it to Discovery first (rule 14).
 6. **Detaching from an archived board is allowed for an Org Admin.** Archiving a board makes it
    read-only, and without this exception its ideas would be stranded. No other edit to an archived
-   board's ideas changes. *(proposed; Q1)*
+   board's ideas changes. A User may not detach from an archived board, even their own idea.
+   *(answered, Q1)*
 7. **Where pool ideas appear.** On the Ideas list, with a *No board* label in the Board column and a
-   *No board* choice in the board filter; in search and the command palette; and in the pull step
-   (rule 9). They appear on **no** board page, and they are not counted in any board's lane counts or
-   in Home's board-based figures. *(proposed; Q4)*
+   *No board* choice in the board filter; in search and the command palette; in the pull step
+   (rule 9); and on **Home** as a *Needs a board* tile for an Org Admin (a Site Admin through View As),
+   counting the organization's live Discovery ideas with no board and linking to the Ideas list
+   filtered to *No board*. They appear on **no** board page, and they are not counted in any board's
+   lane counts or in Home's board-based figures. *(answered, Q4)*
 8. **Promotion.** A pool idea can be promoted to an Issue like any idea. The Issue has no board, and
-   returning it to Discovery puts it back in the pool. *(proposed; Q2)*
+   returning it to Discovery puts it back in the pool. *(answered, Q2)*
 
-### Pulling onto a new board
+### Pulling onto a board
 
-9. **Pulling happens only while creating a board.** The create-board form gains an optional step,
-   *Add existing items*, with three tabs: **Unassigned ideas**, **Ideas on other boards** and
-   **Backlog Issues** (the last shown only to an Org Admin). Each tab searches by title and filters by
-   tag and author, and lists items of the caller's organization only. Adding items to an existing
-   board is out of scope (Q3).
+9. **Pulling happens in the save that creates or edits a board** *(answered, Q3)*. The board form,
+   for a new board and for an existing live board's edit, gains an optional step, *Add existing
+   items*, with three tabs: **Unassigned ideas**, **Ideas on other boards** and **Backlog Issues**
+   (the last shown only to an Org Admin). Each tab searches by title and filters by tag and author,
+   and lists items of the caller's organization only, **never the board's own ideas**. An archived
+   board takes no pull: it is read-only and the edit already refuses (`409`). When one edit both
+   removes a lane and pulls items, the lane removal and its `ideaMoves` apply first, and rule 13
+   places pulled items on the board's lanes as they stand after that save.
 10. **What is eligible.** An item must belong to the organization, not be deleted, and be one of:
     - a **Discovery idea with no board**;
-    - a **Discovery idea on another board**, live or archived;
+    - a **Discovery idea on another board**, live or archived (never the target board's own);
     - a **backlog Issue**: `Delivery` phase, no sprint.
 
     An Issue in a Planned or Active sprint is not eligible; an admin returns it to the backlog first,
@@ -90,31 +98,32 @@ board where it now belongs.
     create a board and so cannot pull. A Site Admin acting as themselves is refused, as for every board
     write.
 12. **A refused item refuses the save.** If any named item is not eligible, does not exist, belongs to
-    another organization, or is outside the caller's rights under rule 11, **the board is not created**
-    and the refusal names the item (below).
-13. **Placement: keep the status, else the first lane.** An item keeps its status if the new board has
-    a lane for it; otherwise it lands in the new board's leftmost lane and its status becomes that
-    lane's. The new board's lanes are the ones chosen in the same form. Within a lane, pulled items are
-    appended after any existing cards, oldest first. *(answered 2026-10-13; the in-lane order is
+    another organization, or is outside the caller's rights under rule 11, **nothing is saved** (a new
+    board is not created; an edit changes nothing) and the refusal names the item (below).
+13. **Placement: keep the status, else the first lane.** An item keeps its status if the board has a
+    lane for it; otherwise it lands in the board's leftmost lane and its status becomes that lane's.
+    The lanes are those the same form saves. Within a lane, pulled items are appended after any
+    existing cards, oldest first. *(answered 2026-10-13; the in-lane order is
     proposed)*
 14. **Backlog Issues are returned to Discovery, then placed.** For each, the existing Return to
     Discovery runs first (sprint and delivery status cleared; effort, the promotion snapshot and tasks
-    retained, so a later re-promote is lossless), then rule 13 places it. The board it sat on before is
-    replaced by the new board. Return to Discovery on its own refuses an Issue whose board is
+    retained, so a later re-promote is lossless), then rule 13 places it. The board it sat on before, if
+    any, is replaced by this one. Return to Discovery on its own refuses an Issue whose board is
     archived; **inside a pull that refusal does not apply**, because the Issue is leaving that board.
-15. **Side effects.** Per item: its board is set to the new board; its status changes under rule 13;
+15. **Side effects.** Per item: its board is set to this board; its status changes under rule 13;
     one audit event is written (below). **No notification is sent** and followers are unchanged: a pull
     is a re-filing, the same stance as a lane removal (`20-feature-boards-and-statuses.md` rule 14).
     `updated_at_utc` is stamped.
 16. **One commit.** The board, its lanes, its audit event and every pulled item commit together. A
     failure anywhere, including an item that was moved or deleted between the picker loading and the
-    save, creates nothing.
-17. **Limits.** At most **100 items** per board creation. *(proposed; Q5)*
+    save, saves nothing.
+17. **Limits.** At most **100 items** per save. *(answered, Q5)*
 
 ### Audit
 
 18. A pull writes, in the same commit:
-    - `BoardCreated` as today, with metadata `pulledItemCount` and `returnedIssueCount`;
+    - `BoardCreated` or `BoardUpdated` as today, with metadata `pulledItemCount` and
+      `returnedIssueCount`;
     - one `IdeaBoardChanged` per pulled item (`fromBoardId` or `null`, `toBoardId`), attributed to the
       real user with the View As target on behalf of, as every board write is;
     - `IdeaStatusChanged` for an item whose status changed under rule 13, in the shape slice 123 uses;
@@ -122,14 +131,15 @@ board where it now belongs.
 19. A **detach** writes one `IdeaBoardChanged` (`toBoardId` is `null`). Creating an idea in the pool
     writes the same `IdeaCreated` as today.
 
-## Contract changes (proposed; written in slice 177)
+## Contract changes (proposed; written in slices 177 and 178)
 
-- **`POST /organizations/{orgId}/boards`** gains an optional `pullItemIds`: an array of at most 100
+- **`POST /organizations/{orgId}/boards`** and **`PUT /organizations/{orgId}/boards/{boardId}`** gain an optional `pullItemIds`: an array of at most 100
   idea ids. Any other value is `400`, keyed `pullItemIds`. A refused item is `400` keyed `pullItemIds`
   with a message naming it (not found or not in this organization; not eligible and why; "you may pull
   only ideas you created"; Issues are Org Admin only; the 100-item cap). The response gains
-  `pulledItems`: `{ ideaId, fromBoardId, statusId }[]`, so the client can refresh. Nothing else about
-  the route changes.
+  `pulledItems`: `{ ideaId, fromBoardId, statusId }[]`, so the client can refresh. On the `PUT`, naming
+  an idea already on that board is `400` keyed `pullItemIds`, and an archived board stays `409`.
+  Nothing else about either route changes.
 - **`POST /organizations/{orgId}/ideas`** (new): creates an idea in the pool. The body is
   `POST /boards/{boardId}/ideas`'s without `statusId` (rule 3 fixes the status). `POST
   /boards/{boardId}/ideas` is unchanged, and so are CSV import and the idea assistant.
@@ -145,14 +155,16 @@ board where it now belongs.
 
 ## UI (comp first)
 
-- **Create board** form: the existing name, description and lane fields, then the optional *Add
-  existing items* step with the three tabs of rule 9, a selected-items summary with a remove control,
+- **Board form** (create and edit): the existing name, description and lane fields, then the optional
+  *Add existing items* step with the three tabs of rule 9, a selected-items summary with a remove control,
   and a line saying where each item will land (rule 13). The step is collapsed by default.
 - **Idea form:** Board becomes a select with a *No board* choice, preselected when the form opens from a
   board and empty when it opens from the Ideas list.
 - **Idea drawer and Ideas list:** a *No board* label in place of the board name; a *Remove from board*
   action for the author and an Org Admin.
-- **Home** and board counts: unchanged apart from rule 7.
+- **Home:** an Org Admin's *Needs a board* tile (rule 7), drawn into the Home comp with the rest;
+  every other Home figure and every board count is unchanged. The tile reads the Ideas list with the
+  `none` board filter, so it needs no new route.
 
 ## Acceptance criteria
 
@@ -167,38 +179,43 @@ board where it now belongs.
 - *Given* an item moved to another board after the picker loaded *When* the form is saved *Then* the
   save is refused naming it and no board exists.
 - *Given* 101 ids *Then* `400` on `pullItemIds`.
+- *Given* an Org Admin editing a live board and naming a pool idea *When* the form is saved *Then* the
+  idea is on the board in a lane by rule 13; *given* the edit also removes a lane *Then* the removal's
+  `ideaMoves` apply first.
+- *Given* an archived board *When* an edit names items to pull *Then* `409` and nothing changes.
+- *Given* an Org Admin with pool ideas *Then* Home shows *Needs a board* with their count, linking to the
+  Ideas list filtered to *No board*; *given* a User *Then* no such tile.
 - *Given* an idea created with an empty Board field *Then* it exists, has the organization's first
   active status, appears on the Ideas list as *No board*, and appears on no board page.
 - *Given* the author of a Discovery idea *When* they remove it from its board *Then* it is in the pool,
   with comments, upvotes and followers intact, and no one is notified.
 - *Given* an Issue *When* anyone tries to detach it *Then* `409`.
 - *Given* an archived board *When* an Org Admin detaches one of its ideas *Then* it succeeds; *when* a
-  User does *Then* `409`.
+  User does, even for their own idea, *Then* `409`.
 - *Given* a direct Site Admin *Then* every route here is refused, and through View As it acts as the
   target.
 
 ## Out of scope
 
-Adding items to an **existing** board, and a single-idea *Move to another board* action (both use the
-same re-board primitive; the second is the likely first follow-up and is parked in
+A single-idea *Move to another board* action (it uses the same re-board primitive and is parked in
 `SPEC/ideas-inbox.md`); pulling Issues out of a sprint; email or any notification for a pull; bulk
 detach; a board-level default for new pool ideas.
 
-## Open questions
+## Answered questions
 
-Answer before the backend slice; each default above is marked *(proposed)*.
+Answered by the user 2026-10-13; each is marked *(answered, Qn)* where it applies.
 
-1. **Q1.** Detaching an idea from an **archived** board: allow it for an Org Admin (rule 6), or keep
-   archived boards fully read-only and let the pool be reachable only from live boards?
-2. **Q2.** May a **pool idea be promoted** to an Issue with no board (rule 8), or must it be placed on
-   a board first?
-3. **Q3.** Should *Add existing items* also exist on **existing** boards, so the pool can be drained
-   after creation? Without it, a pool idea can only reach a board through a new board.
-4. **Q4.** Home and board pages: are pool ideas surfaced anywhere beyond the Ideas list (a Home tile,
-   a *Needs a board* count), or is the Ideas list enough?
-5. **Q5.** Is **100 items** the right cap per board creation?
-6. **Q6.** CSV import and the idea assistant stay board-scoped (rule 4): confirm, or should either be
-   able to create pool ideas?
+| # | Question | Answer |
+|---|---|---|
+| Q1 | Detach an idea from an **archived** board? | **Yes, Org Admin only** (rule 6). A User may not, even for their own idea. |
+| Q2 | Promote a **pool idea** to an Issue? | **Yes**; the Issue has no board (rule 8). |
+| Q3 | Pull onto **existing** boards too? | **Yes**: the board edit form gets the same step, in slice 178 (rule 9). |
+| Q4 | Surface pool ideas beyond the Ideas list? | **Yes: a *Needs a board* count on Home** for an Org Admin (rule 7). |
+| Q5 | Cap per save | **100 items** (rule 17). |
+| Q6 | CSV import and the idea assistant create pool ideas? | **No**, both stay board-scoped (rule 4). |
+
+Still *(proposed)*, and worth confirming in the comp: the status a pool idea is created with (rule 3)
+and the in-lane order of pulled items (rule 13).
 
 ## Code touchpoints (for slices 177 and 178; read from the code 2026-10-13)
 
@@ -211,7 +228,9 @@ Answer before the backend slice; each default above is marked *(proposed)*.
   a sibling for the pool. Every `getBoardContext(idea.boardId)` caller needs a null case:
   `ensureIdeaBoardNotArchived` (used by update, status change, delete, promote and return),
   `changeStatus`, and the comment, task and notification inputs that pass `boardId`. `BoardService.create`
-  already admits a User (`ensureCreateScope`), so the pull needs its own role check (rule 11).
+  already admits a User (`ensureCreateScope`), so the pull needs its own role check (rule 11);
+  `BoardService.update` (`ensureAdminScope`) already plans `ideaMoves` for removed lanes, and the pull
+  runs after it in the same unit of work.
 - **Infrastructure.** `moveIdeas` and `listLaneIdeas` are keyed by board and status and cannot re-board:
   a new `reassignIdeas(ideaIds, toBoardId, statusPlacements)` runs after the new board is added in the
   same unit of work. The idea list's raw SQL already `LEFT JOIN`s boards and needs the `none` filter and
