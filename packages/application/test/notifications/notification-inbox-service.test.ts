@@ -85,7 +85,7 @@ function inboxHarness(options: {
   }
 }
 
-const NO_PAGING = { page: null, pageSize: null }
+const NO_PAGING = { page: null, pageSize: null, unreadOnly: false }
 
 describe('NotificationInboxService.list', () => {
   it('asks only for the caller notifications', async () => {
@@ -103,6 +103,14 @@ describe('NotificationInboxService.list', () => {
 
     expect(INBOX_WINDOW_DAYS).toBe(90)
     expect(h.calls.list[0]?.sinceUtc).toEqual(new Date(NOW.getTime() - 90 * DAY_MS))
+  })
+
+  it.each([true, false])('passes unreadOnly=%s through to the repository', async (unreadOnly) => {
+    const h = inboxHarness({ currentUser: member(ORG_A, 'me') })
+
+    await h.service.list({ page: null, pageSize: null, unreadOnly })
+
+    expect(h.calls.list[0]?.unreadOnly).toBe(unreadOnly)
   })
 
   it('defaults to page 1 of 20', async () => {
@@ -138,7 +146,7 @@ describe('NotificationInboxService.list', () => {
   ])('clamps paging %j to %j', async (requested, expected) => {
     const h = inboxHarness({ currentUser: member(ORG_A, 'me') })
 
-    await h.service.list(requested)
+    await h.service.list({ ...requested, unreadOnly: false })
 
     expect(h.calls.list[0]?.page).toEqual(expected)
   })

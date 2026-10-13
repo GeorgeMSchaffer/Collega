@@ -135,10 +135,15 @@ function followingController(currentUser: CurrentUserContext) {
 function inboxController(
   options: { currentUser?: CurrentUserContext; rows?: readonly InboxRow[]; found?: boolean } = {},
 ) {
-  const calls = { list: [] as { page: number; pageSize: number }[], marked: [] as string[] }
+  const calls = {
+    list: [] as { page: number; pageSize: number }[],
+    unreadOnly: [] as boolean[],
+    marked: [] as string[],
+  }
   const repository: NotificationInboxRepository = {
     listForRecipient: async (query) => {
       calls.list.push(query.page)
+      calls.unreadOnly.push(query.unreadOnly)
       return {
         items: options.rows ?? [],
         page: query.page.page,
@@ -315,6 +320,26 @@ describe('Inbox routes', () => {
       await controller.list(query)
 
       expect(calls.list).toEqual([expected])
+    })
+  })
+
+  describe('GET /notifications unread filter', () => {
+    it.each([
+      ['true', true],
+      ['TRUE', true],
+      ['True', true],
+      ['false', false],
+      ['1', false],
+      ['yes', false],
+      ['', false],
+      [undefined, false],
+      [['true', 'true'], false],
+    ])('reads unread=%j as unreadOnly %s', async (unread, expected) => {
+      const { controller, calls } = inboxController()
+
+      await controller.list(unread === undefined ? {} : { unread })
+
+      expect(calls.unreadOnly).toEqual([expected])
     })
   })
 
