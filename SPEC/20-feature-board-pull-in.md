@@ -12,7 +12,7 @@
 >   status if the board has that lane, else lands in the leftmost lane (13); one commit, all or
 >   nothing (16); at most 100 items a save (17).
 > - **Contracts:** `contracts/ideas.md` (the pool create, the list filter and the detach route) was
->   written in slice 177; `contracts/boards.md` `POST` and `PUT` follow in slice 178. Proposed shapes
+>   written in slice 177; `contracts/boards.md` (`POST`, `PUT` and `pull-candidates`) was written in slice 178. Proposed shapes
 >   are under "Contract changes".
 > - **Decisions:** 2026-10-13 "Boards can pull in existing items, and ideas can have no board"; the
 >   same entry records the **eighth** S0.2 schema freeze amendment (`ideas.board_id` nullable).
@@ -154,9 +154,10 @@ board where it now belongs.
   `403` when the caller is neither the author nor an Org Admin; `409` for an Issue, and for an
   archived board unless the caller is an Org Admin (rule 6). Idempotent: an idea already in the pool
   answers `204`.
-- **Picker reads** reuse the list with filters (`phase=Ideas`, `board=none`, a board-exclusion, `scope`)
-  where they can; a dedicated `GET /organizations/{orgId}/boards/pull-candidates` is added only if the
-  list cannot carry the "not on board X" and the backlog-Issue cases. Decided in slice 178.
+- **Picker reads** (decided in slice 178): the organization idea list cannot carry them, because it has
+  no "not on board X" and cannot list Issues with no sprint, so a dedicated
+  `GET /organizations/{orgId}/boards/pull-candidates?source=unassigned|boards|backlog` was added. It is
+  specified in `contracts/boards.md`.
 
 ## UI (comp first)
 
