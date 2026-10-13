@@ -774,6 +774,8 @@ export type HomeKpi = {
   href: string | null
   /** Where the detail's own number opens, when it has one (the critical share). */
   detailHref?: string | undefined
+  /** A tile that asks for something (Needs a board): drawn with an accent outline and this link. */
+  action?: { label: string; href: string } | undefined
 }
 
 /** An idea in one of Home's lists: the attention queue, Assigned to me, Most upvoted. */

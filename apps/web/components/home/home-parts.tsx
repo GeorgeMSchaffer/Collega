@@ -13,10 +13,25 @@ export const plural = (count: number, one: string, many: string) =>
 
 export const ideaHref = (id: string) => `/ideas?idea=${encodeURIComponent(id)}`
 
-function Tile({ children, untracked = false }: { children: ReactNode; untracked?: boolean }) {
+function Tile({
+  children,
+  untracked = false,
+  asks = false,
+}: {
+  children: ReactNode
+  untracked?: boolean
+  /** A tile that asks for something: solid, with the accent outline (never the dashed untracked one). */
+  asks?: boolean
+}) {
   return (
     <li>
-      <Card className={cn('h-full', untracked && 'border-dashed bg-transparent shadow-none')}>
+      <Card
+        className={cn(
+          'h-full',
+          untracked && 'border-dashed bg-transparent shadow-none',
+          asks && 'border-2 border-primary',
+        )}
+      >
         <CardContent className="flex h-full flex-col gap-0.5">{children}</CardContent>
       </Card>
     </li>
@@ -39,8 +54,10 @@ export function KpiRow({
       className="m-0 grid list-none grid-cols-1 gap-3 p-0 min-[380px]:grid-cols-2 min-[1100px]:grid-cols-4"
     >
       {kpis.map((kpi) => (
-        <Tile key={kpi.label}>
-          <Meta caps>{kpi.label}</Meta>
+        <Tile key={kpi.label} asks={kpi.action !== undefined}>
+          <Meta caps className={cn(kpi.action && 'text-primary')}>
+            {kpi.label}
+          </Meta>
           <span className="self-start font-heading text-[26px] leading-tight font-semibold tabular-nums sm:text-3xl">
             {kpi.href ? (
               <Link href={kpi.href} className="text-foreground no-underline hover:underline">
@@ -65,6 +82,11 @@ export function KpiRow({
             )}
           </span>
           <p className="m-0 mt-1.5 text-xs text-muted-foreground">{kpi.definition}</p>
+          {kpi.action ? (
+            <Link href={kpi.action.href} className="mt-1.5 text-sm font-semibold">
+              {kpi.action.label}
+            </Link>
+          ) : null}
         </Tile>
       ))}
       {children}
