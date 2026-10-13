@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-13 | Boards can pull in existing items, and ideas can have no board | active | full below |
 | 2026-10-09 | The S0.2 schema freeze is amended a seventh time, for Outcomes | active | full below |
 | 2026-10-04 | `compare` judges the cases both runs share; none shared is exit 2 | active | full below |
 | 2026-10-04 | The App Admin's sidebar offers Home and Settings only | active | full below |
@@ -46,7 +47,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-10-01 | Following an idea, and an in-app notification inbox | active | full below |
 | 2026-10-01 | The View As banner names only the target | active | full below |
 | 2026-10-01 | The View As candidate order, and F1 closes | active | full below |
-| 2026-09-30 | What the MVP release includes | active | full below |
+| 2026-09-30 | What the MVP release includes | active | [2026-09-29 to 2026-09-30](decisions/archive-2026-09-29-to-2026-09-30.md) |
 | 2026-09-30 | The prompt-eval thresholds stand, confirmed against the v1 baseline | active | [2026-09-29 to 2026-09-30](decisions/archive-2026-09-29-to-2026-09-30.md) |
 | 2026-09-29 | How the cutover is run | active | [2026-09-29 to 2026-09-30](decisions/archive-2026-09-29-to-2026-09-30.md) |
 | 2026-09-29 | Board lanes reorder by dragging the header, with buttons as the fallback | active | [2026-09-29 to 2026-09-30](decisions/archive-2026-09-29-to-2026-09-30.md) |
@@ -116,6 +117,40 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-13 — Boards can pull in existing items, and ideas can have no board
+
+**Decided by the user.** Creating a board offers to pull in existing items. The request named "items
+from the backlog or other ideas not assigned to other boards"; both needed a reading, because every
+idea belongs to exactly one board today (`ideas.board_id` is `NOT NULL`) and "backlog" means the
+delivery backlog (Issues with no sprint). The user chose all three readings. Specified in
+`SPEC/20-feature-board-pull-in.md`:
+
+1. **Three sources.** Discovery ideas on other boards; backlog Issues, returned to Discovery by the
+   existing action; and a new pool of ideas that belong to no board.
+2. **Ideas can have no board, and enter the pool both ways:** created without a board, or detached
+   from one later by the author or an Org Admin.
+3. **Placement.** An item keeps its status if the new board has that lane, else it lands in the
+   leftmost lane.
+4. **Who pulls.** An Org Admin pulls anything eligible; a User only Discovery ideas they authored.
+   Backlog Issues stay Org Admin only, because Return to Discovery already is.
+
+Pulling happens only in the save that creates the board, in one commit, with no notification. Six
+defaults the user has not yet confirmed (archived-board detach, promoting a pool idea, pulling into an
+existing board, where pool ideas surface, the 100-item cap, and import and the assistant staying
+board-scoped) are marked *(proposed)* and listed as Q1–Q6 in that spec.
+
+**The S0.2 schema freeze is amended an eighth time**, under the 2026-09-11 rule that each change to
+`schema.prisma` needs its own entry. Additive, no backfill, no new foreign key: `ideas.board_id` and
+`notification_events.board_id` drop `NOT NULL` (neither has a foreign key or check constraint
+today). No enum value is added: `audit_events.event_type` is a free string, so `IdeaBoardChanged`
+needs no migration. The migration lands in slice 177 with the contracts.
+
+**Golden corpus.** The new fields are optional and `boardId` is never null in the recorded cases, so
+the replay is not expected to differ; slice 177 confirms it and records anything else in
+`tools/golden/src/accepted.ts`.
 
 ---
 
@@ -482,24 +517,3 @@ stays persistent, non-dismissable and on every screen, and every action is still
    `tools/golden/src/accepted.ts`.
 3. **F1 closes.** Every difference in the replay is now fixed, accepted or recorded; none is
    unexplained.
-
----
-
-## 2026-09-30 — What the MVP release includes
-
-**Decided by the user**, answering the scope questions of the MVP release plan
-(`SPEC/sprints/sprint-13-mvp-release.md`).
-
-1. **The shared-store hardening is deferred past MVP.** The account-lockout denial of service and
-   the per-instance auth rate limiter stay as the tracker's "Known open risks" record them. Their
-   one fix, a shared store for both, is scheduled before the first real tenant onboards, not before
-   cutover: there are no production users yet, and the store is a new dependency.
-2. **The demo-seed routes stay, opt-in only.** `POST /demo-seed` and `/demo-seed/reset` get a
-   contract, and `90-definition-of-done.md` gains the exception: they answer only where
-   `COLLEGA_ALLOW_DEMO_SEED` is set, which Production never sets. Closes `05` §8 item 7.
-3. **F1's remaining non-contract differences are accepted** as deliberate: the export's three new
-   columns (4 cases) and the demo seed's delivery module moving ideas out of the Discovery board
-   list (14 cases), recorded in `tools/golden/src/accepted.ts`. The View As candidates' order and
-   grouping (3 cases) is **not** accepted — `contracts/view-as.md` requires grouping by
-   organization — and is fixed instead. With those, F1 closes (2026-09-11: fix, accept, or do
-   better).
