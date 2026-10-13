@@ -30,6 +30,7 @@ import type {
   board_swimlanes as SwimlaneRow,
 } from '../generated/prisma/index.js'
 import { Prisma } from '../generated/prisma/index.js'
+import { PULL_UNAVAILABLE_MARKER } from '../persistence/constraint-errors.js'
 import type { PrismaClient } from '../persistence/prisma-client.js'
 import type { PrismaUnitOfWork } from '../persistence/unit-of-work.js'
 
@@ -65,9 +66,6 @@ function boardFromRow(row: BoardRowWithSwimlanes): Board {
 function boardIdeasWhere(boardIds: readonly string[]): Prisma.ideasWhereInput {
   return { board_id: { in: [...boardIds] }, is_deleted: false, phase: IdeaPhase.Discovery }
 }
-
-/** The text `reassignIdeas`'s closing statement fails on; `translateWriteError` recognises it. */
-export const PULL_UNAVAILABLE_MARKER = 'pull-unavailable:'
 
 export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort, BoardsPort {
   constructor(
@@ -250,7 +248,7 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
     this.unitOfWork.enqueue(
       this.prisma.$queryRaw(Prisma.sql`
         SELECT CAST(COALESCE(
-          (SELECT ${PULL_UNAVAILABLE_MARKER} || expected.title
+          (SELECT ${PULL_UNAVAILABLE_MARKER} || encode(convert_to(expected.title, 'UTF8'), 'hex')
            FROM UNNEST(${items.map((item) => item.ideaId)}::uuid[], ${items.map((item) => item.title)}::text[])
              WITH ORDINALITY AS expected(idea_id, title, position)
            WHERE NOT EXISTS (

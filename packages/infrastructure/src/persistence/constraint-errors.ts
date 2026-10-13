@@ -70,18 +70,27 @@ const KNOWN_CONSTRAINTS: readonly KnownConstraint[] = [
   },
 ]
 
+/** The text `PrismaBoardRepository.reassignIdeas`'s closing statement fails on, then the title in hex. */
+export const PULL_UNAVAILABLE_MARKER = 'pull-unavailable:'
+
 /**
  * The item named by `PrismaBoardRepository.reassignIdeas`'s failed check, or `null` for any other
- * error. That check fails a raw query with Postgres's `invalid input syntax for type integer:
- * "pull-unavailable:<title>"`, which Prisma reports as P2010 with the database message in `meta`.
+ * error. That check casts `pull-unavailable:<hex of the title>` to an integer, which Postgres refuses
+ * with SQLSTATE 22P02 and Prisma reports as P2010. The SQLSTATE and the hex marker are both
+ * independent of the server's message language, and the hex keeps quotes, newlines and any length of
+ * title from needing to be parsed out of prose.
  */
 function pullUnavailableTitle(error: unknown): string | null {
-  if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2010') {
+  if (
+    !(error instanceof Prisma.PrismaClientKnownRequestError) ||
+    error.code !== 'P2010' ||
+    error.meta?.code !== '22P02'
+  ) {
     return null
   }
-  const message = typeof error.meta?.message === 'string' ? error.meta.message : ''
-  // Greedy to the final quote: a title may contain quotes of its own.
-  return /"pull-unavailable:(.*)"\s*$/s.exec(message)?.[1] ?? null
+  const message = typeof error.meta.message === 'string' ? error.meta.message : ''
+  const hex = new RegExp(`${PULL_UNAVAILABLE_MARKER}([0-9a-f]*)`).exec(message)?.[1]
+  return hex === undefined ? null : Buffer.from(hex, 'hex').toString('utf8')
 }
 
 function targetColumns(target: unknown): readonly string[] {
