@@ -49,17 +49,22 @@ board where it now belongs.
 2. **An idea in the pool is an ordinary Discovery idea** in everything but placement: it can be
    edited, commented on, upvoted and followed, carries tags, assignees and custom fields, and is
    visible to the whole organization under the same role rules. It sits in **no lane**, so it has no
-   board column and no position.
+   board column and no position, and **its status cannot be changed on its own**: the status route
+   refuses it as a `400` ("This idea is not on a board."), and only a pull sets it (rule 13).
 3. **A pool idea keeps a status.** `ideas.status_id` stays required: when an idea is created without a
    board its status is the organization's first active status in sort order (the same status the
-   leftmost lane of a new board would carry). *(proposed)*
+   leftmost lane of a new board would carry). If the organization has no active status the creation
+   is refused as a `400` keyed `statusId`. *(proposed)*
 4. **Create without a board.** The idea form's Board field is optional; leaving it empty creates the
    idea in the pool, through a new organization-level create route (today idea creation exists only
    under a board). **CSV import and the idea assistant stay board-scoped**: both are written around
    one board's lanes, and neither creates pool ideas. *(answered, Q6)* The author still follows
-   automatically (following rule 4).
-5. **Detach.** The author of a Discovery idea, or an Org Admin, may remove it from its board. The idea
-   keeps its status, tags, comments, upvotes and followers and joins the pool. An **Issue cannot be
+   automatically (following rule 4). The roles that may create are those that may create on a board:
+   User and Org Admin of the organization (a Site Admin through View As); Read Only is `403` and a
+   direct Site Admin is refused.
+5. **Detach.** The author of a Discovery idea, or an Org Admin, may remove it from its board; the
+   caller must still be a User or Org Admin, so a Read Only author may not. The idea keeps its status,
+   tags, comments, upvotes and followers, has `updated_at_utc` stamped, and joins the pool. An **Issue cannot be
    detached**: return it to Discovery first (rule 14).
 6. **Detaching from an archived board is allowed for an Org Admin.** Archiving a board makes it
    read-only, and without this exception its ideas would be stranded. No other edit to an archived
