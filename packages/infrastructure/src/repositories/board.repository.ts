@@ -96,7 +96,9 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
     })
     // The where names the boards, so no board-less group comes back; this only narrows the type.
     return new Map(
-      rows.flatMap((row) => (row.board_id === null ? [] : [[row.board_id, row._count._all] as const])),
+      rows.flatMap((row) =>
+        row.board_id === null ? [] : [[row.board_id, row._count._all] as const],
+      ),
     )
   }
 

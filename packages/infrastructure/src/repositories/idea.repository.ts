@@ -372,7 +372,9 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       conditions.push(Prisma.sql`i.phase = ${filter.phase}::"IdeaPhase"`)
     }
     if (filter.boardIds.length > 0 && filter.includeNoBoard) {
-      conditions.push(Prisma.sql`(i.board_id IS NULL OR i.board_id IN (${uuidList(filter.boardIds)}))`)
+      conditions.push(
+        Prisma.sql`(i.board_id IS NULL OR i.board_id IN (${uuidList(filter.boardIds)}))`,
+      )
     } else if (filter.boardIds.length > 0) {
       conditions.push(Prisma.sql`i.board_id IN (${uuidList(filter.boardIds)})`)
     } else if (filter.includeNoBoard) {

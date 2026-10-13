@@ -306,11 +306,7 @@ export class IdeaService {
     await this.getActiveIdeaType(organizationId, command.ideaTypeId)
     await this.ensureActiveBusinessImpact(organizationId, command.businessImpactId)
 
-    const assigneeIds = await this.resolveAssignees(
-      organizationId,
-      command.assigneeUserIds,
-      [],
-    )
+    const assigneeIds = await this.resolveAssignees(organizationId, command.assigneeUserIds, [])
     const tagIds = await this.resolveTags(organizationId, command.tagNames, now, authorId)
     const mentionIds = await this.resolveMentions(
       organizationId,
