@@ -388,6 +388,37 @@ export function detachIdeaFromBoard(idea: Idea, nowUtc: Date, actorUserId: strin
 }
 
 /**
+ * Files an idea or backlog Issue onto a board in the given lane (SPEC/20-feature-board-pull-in.md
+ * rules 13 and 14). A backlog Issue is returned to Discovery first, so it lands as an ordinary
+ * idea; unlike the standalone return, nothing here looks at the board it is leaving. An Issue in
+ * a sprint is refused: the sprint has to release it first.
+ */
+export function pullIdeaOntoBoard(
+  idea: Idea,
+  boardId: string,
+  statusId: string,
+  nowUtc: Date,
+  actorUserId: string | null,
+): Idea {
+  let pulled = idea
+  if (pulled.phase === IdeaPhase.Delivery) {
+    if (pulled.sprintId !== null) {
+      throw new IdeaPhaseConflictError('An issue in a sprint cannot be moved to a board.')
+    }
+    pulled = returnIdeaToDiscovery(pulled, nowUtc, actorUserId)
+  }
+  return markUpdated(
+    {
+      ...pulled,
+      boardId: assertRequiredId('boardId', boardId, 'Board id is required.'),
+      statusId: assertRequiredId('statusId', statusId, 'Status id is required.'),
+    },
+    nowUtc,
+    actorUserId,
+  )
+}
+
+/**
  * Sets or clears the optional Discovery-phase effort estimate.
  *
  * Discovery only, deliberately. In Delivery, `effort` is no longer a working estimate - it is half
