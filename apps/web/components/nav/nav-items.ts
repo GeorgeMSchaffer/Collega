@@ -51,7 +51,7 @@ const NAV_SHAPE: { label: string; items: NavShapeItem[] }[] = [
   {
     label: 'Workspace',
     items: [
-      { href: '/home', label: 'Home', icon: 'home' },
+      { href: '/', label: 'Home', icon: 'home' },
       // Its unread badge is live rather than a count from here: `inbox-link.tsx`.
       { href: INBOX_HREF, label: 'Inbox', icon: 'inbox' },
       { href: '/boards', label: 'Boards', icon: 'boards', countKey: 'boards' },

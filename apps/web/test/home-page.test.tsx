@@ -13,7 +13,7 @@ import type {
 import { actAs } from './support/acting-role'
 
 /**
- * What Home draws for each role (slices 132 and 155, `app/(desk)/home/page.tsx`, comp R
+ * What Home draws for each role (slices 132 and 155, `app/(desk)/page.tsx`, comp R
  * `comp-r-home-dashboard.html`): the greeting's counts, the tiles with the untracked figures saying
  * so, the attention queue, Assigned to me, the boards, the current sprint and Most upvoted, their
  * empty states, the no-boards state and who may act on it, and the Site Admin's roll-up.
@@ -191,7 +191,7 @@ async function resolveAsync(node: ReactNode): Promise<ReactNode> {
 
 async function renderHome(role: Role) {
   actAs(role)
-  const { default: HomePage } = await import('@/app/(desk)/home/page')
+  const { default: HomePage } = await import('@/app/(desk)/page')
   const tree = await resolveAsync(await HomePage())
   render(<div>{tree}</div>)
 }
