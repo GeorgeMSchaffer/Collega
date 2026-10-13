@@ -7,7 +7,14 @@ import { IdeaWorkspace } from '@/components/ideas/idea-workspace'
 import { loadIdeaDrawer } from '@/components/ideas/load-idea-drawer'
 import { readListState } from '@/components/list/list-state'
 import { Topbar } from '@/components/nav/topbar'
-import { getBoardRefs, getIdeaList, getIssueIds, getStatuses, getTagRefs } from '@/lib/data'
+import {
+  getBoardRefs,
+  getIdeaList,
+  getStatuses,
+  getTagRefs,
+  issueIdsAmong,
+  startIssueLookup,
+} from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser, writeDenial } from '@/lib/session'
 
@@ -32,12 +39,15 @@ export default async function IdeasPage({
   const state = readListState(params, IDEAS_LIST)
   const query = toIdeaListQuery(state)
 
-  const [first, boards, statuses, tags, drawer] = await Promise.all([
+  // Only a reader who can remove ideas from boards needs to know which rows are Issues; the lookup
+  // runs beside the list so it adds no wait.
+  const [first, boards, statuses, tags, drawer, issueLookup] = await Promise.all([
     getIdeaList(query),
     getBoardRefs(),
     getStatuses(),
     getTagRefs(),
     loadIdeaDrawer(params, roleDenial === null),
+    roleDenial === null ? startIssueLookup(query) : null,
   ])
 
   // A page past the end — a shared link to page 7 of a list now three pages long — shows the last
@@ -47,7 +57,7 @@ export default async function IdeasPage({
     first.ideas.length === 0 && query.page > lastPage
       ? await getIdeaList({ ...query, page: lastPage })
       : first
-  const issueIds = await getIssueIds(query, ideas.ideas)
+  const issueIds = issueIdsAmong(query, ideas.ideas, issueLookup)
 
   return (
     <>
@@ -55,7 +65,7 @@ export default async function IdeasPage({
       <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
         <PageHeader
           title="Ideas"
-          description="Every idea on every board. Filter, sort, or open one to read and edit it."
+          description="Every idea in the organization, on a board or not. Filter, sort, or open one to read and edit it."
           action={
             roleDenial ? (
               <GatedAction id="why-new-ideas" label="Add New Idea" denial={roleDenial} />

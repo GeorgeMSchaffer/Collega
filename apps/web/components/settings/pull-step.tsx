@@ -163,13 +163,20 @@ export function PullStep({
     return () => form.removeEventListener('submit', onSubmit)
   }, [])
 
-  // A refusal opens the step, so the reader lands on what needs attention.
+  // A refusal opens the step and moves focus to its alert: the save button was disabled while
+  // pending, so focus would otherwise fall to <body> with the alert possibly below the fold.
+  const alertRef = useRef<HTMLDivElement>(null)
+  const [alertFocus, setAlertFocus] = useState(0)
   useEffect(() => {
     if (refused.length > 0 && !disabled) {
       setOpen(true)
       setVisited(true)
+      setAlertFocus((count) => count + 1)
     }
   }, [refused, disabled])
+  useEffect(() => {
+    if (alertFocus > 0) alertRef.current?.focus()
+  }, [alertFocus])
 
   const toggle = (item: PullCandidate) =>
     onChange(
@@ -269,8 +276,10 @@ export function PullStep({
       >
         {refused.length > 0 ? (
           <div
+            ref={alertRef}
+            tabIndex={-1}
             role="alert"
-            className="flex gap-2 rounded-md border border-destructive bg-destructive/5 px-3 py-2.5 text-sm text-foreground"
+            className="flex gap-2 rounded-md border border-destructive bg-destructive/5 px-3 py-2.5 text-sm text-foreground outline-none"
           >
             <Icon name="alert" className="mt-0.5 size-4 text-destructive" />
             <div>

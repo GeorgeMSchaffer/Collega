@@ -38,6 +38,7 @@ export async function GET(request: Request): Promise<Response> {
         page: number('page', 1),
         pageSize: Math.min(number('pageSize', 20), 100),
       }),
+      { headers: { 'Cache-Control': 'private, no-store' } },
     )
   } catch (error) {
     if (error instanceof ApiError && [400, 401, 403, 404].includes(error.status)) {

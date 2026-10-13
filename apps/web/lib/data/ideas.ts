@@ -172,22 +172,30 @@ export async function getIdea(id: string): Promise<IdeaDetail | null> {
 }
 
 /**
- * Which of a page's rows are Issues. The organization list carries no phase on its items, and Remove
- * from board needs to know (an Issue returns to Discovery first), so this asks the same question
- * again for the Issues alone and keeps the rows that answer. A set of more than one page of Issues
- * under the same filters would miss some; the API refuses that detach with its own message.
+ * Starts the lookup of which Issues match a list's filters, to run beside the list itself. The
+ * organization list carries no phase on its items, and Remove from board needs to know (an Issue
+ * returns to Discovery first), so this asks the same question again for the Issues alone. `null`
+ * when the filters already settle it. More than one page of Issues under the same filters would
+ * miss some; the API refuses that detach with its own message.
  */
-export async function getIssueIds(query: IdeaListQuery, rows: readonly Idea[]): Promise<string[]> {
-  if (rows.length === 0 || query.phase === 'Ideas') return []
-  if (query.phase === 'Issues') return rows.map((row) => row.id)
-
-  const issues = await getIdeaList({
+export function startIssueLookup(query: IdeaListQuery): Promise<ReadonlySet<string>> | null {
+  if (query.phase === 'Ideas' || query.phase === 'Issues') return null
+  return getIdeaList({
     ...query,
     phase: 'Issues',
     page: 1,
     pageSize: API_MAX_PAGE_SIZE,
     sortBy: null,
-  })
-  const ids = new Set(issues.ideas.map((issue) => issue.id))
-  return rows.filter((row) => ids.has(row.id)).map((row) => row.id)
+  }).then((issues) => new Set(issues.ideas.map((issue) => issue.id)))
+}
+
+/** Which of a page's rows are Issues, from the filters or the started lookup. */
+export function issueIdsAmong(
+  query: IdeaListQuery,
+  rows: readonly Idea[],
+  lookup: ReadonlySet<string> | null,
+): string[] {
+  if (query.phase === 'Issues') return rows.map((row) => row.id)
+  if (lookup === null) return []
+  return rows.filter((row) => lookup.has(row.id)).map((row) => row.id)
 }
