@@ -57,6 +57,9 @@ export const PERSON_NAME_MAX_LENGTH = 100
  */
 export const SWIMLANE_FLOOR = 2
 
+/** `packages/application/src/boards/board-service.ts` — `MAX_PULL_ITEMS`, the most one board save may pull in. */
+export const PULL_ITEM_CAP = 100
+
 /** `packages/domain/src/organizations/organization.ts` — `ORGANIZATION_AI_SCOPE_STATEMENT_MAX_LENGTH`. */
 export const SCOPE_STATEMENT_MAX = 500
 

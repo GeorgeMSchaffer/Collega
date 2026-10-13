@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { loadPullSetup } from '@/components/boards/load-pull-setup'
 import { BoardRefusal } from '@/components/settings/admin-only'
 import { BoardForm } from '@/components/settings/board-form'
 import { SettingsPage } from '@/components/settings/settings-page'
@@ -22,7 +23,7 @@ export default async function EditBoardPage({ params }: { params: Promise<{ boar
   const [board, statuses, overviews] = await Promise.all([
     getBoard(boardId),
     getStatuses(),
-    getBoardOverviews(),
+    getBoardOverviews({ includeArchived: true }),
   ])
   if (!board) notFound()
   const overview = overviews.find((candidate) => candidate.id === board.id)
@@ -55,6 +56,15 @@ export default async function EditBoardPage({ params }: { params: Promise<{ boar
         ]}
         submitLabel="Save changes"
         explainerHeading="Edit board"
+        pullSetup={
+          await loadPullSetup({
+            isAdmin: true,
+            archivedBoardIds: overviews
+              .filter((candidate) => candidate.isArchived)
+              .map((candidate) => candidate.id),
+            archived: board.isArchived,
+          })
+        }
       />
     </SettingsPage>
   )

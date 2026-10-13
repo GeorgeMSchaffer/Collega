@@ -46,6 +46,24 @@ const PATHS = {
     </>
   ),
   check: <path d="m5 12 5 5 9-10" />,
+  alert: (
+    <>
+      <path d="M12 3 2 20h20z" />
+      <path d="M12 10v5M12 18v.5" />
+    </>
+  ),
+  info: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v6M12 7.5v.5" />
+    </>
+  ),
+  lock: (
+    <>
+      <rect x="5" y="11" width="14" height="9" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </>
+  ),
   grip: <path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01" strokeWidth="3" />,
 } as const
 

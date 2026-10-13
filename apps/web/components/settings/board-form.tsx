@@ -13,12 +13,14 @@ import {
   Textarea,
 } from '@collega/design-system'
 import Link from 'next/link'
-import { useActionState, useState } from 'react'
+import { type FormEvent, useActionState, useState, useTransition } from 'react'
 import { IdeaMovesGuard } from '@/components/settings/idea-moves-guard'
+import { type PullSetup, PullStep } from '@/components/settings/pull-step'
 import { SwimlanePicker } from '@/components/settings/swimlane-picker'
+import { PULL_ITEM_CAP } from '@/lib/limits'
 import type { BoardFormState } from '@/lib/server/board-actions'
 import { createBoard, saveBoard } from '@/lib/server/board-actions'
-import type { Status } from '@/lib/types'
+import type { PullCandidate, Status } from '@/lib/types'
 
 const IDLE: BoardFormState = { error: null }
 
@@ -49,6 +51,7 @@ export function BoardForm({
   statuses,
   submitLabel,
   explainerHeading,
+  pullSetup,
 }: {
   /** The board being edited, or null on the create route. */
   boardId: string | null
@@ -62,8 +65,13 @@ export function BoardForm({
   statuses: Status[]
   submitLabel: string
   explainerHeading: string
+  /** What the *Add existing items* step needs; absent leaves the step out. */
+  pullSetup?: PullSetup
 }) {
   const [state, submit, pending] = useActionState(boardId === null ? createBoard : saveBoard, IDLE)
+  const onSubmit = useKeptSubmit(submit)
+  const [pulled, setPulled] = useState<PullCandidate[]>([])
+  const over = pulled.length > PULL_ITEM_CAP
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_356px]">
@@ -75,7 +83,7 @@ export function BoardForm({
             </Alert>
           ) : null}
 
-          <form action={submit}>
+          <form onSubmit={onSubmit}>
             <BoardFields
               boardId={boardId}
               defaultName={defaultName}
@@ -84,12 +92,36 @@ export function BoardForm({
               swimlaneIds={swimlaneIds}
               laneIdeaCounts={laneIdeaCounts}
               statuses={statuses}
+              pull={
+                pullSetup
+                  ? {
+                      setup: pullSetup,
+                      selected: pulled,
+                      onChange: setPulled,
+                      refused: state.pullErrors ?? [],
+                      boardName: defaultName,
+                    }
+                  : undefined
+              }
             />
 
             <div className="mt-5 flex flex-wrap items-center gap-2">
-              <Button type="submit" disabled={pending}>
-                {pending ? 'Saving…' : submitLabel}
+              <Button
+                type="submit"
+                disabled={pending}
+                aria-disabled={over ? 'true' : undefined}
+                aria-describedby={over ? 'pull-over-cap' : undefined}
+                onClick={(event) => {
+                  if (over) event.preventDefault()
+                }}
+              >
+                {pending ? 'Saving…' : pullLabel(submitLabel, pulled.length)}
               </Button>
+              {over ? (
+                <span id="pull-over-cap" className="text-xs text-muted-foreground">
+                  Can&rsquo;t save: {pulled.length} items selected, the limit is {PULL_ITEM_CAP}.
+                </span>
+              ) : null}
               <Link href="/settings/boards" className={buttonVariants({ variant: 'outline' })}>
                 Cancel
               </Link>
@@ -119,6 +151,30 @@ export function BoardForm({
 }
 
 /**
+ * Submits the board form from `onSubmit` rather than as the form's `action`.
+ *
+ * React resets an uncontrolled form once its action settles, refusal included, so a save the API
+ * refuses would hand back an empty name and description. A refused pull is now an ordinary way to
+ * land there, and retyping a board is the wrong price for dropping one item. The submit listeners
+ * on the form itself (`IdeaMovesGuard`'s confirm, `PullStep`'s cap) stop a submit with
+ * `preventDefault`, which this honours.
+ */
+export function useKeptSubmit(submit: (data: FormData) => void) {
+  const [, start] = useTransition()
+  return (event: FormEvent<HTMLFormElement>) => {
+    if (event.defaultPrevented) return
+    event.preventDefault()
+    const data = new FormData(event.currentTarget)
+    start(() => submit(data))
+  }
+}
+
+/** The save button's label, naming the pull so it is never a surprise ("Create board and add 3 items"). */
+export function pullLabel(label: string, count: number): string {
+  return count > 0 ? `${label} and add ${count} item${count > 1 ? 's' : ''}` : label
+}
+
+/**
  * The board form's fields, without the form around them: the Settings screen wraps them in a card
  * that redirects on save, the Boards screen's drawer in a form that stays put.
  *
@@ -134,6 +190,7 @@ export function BoardFields({
   laneIdeaCounts = {},
   statuses,
   sectionHeading: SectionHeading = 'h2',
+  pull,
 }: {
   boardId: string | null
   defaultName?: string
@@ -144,6 +201,17 @@ export function BoardFields({
   laneIdeaCounts?: Readonly<Record<string, number>> | undefined
   statuses: Status[]
   sectionHeading?: 'h2' | 'h3'
+  /** The *Add existing items* step; absent leaves it out. The caller owns the selection. */
+  pull?:
+    | {
+        setup: PullSetup
+        selected: PullCandidate[]
+        onChange: (next: PullCandidate[]) => void
+        /** The API's per-item refusals from the last save. */
+        refused: readonly string[]
+        boardName: string
+      }
+    | undefined
 }) {
   const [ids, setIds] = useState(swimlaneIds)
   // The board's lanes this save would drop that still hold ideas: each needs a lane to move them to.
@@ -158,6 +226,14 @@ export function BoardFields({
   return (
     <>
       {boardId === null ? null : <input type="hidden" name="boardId" value={boardId} />}
+
+      {pull?.setup.archived ? (
+        <Alert variant="note" role="status" className="mb-4">
+          <span>
+            This board is archived and read-only. Unarchive it to change its lanes or details.
+          </span>
+        </Alert>
+      ) : null}
 
       <Field
         htmlFor="board-name"
@@ -209,6 +285,21 @@ export function BoardFields({
       </div>
       <SwimlanePicker ids={ids} onChange={setIds} statuses={statuses} />
       <IdeaMovesGuard removed={removed} remaining={remaining} />
+
+      {pull ? (
+        <PullStep
+          setup={pull.setup}
+          boardId={boardId}
+          boardName={pull.boardName}
+          lanes={remaining}
+          statuses={statuses}
+          laneRemoval={removed.length > 0}
+          selected={pull.selected}
+          onChange={pull.onChange}
+          refused={pull.refused}
+          sectionHeading={SectionHeading}
+        />
+      ) : null}
     </>
   )
 }

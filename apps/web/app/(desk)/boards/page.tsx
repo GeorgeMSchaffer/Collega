@@ -1,5 +1,6 @@
 import type { BoardFormData } from '@/components/boards/board-drawer'
 import { BoardsScreen } from '@/components/boards/boards-screen'
+import { loadPullSetup } from '@/components/boards/load-pull-setup'
 import { Topbar } from '@/components/nav/topbar'
 import {
   type BoardOverview,
@@ -22,11 +23,19 @@ const first = (value: string | string[] | undefined) => (Array.isArray(value) ? 
  * `?board={id}&mode=edit` on a board that is not archived. Anything else opens no form, and the
  * screen falls back to the view (or to nothing).
  */
-async function formFor(search: Search, boards: BoardOverview[]): Promise<BoardFormData | null> {
+async function formFor(
+  search: Search,
+  boards: BoardOverview[],
+  isAdmin: boolean,
+): Promise<BoardFormData | null> {
   const requested = first(search.board)
+  const archivedBoardIds = boards.filter((board) => board.isArchived).map((board) => board.id)
 
   if (requested === 'new') {
-    const statuses = await getStatuses()
+    const [statuses, pull] = await Promise.all([
+      getStatuses(),
+      loadPullSetup({ isAdmin, archivedBoardIds }),
+    ])
     return {
       boardId: null,
       name: '',
@@ -36,13 +45,18 @@ async function formFor(search: Search, boards: BoardOverview[]): Promise<BoardFo
       // form that opens below its own floor cannot be submitted until the person works out why.
       swimlaneIds: statuses.slice(0, SWIMLANE_FLOOR).map((status) => status.id),
       statuses,
+      pull,
     }
   }
 
   const listed = boards.find((board) => board.id === requested)
   if (first(search.mode) !== 'edit' || !listed || listed.isArchived) return null
 
-  const [board, statuses] = await Promise.all([getBoard(listed.id), getStatuses()])
+  const [board, statuses, pull] = await Promise.all([
+    getBoard(listed.id),
+    getStatuses(),
+    loadPullSetup({ isAdmin, archivedBoardIds }),
+  ])
   if (!board) return null
   return {
     boardId: board.id,
@@ -57,6 +71,7 @@ async function formFor(search: Search, boards: BoardOverview[]): Promise<BoardFo
       ...statuses,
       ...board.lanes.filter((lane) => !statuses.some((status) => status.id === lane.id)),
     ],
+    pull,
   }
 }
 
@@ -72,7 +87,7 @@ export default async function BoardsPage({ searchParams }: { searchParams: Promi
   const boards = await getBoardOverviews({ includeArchived: true })
   // Creating is open to a User too; editing an existing board is not.
   const formDenial = first(search.board) === 'new' ? createDenial : adminDenial
-  const form = formDenial === null ? await formFor(search, boards) : null
+  const form = formDenial === null ? await formFor(search, boards, adminDenial === null) : null
 
   return (
     <>
