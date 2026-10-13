@@ -16,10 +16,14 @@ import type {
   BoardTagIdeaCount,
   IdeaReassignment,
   LaneIdea,
+  PullCandidate,
+  PullCandidateFilter,
   UserName,
 } from '@collega/application/boards'
+import type { Page } from '@collega/application/common'
 import type { BoardsPort } from '@collega/application/ideas'
 import type { Board, BoardSwimlane } from '@collega/domain/boards'
+import type { Priority } from '@collega/domain/enums'
 import { IdeaPhase } from '@collega/domain/enums'
 import type {
   boards as BoardRow,
@@ -259,6 +263,106 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
            LIMIT 1), '0') AS integer) AS verified
       `),
     )
+  }
+
+  /**
+   * The pull picker's read. Raw SQL for the same reason the idea lists are: the card carries the
+   * author's, board's and status's names and the idea's tags, none of which the frozen schema
+   * relates to `ideas`. The population mirrors the eligibility in rule 10, one tab per source;
+   * oldest first, then title, then id.
+   */
+  async listPullCandidates(filter: PullCandidateFilter): Promise<Page<PullCandidate>> {
+    const conditions: Prisma.Sql[] = [
+      Prisma.sql`i.organization_id = ${filter.organizationId}::uuid`,
+      Prisma.sql`i.is_deleted = FALSE`,
+    ]
+    switch (filter.source) {
+      case 'unassigned':
+        conditions.push(Prisma.sql`i.phase = 'Discovery'::"IdeaPhase" AND i.board_id IS NULL`)
+        break
+      case 'boards':
+        conditions.push(Prisma.sql`i.phase = 'Discovery'::"IdeaPhase" AND i.board_id IS NOT NULL`)
+        break
+      case 'backlog':
+        conditions.push(Prisma.sql`i.phase = 'Delivery'::"IdeaPhase" AND i.sprint_id IS NULL`)
+        break
+    }
+    if (filter.excludeBoardId !== null) {
+      conditions.push(Prisma.sql`i.board_id IS DISTINCT FROM ${filter.excludeBoardId}::uuid`)
+    }
+    if (filter.authorUserId !== null) {
+      conditions.push(Prisma.sql`i.author_user_id = ${filter.authorUserId}::uuid`)
+    }
+    if (filter.search !== null) {
+      const term = `%${filter.search.replace(/[\\%_]/g, '\\$&')}%`
+      conditions.push(Prisma.sql`i.title ILIKE ${term}`)
+    }
+    if (filter.tags.length > 0) {
+      conditions.push(
+        Prisma.sql`EXISTS (SELECT 1 FROM idea_tags AS filter_link INNER JOIN tags AS filter_tag ON filter_tag.id = filter_link.tag_id WHERE filter_link.idea_id = i.id AND filter_tag.normalized_name IN (${Prisma.join(filter.tags)}))`,
+      )
+    }
+    const where = Prisma.join(conditions, ' AND ')
+    const { page, pageSize } = filter.page
+
+    const rows = await this.prisma.$queryRaw<
+      {
+        idea_id: string
+        title: string
+        author_user_id: string
+        author_name: string | null
+        board_id: string | null
+        board_name: string | null
+        status_id: string
+        status_name: string | null
+        phase: IdeaPhase
+        priority: Priority
+        tag_names: string[]
+        upvote_count: number
+      }[]
+    >(Prisma.sql`
+      SELECT i.id AS idea_id, i.title, i.author_user_id,
+        (author.first_name || ' ' || author.last_name) AS author_name,
+        i.board_id, board.name AS board_name, i.status_id, status.name AS status_name,
+        i.phase, i.priority,
+        COALESCE((
+          SELECT ARRAY_AGG(tag.name ORDER BY LOWER(tag.name), tag.name)
+          FROM idea_tags AS link INNER JOIN tags AS tag ON tag.id = link.tag_id
+          WHERE link.idea_id = i.id
+        ), ARRAY[]::text[]) AS tag_names,
+        (SELECT COUNT(*)::int FROM idea_upvotes AS upvote WHERE upvote.idea_id = i.id) AS upvote_count
+      FROM ideas AS i
+      LEFT JOIN users AS author ON author.id = i.author_user_id
+      LEFT JOIN boards AS board ON board.id = i.board_id
+      LEFT JOIN statuses AS status ON status.id = i.status_id
+      WHERE ${where}
+      ORDER BY i.created_at_utc ASC, i.title ASC, i.id ASC
+      LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}
+    `)
+    const countRows = await this.prisma.$queryRaw<{ total: number }[]>(Prisma.sql`
+      SELECT COUNT(*)::int AS total FROM ideas AS i WHERE ${where}
+    `)
+
+    return {
+      items: rows.map((row) => ({
+        ideaId: row.idea_id,
+        title: row.title,
+        authorUserId: row.author_user_id,
+        authorName: row.author_name ?? '',
+        boardId: row.board_id,
+        boardName: row.board_name,
+        statusId: row.status_id,
+        statusName: row.status_name ?? '',
+        phase: row.phase,
+        tags: row.tag_names,
+        priority: row.priority,
+        upvoteCount: row.upvote_count,
+        isMine: row.author_user_id === filter.currentUserId,
+      })),
+      page,
+      pageSize,
+      totalCount: countRows[0]?.total ?? 0,
+    }
   }
 
   async isStatusReferenced(statusId: string): Promise<boolean> {

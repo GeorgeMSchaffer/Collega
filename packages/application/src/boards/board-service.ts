@@ -18,6 +18,7 @@ import {
 import { IdeaPhase, Role } from '@collega/domain/enums'
 import { type Idea, pullIdeaOntoBoard } from '@collega/domain/ideas'
 import type { Status } from '@collega/domain/statuses'
+import { normalizeTagName } from '@collega/domain/tags'
 import {
   type AuditEventWriter,
   attributeAudit,
@@ -27,6 +28,8 @@ import {
   ensureNotDirectSiteAdmin,
   ForbiddenError,
   NotFoundError,
+  normalizePageRequest,
+  type Page,
   UnauthorizedError,
   type UnitOfWork,
   ValidationError,
@@ -41,6 +44,9 @@ import type {
   CreateBoardCommand,
   CreateBoardResult,
   IdeaMoveInput,
+  PullCandidate,
+  PullCandidateSource,
+  PullCandidatesQuery,
   PulledItem,
   ReorderSwimlanesCommand,
   SwimlaneDetail,
@@ -261,6 +267,38 @@ export class BoardService {
     await this.auditPull(board.organizationId, board, pull, now)
 
     return { ...toDetail(board, statusLookup), ...pulledItemsOf(pull) }
+  }
+
+  /**
+   * What the pull picker offers (SPEC/20-feature-board-pull-in.md rules 9 to 11): the same
+   * eligibility as a pull, narrowed to what this caller may pull, so a User sees only their own
+   * Discovery ideas and no Issues. Same scope as creating a board: Read Only is refused, a direct
+   * Site Admin is refused, and another organization is not found.
+   */
+  async listPullCandidates(
+    organizationId: string,
+    query: PullCandidatesQuery,
+  ): Promise<Page<PullCandidate>> {
+    const role = this.ensureCreateScope(organizationId)
+    await this.ensureOrganizationExists(organizationId)
+    const userId = this.requireAuthenticatedUserId()
+
+    const source = parsePullSource(query.source)
+    if (source === 'backlog' && role !== Role.OrgAdmin) {
+      throw new ForbiddenError('Only an Org Admin can pull backlog issues.')
+    }
+
+    return this.boards.listPullCandidates({
+      organizationId,
+      source,
+      excludeBoardId: query.excludeBoardId,
+      search: query.search,
+      tags: [...new Set(query.tags.map(normalizeTagName).filter((name) => name !== ''))],
+      // A User sees only what they could pull, which is their own ideas whatever author was asked.
+      authorUserId: role === Role.OrgAdmin ? query.authorUserId : userId,
+      currentUserId: userId,
+      page: normalizePageRequest(toPageRequest(query.page, query.pageSize)),
+    })
   }
 
   /**
@@ -749,6 +787,25 @@ function pulledItemsOf(pull: PullPlan | null): { pulledItems?: readonly PulledIt
           statusId: after.statusId,
         })),
       }
+}
+
+function parsePullSource(source: string | null): PullCandidateSource {
+  if (source === 'unassigned' || source === 'boards' || source === 'backlog') {
+    return source
+  }
+  throw new ValidationError('One or more fields are invalid.', {
+    source: ["Source must be 'unassigned', 'boards' or 'backlog'."],
+  })
+}
+
+function toPageRequest(
+  page: number | null,
+  pageSize: number | null,
+): { page?: number; pageSize?: number } {
+  return {
+    ...(page === null ? {} : { page }),
+    ...(pageSize === null ? {} : { pageSize }),
+  }
 }
 
 type PlannedIdeaMove = {

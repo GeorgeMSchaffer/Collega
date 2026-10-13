@@ -1,5 +1,7 @@
 // Command and result shapes for board configuration (SPEC/30-Contracts.md "Board Contracts").
 
+import type { IdeaPhase, Priority } from '@collega/domain/enums'
+
 /** A requested swimlane: which status, and its position. Order is normalized densely 0..n-1. */
 export type SwimlaneInput = {
   readonly statusId: string
@@ -131,4 +133,35 @@ export type CreateBoardResult = {
   readonly swimlanes: readonly SwimlaneDetail[]
   /** Present only when the request pulled items. */
   readonly pulledItems?: readonly PulledItem[]
+}
+
+/** Which population `GET /organizations/{id}/boards/pull-candidates` lists. */
+export type PullCandidateSource = 'unassigned' | 'boards' | 'backlog'
+
+export type PullCandidatesQuery = {
+  readonly source: string | null
+  /** The board being created or edited, whose own ideas are never offered. */
+  readonly excludeBoardId: string | null
+  readonly search: string | null
+  readonly tags: readonly string[]
+  readonly authorUserId: string | null
+  readonly page: number | null
+  readonly pageSize: number | null
+}
+
+/** One card in the pull picker. */
+export type PullCandidate = {
+  readonly ideaId: string
+  readonly title: string
+  readonly authorUserId: string
+  readonly authorName: string
+  readonly boardId: string | null
+  readonly boardName: string | null
+  readonly statusId: string
+  readonly statusName: string
+  readonly phase: IdeaPhase
+  readonly tags: readonly string[]
+  readonly priority: Priority
+  readonly upvoteCount: number
+  readonly isMine: boolean
 }

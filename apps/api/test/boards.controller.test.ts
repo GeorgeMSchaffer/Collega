@@ -88,6 +88,7 @@ function controller(): { controller: BoardsController; persisted: Board[] } {
     listLaneIdeas: async () => [],
     moveIdeas: async () => {},
     reassignIdeas: async () => {},
+    listPullCandidates: async () => ({ items: [], page: 1, pageSize: 20, totalCount: 0 }),
   }
   const statusRepository: StatusRepository = {
     add: async () => {},

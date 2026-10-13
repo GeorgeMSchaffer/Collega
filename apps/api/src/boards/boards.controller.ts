@@ -4,9 +4,11 @@ import {
   BoardService,
   type CreateBoardResult,
   type IdeaMoveInput,
+  type PullCandidate,
   type SwimlaneInput,
   type UpdateBoardResult,
 } from '@collega/application/boards'
+import type { Page } from '@collega/application/common'
 import { BOARD_NAME_MAX_LENGTH } from '@collega/domain/boards'
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '../auth/auth.guard.js'
@@ -15,7 +17,13 @@ import {
   RequestValidationError,
   validateFields,
 } from '../common/errors/request-validation.error.js'
-import { queryBool } from '../common/request-values.js'
+import {
+  optional,
+  optionalGuid,
+  optionalInt,
+  queryBool,
+  queryList,
+} from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 /** One entry of a request's `swimlanes` array - `SwimlaneRequest` on the .NET side. */
@@ -142,6 +150,26 @@ export class BoardsController {
     @Query('includeArchived') includeArchived: unknown,
   ): Promise<readonly BoardListItem[]> {
     return this.boards.list(organizationId, { includeArchived: queryBool(includeArchived) })
+  }
+
+  /**
+   * The pull picker's read (SPEC/contracts/boards.md). Declared beside the list rather than under
+   * `boards/:boardId`, so it cannot be mistaken for a board id.
+   */
+  @Get('organizations/:organizationId/boards/pull-candidates')
+  async pullCandidates(
+    @Param('organizationId', UuidParamPipe) organizationId: string,
+    @Query() query: Record<string, unknown>,
+  ): Promise<Page<PullCandidate>> {
+    return this.boards.listPullCandidates(organizationId, {
+      source: optional(query.source),
+      excludeBoardId: optionalGuid(query.excludeBoardId),
+      search: optional(query.search)?.trim() ?? null,
+      tags: queryList(query.tag),
+      authorUserId: optionalGuid(query.authorUserId),
+      page: optionalInt(query.page),
+      pageSize: optionalInt(query.pageSize),
+    })
   }
 
   @Post('organizations/:organizationId/boards')

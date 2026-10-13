@@ -3,6 +3,8 @@
 
 import type { Board } from '@collega/domain/boards'
 import type { IdeaPhase } from '@collega/domain/enums'
+import type { Page } from '../common/index.js'
+import type { PullCandidate } from './models.js'
 
 export interface BoardRepository {
   add(board: Board): Promise<void>
@@ -85,6 +87,12 @@ export interface BoardRepository {
     nowUtc: Date,
     actorUserId: string | null,
   ): Promise<void>
+
+  /**
+   * One page of the items the pull picker offers, oldest first and tie-broken on title then id so
+   * paging is stable. The caller has already decided what the user may see and passes it in.
+   */
+  listPullCandidates(filter: PullCandidateFilter): Promise<Page<PullCandidate>>
 }
 
 export type IdeaReassignment = {
@@ -100,6 +108,19 @@ export type IdeaReassignment = {
   readonly toStatusId: string
   /** True for a backlog Issue: its phase becomes Discovery and its delivery status and sprint clear. */
   readonly returnsToDiscovery: boolean
+}
+
+export type PullCandidateFilter = {
+  readonly organizationId: string
+  readonly source: 'unassigned' | 'boards' | 'backlog'
+  readonly excludeBoardId: string | null
+  readonly search: string | null
+  /** Normalized tag names, any-of. */
+  readonly tags: readonly string[]
+  readonly authorUserId: string | null
+  /** The caller, for `isMine`. */
+  readonly currentUserId: string
+  readonly page: { readonly page: number; readonly pageSize: number }
 }
 
 export type LaneIdea = {
