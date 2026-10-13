@@ -2,6 +2,7 @@
 // Prisma; this feature only depends on the shapes below, never on Prisma or Nest directly.
 
 import type { Board } from '@collega/domain/boards'
+import type { IdeaPhase } from '@collega/domain/enums'
 
 export interface BoardRepository {
   add(board: Board): Promise<void>
@@ -70,6 +71,35 @@ export interface BoardRepository {
     nowUtc: Date,
     actorUserId: string | null,
   ): Promise<void>
+
+  /**
+   * Stages filing the given items onto `boardId`, in the same unit of work as the board's own add
+   * or save (SPEC/20-feature-board-pull-in.md rules 13 to 16). Each item is written only if it is
+   * still as `from` describes it; one that is not - moved, deleted or promoted since it was read -
+   * fails the whole commit with a `ValidationError` keyed `pullItemIds` that names it, so nothing
+   * is saved. The target board must already be staged ahead of this call when it is new.
+   */
+  reassignIdeas(
+    boardId: string,
+    items: readonly IdeaReassignment[],
+    nowUtc: Date,
+    actorUserId: string | null,
+  ): Promise<void>
+}
+
+export type IdeaReassignment = {
+  readonly ideaId: string
+  /** For the "no longer available" message. */
+  readonly title: string
+  readonly from: {
+    readonly boardId: string | null
+    readonly statusId: string
+    readonly phase: IdeaPhase
+    readonly sprintId: string | null
+  }
+  readonly toStatusId: string
+  /** True for a backlog Issue: its phase becomes Discovery and its delivery status and sprint clear. */
+  readonly returnsToDiscovery: boolean
 }
 
 export type LaneIdea = {

@@ -5,6 +5,7 @@ import {
   type CreateBoardResult,
   type IdeaMoveInput,
   type SwimlaneInput,
+  type UpdateBoardResult,
 } from '@collega/application/boards'
 import { BOARD_NAME_MAX_LENGTH } from '@collega/domain/boards'
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
@@ -25,6 +26,7 @@ type CreateBoardBody = {
   description?: string | null
   allowUserStatusUpdate?: boolean
   swimlanes?: readonly SwimlaneBody[]
+  pullItemIds?: unknown
 }
 
 /** One entry of `PUT`'s `ideaMoves` (added 2026-09-29): a removed lane and where its ideas go. */
@@ -101,6 +103,21 @@ function toIdeaMoves(moves: unknown): readonly IdeaMoveInput[] {
 }
 
 /**
+ * `pullItemIds`: absent or `null` pulls nothing. The body type is compile-time only, so anything
+ * but an array of strings is refused here under the field's key; what the ids name, how many and
+ * whether they repeat is the Application layer's.
+ */
+function toPullItemIds(value: unknown): readonly string[] {
+  if (value === undefined || value === null) {
+    return []
+  }
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== 'string')) {
+    throw new RequestValidationError({ pullItemIds: ['Pull item ids must be an array of ids.'] })
+  }
+  return value as readonly string[]
+}
+
+/**
  * Board configuration (SPEC/30-Contracts.md "Board Contracts").
  *
  * `@Controller()` carries no prefix on purpose. The .NET controller declared a full path on every
@@ -141,6 +158,7 @@ export class BoardsController {
       // A .NET `bool` (not `bool?`): an absent value bound to false.
       allowUserStatusUpdate: body.allowUserStatusUpdate === true,
       swimlanes: toSwimlaneInputs(body.swimlanes),
+      pullItemIds: toPullItemIds(body.pullItemIds),
     })
   }
 
@@ -153,7 +171,7 @@ export class BoardsController {
   async update(
     @Param('boardId', UuidParamPipe) boardId: string,
     @Body() body: UpdateBoardBody,
-  ): Promise<BoardDetail> {
+  ): Promise<UpdateBoardResult> {
     validateFields(boardBodyRules(body))
 
     return this.boards.update(boardId, {
@@ -162,6 +180,7 @@ export class BoardsController {
       allowUserStatusUpdate: body.allowUserStatusUpdate === true,
       swimlanes: toSwimlaneInputs(body.swimlanes),
       ideaMoves: toIdeaMoves(body.ideaMoves),
+      pullItemIds: toPullItemIds(body.pullItemIds),
     })
   }
 

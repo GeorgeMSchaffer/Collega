@@ -15,7 +15,8 @@ import {
   unarchiveBoard,
   updateBoard,
 } from '@collega/domain/boards'
-import { Role } from '@collega/domain/enums'
+import { IdeaPhase, Role } from '@collega/domain/enums'
+import { type Idea, pullIdeaOntoBoard } from '@collega/domain/ideas'
 import type { Status } from '@collega/domain/statuses'
 import {
   type AuditEventWriter,
@@ -30,6 +31,7 @@ import {
   type UnitOfWork,
   ValidationError,
 } from '../common/index.js'
+import type { IdeaRepository } from '../ideas/index.js'
 import type { StatusRepository } from '../statuses/index.js'
 import type {
   BoardDetail,
@@ -39,10 +41,12 @@ import type {
   CreateBoardCommand,
   CreateBoardResult,
   IdeaMoveInput,
+  PulledItem,
   ReorderSwimlanesCommand,
   SwimlaneDetail,
   SwimlaneInput,
   UpdateBoardCommand,
+  UpdateBoardResult,
 } from './models.js'
 import type { BoardRepository, LaneIdea, OrganizationExistenceLookup } from './ports.js'
 
@@ -55,6 +59,7 @@ export class BoardService {
     private readonly auditEvents: AuditEventWriter,
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
+    private readonly ideas: IdeaRepository,
   ) {}
 
   async list(
@@ -145,7 +150,11 @@ export class BoardService {
       nowUtc: now,
       actorUserId: this.currentUser.userId,
     })
+    const pull = await this.planPull(organizationId, board, command.pullItemIds ?? [], now)
     await this.boards.add(board)
+    if (pull !== null) {
+      await this.stagePull(board.id, pull, now)
+    }
     await this.unitOfWork.saveChanges()
 
     await this.audit(
@@ -154,13 +163,15 @@ export class BoardService {
       board.id,
       `Board '${board.name}' created.`,
       now,
-      { name: board.name, swimlaneCount: board.swimlanes.length },
+      { name: board.name, swimlaneCount: board.swimlanes.length, ...pullAuditCounts(pull) },
     )
+    await this.auditPull(organizationId, board, pull, now)
 
     return {
       boardId: board.id,
       name: board.name,
       swimlanes: buildSwimlaneDetails(board, statusLookup),
+      ...pulledItemsOf(pull),
     }
   }
 
@@ -176,7 +187,7 @@ export class BoardService {
     return toDetail(board, statusLookup)
   }
 
-  async update(boardId: string, command: UpdateBoardCommand): Promise<BoardDetail> {
+  async update(boardId: string, command: UpdateBoardCommand): Promise<UpdateBoardResult> {
     const existing = await this.boards.getById(boardId)
     if (existing === null) {
       throw new NotFoundError('Board not found.')
@@ -201,6 +212,7 @@ export class BoardService {
       this.currentUser.userId,
     )
     const moves = await this.planIdeaMoves(existing, board, command.ideaMoves ?? [], statusLookup)
+    const pull = await this.planPull(board.organizationId, board, command.pullItemIds ?? [], now)
 
     await this.boards.save(board)
     for (const move of moves) {
@@ -212,6 +224,9 @@ export class BoardService {
         now,
         this.currentUser.userId,
       )
+    }
+    if (pull !== null) {
+      await this.stagePull(board.id, pull, now)
     }
     await this.unitOfWork.saveChanges()
 
@@ -233,6 +248,7 @@ export class BoardService {
                 ideaCount: move.ideas.length,
               })),
             }),
+        ...pullAuditCounts(pull),
       },
     )
     // One entry per moved idea, in the shape a move on the board writes, so an idea's history
@@ -242,8 +258,133 @@ export class BoardService {
         await this.auditIdeaMove(board.organizationId, idea, move.toStatusId, now)
       }
     }
+    await this.auditPull(board.organizationId, board, pull, now)
 
-    return toDetail(board, statusLookup)
+    return { ...toDetail(board, statusLookup), ...pulledItemsOf(pull) }
+  }
+
+  /**
+   * Validates every named item against rules 10 to 13 and works out where each lands on `board`'s
+   * lanes (the ones this same save leaves), or `null` when nothing is pulled. Every problem is
+   * reported at once under `pullItemIds`; nothing is staged here, so a refusal saves nothing.
+   * Items are returned oldest first, the order they are audited and answered in.
+   */
+  private async planPull(
+    organizationId: string,
+    board: Board,
+    requested: readonly string[],
+    now: Date,
+  ): Promise<PullPlan | null> {
+    if (requested.length === 0) {
+      return null
+    }
+    if (requested.length > MAX_PULL_ITEMS) {
+      throw invalidPullItems([`At most ${MAX_PULL_ITEMS} items can be pulled in one save.`])
+    }
+    const malformed = requested.find((id) => !UUID_PATTERN.test(id))
+    if (malformed !== undefined) {
+      throw invalidPullItems([`'${malformed}' is not a valid item id.`])
+    }
+    if (new Set(requested.map((id) => id.toLowerCase())).size !== requested.length) {
+      throw invalidPullItems(['An item can be named only once.'])
+    }
+
+    const role = this.requireAuthenticatedRole()
+    const userId = this.requireAuthenticatedUserId()
+    const found = await Promise.all(requested.map((id) => this.ideas.getById(id, true)))
+
+    const laneOrder = [...board.swimlanes].sort((a, b) => a.displayOrder - b.displayOrder)
+    const laneStatusIds = new Set(laneOrder.map((lane) => lane.statusId))
+    const leftmostStatusId = laneOrder[0]?.statusId ?? ''
+
+    const problems: string[] = []
+    const items: PlannedPull[] = []
+    requested.forEach((id, index) => {
+      const before = found[index] ?? null
+      if (before === null || before.organizationId !== organizationId) {
+        problems.push(`Item '${id}' was not found.`)
+        return
+      }
+      const problem = pullRefusal(before, board.id, role, userId)
+      if (problem !== null) {
+        problems.push(problem)
+        return
+      }
+      const statusId = laneStatusIds.has(before.statusId) ? before.statusId : leftmostStatusId
+      items.push({
+        before,
+        after: pullIdeaOntoBoard(before, board.id, statusId, now, this.currentUser.userId),
+      })
+    })
+    if (problems.length > 0) {
+      throw invalidPullItems(problems)
+    }
+
+    items.sort(
+      (a, b) =>
+        a.before.createdAtUtc.getTime() - b.before.createdAtUtc.getTime() ||
+        compareStrings(a.before.id, b.before.id),
+    )
+    return { items }
+  }
+
+  private async stagePull(boardId: string, pull: PullPlan, now: Date): Promise<void> {
+    await this.boards.reassignIdeas(
+      boardId,
+      pull.items.map(({ before, after }) => ({
+        ideaId: before.id,
+        title: before.title,
+        from: {
+          boardId: before.boardId,
+          statusId: before.statusId,
+          phase: before.phase,
+          sprintId: before.sprintId,
+        },
+        toStatusId: after.statusId,
+        returnsToDiscovery: before.phase === IdeaPhase.Delivery,
+      })),
+      now,
+      this.currentUser.userId,
+    )
+  }
+
+  /** The per-item entries of a pull (rule 18), after the board's own entry. */
+  private async auditPull(
+    organizationId: string,
+    board: Board,
+    pull: PullPlan | null,
+    now: Date,
+  ): Promise<void> {
+    for (const { before, after } of pull?.items ?? []) {
+      await this.auditIdea(
+        'IdeaBoardChanged',
+        organizationId,
+        before.id,
+        `Idea '${before.title}' pulled onto board '${board.name}'.`,
+        now,
+        { fromBoardId: before.boardId, toBoardId: board.id },
+      )
+      if (after.statusId !== before.statusId) {
+        await this.auditIdea(
+          'IdeaStatusChanged',
+          organizationId,
+          before.id,
+          `Idea '${before.title}' moved to a new status.`,
+          now,
+          { fromStatusId: before.statusId, toStatusId: after.statusId },
+        )
+      }
+      if (before.phase === IdeaPhase.Delivery) {
+        await this.auditIdea(
+          'IssueReturnedToDiscovery',
+          organizationId,
+          before.id,
+          `Issue '${before.title}' returned to discovery.`,
+          now,
+          { previousSprintId: before.sprintId },
+        )
+      }
+    }
   }
 
   /**
@@ -441,12 +582,12 @@ export class BoardService {
    * Who may create a board: an Org Admin or a User of that organization (`SPEC/decisions.md`
    * 2026-10-04). Editing, archiving and reordering an existing board stay `ensureAdminScope`.
    */
-  private ensureCreateScope(organizationId: string): void {
+  private ensureCreateScope(organizationId: string): Role {
     const role = this.requireAuthenticatedRole()
     ensureNotDirectSiteAdmin(this.currentUser)
 
     if (role === Role.OrgAdmin || role === Role.User) {
-      if (this.currentUser.organizationId === organizationId) return
+      if (this.currentUser.organizationId === organizationId) return role
       throw new NotFoundError('Board not found.')
     }
 
@@ -480,6 +621,13 @@ export class BoardService {
     return this.currentUser.role
   }
 
+  private requireAuthenticatedUserId(): string {
+    if (this.currentUser.userId === null) {
+      throw new UnauthorizedError('Caller identity could not be resolved.')
+    }
+    return this.currentUser.userId
+  }
+
   /** The `IdeaStatusChanged` entry `IdeaService.changeStatus` writes, attributed the same way. */
   private async auditIdeaMove(
     organizationId: string,
@@ -496,6 +644,26 @@ export class BoardService {
       attribution: attributeAudit(this.currentUser, this.currentUser.userId),
       entityId: idea.ideaId,
       metadataJson: JSON.stringify({ fromStatusId: idea.statusId, toStatusId }),
+    })
+  }
+
+  private async auditIdea(
+    eventType: string,
+    organizationId: string,
+    ideaId: string,
+    message: string,
+    occurredAtUtc: Date,
+    metadata: Record<string, unknown>,
+  ): Promise<void> {
+    await this.auditEvents.write({
+      eventType,
+      entityType: 'Idea',
+      message,
+      occurredAtUtc,
+      organizationId,
+      attribution: attributeAudit(this.currentUser, this.currentUser.userId),
+      entityId: ideaId,
+      metadataJson: JSON.stringify(metadata),
     })
   }
 
@@ -521,6 +689,66 @@ export class BoardService {
       metadataJson: metadata === null ? null : JSON.stringify(metadata),
     })
   }
+}
+
+const MAX_PULL_ITEMS = 100
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** The ideas as read and as they will be saved, oldest first. */
+type PullPlan = { readonly items: readonly PlannedPull[] }
+type PlannedPull = { readonly before: Idea; readonly after: Idea }
+
+function invalidPullItems(messages: readonly string[]): ValidationError {
+  return new ValidationError('One or more fields are invalid.', { pullItemIds: [...messages] })
+}
+
+/**
+ * Why `idea` cannot be pulled onto `boardId` by this caller, or `null` when it can (rules 10 and
+ * 11). Eligibility first, then rights, so a message says what is wrong with the item before it
+ * says what the caller may not do.
+ */
+function pullRefusal(idea: Idea, boardId: string, role: Role, userId: string): string | null {
+  if (idea.isDeleted) {
+    return `'${idea.title}' is no longer available.`
+  }
+  if (idea.boardId === boardId) {
+    return `'${idea.title}' is already on this board.`
+  }
+  if (idea.phase === IdeaPhase.Delivery) {
+    if (idea.sprintId !== null) {
+      return `'${idea.title}' is in a sprint, so it cannot be pulled. Move it back to the backlog first.`
+    }
+    if (role !== Role.OrgAdmin) {
+      return `'${idea.title}' is an issue, and only an Org Admin can pull issues.`
+    }
+    return null
+  }
+  if (role !== Role.OrgAdmin && idea.authorUserId !== userId) {
+    return `You can pull only ideas you created; '${idea.title}' was created by someone else.`
+  }
+  return null
+}
+
+function pullAuditCounts(pull: PullPlan | null): Record<string, number> {
+  return pull === null
+    ? {}
+    : {
+        pulledItemCount: pull.items.length,
+        returnedIssueCount: pull.items.filter(({ before }) => before.phase === IdeaPhase.Delivery)
+          .length,
+      }
+}
+
+function pulledItemsOf(pull: PullPlan | null): { pulledItems?: readonly PulledItem[] } {
+  return pull === null
+    ? {}
+    : {
+        pulledItems: pull.items.map(({ before, after }) => ({
+          ideaId: before.id,
+          fromBoardId: before.boardId,
+          statusId: after.statusId,
+        })),
+      }
 }
 
 type PlannedIdeaMove = {

@@ -20,6 +20,7 @@ import type {
   CurrentUserContext,
   UnitOfWork,
 } from '@collega/application/common'
+import type { IdeaRepository } from '@collega/application/ideas'
 import type { StatusRepository } from '@collega/application/statuses'
 import { type Board, createBoard } from '@collega/domain/boards'
 import { Role } from '@collega/domain/enums'
@@ -86,6 +87,7 @@ function controller(): { controller: BoardsController; persisted: Board[] } {
     getUserNames: async () => new Map(),
     listLaneIdeas: async () => [],
     moveIdeas: async () => {},
+    reassignIdeas: async () => {},
   }
   const statusRepository: StatusRepository = {
     add: async () => {},
@@ -111,6 +113,7 @@ function controller(): { controller: BoardsController; persisted: Board[] } {
         audit,
         CURRENT_USER,
         clock,
+        {} as IdeaRepository,
       ),
     ),
     persisted,

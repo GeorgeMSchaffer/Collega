@@ -14,6 +14,7 @@ import type {
   BoardRepository,
   BoardStatusIdeaCount,
   BoardTagIdeaCount,
+  IdeaReassignment,
   LaneIdea,
   UserName,
 } from '@collega/application/boards'
@@ -60,6 +61,9 @@ function boardFromRow(row: BoardRowWithSwimlanes): Board {
 function boardIdeasWhere(boardIds: readonly string[]): Prisma.ideasWhereInput {
   return { board_id: { in: [...boardIds] }, is_deleted: false, phase: IdeaPhase.Discovery }
 }
+
+/** The text `reassignIdeas`'s closing statement fails on; `translateWriteError` recognises it. */
+export const PULL_UNAVAILABLE_MARKER = 'pull-unavailable:'
 
 export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort, BoardsPort {
   constructor(
@@ -196,6 +200,64 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
         },
         data: { status_id: toStatusId, updated_at_utc: nowUtc, updated_by_user_id: actorUserId },
       }),
+    )
+  }
+
+  /**
+   * One guarded `updateMany` per item, then one statement that proves they all landed. A batch
+   * cannot read a count back, so a guard that matched nothing would otherwise pass silently; the
+   * closing SELECT casts a marker naming the first missing item to an integer, which Postgres
+   * refuses, and that refusal rolls the whole batch back (`translateWriteError` turns it into the
+   * keyed 400). An item already on the board by another route fails the check too, and
+   * `updated_at_utc = nowUtc` is what ties a landed row to this save.
+   */
+  async reassignIdeas(
+    boardId: string,
+    items: readonly IdeaReassignment[],
+    nowUtc: Date,
+    actorUserId: string | null,
+  ): Promise<void> {
+    if (items.length === 0) {
+      return
+    }
+    for (const item of items) {
+      this.unitOfWork.enqueue(
+        this.prisma.ideas.updateMany({
+          where: {
+            id: item.ideaId,
+            is_deleted: false,
+            board_id: item.from.boardId,
+            status_id: item.from.statusId,
+            phase: item.from.phase,
+            sprint_id: item.from.sprintId,
+          },
+          data: {
+            board_id: boardId,
+            status_id: item.toStatusId,
+            updated_at_utc: nowUtc,
+            updated_by_user_id: actorUserId,
+            ...(item.returnsToDiscovery
+              ? { phase: IdeaPhase.Discovery, delivery_status: null, sprint_id: null }
+              : {}),
+          },
+        }),
+      )
+    }
+    this.unitOfWork.enqueue(
+      this.prisma.$queryRaw(Prisma.sql`
+        SELECT CAST(COALESCE(
+          (SELECT ${PULL_UNAVAILABLE_MARKER} || expected.title
+           FROM UNNEST(${items.map((item) => item.ideaId)}::uuid[], ${items.map((item) => item.title)}::text[])
+             WITH ORDINALITY AS expected(idea_id, title, position)
+           WHERE NOT EXISTS (
+             SELECT 1 FROM ideas AS landed
+             WHERE landed.id = expected.idea_id
+               AND landed.board_id = ${boardId}::uuid
+               AND landed.updated_at_utc = ${nowUtc}::timestamptz
+           )
+           ORDER BY expected.position
+           LIMIT 1), '0') AS integer) AS verified
+      `),
     )
   }
 

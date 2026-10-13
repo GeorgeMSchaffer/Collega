@@ -24,6 +24,7 @@ import {
   NotFoundError,
   ValidationError,
 } from '../../src/common/index.js'
+import type { IdeaRepository } from '../../src/ideas/ports.js'
 import type { StatusRepository } from '../../src/statuses/ports.js'
 import {
   countingUnitOfWork,
@@ -132,6 +133,7 @@ function harness(options: {
       return []
     },
     async moveIdeas() {},
+    async reassignIdeas() {},
   }
 
   const statuses: StatusRepository = {
@@ -171,6 +173,7 @@ function harness(options: {
       audit,
       options.currentUser,
       fixedClock(),
+      {} as IdeaRepository,
     ),
     added,
     saved,

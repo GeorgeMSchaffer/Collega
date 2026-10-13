@@ -6,6 +6,7 @@ import type {
   CurrentUserContext,
   UnitOfWork,
 } from '@collega/application/common'
+import type { IdeaRepository } from '@collega/application/ideas'
 import type { StatusRepository } from '@collega/application/statuses'
 import { Module } from '@nestjs/common'
 import { AuthModule } from '../auth/auth.module.js'
@@ -39,6 +40,7 @@ import { BoardsController } from './boards.controller.js'
         auditEvents: AuditEventWriter,
         currentUser: CurrentUserContext,
         clock: Clock,
+        ideas: IdeaRepository,
       ) =>
         new BoardService(
           boards,
@@ -48,6 +50,7 @@ import { BoardsController } from './boards.controller.js'
           auditEvents,
           currentUser,
           clock,
+          ideas,
         ),
       inject: [
         PORT_TOKENS.BoardRepository,
@@ -57,6 +60,7 @@ import { BoardsController } from './boards.controller.js'
         PORT_TOKENS.AuditEventWriter,
         PORT_TOKENS.CurrentUserContext,
         PORT_TOKENS.Clock,
+        PORT_TOKENS.IdeaRepository,
       ],
     },
   ],

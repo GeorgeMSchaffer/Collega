@@ -12,6 +12,9 @@ export type CreateBoardCommand = {
   readonly description?: string | null | undefined
   readonly allowUserStatusUpdate: boolean
   readonly swimlanes: readonly SwimlaneInput[]
+  /** Ideas and backlog Issues to pull onto the new board (SPEC/20-feature-board-pull-in.md). At
+   * most 100; absent or empty pulls nothing. */
+  readonly pullItemIds?: readonly string[] | undefined
 }
 
 export type UpdateBoardCommand = {
@@ -23,6 +26,8 @@ export type UpdateBoardCommand = {
   /** Where the ideas in each removed lane go. Absent is none; required per removed lane that
    * still holds live ideas (SPEC/contracts/boards.md `PUT /boards/{boardId}`). */
   readonly ideaMoves?: readonly IdeaMoveInput[] | undefined
+  /** As on create; applied after `ideaMoves`, against the lanes the save leaves. */
+  readonly pullItemIds?: readonly string[] | undefined
 }
 
 /** One removed lane's ideas, and the lane that stays on the board they move to. */
@@ -107,9 +112,23 @@ export type BoardDetail = {
   readonly archivedAtUtc: Date | null
 }
 
+/** A `PUT /boards/{boardId}` result: the detail, plus what was pulled when the save pulled. */
+export type UpdateBoardResult = BoardDetail & {
+  readonly pulledItems?: readonly PulledItem[]
+}
+
+/** Where a pulled item came from and the status it now has. */
+export type PulledItem = {
+  readonly ideaId: string
+  readonly fromBoardId: string | null
+  readonly statusId: string
+}
+
 /** Shape matches the `POST /organizations/{id}/boards` create response. */
 export type CreateBoardResult = {
   readonly boardId: string
   readonly name: string
   readonly swimlanes: readonly SwimlaneDetail[]
+  /** Present only when the request pulled items. */
+  readonly pulledItems?: readonly PulledItem[]
 }

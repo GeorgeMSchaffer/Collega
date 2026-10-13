@@ -36,7 +36,7 @@
 // anything tested. Flagged here rather than fixed there - `packages/application/**` is out of this
 // slice's globs.
 
-import { ConflictError } from '@collega/application/common'
+import { ConflictError, ValidationError } from '@collega/application/common'
 import { Prisma } from '../generated/prisma/index.js'
 
 /** One hand-written partial unique index this file knows how to translate. */
@@ -70,6 +70,20 @@ const KNOWN_CONSTRAINTS: readonly KnownConstraint[] = [
   },
 ]
 
+/**
+ * The item named by `PrismaBoardRepository.reassignIdeas`'s failed check, or `null` for any other
+ * error. That check fails a raw query with Postgres's `invalid input syntax for type integer:
+ * "pull-unavailable:<title>"`, which Prisma reports as P2010 with the database message in `meta`.
+ */
+function pullUnavailableTitle(error: unknown): string | null {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2010') {
+    return null
+  }
+  const message = typeof error.meta?.message === 'string' ? error.meta.message : ''
+  // Greedy to the final quote: a title may contain quotes of its own.
+  return /"pull-unavailable:(.*)"\s*$/s.exec(message)?.[1] ?? null
+}
+
 function targetColumns(target: unknown): readonly string[] {
   if (Array.isArray(target)) {
     return target.filter((entry): entry is string => typeof entry === 'string')
@@ -96,6 +110,13 @@ function sameColumnSet(a: readonly string[], b: readonly string[]): boolean {
  * original Prisma error is kept as `.cause` so a caller that wants the underlying detail still can.
  */
 export function translateWriteError(error: unknown): unknown {
+  const unavailableItem = pullUnavailableTitle(error)
+  if (unavailableItem !== null) {
+    return new ValidationError('One or more fields are invalid.', {
+      pullItemIds: [`'${unavailableItem}' is no longer available.`],
+    })
+  }
+
   if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
     return error
   }
