@@ -161,10 +161,10 @@ no confirmation.
 `schema.prisma` needs its own entry. Additive, no backfill, no new foreign key: `ideas.board_id` and
 `notification_events.board_id` drop `NOT NULL` (neither has a foreign key or check constraint
 today). No enum value is added: `audit_events.event_type` is a free string, so `IdeaBoardChanged`
-needs no migration. The migration lands in slice 177 with the contracts.
+needs no migration. The migration lands in slice 179 with the contracts.
 
 **Golden corpus.** The new fields are optional and `boardId` is never null in the recorded cases, so
-the replay is not expected to differ; slice 177 confirms it and records anything else in
+the replay is not expected to differ; slice 179 confirms it and records anything else in
 `tools/golden/src/accepted.ts`.
 
 ---

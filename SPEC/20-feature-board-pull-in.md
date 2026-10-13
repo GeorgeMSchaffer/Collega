@@ -12,12 +12,12 @@
 >   status if the board has that lane, else lands in the leftmost lane (13); one commit, all or
 >   nothing (16); at most 100 items a save (17).
 > - **Contracts:** `contracts/ideas.md` (the pool create, the list filter and the detach route) was
->   written in slice 177; `contracts/boards.md` (`POST`, `PUT` and `pull-candidates`) was written in slice 178. Proposed shapes
+>   written in slice 179; `contracts/boards.md` (`POST`, `PUT` and `pull-candidates`) was written in slice 180. Proposed shapes
 >   are under "Contract changes".
 > - **Decisions:** 2026-10-13 "Boards can pull in existing items, and ideas can have no board"; the
 >   same entry records the **eighth** S0.2 schema freeze amendment (`ideas.board_id` nullable).
 > - **Comp:** `SPEC/mockups/comp-r-board-pull-in.html`, **approved as drawn by the user 2026-10-13**
->   (slice 180). The Home tile is drawn there only; `comp-r-home-dashboard.html` is unchanged.
+>   (slice 182). The Home tile is drawn there only; `comp-r-home-dashboard.html` is unchanged.
 > - **Answered by the user 2026-10-13:** the scope (all three sources), how ideas enter the pool (both
 >   ways), where a pulled item lands, who may pull, and Q1–Q6 ("Answered questions" below). The comp's
 >   approval on the same day settled the last open details ("Answered questions" below).
@@ -138,7 +138,7 @@ board where it now belongs.
 19. A **detach** writes one `IdeaBoardChanged` (`toBoardId` is `null`). Creating an idea in the pool
     writes the same `IdeaCreated` as today.
 
-## Contract changes (proposed; written in slices 177 and 178)
+## Contract changes (proposed; written in slices 179 and 180)
 
 - **`POST /organizations/{orgId}/boards`** and **`PUT /organizations/{orgId}/boards/{boardId}`** gain an optional `pullItemIds`: an array of at most 100
   idea ids. Any other value is `400`, keyed `pullItemIds`. A refused item is `400` keyed `pullItemIds`
@@ -156,7 +156,7 @@ board where it now belongs.
   `403` when the caller is neither the author nor an Org Admin; `409` for an Issue, and for an
   archived board unless the caller is an Org Admin (rule 6). Idempotent: an idea already in the pool
   answers `204`.
-- **Picker reads** (decided in slice 178): the organization idea list cannot carry them, because it has
+- **Picker reads** (decided in slice 180): the organization idea list cannot carry them, because it has
   no "not on board X" and cannot list Issues with no sprint, so a dedicated
   `GET /organizations/{orgId}/boards/pull-candidates?source=unassigned|boards|backlog` was added. It is
   specified in `contracts/boards.md`.
@@ -217,7 +217,7 @@ Answered by the user 2026-10-13; each is marked *(answered, Qn)* where it applie
 |---|---|---|
 | Q1 | Detach an idea from an **archived** board? | **Yes, Org Admin only** (rule 6). A User may not, even for their own idea. |
 | Q2 | Promote a **pool idea** to an Issue? | **Yes**; the Issue has no board (rule 8). |
-| Q3 | Pull onto **existing** boards too? | **Yes**: the board edit form gets the same step, in slice 178 (rule 9). |
+| Q3 | Pull onto **existing** boards too? | **Yes**: the board edit form gets the same step, in slice 180 (rule 9). |
 | Q4 | Surface pool ideas beyond the Ideas list? | **Yes: a *Needs a board* count on Home** for an Org Admin (rule 7). |
 | Q5 | Cap per save | **100 items** (rule 17). |
 | Q6 | CSV import and the idea assistant create pool ideas? | **No**, both stay board-scoped (rule 4). |
@@ -228,7 +228,7 @@ with (rule 3); the in-lane order (no stored position, so the ordinary card order
 same save lands by rule 13, in the first lane if its status has no lane; and a pull asks for **no
 confirmation**, only the per-row *Lands in* hints.
 
-## Code touchpoints (for slices 177 and 178; read from the code 2026-10-13)
+## Code touchpoints (for slices 179 and 180; read from the code 2026-10-13)
 
 - **Domain.** `createIdea` requires a board id (`packages/domain/src/ideas/idea.ts`) and must accept
   none; the notification event's `boardId` becomes optional. A board is set only at creation today and
@@ -256,4 +256,4 @@ confirmation**, only the per-row *Lands in* hints.
   migration, and no notification type is added.
 - **Golden.** `ideas.create`, `ideas.list`, `ideas.get` and `boards.create` carry the touched shapes.
   Additive optional fields and a nullable `boardId` that is never null in the corpus should leave the
-  replay unchanged; slice 177 confirms it.
+  replay unchanged; slice 179 confirms it.

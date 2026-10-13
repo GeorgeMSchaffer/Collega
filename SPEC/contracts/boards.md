@@ -71,7 +71,7 @@ Create a board with at least two swimlanes.
   - `swimlanes` required array of
     - `statusId` GUID string
     - `order` integer
-  - `pullItemIds` optional array of at most 100 idea ids (added 2026-10-13, slice 178, `20-feature-board-pull-in.md`) — existing items to pull onto the new board. Absent, `null` or `[]` pulls nothing.
+  - `pullItemIds` optional array of at most 100 idea ids (added 2026-10-13, slice 180, `20-feature-board-pull-in.md`) — existing items to pull onto the new board. Absent, `null` or `[]` pulls nothing.
 - **Response:** `201`
   - `boardId`
   - `name`
@@ -100,7 +100,7 @@ Update board name or selected statuses.
   - `allowUserStatusUpdate` required boolean
   - `description` optional string or `null` (added 2026-09-27) — same rules as on create. **Absent leaves the stored description unchanged**; `null` or a blank string clears it.
   - `swimlanes` required array of `statusId` and `order`
-  - `pullItemIds` optional array of at most 100 idea ids (added 2026-10-13, slice 178): items to pull onto this board, applied **after** `ideaMoves`. Same value rules as on create; see "Pulling items".
+  - `pullItemIds` optional array of at most 100 idea ids (added 2026-10-13, slice 180): items to pull onto this board, applied **after** `ideaMoves`. Same value rules as on create; see "Pulling items".
   - `ideaMoves` optional array (added 2026-09-29, `decisions.md` "Removing a lane moves its ideas") — where the ideas of each lane this save removes go. Absent or `null` is none. Each entry:
     - `fromStatusId` — a lane on the board now that this save's `swimlanes` leaves out
     - `toStatusId` — a lane in this save's `swimlanes`, so one the board keeps (a lane added by the same save counts)
@@ -122,7 +122,7 @@ Update board name or selected statuses.
   - Each moved idea gets an `IdeaStatusChanged` audit event in the shape a move on the board writes (`entityType` `Idea`, message `Idea '{title}' moved to a new status.`, metadata `{ fromStatusId, toStatusId }`), attributed to the administrator saving the board. The `BoardUpdated` event's metadata gains `ideaMoves: [{ fromStatusId, toStatusId, ideaCount }]` when anything moved.
   - A move sends no notification (decided by the user 2026-09-29): it is a board reconfiguration, not a decision about any one idea. `20-feature-notifications.md` trigger 4 carries the exception.
 
-### Pulling items (`pullItemIds`, added 2026-10-13, slice 178)
+### Pulling items (`pullItemIds`, added 2026-10-13, slice 180)
 `POST …/boards` and `PUT …/boards/{boardId}` file existing items onto the board in the same save (`20-feature-board-pull-in.md` rules 9 to 18).
 
 - **Eligible** (rule 10): an item of the caller's organization, not deleted, that is a Discovery idea with no board; a Discovery idea on another board, live or archived; or a backlog Issue (Delivery phase, no sprint). **Never the board's own ideas** — naming one on `PUT` is refused, and so is an Issue already on that board. An Issue in a sprint is refused.
@@ -144,7 +144,7 @@ Update board name or selected statuses.
 - **Audit** (rule 18). The board's own event, `BoardCreated` or `BoardUpdated`, gains metadata `pulledItemCount` and `returnedIssueCount` **only when items were pulled**. Then, per pulled item, all attributed to the real user with a View As target as on-behalf-of: `IdeaBoardChanged` (`entityType` `Idea`, message `Idea '{title}' pulled onto board '{board name}'.`, metadata `{ fromBoardId (or null), toBoardId }`); `IdeaStatusChanged` when placement changed the status (message `Idea '{title}' moved to a new status.`, metadata `{ fromStatusId, toStatusId }`); `IssueReturnedToDiscovery` for a returned Issue (message `Issue '{title}' returned to discovery.`, metadata `{ previousSprintId }`). The audit writer commits on its own after the transaction, as for every other event (`PrismaAuditEventWriter`), so a failure after the commit can lose entries but never the pull.
 
 ### `GET /api/v1/organizations/{organizationId}/boards/pull-candidates`
-The pull picker's read (added 2026-10-13, slice 178). One tab per `source`; each is searchable by title and filterable by tag and author, within the caller's organization. The organization idea list cannot carry it: it has no "not on board X" and no way to list Issues with no sprint, so this is a dedicated read as `20-feature-board-pull-in.md` allowed.
+The pull picker's read (added 2026-10-13, slice 180). One tab per `source`; each is searchable by title and filterable by tag and author, within the caller's organization. The organization idea list cannot carry it: it has no "not on board X" and no way to list Issues with no sprint, so this is a dedicated read as `20-feature-board-pull-in.md` allowed.
 
 - **Roles:** the roles that may create a board — an Org Admin or a User of the organization (a Site Admin through View As as the target). Read Only and a direct Site Admin are `403`; another organization is `404`. **Scoped to what the caller may pull**: a User sees only Discovery ideas they authored and asking for `backlog` is `403` (`Only an Org Admin can pull backlog issues.`); an Org Admin sees everything eligible.
 - **Request:** query

@@ -10,7 +10,7 @@
 
 > Raised 2026-10-13, out of scope for Sprint 14 (`SPEC/20-feature-board-pull-in.md` "Out of scope").
 > Sprint 14 pulls items onto a board from the board's own form, in bulk. A single-idea *Move to
-> another board* action on the idea drawer would reuse the re-board primitive slice 178 builds.
+> another board* action on the idea drawer would reuse the re-board primitive slice 180 builds.
 > Unrefined: who may move someone else's idea, and whether a move notifies followers, are open.
 
 ## Chat assistant: ingestion, and refining ideas that already exist (needs a spec)
