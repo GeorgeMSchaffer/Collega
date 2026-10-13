@@ -156,7 +156,7 @@ board where it now belongs.
   answers `204`.
 - **Picker reads** reuse the list with filters (`phase=Ideas`, `board=none`, a board-exclusion, `scope`)
   where they can; a dedicated `GET /organizations/{orgId}/boards/pull-candidates` is added only if the
-  list cannot carry the "not on board X" and the backlog-Issue cases. Decided in slice 177.
+  list cannot carry the "not on board X" and the backlog-Issue cases. Decided in slice 178.
 
 ## UI (comp first)
 
