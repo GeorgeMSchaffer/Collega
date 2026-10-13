@@ -94,7 +94,10 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
       where: boardIdeasWhere(boardIds),
       _count: { _all: true },
     })
-    return new Map(rows.map((row) => [row.board_id, row._count._all]))
+    // The where names the boards, so no board-less group comes back; this only narrows the type.
+    return new Map(
+      rows.flatMap((row) => (row.board_id === null ? [] : [[row.board_id, row._count._all] as const])),
+    )
   }
 
   async countIdeasByBoardAndStatus(
@@ -108,11 +111,11 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
       where: boardIdeasWhere(boardIds),
       _count: { _all: true },
     })
-    return rows.map((row) => ({
-      boardId: row.board_id,
-      statusId: row.status_id,
-      ideaCount: row._count._all,
-    }))
+    return rows.flatMap((row) =>
+      row.board_id === null
+        ? []
+        : [{ boardId: row.board_id, statusId: row.status_id, ideaCount: row._count._all }],
+    )
   }
 
   /** Raw SQL because the tag name is two joins away from the board, and `groupBy` cannot join.
@@ -245,6 +248,16 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
         { statusId: row.id, name: row.name, color: row.color, isDeleted: row.is_deleted },
       ]),
     )
+  }
+
+  /** `ideas.BoardsPort.getFirstActiveStatusId` - the status a pool idea starts with. */
+  async getFirstActiveStatusId(organizationId: string): Promise<string | null> {
+    const row = await this.prisma.statuses.findFirst({
+      where: { organization_id: organizationId, is_deleted: false },
+      orderBy: [{ sort_order: 'asc' }, { created_at_utc: 'asc' }, { id: 'asc' }],
+      select: { id: true },
+    })
+    return row?.id ?? null
   }
 
   async add(board: Board): Promise<void> {

@@ -120,7 +120,7 @@ async function main(): Promise<void> {
       (i) =>
         matches(i.title, TEST_IDEA) ||
         organizationIds.includes(i.organization_id) ||
-        boardIds.includes(i.board_id),
+        (i.board_id !== null && boardIds.includes(i.board_id)),
     )
     const ideaIds = ideas.map((i) => i.id)
 
