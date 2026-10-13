@@ -16,11 +16,11 @@
 >   are under "Contract changes".
 > - **Decisions:** 2026-10-13 "Boards can pull in existing items, and ideas can have no board"; the
 >   same entry records the **eighth** S0.2 schema freeze amendment (`ideas.board_id` nullable).
-> - **Comp:** none yet. New flows are comp-first (`AGENTS.md`); slice 180 draws it, with the Home
->   tile, and the UI is not built until the user approves it.
+> - **Comp:** `SPEC/mockups/comp-r-board-pull-in.html`, **approved as drawn by the user 2026-10-13**
+>   (slice 180). The Home tile is drawn there only; `comp-r-home-dashboard.html` is unchanged.
 > - **Answered by the user 2026-10-13:** the scope (all three sources), how ideas enter the pool (both
->   ways), where a pulled item lands, who may pull, and Q1–Q6 ("Answered questions" below). Only the
->   few details still marked *(proposed)* are defaults to confirm.
+>   ways), where a pulled item lands, who may pull, and Q1–Q6 ("Answered questions" below). The comp's
+>   approval on the same day settled the last open details ("Answered questions" below).
 
 ## Outcome
 
@@ -54,7 +54,7 @@ board where it now belongs.
 3. **A pool idea keeps a status.** `ideas.status_id` stays required: when an idea is created without a
    board its status is the organization's first active status in sort order (the same status the
    leftmost lane of a new board would carry). If the organization has no active status the creation
-   is refused as a `400` keyed `statusId`. *(proposed)*
+   is refused as a `400` keyed `statusId`. *(answered with the comp, 2026-10-13)*
 4. **Create without a board.** The idea form's Board field is optional; leaving it empty creates the
    idea in the pool, through a new organization-level create route (today idea creation exists only
    under a board). **CSV import and the idea assistant stay board-scoped**: both are written around
@@ -107,9 +107,9 @@ board where it now belongs.
     board is not created; an edit changes nothing) and the refusal names the item (below).
 13. **Placement: keep the status, else the first lane.** An item keeps its status if the board has a
     lane for it; otherwise it lands in the board's leftmost lane and its status becomes that lane's.
-    The lanes are those the same form saves. Within a lane, pulled items are appended after any
-    existing cards, oldest first. *(answered 2026-10-13; the in-lane order is
-    proposed)*
+    The lanes are those the same form saves. A lane has no stored position, so a pulled item
+    takes its place among the lane's cards under the board's ordinary card ordering, like any other
+    card. *(answered 2026-10-13; the in-lane order follows because no position column exists)*
 14. **Backlog Issues are returned to Discovery, then placed.** For each, the existing Return to
     Discovery runs first (sprint and delivery status cleared; effort, the promotion snapshot and tasks
     retained, so a later re-promote is lossless), then rule 13 places it. The board it sat on before, if
@@ -220,8 +220,11 @@ Answered by the user 2026-10-13; each is marked *(answered, Qn)* where it applie
 | Q5 | Cap per save | **100 items** (rule 17). |
 | Q6 | CSV import and the idea assistant create pool ideas? | **No**, both stay board-scoped (rule 4). |
 
-Still *(proposed)*, and worth confirming in the comp: the status a pool idea is created with (rule 3)
-and the in-lane order of pulled items (rule 13).
+Settled by the user's approval of the comp as drawn (2026-10-13): the status a pool idea is created
+with (rule 3); the in-lane order (no stored position, so the ordinary card ordering, rule 13); the
+*Needs a board* tile is **hidden at a count of 0**; an item pulled from a lane being removed in the
+same save lands by rule 13, in the first lane if its status has no lane; and a pull asks for **no
+confirmation**, only the per-row *Lands in* hints.
 
 ## Code touchpoints (for slices 177 and 178; read from the code 2026-10-13)
 

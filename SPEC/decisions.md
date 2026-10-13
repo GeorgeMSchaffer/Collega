@@ -149,6 +149,13 @@ questions"):
 - **Q5.** At most 100 items per save.
 - **Q6.** CSV import and the idea assistant stay board-scoped and create no pool ideas.
 
+The user approved the comp (`SPEC/mockups/comp-r-board-pull-in.html`) as drawn the same day, which
+settles its five open questions: a pool idea takes the organization's first active status; pulled
+items take their place under the board's ordinary card ordering (there is no stored lane position,
+so "appended after existing cards" is not possible); the Home *Needs a board* tile is hidden at 0;
+an item pulled from a lane removed in the same save lands by the placement rule; and a pull asks for
+no confirmation.
+
 **The S0.2 schema freeze is amended an eighth time**, under the 2026-09-11 rule that each change to
 `schema.prisma` needs its own entry. Additive, no backfill, no new foreign key: `ideas.board_id` and
 `notification_events.board_id` drop `NOT NULL` (neither has a foreign key or check constraint
