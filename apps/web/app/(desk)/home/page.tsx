@@ -29,7 +29,6 @@ import {
   getInbox,
   getOrganizationHome,
   getPlatformHome,
-  getUnreadCount,
   type HomeSprint,
   type InboxItem,
   type OrganizationHome,
@@ -315,14 +314,11 @@ type UnreadNotifications = { total: number; rows: InboxItem[] }
 
 const UNREAD_ROWS = 5
 
-/**
- * The newest unread notifications. The inbox route has no unread filter, so this reads its first
- * page and keeps the unread ones; the total comes from the count route, uncapped by the page.
- */
+/** The newest unread notifications, and how many there are in all. */
 async function getUnreadNotifications(): Promise<UnreadNotifications> {
   if (!hasInbox(currentUser().role)) return { total: 0, rows: [] }
-  const [page, total] = await Promise.all([getInbox({ page: 1, pageSize: 50 }), getUnreadCount()])
-  return { total, rows: page.items.filter((item) => item.unread).slice(0, UNREAD_ROWS) }
+  const page = await getInbox({ page: 1, pageSize: UNREAD_ROWS, unreadOnly: true })
+  return { total: page.totalCount, rows: page.items }
 }
 
 function UnreadRow({ item }: { item: InboxItem }) {

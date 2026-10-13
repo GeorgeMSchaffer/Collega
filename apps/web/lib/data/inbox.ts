@@ -14,12 +14,20 @@ import type { InboxPage } from '../types'
 export type { InboxItem, InboxPage, NotificationEventType } from '../types'
 
 /** One page of the inbox, newest first — the API's one order. */
-export async function getInbox(query: { page: number; pageSize: number }): Promise<InboxPage> {
+export async function getInbox(query: {
+  page: number
+  pageSize: number
+  unreadOnly?: boolean
+}): Promise<InboxPage> {
   const result = await apiGet<WirePage<WireNotification>>(
     'getInbox',
     withQuery(
       apiPath`/notifications`,
-      new URLSearchParams({ page: String(query.page), pageSize: String(query.pageSize) }),
+      new URLSearchParams({
+        page: String(query.page),
+        pageSize: String(query.pageSize),
+        ...(query.unreadOnly ? { unread: 'true' } : {}),
+      }),
     ),
   )
   const now = new Date()

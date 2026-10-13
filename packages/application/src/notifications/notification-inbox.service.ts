@@ -29,6 +29,7 @@ export class NotificationInboxService {
     const page = await this.inbox.listForRecipient({
       recipientUserId,
       sinceUtc: this.windowStart(),
+      unreadOnly: query.unreadOnly,
       page: normalizePageRequest({
         ...(query.page !== null ? { page: query.page } : {}),
         ...(query.pageSize !== null ? { pageSize: query.pageSize } : {}),

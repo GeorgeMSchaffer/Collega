@@ -5,7 +5,7 @@ import {
 } from '@collega/application/notifications'
 import { Controller, Get, HttpCode, Param, Post, Query, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '../auth/auth.guard.js'
-import { optionalInt } from '../common/request-values.js'
+import { optionalInt, queryBool } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 /**
@@ -23,6 +23,7 @@ export class NotificationsController {
     return this.inbox.list({
       page: optionalInt(query.page),
       pageSize: optionalInt(query.pageSize),
+      unreadOnly: queryBool(query.unread),
     })
   }
 

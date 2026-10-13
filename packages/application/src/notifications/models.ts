@@ -60,6 +60,8 @@ export type InboxItem = {
 export type InboxQuery = {
   readonly page: number | null
   readonly pageSize: number | null
+  /** `unread=true`: only notifications with no read time. */
+  readonly unreadOnly: boolean
 }
 
 export type InboxPage = Page<InboxItem> & {

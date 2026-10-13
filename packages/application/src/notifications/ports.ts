@@ -47,6 +47,7 @@ export interface NotificationInboxRepository {
   listForRecipient(query: {
     readonly recipientUserId: string
     readonly sinceUtc: Date
+    readonly unreadOnly: boolean
     readonly page: PageRequest
   }): Promise<Page<InboxRow>>
 
