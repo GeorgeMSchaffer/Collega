@@ -119,14 +119,16 @@ board where it now belongs.
     one audit event is written (below). **No notification is sent** and followers are unchanged: a pull
     is a re-filing, the same stance as a lane removal (`20-feature-boards-and-statuses.md` rule 14).
     `updated_at_utc` is stamped.
-16. **One commit.** The board, its lanes, its audit event and every pulled item commit together. A
+16. **One commit.** The board, its lanes and every pulled item commit together; the audit follows
+    (rule 18). A
     failure anywhere, including an item that was moved or deleted between the picker loading and the
     save, saves nothing.
 17. **Limits.** At most **100 items** per save. *(answered, Q5)*
 
 ### Audit
 
-18. A pull writes, in the same commit:
+18. A pull writes, immediately after the save commits (the audit writer has its own commit, as for
+    every other event; a failure there can lose entries but never the pull):
     - `BoardCreated` or `BoardUpdated` as today, with metadata `pulledItemCount` and
       `returnedIssueCount`;
     - one `IdeaBoardChanged` per pulled item (`fromBoardId` or `null`, `toBoardId`), attributed to the
