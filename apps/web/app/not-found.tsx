@@ -22,7 +22,7 @@ export default function NotFound() {
       <EmptyState
         heading="Nothing at this address"
         action={
-          <Link href="/home" className={buttonVariants()}>
+          <Link href="/" className={buttonVariants()}>
             Go to Home
           </Link>
         }

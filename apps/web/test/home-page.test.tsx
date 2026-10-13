@@ -5,6 +5,7 @@ import type { Role } from '@/lib/roles'
 import type {
   BoardOverview,
   HomeIdea,
+  InboxItem,
   OrganizationHome,
   PlatformHome,
   PlatformOrganization,
@@ -12,7 +13,7 @@ import type {
 import { actAs } from './support/acting-role'
 
 /**
- * What Home draws for each role (slices 132 and 155, `app/(desk)/home/page.tsx`, comp R
+ * What Home draws for each role (slices 132 and 155, `app/(desk)/page.tsx`, comp R
  * `comp-r-home-dashboard.html`): the greeting's counts, the tiles with the untracked figures saying
  * so, the attention queue, Assigned to me, the boards, the current sprint and Most upvoted, their
  * empty states, the no-boards state and who may act on it, and the Site Admin's roll-up.
@@ -20,6 +21,7 @@ import { actAs } from './support/acting-role'
  * The readers are the boundary and are replaced by what `home-reads.test.ts` proves they return.
  */
 const readers = vi.hoisted(() => ({
+  getInbox: vi.fn(),
   getOrganizationHome: vi.fn(),
   getPlatformHome: vi.fn(),
 }))
@@ -189,7 +191,7 @@ async function resolveAsync(node: ReactNode): Promise<ReactNode> {
 
 async function renderHome(role: Role) {
   actAs(role)
-  const { default: HomePage } = await import('@/app/(desk)/home/page')
+  const { default: HomePage } = await import('@/app/(desk)/page')
   const tree = await resolveAsync(await HomePage())
   render(<div>{tree}</div>)
 }
@@ -199,6 +201,9 @@ const panel = (name: string) => screen.getByRole('region', { name })
 beforeEach(() => {
   readers.getOrganizationHome.mockReset().mockResolvedValue(orgHome())
   readers.getPlatformHome.mockReset().mockResolvedValue(platformHome)
+  readers.getInbox
+    .mockReset()
+    .mockResolvedValue({ items: [], page: 1, pageSize: 50, totalCount: 0 })
   localStorage.clear()
 })
 
@@ -446,5 +451,63 @@ describe('Home for an App Admin', () => {
       '/settings/organizations/new',
     )
     expect(screen.queryByRole('list')).toBeNull()
+  })
+})
+
+function notification(over: Partial<InboxItem> = {}): InboxItem {
+  return {
+    id: 'n-1',
+    eventType: 'CommentAdded',
+    ideaId: 'i-1',
+    ideaTitle: 'Slow conveyor',
+    actor: { name: 'Ada Lovelace', initials: 'AL' },
+    statusName: null,
+    boardName: 'Assembly',
+    occurredAtUtc: '2026-09-29T10:00:00Z',
+    when: '2h ago',
+    unread: true,
+    ...over,
+  }
+}
+
+describe('Home’s Unread notifications panel', () => {
+  it('asks the inbox for the first five unread notifications', async () => {
+    await renderHome('User')
+    expect(readers.getInbox).toHaveBeenCalledTimes(1)
+    expect(readers.getInbox).toHaveBeenCalledWith({ page: 1, pageSize: 5, unreadOnly: true })
+  })
+
+  it('lists the rows the inbox answers and takes the count from totalCount, not the page length', async () => {
+    readers.getInbox.mockResolvedValue({
+      items: [
+        notification(),
+        notification({ id: 'n-2', ideaId: 'i-2', ideaTitle: 'Guard rails', boardName: null }),
+      ],
+      page: 1,
+      pageSize: 5,
+      totalCount: 12,
+    })
+    await renderHome('User')
+    const unread = panel('Unread notifications 12')
+    const link = within(unread).getByRole('link', { name: 'Slow conveyor' })
+    expect(link.getAttribute('href')).toBe('/inbox?idea=i-1')
+    expect(within(unread).getByRole('link', { name: 'Guard rails' })).toBeTruthy()
+    expect(unread.textContent).toContain('Ada Lovelace commented on this')
+    expect(within(unread).getByRole('link', { name: 'Open inbox' }).getAttribute('href')).toBe(
+      '/inbox',
+    )
+  })
+
+  it('says everything is read when there are no unread notifications', async () => {
+    await renderHome('OrgAdmin')
+    const unread = panel('Unread notifications 0')
+    expect(unread.textContent).toContain('You’re all caught up.')
+    expect(within(unread).queryByRole('link', { name: 'Open inbox' })).toBeNull()
+  })
+
+  it('gives a Site Admin no inbox, so no panel is filled and the inbox is not read', async () => {
+    await renderHome('SiteAdmin')
+    expect(readers.getInbox).not.toHaveBeenCalled()
+    expect(screen.queryByRole('region', { name: /Unread notifications/ })).toBeNull()
   })
 })

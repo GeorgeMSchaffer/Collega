@@ -64,10 +64,11 @@ describe.skipIf(!DATABASE_URL)('The notification inbox, against a live database'
   }
 
   const window = (days = 90) => daysAgo(days)
-  const listAll = (recipientUserId: string, page = 1, pageSize = 100) =>
+  const listAll = (recipientUserId: string, page = 1, pageSize = 100, unreadOnly = false) =>
     repository.listForRecipient({
       recipientUserId,
       sinceUtc: window(),
+      unreadOnly,
       page: { page, pageSize },
     })
 
@@ -186,6 +187,60 @@ describe.skipIf(!DATABASE_URL)('The notification inbox, against a live database'
       await prisma.ideas.delete({ where: { id: gone } })
 
       expect((await listAll(me)).items).toEqual([])
+    })
+
+    describe('unreadOnly', () => {
+      it('leaves out read rows and counts only the unread ones', async () => {
+        const me = await recipient()
+        const unreadNew = await write(me, { at: daysAgo(1) })
+        await write(me, { at: daysAgo(2), readAt: daysAgo(1) })
+        const unreadOld = await write(me, { at: daysAgo(3) })
+
+        const filtered = await listAll(me, 1, 100, true)
+        const unfiltered = await listAll(me)
+
+        expect(filtered.items.map((i) => i.id)).toEqual([unreadNew, unreadOld])
+        expect(filtered.totalCount).toBe(2)
+        expect(unfiltered.totalCount).toBe(3)
+      })
+
+      it('pages the filtered rows with a filtered total', async () => {
+        const me = await recipient()
+        const ids: string[] = []
+        for (let day = 1; day <= 4; day++) {
+          ids.push(await write(me, { at: daysAgo(day) }))
+          await write(me, { at: daysAgo(day), readAt: daysAgo(0) })
+        }
+
+        const second = await listAll(me, 2, 3, true)
+
+        expect(second.items.map((i) => i.id)).toEqual([ids[3]])
+        expect(second.totalCount).toBe(4)
+      })
+
+      it('still applies the 90-day window', async () => {
+        const me = await recipient()
+        const recent = await write(me, { at: daysAgo(89) })
+        await write(me, { at: daysAgo(91) })
+
+        const page = await listAll(me, 1, 100, true)
+
+        expect(page.items.map((i) => i.id)).toEqual([recent])
+        expect(page.totalCount).toBe(1)
+      })
+
+      it('still leaves out a soft-deleted idea’s unread notifications', async () => {
+        const me = await recipient()
+        const doomed = await org.newIdea(actor)
+        const kept = await write(me, { at: daysAgo(1) })
+        await write(me, { at: daysAgo(2), ideaId: doomed })
+        await prisma.ideas.update({ where: { id: doomed }, data: { is_deleted: true } })
+
+        const page = await listAll(me, 1, 100, true)
+
+        expect(page.items.map((i) => i.id)).toEqual([kept])
+        expect(page.totalCount).toBe(1)
+      })
     })
 
     it('maps the stored fields, the status name and read state', async () => {
@@ -405,7 +460,7 @@ describe.skipIf(!DATABASE_URL)('The notification inbox, against a live database'
         { now: () => NOW },
       )
 
-      const page = await service.list({ page: null, pageSize: null })
+      const page = await service.list({ page: null, pageSize: null, unreadOnly: false })
       expect(page.items.map((i) => i.notificationId)).toEqual([inWindow])
       expect(await service.unreadCount()).toEqual({ unreadCount: 1 })
 

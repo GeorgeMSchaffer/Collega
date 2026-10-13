@@ -136,7 +136,7 @@ async function actAs(page: Page, identity: string, signInAs: () => Promise<void>
   const saved = sessions.get(identity)
   if (saved) {
     await page.context().addCookies(saved)
-    await page.goto('/home')
+    await page.goto('/')
     if (!/\/login/.test(page.url())) return
   }
 
@@ -336,7 +336,7 @@ test.describe
 
       // Landing on home is the point: acting as someone is a change of vantage, so the first thing
       // shown is what they see.
-      await expect(page).toHaveURL(/\/home/, { timeout: 30_000 })
+      await expect(page).toHaveURL(/\/$/, { timeout: 30_000 })
 
       // The banner is the control that stops somebody misreading the whole product. It names who they
       // are acting as and who they really are, and it is an `alert` so a screen reader interrupts.
@@ -355,7 +355,7 @@ test.describe
       await viewAsRowFor(page, world.memberEmail)
         .getByRole('button', { name: /view as/i })
         .click()
-      await expect(page).toHaveURL(/\/home/, { timeout: 30_000 })
+      await expect(page).toHaveURL(/\/$/, { timeout: 30_000 })
 
       await page.getByRole('button', { name: /stop viewing as/i }).click()
 

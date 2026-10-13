@@ -54,7 +54,7 @@ export function proxy(request: NextRequest): NextResponse {
       response.cookies.delete(SESSION_COOKIE_NAME)
       return response
     }
-    return NextResponse.redirect(new URL('/boards', request.url))
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
   return NextResponse.next()
