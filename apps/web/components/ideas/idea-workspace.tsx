@@ -42,7 +42,7 @@ type BoardContext = {
   canReorder: boolean
 }
 
-type Removing = { id: string; title: string; boardId: string }
+type Removing = { id: string; title: string; boardId: string | null }
 
 /**
  * An idea list on the comp R pattern — the Ideas page (`board` null: List or Cards) or a board's own
@@ -181,9 +181,10 @@ export function IdeaWorkspace({
   const statusById = useMemo(() => new Map(statuses.map((s) => [s.id, s])), [statuses])
 
   const denial = writeDenial(user.role)
-  const archived = (boardId: string) => boardsById.get(boardId)?.isArchived ?? false
-  const canEdit = (idea: { boardId: string }) => denial === null && !archived(idea.boardId)
-  const canDelete = (idea: { boardId: string }) =>
+  const archived = (boardId: string | null) =>
+    boardId ? (boardsById.get(boardId)?.isArchived ?? false) : false
+  const canEdit = (idea: { boardId: string | null }) => denial === null && !archived(idea.boardId)
+  const canDelete = (idea: { boardId: string | null }) =>
     mayDeleteIdeas(user.role) && !archived(idea.boardId)
   const engagement = engagementDenial(user.role)
 
@@ -200,7 +201,7 @@ export function IdeaWorkspace({
   const confirmRemove = () => {
     if (!removing) return
     startDelete(async () => {
-      const result = await deleteIdea(removing.id, removing.boardId)
+      const result = await deleteIdea(removing.id, removing.boardId ?? '')
       setRemoveError(result.error)
       if (!result.error && drawer.idea?.id === removing.id) openDrawer(null)
       setRemoving(null)
@@ -237,7 +238,8 @@ export function IdeaWorkspace({
     />
   )
 
-  const boardName = (boardId: string) => boardsById.get(boardId)?.name ?? board?.name ?? ''
+  const boardName = (boardId: string | null) =>
+    boardId === null ? 'No board' : (boardsById.get(boardId)?.name ?? board?.name ?? '')
 
   const columns: Column<Idea>[] = [
     {
@@ -265,7 +267,7 @@ export function IdeaWorkspace({
             cell: (idea: Idea) => (
               <>
                 {boardName(idea.boardId)}
-                {boardsById.get(idea.boardId)?.isArchived ? (
+                {archived(idea.boardId) ? (
                   <span className="block text-xs text-muted-foreground">Archived</span>
                 ) : null}
               </>

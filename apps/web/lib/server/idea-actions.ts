@@ -89,7 +89,8 @@ function refusal(error: unknown): string {
  * reason `apiPath` gives: a cache path is a path, and an id that names no route revalidates nothing.
  */
 function revalidateIdeaScreens(boardId: string): void {
-  revalidatePath(`/boards/${encodeURIComponent(boardId)}`)
+  // An idea in the pool sends an empty id: it is on no board page.
+  if (boardId) revalidatePath(`/boards/${encodeURIComponent(boardId)}`)
   revalidatePath('/ideas')
   // Tag counts, and tags created inline while tagging.
   revalidatePath('/settings/tags')

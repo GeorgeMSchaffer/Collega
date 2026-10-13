@@ -374,7 +374,7 @@ export type TagOverview = TagRef & {
  */
 export type Idea = {
   id: string
-  boardId: string
+  boardId: string | null
   statusId: string
   /**
    * The lane the idea sits in, spelled out. A list item carries it, so a row that names its status
@@ -624,7 +624,7 @@ export type Issue = {
   effort: Effort
   assigneeInitials: string | null
   upvotesAtPromotion: number
-  boardId: string
+  boardId: string | null
   authorUserId: string
   assignees: PersonRef[]
   tags: TagRef[]

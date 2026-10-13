@@ -64,7 +64,7 @@ export const TAG_USAGE_LIMIT = 25
 export async function getTagUsage(
   organizationId: string,
   tagName: string,
-): Promise<{ ideas: { id: string; title: string; boardId: string }[]; total: number }> {
+): Promise<{ ideas: { id: string; title: string; boardId: string | null }[]; total: number }> {
   failIfRequested('getTagUsage')
 
   const params = new URLSearchParams({

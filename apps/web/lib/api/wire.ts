@@ -339,7 +339,7 @@ export type WireIdeaComment = {
  */
 export type WireIdeaDetail = {
   ideaId: string
-  boardId: string
+  boardId: string | null
   title: string
   problem: string
   proposedSolutions: readonly string[]
@@ -407,7 +407,7 @@ export type WireCreatedIdea = { ideaId: string }
 /** `GET /boards/{id}/ideas` and `GET /organizations/{id}/ideas` items. */
 export type WireIdeaListItem = {
   ideaId: string
-  boardId: string
+  boardId: string | null
   title: string
   priority: string
   ideaTypeName: string
@@ -503,7 +503,7 @@ export type WireSprint = {
  */
 export type WireDeliveryCard = {
   ideaId: string
-  boardId: string
+  boardId: string | null
   title: string
   authorUserId: string
   effort: string | null

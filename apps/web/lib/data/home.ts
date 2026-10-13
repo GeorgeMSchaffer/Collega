@@ -166,7 +166,7 @@ export async function getOrganizationHome(): Promise<OrganizationHome> {
   const toRow = (idea: WireIdeaListItem): HomeIdea => ({
     id: idea.ideaId,
     title: idea.title,
-    boardName: boardNames.get(idea.boardId) ?? null,
+    boardName: idea.boardId ? (boardNames.get(idea.boardId) ?? null) : null,
     ideaType: idea.ideaTypeName,
     status: statuses.find((status) => status.id === idea.statusId) ?? {
       id: idea.statusId,
