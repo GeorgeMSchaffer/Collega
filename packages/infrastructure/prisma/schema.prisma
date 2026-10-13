@@ -329,7 +329,7 @@ model idea_upvotes {
 model ideas {
   id                        String              @id(map: "PK_ideas") @db.Uuid
   organization_id           String              @db.Uuid
-  board_id                  String              @db.Uuid
+  board_id                  String?             @db.Uuid
   status_id                 String              @db.Uuid
   title                     String              @db.VarChar(150)
   description               String?             @db.VarChar(4000)
@@ -420,7 +420,7 @@ model notification_events {
   id                String                @id(map: "PK_notification_events") @db.Uuid
   event_type        NotificationEventType
   organization_id   String                @db.Uuid
-  board_id          String                @db.Uuid
+  board_id          String?               @db.Uuid
   idea_id           String                @db.Uuid
   idea_title        String                @db.VarChar(150)
   actor_user_id     String                @db.Uuid
