@@ -32,10 +32,17 @@ import { actingOrganizationId } from './current-user'
  * in `SwimlanePicker`'s own state, so React's reset after an action resolves costs nothing that
  * the next render does not restore.
  */
-export type BoardFormState = { error: string | null }
+export type BoardFormState = { error: string | null; pullErrors?: string[] }
 
-/** The drawer's form. `savedId` is the board written, its cue to move on: nothing redirects it. */
-export type BoardDrawerState = { error: string | null; savedId: string | null }
+/**
+ * The drawer's form. `savedId` is the board written, its cue to move on: nothing redirects it.
+ * `pullErrors` is one message per item the API refused to pull, for the step to mark.
+ */
+export type BoardDrawerState = {
+  error: string | null
+  savedId: string | null
+  pullErrors?: string[]
+}
 
 function refusal(error: unknown): string {
   if (error instanceof ApiError) {
@@ -44,6 +51,23 @@ function refusal(error: unknown): string {
     if ([400, 403, 404, 409].includes(error.status)) return error.detail
   }
   throw error
+}
+
+/**
+ * A refused save: the banner message, and apart from it the per-item messages of a refused pull.
+ * The step shows those beside the items they name, so the banner keeps only what is left over.
+ */
+function refusedSave(error: unknown): { error: string | null; pullErrors: string[] } {
+  if (error instanceof ApiError && error.status === 400) {
+    const pullErrors = [...(error.errorLists.pullItemIds ?? [])]
+    if (pullErrors.length > 0) {
+      const rest = Object.entries(error.errors)
+        .filter(([field]) => field !== 'pullItemIds')
+        .map(([, message]) => message)
+      return { error: rest.length > 0 ? rest.join(' ') : null, pullErrors }
+    }
+  }
+  return { error: refusal(error), pullErrors: [] }
 }
 
 /**
@@ -66,7 +90,10 @@ function boardBody(form: FormData): {
   description: string
   allowUserStatusUpdate: boolean
   swimlanes: { statusId: string; order: number }[]
+  pullItemIds?: string[]
 } {
+  // Left out when empty, so a save that pulls nothing is the request it was before the step existed.
+  const pullItemIds = form.getAll('pullItemIds').map(String)
   return {
     name: String(form.get('name') ?? ''),
     // Always sent, blank included: on `PUT` an absent description means "leave it", so emptying the
@@ -77,6 +104,7 @@ function boardBody(form: FormData): {
       statusId: String(statusId),
       order,
     })),
+    ...(pullItemIds.length > 0 ? { pullItemIds } : {}),
   }
 }
 
@@ -93,13 +121,16 @@ function ideaMoves(form: FormData): { fromStatusId: string; toStatusId: string }
 }
 
 /** Creates the board, answering its id, or the refusal to show. */
-async function create(form: FormData): Promise<{ boardId: string } | { error: string }> {
+async function create(
+  form: FormData,
+): Promise<{ boardId: string } | { error: string | null; pullErrors: string[] }> {
   const organizationId = await actingOrganizationId()
   if (organizationId === null) {
     return {
       error:
         'An App Admin belongs to no organization, so there is no organization to create a board ' +
         'in. Use View As to act as an administrator of one.',
+      pullErrors: [],
     }
   }
 
@@ -113,7 +144,7 @@ async function create(form: FormData): Promise<{ boardId: string } | { error: st
     )
     boardId = created.boardId
   } catch (error) {
-    return { error: refusal(error) }
+    return refusedSave(error)
   }
 
   // The sidebar's board count and the workspace list both change, and both are rendered above this
@@ -123,13 +154,15 @@ async function create(form: FormData): Promise<{ boardId: string } | { error: st
 }
 
 /** Saves the board, answering the refusal to show or `null` once it is written. */
-async function save(form: FormData): Promise<string | null> {
+async function save(
+  form: FormData,
+): Promise<{ error: string | null; pullErrors: string[] } | null> {
   const boardId = String(form.get('boardId') ?? '')
 
   try {
     await apiPut(apiPath`/boards/${boardId}`, { ...boardBody(form), ideaMoves: ideaMoves(form) })
   } catch (error) {
-    return refusal(error)
+    return refusedSave(error)
   }
 
   // The lanes changed, so the board itself is stale as well as the lists. Escaped for the reason
@@ -155,8 +188,8 @@ export async function saveBoard(
   _previous: BoardFormState,
   form: FormData,
 ): Promise<BoardFormState> {
-  const error = await save(form)
-  if (error !== null) return { error }
+  const refused = await save(form)
+  if (refused !== null) return refused
   redirect('/settings/boards')
 }
 
@@ -166,7 +199,7 @@ export async function createBoardInPlace(
 ): Promise<BoardDrawerState> {
   const result = await create(form)
   return 'error' in result
-    ? { error: result.error, savedId: null }
+    ? { error: result.error, savedId: null, pullErrors: result.pullErrors }
     : { error: null, savedId: result.boardId }
 }
 
@@ -174,8 +207,10 @@ export async function saveBoardInPlace(
   _previous: BoardDrawerState,
   form: FormData,
 ): Promise<BoardDrawerState> {
-  const error = await save(form)
-  return { error, savedId: error === null ? String(form.get('boardId') ?? '') : null }
+  const refused = await save(form)
+  return refused === null
+    ? { error: null, savedId: String(form.get('boardId') ?? '') }
+    : { ...refused, savedId: null }
 }
 
 /**

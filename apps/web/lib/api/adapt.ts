@@ -35,6 +35,7 @@ import type {
   PersonRef,
   Priority,
   Profile,
+  PullCandidate,
   Role,
   Sprint,
   SprintState,
@@ -60,6 +61,7 @@ import type {
   WireMember,
   WireNotification,
   WireOrganizationListItem,
+  WirePullCandidate,
   WireSprint,
   WireStatus,
   WireSwimlane,
@@ -427,6 +429,22 @@ export function toIdeaDetail(wire: WireIdeaDetail): IdeaDetail {
   }
 }
 
+export function toPullCandidate(wire: WirePullCandidate): PullCandidate {
+  return {
+    id: wire.ideaId,
+    title: wire.title,
+    authorUserId: wire.authorUserId,
+    authorName: wire.authorName,
+    boardId: wire.boardId,
+    boardName: wire.boardName,
+    statusId: wire.statusId,
+    statusName: wire.statusName,
+    phase: wire.phase,
+    tags: [...wire.tags],
+    isMine: wire.isMine,
+  }
+}
+
 /** An inbox row, with its time made relative to `now` (injected, so it is testable). */
 export function toInboxItem(wire: WireNotification, now: Date): InboxItem {
   return {
@@ -456,6 +474,7 @@ export function toIdea(wire: WireIdeaListItem): Idea {
   return {
     id: wire.ideaId,
     boardId: wire.boardId,
+    authorUserId: wire.authorUserId,
     statusId: wire.statusId,
     statusName: wire.statusName,
     title: wire.title,

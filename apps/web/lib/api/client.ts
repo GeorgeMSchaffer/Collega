@@ -26,7 +26,7 @@ import 'server-only'
 import { failIfRequested, resolve } from '../data/latency'
 import { sessionHeader } from '../server/current-user'
 import { apiBaseUrl } from './config'
-import { fieldErrors, fieldMessages, type ProblemDetails } from './problem'
+import { fieldErrorLists, fieldErrors, fieldMessages, type ProblemDetails } from './problem'
 
 declare const API_PATH: unique symbol
 
@@ -101,12 +101,15 @@ export class ApiError extends Error {
   readonly detail: string
   /** A validation 400's messages keyed by field, so a form can put each beside its control. */
   readonly errors: Readonly<Record<string, string>>
+  /** Every message per field, for the few fields that report one problem per item. */
+  readonly errorLists: Readonly<Record<string, readonly string[]>>
 
   constructor(
     status: number,
     path: string,
     detail: string,
     errors: Readonly<Record<string, string>> = {},
+    errorLists: Readonly<Record<string, readonly string[]>> = {},
   ) {
     super(`${path} answered ${status}: ${detail}`)
     this.name = 'ApiError'
@@ -114,6 +117,7 @@ export class ApiError extends Error {
     this.path = path
     this.detail = detail
     this.errors = errors
+    this.errorLists = errorLists
   }
 }
 
@@ -128,6 +132,7 @@ async function failure(response: Response, path: string): Promise<ApiError> {
       path,
       fieldMessages(problem.errors) ?? detail ?? title ?? response.statusText,
       fieldErrors(problem.errors),
+      fieldErrorLists(problem.errors),
     )
   } catch {
     return new ApiError(response.status, path, response.statusText)

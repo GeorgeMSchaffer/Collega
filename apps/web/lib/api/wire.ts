@@ -427,6 +427,21 @@ export type WireIdeaListItem = {
   createdAtUtc: string
 }
 
+/** `GET /organizations/{id}/boards/pull-candidates` items. */
+export type WirePullCandidate = {
+  ideaId: string
+  title: string
+  authorUserId: string
+  authorName: string
+  boardId: string | null
+  boardName: string | null
+  statusId: string
+  statusName: string
+  phase: string
+  tags: readonly string[]
+  isMine: boolean
+}
+
 /**
  * A page of anything, plus the sort the API actually applied.
  *
