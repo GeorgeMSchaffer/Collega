@@ -23,7 +23,7 @@ List ideas on a board with pagination.
   - `sortDirection` optional `asc` or `desc`
 - **Response:** `200` paged item shape
   - `ideaId`
-  - `boardId`
+  - `boardId` string, or **`null` for an idea that belongs to no board** (added 2026-10-13, `20-feature-board-pull-in.md`). Never `null` on this board-scoped list; the organization list, the delivery card and the detail can return it.
   - `title`
   - `priority` string
   - `ideaTypeId` GUID string
@@ -60,8 +60,9 @@ Cross-board, organization-scoped idea list for the global `/ideas` page (`SPEC/2
   - `scope` optional `all` (default), `created` (authored by the caller), or `assigned` (assigned to the caller) — the caller's me-chips
   - `tag` optional — filter to ideas carrying a tag whose normalized name equals the given value (same normalization/semantics as the board list's `tag`)
   - `user` optional GUID — user-association search box: filter to ideas the given user **authored or is assigned to** (`SPEC/Bug Triage.md`). `Guid.Empty` is treated as absent. Composes (AND) with `scope`/`tag`/`search`/`fieldFilters` when combined.
-  - `sortBy` optional `createdAt` (default), `title`, `createdBy` (author name), `assignedTo` (alphabetically-first assignee's name), or `status` (status name); **added 2026-09-27** for the list pattern: `board` (board name), `priority` (Low→Critical order), `upvoteCount`, and `tags` (alphabetically-first tag)
+  - `sortBy` optional `createdAt` (default), `title`, `createdBy` (author name), `assignedTo` (alphabetically-first assignee's name), or `status` (status name); **added 2026-09-27** for the list pattern: `board` (board name; ideas with no board sort **after** every named board in both directions), `priority` (Low→Critical order), `upvoteCount`, and `tags` (alphabetically-first tag)
   - `boardId`, `statusId`, `priority` optional and repeatable (added 2026-09-27); `tag` becomes repeatable with any-of semantics
+  - `boardId` also accepts the literal **`none`** (case-insensitive; added 2026-10-13): the idea has no board. It is any-of with the other `boardId` values, so `boardId=none` returns only board-less ideas, `boardId=none&boardId={id}` returns board-less ideas and those on that board, and `boardId={id}` alone never returns a board-less idea. A value that is neither a GUID nor `none` matches nothing.
   - `sortDirection` optional `asc` or `desc` (the page requests `desc` for newest-first). All sorts apply a stable `ideaId` tiebreaker so ordering is deterministic across pages.
   - `fieldFilters[<fieldDefinitionId>]=<value>` optional, repeatable — filter by User-Defined Field value (T059). Semantics per field type: `Text`/`Url` contains; `Number` range `<min>:<max>` (either side omittable); `Date` range `<from>:<to>` (ISO-8601, either side omittable); `Boolean` `true`/`false`; `Dropdown` exact option id; `MultiSelect` any-of (matches when the stored option ids include the value). Unknown/invalid `fieldDefinitionId` keys and unparseable values are silently ignored.
   - `phase` optional (added 2026-09-11, Issues and Delivery Slice 1) — `All` (**default**), `Ideas` (`Discovery`-phase only), or `Issues` (`Delivery`-phase only). Unrecognised values are treated as `All`.
@@ -139,6 +140,21 @@ Create a new idea on a board.
 - **Errors:** —
 - **Rules:** —
 
+### `POST /api/v1/organizations/{organizationId}/ideas`
+Create an idea that belongs to no board (the organization's pool; added 2026-10-13, `20-feature-board-pull-in.md` rules 3 and 4).
+
+- **Roles:** User and Org Admin of the organization (a Site Admin through View As, acting as the target). Read Only is `403`; a Site Admin acting as themselves is refused, as for every organization-content write.
+- **Request:** body — the same fields, limits and validation as `POST /api/v1/boards/{boardId}/ideas`, **except there is no `statusId`**: a `statusId` sent is ignored. Idea Type, Business Impact, assignees and field values are validated against `{organizationId}`.
+- **Response:** `201` — the shape of `POST /api/v1/boards/{boardId}/ideas`, with `boardId` always `null`. `statusId` is the organization's first non-deleted status in sort order.
+- **Errors:**
+  - `400` the board create's field errors, keyed the same way; plus `statusId` ("The organization has no active status to place the idea in.") when the organization has no active status
+  - `403` Read Only, or a Site Admin acting as themselves
+  - `404` `{organizationId}` is not the caller's organization
+- **Rules:**
+  - The idea sits in no lane and has no position. Its status cannot be changed on its own (`POST /api/v1/ideas/{ideaId}/status` answers `400`); only pulling it onto a board sets one.
+  - The author follows automatically, and the audit event is the same `IdeaCreated` (metadata `title`, `priority`, `statusId`).
+  - CSV import and the idea assistant remain board-scoped and never create these ideas.
+
 ### `POST /api/v1/boards/{boardId}/ideas/ai-draft`
 > **Withdrawn 2026-09-27** (`20-feature-ai-idea-assist-v2.md` "Contract changes"): never built, and extraction is covered by the v2 turn endpoint. Kept for history.
 
@@ -203,7 +219,7 @@ Return full idea detail.
 - **Request:** —
 - **Response:** `200`
   - `ideaId`
-  - `boardId`
+  - `boardId` string, or `null` for an idea that belongs to no board (added 2026-10-13)
   - `title`
   - `problem` string (added 2026-09-27)
   - `proposedSolutions` string array (added 2026-09-27)
@@ -290,8 +306,24 @@ Move an idea to another board status.
 - **Request:** body
   - `statusId` required GUID string
 - **Response:** `204 No Content`
-- **Errors:** —
+- **Errors:**
+  - `400` keyed `statusId` ("This idea is not on a board.") when the idea belongs to no board (added 2026-10-13): it sits in no lane, and only pulling it onto a board sets a status
 - **Rules:** —
+
+### `DELETE /api/v1/ideas/{ideaId}/board`
+Remove an idea from its board, leaving it in the organization's pool (added 2026-10-13, `20-feature-board-pull-in.md` rules 5, 6 and 19).
+
+- **Roles:** the idea's author, or an Org Admin of its organization (a Site Admin through View As, acting as the target); the caller must be a User or Org Admin, so a Read Only author is refused. A Site Admin acting as themselves is refused.
+- **Request:** —
+- **Response:** `204 No Content`
+- **Errors:**
+  - `403` the caller is neither the author nor an Org Admin, is Read Only, or is a Site Admin acting as themselves
+  - `404` the idea does not exist, is deleted, or belongs to another organization
+  - `409` the idea is an Issue ("An issue cannot be removed from its board; return it to discovery first."), or its board is archived and the caller is not an Org Admin ("The board is archived, so only an Org Admin can remove its ideas.")
+- **Rules:**
+  - **Idempotent.** An idea already in the pool answers `204` with nothing written: no `updated_at_utc` stamp, no audit event. An Issue is refused (`409`) whether or not it has a board.
+  - The idea keeps its status, tags, assignees, comments, upvotes and followers; `updatedAtUtc` is stamped. No notification is sent.
+  - Writes one `IdeaBoardChanged` audit event (`entityType` `Idea`, message `Idea '{title}' removed from its board.`, metadata `{ fromBoardId, toBoardId }` with `toBoardId` `null`), attributed to the real user with the View As target as the intended actor, as every content write is.
 
 ### `DELETE /api/v1/ideas/{ideaId}`
 Soft-delete an idea while preserving its row and audit history.

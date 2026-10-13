@@ -11,9 +11,9 @@
 >   Admin pulls anything eligible, a User only their own Discovery ideas (11–12); each item keeps its
 >   status if the board has that lane, else lands in the leftmost lane (13); one commit, all or
 >   nothing (16); at most 100 items a save (17).
-> - **Contracts:** to be written in slices 177 and 178 (`contracts/boards.md` `POST` and `PUT`,
->   `contracts/ideas.md` create, the list filter and the detach route); proposed shapes are under
->   "Contract changes".
+> - **Contracts:** `contracts/ideas.md` (the pool create, the list filter and the detach route) was
+>   written in slice 177; `contracts/boards.md` `POST` and `PUT` follow in slice 178. Proposed shapes
+>   are under "Contract changes".
 > - **Decisions:** 2026-10-13 "Boards can pull in existing items, and ideas can have no board"; the
 >   same entry records the **eighth** S0.2 schema freeze amendment (`ideas.board_id` nullable).
 > - **Comp:** none yet. New flows are comp-first (`AGENTS.md`); slice 180 draws it, with the Home

@@ -102,7 +102,7 @@ contract states nothing for that item, and the conventions above apply.
 | Idea-Type Field Contracts | [`contracts/idea-type-fields.md`](contracts/idea-type-fields.md) | `/organizations/{organizationId}/idea-types/{ideaTypeId}/fields` and `/appearance`, `/organizations/{organizationId}/ideas/{ideaId}/idea-type` |
 | Fieldset Contracts | [`contracts/fieldsets.md`](contracts/fieldsets.md) | `/organizations/{organizationId}/fieldsets` (and `/{id}`, `/{id}/fields`). Specified 2026-10-04 (`SPEC/decisions.md`), before the code. |
 | Board Contracts | [`contracts/boards.md`](contracts/boards.md) | `/organizations/{organizationId}/boards`, `/boards/{boardId}` (and `/archive`, `/unarchive`, `/swimlanes/reorder`) |
-| Idea Contracts | [`contracts/ideas.md`](contracts/ideas.md) | `/boards/{boardId}/ideas` (and `/export`, `/import`, `/ai-draft`, `/ai-polish`), `/organizations/{organizationId}/ideas`, `/ideas/{ideaId}` (and `/status`) |
+| Idea Contracts | [`contracts/ideas.md`](contracts/ideas.md) | `/boards/{boardId}/ideas` (and `/export`, `/import`, `/ai-draft`, `/ai-polish`), `/organizations/{organizationId}/ideas` (list and the board-less create), `/ideas/{ideaId}` (and `/status`, `/board`) |
 | Delivery Contracts | [`contracts/delivery.md`](contracts/delivery.md) | `/ideas/{ideaId}/promote`, `/return-to-discovery`, `/delivery-status`, `/sprint`, `/delivery`; `/organizations/{organizationId}/delivery` |
 | Sprint Contracts | [`contracts/sprints.md`](contracts/sprints.md) | `/organizations/{organizationId}/sprints` (and `/{sprintId}`, `/start`, `/complete`) |
 | Issue Task Contracts | [`contracts/issue-tasks.md`](contracts/issue-tasks.md) | `/ideas/{ideaId}/tasks` (and `/{taskId}`, `/{taskId}/state`, `/order`) |

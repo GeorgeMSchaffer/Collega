@@ -24,7 +24,7 @@ enum, and the inbox below sends them by these names: `IdeaMention`, `CommentMent
 - `eventId` GUID string
 - `eventType` string
 - `organizationId` GUID string
-- `boardId` GUID string
+- `boardId` GUID string, or `null` when the idea belongs to no board (added 2026-10-13)
 - `ideaId` GUID string
 - `actorUserId` GUID string
 - `recipientUserId` GUID string

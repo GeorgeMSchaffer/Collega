@@ -34,8 +34,8 @@ Tag item shape (the list, create and update below):
 - `tagId`
 - `name` — as stored (trimmed; case preserved)
 - `color`
-- `ideaCount` integer — live (not soft-deleted) ideas carrying the tag, **both phases**
-- `boards` array of `{ boardId, name }`, the boards those ideas are on, ordered by `name` (case-insensitive); archived boards included
+- `ideaCount` integer — live (not soft-deleted) ideas carrying the tag, **both phases**; ideas that belong to no board count here (changed 2026-10-13)
+- `boards` array of `{ boardId, name }`, the boards those ideas are on, ordered by `name` (case-insensitive); archived boards included; ideas with no board add no entry
 - `createdAtUtc`
 - `createdBy` — `{ userId, displayName }`, or `null`, as on the board list item
 
