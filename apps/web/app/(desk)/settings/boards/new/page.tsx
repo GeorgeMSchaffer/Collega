@@ -1,7 +1,8 @@
+import { loadPullSetup } from '@/components/boards/load-pull-setup'
 import { BoardRefusal } from '@/components/settings/admin-only'
 import { BoardForm } from '@/components/settings/board-form'
 import { SettingsPage } from '@/components/settings/settings-page'
-import { getStatuses, SWIMLANE_FLOOR } from '@/lib/data'
+import { getBoardOverviews, getStatuses, SWIMLANE_FLOOR } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
@@ -18,7 +19,10 @@ export default async function NewBoardPage() {
     return <BoardRefusal title="New board" reading="board creation" />
   }
 
-  const statuses = await getStatuses()
+  const [statuses, boards] = await Promise.all([
+    getStatuses(),
+    getBoardOverviews({ includeArchived: true }),
+  ])
 
   return (
     <SettingsPage
@@ -37,6 +41,12 @@ export default async function NewBoardPage() {
         statuses={statuses}
         submitLabel="Create board"
         explainerHeading="New board"
+        pullSetup={
+          await loadPullSetup({
+            isAdmin: true,
+            archivedBoardIds: boards.filter((board) => board.isArchived).map((board) => board.id),
+          })
+        }
       />
     </SettingsPage>
   )

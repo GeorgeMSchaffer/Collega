@@ -26,6 +26,7 @@ vi.mock('@/lib/data', () => ({
   }),
   getBoardIdeaList: async () => ({ ideas: [], totalCount: 0 }),
   getTagRefs: async () => [],
+  getBoardRefs: async () => [],
 }))
 
 function find(node: ReactNode): ReactElement<Record<string, unknown>> | null {

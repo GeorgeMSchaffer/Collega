@@ -16,6 +16,8 @@ export type IssueDrawerData = {
   idea: IdeaDetail
   tasks: IssueTask[]
   members: MemberOption[]
+  /** The board the Issue sits on; null for one promoted from the pool. */
+  boardName: string | null
   boardArchived: boolean
   /** The idea form's catalogs, read only when `&edit=1` asks for the form. */
   formOptions: IdeaFormOptions | null
@@ -59,6 +61,7 @@ export async function loadIssueDrawer(
       idea,
       tasks,
       members,
+      boardName: boards.find((board) => board.id === issue.boardId)?.name ?? null,
       boardArchived: boards.find((board) => board.id === issue.boardId)?.isArchived ?? false,
       formOptions,
     },

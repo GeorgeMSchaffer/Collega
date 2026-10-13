@@ -46,6 +46,7 @@ function idea(id: string, effort: Idea['effort']): Idea {
   return {
     id,
     boardId: 'b1',
+    authorUserId: null,
     statusId: 's1',
     statusName: 'New',
     title: `Idea ${id}`,

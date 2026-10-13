@@ -14,17 +14,23 @@ import type {
   BoardRepository,
   BoardStatusIdeaCount,
   BoardTagIdeaCount,
+  IdeaReassignment,
   LaneIdea,
+  PullCandidate,
+  PullCandidateFilter,
   UserName,
 } from '@collega/application/boards'
+import type { Page } from '@collega/application/common'
 import type { BoardsPort } from '@collega/application/ideas'
 import type { Board, BoardSwimlane } from '@collega/domain/boards'
+import type { Priority } from '@collega/domain/enums'
 import { IdeaPhase } from '@collega/domain/enums'
 import type {
   boards as BoardRow,
   board_swimlanes as SwimlaneRow,
 } from '../generated/prisma/index.js'
 import { Prisma } from '../generated/prisma/index.js'
+import { PULL_UNAVAILABLE_MARKER } from '../persistence/constraint-errors.js'
 import type { PrismaClient } from '../persistence/prisma-client.js'
 import type { PrismaUnitOfWork } from '../persistence/unit-of-work.js'
 
@@ -94,7 +100,12 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
       where: boardIdeasWhere(boardIds),
       _count: { _all: true },
     })
-    return new Map(rows.map((row) => [row.board_id, row._count._all]))
+    // The where names the boards, so no board-less group comes back; this only narrows the type.
+    return new Map(
+      rows.flatMap((row) =>
+        row.board_id === null ? [] : [[row.board_id, row._count._all] as const],
+      ),
+    )
   }
 
   async countIdeasByBoardAndStatus(
@@ -108,11 +119,11 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
       where: boardIdeasWhere(boardIds),
       _count: { _all: true },
     })
-    return rows.map((row) => ({
-      boardId: row.board_id,
-      statusId: row.status_id,
-      ideaCount: row._count._all,
-    }))
+    return rows.flatMap((row) =>
+      row.board_id === null
+        ? []
+        : [{ boardId: row.board_id, statusId: row.status_id, ideaCount: row._count._all }],
+    )
   }
 
   /** Raw SQL because the tag name is two joins away from the board, and `groupBy` cannot join.
@@ -194,6 +205,164 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
     )
   }
 
+  /**
+   * One guarded `updateMany` per item, then one statement that proves they all landed. A batch
+   * cannot read a count back, so a guard that matched nothing would otherwise pass silently; the
+   * closing SELECT casts a marker naming the first missing item to an integer, which Postgres
+   * refuses, and that refusal rolls the whole batch back (`translateWriteError` turns it into the
+   * keyed 400). An item already on the board by another route fails the check too, and
+   * `updated_at_utc = nowUtc` is what ties a landed row to this save.
+   */
+  async reassignIdeas(
+    boardId: string,
+    items: readonly IdeaReassignment[],
+    nowUtc: Date,
+    actorUserId: string | null,
+  ): Promise<void> {
+    if (items.length === 0) {
+      return
+    }
+    for (const item of items) {
+      this.unitOfWork.enqueue(
+        this.prisma.ideas.updateMany({
+          where: {
+            id: item.ideaId,
+            is_deleted: false,
+            board_id: item.from.boardId,
+            status_id: item.from.statusId,
+            phase: item.from.phase,
+            sprint_id: item.from.sprintId,
+          },
+          data: {
+            board_id: boardId,
+            status_id: item.toStatusId,
+            updated_at_utc: nowUtc,
+            updated_by_user_id: actorUserId,
+            ...(item.returnsToDiscovery
+              ? { phase: IdeaPhase.Discovery, delivery_status: null, sprint_id: null }
+              : {}),
+          },
+        }),
+      )
+    }
+    this.unitOfWork.enqueue(
+      this.prisma.$queryRaw(Prisma.sql`
+        SELECT CAST(COALESCE(
+          (SELECT ${PULL_UNAVAILABLE_MARKER} || encode(convert_to(expected.title, 'UTF8'), 'hex')
+           FROM UNNEST(${items.map((item) => item.ideaId)}::uuid[], ${items.map((item) => item.title)}::text[])
+             WITH ORDINALITY AS expected(idea_id, title, position)
+           WHERE NOT EXISTS (
+             SELECT 1 FROM ideas AS landed
+             WHERE landed.id = expected.idea_id
+               AND landed.board_id = ${boardId}::uuid
+               AND landed.updated_at_utc = ${nowUtc}::timestamptz
+           )
+           ORDER BY expected.position
+           LIMIT 1), '0') AS integer) AS verified
+      `),
+    )
+  }
+
+  /**
+   * The pull picker's read. Raw SQL for the same reason the idea lists are: the card carries the
+   * author's, board's and status's names and the idea's tags, none of which the frozen schema
+   * relates to `ideas`. The population mirrors the eligibility in rule 10, one tab per source;
+   * oldest first, then title, then id.
+   */
+  async listPullCandidates(filter: PullCandidateFilter): Promise<Page<PullCandidate>> {
+    const conditions: Prisma.Sql[] = [
+      Prisma.sql`i.organization_id = ${filter.organizationId}::uuid`,
+      Prisma.sql`i.is_deleted = FALSE`,
+    ]
+    switch (filter.source) {
+      case 'unassigned':
+        conditions.push(Prisma.sql`i.phase = 'Discovery'::"IdeaPhase" AND i.board_id IS NULL`)
+        break
+      case 'boards':
+        conditions.push(Prisma.sql`i.phase = 'Discovery'::"IdeaPhase" AND i.board_id IS NOT NULL`)
+        break
+      case 'backlog':
+        conditions.push(Prisma.sql`i.phase = 'Delivery'::"IdeaPhase" AND i.sprint_id IS NULL`)
+        break
+    }
+    if (filter.excludeBoardId !== null) {
+      conditions.push(Prisma.sql`i.board_id IS DISTINCT FROM ${filter.excludeBoardId}::uuid`)
+    }
+    if (filter.authorUserId !== null) {
+      conditions.push(Prisma.sql`i.author_user_id = ${filter.authorUserId}::uuid`)
+    }
+    if (filter.search !== null) {
+      const term = `%${filter.search.replace(/[\\%_]/g, '\\$&')}%`
+      conditions.push(Prisma.sql`i.title ILIKE ${term}`)
+    }
+    if (filter.tags.length > 0) {
+      conditions.push(
+        Prisma.sql`EXISTS (SELECT 1 FROM idea_tags AS filter_link INNER JOIN tags AS filter_tag ON filter_tag.id = filter_link.tag_id WHERE filter_link.idea_id = i.id AND filter_tag.normalized_name IN (${Prisma.join(filter.tags)}))`,
+      )
+    }
+    const where = Prisma.join(conditions, ' AND ')
+    const { page, pageSize } = filter.page
+
+    const rows = await this.prisma.$queryRaw<
+      {
+        idea_id: string
+        title: string
+        author_user_id: string
+        author_name: string | null
+        board_id: string | null
+        board_name: string | null
+        status_id: string
+        status_name: string | null
+        phase: IdeaPhase
+        priority: Priority
+        tag_names: string[]
+        upvote_count: number
+      }[]
+    >(Prisma.sql`
+      SELECT i.id AS idea_id, i.title, i.author_user_id,
+        (author.first_name || ' ' || author.last_name) AS author_name,
+        i.board_id, board.name AS board_name, i.status_id, status.name AS status_name,
+        i.phase, i.priority,
+        COALESCE((
+          SELECT ARRAY_AGG(tag.name ORDER BY LOWER(tag.name), tag.name)
+          FROM idea_tags AS link INNER JOIN tags AS tag ON tag.id = link.tag_id
+          WHERE link.idea_id = i.id
+        ), ARRAY[]::text[]) AS tag_names,
+        (SELECT COUNT(*)::int FROM idea_upvotes AS upvote WHERE upvote.idea_id = i.id) AS upvote_count
+      FROM ideas AS i
+      LEFT JOIN users AS author ON author.id = i.author_user_id
+      LEFT JOIN boards AS board ON board.id = i.board_id
+      LEFT JOIN statuses AS status ON status.id = i.status_id
+      WHERE ${where}
+      ORDER BY i.created_at_utc ASC, i.title ASC, i.id ASC
+      LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}
+    `)
+    const countRows = await this.prisma.$queryRaw<{ total: number }[]>(Prisma.sql`
+      SELECT COUNT(*)::int AS total FROM ideas AS i WHERE ${where}
+    `)
+
+    return {
+      items: rows.map((row) => ({
+        ideaId: row.idea_id,
+        title: row.title,
+        authorUserId: row.author_user_id,
+        authorName: row.author_name ?? '',
+        boardId: row.board_id,
+        boardName: row.board_name,
+        statusId: row.status_id,
+        statusName: row.status_name ?? '',
+        phase: row.phase,
+        tags: row.tag_names,
+        priority: row.priority,
+        upvoteCount: row.upvote_count,
+        isMine: row.author_user_id === filter.currentUserId,
+      })),
+      page,
+      pageSize,
+      totalCount: countRows[0]?.total ?? 0,
+    }
+  }
+
   async isStatusReferenced(statusId: string): Promise<boolean> {
     const found = await this.prisma.board_swimlanes.findFirst({
       where: { status_id: statusId },
@@ -245,6 +414,16 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
         { statusId: row.id, name: row.name, color: row.color, isDeleted: row.is_deleted },
       ]),
     )
+  }
+
+  /** `ideas.BoardsPort.getFirstActiveStatusId` - the status a pool idea starts with. */
+  async getFirstActiveStatusId(organizationId: string): Promise<string | null> {
+    const row = await this.prisma.statuses.findFirst({
+      where: { organization_id: organizationId, is_deleted: false },
+      orderBy: [{ sort_order: 'asc' }, { created_at_utc: 'asc' }, { id: 'asc' }],
+      select: { id: true },
+    })
+    return row?.id ?? null
   }
 
   async add(board: Board): Promise<void> {

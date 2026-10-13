@@ -29,6 +29,7 @@ import type {
   WireUserListItem,
 } from '../api/wire'
 import { DELIVERY_STATUSES } from '../display'
+import { currentUser } from '../session'
 import type { HomeIdea, HomeKpi, OrganizationHome, PlatformHome, Priority } from '../types'
 import { failIfRequested } from './latency'
 import { everyOrganization, organizationScope } from './scope'
@@ -115,22 +116,21 @@ export async function getOrganizationHome(): Promise<OrganizationHome> {
     ideaCount(reader, scope, new URLSearchParams({ phase: 'Issues' })),
   ])
 
-  // **Ideas on archived boards are left out of every idea figure on Home** (decision 2026-10-01).
-  // The API cannot exclude archived boards, so when one is archived each request and each link
-  // names the live boards instead: `boardId` to the API, `board` to the `/ideas` URL, so every
-  // count still matches the list it opens. With every board live the plain query is the same set.
+  // **Ideas on archived boards are left out of every idea figure on Home** (decision 2026-10-01),
+  // and so are ideas on no board (`20-feature-board-pull-in.md` rule 7): the API's plain query
+  // returns both, so each request and each link names the live boards instead: `boardId` to the
+  // API, `board` to the `/ideas` URL, so every count still matches the list it opens.
   const liveBoards = boards.filter((board) => !board.isArchived)
-  const someArchived = liveBoards.length < boards.length
   const onLiveBoards = (params: Record<string, string>, priorities: string[] = []) => {
     const api = new URLSearchParams(params)
     for (const priority of priorities) api.append('priority', priority)
-    if (someArchived) for (const board of liveBoards) api.append('boardId', board.boardId)
+    for (const board of liveBoards) api.append('boardId', board.boardId)
     return api
   }
   const link = (params: Record<string, string>, priorities: string[] = []) => {
     const url = new URLSearchParams(params)
     for (const priority of priorities) url.append('priority', priority)
-    if (someArchived) for (const board of liveBoards) url.append('board', board.boardId)
+    for (const board of liveBoards) url.append('board', board.boardId)
     return `/ideas?${url}`
   }
   const empty: WirePage<WireIdeaListItem> = { items: [], page: 1, pageSize: 1, totalCount: 0 }
@@ -138,8 +138,14 @@ export async function getOrganizationHome(): Promise<OrganizationHome> {
   const page = (params: URLSearchParams, rows: number) =>
     liveBoards.length === 0 ? Promise.resolve(empty) : ideaPage(reader, scope, params, rows)
 
+  // Only an Org Admin can put an idea on a board, so only they are shown the ones waiting for one.
+  const needsBoard =
+    currentUser().role === 'OrgAdmin'
+      ? ideaCount(reader, scope, new URLSearchParams({ boardId: 'none', phase: 'Ideas' }))
+      : Promise.resolve(0)
+
   const urgent = ['Critical', 'High']
-  const [critical, created, attention, assigned, voted] = await Promise.all([
+  const [critical, created, attention, assigned, voted, waiting] = await Promise.all([
     page(onLiveBoards({ scope: 'assigned' }, ['Critical']), 1).then((p) => p.totalCount),
     page(onLiveBoards({ scope: 'created' }), 1).then((p) => p.totalCount),
     page(
@@ -149,6 +155,7 @@ export async function getOrganizationHome(): Promise<OrganizationHome> {
     // The default phase, so a promoted Issue assigned to the reader is listed too.
     page(onLiveBoards({ scope: 'assigned', sortBy: 'priority', sortDirection: 'desc' }), LIST_ROWS),
     page(onLiveBoards({ phase: 'Ideas', sortBy: 'upvoteCount', sortDirection: 'desc' }), LIST_ROWS),
+    needsBoard,
   ])
   const attentionHref = link({ phase: 'Ideas' }, urgent)
   const assignedHref = link({ scope: 'assigned', sort: 'priority', dir: 'desc' })
@@ -166,7 +173,7 @@ export async function getOrganizationHome(): Promise<OrganizationHome> {
   const toRow = (idea: WireIdeaListItem): HomeIdea => ({
     id: idea.ideaId,
     title: idea.title,
-    boardName: boardNames.get(idea.boardId) ?? null,
+    boardName: idea.boardId ? (boardNames.get(idea.boardId) ?? null) : null,
     ideaType: idea.ideaTypeName,
     status: statuses.find((status) => status.id === idea.statusId) ?? {
       id: idea.statusId,
@@ -183,6 +190,18 @@ export async function getOrganizationHome(): Promise<OrganizationHome> {
   const ideas = liveBoards.reduce((total, board) => total + board.ideaCount, 0)
 
   const kpis: HomeKpi[] = [
+    ...(waiting > 0
+      ? [
+          {
+            label: 'Needs a board',
+            value: waiting,
+            detail: 'ideas with no board',
+            definition: 'Live Discovery ideas that belong to no board yet.',
+            href: '/ideas?board=none&phase=Ideas',
+            action: { label: 'View ideas with no board', href: '/ideas?board=none&phase=Ideas' },
+          },
+        ]
+      : []),
     {
       label: 'Assigned to me',
       value: assigned.totalCount,

@@ -12,17 +12,27 @@
  * last fixture screen that could have joined the two.
  */
 
-import { swimlaneToStatus, toBoardOverview, toStatus } from '../api/adapt'
-import { apiGet, apiPath, isApiStatus } from '../api/client'
+import { swimlaneToStatus, toBoardOverview, toPullCandidate, toStatus } from '../api/adapt'
+import { apiGet, apiPath, isApiStatus, withQuery } from '../api/client'
 import type {
   WireBoardDetail,
   WireBoardListItem,
   WireDeliveryCard,
   WireIdeaListItem,
   WirePage,
+  WirePullCandidate,
   WireStatus,
 } from '../api/wire'
-import type { Board, BoardAdmin, BoardOverview, BoardRef, BoardWithLanes, Status } from '../types'
+import type {
+  Board,
+  BoardAdmin,
+  BoardOverview,
+  BoardRef,
+  BoardWithLanes,
+  PullCandidatePage,
+  PullCandidateQuery,
+  Status,
+} from '../types'
 import { failIfRequested, resolve } from './latency'
 import { everyOrganization, organizationScope } from './scope'
 
@@ -251,4 +261,38 @@ export async function getBoardRefs(): Promise<BoardRef[]> {
     name: board.name,
     isArchived: board.isArchived,
   }))
+}
+
+/**
+ * One page of what the board form's *Add existing items* step can pull, for one tab.
+ *
+ * Takes the organization rather than reading it from the principal: the picker asks from a route
+ * handler, which runs outside the render scope `organizationScope` needs, so the handler resolves
+ * the organization the way the Server Functions do (`actingOrganizationId`). The API scopes the
+ * answer to what the caller may pull, so a User never sees another author's idea here.
+ */
+export async function getPullCandidates(
+  organizationId: string,
+  query: PullCandidateQuery,
+): Promise<PullCandidatePage> {
+  const params = new URLSearchParams({
+    source: query.source,
+    page: String(query.page),
+    pageSize: String(query.pageSize),
+  })
+  if (query.excludeBoardId) params.set('excludeBoardId', query.excludeBoardId)
+  if (query.search?.trim()) params.set('search', query.search.trim())
+  if (query.tag) params.set('tag', query.tag)
+  if (query.authorUserId) params.set('authorUserId', query.authorUserId)
+
+  const result = await apiGet<WirePage<WirePullCandidate>>(
+    'getPullCandidates',
+    withQuery(apiPath`/organizations/${organizationId}/boards/pull-candidates`, params),
+  )
+  return {
+    items: result.items.map(toPullCandidate),
+    page: result.page,
+    pageSize: result.pageSize,
+    totalCount: result.totalCount,
+  }
 }

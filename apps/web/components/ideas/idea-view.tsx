@@ -4,9 +4,38 @@ import type { IdeaDetail } from '@/lib/types'
 import { CommentBox, FollowButton, UpvoteButton } from './engagement'
 import { People, PriorityMarker, StatusMarker, TagList } from './idea-chips'
 
-function Fact({ label, children }: { label: string; children: ReactNode }) {
+/** The board line of the drawer's facts: where the idea sits, or that it sits nowhere yet. */
+export type BoardLine = {
+  /** Null for an idea in the pool. */
+  name: string | null
+  archived: boolean
+  /** Remove from board, when the reader is offered it. */
+  action: ReactNode
+}
+
+export function BoardChip({ name }: { name: string | null }) {
+  return name === null ? (
+    <span className="inline-flex items-center rounded-full border border-dashed px-2 py-px text-xs font-semibold italic">
+      No board
+    </span>
+  ) : (
+    <span className="inline-flex items-center rounded-full border bg-secondary px-2 py-px text-xs font-semibold">
+      {name}
+    </span>
+  )
+}
+
+function Fact({
+  label,
+  children,
+  wide = false,
+}: {
+  label: string
+  children: ReactNode
+  wide?: boolean
+}) {
   return (
-    <div className="min-w-0">
+    <div className={wide ? 'col-span-2 min-w-0' : 'min-w-0'}>
       <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</dt>
       <dd className="m-0 mt-0.5 flex flex-wrap items-center gap-1 text-sm font-medium">
         {children}
@@ -37,6 +66,7 @@ export function IdeaView({
   engagementDenial,
   followDenial,
   facts = true,
+  boardLine,
 }: {
   idea: IdeaDetail
   statusColor: string | undefined
@@ -45,11 +75,28 @@ export function IdeaView({
   followDenial: string | null
   /** False in the Issue drawer, which shows its delivery facts in their place. */
   facts?: boolean
+  boardLine?: BoardLine | null | undefined
 }) {
   return (
     <>
       {facts ? (
         <dl className="m-0 grid grid-cols-2 gap-3 rounded-md bg-muted/60 p-3">
+          {boardLine ? (
+            <Fact label="Board" wide>
+              <BoardChip name={boardLine.name} />
+              {boardLine.archived ? (
+                <span className="text-xs font-semibold text-warning">Board archived</span>
+              ) : null}
+              {boardLine.name === null ? (
+                <span className="text-xs font-normal text-muted-foreground">
+                  Waiting on the Ideas list. An Org Admin can pull it onto a board from the board
+                  form.
+                </span>
+              ) : (
+                boardLine.action
+              )}
+            </Fact>
+          ) : null}
           <Fact label="Status">
             <StatusMarker name={idea.statusName} color={statusColor} />
           </Fact>

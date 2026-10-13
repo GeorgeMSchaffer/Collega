@@ -128,3 +128,26 @@ export function mayWorkOnIssue(
   if (role !== 'User') return false
   return issue.authorUserId === userId || issue.assignees.some((person) => person.id === userId)
 }
+
+/**
+ * What Remove from board offers the reader on an idea (`20-feature-board-pull-in.md` rules 5 and 6):
+ * `null` when the control is not shown at all - the idea is already in the pool, or the reader is
+ * neither its author nor an Org Admin - and otherwise `{ reason }`, `null` when it works. An Issue
+ * and an archived board a User may not touch show it disabled, with the reason beside it.
+ */
+export function detachOffer(
+  role: Role,
+  userId: string,
+  idea: { boardId: string | null; authorUserId: string | null },
+  context: { isIssue: boolean; boardArchived: boolean },
+): { reason: string | null } | null {
+  if (idea.boardId === null) return null
+  const admin = role === 'OrgAdmin'
+  const author = role === 'User' && idea.authorUserId !== null && idea.authorUserId === userId
+  if (!admin && !author) return null
+  if (context.isIssue) return { reason: 'Issues return to Discovery first.' }
+  if (context.boardArchived && !admin) {
+    return { reason: 'Only an Org Admin can remove ideas from an archived board.' }
+  }
+  return { reason: null }
+}

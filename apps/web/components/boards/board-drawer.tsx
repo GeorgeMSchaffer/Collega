@@ -2,12 +2,14 @@
 
 import { Alert, Button, buttonVariants } from '@collega/design-system'
 import Link from 'next/link'
-import { type ReactNode, useActionState } from 'react'
+import { type ReactNode, useActionState, useState } from 'react'
 import { Drawer } from '@/components/list'
 import { Icon } from '@/components/list/icons'
-import { BoardFields } from '@/components/settings/board-form'
+import { BoardFields, pullLabel, useKeptSubmit } from '@/components/settings/board-form'
+import type { PullSetup } from '@/components/settings/pull-step'
+import { PULL_ITEM_CAP } from '@/lib/limits'
 import { createBoardInPlace, saveBoardInPlace } from '@/lib/server/board-actions'
-import type { BoardOverview, Status } from '@/lib/types'
+import type { BoardOverview, PullCandidate, Status } from '@/lib/types'
 import { LaneLegend, LaneStrip, statusLabel, TopTags } from './board-parts'
 
 export type DrawerMode = 'view' | 'edit' | 'create'
@@ -23,13 +25,15 @@ export type BoardFormData = {
   /** Live ideas per lane of the board being edited, for the confirm step a lane removal needs. */
   laneIdeaCounts?: Readonly<Record<string, number>> | undefined
   statuses: Status[]
+  /** What the *Add existing items* step needs; absent leaves the step out. */
+  pull?: PullSetup
 }
 
 const FORM_ID = 'board-drawer-form'
 
 /** The last save's refusal, and which form it belongs to, so it never shows on another board's. */
-type Outcome = { error: string | null; formKey: string | null }
-const IDLE: Outcome = { error: null, formKey: null }
+type Outcome = { error: string | null; pullErrors: string[]; formKey: string | null }
+const IDLE: Outcome = { error: null, pullErrors: [], formKey: null }
 
 /**
  * The Boards screen's drawer: a board's facts in view mode, and the board form for edit and create.
@@ -67,10 +71,19 @@ export function BoardDrawer({
       const save = boardId === null ? createBoardInPlace : saveBoardInPlace
       const result = await save({ error: null, savedId: null }, data)
       if (result.savedId) onView(result.savedId)
-      return { error: result.error, formKey }
+      return { error: result.error, pullErrors: result.pullErrors ?? [], formKey }
     },
     IDLE,
   )
+  const onSubmit = useKeptSubmit(submit)
+  // The items to pull belong to the form that chose them, like the refusal above.
+  const [chosen, setChosen] = useState<{ formKey: string | null; items: PullCandidate[] }>({
+    formKey: null,
+    items: [],
+  })
+  const pulled = chosen.formKey === formKey ? chosen.items : []
+  const over = pulled.length > PULL_ITEM_CAP
+  const refused = outcome.formKey === formKey ? outcome.pullErrors : []
 
   const eyebrow =
     mode === 'create'
@@ -111,7 +124,7 @@ export function BoardDrawer({
         id={FORM_ID}
         // A fresh form per board, so one board's typing never seeds another's.
         key={formKey}
-        action={submit}
+        onSubmit={onSubmit}
       >
         {outcome.error && outcome.formKey === formKey ? (
           <Alert variant="destructive" className="mb-4">
@@ -127,22 +140,51 @@ export function BoardDrawer({
           laneIdeaCounts={form.laneIdeaCounts}
           statuses={form.statuses}
           sectionHeading="h3"
+          pull={
+            form.pull
+              ? {
+                  setup: form.pull,
+                  selected: pulled,
+                  onChange: (items) => setChosen({ formKey, items }),
+                  refused,
+                  boardName: form.name,
+                }
+              : undefined
+          }
         />
       </form>
     )
     // Outside the form, so they submit it by `form=`; Enter in a field still submits.
     footer = (
-      <>
-        <Button type="submit" form={FORM_ID} disabled={saving}>
-          {saving ? 'Saving…' : mode === 'create' ? 'Create board' : 'Save changes'}
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => (mode === 'edit' && board ? onView(board.id) : onClose())}
-        >
-          Cancel
-        </Button>
-      </>
+      <div className="flex w-full flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="submit"
+            form={FORM_ID}
+            disabled={saving}
+            aria-disabled={over ? 'true' : undefined}
+            aria-describedby={over ? 'pull-over-cap' : undefined}
+            onClick={(event) => {
+              if (over) event.preventDefault()
+            }}
+          >
+            {saving
+              ? 'Saving…'
+              : pullLabel(mode === 'create' ? 'Create board' : 'Save changes', pulled.length)}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => (mode === 'edit' && board ? onView(board.id) : onClose())}
+          >
+            Cancel
+          </Button>
+        </div>
+        {over ? (
+          <p id="pull-over-cap" className="m-0 text-xs text-muted-foreground">
+            Can&rsquo;t save: {pulled.length} items selected, the limit is {PULL_ITEM_CAP}.
+          </p>
+        ) : null}
+      </div>
     )
   }
 

@@ -20,7 +20,10 @@ import type { TagOverview } from '@/lib/types'
 export type TagDrawerMode = 'view' | 'edit' | 'create'
 
 /** The ideas carrying the open tag, read by the page from the ideas list's `tag` filter. */
-export type TagUsage = { ideas: { id: string; title: string; boardId: string }[]; total: number }
+export type TagUsage = {
+  ideas: { id: string; title: string; boardId: string | null }[]
+  total: number
+}
 
 const FORM_ID = 'tag-drawer-form'
 
@@ -196,7 +199,8 @@ function TagForm({
 }
 
 function TagFacts({ tag, usage }: { tag: TagOverview; usage: TagUsage | null }) {
-  const boardName = (boardId: string) => tag.boards.find((board) => board.id === boardId)?.name
+  const boardName = (boardId: string | null) =>
+    tag.boards.find((board) => board.id === boardId)?.name
   const facts: [string, ReactNode][] = [
     ['Ideas', tag.ideaCount],
     [

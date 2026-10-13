@@ -89,7 +89,7 @@ export function InboxWorkspace({
   const statusById = useMemo(() => new Map(statuses.map((s) => [s.id, s])), [statuses])
 
   const idea = drawer.idea
-  const board = idea ? boardsById.get(idea.boardId) : undefined
+  const board = idea?.boardId ? boardsById.get(idea.boardId) : undefined
   // Archived boards are read-only, as on Ideas.
   const canEdit = idea !== null && writeDenial(user.role) === null && !board?.isArchived
   const mode = drawer.mode === 'edit' && !canEdit ? 'view' : drawer.mode
@@ -162,7 +162,8 @@ export function InboxWorkspace({
       <IdeaDrawer
         mode={mode}
         idea={idea}
-        boardName={board?.name ?? null}
+        boardName={idea?.boardId === null ? 'No board' : (board?.name ?? null)}
+        boardLine={null}
         statusColor={idea ? statusById.get(idea.statusId)?.color : undefined}
         formOptions={drawer.formOptions}
         createBoards={null}

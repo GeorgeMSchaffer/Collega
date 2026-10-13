@@ -6,7 +6,7 @@ import { Drawer } from '@/components/list'
 import { Icon } from '@/components/list/icons'
 import type { BoardRef, IdeaDetail, IdeaFormOptions } from '@/lib/types'
 import { IdeaForm } from './idea-form'
-import { IdeaView } from './idea-view'
+import { type BoardLine, IdeaView } from './idea-view'
 
 export type DrawerMode = 'view' | 'edit' | 'create'
 
@@ -22,6 +22,7 @@ export function IdeaDrawer({
   mode,
   idea,
   boardName,
+  boardLine,
   statusColor,
   formOptions,
   createBoards,
@@ -41,9 +42,11 @@ export function IdeaDrawer({
   mode: DrawerMode | null
   idea: IdeaDetail | null
   boardName: string | null
+  /** The facts' board line, and Remove from board within it. */
+  boardLine: BoardLine | null
   statusColor: string | undefined
   formOptions: IdeaFormOptions | null
-  /** Boards a new idea may go on, when none is in context (Ideas); null on a board's page. */
+  /** Boards a new idea may go on, beside "No board". */
   createBoards: BoardRef[] | null
   createBoardId: string | null
   canEdit: boolean
@@ -136,6 +139,7 @@ export function IdeaDrawer({
           statusColor={statusColor}
           engagementDenial={engagementDenial}
           followDenial={followDenial}
+          boardLine={boardLine}
         />
       ) : null}
     </Drawer>

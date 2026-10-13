@@ -14,6 +14,7 @@ import { BoardService } from '../../src/boards/board-service.js'
 import type { IdeaMoveInput, UpdateBoardCommand } from '../../src/boards/models.js'
 import type { BoardRepository, LaneIdea } from '../../src/boards/ports.js'
 import { ConflictError, type CurrentUserContext, ValidationError } from '../../src/common/index.js'
+import type { IdeaRepository } from '../../src/ideas/ports.js'
 import type { StatusRepository } from '../../src/statuses/ports.js'
 import {
   countingUnitOfWork,
@@ -128,6 +129,10 @@ function harness(
       log.push('move')
       moves.push({ boardId, ideaIds, fromStatusId, toStatusId, nowUtc, actorUserId })
     },
+    async reassignIdeas() {},
+    async listPullCandidates() {
+      return { items: [], page: 1, pageSize: 20, totalCount: 0 }
+    },
   }
 
   const statuses: StatusRepository = {
@@ -166,6 +171,7 @@ function harness(
       audit,
       options.currentUser ?? orgAdmin(ORG_A),
       fixedClock(),
+      {} as IdeaRepository,
     ),
     log,
     moves,
