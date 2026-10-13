@@ -67,6 +67,8 @@ export type OrganizationIdeaListFilter = {
   readonly searchTextFieldIds: readonly string[]
   /** Any-of within each list, AND across them; an empty list is no filter. Tags are normalized. */
   readonly boardIds: readonly string[]
+  /** Also matches ideas with no board (the `none` filter value), any-of with `boardIds`. */
+  readonly includeNoBoard: boolean
   readonly statusIds: readonly string[]
   readonly priorities: readonly Priority[]
   readonly tags: readonly string[]
@@ -151,7 +153,7 @@ export type NotificationEventType =
 export type NotificationInput = {
   readonly eventType: NotificationEventType
   readonly organizationId: string
-  readonly boardId: string
+  readonly boardId: string | null
   readonly ideaId: string
   readonly ideaTitle: string
   readonly actorUserId: string
@@ -262,6 +264,10 @@ export interface BoardsPort {
   /** Status id -> display info for every status in an organization, including soft-deleted ones
    * so historical references still render their prior name (rule #8). */
   getStatusInfo(organizationId: string): Promise<ReadonlyMap<string, StatusInfo>>
+
+  /** The organization's first non-deleted status in sort order: the status a pool idea starts
+   * with. `null` when it has none. */
+  getFirstActiveStatusId(organizationId: string): Promise<string | null>
 }
 
 /** The left-most swimlane's status - the default for new ideas (rule #27). A plain function

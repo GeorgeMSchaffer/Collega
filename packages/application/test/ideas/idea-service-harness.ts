@@ -145,6 +145,7 @@ export const ORG_LIST_QUERY: OrganizationIdeaListQuery = {
   sortDirection: null,
   fieldFilters: null,
   boardIds: [],
+  includeNoBoard: false,
   statusIds: [],
   priorities: [],
   tags: [],
@@ -258,6 +259,9 @@ export function harness(options: {
         isDeleted: false,
       }
       return new Map([[STATUS_1, info]])
+    },
+    async getFirstActiveStatusId() {
+      return STATUS_1
     },
   }
 

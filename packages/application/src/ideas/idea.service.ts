@@ -15,6 +15,7 @@ import {
   changeIdeaDeliveryStatus,
   changeIdeaStatus,
   createIdea,
+  detachIdeaFromBoard,
   IdeaDomainError,
   IdeaPhaseConflictError,
   MAX_ASSIGNEES,
@@ -58,6 +59,7 @@ import type {
   ChangeIdeaStatusCommand,
   CreateIdeaCommand,
   CreateIdeaResult,
+  CreatePoolIdeaCommand,
   DeliveryCard,
   DeliveryListQuery,
   IdeaAssigneeDto,
@@ -225,6 +227,7 @@ export class IdeaService {
       fieldFilters,
       searchTextFieldIds,
       boardIds: distinctNonEmpty(query.boardIds),
+      includeNoBoard: query.includeNoBoard,
       statusIds: distinctNonEmpty(query.statusIds),
       priorities: parsePriorityFilters(query.priorities),
       tags: normalizeTagFilters(query.tags),
@@ -251,11 +254,6 @@ export class IdeaService {
     this.ensureOrganizationScope(board.organizationId)
     ensureBoardNotArchived(board)
 
-    const now = this.clock.now()
-    const authorId = this.requireAuthenticatedUserId()
-    const priority = parsePriority(command.priority)
-    const dueDate = parseDueDate(command.dueDate)
-
     const statusId = command.statusId ?? leftMostStatusId(board)
     if (!statusId) {
       throw new ValidationError('One or more fields are invalid.', {
@@ -268,30 +266,67 @@ export class IdeaService {
       })
     }
 
-    await this.getActiveIdeaType(board.organizationId, command.ideaTypeId)
-    await this.ensureActiveBusinessImpact(board.organizationId, command.businessImpactId)
+    return this.createIdeaRecord(board.organizationId, boardId, statusId, command)
+  }
+
+  /**
+   * Creates an idea in the organization's pool: no board, no lane, and so no `statusId` in the
+   * request. It takes the first active status in sort order, the one a new board's leftmost lane
+   * would carry (SPEC/20-feature-board-pull-in.md rules 3 and 4).
+   */
+  async createInPool(
+    organizationId: string,
+    command: CreatePoolIdeaCommand,
+  ): Promise<CreateIdeaResult> {
+    ensureNotDirectSiteAdmin(this.currentUser)
+    this.requireIdeaEditRole()
+    this.ensureOrganizationScope(organizationId)
+
+    const statusId = await this.boards.getFirstActiveStatusId(organizationId)
+    if (!statusId) {
+      throw new ValidationError('One or more fields are invalid.', {
+        statusId: ['The organization has no active status to place the idea in.'],
+      })
+    }
+
+    return this.createIdeaRecord(organizationId, null, statusId, command)
+  }
+
+  private async createIdeaRecord(
+    organizationId: string,
+    boardId: string | null,
+    statusId: string,
+    command: Omit<CreateIdeaCommand, 'statusId'>,
+  ): Promise<CreateIdeaResult> {
+    const now = this.clock.now()
+    const authorId = this.requireAuthenticatedUserId()
+    const priority = parsePriority(command.priority)
+    const dueDate = parseDueDate(command.dueDate)
+
+    await this.getActiveIdeaType(organizationId, command.ideaTypeId)
+    await this.ensureActiveBusinessImpact(organizationId, command.businessImpactId)
 
     const assigneeIds = await this.resolveAssignees(
-      board.organizationId,
+      organizationId,
       command.assigneeUserIds,
       [],
     )
-    const tagIds = await this.resolveTags(board.organizationId, command.tagNames, now, authorId)
+    const tagIds = await this.resolveTags(organizationId, command.tagNames, now, authorId)
     const mentionIds = await this.resolveMentions(
-      board.organizationId,
+      organizationId,
       command.mentionEmails,
       'mentionEmails',
     )
 
     const fieldValues = await this.fieldValues.resolveAndValidate({
-      organizationId: board.organizationId,
+      organizationId: organizationId,
       ideaTypeId: command.ideaTypeId,
       submitted: command.fieldValues ?? [],
     })
 
     let idea = createIdeaOrThrow({
       id: randomUUID(),
-      organizationId: board.organizationId,
+      organizationId: organizationId,
       boardId,
       statusId,
       title: command.title ?? '',
@@ -311,7 +346,7 @@ export class IdeaService {
     })
 
     const reconcileScope = await this.fieldValues.getReconcileScope(
-      board.organizationId,
+      organizationId,
       command.ideaTypeId,
     )
     idea = replaceIdeaFieldValues(idea, fieldValues, reconcileScope, now, authorId)
@@ -341,6 +376,52 @@ export class IdeaService {
       businessImpactId: idea.businessImpactId,
       dueDate: idea.dueDate,
     }
+  }
+
+  /**
+   * Removes a Discovery idea from its board, leaving it in the pool (SPEC/20-feature-board-pull-in.md
+   * rules 5, 6 and 19). The author or an Org Admin; an Issue is a conflict; an archived board's
+   * ideas may be detached by an Org Admin only. Idempotent, and silent: no notification.
+   */
+  async detachFromBoard(ideaId: string): Promise<void> {
+    ensureNotDirectSiteAdmin(this.currentUser)
+    this.requireIdeaEditRole()
+
+    let idea = await this.ideaRepository.getById(ideaId, false)
+    if (!idea) {
+      throw new NotFoundError('Idea not found.')
+    }
+    this.ensureOrganizationScope(idea.organizationId)
+
+    const actorId = this.requireAuthenticatedUserId()
+    if (!this.canAdministerIdeaContent(idea, actorId)) {
+      throw new ForbiddenError('You are not allowed to remove this idea from its board.')
+    }
+
+    const now = this.clock.now()
+    const previousBoardId = idea.boardId
+    const detached = runDelivery(detachIdeaFromBoard, idea, now, actorId)
+    if (previousBoardId === null) {
+      return
+    }
+
+    const board = await this.boards.getBoardContext(previousBoardId)
+    if (board?.isArchived && !this.canAdministerIdeaContent(idea, null, true)) {
+      throw new ConflictError('The board is archived, so only an Org Admin can remove its ideas.')
+    }
+
+    idea = detached
+    await this.ideaRepository.update(idea)
+    await this.unitOfWork.saveChanges()
+
+    await this.auditIdea(
+      'IdeaBoardChanged',
+      idea,
+      actorId,
+      `Idea '${idea.title}' removed from its board.`,
+      now,
+      { fromBoardId: previousBoardId, toBoardId: null },
+    )
   }
 
   async getById(ideaId: string): Promise<IdeaDetail> {
@@ -554,6 +635,12 @@ export class IdeaService {
     }
     this.ensureOrganizationScope(idea.organizationId)
 
+    // A pool idea sits in no lane; only a pull sets its status (board pull-in rule 2).
+    if (idea.boardId === null) {
+      throw new ValidationError('One or more fields are invalid.', {
+        statusId: ['This idea is not on a board.'],
+      })
+    }
     const board = await this.boards.getBoardContext(idea.boardId)
     if (!board) {
       throw new NotFoundError('Board not found.')
@@ -1774,6 +1861,9 @@ export class IdeaService {
 
   /** `ensureBoardNotArchived` for an idea already loaded, whose board context is not. */
   private async ensureIdeaBoardNotArchived(idea: Idea): Promise<void> {
+    if (idea.boardId === null) {
+      return
+    }
     const board = await this.boards.getBoardContext(idea.boardId)
     if (board) {
       ensureBoardNotArchived(board)

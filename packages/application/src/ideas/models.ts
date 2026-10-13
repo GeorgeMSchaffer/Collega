@@ -31,6 +31,10 @@ export type CreateIdeaCommand = {
   readonly fieldValues: readonly IdeaFieldValueWrite[] | null
 }
 
+/** `POST /organizations/{organizationId}/ideas`: the create shape without `statusId`, which a pool
+ * idea does not choose. */
+export type CreatePoolIdeaCommand = Omit<CreateIdeaCommand, 'statusId'>
+
 export type UpdateIdeaCommand = {
   readonly title: string
   readonly description: string | null
@@ -179,6 +183,9 @@ export type OrganizationIdeaListQuery = {
   readonly fieldFilters: ReadonlyMap<string, string> | null
   /** Repeatable, any-of within each, AND across them and the rest (2026-09-27). */
   readonly boardIds: readonly string[]
+  /** The literal `none` in the `boardId` filter: any-of with `boardIds`, so an idea matches when it
+   * is on one of those boards or, with this set, on no board. */
+  readonly includeNoBoard: boolean
   readonly statusIds: readonly string[]
   readonly priorities: readonly string[]
   readonly tags: readonly string[]
@@ -275,7 +282,7 @@ export type IdeaTagDto = {
 
 export type IdeaListItem = {
   readonly ideaId: string
-  readonly boardId: string
+  readonly boardId: string | null
   readonly title: string
   readonly priority: string
   readonly ideaTypeId: string
@@ -302,7 +309,7 @@ export type IdeaListItem = {
 
 export type IdeaDetail = {
   readonly ideaId: string
-  readonly boardId: string
+  readonly boardId: string | null
   readonly title: string
   readonly problem: string
   readonly proposedSolutions: readonly string[]
@@ -348,7 +355,7 @@ export type IdeaDetail = {
 
 export type CreateIdeaResult = {
   readonly ideaId: string
-  readonly boardId: string
+  readonly boardId: string | null
   readonly statusId: string
   readonly title: string
   readonly priority: string
