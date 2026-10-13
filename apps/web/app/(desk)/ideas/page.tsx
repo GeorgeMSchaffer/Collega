@@ -7,7 +7,7 @@ import { IdeaWorkspace } from '@/components/ideas/idea-workspace'
 import { loadIdeaDrawer } from '@/components/ideas/load-idea-drawer'
 import { readListState } from '@/components/list/list-state'
 import { Topbar } from '@/components/nav/topbar'
-import { getBoardRefs, getIdeaList, getStatuses, getTagRefs } from '@/lib/data'
+import { getBoardRefs, getIdeaList, getIssueIds, getStatuses, getTagRefs } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser, writeDenial } from '@/lib/session'
 
@@ -47,6 +47,7 @@ export default async function IdeasPage({
     first.ideas.length === 0 && query.page > lastPage
       ? await getIdeaList({ ...query, page: lastPage })
       : first
+  const issueIds = await getIssueIds(query, ideas.ideas)
 
   return (
     <>
@@ -78,6 +79,7 @@ export default async function IdeasPage({
           tags={tags}
           board={null}
           drawer={drawer}
+          issueIds={issueIds}
         />
       </main>
     </>

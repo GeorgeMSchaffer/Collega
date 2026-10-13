@@ -30,11 +30,15 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { ApiError, apiDelete, apiPath, apiPost, apiPostReturning, apiPut } from '../api/client'
 import type { WireCreatedIdea } from '../api/wire'
+import { actingOrganizationId } from './current-user'
 
 /** What a card's controls render back: the API's refusal, or nothing. */
 export type ActionState = { error: string | null }
 
-/** Everything the idea form sends. `ideaId` absent is a create, on `boardId`. */
+/**
+ * Everything the idea form sends. `ideaId` absent is a create, on `boardId` — or in the pool, the
+ * organization's ideas with no board, when `boardId` is empty.
+ */
 export type IdeaInput = {
   ideaId: string | null
   boardId: string
@@ -123,9 +127,20 @@ export async function saveIdea(input: IdeaInput): Promise<SaveIdeaResult> {
       ideaId = input.ideaId
     } else {
       // The exception `apiPostReturning` exists for: the drawer opens the new idea next, and its id
-      // exists nowhere until this answers. No `statusId`: omitting it means the left-most lane.
+      // exists nowhere until this answers. No `statusId`: omitting it means the left-most lane, and
+      // for the pool the API picks the organization's first active status.
+      const organizationId = input.boardId ? null : await actingOrganizationId()
+      if (!input.boardId && organizationId === null) {
+        return {
+          ok: false,
+          error: 'An App Admin belongs to no organization. Use View As to act as a member of one.',
+          errors: {},
+        }
+      }
       const created = await apiPostReturning<WireCreatedIdea>(
-        apiPath`/boards/${input.boardId}/ideas`,
+        organizationId === null
+          ? apiPath`/boards/${input.boardId}/ideas`
+          : apiPath`/organizations/${organizationId}/ideas`,
         body,
       )
       ideaId = created.ideaId
@@ -229,5 +244,22 @@ export async function setFollowing(
 
   revalidateIdeaScreens(boardId)
   revalidatePath('/inbox')
+  return { error: null }
+}
+
+/**
+ * Take an idea off its board, leaving it in the pool with its status, comments, votes and
+ * followers. Idempotent on the API's side, so a second press from a stale page changes nothing.
+ */
+export async function detachIdea(ideaId: string, boardId: string): Promise<ActionState> {
+  try {
+    await apiDelete(apiPath`/ideas/${ideaId}/board`)
+  } catch (error) {
+    return { error: refusal(error) }
+  }
+
+  revalidateIdeaScreens(boardId)
+  // The board's idea count in the sidebar, and Home's Needs a board tile.
+  revalidatePath('/', 'layout')
   return { error: null }
 }

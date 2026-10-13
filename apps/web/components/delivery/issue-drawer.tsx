@@ -4,7 +4,7 @@ import { Button, Dot, EffortBar, Marker, Select } from '@collega/design-system'
 import { type ReactNode, useId, useOptimistic, useState, useTransition } from 'react'
 import { People, TagList } from '@/components/ideas/idea-chips'
 import { IdeaForm } from '@/components/ideas/idea-form'
-import { IdeaView } from '@/components/ideas/idea-view'
+import { BoardChip, IdeaView } from '@/components/ideas/idea-view'
 import { useDrawerUrl } from '@/components/ideas/use-drawer-url'
 import { Drawer } from '@/components/list'
 import { Icon } from '@/components/list/icons'
@@ -187,6 +187,9 @@ export function IssueDrawer({
               ) : (
                 'Backlog'
               )}
+            </Fact>
+            <Fact label="Board">
+              <BoardChip name={data.boardName} />
             </Fact>
             <Fact label="Outcome">
               <span className="text-muted-foreground">Not grouped</span>

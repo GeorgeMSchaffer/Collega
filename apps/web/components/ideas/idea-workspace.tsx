@@ -15,6 +15,7 @@ import {
 } from '@/components/list'
 import { Icon } from '@/components/list/icons'
 import {
+  detachOffer,
   engagementDenial,
   followDenial,
   mayDeleteIdeas,
@@ -22,13 +23,15 @@ import {
   writeDenial,
 } from '@/lib/roles'
 import { reorderLanes } from '@/lib/server/board-actions'
-import { deleteIdea, moveIdea } from '@/lib/server/idea-actions'
+import { deleteIdea, detachIdea, moveIdea } from '@/lib/server/idea-actions'
 import { useCurrentUser } from '@/lib/session-client'
 import type { BoardRef, Idea, IdeaDetail, IdeaFormOptions, Status, TagRef } from '@/lib/types'
 import { People, PriorityMarker, StatusMarker, TagList } from './idea-chips'
 import { type DrawerMode, IdeaDrawer } from './idea-drawer'
 import { BOARD_LIST, IDEAS_LIST, PHASES, PRIORITIES, SCOPES } from './idea-list-config'
+import { BoardChip } from './idea-view'
 import { type CardDrag, Lane, type LaneReorder } from './lane'
+import { RemoveFromBoardButton } from './remove-from-board'
 import { useDrawerUrl } from './use-drawer-url'
 
 type BoardContext = {
@@ -43,6 +46,9 @@ type BoardContext = {
 }
 
 type Removing = { id: string; title: string; boardId: string | null }
+
+/** An idea whose Remove from board is awaiting its confirm. */
+type Detaching = { id: string; title: string; boardId: string; boardName: string }
 
 /**
  * An idea list on the comp R pattern — the Ideas page (`board` null: List or Cards) or a board's own
@@ -62,6 +68,7 @@ export function IdeaWorkspace({
   tags,
   board,
   drawer,
+  issueIds = [],
 }: {
   rows: Idea[]
   total: number
@@ -72,7 +79,15 @@ export function IdeaWorkspace({
   /** The Tags filter's options: the organization's whole catalog. */
   tags: TagRef[]
   board: BoardContext | null
-  drawer: { mode: DrawerMode | null; idea: IdeaDetail | null; formOptions: IdeaFormOptions | null }
+  drawer: {
+    mode: DrawerMode | null
+    idea: IdeaDetail | null
+    formOptions: IdeaFormOptions | null
+    /** The open idea is in Delivery, which the detail does not say. */
+    isIssue?: boolean
+  }
+  /** Which of `rows` are Issues, which the list items do not say. */
+  issueIds?: readonly string[]
 }) {
   const user = useCurrentUser()
   const config = board ? BOARD_LIST : IDEAS_LIST
@@ -83,6 +98,9 @@ export function IdeaWorkspace({
   const [removing, setRemoving] = useState<Removing | null>(null)
   const [removeError, setRemoveError] = useState<string | null>(null)
   const [deleting, startDelete] = useTransition()
+  const [detaching, setDetaching] = useState<Detaching | null>(null)
+  const [detachError, setDetachError] = useState<string | null>(null)
+  const [detachPending, startDetach] = useTransition()
 
   // The lane order as last saved, or as the reorder in flight has it. A refusal ends the transition
   // with `board.lanes` unchanged, so the columns fall back on their own; a save revalidates the
@@ -208,6 +226,39 @@ export function IdeaWorkspace({
     })
   }
 
+  const confirmDetach = () => {
+    if (!detaching) return
+    startDetach(async () => {
+      const result = await detachIdea(detaching.id, detaching.boardId)
+      setDetachError(result.error)
+      setDetaching(null)
+    })
+  }
+
+  const issues = new Set(issueIds)
+  const offerDetach = (idea: Idea, isIssue: boolean) =>
+    detachOffer(user.role, user.userId, idea, { isIssue, boardArchived: archived(idea.boardId) })
+  const detachButton = (
+    idea: { id: string; title: string; boardId: string | null },
+    offer: { reason: string | null },
+  ) => (
+    <RemoveFromBoardButton
+      title={idea.title}
+      offer={offer}
+      onRemove={() => {
+        if (idea.boardId) {
+          setDetachError(null)
+          setDetaching({
+            id: idea.id,
+            title: idea.title,
+            boardId: idea.boardId,
+            boardName: boardName(idea.boardId),
+          })
+        }
+      }}
+    />
+  )
+
   const selectedTags = state.filters.tag ?? []
   // The filter is by name. A selected name the catalog no longer has (a link to a deleted tag) stays
   // an option, so it can be cleared.
@@ -227,16 +278,22 @@ export function IdeaWorkspace({
   const selectedId =
     drawer.mode === 'view' || drawer.mode === 'edit' ? (drawer.idea?.id ?? null) : null
 
-  const actions = (idea: Idea) => (
-    <RowActions
-      itemLabel={idea.title}
-      onView={(from) => view(idea.id, from)}
-      onEdit={(from) => edit(idea.id, from)}
-      onRemove={() => setRemoving({ id: idea.id, title: idea.title, boardId: idea.boardId })}
-      canEdit={canEdit(idea)}
-      canRemove={canDelete(idea)}
-    />
-  )
+  const actions = (idea: Idea) => {
+    const offer = board ? null : offerDetach(idea, issues.has(idea.id))
+    return (
+      <span className="inline-flex flex-wrap items-center gap-1">
+        <RowActions
+          itemLabel={idea.title}
+          onView={(from) => view(idea.id, from)}
+          onEdit={(from) => edit(idea.id, from)}
+          onRemove={() => setRemoving({ id: idea.id, title: idea.title, boardId: idea.boardId })}
+          canEdit={canEdit(idea)}
+          canRemove={canDelete(idea)}
+        />
+        {offer ? detachButton(idea, offer) : null}
+      </span>
+    )
+  }
 
   const boardName = (boardId: string | null) =>
     boardId === null ? 'No board' : (boardsById.get(boardId)?.name ?? board?.name ?? '')
@@ -266,7 +323,7 @@ export function IdeaWorkspace({
             header: 'Board',
             cell: (idea: Idea) => (
               <>
-                {boardName(idea.boardId)}
+                {idea.boardId === null ? <BoardChip name={null} /> : boardName(idea.boardId)}
                 {archived(idea.boardId) ? (
                   <span className="block text-xs text-muted-foreground">Archived</span>
                 ) : null}
@@ -314,10 +371,14 @@ export function IdeaWorkspace({
         {board ? null : (
           <MultiSelectFilter
             label="Board"
-            options={boards.map((b) => ({
-              value: b.id,
-              label: b.isArchived ? `${b.name} (archived)` : b.name,
-            }))}
+            options={[
+              // `none` is the API's own spelling of the ideas that belong to no board.
+              { value: 'none', label: 'No board' },
+              ...boards.map((b) => ({
+                value: b.id,
+                label: b.isArchived ? `${b.name} (archived)` : b.name,
+              })),
+            ]}
             selected={state.filters.board ?? []}
             onChange={(next) => update({ filters: { ...state.filters, board: next } })}
           />
@@ -371,6 +432,11 @@ export function IdeaWorkspace({
       {removeError ? (
         <Alert variant="destructive" role="alert">
           <span>{removeError}</span>
+        </Alert>
+      ) : null}
+      {detachError ? (
+        <Alert variant="destructive" role="alert">
+          <span>{detachError}</span>
         </Alert>
       ) : null}
 
@@ -565,10 +631,28 @@ export function IdeaWorkspace({
       <IdeaDrawer
         mode={drawerMode}
         idea={drawerIdea}
-        boardName={drawerBoardId ? boardName(drawerBoardId) : null}
+        boardName={
+          drawerIdea
+            ? boardName(drawerIdea.boardId)
+            : drawerBoardId
+              ? boardName(drawerBoardId)
+              : null
+        }
+        boardLine={
+          drawerIdea && drawer.mode !== 'create'
+            ? {
+                name: drawerIdea.boardId === null ? null : boardName(drawerIdea.boardId),
+                archived: archived(drawerIdea.boardId),
+                action: (() => {
+                  const offer = offerDetach(drawerIdea, drawer.isIssue === true)
+                  return offer ? detachButton(drawerIdea, offer) : null
+                })(),
+              }
+            : null
+        }
         statusColor={drawerIdea ? statusById.get(drawerIdea.statusId)?.color : undefined}
         formOptions={drawer.formOptions}
-        createBoards={board ? null : boards}
+        createBoards={boards}
         createBoardId={board?.id ?? null}
         canEdit={drawerIdea ? canEdit(drawerIdea) : false}
         canDelete={drawerIdea ? canDelete(drawerIdea) : false}
@@ -589,6 +673,16 @@ export function IdeaWorkspace({
           setRemoving({ id: drawerIdea.id, title: drawerIdea.title, boardId: drawerIdea.boardId })
         }
         onSaved={(ideaId) => openDrawer({ view: ideaId })}
+      />
+
+      <ConfirmDialog
+        open={detaching !== null}
+        title={`Remove “${detaching?.title ?? ''}” from ${detaching?.boardName ?? 'its board'}?`}
+        description="It moves to the Ideas list with no board and keeps its status, comments, upvotes and followers. No one is notified. Anyone who can pull it can put it on a board later."
+        confirmLabel="Remove from board"
+        pending={detachPending}
+        onConfirm={confirmDetach}
+        onCancel={() => setDetaching(null)}
       />
 
       <ConfirmDialog

@@ -210,7 +210,8 @@ export function InboxWorkspace({
       <IdeaDrawer
         mode={mode}
         idea={idea}
-        boardName={board?.name ?? null}
+        boardName={idea?.boardId === null ? 'No board' : (board?.name ?? null)}
+        boardLine={null}
         statusColor={idea ? statusById.get(idea.statusId)?.color : undefined}
         formOptions={drawer.formOptions}
         createBoards={null}

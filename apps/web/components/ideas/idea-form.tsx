@@ -116,9 +116,9 @@ export function IdeaForm({
   /** The idea being edited, or null to create one. */
   idea: IdeaDetail | null
   options: IdeaFormOptions
-  /** Boards to choose from when creating with no board in context (Ideas); null otherwise. */
+  /** Boards to choose from when creating, with "No board" first; null when editing. */
   boards: BoardRef[] | null
-  /** The board in context when creating on a board's page. */
+  /** The board preselected when creating from a board's page; none from the Ideas list. */
   boardId: string | null
   contentLocked: boolean
   onSaved: (ideaId: string) => void
@@ -147,14 +147,12 @@ export function IdeaForm({
     setDraft((current) => ({ ...current, fields: { ...current.fields, [fieldId]: value } }))
 
   const missingCatalogs = [
-    openBoards !== null && openBoards.length === 0 ? 'boards' : null,
     options.ideaTypes.length === 0 ? 'idea types' : null,
     options.businessImpacts.length === 0 ? 'business impacts' : null,
   ].filter((catalog) => catalog !== null)
 
   function check(): Record<string, string> {
     const found: Record<string, string> = {}
-    if (openBoards !== null && !draft.boardId) found.boardId = required('Board')
     if (!draft.title.trim()) found.title = required('Title')
     if (!draft.problem.trim()) found.problem = required('Problem')
     if (!draft.solutions.some((s) => s.trim())) {
@@ -262,7 +260,16 @@ export function IdeaForm({
       </p>
 
       {openBoards !== null ? (
-        <Field htmlFor={fid('board')} label="Board" error={errors.boardId}>
+        <Field
+          htmlFor={fid('board')}
+          label="Board"
+          hint={
+            draft.boardId === ''
+              ? 'Ideas with no board wait on the Ideas list until someone pulls them onto a board.'
+              : undefined
+          }
+          error={errors.boardId}
+        >
           <Select
             id={fid('board')}
             data-error-key="boardId"
@@ -270,7 +277,7 @@ export function IdeaForm({
             onChange={(event) => set('boardId', event.target.value)}
             aria-invalid={errors.boardId ? true : undefined}
           >
-            <option value="">Choose…</option>
+            <option value="">No board</option>
             {openBoards.map((board) => (
               <option key={board.id} value={board.id}>
                 {board.name}

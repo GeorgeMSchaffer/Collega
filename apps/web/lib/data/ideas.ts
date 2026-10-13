@@ -20,7 +20,8 @@ import type {
   WireMember,
   WirePage,
 } from '../api/wire'
-import type { IdeaDetail, IdeaFormOptions, IdeaListQuery, IdeaPage } from '../types'
+import { API_MAX_PAGE_SIZE } from '../limits'
+import type { Idea, IdeaDetail, IdeaFormOptions, IdeaListQuery, IdeaPage } from '../types'
 import { failIfRequested } from './latency'
 import { organizationScope } from './scope'
 import { getTagRefs } from './tags'
@@ -168,4 +169,25 @@ export async function getIdea(id: string): Promise<IdeaDetail | null> {
     if (isApiStatus(error, 404) || isApiStatus(error, 400)) return null
     throw error
   }
+}
+
+/**
+ * Which of a page's rows are Issues. The organization list carries no phase on its items, and Remove
+ * from board needs to know (an Issue returns to Discovery first), so this asks the same question
+ * again for the Issues alone and keeps the rows that answer. A set of more than one page of Issues
+ * under the same filters would miss some; the API refuses that detach with its own message.
+ */
+export async function getIssueIds(query: IdeaListQuery, rows: readonly Idea[]): Promise<string[]> {
+  if (rows.length === 0 || query.phase === 'Ideas') return []
+  if (query.phase === 'Issues') return rows.map((row) => row.id)
+
+  const issues = await getIdeaList({
+    ...query,
+    phase: 'Issues',
+    page: 1,
+    pageSize: API_MAX_PAGE_SIZE,
+    sortBy: null,
+  })
+  const ids = new Set(issues.ideas.map((issue) => issue.id))
+  return rows.filter((row) => ids.has(row.id)).map((row) => row.id)
 }
