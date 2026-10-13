@@ -1,0 +1,1260 @@
+<!doctype html>
+<html lang="en" data-theme="graphite">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega · Home (built from the design system)</title>
+<style>/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+@layer properties;
+@layer theme, base, components, utilities;
+@layer theme {
+  :root, :host {
+    --spacing: 0.25rem;
+    --text-xs: 0.75rem;
+    --text-xs--line-height: calc(1 / 0.75);
+    --text-sm: 0.875rem;
+    --text-sm--line-height: calc(1.25 / 0.875);
+    --text-base: 1rem;
+    --text-base--line-height: calc(1.5 / 1);
+    --text-lg: 1.125rem;
+    --text-lg--line-height: calc(1.75 / 1.125);
+    --text-xl: 1.25rem;
+    --text-xl--line-height: calc(1.75 / 1.25);
+    --text-2xl: 1.5rem;
+    --text-2xl--line-height: calc(2 / 1.5);
+    --text-3xl: 1.875rem;
+    --text-3xl--line-height: calc(2.25 / 1.875);
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    --tracking-tight: -0.025em;
+    --leading-tight: 1.25;
+    --leading-snug: 1.375;
+    --default-transition-duration: 150ms;
+    --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    --default-font-family: var(--font-body);
+    --default-mono-font-family: var(--font-code);
+  }
+}
+@layer base {
+  *, ::after, ::before, ::backdrop, ::file-selector-button {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0 solid;
+  }
+  html, :host {
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+    tab-size: 4;
+    font-family: var(--default-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
+    font-feature-settings: var(--default-font-feature-settings, normal);
+    font-variation-settings: var(--default-font-variation-settings, normal);
+    -webkit-tap-highlight-color: transparent;
+  }
+  hr {
+    height: 0;
+    color: inherit;
+    border-top-width: 1px;
+  }
+  abbr:where([title]) {
+    -webkit-text-decoration: underline dotted;
+    text-decoration: underline dotted;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+  a {
+    color: inherit;
+    -webkit-text-decoration: inherit;
+    text-decoration: inherit;
+  }
+  b, strong {
+    font-weight: bolder;
+  }
+  code, kbd, samp, pre {
+    font-family: var(--default-mono-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
+    font-feature-settings: var(--default-mono-font-feature-settings, normal);
+    font-variation-settings: var(--default-mono-font-variation-settings, normal);
+    font-size: 1em;
+  }
+  small {
+    font-size: 80%;
+  }
+  sub, sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+  }
+  sub {
+    bottom: -0.25em;
+  }
+  sup {
+    top: -0.5em;
+  }
+  table {
+    text-indent: 0;
+    border-color: inherit;
+    border-collapse: collapse;
+  }
+  :-moz-focusring:where(:not(iframe)) {
+    outline: auto;
+  }
+  progress {
+    vertical-align: baseline;
+  }
+  summary {
+    display: list-item;
+  }
+  ol, ul, menu {
+    list-style: none;
+  }
+  img, svg, video, canvas, audio, iframe, embed, object {
+    display: block;
+    vertical-align: middle;
+  }
+  img, video {
+    max-width: 100%;
+    height: auto;
+  }
+  button, input, select, optgroup, textarea, ::file-selector-button {
+    font: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    border-radius: 0;
+    background-color: transparent;
+    opacity: 1;
+  }
+  :where(select:is([multiple], [size])) optgroup {
+    font-weight: bolder;
+  }
+  :where(select:is([multiple], [size])) optgroup option {
+    padding-inline-start: 20px;
+  }
+  ::file-selector-button {
+    margin-inline-end: 4px;
+  }
+  ::placeholder {
+    opacity: 1;
+  }
+  @supports (not (-webkit-appearance: -apple-pay-button))  or (contain-intrinsic-size: 1px) {
+    ::placeholder {
+      color: currentcolor;
+      @supports (color: color-mix(in lab, red, red)) {
+        color: color-mix(in oklab, currentcolor 50%, transparent);
+      }
+    }
+  }
+  textarea {
+    resize: vertical;
+  }
+  ::-webkit-search-decoration {
+    -webkit-appearance: none;
+  }
+  ::-webkit-date-and-time-value {
+    min-height: 1lh;
+    text-align: inherit;
+  }
+  ::-webkit-datetime-edit {
+    display: inline-flex;
+  }
+  ::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+  }
+  ::-webkit-datetime-edit, ::-webkit-datetime-edit-year-field, ::-webkit-datetime-edit-month-field, ::-webkit-datetime-edit-day-field, ::-webkit-datetime-edit-hour-field, ::-webkit-datetime-edit-minute-field, ::-webkit-datetime-edit-second-field, ::-webkit-datetime-edit-millisecond-field, ::-webkit-datetime-edit-meridiem-field {
+    padding-block: 0;
+  }
+  ::-webkit-calendar-picker-indicator {
+    line-height: 1;
+  }
+  :-moz-ui-invalid {
+    box-shadow: none;
+  }
+  button, input:where([type="button"], [type="reset"], [type="submit"]), ::file-selector-button {
+    appearance: button;
+  }
+  ::-webkit-inner-spin-button, ::-webkit-outer-spin-button {
+    height: auto;
+  }
+  [hidden]:where(:not([hidden="until-found"])) {
+    display: none !important;
+  }
+}
+@layer utilities {
+  .m-0 {
+    margin: 0px;
+  }
+  .mx-auto {
+    margin-inline: auto;
+  }
+  .mt-0\.5 {
+    margin-top: calc(var(--spacing) * 0.5);
+  }
+  .mt-1 {
+    margin-top: var(--spacing);
+  }
+  .mt-1\.5 {
+    margin-top: calc(var(--spacing) * 1.5);
+  }
+  .mt-auto {
+    margin-top: auto;
+  }
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  .block {
+    display: block;
+  }
+  .flex {
+    display: flex;
+  }
+  .grid {
+    display: grid;
+  }
+  .inline-block {
+    display: inline-block;
+  }
+  .inline-flex {
+    display: inline-flex;
+  }
+  .size-2 {
+    width: calc(var(--spacing) * 2);
+    height: calc(var(--spacing) * 2);
+  }
+  .h-2 {
+    height: calc(var(--spacing) * 2);
+  }
+  .h-2\.5 {
+    height: calc(var(--spacing) * 2.5);
+  }
+  .h-\[var\(--control-h-sm\)\] {
+    height: var(--control-h-sm);
+  }
+  .h-full {
+    height: 100%;
+  }
+  .w-full {
+    width: 100%;
+  }
+  .max-w-\[1400px\] {
+    max-width: 1400px;
+  }
+  .max-w-prose {
+    max-width: 65ch;
+  }
+  .min-w-0 {
+    min-width: 0px;
+  }
+  .min-w-\[34px\] {
+    min-width: 34px;
+  }
+  .min-w-\[42px\] {
+    min-width: 42px;
+  }
+  .flex-1 {
+    flex: 1;
+  }
+  .flex-\[1_1_240px\] {
+    flex: 1 1 240px;
+  }
+  .shrink-0 {
+    flex-shrink: 0;
+  }
+  .list-none {
+    list-style-type: none;
+  }
+  .grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+  .grid-cols-\[repeat\(auto-fill\,minmax\(min\(100\%\,260px\)\,1fr\)\)\] {
+    grid-template-columns: repeat(auto-fill,minmax(min(100%, 260px),1fr));
+  }
+  .flex-col {
+    flex-direction: column;
+  }
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+  .items-baseline {
+    align-items: baseline;
+  }
+  .items-center {
+    align-items: center;
+  }
+  .items-start {
+    align-items: flex-start;
+  }
+  .justify-between {
+    justify-content: space-between;
+  }
+  .justify-center {
+    justify-content: center;
+  }
+  .gap-0\.5 {
+    gap: calc(var(--spacing) * 0.5);
+  }
+  .gap-1 {
+    gap: var(--spacing);
+  }
+  .gap-1\.5 {
+    gap: calc(var(--spacing) * 1.5);
+  }
+  .gap-2 {
+    gap: calc(var(--spacing) * 2);
+  }
+  .gap-2\.5 {
+    gap: calc(var(--spacing) * 2.5);
+  }
+  .gap-3 {
+    gap: calc(var(--spacing) * 3);
+  }
+  .gap-5 {
+    gap: calc(var(--spacing) * 5);
+  }
+  .gap-6 {
+    gap: calc(var(--spacing) * 6);
+  }
+  .gap-x-3 {
+    column-gap: calc(var(--spacing) * 3);
+  }
+  .gap-x-3\.5 {
+    column-gap: calc(var(--spacing) * 3.5);
+  }
+  .gap-y-1 {
+    row-gap: var(--spacing);
+  }
+  .gap-y-1\.5 {
+    row-gap: calc(var(--spacing) * 1.5);
+  }
+  .self-start {
+    align-self: flex-start;
+  }
+  .overflow-hidden {
+    overflow: hidden;
+  }
+  .rounded-full {
+    border-radius: calc(infinity * 1px);
+  }
+  .rounded-lg {
+    border-radius: calc(var(--radius) + 2px);
+  }
+  .rounded-md {
+    border-radius: var(--radius);
+  }
+  .rounded-sm {
+    border-radius: calc(var(--radius) - 2px);
+  }
+  .border {
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+  }
+  .border-t {
+    border-top-style: var(--tw-border-style);
+    border-top-width: 1px;
+  }
+  .border-dashed {
+    --tw-border-style: dashed;
+    border-style: dashed;
+  }
+  .border-border {
+    border-color: var(--border);
+  }
+  .border-input {
+    border-color: var(--input);
+  }
+  .border-transparent {
+    border-color: transparent;
+  }
+  .bg-\[var\(--success\)\]\/15 {
+    background-color: var(--success);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--success) 15%, transparent);
+    }
+  }
+  .bg-card {
+    background-color: var(--card);
+  }
+  .bg-muted {
+    background-color: var(--muted);
+  }
+  .bg-muted-foreground {
+    background-color: var(--muted-foreground);
+  }
+  .bg-muted\/40 {
+    background-color: var(--muted);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--muted) 40%, transparent);
+    }
+  }
+  .bg-primary {
+    background-color: var(--primary);
+  }
+  .bg-primary\/15 {
+    background-color: var(--primary);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--primary) 15%, transparent);
+    }
+  }
+  .bg-secondary {
+    background-color: var(--secondary);
+  }
+  .bg-transparent {
+    background-color: transparent;
+  }
+  .p-0 {
+    padding: 0px;
+  }
+  .p-4 {
+    padding: calc(var(--spacing) * 4);
+  }
+  .px-1\.5 {
+    padding-inline: calc(var(--spacing) * 1.5);
+  }
+  .px-2 {
+    padding-inline: calc(var(--spacing) * 2);
+  }
+  .px-2\.5 {
+    padding-inline: calc(var(--spacing) * 2.5);
+  }
+  .px-3 {
+    padding-inline: calc(var(--spacing) * 3);
+  }
+  .px-4 {
+    padding-inline: calc(var(--spacing) * 4);
+  }
+  .px-5 {
+    padding-inline: calc(var(--spacing) * 5);
+  }
+  .py-0 {
+    padding-block: 0px;
+  }
+  .py-0\.5 {
+    padding-block: calc(var(--spacing) * 0.5);
+  }
+  .py-2 {
+    padding-block: calc(var(--spacing) * 2);
+  }
+  .py-2\.5 {
+    padding-block: calc(var(--spacing) * 2.5);
+  }
+  .py-3\.5 {
+    padding-block: calc(var(--spacing) * 3.5);
+  }
+  .py-4 {
+    padding-block: calc(var(--spacing) * 4);
+  }
+  .pt-2 {
+    padding-top: calc(var(--spacing) * 2);
+  }
+  .pr-2 {
+    padding-right: calc(var(--spacing) * 2);
+  }
+  .pl-1 {
+    padding-left: var(--spacing);
+  }
+  .text-right {
+    text-align: right;
+  }
+  .font-heading {
+    font-family: var(--font-display);
+  }
+  .font-mono {
+    font-family: var(--font-code);
+  }
+  .text-3xl {
+    font-size: var(--text-3xl);
+    line-height: var(--tw-leading, var(--text-3xl--line-height));
+  }
+  .text-base {
+    font-size: var(--text-base);
+    line-height: var(--tw-leading, var(--text-base--line-height));
+  }
+  .text-sm {
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+  }
+  .text-xs {
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+  }
+  .text-\[10\.5px\] {
+    font-size: 10.5px;
+  }
+  .text-\[10px\] {
+    font-size: 10px;
+  }
+  .text-\[13px\] {
+    font-size: 13px;
+  }
+  .text-\[17px\] {
+    font-size: 17px;
+  }
+  .text-\[26px\] {
+    font-size: 26px;
+  }
+  .leading-snug {
+    --tw-leading: var(--leading-snug);
+    line-height: var(--leading-snug);
+  }
+  .leading-tight {
+    --tw-leading: var(--leading-tight);
+    line-height: var(--leading-tight);
+  }
+  .font-bold {
+    --tw-font-weight: var(--font-weight-bold);
+    font-weight: var(--font-weight-bold);
+  }
+  .font-medium {
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+  }
+  .font-semibold {
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
+  }
+  .tracking-\[0\.06em\] {
+    --tw-tracking: 0.06em;
+    letter-spacing: 0.06em;
+  }
+  .whitespace-nowrap {
+    white-space: nowrap;
+  }
+  .text-\[var\(--success\)\] {
+    color: var(--success);
+  }
+  .text-card-foreground {
+    color: var(--card-foreground);
+  }
+  .text-destructive {
+    color: var(--destructive);
+  }
+  .text-foreground {
+    color: var(--foreground);
+  }
+  .text-muted-foreground {
+    color: var(--muted-foreground);
+  }
+  .text-secondary-foreground {
+    color: var(--secondary-foreground);
+  }
+  .uppercase {
+    text-transform: uppercase;
+  }
+  .tabular-nums {
+    --tw-numeric-spacing: tabular-nums;
+    font-variant-numeric: var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,);
+  }
+  .no-underline {
+    text-decoration-line: none;
+  }
+  .shadow-none {
+    --tw-shadow: 0 0 #0000;
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+  .shadow-xs {
+    --tw-shadow: 0 1px 2px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.05));
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+  .transition-colors {
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+  }
+  .first\:border-t-0:first-child {
+    border-top-style: var(--tw-border-style);
+    border-top-width: 0px;
+  }
+  @media (hover: hover) {
+    .hover\:bg-accent:hover {
+      background-color: var(--accent);
+    }
+    .hover\:bg-muted\/40:hover {
+      background-color: var(--muted);
+    }
+    @supports (color: color-mix(in lab, red, red)) {
+      .hover\:bg-muted\/40:hover {
+        background-color: color-mix(in oklab, var(--muted) 40%, transparent);
+      }
+    }
+    .hover\:text-accent-foreground:hover {
+      color: var(--accent-foreground);
+    }
+    .hover\:underline:hover {
+      text-decoration-line: underline;
+    }
+  }
+  .focus-visible\:ring-1:focus-visible {
+    --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+  .focus-visible\:ring-ring:focus-visible {
+    --tw-ring-color: var(--ring);
+  }
+  .focus-visible\:outline-none:focus-visible {
+    --tw-outline-style: none;
+    outline-style: none;
+  }
+  .disabled\:pointer-events-none:disabled {
+    pointer-events: none;
+  }
+  .disabled\:opacity-50:disabled {
+    opacity: 50%;
+  }
+  .aria-disabled\:cursor-not-allowed[aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+  .aria-disabled\:opacity-50[aria-disabled="true"] {
+    opacity: 50%;
+  }
+  @media (width >= 380px) {
+    .min-\[380px\]\:grid-cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (width >= 900px) {
+    .min-\[900px\]\:p-6 {
+      padding: calc(var(--spacing) * 6);
+    }
+  }
+  @media (width >= 1100px) {
+    .min-\[1100px\]\:grid-cols-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .min-\[1100px\]\:grid-cols-\[minmax\(0\,3fr\)_minmax\(0\,2fr\)\] {
+      grid-template-columns: minmax(0,3fr) minmax(0,2fr);
+    }
+  }
+  @media (width >= 40rem) {
+    .sm\:px-4 {
+      padding-inline: calc(var(--spacing) * 4);
+    }
+    .sm\:text-3xl {
+      font-size: var(--text-3xl);
+      line-height: var(--tw-leading, var(--text-3xl--line-height));
+    }
+  }
+}
+:root, :root[data-theme="terrazzo"] {
+  color-scheme: light;
+  --font-display: "Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-code: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --heading-weight: 700;
+  --radius: 6px;
+  --shadow-rgb: 30 39 51;
+  --background: #F5F6F8;
+  --foreground: #1E2733;
+  --card: #FFFFFF;
+  --card-foreground: #1E2733;
+  --popover: #FFFFFF;
+  --popover-foreground: #1E2733;
+  --primary: #3D5A80;
+  --primary-hover: #324B6B;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EDF0F3;
+  --secondary-foreground: #36414F;
+  --muted: #EDF0F3;
+  --muted-foreground: #5E6978;
+  --accent: #E4EAF2;
+  --accent-foreground: #35507A;
+  --destructive: #963636;
+  --destructive-foreground: #FFFFFF;
+  --warning: #7F5A12;
+  --warning-foreground: #7F5A12;
+  --success: #3F6B2E;
+  --suggest: #3F6B2E;
+  --suggest-tint: #E6F2DF;
+  --metric: var(--primary);
+  --field: var(--card);
+  --suggest-line: var(--suggest);
+  --border: #E3E6EB;
+  --input: #CDD2DA;
+  --ring: #3D5A80;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #36414F;
+  --sidebar-primary: #3D5A80;
+  --sidebar-accent: #E4EAF2;
+  --sidebar-accent-foreground: #1E2733;
+  --sidebar-border: #E3E6EB;
+}
+:root[data-theme="portico"] {
+  color-scheme: light;
+  --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Figtree", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-code: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --heading-weight: 600;
+  --radius: 10px;
+  --shadow-rgb: 22 41 46;
+  --background: #F1F5F5;
+  --foreground: #16292E;
+  --card: #FFFFFF;
+  --card-foreground: #16292E;
+  --popover: #FFFFFF;
+  --popover-foreground: #16292E;
+  --primary: #1F6A80;
+  --primary-hover: #185769;
+  --primary-foreground: #FFFFFF;
+  --secondary: #E8EFF0;
+  --secondary-foreground: #2C4247;
+  --muted: #E8EFF0;
+  --muted-foreground: #56696D;
+  --accent: #E1EEF1;
+  --accent-foreground: #1B5F73;
+  --destructive: #963B28;
+  --destructive-foreground: #FFFFFF;
+  --warning: #8E4A1F;
+  --warning-foreground: #8E4A1F;
+  --success: #3B6E51;
+  --suggest: #3B6E51;
+  --suggest-tint: #E3EEE7;
+  --metric: var(--primary);
+  --field: var(--card);
+  --suggest-line: var(--suggest);
+  --border: #DDE6E7;
+  --input: #C6D3D5;
+  --ring: #1F6A80;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #2C4247;
+  --sidebar-primary: #1F6A80;
+  --sidebar-accent: #E1EEF1;
+  --sidebar-accent-foreground: #16292E;
+  --sidebar-border: #DDE6E7;
+}
+:root[data-theme="sera"] {
+  color-scheme: light;
+  --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "DM Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-code: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --heading-weight: 700;
+  --radius: 10px;
+  --shadow-rgb: 28 34 54;
+  --background: #F3F4F7;
+  --foreground: #1C2236;
+  --card: #FFFFFF;
+  --card-foreground: #1C2236;
+  --popover: #FFFFFF;
+  --popover-foreground: #1C2236;
+  --primary: #3450A8;
+  --primary-hover: #2A4290;
+  --primary-foreground: #FFFFFF;
+  --secondary: #ECEEF3;
+  --secondary-foreground: #343B52;
+  --muted: #ECEEF3;
+  --muted-foreground: #5C6378;
+  --accent: #E6EAF6;
+  --accent-foreground: #2E4799;
+  --destructive: #94402D;
+  --destructive-foreground: #FFFFFF;
+  --warning: #83590C;
+  --warning-foreground: #83590C;
+  --success: #2E6E4C;
+  --suggest: #2E6E4C;
+  --suggest-tint: #E1EFE7;
+  --metric: var(--primary);
+  --field: var(--card);
+  --suggest-line: var(--suggest);
+  --border: #E2E4EC;
+  --input: #CCD0DC;
+  --ring: #3450A8;
+  --sidebar: #1F2540;
+  --sidebar-foreground: #CDD1E3;
+  --sidebar-primary: #3450A8;
+  --sidebar-accent: #2E3760;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #2D3454;
+}
+:root[data-theme="lagoon"] {
+  color-scheme: light;
+  --font-display: "Lexend", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Nunito Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-code: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --heading-weight: 600;
+  --radius: 12px;
+  --shadow-rgb: 19 48 43;
+  --background: #F3F4EF;
+  --foreground: #13302B;
+  --card: #FFFFFF;
+  --card-foreground: #13302B;
+  --popover: #FFFFFF;
+  --popover-foreground: #13302B;
+  --primary: #0E6B5C;
+  --primary-hover: #0A5649;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EAEFEA;
+  --secondary-foreground: #2A4640;
+  --muted: #EAEFEA;
+  --muted-foreground: #5A6B66;
+  --accent: #DCEFEA;
+  --accent-foreground: #0C6154;
+  --destructive: #9E3322;
+  --destructive-foreground: #FFFFFF;
+  --warning: #7A5410;
+  --warning-foreground: #7A5410;
+  --success: #2F6B3F;
+  --suggest: #2F5F9E;
+  --suggest-tint: #E3ECF8;
+  --metric: var(--primary);
+  --field: var(--card);
+  --suggest-line: var(--suggest);
+  --border: #E1E5DF;
+  --input: #CBD3CB;
+  --ring: #0E6B5C;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #2A4640;
+  --sidebar-primary: #0E6B5C;
+  --sidebar-accent: #DCEFEA;
+  --sidebar-accent-foreground: #13302B;
+  --sidebar-border: #E1E5DF;
+}
+:root[data-theme="graphite"] {
+  color-scheme: dark;
+  --font-display: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-code: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --heading-weight: 600;
+  --radius: 6px;
+  --shadow-rgb: 0 0 0;
+  --background: #0F1113;
+  --foreground: #E6E8EA;
+  --card: #16191C;
+  --card-foreground: #E6E8EA;
+  --popover: #16191C;
+  --popover-foreground: #E6E8EA;
+  --primary: #F5A524;
+  --primary-hover: #FFC35C;
+  --primary-foreground: #16120A;
+  --secondary: #1C2024;
+  --secondary-foreground: #C4CAD0;
+  --muted: #1C2024;
+  --muted-foreground: #9BA3AB;
+  --accent: #2A2418;
+  --accent-foreground: #F5A524;
+  --destructive: #FF8A8E;
+  --destructive-foreground: #0F1113;
+  --warning: #F5B456;
+  --warning-foreground: #F5B456;
+  --success: #58C781;
+  --suggest: #5CC8E0;
+  --suggest-tint: #0F1D21;
+  --suggest-line: #2E6A78;
+  --metric: #5CC8E0;
+  --field: #0F1113;
+  --border: #22272C;
+  --input: #2C3238;
+  --ring: #F5A524;
+  --sidebar: #121518;
+  --sidebar-foreground: #AEB5BC;
+  --sidebar-primary: #F5A524;
+  --sidebar-accent: #1C2024;
+  --sidebar-accent-foreground: #E6E8EA;
+  --sidebar-border: #22272C;
+}
+:root {
+  --control-h: 2rem;
+  --control-h-sm: 1.75rem;
+  --control-h-lg: 2.25rem;
+  --control-px: 0.75rem;
+  --field-h: 2.125rem;
+  --label-size: 0.75rem;
+  --drawer: clamp(380px, 28vw, 520px);
+  --drawer-wide: clamp(720px, 62vw, 1100px);
+  --sky: #5B7FA3;
+  --teal: #5F9E93;
+  --green: #6FAF7A;
+  --orange: #C9A65C;
+  --pink: #C97A7A;
+  --purple: #9A8AC4;
+  --purple-deep: #5B4F86;
+  --brown: #8A6D2E;
+  --orange-deep: var(--warning-foreground);
+  --teal-brand: var(--suggest);
+  --sug: var(--suggest);
+  --sug-soft: var(--suggest-tint);
+  --ink: var(--foreground);
+  --ink-secondary: var(--secondary-foreground);
+  --ink-muted: var(--muted-foreground);
+  --ink-faint: var(--muted-foreground);
+  --hairline: var(--border);
+  --canvas: var(--card);
+  --canvas-soft: var(--muted);
+  --surface: var(--card);
+  --primary-active: var(--primary-hover);
+  --on-primary: var(--primary-foreground);
+  --s-xxs: 4px;
+  --s-xs: 8px;
+  --s-sm: 12px;
+  --s-md: 16px;
+  --s-lg: 24px;
+  --s-xl: 28px;
+  --s-xxl: 32px;
+  --r-xs: calc(var(--radius) - 2px);
+  --r-sm: var(--radius);
+  --r-md: var(--radius);
+  --r-lg: calc(var(--radius) + 2px);
+  --r-xl: calc(var(--radius) + 6px);
+  --r-full: 9999px;
+  --e1: 0 1px 2px rgb(var(--shadow-rgb) / .06);
+  --e2: 0 8px 24px rgb(var(--shadow-rgb) / .14);
+  --font: var(--font-body);
+}
+@media (max-width: 900px) {
+  :root {
+    --drawer: 100vw;
+    --drawer-wide: 100vw;
+  }
+}
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html, body {
+    margin: 0;
+  }
+  body {
+    background-color: var(--background);
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: var(--heading-weight);
+  }
+  h1 {
+    font-size: var(--text-2xl);
+    line-height: var(--tw-leading, var(--text-2xl--line-height));
+    --tw-tracking: var(--tracking-tight);
+    letter-spacing: var(--tracking-tight);
+  }
+  h2 {
+    font-size: var(--text-xl);
+    line-height: var(--tw-leading, var(--text-xl--line-height));
+    --tw-tracking: var(--tracking-tight);
+    letter-spacing: var(--tracking-tight);
+  }
+  h3 {
+    font-size: var(--text-lg);
+    line-height: var(--tw-leading, var(--text-lg--line-height));
+    --tw-tracking: var(--tracking-tight);
+    letter-spacing: var(--tracking-tight);
+  }
+  p {
+    margin: 0px;
+    margin-bottom: calc(var(--spacing) * 4);
+  }
+  a {
+    color: var(--primary);
+    text-decoration-line: none;
+    &:hover {
+      @media (hover: hover) {
+        text-decoration-line: underline;
+      }
+    }
+  }
+  input[type=text], input[type=password], input[type=search], input[type=email], input[type=url], input[type=tel], input[type=number], input[type=date], input[type=file], textarea, select {
+    display: flex;
+    height: var(--field-h);
+    width: 100%;
+    border-radius: var(--radius);
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+    border-color: var(--input);
+    background-color: var(--field);
+    padding-inline: calc(var(--spacing) * 2.5);
+    padding-block: 7px;
+    font-size: 13px;
+    --tw-leading: 1.45;
+    line-height: 1.45;
+    --tw-shadow: 0 1px 2px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.05));
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    &::placeholder {
+      color: var(--muted-foreground);
+    }
+    &:focus-visible {
+      --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+    &:focus-visible {
+      --tw-ring-color: var(--ring);
+    }
+    &:focus-visible {
+      --tw-outline-style: none;
+      outline-style: none;
+    }
+  }
+  textarea {
+    height: auto;
+    min-height: calc(var(--spacing) * 16);
+    resize: vertical;
+  }
+  :is(input, textarea, select)[aria-invalid=true] {
+    border-color: var(--destructive);
+    &:focus-visible {
+      --tw-ring-color: var(--destructive);
+    }
+  }
+  input[type=file] {
+    padding-block: calc(var(--spacing) * 1.5);
+    &::file-selector-button {
+      margin-right: calc(var(--spacing) * 3);
+    }
+    &::file-selector-button {
+      border-radius: calc(var(--radius) - 2px);
+    }
+    &::file-selector-button {
+      border-style: var(--tw-border-style);
+      border-width: 0px;
+    }
+    &::file-selector-button {
+      background-color: var(--secondary);
+    }
+    &::file-selector-button {
+      padding-inline: calc(var(--spacing) * 2);
+    }
+    &::file-selector-button {
+      padding-block: calc(var(--spacing) * 0.5);
+    }
+    &::file-selector-button {
+      font-size: var(--text-xs);
+      line-height: var(--tw-leading, var(--text-xs--line-height));
+    }
+    &::file-selector-button {
+      --tw-font-weight: var(--font-weight-medium);
+      font-weight: var(--font-weight-medium);
+    }
+  }
+  input[type=checkbox], input[type=radio] {
+    width: calc(var(--spacing) * 4);
+    height: calc(var(--spacing) * 4);
+    accent-color: var(--primary);
+  }
+  label {
+    margin-bottom: calc(var(--spacing) * 1.5);
+    display: block;
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    --tw-leading: 1;
+    line-height: 1;
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+  }
+  table {
+    width: 100%;
+    caption-side: bottom;
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+  }
+  thead th {
+    height: calc(var(--spacing) * 10);
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 1px;
+    background-color: var(--muted);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--muted) 40%, transparent);
+    }
+    padding-inline: calc(var(--spacing) * 3);
+    text-align: left;
+    vertical-align: middle;
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+    color: var(--muted-foreground);
+  }
+  tbody td {
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 1px;
+    padding-inline: calc(var(--spacing) * 3);
+    padding-block: calc(var(--spacing) * 2.5);
+    vertical-align: middle;
+  }
+  tbody tr:last-child td {
+    border-style: var(--tw-border-style);
+    border-width: 0px;
+  }
+  tbody tr:hover td {
+    background-color: var(--muted);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--muted) 50%, transparent);
+    }
+  }
+  tfoot td {
+    border-top-style: var(--tw-border-style);
+    border-top-width: 2px;
+    background-color: var(--muted);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--muted) 40%, transparent);
+    }
+    padding-inline: calc(var(--spacing) * 3);
+    padding-block: calc(var(--spacing) * 2);
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+  }
+  button {
+    font-family: inherit;
+  }
+  code {
+    border-radius: 0.25rem;
+    background-color: var(--muted);
+    padding-inline: var(--spacing);
+    padding-block: calc(var(--spacing) * 0.5);
+    font-family: var(--font-code);
+    font-size: 0.85em;
+  }
+}
+@property --tw-border-style {
+  syntax: "*";
+  inherits: false;
+  initial-value: solid;
+}
+@property --tw-leading {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-font-weight {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-tracking {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-ordinal {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-slashed-zero {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-numeric-figure {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-numeric-spacing {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-numeric-fraction {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-shadow-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-shadow-alpha {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-inset-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-shadow-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-inset-shadow-alpha {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-ring-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-ring-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-ring-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-inset-ring-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-ring-inset {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-ring-offset-width {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --tw-ring-offset-color {
+  syntax: "*";
+  inherits: false;
+  initial-value: #fff;
+}
+@property --tw-ring-offset-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@layer properties {
+  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
+    *, ::before, ::after, ::backdrop {
+      --tw-border-style: solid;
+      --tw-leading: initial;
+      --tw-font-weight: initial;
+      --tw-tracking: initial;
+      --tw-ordinal: initial;
+      --tw-slashed-zero: initial;
+      --tw-numeric-figure: initial;
+      --tw-numeric-spacing: initial;
+      --tw-numeric-fraction: initial;
+      --tw-shadow: 0 0 #0000;
+      --tw-shadow-color: initial;
+      --tw-shadow-alpha: 100%;
+      --tw-inset-shadow: 0 0 #0000;
+      --tw-inset-shadow-color: initial;
+      --tw-inset-shadow-alpha: 100%;
+      --tw-ring-color: initial;
+      --tw-ring-shadow: 0 0 #0000;
+      --tw-inset-ring-color: initial;
+      --tw-inset-ring-shadow: 0 0 #0000;
+      --tw-ring-inset: initial;
+      --tw-ring-offset-width: 0px;
+      --tw-ring-offset-color: #fff;
+      --tw-ring-offset-shadow: 0 0 #0000;
+    }
+  }
+}
+</style>
+</head>
+<body class="bg-background text-foreground">
+<!-- Generated by SPEC/mockups/_build/build_r_home.mjs from @collega/design-system. Do not edit. -->
+<div class="border-b bg-muted/40 px-4 py-2 text-xs text-muted-foreground">Comp R · Home, drawn with the real design-system components. Illustrative data. Theme: <select id="theme" aria-label="Theme"></select></div>
+<div class="mx-auto flex max-w-[1400px] flex-col gap-5 p-4 min-[900px]:p-6"><header><h1 class="m-0 font-heading text-3xl font-semibold">Good to see you, Alex.</h1><p class="m-0 mt-1 max-w-prose text-muted-foreground">Here’s what needs you today. Acme Robotics has 41 ideas across 2 boards and 1 delivery issue — press <span class="rounded-sm border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">Ctrl K</span> to jump straight to any of them.</p></header><ul aria-label="Your numbers" class="m-0 grid list-none grid-cols-1 gap-3 p-0 min-[380px]:grid-cols-2 min-[1100px]:grid-cols-4"><li><div class="rounded-lg border border-border bg-card text-card-foreground shadow-xs h-full"><div class="px-5 py-4 flex h-full flex-col gap-0.5"><span class="font-mono font-medium text-muted-foreground text-[10.5px] uppercase tracking-[0.06em]">Assigned to me</span><span class="self-start font-heading text-[26px] leading-tight font-semibold tabular-nums sm:text-3xl">3</span><span class="text-sm font-semibold text-destructive">1 critical</span><p class="m-0 mt-1.5 text-xs text-muted-foreground">Every idea with your name in Assigned, whatever its status.</p></div></div></li><li><div class="rounded-lg border border-border bg-card text-card-foreground shadow-xs h-full"><div class="px-5 py-4 flex h-full flex-col gap-0.5"><span class="font-mono font-medium text-muted-foreground text-[10.5px] uppercase tracking-[0.06em]">Critical &amp; high</span><span class="self-start font-heading text-[26px] leading-tight font-semibold tabular-nums sm:text-3xl">7</span><span class="text-sm text-muted-foreground">still on a board</span><p class="m-0 mt-1.5 text-xs text-muted-foreground">Critical or high-priority ideas not yet complete.</p></div></div></li><li><div class="rounded-lg border border-border bg-card text-card-foreground shadow-xs h-full"><div class="px-5 py-4 flex h-full flex-col gap-0.5"><span class="font-mono font-medium text-muted-foreground text-[10.5px] uppercase tracking-[0.06em]">You created</span><span class="self-start font-heading text-[26px] leading-tight font-semibold tabular-nums sm:text-3xl">12</span><span class="text-sm text-muted-foreground">ideas</span><p class="m-0 mt-1.5 text-xs text-muted-foreground">Ideas you submitted, whatever their status.</p></div></div></li><li><div class="rounded-lg border border-border text-card-foreground h-full border-dashed bg-transparent shadow-none"><div class="px-5 py-4 flex h-full flex-col gap-0.5"><span class="font-mono font-medium text-muted-foreground text-[10.5px] uppercase tracking-[0.06em]">Not tracked yet</span><span class="self-start font-heading text-[26px] leading-tight font-semibold tabular-nums sm:text-3xl">—</span><span class="text-sm text-muted-foreground">Open ideas · Awaiting review · Completed 30d</span><p class="m-0 mt-1.5 text-xs text-muted-foreground">Needs status categories and status-change times.</p></div></div></li></ul><div class="grid items-start gap-6 min-[1100px]:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]"><div class="flex min-w-0 flex-col gap-6"><section aria-labelledby="home-attention" class="flex min-w-0 flex-col gap-2.5"><div class="flex items-start gap-2.5"><div class="min-w-0 flex-1"><h2 id="home-attention" class="m-0 flex items-center gap-2 text-[17px] leading-snug font-semibold">Needs your attention</h2><p class="m-0 mt-0.5 max-w-prose text-sm text-muted-foreground">Critical and high-priority ideas still on a board, oldest first — the longer one waits, the more it needs a decision.</p></div></div><div class="overflow-hidden rounded-lg border bg-card"><ul class="m-0 list-none p-0"><li class="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t px-3 py-2.5 first:border-t-0 hover:bg-muted/40 sm:px-4"><span class="min-w-0 flex-[1_1_240px]"><a href="#" class="text-foreground no-underline hover:underline font-semibold">Warranty claims stall at triage</a><span class="block text-xs text-muted-foreground">Opportunities · Process</span></span><span class="flex flex-wrap items-center gap-3"><span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--orange)" aria-hidden="true"></span>In Review</span><span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--destructive)" aria-hidden="true"></span>Critical</span><span class="min-w-[34px] text-right font-mono text-xs text-muted-foreground">9d</span></span></li><li class="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t px-3 py-2.5 first:border-t-0 hover:bg-muted/40 sm:px-4"><span class="min-w-0 flex-[1_1_240px]"><a href="#" class="text-foreground no-underline hover:underline font-semibold">Field units lose pairing after update</a><span class="block text-xs text-muted-foreground">Ideas · Defect</span></span><span class="flex flex-wrap items-center gap-3"><span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--sky)" aria-hidden="true"></span>New / Pending</span><span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--destructive)" aria-hidden="true"></span>Critical</span><span class="min-w-[34px] text-right font-mono text-xs text-muted-foreground">6d</span></span></li><li class="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t px-3 py-2.5 first:border-t-0 hover:bg-muted/40 sm:px-4"><span class="min-w-0 flex-[1_1_240px]"><a href="#" class="text-foreground no-underline hover:underline font-semibold">Parts lookup is too slow on tablets</a><span class="block text-xs text-muted-foreground">Opportunities · Improvement</span></span><span class="flex flex-wrap items-center gap-3"><span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--primary)" aria-hidden="true"></span>In Progress</span><span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--orange)" aria-hidden="true"></span>High</span><span class="min-w-[34px] text-right font-mono text-xs text-muted-foreground">4d</span></span></li></ul><div class="border-t bg-muted/40 px-4 py-2 text-sm"><a href="#">View all 7</a></div></div></section><section aria-labelledby="home-boards" class="flex min-w-0 flex-col gap-2.5"><div class="flex items-start gap-2.5"><div class="min-w-0 flex-1"><h2 id="home-boards" class="m-0 flex items-center gap-2 text-[17px] leading-snug font-semibold">Your boards</h2><p class="m-0 mt-0.5 max-w-prose text-sm text-muted-foreground">Ideas on each board by lane, left to right in lane order.</p></div><a href="#" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 border border-input bg-card shadow-xs hover:bg-accent hover:text-accent-foreground h-[var(--control-h-sm)] rounded-md px-2.5 text-xs">Manage boards</a></div><div class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,260px),1fr))] gap-3"><div class="rounded-lg border border-border bg-card text-card-foreground shadow-xs flex flex-col gap-2.5 px-4 py-3.5"><h3 class="m-0 text-base font-semibold"><a href="#" class="text-foreground no-underline hover:underline">Opportunities</a></h3><p class="m-0 line-clamp-2 text-sm text-muted-foreground">Customer-facing ideas that could grow revenue.</p><div class="flex h-2 overflow-hidden rounded-full bg-muted" role="img" aria-label="Opportunities ideas by lane"><span style="flex:6;background:var(--sky)"></span><span style="flex:5;background:var(--orange)"></span><span style="flex:4;background:var(--primary)"></span><span style="flex:2;background:var(--violet, #7c3aed)"></span><span style="flex:3;background:var(--success)"></span></div><div class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground"><span class="inline-flex items-center gap-1"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--sky)" aria-hidden="true"></span>New / Pending 6</span><span class="inline-flex items-center gap-1"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--orange)" aria-hidden="true"></span>In Review 5</span><span class="inline-flex items-center gap-1"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--primary)" aria-hidden="true"></span>In Progress 4</span><span class="inline-flex items-center gap-1"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--violet, #7c3aed)" aria-hidden="true"></span>Client Review 2</span><span class="inline-flex items-center gap-1"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--success)" aria-hidden="true"></span>Complete 3</span></div><div class="mt-auto flex justify-between gap-2 border-t pt-2 text-xs text-muted-foreground tabular-nums"><span>20 ideas</span><span>6 tags</span></div></div><div class="rounded-lg border border-border bg-card text-card-foreground shadow-xs flex flex-col gap-2.5 px-4 py-3.5"><h3 class="m-0 text-base font-semibold"><a href="#" class="text-foreground no-underline hover:underline">Ideas</a></h3><p class="m-0 line-clamp-2 text-sm text-muted-foreground">Anything the floor wants looked at.</p><div class="flex h-2 overflow-hidden rounded-full bg-muted" role="img" aria-label="Ideas ideas by lane"><span style="flex:9;background:var(--sky)"></span><span style="flex:4;background:var(--orange)"></span><span style="flex:3;background:var(--primary)"></span><span style="flex:1;background:var(--violet, #7c3aed)"></span><span style="flex:4;background:var(--success)"></span></div><div class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground"><span class="inline-flex items-center gap-1"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--sky)" aria-hidden="true"></span>New / Pending 9</span><span class="inline-flex items-center gap-1"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--orange)" aria-hidden="true"></span>In Review 4</span><span class="inline-flex items-center gap-1"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--primary)" aria-hidden="true"></span>In Progress 3</span><span class="inline-flex items-center gap-1"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--violet, #7c3aed)" aria-hidden="true"></span>Client Review 1</span><span class="inline-flex items-center gap-1"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--success)" aria-hidden="true"></span>Complete 4</span></div><div class="mt-auto flex justify-between gap-2 border-t pt-2 text-xs text-muted-foreground tabular-nums"><span>21 ideas</span><span>6 tags</span></div></div></div></section><section aria-labelledby="home-activity" class="flex min-w-0 flex-col gap-2.5"><div class="flex items-start gap-2.5"><div class="min-w-0 flex-1"><h2 id="home-activity" class="m-0 flex items-center gap-2 text-[17px] leading-snug font-semibold">Recent activity</h2><p class="m-0 mt-0.5 max-w-prose text-sm text-muted-foreground">What changed on boards you can see, newest first.</p></div></div><p class="m-0 rounded-lg border border-dashed px-4 py-3.5 text-sm text-muted-foreground">Not available yet. Moves, comments and edits will be listed here once the activity feed is switched on.</p></section></div><div class="flex min-w-0 flex-col gap-6"><section aria-labelledby="home-unread" class="flex min-w-0 flex-col gap-2.5"><div class="flex items-start gap-2.5"><div class="min-w-0 flex-1"><h2 id="home-unread" class="m-0 flex items-center gap-2 text-[17px] leading-snug font-semibold">Unread notifications <span class="font-mono text-xs font-medium text-muted-foreground">7</span></h2><p class="m-0 mt-0.5 max-w-prose text-sm text-muted-foreground">Mentions and activity on ideas you follow, newest first.</p></div></div><div class="overflow-hidden rounded-lg border bg-card"><ul class="m-0 list-none p-0"><li class="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t px-3 py-2.5 first:border-t-0 hover:bg-muted/40 sm:px-4"><span class="min-w-0 flex-[1_1_240px]"><a href="#" class="text-foreground no-underline hover:underline font-bold">Remote fault diagnostics for field units</a><span class="block text-xs text-muted-foreground">Priya Nair mentioned you in a comment on this · Opportunities</span></span><time class="text-xs text-muted-foreground">12m</time></li><li class="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t px-3 py-2.5 first:border-t-0 hover:bg-muted/40 sm:px-4"><span class="min-w-0 flex-[1_1_240px]"><a href="#" class="text-foreground no-underline hover:underline font-bold">Customer-visible repair status</a><span class="block text-xs text-muted-foreground">Sam Okafor moved this to <b class="font-semibold">Client Review</b> · Opportunities</span></span><time class="text-xs text-muted-foreground">2h</time></li><li class="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t px-3 py-2.5 first:border-t-0 hover:bg-muted/40 sm:px-4"><span class="min-w-0 flex-[1_1_240px]"><a href="#" class="text-foreground no-underline hover:underline font-bold">Torque audit on every tenth unit</a><span class="block text-xs text-muted-foreground">Lena Fischer commented on this · Ideas</span></span><time class="text-xs text-muted-foreground">5h</time></li><li class="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t px-3 py-2.5 first:border-t-0 hover:bg-muted/40 sm:px-4"><span class="min-w-0 flex-[1_1_240px]"><a href="#" class="text-foreground no-underline hover:underline font-bold">Offline service manuals on the tablet</a><span class="block text-xs text-muted-foreground">Priya Nair edited this · Opportunities</span></span><time class="text-xs text-muted-foreground">1d</time></li></ul><div class="border-t bg-muted/40 px-4 py-2 text-sm"><a href="#">Open inbox</a></div></div></section><section aria-labelledby="home-assigned" class="flex min-w-0 flex-col gap-2.5"><div class="flex items-start gap-2.5"><div class="min-w-0 flex-1"><h2 id="home-assigned" class="m-0 flex items-center gap-2 text-[17px] leading-snug font-semibold">Assigned to me <span class="font-mono text-xs font-medium text-muted-foreground">3</span></h2><p class="m-0 mt-0.5 max-w-prose text-sm text-muted-foreground">Highest priority first.</p></div></div><div class="overflow-hidden rounded-lg border bg-card"><ul class="m-0 list-none p-0"><li class="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t px-3 py-2.5 first:border-t-0 hover:bg-muted/40 sm:px-4"><span class="min-w-0 flex-[1_1_240px]"><a href="#" class="text-foreground no-underline hover:underline font-semibold">Warranty claims stall at triage</a><span class="block text-xs text-muted-foreground">Opportunities</span></span><span class="flex flex-wrap items-center gap-3"><span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--orange)" aria-hidden="true"></span>In Review</span><span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--destructive)" aria-hidden="true"></span>Critical</span></span></li><li class="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t px-3 py-2.5 first:border-t-0 hover:bg-muted/40 sm:px-4"><span class="min-w-0 flex-[1_1_240px]"><a href="#" class="text-foreground no-underline hover:underline font-semibold">Parts lookup is too slow on tablets</a><span class="block text-xs text-muted-foreground">Opportunities</span></span><span class="flex flex-wrap items-center gap-3"><span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--primary)" aria-hidden="true"></span>In Progress</span><span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--orange)" aria-hidden="true"></span>High</span></span></li><li class="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t px-3 py-2.5 first:border-t-0 hover:bg-muted/40 sm:px-4"><span class="min-w-0 flex-[1_1_240px]"><a href="#" class="text-foreground no-underline hover:underline font-semibold">Torque audit on every tenth unit</a><span class="block text-xs text-muted-foreground">Ideas</span></span><span class="flex flex-wrap items-center gap-3"><span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--success)" aria-hidden="true"></span>Complete</span><span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--sky)" aria-hidden="true"></span>Medium</span></span></li></ul><div class="border-t bg-muted/40 px-4 py-2 text-sm"><a href="#">View all 3</a></div></div></section><section aria-labelledby="home-sprint" class="flex min-w-0 flex-col gap-2.5"><div class="flex items-start gap-2.5"><div class="min-w-0 flex-1"><h2 id="home-sprint" class="m-0 flex items-center gap-2 text-[17px] leading-snug font-semibold">Current sprint</h2></div></div><div class="rounded-lg border border-border bg-card text-card-foreground shadow-xs flex flex-col gap-2.5 px-4 py-3.5"><div class="flex flex-wrap items-baseline justify-between gap-2"><b class="font-heading text-base">Sprint 14</b><span class="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium whitespace-nowrap border-transparent bg-[var(--success)]/15 text-[var(--success)]">Active</span></div><span class="font-mono text-xs text-muted-foreground">22 Sep – 5 Oct</span><p class="m-0 text-sm">Ship the repair-status portal to the first three customers.</p><span aria-hidden="true" class="block h-2.5 w-full overflow-hidden rounded-full border bg-muted"><span class="block h-full rounded-full bg-primary" style="width:55%"></span></span><div class="flex flex-wrap justify-between gap-1 text-sm"><span><b>6</b> of 11 issues done</span><a href="#" class="text-muted-foreground">14 in the backlog</a></div><div><a href="#" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 border border-input bg-card shadow-xs hover:bg-accent hover:text-accent-foreground h-[var(--control-h-sm)] rounded-md px-2.5 text-xs">Open sprint board</a></div></div></section><section aria-labelledby="home-voted" class="flex min-w-0 flex-col gap-2.5"><div class="flex items-start gap-2.5"><div class="min-w-0 flex-1"><h2 id="home-voted" class="m-0 flex items-center gap-2 text-[17px] leading-snug font-semibold">Most upvoted</h2><p class="m-0 mt-0.5 max-w-prose text-sm text-muted-foreground">Ideas on a board with the most upvotes.</p></div></div><div class="overflow-hidden rounded-lg border bg-card"><ul class="m-0 list-none p-0"><li class="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t px-3 py-2.5 first:border-t-0 hover:bg-muted/40 sm:px-4"><span class="min-w-0 flex-[1_1_240px]"><a href="#" class="text-foreground no-underline hover:underline font-semibold">Customer-visible repair status</a><span class="block text-xs text-muted-foreground">Opportunities</span></span><span class="flex flex-wrap items-center gap-3"><span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--violet, #7c3aed)" aria-hidden="true"></span>Client Review</span><span class="inline-flex min-w-[42px] items-center gap-0.5 rounded-full py-0 pr-2 pl-1 text-xs font-semibold bg-primary/15 text-foreground" title="You upvoted this">▲9</span></span></li><li class="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t px-3 py-2.5 first:border-t-0 hover:bg-muted/40 sm:px-4"><span class="min-w-0 flex-[1_1_240px]"><a href="#" class="text-foreground no-underline hover:underline font-semibold">Remote fault diagnostics for field units</a><span class="block text-xs text-muted-foreground">Opportunities</span></span><span class="flex flex-wrap items-center gap-3"><span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--orange)" aria-hidden="true"></span>In Review</span><span class="inline-flex min-w-[42px] items-center gap-0.5 rounded-full py-0 pr-2 pl-1 text-xs font-semibold bg-primary/15 text-foreground" title="You upvoted this">▲7</span></span></li><li class="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t px-3 py-2.5 first:border-t-0 hover:bg-muted/40 sm:px-4"><span class="min-w-0 flex-[1_1_240px]"><a href="#" class="text-foreground no-underline hover:underline font-semibold">Offline service manuals on the tablet</a><span class="block text-xs text-muted-foreground">Opportunities</span></span><span class="flex flex-wrap items-center gap-3"><span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"><span class="inline-block size-2 shrink-0 rounded-full bg-muted-foreground" style="background:var(--sky)" aria-hidden="true"></span>New / Pending</span><span class="inline-flex min-w-[42px] items-center gap-0.5 rounded-full py-0 pr-2 pl-1 text-xs font-semibold bg-muted text-foreground" title="Upvotes">▲4</span></span></li></ul></div></section></div></div></div>
+<script>
+const themes = ["terrazzo","portico","sera","lagoon","graphite"];
+const pick = document.getElementById('theme');
+for (const t of themes) pick.add(new Option(t, t, false, t === 'graphite'));
+pick.onchange = () => { document.documentElement.dataset.theme = pick.value };
+</script>
+</body>
+</html>
