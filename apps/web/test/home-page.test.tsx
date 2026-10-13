@@ -20,6 +20,8 @@ import { actAs } from './support/acting-role'
  * The readers are the boundary and are replaced by what `home-reads.test.ts` proves they return.
  */
 const readers = vi.hoisted(() => ({
+  getInbox: vi.fn(),
+  getUnreadCount: vi.fn(),
   getOrganizationHome: vi.fn(),
   getPlatformHome: vi.fn(),
 }))
@@ -199,6 +201,10 @@ const panel = (name: string) => screen.getByRole('region', { name })
 beforeEach(() => {
   readers.getOrganizationHome.mockReset().mockResolvedValue(orgHome())
   readers.getPlatformHome.mockReset().mockResolvedValue(platformHome)
+  readers.getInbox
+    .mockReset()
+    .mockResolvedValue({ items: [], page: 1, pageSize: 50, totalCount: 0 })
+  readers.getUnreadCount.mockReset().mockResolvedValue(0)
   localStorage.clear()
 })
 
