@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="en" data-proto-theme="graphite">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Comp R: pulling existing items onto a board, and ideas with no board (slice 182, 2026-10-13). A throwaway review
+     comp for SPEC/20-feature-board-pull-in.md, in comp R's look: the five themes copied from comp-r-home-dashboard.html,
+     Graphite by default. Self-contained; open in a browser. Sample Acme Robotics data is inlined; nothing saves. -->
+<title>Collega Board Pull-in Comp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&family=Figtree:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Sans:wght@400;500;600;700&family=Lexend:wght@500;600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=Schibsted+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Theme tokens: copied verbatim from comp-r-portico-prototype.html, so the two comps stay one palette. */
+:root,:root[data-proto-theme="portico"]{--suggest:#3B6E51;--suggest-tint:#E3EEE7;color-scheme:light;
+--bg:#F1F5F5;--ink:#16292E;--ink2:#2C4247;--muted:#56696D;--line:#DDE6E7;--line2:#C6D3D5;--card:#FFFFFF;--soft:#E8EFF0;--rowh:#F6FAFA;--thead:#F7FAFA;--facts:#F6FAFA;
+--pri:#1F6A80;--pri-h:#185769;--pri-t:#1B5F73;--pri-tint:#E1EEF1;--pri-ink:#FFFFFF;--vote:#F2B28A;--vote-ink:#16292E;
+--hot:#B64A34;--hot-t:#963B28;--hot-tint:#F6E1DB;--ok-t:#3B6E51;--ok-tint:#E3EEE7;--warn-t:#8E4A1F;--warn-tint:#FCEBDF;
+--side:#FFFFFF;--side-ink:#2C4247;--side-line:#DDE6E7;--side-hover:#EEF4F4;--side-on:#E1EEF1;--side-on-ink:#16292E;--bar:#16292E;--bar-ink:#E3EEF0;
+--tag:#E1EEF1;--tag-ink:#1B5566;--av1:#1F6A80;--av1i:#FFFFFF;--av2:#F2B28A;--av2i:#16292E;--av3:#7A5AA6;--av3i:#FFFFFF;--av4:#4F8A6A;--av4i:#FFFFFF;
+--shadow:22 41 46;--r:14px;--rs:10px;--display:"Outfit",ui-sans-serif,system-ui,sans-serif;--body:"Figtree",ui-sans-serif,system-ui,sans-serif;--mono:"DM Mono",ui-monospace,monospace;--h-weight:600}
+:root[data-proto-theme="sera"]{--suggest:#2E6E4C;--suggest-tint:#E1EFE7;--bg:#F3F4F7;--ink:#1C2236;--ink2:#343B52;--muted:#5C6378;--line:#E2E4EC;--line2:#CCD0DC;--soft:#ECEEF3;--rowh:#F7F8FB;--thead:#F7F8FB;--facts:#F5F6FA;
+--pri:#3450A8;--pri-h:#2A4290;--pri-t:#2E4799;--pri-tint:#E6EAF6;--vote:#E3B04B;--vote-ink:#1C2236;--hot:#B8553F;--hot-t:#94402D;--hot-tint:#F6E3DE;--ok-t:#2E6E4C;--ok-tint:#E1EFE7;--warn-t:#83590C;--warn-tint:#FAF0DA;
+--side:#1F2540;--side-ink:#CDD1E3;--side-line:#2D3454;--side-hover:#272E4D;--side-on:#2E3760;--side-on-ink:#FFFFFF;--bar:#0F1426;--bar-ink:#E6E9F5;--tag:#ECEEF3;--tag-ink:#343B52;
+--av1:#3450A8;--av1i:#FFFFFF;--av2:#E3B04B;--av2i:#1C2236;--av3:#B8553F;--av3i:#FFFFFF;--av4:#3E8A62;--av4i:#FFFFFF;--shadow:28 34 54;--r:16px;--display:"Bricolage Grotesque",ui-sans-serif,sans-serif;--body:"DM Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="lagoon"]{--suggest:#2F5F9E;--suggest-tint:#E3ECF8;--bg:#F3F4EF;--ink:#13302B;--ink2:#2A4640;--muted:#5A6B66;--line:#E1E5DF;--line2:#CBD3CB;--soft:#EAEFEA;--rowh:#F7F9F5;--thead:#F7F9F5;--facts:#F5F8F3;
+--pri:#0E6B5C;--pri-h:#0A5649;--pri-t:#0C6154;--pri-tint:#DCEFEA;--vote:#F08A6C;--vote-ink:#13302B;--hot:#C2412D;--hot-t:#9E3322;--hot-tint:#F9E1DA;--ok-t:#2F6B3F;--ok-tint:#E2F0E4;--warn-t:#7A5410;--warn-tint:#F8EDD3;
+--side:#FFFFFF;--side-ink:#2A4640;--side-line:#E1E5DF;--side-hover:#EFF3EE;--side-on:#DCEFEA;--side-on-ink:#13302B;--bar:#0F2A25;--bar-ink:#E2F0EC;--tag:#DCEFEA;--tag-ink:#0C5549;
+--av1:#0E6B5C;--av1i:#FFFFFF;--av2:#F08A6C;--av2i:#13302B;--av3:#3D6FB6;--av3i:#FFFFFF;--av4:#8C6A1F;--av4i:#FFFFFF;--shadow:19 48 43;--r:16px;--rs:12px;--display:"Lexend",ui-sans-serif,sans-serif;--body:"Nunito Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:600}
+:root[data-proto-theme="terrazzo"]{--suggest:#3F6B2E;--suggest-tint:#E6F2DF;--bg:#F5F6F8;--ink:#1E2733;--ink2:#36414F;--muted:#5E6978;--line:#E3E6EB;--line2:#CDD2DA;--soft:#EDF0F3;--rowh:#F8F9FB;--thead:#F8F9FB;--facts:#F6F7F9;
+--pri:#3D5A80;--pri-h:#324B6B;--pri-t:#35507A;--pri-tint:#E4EAF2;--vote:#F4C7C3;--vote-ink:#1E2733;--hot:#B84A4A;--hot-t:#963636;--hot-tint:#F7E2E2;--ok-t:#3F6B2E;--ok-tint:#E6F2DF;--warn-t:#7F5A12;--warn-tint:#F7EDD6;
+--side:#FFFFFF;--side-ink:#36414F;--side-line:#E3E6EB;--side-hover:#F1F3F6;--side-on:#E4EAF2;--side-on-ink:#1E2733;--bar:#1E2733;--bar-ink:#E8ECF2;--tag:#F4E4E1;--tag-ink:#7A3B34;
+--av1:#3D5A80;--av1i:#FFFFFF;--av2:#F4C7C3;--av2i:#1E2733;--av3:#4E7A40;--av3i:#FFFFFF;--av4:#7A5AA6;--av4i:#FFFFFF;--shadow:30 39 51;--r:8px;--rs:6px;--display:"Schibsted Grotesk",ui-sans-serif,sans-serif;--body:"Public Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="graphite"]{color-scheme:dark;--metric:#5CC8E0;--suggest:#5CC8E0;--suggest-tint:#0F1D21;--suggest-line:#2E6A78;
+--bg:#0F1113;--ink:#E6E8EA;--ink2:#C4CAD0;--muted:#9BA3AB;--line:#22272C;--line2:#2C3238;--card:#16191C;--soft:#1C2024;--rowh:#1A1E22;--thead:#121518;--facts:#1A1E22;--field:#0F1113;
+--pri:#F5A524;--pri-h:#FFC35C;--pri-t:#F5A524;--pri-tint:#2A2418;--pri-ink:#16120A;--vote:#2A2418;--vote-ink:#F3E3C3;--me:#2A2418;--me-ink:#F3E3C3;
+--hot:#E5484D;--hot-t:#FF8A8E;--hot-tint:#2E1719;--ok-t:#58C781;--ok-tint:#13241A;--warn-t:#F5B456;--warn-tint:#2A2418;
+--side:#121518;--side-ink:#AEB5BC;--side-line:#22272C;--side-hover:#1A1E22;--side-on:#1C2024;--side-on-ink:#E6E8EA;--bar:#0B0D0F;--bar-ink:#AEB5BC;--tag:#1C2024;--tag-ink:#C4CAD0;
+--av1:#2A2418;--av1i:#F5A524;--av2:#153038;--av2i:#5CC8E0;--av3:#262B30;--av3i:#C4CAD0;--av4:#1C2A20;--av4i:#58C781;--shadow:0 0 0;--r:8px;--rs:6px;
+--display:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;--h-weight:600}
+:root{--metric:var(--pri);--field:var(--card);--suggest-line:var(--suggest);--me:var(--pri);--me-ink:var(--pri-ink);--drawer:clamp(380px,28vw,520px);--drawer-wide:clamp(720px,62vw,1100px)}
+*,*::before,*::after{box-sizing:border-box}
+html,body{min-height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--body);display:flex;flex-direction:column;min-height:100vh}
+button,input,select{font:inherit;color:inherit}
+a{color:var(--pri-t)}
+:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.i{width:16px;height:16px;flex:none}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+body{min-height:100vh}
+h1,h2,h3,h4{text-wrap:balance}
+
+/* review chrome (outside the app, as comp R) */
+.proto{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:8px 16px;background:var(--bar);color:var(--bar-ink);font-size:13px}
+.proto b{font-family:var(--display);font-weight:600}
+.proto nav{display:flex;flex-wrap:wrap;gap:4px;flex:1}
+.proto nav a{color:var(--bar-ink);text-decoration:none;border:1px solid color-mix(in srgb,var(--bar-ink) 30%,transparent);border-radius:999px;padding:2px 10px}
+.proto nav a:hover{background:color-mix(in srgb,var(--bar-ink) 15%,transparent)}
+.proto .themepick{color:var(--bar-ink)}
+.proto .themepick select{border:1px solid color-mix(in srgb,var(--bar-ink) 40%,transparent);border-radius:999px;padding:3px 10px;background:var(--bar);color:var(--bar-ink)}
+@media (min-width:900px){.proto{position:sticky;top:0;z-index:20}}
+.themepick{display:inline-flex;align-items:center;gap:6px;font-size:13px}
+
+.wrap{width:100%;max-width:1180px;margin:0 auto;padding:24px 16px 64px;display:flex;flex-direction:column;gap:48px}
+.intro h1{margin:0;font:var(--h-weight) 28px/1.15 var(--display);letter-spacing:-.02em}
+.intro p{margin:8px 0 0;color:var(--ink2);max-width:80ch}
+.frame{scroll-margin-top:64px;display:flex;flex-direction:column;gap:14px}
+.frame>h2{margin:0;font:var(--h-weight) 21px/1.25 var(--display);display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.frame>h2 .fl{font:500 12px var(--mono);color:var(--muted);border:1px solid var(--line2);border-radius:4px;padding:0 6px;line-height:20px}
+.sub{margin:6px 0 0;font:var(--h-weight) 15px var(--display)}
+.note{border:1px solid var(--line);border-left:4px solid var(--pri);background:var(--card);border-radius:var(--rs);padding:10px 14px;font-size:13px;color:var(--ink2);display:flex;flex-direction:column;gap:4px;max-width:96ch}
+.note p{margin:0}
+.note b{color:var(--ink)}
+.note .q{color:var(--warn-t)}
+.note .q b{color:var(--warn-t)}
+.stage{background:var(--soft);border:1px solid var(--line);border-radius:var(--r);padding:20px 16px;display:flex;gap:20px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+.stage>*{flex:1 1 440px;min-width:0}
+.stage .cap{font:500 11px var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.col1{display:flex;flex-direction:column;min-width:0}
+.stage.one>*{max-width:780px;margin:0 auto}
+.stage.stack{flex-direction:column;align-items:stretch}
+.stage.stack>*{flex:none}
+.phone{width:390px;max-width:100%;margin:0 auto}
+
+/* static drawer, as comp R's .drawer but in flow */
+.dr{background:var(--card);border:1px solid var(--line2);border-radius:var(--r);box-shadow:0 12px 32px rgb(var(--shadow)/.18);display:flex;flex-direction:column;min-width:0;container-type:inline-size;overflow:hidden}
+.dhead{display:flex;align-items:flex-start;gap:8px;padding:16px 18px 10px;border-bottom:1px solid var(--line)}
+.dhead .eb{font:500 11px var(--mono);color:var(--muted);letter-spacing:.03em}
+.dhead h3{margin:2px 0 0;font:var(--h-weight) 19px/1.25 var(--display)}
+.dhead .x{margin-left:auto}
+.dbody{padding:16px 18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.dfoot{display:flex;flex-direction:column;gap:8px;padding:12px 18px;border-top:1px solid var(--line);background:var(--thead)}
+.dfoot .acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.dfoot .land{margin:0;font-size:12px;color:var(--ink2)}
+.iconbtn{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer}
+.iconbtn:hover{background:var(--soft);color:var(--ink)}
+
+.btn{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13px;min-height:32px;padding:0 12px;border-radius:var(--rs);border:1px solid var(--line2);background:var(--card);color:var(--ink);cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--pri)}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}.btn.pri:hover{background:var(--pri-h)}
+.btn.sm{min-height:28px;padding:0 10px;font-size:12px}
+.btn.danger{background:var(--hot-tint);border-color:var(--hot);color:var(--hot-t)}
+.btn[aria-disabled="true"]{background:var(--soft);color:var(--muted);border-style:dashed;cursor:not-allowed}
+.btn[aria-disabled="true"]:hover{border-color:var(--line2)}
+.why{font-size:12px;color:var(--muted)}
+.dis{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field>label,.field .flabel{font-weight:500;font-size:12px;color:var(--ink2)}
+.field input:not([type=checkbox]),.field select,.field textarea{border:1px solid var(--line2);border-radius:var(--rs);min-height:34px;padding:7px 10px;font-size:13px;line-height:1.45;width:100%;background:var(--field);color:var(--ink)}
+.field small{color:var(--muted);font-size:12px}
+::placeholder{color:var(--muted);opacity:1}
+.check{display:flex;gap:8px;align-items:flex-start}
+.check input{width:16px;height:16px;margin-top:2px;accent-color:var(--pri)}
+.check label{font-size:13px;font-weight:500}
+.check small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.lanes{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
+.lanes li{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line2);border-radius:var(--rs);padding:3px 10px;background:var(--soft);font-size:13px}
+.lanes li b{font:500 11px var(--mono);color:var(--muted)}
+.lanes li.rm{border-style:dashed;text-decoration:line-through;color:var(--muted)}
+.lanes li.rm em{text-decoration:none;font-style:normal;font-size:11px;color:var(--warn-t);display:inline-block}
+.fsec h4{margin:0 0 2px;font-size:13px;font-weight:600}
+.fsec p{margin:0 0 8px;font-size:12px;color:var(--muted)}
+
+/* chips: text always carries the meaning, colour only supports it */
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:1px 9px;border-radius:999px;white-space:nowrap;background:var(--soft);color:var(--ink2);border:1px solid var(--line2)}
+.chip.nb{border-style:dashed;background:transparent;color:var(--ink2);font-style:italic}
+.chip.st .dot{width:7px;height:7px;border-radius:50%;background:var(--pri-t)}
+.chip.arch{background:var(--warn-tint);color:var(--warn-t);border-color:transparent}
+.chip.iss{background:var(--pri-tint);color:var(--pri-t);border-color:transparent}
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:1px 8px;border-radius:999px;background:var(--tag);color:var(--tag-ink);white-space:nowrap}
+
+/* the pull step */
+.step{border:1px solid var(--line2);border-radius:var(--r);background:var(--card)}
+.step>h4{margin:0}
+.step-btn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:transparent;border:0;padding:11px 14px;cursor:pointer;font-size:14px;font-weight:600;border-radius:var(--r)}
+.step-btn .sum{font-weight:400;color:var(--ink2)}
+.step-btn .chev{transition:transform .15s}
+.step-btn[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.step-btn[aria-disabled="true"]{cursor:not-allowed;color:var(--muted)}
+.step-btn .flag{margin-left:auto;font-size:12px;font-weight:600;color:var(--hot-t);display:inline-flex;gap:4px;align-items:center}
+.step-body{border-top:1px solid var(--line);padding:12px 14px 14px;display:flex;flex-direction:column;gap:12px}
+.step-body[hidden]{display:none}
+.hint{margin:0;font-size:12px;color:var(--ink2)}
+.callout{display:flex;gap:8px;align-items:flex-start;font-size:12px;padding:8px 10px;border-radius:var(--rs);background:var(--pri-tint);color:var(--ink);border:1px solid var(--line2)}
+.callout svg{margin-top:2px}
+.callout.warn{background:var(--warn-tint);color:var(--ink)}
+.callout.err,.alert{background:var(--hot-tint);border:1px solid var(--hot);color:var(--ink)}
+.alert{display:flex;gap:8px;padding:10px 12px;border-radius:var(--rs);font-size:13px}
+.alert svg{color:var(--hot-t);margin-top:2px}
+.alert ul{margin:4px 0 0;padding-left:18px}
+.alert b{color:var(--hot-t)}
+.tablist{display:flex;gap:2px;border-bottom:1px solid var(--line2)}
+.tablist [role=tab]{flex:1 1 auto;min-width:0;white-space:normal;text-align:left;justify-content:center;flex-wrap:wrap}
+.tablist [role=tab]{background:transparent;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;padding:7px 10px;cursor:pointer;font-size:13px;color:var(--ink2);display:inline-flex;gap:6px;align-items:center}
+.tablist [role=tab][aria-selected="true"]{border-bottom-color:var(--pri-t);color:var(--ink);font-weight:700}
+.tablist [role=tab] .n{font:500 11px var(--mono);background:var(--soft);border-radius:999px;padding:0 7px;color:var(--ink2)}
+.tablist [role=tab][aria-selected="true"] .n{background:var(--pri-tint);color:var(--pri-t)}
+.filters{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr);gap:8px}
+@container (max-width:560px){.filters{grid-template-columns:minmax(0,1fr)}}
+.pl{margin:0;padding:0;list-style:none;border:1px solid var(--line);border-radius:var(--rs);max-height:340px;overflow:auto}
+.pl li{border-top:1px solid var(--line)}.pl li:first-child{border-top:0}
+.pl li[hidden]{display:none}
+.pr{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;padding:9px 12px;cursor:pointer}
+.pr:hover{background:var(--rowh)}
+.pr input{width:18px;height:18px;margin:2px 0 0;accent-color:var(--pri)}
+.pr:has(input:checked){background:var(--pri-tint)}
+.pr:has(input:focus-visible){outline:2px solid var(--pri);outline-offset:-2px}
+.pr-title{font-weight:600;display:block;color:var(--ink)}
+.pr-meta{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;font-size:12px;color:var(--ink2);margin-top:2px}
+.pr-note{display:block;font-size:12px;color:var(--pri-t);margin-top:3px;font-weight:500}
+.pr-hint{display:block;font-size:12px;color:var(--ink2);margin-top:3px}
+.pr-hint b{font-weight:600;color:var(--ink)}
+.pr-hint.first b{color:var(--warn-t)}
+.pr.bad{background:var(--hot-tint)}
+.pr-bad{display:flex;gap:5px;font-size:12px;font-weight:600;color:var(--hot-t);margin-top:3px}
+.empty-r{padding:14px;text-align:center;color:var(--muted);font-size:13px}
+.sel{border:1px solid var(--line);border-radius:var(--rs);padding:10px 12px;background:var(--thead)}
+.sel-h{display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.sel-h b{font-size:13px}
+.cnt{font:500 12px var(--mono);color:var(--ink2)}
+.cnt.over{color:var(--hot-t);font-weight:700}
+.sel-l{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.sel-l li{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--line2);background:var(--card);border-radius:999px;padding:1px 2px 1px 10px;font-size:12px;max-width:100%}
+.sel-l li span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:36ch}
+.sel-l li.bad{border-color:var(--hot);background:var(--hot-tint)}
+.sel-l li .badtxt{color:var(--hot-t);font-weight:700;margin-left:4px}
+.sel-l button{width:24px;height:24px;border-radius:50%;border:0;background:transparent;color:var(--ink2);cursor:pointer;display:grid;place-items:center}
+.sel-l button:hover{background:var(--soft);color:var(--ink)}
+.sel-l .more{border-style:dashed;padding-right:10px}
+.none-sel{margin:6px 0 0;font-size:12px;color:var(--muted)}
+
+/* Ideas list */
+.tb{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;padding:12px 14px;border-bottom:1px solid var(--line)}
+.tb .field{min-width:150px;flex:1 1 150px}
+.tb .field.grow{flex:2 1 220px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;min-width:0}
+table.tbl{border-collapse:collapse;width:100%;font-size:13px}
+.tbl th{font:500 11px var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 14px;background:var(--thead);border-bottom:1px solid var(--line)}
+.tbl td{padding:10px 14px;border-top:1px solid var(--line);vertical-align:top}
+.tbl tr:first-child td{border-top:0}
+.tbl .ttl{font-weight:600;color:var(--ink)}
+.tbl .sm{display:block;font-size:12px;color:var(--muted);font-weight:400}
+.pop{position:relative;margin:6px 14px 0;padding:6px;border:1px solid var(--line2);border-radius:var(--rs);background:var(--card);box-shadow:0 12px 32px rgb(var(--shadow)/.2);max-width:300px}
+.pop [role=option]{display:flex;justify-content:space-between;gap:8px;padding:6px 10px;border-radius:6px;font-size:13px}
+.pop [role=option][aria-selected="true"]{background:var(--pri-tint);font-weight:700}
+.pop hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+.pop .n{font:500 12px var(--mono);color:var(--muted)}
+.dialog{background:var(--card);border:1px solid var(--line2);border-radius:var(--r);padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 24px 60px rgb(var(--shadow)/.3)}
+.dialog h4{margin:0;font:var(--h-weight) 18px var(--display)}.dialog p{margin:0;color:var(--ink2)}
+.dialog .row{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:12px;background:var(--facts);border-radius:var(--rs);padding:12px;margin:0}
+.facts dt{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.facts dd{margin:3px 0 0;font-weight:500;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.facts .wide{grid-column:1/-1}
+
+/* Home excerpt */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:0;padding:0;list-style:none}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:2px;height:100%}
+.kpi .lb{font:500 10.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.kpi .val{font:var(--h-weight) 30px/1.15 var(--display);font-variant-numeric:tabular-nums;color:var(--ink);text-decoration:none;align-self:flex-start}
+a.val:hover{color:var(--pri-t);text-decoration:underline}
+.kpi .det{font-size:13px;color:var(--ink2)}
+.kpi .def{margin:6px 0 0;font-size:12px;color:var(--muted)}
+.kpi.gap{background:transparent;border-style:dashed;border-color:var(--line2)}
+.kpi.gap ul{margin:4px 0 0;padding:0;list-style:none;font-size:13px;color:var(--ink2)}
+.kpi.gap li{display:flex;justify-content:space-between}
+.kpi.new{border-color:var(--pri);border-width:2px;padding:13px 15px}
+.kpi.new .lb{color:var(--pri-t)}
+.kpi .go{margin-top:6px;font-size:13px;font-weight:600}
+.pghead h1{margin:0;font:var(--h-weight) 24px/1.15 var(--display)}
+.pghead p{margin:4px 0 0;color:var(--muted)}
+.hv{display:flex;flex-direction:column;gap:12px;padding:16px;background:var(--bg);border-radius:var(--r);border:1px solid var(--line)}
+.rolecap{font:500 11px var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--ink2)}
+
+.rev{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.rev>div{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.rev h3{margin:0;font:var(--h-weight) 16px var(--display)}
+.rev p{margin:0;font-size:13px;color:var(--ink2)}
+.rev .tagp{align-self:flex-start;font:500 10.5px var(--mono);letter-spacing:.04em;color:var(--warn-t);background:var(--warn-tint);border-radius:4px;padding:1px 6px}
+.rev .def{color:var(--ink)}
+
+@media (max-width:700px){
+  .tbl thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .tbl,.tbl tbody,.tbl tr,.tbl td{display:block}
+  .tbl td{border-top:0;padding:3px 14px}
+  .tbl tr{border-top:1px solid var(--line);padding:8px 0}.tbl tr:first-child{border-top:0}
+  .tbl td[data-l]::before{content:attr(data-l) ": ";font:500 11px var(--mono);color:var(--muted);text-transform:uppercase}
+  .wrap{gap:36px}
+  .intro h1{font-size:23px}
+  .facts{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){.step-btn .chev{transition:none}}
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-board" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 2 20h20z"/><path d="M12 10v5M12 18v.5"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-theme" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></symbol>
+  </defs>
+</svg>
+
+<div class="proto" role="region" aria-label="Review controls">
+  <b>Collega · Board pull-in comp</b>
+  <nav aria-label="Frames">
+    <a href="#frame-a">A Create</a><a href="#frame-a-mobile">A Mobile</a><a href="#frame-b">B User</a><a href="#frame-c">C Edit</a><a href="#frame-d">D Refusals</a><a href="#frame-e">E Idea form</a><a href="#frame-f">F Ideas list</a><a href="#frame-g">G Home</a><a href="#frame-h">H Open</a>
+  </nav>
+  <label class="themepick" for="theme"><svg class="i" aria-hidden="true"><use href="#i-theme"/></svg><span>Theme</span>
+    <select id="theme"><optgroup label="Light"><option value="terrazzo">Terrazzo</option><option value="portico">Portico</option><option value="sera">Piazza Sera</option><option value="lagoon">Lagoon</option></optgroup><optgroup label="Dark"><option value="graphite">Graphite</option></optgroup></select></label>
+</div>
+
+<main class="wrap">
+<header class="intro">
+  <h1>Pulling existing items onto a board, and ideas with no board</h1>
+  <p>Slice 182, a throwaway comp for review. It draws <code>SPEC/20-feature-board-pull-in.md</code> in comp R's look (Graphite by default, the theme picker above). Nothing here is built; the UI waits on your approval. Sample data is Acme Robotics. The selectors, tabs and step are live so you can feel them; saving does nothing.</p>
+</header>
+
+<section class="frame" id="frame-a" aria-labelledby="a-h">
+  <h2 id="a-h"><span class="fl">A</span> Board drawer, create, as an Org Admin</h2>
+  <div class="note"><p><b>Draws</b> rules 9, 10, 13, 14, 17 and the UI section. The step sits after the existing fields and is collapsed by default; collapsed, it carries a one-line summary. Each row says where the item will land (rule 13), and the footer repeats the rule once.</p>
+  <p><b>Decision where the spec was silent</b> The Create button names the count ("Create board and add 3 items") so the pull is never a surprise. A Backlog Issue row also shows its task count, since "tasks kept" is the reason an admin would choose it.</p></div>
+  <div class="stage stack">
+    <div class="col1"><p class="cap">A1 · Collapsed, nothing selected (default)</p><div id="a1"></div></div>
+    <div class="col1"><p class="cap">A2 · Expanded, three items selected (try the tabs, the boxes, the remove controls)</p><div id="a2"></div></div>
+  </div>
+</section>
+
+<section class="frame" id="frame-a-mobile" aria-labelledby="am-h">
+  <h2 id="am-h"><span class="fl">A</span> The picker at 390px</h2>
+  <div class="note"><p><b>Draws</b> the same step on a phone. The filters stack, rows keep the checkbox on the left with a 44px-tall touch target (the whole row is the label), the selected-items chips wrap, and the footer actions wrap under the landing line.</p></div>
+  <div class="stage"><div class="phone" id="a-m"></div></div>
+</section>
+
+<section class="frame" id="frame-b" aria-labelledby="b-h">
+  <h2 id="b-h"><span class="fl">B</span> Board drawer, create, as a plain User</h2>
+  <div class="note"><p><b>Draws</b> rule 11 (a User pulls only Discovery ideas they authored, from the pool or from other boards; Backlog Issues are Org Admin only). There is no Backlog Issues tab and the list is already narrowed to Noah's own ideas, with the one-line note.</p>
+  <p><b>Decision</b> The author filter is omitted for a User (it could only ever show one name). A User cannot edit a board (edit needs Org Admin scope), so there is no User version of frame C.</p></div>
+  <div class="stage one"><div id="b1"></div></div>
+</section>
+
+<section class="frame" id="frame-c" aria-labelledby="c-h">
+  <h2 id="c-h"><span class="fl">C</span> Board drawer, edit of a live board, as an Org Admin</h2>
+  <div class="note"><p><b>Draws</b> rules 9 and 13 on an existing board ("Product Roadmap"). Its own ideas are never listed (Roadmap's ideas are missing from the tabs; counts are lower than in A). The Planned lane is being removed in the same save, so the interplay note shows and the "Lands in" hints are computed against the lanes <i>after</i> the save (New, Under Review, Done): an item in Planned now lands in the first lane.</p>
+  <p class="q"><b>Open question</b> The lane-removal guard asks where the ideas in Planned go; a pulled item that was in Planned lands in New by rule 13, not in that chosen lane. The comp says so in the hint; confirm that is intended.</p></div>
+  <div class="stage one"><div id="c1"></div></div>
+</section>
+
+<section class="frame" id="frame-d" aria-labelledby="d-h">
+  <h2 id="d-h"><span class="fl">D</span> Refusal states</h2>
+  <div class="note"><p><b>Draws</b> rules 12, 16, 17 and 9 (archived). The refusal is keyed to the step: the alert sits at the top of the step, the step header carries a "Needs attention" flag, the refused items are marked in the selected list and in the rows with text (never colour alone), and a line states that nothing was saved. The alert is <code>role="alert"</code>. The over-cap state disables the save with a visible reason; the server's 400 on <code>pullItemIds</code> is still the authority.</p></div>
+  <div class="stage stack">
+    <div class="col1"><p class="cap">D1 · Server refusal, Org Admin: an item moved or was deleted after the picker loaded</p><div id="d1"></div></div>
+    <div class="col1"><p class="cap">D2 · Server refusal, User: an idea they did not author (only reachable with a stale or tampered request)</p><div id="d2"></div></div>
+    <div class="col1"><p class="cap">D3 · Over the cap: 101 selected</p><div id="d3"></div></div>
+    <div class="col1"><p class="cap">D4 · Edit of an archived board: the step is disabled with its reason</p><div id="d4"></div></div>
+  </div>
+</section>
+
+<section class="frame" id="frame-e" aria-labelledby="e-h">
+  <h2 id="e-h"><span class="fl">E</span> Idea form: Board select with "No board"</h2>
+  <div class="note"><p><b>Draws</b> rules 3 and 4 and the UI section. Board becomes a select whose first choice is "No board". Opened from a board it is preselected to that board; opened from the Ideas list it shows "No board" (the empty value). The helper text appears while "No board" is chosen. Only the Board field is new; other fields are drawn short because they are unchanged (see <code>idea-form.tsx</code>).</p>
+  <p><b>Decision</b> There is no Status field in either state: the status of a pool idea is fixed by rule 3 (see frame H), and on a board the existing behaviour is unchanged.</p></div>
+  <div class="stage">
+    <div class="col1"><p class="cap">E1 · Opened from the Product Roadmap board</p><div id="e1"></div></div>
+    <div class="col1"><p class="cap">E2 · Opened from the Ideas list</p><div id="e2"></div></div>
+  </div>
+</section>
+
+<section class="frame" id="frame-f" aria-labelledby="f-h">
+  <h2 id="f-h"><span class="fl">F</span> Ideas list and idea drawer: no board, and Remove from board</h2>
+  <div class="note"><p><b>Draws</b> rules 5, 6, 7 and the UI section. The Board filter gains "No board" (with a count); the Board column shows a dashed "No board" chip. "Remove from board" is a row action for the author or an Org Admin and asks for a confirm that says what stays. An Issue cannot be detached (409), so its row shows the action disabled with the reason. On an archived board only an Org Admin may detach; a User sees it disabled with a reason.</p>
+  <p><b>Decision</b> An idea already in the pool offers no Remove from board (the route is idempotent, but a button that does nothing is noise). The drawer's board line therefore reads "No board" with a short pointer instead of the action.</p></div>
+  <div class="stage stack">
+    <div class="col1"><p class="cap">F1 · Ideas list, as Org Admin, with the Board filter open</p>
+      <div class="box">
+        <div class="tb">
+          <div class="field grow"><label for="f-q">Search ideas</label><input id="f-q" type="search" placeholder="Search by title"></div>
+          <div class="field"><label id="f-bl">Board</label><button class="btn" type="button" aria-haspopup="listbox" aria-expanded="true" aria-labelledby="f-bl f-bv" style="justify-content:space-between;width:100%"><span id="f-bv">All boards</span><svg class="i" aria-hidden="true" style="transform:rotate(90deg)"><use href="#i-chev"/></svg></button></div>
+          <div class="field"><label for="f-s">Status</label><select id="f-s"><option>All statuses</option></select></div>
+          <div class="field"><label for="f-t">Tag</label><select id="f-t"><option>All tags</option></select></div>
+        </div>
+        <div class="pop" role="listbox" aria-label="Board filter options (drawn open)">
+          <div role="option" aria-selected="true"><span>All boards</span><span class="n">23</span></div>
+          <div role="option" aria-selected="false"><span>No board</span><span class="n">7</span></div>
+          <hr>
+          <div role="option" aria-selected="false"><span>Product Roadmap</span><span class="n">9</span></div>
+          <div role="option" aria-selected="false"><span>Support Triage</span><span class="n">5</span></div>
+          <div role="option" aria-selected="false"><span>Q2 Planning (archived)</span><span class="n">2</span></div>
+        </div>
+        <table class="tbl" style="margin-top:10px">
+          <thead><tr><th scope="col">Idea</th><th scope="col">Board</th><th scope="col">Status</th><th scope="col">Author</th><th scope="col">Actions</th></tr></thead>
+          <tbody>
+            <tr><td data-l="Idea"><span class="ttl">Reduce gripper torque drift after 200 cycles</span></td><td data-l="Board"><span class="chip"><svg class="i" aria-hidden="true" style="width:12px;height:12px"><use href="#i-board"/></svg>Product Roadmap</span></td><td data-l="Status"><span class="chip st"><span class="dot"></span>Planned</span></td><td data-l="Author">Priya Raman</td><td data-l="Actions"><button class="btn sm" type="button">Remove from board</button></td></tr>
+            <tr><td data-l="Idea"><span class="ttl">Pinecone Labs wants a nightly status export</span></td><td data-l="Board"><span class="chip nb">No board</span></td><td data-l="Status"><span class="chip st"><span class="dot"></span>New</span></td><td data-l="Author">Noah Contributor</td><td data-l="Actions"><span class="why">Already has no board</span></td></tr>
+            <tr><td data-l="Idea"><span class="ttl">Self-serve onboarding checklist</span></td><td data-l="Board"><span class="chip"><svg class="i" aria-hidden="true" style="width:12px;height:12px"><use href="#i-board"/></svg>Support Triage</span></td><td data-l="Status"><span class="chip st"><span class="dot"></span>New</span></td><td data-l="Author">Noah Contributor</td><td data-l="Actions"><button class="btn sm" type="button">Remove from board</button></td></tr>
+            <tr><td data-l="Idea"><span class="ttl">ISS-142 Fix gripper torque drift</span><span class="sm">Issue</span></td><td data-l="Board"><span class="chip"><svg class="i" aria-hidden="true" style="width:12px;height:12px"><use href="#i-board"/></svg>Product Roadmap</span></td><td data-l="Status"><span class="chip st"><span class="dot"></span>Ready</span></td><td data-l="Author">Priya Raman</td><td data-l="Actions"><span class="dis"><button class="btn sm" type="button" aria-disabled="true" aria-describedby="f-iss">Remove from board</button><span class="why" id="f-iss">Issues return to Discovery first.</span></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="col1"><p class="cap">F2 · The confirm (the one modal; destructive-ish actions only, as comp R)</p>
+      <div class="dialog" role="dialog" aria-labelledby="f-dh" aria-describedby="f-dd" style="max-width:460px">
+        <h4 id="f-dh">Remove "Self-serve onboarding checklist" from Support Triage?</h4>
+        <p id="f-dd">It moves to the Ideas list with no board and keeps its status, comments, upvotes and followers. No one is notified. Anyone who can pull it can put it on a board later.</p>
+        <div class="row"><button class="btn" type="button">Cancel</button><button class="btn danger" type="button">Remove from board</button></div>
+      </div>
+    </div>
+    <div class="col1"><p class="cap">F3 · Idea drawer, board line: before and after</p>
+      <div class="stage" style="padding:0;background:none;border:0">
+        <div class="dr"><div class="dhead"><div><div class="eb">IDEA · DISCOVERY</div><h3>Self-serve onboarding checklist</h3></div><button class="iconbtn x" type="button" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
+          <div class="dbody"><dl class="facts"><div class="wide"><dt>Board</dt><dd><span class="chip"><svg class="i" aria-hidden="true" style="width:12px;height:12px"><use href="#i-board"/></svg>Support Triage</span><button class="btn sm" type="button">Remove from board</button></dd></div><div><dt>Status</dt><dd><span class="chip st"><span class="dot"></span>New</span></dd></div><div><dt>Author</dt><dd>Noah Contributor</dd></div></dl></div></div>
+        <div class="dr"><div class="dhead"><div><div class="eb">IDEA · DISCOVERY</div><h3>Self-serve onboarding checklist</h3></div><button class="iconbtn x" type="button" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button></div>
+          <div class="dbody"><dl class="facts"><div class="wide"><dt>Board</dt><dd><span class="chip nb">No board</span><span class="why">Waiting on the Ideas list. An Org Admin can pull it onto a board from the board form.</span></dd></div><div><dt>Status</dt><dd><span class="chip st"><span class="dot"></span>New</span></dd></div><div><dt>Author</dt><dd>Noah Contributor</dd></div></dl></div></div>
+      </div>
+    </div>
+    <div class="col1"><p class="cap">F4 · The archived-board case: the same idea, Tablet layout for pick-and-place setup, on "Q2 Planning (archived)"</p>
+      <div class="stage" style="padding:0;background:none;border:0">
+        <div class="box" style="padding:14px;display:flex;flex-direction:column;gap:8px"><span class="rolecap">Signed in as Org Admin</span><span class="chip arch" style="align-self:flex-start">Board archived</span><span><button class="btn sm" type="button">Remove from board</button></span><span class="why">Allowed: an Org Admin can detach from an archived board so its ideas are not stranded.</span></div>
+        <div class="box" style="padding:14px;display:flex;flex-direction:column;gap:8px"><span class="rolecap">Signed in as User (the author, Noah)</span><span class="chip arch" style="align-self:flex-start">Board archived</span><span class="dis"><button class="btn sm" type="button" aria-disabled="true" aria-describedby="f-arch">Remove from board</button></span><span class="why" id="f-arch">Only an Org Admin can remove ideas from an archived board.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="frame" id="frame-g" aria-labelledby="g-h">
+  <h2 id="g-h"><span class="fl">G</span> Home: the "Needs a board" tile</h2>
+  <div class="note"><p><b>Draws</b> rule 7 and the acceptance criteria for Home. <code>comp-r-home-dashboard.html</code> is untouched; the tile is drawn here, among the existing "Your numbers" tiles of that comp (copied in miniature), so you can decide whether to fold it back. It counts live Discovery ideas with no board and links to the Ideas list filtered to No board (<code>board=none</code>). It is a solid, accent-outlined tile rather than a dashed one because it is real data and an action, and the dashed style already means "not tracked yet" in that comp.</p>
+  <p class="q"><b>Open question</b> At a count of 0, the comp hides the tile (nothing to do). Alternative: show "0" in the tile's quiet state. A plain User never sees it.</p></div>
+  <div class="stage stack">
+    <div class="col1"><p class="cap">G1 · Org Admin, 7 ideas with no board</p>
+      <div class="hv"><div class="pghead"><span class="rolecap">Home · Org Admin</span><h1>Good to see you, Ada.</h1><p>Here's what needs you today.</p></div>
+        <ul class="kpis" aria-label="Your numbers">
+          <li><div class="kpi new"><span class="lb">Needs a board</span><a class="val" href="#frame-f">7</a><span class="det">ideas with no board</span><p class="def">Live Discovery ideas that belong to no board yet.</p><a class="go" href="#frame-f">View ideas with no board</a></div></li>
+          <li><div class="kpi"><span class="lb">Assigned to me</span><a class="val" href="#frame-g">4</a><span class="det">none critical</span><p class="def">Every idea with your name in Assigned, whatever its status.</p></div></li>
+          <li><div class="kpi"><span class="lb">Critical &amp; high</span><a class="val" href="#frame-g">6</a><span class="det">still on a board</span><p class="def">Critical or high-priority ideas not yet promoted.</p></div></li>
+          <li><div class="kpi"><span class="lb">You created</span><a class="val" href="#frame-g">9</a><span class="det">ideas and issues</span><p class="def">Everything you authored, on any board.</p></div></li>
+          <li><div class="kpi gap"><span class="lb">Not tracked yet</span><ul><li><span>Open ideas</span><span>—</span></li><li><span>Awaiting review</span><span>—</span></li></ul></div></li>
+        </ul>
+      </div>
+    </div>
+    <div class="col1"><p class="cap">G2 · Plain User: no tile, every other figure unchanged</p>
+      <div class="hv"><div class="pghead"><span class="rolecap">Home · User</span><h1>Good to see you, Noah.</h1><p>Here's what needs you today.</p></div>
+        <ul class="kpis" aria-label="Your numbers">
+          <li><div class="kpi"><span class="lb">Assigned to me</span><a class="val" href="#frame-g">2</a><span class="det">none critical</span><p class="def">Every idea with your name in Assigned, whatever its status.</p></div></li>
+          <li><div class="kpi"><span class="lb">Critical &amp; high</span><a class="val" href="#frame-g">6</a><span class="det">still on a board</span><p class="def">Critical or high-priority ideas not yet promoted.</p></div></li>
+          <li><div class="kpi"><span class="lb">You created</span><a class="val" href="#frame-g">5</a><span class="det">ideas and issues</span><p class="def">Everything you authored, on any board.</p></div></li>
+          <li><div class="kpi gap"><span class="lb">Not tracked yet</span><ul><li><span>Open ideas</span><span>—</span></li><li><span>Awaiting review</span><span>—</span></li></ul></div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="frame" id="frame-h" aria-labelledby="h-h">
+  <h2 id="h-h"><span class="fl">H</span> Open for review</h2>
+  <div class="note"><p>The two details the spec still marks <i>(proposed)</i>, then questions that came up while drawing. Everything else in the comp follows answered rules.</p></div>
+  <div class="rev">
+    <div><span class="tagp">PROPOSED · RULE 3</span><h3>Status of an idea created with no board</h3><p class="def">Default: the organization's first active status in sort order (the status the leftmost lane of a new board would carry). If there is no active status, creation is refused with a 400 on <code>statusId</code>.</p><p>Consequence you will see in the comp: the idea form has no Status field for a pool idea, and "Lands in" hints treat a new pool idea as <i>New</i>.</p></div>
+    <div><span class="tagp">PROPOSED · RULE 13</span><h3>In-lane order of pulled items</h3><p class="def">Default: appended after the cards already in the lane, oldest first.</p><p>Alternative: newest first, or keep the order they had on their previous board. The footer line in frames A to C states the default.</p></div>
+    <div><span class="tagp">NEW · FRAME G</span><h3>The Needs a board tile at zero</h3><p class="def">Default: hidden at 0.</p><p>Alternative: shown with 0 as a quiet confirmation that nothing is waiting.</p></div>
+    <div><span class="tagp">NEW · FRAME F</span><h3>Remove from board on a pool idea</h3><p class="def">Default: not offered (nothing to remove). The drawer shows "No board" and a pointer.</p><p>The route stays idempotent either way.</p></div>
+    <div><span class="tagp">NEW · FRAME C</span><h3>Pulled item from a removed lane</h3><p class="def">Default: rule 13 places it by the lanes as they stand after the save, so an item whose status was the removed lane lands in the first lane, not in the lane chosen for the board's own ideas.</p><p>Confirm that is what you want, or say the chosen lane should apply.</p></div>
+    <div><span class="tagp">NEW · FRAME A</span><h3>Pulled ideas whose status changes</h3><p class="def">Default: the row hint says "first lane" with the status it will take, and the audit writes IdeaStatusChanged. No further confirmation.</p><p>Alternative: ask for a confirm when more than a few statuses will change.</p></div>
+  </div>
+</section>
+</main>
+<script>
+(function () {
+'use strict';
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const ic = (n, s) => `<svg class="i" aria-hidden="true"${s ? ` style="${s}"` : ''}><use href="#i-${n}"/></svg>`;
+
+// ---- sample data (Acme Robotics) ----
+const NOAH = 'Noah Contributor';
+const ITEMS = [
+  { id: 'p1', k: 'pool', t: 'Pinecone Labs wants a nightly status export', a: NOAH, s: 'New', b: null, tags: ['integrations'] },
+  { id: 'p2', k: 'pool', t: 'Operator console needs a dark mode', a: 'Priya Raman', s: 'Under Review', b: null, tags: ['ux'] },
+  { id: 'p3', k: 'pool', t: 'Calibration reminders for field units', a: NOAH, s: 'New', b: null, tags: ['field-ops'] },
+  { id: 'p4', k: 'pool', t: 'Spare gripper pad inventory view', a: 'Marcus Lee', s: 'Backlog', b: null, tags: ['inventory'] },
+  { id: 'o1', k: 'other', t: 'Reduce gripper torque drift after 200 cycles', a: 'Priya Raman', s: 'Planned', b: 'Product Roadmap', tags: ['hardware'] },
+  { id: 'o2', k: 'other', t: 'Self-serve onboarding checklist', a: NOAH, s: 'New', b: 'Support Triage', tags: ['onboarding'] },
+  { id: 'o3', k: 'other', t: 'Warehouse map export to PDF', a: 'Marcus Lee', s: 'Under Review', b: 'Product Roadmap', tags: ['integrations'] },
+  { id: 'o4', k: 'other', t: 'Tablet layout for pick-and-place setup', a: NOAH, s: 'Backlog', b: 'Q2 Planning', arch: true, tags: ['ux'] },
+  { id: 'o5', k: 'other', t: 'Sunset the legacy firmware uploader', a: 'Priya Raman', s: 'Planned', b: 'Support Triage', tags: ['hardware'] },
+  { id: 'i1', k: 'issue', t: 'ISS-142 Fix gripper torque drift', a: 'Priya Raman', s: 'Planned', b: 'Product Roadmap', tasks: 3, tags: ['hardware'] },
+  { id: 'i2', k: 'issue', t: 'ISS-151 Pinecone Labs SSO metadata import', a: 'Marcus Lee', s: 'Under Review', b: 'Support Triage', tasks: 5, tags: ['integrations'] },
+  { id: 'i3', k: 'issue', t: 'ISS-157 Bulk label printing', a: NOAH, s: 'New', b: null, tasks: 2, tags: ['field-ops'] },
+];
+const TABS = [['pool', 'Unassigned ideas'], ['other', 'Ideas on other boards'], ['issue', 'Backlog Issues']];
+const byId = Object.fromEntries(ITEMS.map((i) => [i.id, i]));
+let uid = 0;
+
+function visible(cfg) {
+  return ITEMS.filter((i) => {
+    if (cfg.role === 'user') return i.k !== 'issue' && i.a === NOAH;
+    if (cfg.excludeBoard && i.b === cfg.excludeBoard) return false;
+    return true;
+  });
+}
+function landing(cfg, it) {
+  const first = cfg.lanes[0];
+  return cfg.lanes.includes(it.s)
+    ? `<span class="pr-hint">Lands in: <b>${esc(it.s)}</b> · keeps its status</span>`
+    : `<span class="pr-hint first">Lands in: <b>${esc(first)}</b> · first lane (no ${esc(it.s)} lane here), status becomes ${esc(first)}</span>`;
+}
+function row(cfg, it, id, st) {
+  const bad = cfg.refused && cfg.refused[it.id];
+  const board = it.b ? `<span class="chip">${ic('board', 'width:12px;height:12px')}${esc(it.b)}${it.arch ? ' <span class="chip arch" style="padding:0 6px;margin-left:2px">archived</span>' : ''}</span>` : '<span class="chip nb">No board</span>';
+  const issue = it.k === 'issue' ? `<span class="pr-note">Issue · returns to Discovery, ${it.tasks} tasks kept</span>` : '';
+  return `<li data-title="${esc(it.t.toLowerCase())}" data-author="${esc(it.a)}" data-tags="${it.tags.join(',')}"><label class="pr${bad ? ' bad' : ''}"><input type="checkbox" value="${it.id}" ${st.sel.has(it.id) ? 'checked' : ''}>
+    <span><span class="pr-title">${esc(it.t)}</span>
+    <span class="pr-meta"><span>by ${esc(it.a)}</span>${board}<span class="chip st"><span class="dot"></span>${esc(it.s)}</span>${it.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</span>
+    ${issue}${landing(cfg, it)}${bad ? `<span class="pr-bad">${ic('alert')}${esc(bad)}</span>` : ''}</span></label></li>`;
+}
+function panel(cfg, key, id, st) {
+  const list = visible(cfg).filter((i) => i.k === key);
+  const authors = [...new Set(list.map((i) => i.a))], tags = [...new Set(list.flatMap((i) => i.tags))];
+  const fid = `${id}-${key}`;
+  return `<div role="tabpanel" id="${fid}-p" aria-labelledby="${fid}-t" tabindex="0" ${st.tab === key ? '' : 'hidden'} data-key="${key}">
+    <div class="filters">
+      <div class="field"><label for="${fid}-q">Search ${key === 'issue' ? 'Issues' : 'ideas'} by title</label><input id="${fid}-q" type="search" data-f="q" placeholder="Search by title"></div>
+      <div class="field"><label for="${fid}-tg">Tag</label><select id="${fid}-tg" data-f="tag"><option value="">All tags</option>${tags.map((t) => `<option>${esc(t)}</option>`).join('')}</select></div>
+      ${cfg.role === 'user' ? '' : `<div class="field"><label for="${fid}-au">Author</label><select id="${fid}-au" data-f="au"><option value="">All authors</option>${authors.map((t) => `<option>${esc(t)}</option>`).join('')}</select></div>`}
+    </div>
+    <ul class="pl" aria-label="${esc(TABS.find((t) => t[0] === key)[1])}">${list.map((i) => row(cfg, i, id, st)).join('')}</ul>
+    <p class="empty-r" hidden>Nothing matches these filters.</p></div>`;
+}
+
+function build(cfg) {
+  const id = `dr${++uid}`;
+  const st = { sel: new Set(cfg.selected || []), tab: cfg.tab || 'pool', open: !!cfg.expanded && !cfg.disabledReason, cfg };
+  const keys = TABS.filter((t) => (cfg.role === 'user' ? t[0] !== 'issue' : true)).map((t) => t[0]);
+  const counts = Object.fromEntries(keys.map((k) => [k, visible(cfg).filter((i) => i.k === k).length]));
+  const isEdit = cfg.mode === 'edit';
+  const lanesHtml = `<ol class="lanes" aria-label="Swimlanes in order">${cfg.formLanes.map((l, n) => `<li${l.rm ? ' class="rm"' : ''}><b>${l.rm ? '' : n + 1 - cfg.formLanes.slice(0, n).filter((x) => x.rm).length}</b>${esc(l.n)}${l.rm ? ' <em>(removing)</em>' : ''}</li>`).join('')}</ol>`;
+  const fields = cfg.compact ? '' : `
+    <div class="field"><label for="${id}-n">Name</label><input id="${id}-n" value="${esc(cfg.name)}"><small>Required. What this board is called everywhere it appears.</small></div>
+    <div class="field"><label for="${id}-d">Description</label><textarea id="${id}-d" rows="2">${esc(cfg.desc)}</textarea><small>Optional, up to 500 characters. The first two lines show on the board's card.</small></div>
+    <div class="check"><input type="checkbox" id="${id}-m" checked><label for="${id}-m">Let Users move ideas between statuses on this board<small>With this off, only administrators can change an idea's status here.</small></label></div>
+    <div class="fsec"><h4>Swimlanes</h4><p>Pick from this organization's statuses. The order on the left is the left-to-right order of the board's columns.</p>${lanesHtml}
+    ${cfg.removedLane ? `<div class="callout warn" style="margin-top:8px">${ic('info')}<span><b>Planned</b> is being removed. Its 4 ideas move to <b>Under Review</b> when you save.</span></div>` : ''}</div>`;
+  const dis = cfg.disabledReason;
+  const sumTxt = () => (st.sel.size ? `${st.sel.size + (cfg.extra || 0)} selected` : 'none selected');
+  const stepBtn = `<h4><button type="button" class="step-btn" id="${id}-sb" aria-expanded="${st.open}" aria-controls="${id}-sbody"${dis ? ` aria-disabled="true" aria-describedby="${id}-why"` : ''}>
+      ${ic('chev', 'width:14px;height:14px').replace('class="i"', 'class="i chev"')}<span>Add existing items <span class="sum" data-sum>- ${dis ? 'unavailable' : sumTxt()}</span></span>
+      ${cfg.refused ? `<span class="flag">${ic('alert')}Needs attention</span>` : ''}</button></h4>${dis ? `<p class="why" id="${id}-why" style="padding:0 14px 10px;margin:0">${ic('lock', 'vertical-align:-3px;margin-right:4px')}${esc(dis)}</p>` : ''}`;
+  const alert = cfg.refused ? `<div class="alert" role="alert">${ic('alert')}<div><b>Nothing was saved.</b> ${Object.keys(cfg.refused).length} item${Object.keys(cfg.refused).length > 1 ? 's' : ''} in "Add existing items" could not be pulled. ${isEdit ? 'The board is unchanged.' : 'The board was not created.'}<ul>${Object.entries(cfg.refused).map(([k, m]) => `<li>${k === 'i-x' ? '' : ''}${esc(m.replace('{t}', byId[k].t))}</li>`).join('')}</ul>Remove these items or reload the list, then save again.</div></div>` : '';
+  const intro = cfg.role === 'user'
+    ? `<p class="hint">You can pull ideas you created.</p>`
+    : `<p class="hint">Move ideas that already exist onto this board${isEdit ? '' : ' when it is created'}. Nothing changes until you save. ${isEdit ? `Ideas already on ${esc(cfg.name)} are not listed.` : ''}</p>`;
+  const interplay = cfg.removedLane ? `<div class="callout">${ic('info')}<span>Ideas in removed lanes move first, then pulled items are placed on the lanes as they stand after this save.</span></div>` : '';
+  const body = `<div class="step-body" id="${id}-sbody" ${st.open ? '' : 'hidden'}>
+      ${alert}${intro}${interplay}
+      <div class="tablist" role="tablist" aria-label="Where to pull from">${keys.map((k) => `<button type="button" role="tab" id="${id}-${k}-t" aria-controls="${id}-${k}-p" aria-selected="${st.tab === k}" tabindex="${st.tab === k ? 0 : -1}" data-key="${k}">${esc(TABS.find((t) => t[0] === k)[1])}<span class="n">${counts[k]}</span></button>`).join('')}</div>
+      ${keys.map((k) => panel(cfg, k, id, st)).join('')}
+      <div class="sel"><div class="sel-h"><b id="${id}-selh" tabindex="-1">Selected items</b><span class="cnt" data-cnt></span></div><ul class="sel-l" data-sel aria-labelledby="${id}-selh"></ul><p class="none-sel" data-none>Nothing selected yet.</p><p class="why" data-over role="status" style="color:var(--hot-t);font-weight:600;margin-top:6px" hidden></p></div>
+    </div>`;
+  const foot = `<div class="dfoot"><p class="land" data-land></p><div class="acts"><button class="btn" type="button">Cancel</button><button class="btn pri" type="button" data-save aria-describedby="${id}-sw"></button></div><p class="why" id="${id}-sw" data-savewhy hidden style="text-align:right"></p></div>`;
+  const html = `<div class="dr" id="${id}" data-state="1">
+    <div class="dhead"><div><div class="eb">BOARDS</div><h3>${isEdit ? 'Edit ' + esc(cfg.name) : 'New board'}</h3></div><button class="iconbtn x" type="button" aria-label="Close"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+    <div class="dbody">${cfg.banner ? `<div class="callout warn">${ic('lock')}<span>${esc(cfg.banner)}</span></div>` : ''}${fields}<section class="step" aria-label="Add existing items">${stepBtn}${body}</section></div>${foot}</div>`;
+  return { id, html, st, cfg };
+}
+
+function refresh(root, b) {
+  const { st, cfg } = b, n = st.sel.size + (cfg.extra || 0);
+  const isEdit = cfg.mode === 'edit';
+  root.querySelector('[data-sum]').textContent = '- ' + (cfg.disabledReason ? 'unavailable' : n ? `${n} selected` : 'none selected');
+  const cnt = root.querySelector('[data-cnt]');
+  if (cnt) { cnt.textContent = `${n} of 100`; cnt.classList.toggle('over', n > 100); }
+  const ul = root.querySelector('[data-sel]');
+  if (ul) {
+    ul.innerHTML = [...st.sel].map((i) => { const it = byId[i], bad = cfg.refused && cfg.refused[i];
+      return `<li class="${bad ? 'bad' : ''}"><span title="${esc(it.t)}">${esc(it.t)}</span>${bad ? '<span class="badtxt">Refused</span>' : ''}<button type="button" data-rm="${i}" aria-label="Remove ${esc(it.t)}">${ic('x', 'width:12px;height:12px')}</button></li>`; }).join('')
+      + (cfg.extra ? `<li class="more"><span>and ${cfg.extra} more</span></li>` : '');
+    root.querySelector('[data-none]').hidden = n > 0;
+  }
+  const over = root.querySelector('[data-over]');
+  if (over) { over.hidden = n <= 100; over.innerHTML = n > 100 ? `${ic('alert', 'vertical-align:-3px;margin-right:4px')}${n - 100} over the limit. Remove ${n - 100} item${n - 100 > 1 ? 's' : ''} to save (at most 100 per save).` : ''; }
+  const land = root.querySelector('[data-land]');
+  const first = cfg.lanes[0];
+  land.hidden = n === 0 && !cfg.disabledReason;
+  land.textContent = cfg.refused ? 'Nothing was saved. Fix the items in "Add existing items" and save again.' : `Pulled items keep their status where this board has that lane; otherwise they land in the first lane (${first}). They are added after cards already in a lane, oldest first.`;
+  if (cfg.disabledReason) land.hidden = true;
+  const save = root.querySelector('[data-save]'), why = root.querySelector('[data-savewhy]');
+  const verb = isEdit ? 'Save board' : 'Create board';
+  save.textContent = n ? `${verb} and add ${n} item${n > 1 ? 's' : ''}` : verb;
+  save.setAttribute('aria-disabled', n > 100 ? 'true' : 'false');
+  save.classList.toggle('pri', n <= 100);
+  why.hidden = n <= 100; why.textContent = n > 100 ? `Can't save: ${n} items selected, the limit is 100.` : '';
+  root.querySelectorAll('input[type=checkbox][value]').forEach((c) => { c.checked = st.sel.has(c.value); });
+}
+
+function wire(root, b) {
+  const { st } = b;
+  const sb = root.querySelector('.step-btn'), sbody = root.querySelector('.step-body');
+  sb.addEventListener('click', () => {
+    if (sb.getAttribute('aria-disabled') === 'true') return;
+    st.open = !st.open; sb.setAttribute('aria-expanded', st.open); sbody.hidden = !st.open;
+  });
+  const tabs = [...root.querySelectorAll('[role=tab]')];
+  const pick = (t, focus) => {
+    st.tab = t.dataset.key;
+    tabs.forEach((x) => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; });
+    root.querySelectorAll('[role=tabpanel]').forEach((p) => { p.hidden = p.dataset.key !== st.tab; });
+    if (focus) t.focus();
+  };
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => pick(t));
+    t.addEventListener('keydown', (e) => {
+      const k = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+      if (k === undefined) return; e.preventDefault(); pick(tabs[(k + tabs.length) % tabs.length], true);
+    });
+  });
+  root.addEventListener('change', (e) => {
+    const c = e.target;
+    if (c.matches('input[type=checkbox][value]')) { c.checked ? st.sel.add(c.value) : st.sel.delete(c.value); refresh(root, b); }
+  });
+  root.addEventListener('click', (e) => {
+    const r = e.target.closest('[data-rm]');
+    if (r) { st.sel.delete(r.dataset.rm); refresh(root, b); (root.querySelector('[data-sel] button') || root.querySelector('[id$=-selh]')).focus(); }
+    if (e.target.closest('[data-save]')?.getAttribute('aria-disabled') === 'true') e.preventDefault();
+  });
+  const filter = (p) => {
+    const q = p.querySelector('[data-f=q]').value.trim().toLowerCase(), tg = p.querySelector('[data-f=tag]').value, au = p.querySelector('[data-f=au]')?.value || '';
+    let shown = 0;
+    p.querySelectorAll('.pl li').forEach((li) => {
+      const ok = (!q || li.dataset.title.includes(q)) && (!tg || li.dataset.tags.split(',').includes(tg)) && (!au || li.dataset.author === au);
+      li.hidden = !ok; if (ok) shown++;
+    });
+    p.querySelector('.empty-r').hidden = shown > 0;
+  };
+  root.querySelectorAll('[role=tabpanel]').forEach((p) => p.addEventListener('input', () => filter(p)));
+  root.querySelectorAll('[role=tabpanel] select').forEach((s) => s.addEventListener('change', () => filter(s.closest('[role=tabpanel]'))));
+}
+
+function mount(sel, cfg) {
+  const host = document.querySelector(sel), b = build(cfg);
+  host.innerHTML = b.html;
+  const root = host.firstElementChild;
+  wire(root, b); refresh(root, b);
+}
+
+const NEWLANES = [{ n: 'New' }, { n: 'Under Review' }, { n: 'Planned' }];
+const newBoard = { mode: 'create', name: 'Field Robotics Intake', desc: 'Ideas from field teams and partner sites, before they are planned.', formLanes: NEWLANES, lanes: ['New', 'Under Review', 'Planned'] };
+mount('#a1', { ...newBoard, role: 'admin' });
+mount('#a2', { ...newBoard, role: 'admin', expanded: true, tab: 'other', selected: ['p1', 'o4', 'i2'] });
+mount('#a-m', { ...newBoard, role: 'admin', compact: true, expanded: true, tab: 'issue', selected: ['i2', 'p1'] });
+mount('#b1', { ...newBoard, role: 'user', expanded: true, tab: 'pool', selected: ['p3'] });
+mount('#c1', { mode: 'edit', role: 'admin', name: 'Product Roadmap', desc: 'What the product team is planning next quarter.', excludeBoard: 'Product Roadmap',
+  formLanes: [{ n: 'New' }, { n: 'Under Review' }, { n: 'Planned', rm: true }, { n: 'Done' }], removedLane: true, lanes: ['New', 'Under Review', 'Done'], expanded: true, tab: 'other', selected: ['o5', 'o2'] });
+mount('#d1', { ...newBoard, role: 'admin', compact: true, expanded: true, tab: 'other', selected: ['p2', 'o3', 'i2'],
+  refused: { p2: 'Idea "{t}" is no longer available', i2: 'Idea "{t}" is no longer available' } });
+mount('#d2', { ...newBoard, role: 'admin', compact: true, expanded: true, tab: 'other', selected: ['o2', 'o1'],
+  refused: { o1: 'You may pull only ideas you created: "{t}"' } });
+mount('#d3', { ...newBoard, role: 'admin', compact: true, expanded: true, tab: 'pool', selected: ['p1', 'p2', 'p3'], extra: 98 });
+mount('#d4', { mode: 'edit', role: 'admin', name: 'Q2 Planning', desc: 'Planning ideas for the second quarter.', excludeBoard: 'Q2 Planning',
+  formLanes: [{ n: 'Backlog' }, { n: 'Planned' }, { n: 'Done' }], lanes: ['Backlog', 'Planned', 'Done'], banner: 'This board is archived and read-only. Unarchive it to change its lanes or details.',
+  disabledReason: 'Archived boards take no pull. Unarchive this board first (Boards, board menu).' });
+
+// ---- E: idea form board select ----
+function ideaForm(sel, board) {
+  const id = sel.slice(1);
+  document.querySelector(sel).innerHTML = `<div class="dr"><div class="dhead"><div><div class="eb">IDEAS</div><h3>New idea</h3></div><button class="iconbtn x" type="button" aria-label="Close"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+  <div class="dbody">
+    <div class="field"><label for="${id}-b">Board</label><select id="${id}-b" aria-describedby="${id}-h"><option value="">No board</option><option${board === 'Product Roadmap' ? ' selected' : ''}>Product Roadmap</option><option>Support Triage</option></select>
+      <small id="${id}-h" ${board ? 'hidden' : ''}>Ideas with no board wait on the Ideas list until someone pulls them onto a board.</small></div>
+    <div class="field"><label for="${id}-t">Title</label><input id="${id}-t" value=""></div>
+    <div class="field"><label for="${id}-p">Problem</label><textarea id="${id}-p" rows="3"></textarea></div>
+    <div class="field"><label for="${id}-pr">Priority</label><select id="${id}-pr"><option>Medium</option></select></div>
+    <p class="why">Business impact, idea type, due date and the rest are unchanged.</p>
+  </div>
+  <div class="dfoot"><div class="acts"><button class="btn" type="button">Cancel</button><button class="btn pri" type="button">Create idea</button></div></div></div>`;
+  const s = document.getElementById(`${id}-b`), h = document.getElementById(`${id}-h`);
+  s.addEventListener('change', () => { h.hidden = s.value !== ''; });
+}
+ideaForm('#e1', 'Product Roadmap');
+ideaForm('#e2', '');
+
+// ---- theme: Graphite by default, remembered per browser (shared key with comp R) ----
+const THEMES = ['terrazzo', 'portico', 'sera', 'lagoon', 'graphite'];
+const pt = document.getElementById('theme');
+function setTheme(k) { document.documentElement.dataset.protoTheme = k; pt.value = k; try { localStorage.setItem('collega-theme', k); } catch (e) {} }
+let saved = 'graphite'; try { saved = localStorage.getItem('collega-theme') || 'graphite'; } catch (e) {}
+setTheme(THEMES.includes(saved) ? saved : 'graphite');
+pt.addEventListener('change', () => setTheme(pt.value));
+})();
+</script>

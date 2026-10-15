@@ -31,7 +31,7 @@ export function UpvoteButton({
   denial,
 }: {
   ideaId: string
-  boardId: string
+  boardId: string | null
   count: number
   hasUpvoted: boolean
   denial: string | null
@@ -56,7 +56,7 @@ export function UpvoteButton({
 
   return (
     <form action={vote} className="inline-flex items-center gap-2">
-      <input type="hidden" name="boardId" value={boardId} />
+      <input type="hidden" name="boardId" value={boardId ?? ''} />
       <input type="hidden" name="ideaId" value={ideaId} />
       <Button
         type="submit"
@@ -95,7 +95,7 @@ export function FollowButton({
   denial,
 }: {
   ideaId: string
-  boardId: string
+  boardId: string | null
   isFollowing: boolean
   followerCount: number
   denial: string | null
@@ -127,7 +127,7 @@ export function FollowButton({
     setError(null)
     startTransition(async () => {
       setState({ isFollowing: follow, followerCount: state.followerCount + (follow ? 1 : -1) })
-      const result = await setFollowing(ideaId, boardId, follow)
+      const result = await setFollowing(ideaId, boardId ?? '', follow)
       setError(result.error)
     })
   }
@@ -170,7 +170,7 @@ export function CommentBox({
   denial,
 }: {
   ideaId: string
-  boardId: string
+  boardId: string | null
   denial: string | null
 }) {
   const [state, post, posting] = useActionState(addComment, IDLE)
@@ -191,7 +191,7 @@ export function CommentBox({
   return (
     <form action={post} className="flex flex-col gap-2">
       <input type="hidden" name="ideaId" value={ideaId} />
-      <input type="hidden" name="boardId" value={boardId} />
+      <input type="hidden" name="boardId" value={boardId ?? ''} />
       <label htmlFor="comment" className="sr-only">
         Add a comment
       </label>

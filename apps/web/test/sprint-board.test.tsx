@@ -145,6 +145,7 @@ const drawerFor = (item: Issue): IssueDrawerData => ({
   idea: ideaFor(item),
   tasks: [],
   members: [],
+  boardName: null,
   boardArchived: false,
   formOptions: null,
 })

@@ -24,7 +24,7 @@ enum, and the inbox below sends them by these names: `IdeaMention`, `CommentMent
 - `eventId` GUID string
 - `eventType` string
 - `organizationId` GUID string
-- `boardId` GUID string
+- `boardId` GUID string, or `null` when the idea belongs to no board (added 2026-10-13)
 - `ideaId` GUID string
 - `actorUserId` GUID string
 - `recipientUserId` GUID string
@@ -57,6 +57,8 @@ List the caller's notifications, newest first.
 - **Request:** query parameters
   - `page` optional, 1-based
   - `pageSize` optional; absent is `20`, clamped to 1–100 (`30-Contracts.md` "Collection Conventions")
+  - `unread` optional boolean — only the literal `true` (any casing) sets it, anything else lists every
+    notification (*added 2026-10-13*, `decisions.md` "Home gets an Unread notifications panel")
 - **Response:** `200` paged shape (`items`, `page`, `pageSize`, `totalCount`, `sortBy` `occurredAt`,
   `sortDirection` `desc`); each item:
   - `notificationId`
@@ -77,7 +79,9 @@ List the caller's notifications, newest first.
 - **Errors:** —
 - **Rules:**
   - Ordered by `occurredAtUtc` descending, then `notificationId`, so paging is stable. There is no other
-    sort and no filter.
+    sort. The one filter is `unread=true`, which keeps only rows with `readAtUtc` `null`; the 90-day
+    window and the deleted-idea rule apply either way, and `totalCount` counts the filtered rows, so it
+    equals the unread count route's figure.
   - `actor` is `null` only when no user row exists for `actor_user_id`, which has no foreign key: data
     damage, as for a comment's `author`.
   - `statusName` is captured at write time: renaming the status later does not change it. ~~No board name

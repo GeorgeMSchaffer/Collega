@@ -2,7 +2,7 @@
 
 import { Alert, Badge, Button, Field, Input, Textarea } from '@collega/design-system'
 import Link from 'next/link'
-import { useActionState } from 'react'
+import { useActionState, useRef, useState } from 'react'
 import {
   deleteFieldDefinition,
   type EditCatalogItemState,
@@ -30,9 +30,10 @@ const OPTION_BACKED = ['Dropdown', 'MultiSelect']
  * it is deleted, and those values go with it. Rendering all of them, each carrying its id in a
  * hidden input, is what makes saving a renamed field safe.
  *
- * One blank row is appended so an option can be added without a separate screen. It has no id, so
- * the server treats a filled one as new; left blank, the action drops it before sending, because
- * the API marks every option label required and an untouched row would otherwise be a 400.
+ * "Add a choice" appends a row without an id, which the server treats as new; left blank, the
+ * action drops it before sending, because the API marks every option label required and an
+ * untouched row would otherwise be a 400. "Remove" drops a row from the form, and an existing
+ * option missing from the post is deleted by the server.
  *
  * ## What is shown and not editable
  *
@@ -45,7 +46,14 @@ export function FieldEditForm({ field }: { field: FieldDefinitionDetail }) {
   const [archiveState, archive, archiving] = useActionState(deleteFieldDefinition, IDLE)
 
   const takesOptions = OPTION_BACKED.includes(field.fieldType)
-  const rows = takesOptions ? [...field.options, { id: '', label: '', displayOrder: 0 }] : []
+  // `key` is stable per row so removing one doesn't shift the typed text of the rest.
+  const nextKey = useRef(0)
+  const newRow = () => ({ key: `new-${String(nextKey.current++)}`, id: '', label: '' })
+  const [rows, setRows] = useState(() =>
+    takesOptions
+      ? [...field.options.map((o) => ({ key: o.id, id: o.id, label: o.label })), newRow()]
+      : [],
+  )
 
   return (
     <div className="flex flex-col gap-8">
@@ -101,26 +109,44 @@ export function FieldEditForm({ field }: { field: FieldDefinitionDetail }) {
           <fieldset className="m-0 flex flex-col gap-3 border-0 p-0">
             <legend className="mb-1 text-sm font-medium">Choices</legend>
             <p className="m-0 max-w-prose text-sm text-muted-foreground">
-              Clearing a choice removes it, along with the answers ideas have already given using
-              it. The empty row at the end adds one.
+              Removing a choice deletes it, along with the answers ideas have already given using
+              it. Rows left blank are ignored.
             </p>
-            {rows.map((option, index) => (
-              <div
-                // The id for existing rows; the trailing blank row is the only one without one and
-                // there is never more than one of it.
-                key={option.id || 'new'}
-                className="flex items-center gap-2"
-              >
-                <input type="hidden" name="optionId" value={option.id} />
+            {rows.map((row, index) => (
+              <div key={row.key} className="flex items-center gap-2">
+                <input type="hidden" name="optionId" value={row.id} />
                 <Input
                   name="optionLabel"
-                  defaultValue={option.label}
+                  value={row.label}
+                  onChange={(e) =>
+                    setRows((rs) =>
+                      rs.map((r) => (r.key === row.key ? { ...r, label: e.target.value } : r)),
+                    )
+                  }
                   maxLength={OPTION_LABEL_MAX}
-                  aria-label={option.id ? `Choice ${String(index + 1)}` : 'Add a choice'}
-                  placeholder={option.id ? undefined : 'Add a choice'}
+                  aria-label={`Choice ${String(index + 1)}`}
+                  placeholder={row.id ? undefined : 'New choice'}
                 />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  aria-label={`Remove choice ${String(index + 1)}`}
+                  onClick={() => setRows((rs) => rs.filter((r) => r.key !== row.key))}
+                >
+                  Remove
+                </Button>
               </div>
             ))}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-fit"
+              onClick={() => setRows((rs) => [...rs, newRow()])}
+            >
+              Add a choice
+            </Button>
           </fieldset>
         ) : null}
 

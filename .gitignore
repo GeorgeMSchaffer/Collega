@@ -90,3 +90,4 @@ e2e/playwright-report/
 
 # Saved sign-in cookies for the E2E suite (tests/auth.setup.ts). Regenerated every run.
 e2e/.auth/
+.env*

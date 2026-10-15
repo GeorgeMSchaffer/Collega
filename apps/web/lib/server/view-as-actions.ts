@@ -45,7 +45,7 @@ export async function startViewAs(_previous: ViewAsState, form: FormData): Promi
 
   // Home rather than back to the picker: acting as someone is a change of vantage point, and the
   // first useful thing is seeing what they see. `redirect` throws, so it is last and outside `try`.
-  redirect('/home')
+  redirect('/')
 }
 
 /**
@@ -64,5 +64,5 @@ export async function endViewAs(): Promise<void> {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/home')
+  redirect('/')
 }

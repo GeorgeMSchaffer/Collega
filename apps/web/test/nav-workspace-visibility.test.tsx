@@ -14,7 +14,7 @@ import { actAs } from './support/acting-role'
  * `navItemVisible`, and a heading with nothing under it goes too.
  */
 vi.mock('next/navigation', () => ({
-  usePathname: () => '/home',
+  usePathname: () => '/',
   useRouter: () => ({ push: vi.fn() }),
 }))
 vi.mock('@/lib/server/auth-actions', () => ({ signOut: vi.fn() }))

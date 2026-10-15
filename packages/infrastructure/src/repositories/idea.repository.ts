@@ -371,8 +371,14 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
     if (filter.phase) {
       conditions.push(Prisma.sql`i.phase = ${filter.phase}::"IdeaPhase"`)
     }
-    if (filter.boardIds.length > 0) {
+    if (filter.boardIds.length > 0 && filter.includeNoBoard) {
+      conditions.push(
+        Prisma.sql`(i.board_id IS NULL OR i.board_id IN (${uuidList(filter.boardIds)}))`,
+      )
+    } else if (filter.boardIds.length > 0) {
       conditions.push(Prisma.sql`i.board_id IN (${uuidList(filter.boardIds)})`)
+    } else if (filter.includeNoBoard) {
+      conditions.push(Prisma.sql`i.board_id IS NULL`)
     }
     if (filter.createdByUserId) {
       conditions.push(Prisma.sql`i.author_user_id = ${filter.createdByUserId}::uuid`)
@@ -400,6 +406,8 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
     return this.listPage({
       conditions,
       sortSql: this.organizationSortSql(filter.sortBy),
+      // An idea with no board has no board name; it sorts after the named ones either way.
+      nullsLast: (filter.sortBy ?? '').trim().toLowerCase() === 'board',
       direction,
       page: filter.page,
       sortBy: filter.sortBy,
@@ -510,13 +518,15 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
   private async listPage(input: {
     readonly conditions: readonly Prisma.Sql[]
     readonly sortSql: Prisma.Sql
+    readonly nullsLast?: boolean
     readonly direction: SortDirection
     readonly page: { readonly page: number; readonly pageSize: number }
     readonly sortBy: string | null
   }): Promise<IdeaPage<Idea>> {
     const whereClause = Prisma.join([...input.conditions], ' AND ')
     const directionSql = input.direction === 'desc' ? Prisma.sql`DESC` : Prisma.sql`ASC`
-    const orderByClause = Prisma.sql`ORDER BY ${input.sortSql} ${directionSql}, i.created_at_utc ASC, i.title ASC, i.id ASC`
+    const nullsClause = input.nullsLast ? Prisma.sql` NULLS LAST` : Prisma.empty
+    const orderByClause = Prisma.sql`ORDER BY ${input.sortSql} ${directionSql}${nullsClause}, i.created_at_utc ASC, i.title ASC, i.id ASC`
 
     const fromClause = Prisma.sql`
       FROM ideas i

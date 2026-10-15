@@ -44,7 +44,7 @@ export function CardActions({
   upvoteDenial,
 }: {
   idea: Idea
-  boardId: string
+  boardId: string | null
   /** The lane to the left and to the right, or null at the ends of the board. */
   previousStatusId: string | null
   nextStatusId: string | null
@@ -65,7 +65,7 @@ export function CardActions({
     <>
       {upvoteDenial === null ? (
         <form action={vote}>
-          <input type="hidden" name="boardId" value={boardId} />
+          <input type="hidden" name="boardId" value={boardId ?? ''} />
           <input type="hidden" name="ideaId" value={idea.id} />
           <button
             type="submit"
@@ -99,7 +99,7 @@ export function CardActions({
 
       {canMove ? (
         <form action={move} className="flex items-center gap-1">
-          <input type="hidden" name="boardId" value={boardId} />
+          <input type="hidden" name="boardId" value={boardId ?? ''} />
           <input type="hidden" name="ideaId" value={idea.id} />
           <button
             type="submit"

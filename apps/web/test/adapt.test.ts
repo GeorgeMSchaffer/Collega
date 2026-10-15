@@ -106,6 +106,7 @@ describe('toIdea', () => {
     expect(toIdea(WIRE_IDEA)).toEqual({
       id: WIRE_IDEA.ideaId,
       boardId: WIRE_IDEA.boardId,
+      authorUserId: WIRE_IDEA.authorUserId,
       statusId: WIRE_IDEA.statusId,
       statusName: WIRE_IDEA.statusName,
       title: WIRE_IDEA.title,

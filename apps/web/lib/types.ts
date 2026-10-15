@@ -347,6 +347,45 @@ export type BoardRef = {
   isArchived: boolean
 }
 
+/** Where the board form's *Add existing items* step reads from (`contracts/boards.md`, pull-candidates). */
+export type PullSource = 'unassigned' | 'boards' | 'backlog'
+
+/** An item the pull step offers: an idea in the pool or on another board, or a backlog Issue. */
+export type PullCandidate = {
+  id: string
+  title: string
+  authorUserId: string
+  authorName: string
+  /** Null for an idea in the pool. */
+  boardId: string | null
+  boardName: string | null
+  statusId: string
+  statusName: string
+  /** `Discovery` for an idea, `Delivery` for a backlog Issue. */
+  phase: string
+  tags: string[]
+  isMine: boolean
+}
+
+export type PullCandidatePage = {
+  items: PullCandidate[]
+  page: number
+  pageSize: number
+  totalCount: number
+}
+
+/** The pull picker's question: one tab's items, filtered, a page at a time. */
+export type PullCandidateQuery = {
+  source: PullSource
+  /** The board being edited, whose own items are never offered. */
+  excludeBoardId?: string | undefined
+  search?: string | undefined
+  tag?: string | undefined
+  authorUserId?: string | undefined
+  page: number
+  pageSize: number
+}
+
 /** A tag where it labels something: its name, which is always the chip's text, and its colour. */
 export type TagRef = { id: string; name: string; color: string }
 
@@ -374,7 +413,10 @@ export type TagOverview = TagRef & {
  */
 export type Idea = {
   id: string
-  boardId: string
+  /** Null for an idea in the pool: it belongs to no board and sits in no lane. */
+  boardId: string | null
+  /** Who raised it. The list item sends the bare id, so a row can tell its author without a detail. */
+  authorUserId: string | null
   statusId: string
   /**
    * The lane the idea sits in, spelled out. A list item carries it, so a row that names its status
@@ -624,7 +666,7 @@ export type Issue = {
   effort: Effort
   assigneeInitials: string | null
   upvotesAtPromotion: number
-  boardId: string
+  boardId: string | null
   authorUserId: string
   assignees: PersonRef[]
   tags: TagRef[]
@@ -732,6 +774,8 @@ export type HomeKpi = {
   href: string | null
   /** Where the detail's own number opens, when it has one (the critical share). */
   detailHref?: string | undefined
+  /** A tile that asks for something (Needs a board): drawn with an accent outline and this link. */
+  action?: { label: string; href: string } | undefined
 }
 
 /** An idea in one of Home's lists: the attention queue, Assigned to me, Most upvoted. */

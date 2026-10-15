@@ -93,6 +93,8 @@ describe('getOrganizationHome', () => {
   } = {}) {
     answer(/\/ideas/, (url: URL) => {
       const p = url.searchParams
+      // Nothing waits for a board unless a test says so: the tile is hidden at zero.
+      if (p.get('boardId') === 'none') return page(0)
       if (p.get('pageSize') === '5') {
         if (p.get('sortBy') === 'upvoteCount') return page(voted.length, voted)
         if (p.get('scope') === 'assigned') return page(7, assigned)

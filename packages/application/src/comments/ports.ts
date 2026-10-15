@@ -53,7 +53,7 @@ export interface CommentRepository {
 export type IdeaSummary = {
   readonly id: string
   readonly organizationId: string
-  readonly boardId: string
+  readonly boardId: string | null
   readonly title: string
   readonly authorUserId: string
   readonly assigneeUserIds: readonly string[]

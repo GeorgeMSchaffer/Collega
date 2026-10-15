@@ -1,4 +1,4 @@
-import { getIdea, getIdeaFormOptions } from '@/lib/data'
+import { getIdea, getIdeaFormOptions, getIssue } from '@/lib/data'
 import type { IdeaDetail, IdeaFormOptions } from '@/lib/types'
 import type { DrawerMode } from './idea-drawer'
 import { DRAWER_PARAMS } from './idea-list-config'
@@ -16,7 +16,8 @@ const one = (params: Params, key: string) => {
  * or not at all, rather than as a form whose save would be refused.
  *
  * `missing` is an `?idea=` the reader cannot open — deleted, another organization's, or not an id —
- * which the page reports beside the list instead of opening an empty drawer.
+ * which the page reports beside the list instead of opening an empty drawer. `isIssue` says the idea
+ * is in Delivery, which the detail does not: Remove from board is refused for an Issue.
  */
 export async function loadIdeaDrawer(
   params: Params,
@@ -26,17 +27,25 @@ export async function loadIdeaDrawer(
   idea: IdeaDetail | null
   formOptions: IdeaFormOptions | null
   missing: boolean
+  isIssue: boolean
 }> {
   const ideaId = one(params, DRAWER_PARAMS.idea)
   const creating = one(params, DRAWER_PARAMS.create) !== undefined && canAuthor
   const editing = ideaId !== undefined && one(params, DRAWER_PARAMS.edit) !== undefined && canAuthor
 
-  const [idea, formOptions] = await Promise.all([
+  const [idea, formOptions, issue] = await Promise.all([
     ideaId && !creating ? getIdea(ideaId) : null,
     creating || editing ? getIdeaFormOptions() : null,
+    ideaId && !creating && !editing ? getIssue(ideaId) : null,
   ])
 
   const mode: DrawerMode | null = creating ? 'create' : idea ? (editing ? 'edit' : 'view') : null
 
-  return { mode, idea, formOptions, missing: ideaId !== undefined && !creating && idea === null }
+  return {
+    mode,
+    idea,
+    formOptions,
+    missing: ideaId !== undefined && !creating && idea === null,
+    isIssue: issue !== null,
+  }
 }

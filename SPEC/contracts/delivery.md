@@ -113,6 +113,7 @@ The sprint board and the delivery backlog — `Delivery`-phase items as cards.
   - `deliveryStatus` optional — `Pending`, `Scoping`, `Development`, `Review`, or `Complete`. An unrecognised value is ignored rather than refused, matching the board list's other optional filters.
 - **Response:** `200`: an **unpaged** array (a sprint is a bounded, human-sized set) of the `GET /api/v1/boards/{boardId}/ideas` item shape plus:
   - `phase` string — always `Delivery` for this endpoint
+  - `boardId` is `null` for an Issue promoted from the organization's pool, an idea that belongs to no board (added 2026-10-13); returning that Issue to Discovery puts it back in the pool
   - `effort` string or `null`: `Low`, `Medium`, `High`
   - `deliveryStatus` string or `null`
   - `sprint` object or `null`: `sprintId`, `name`, `startDate`, `endDate`

@@ -16,6 +16,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { PrismaClient } from '../src/generated/prisma/index.js'
 import { PrismaUnitOfWork } from '../src/persistence/unit-of-work.js'
 import { PrismaBoardRepository } from '../src/repositories/board.repository.js'
+import { PrismaIdeaRepository } from '../src/repositories/idea.repository.js'
 import { OrganizationExistenceLookupRepository } from '../src/repositories/organization-existence-lookup.repository.js'
 import { PrismaStatusRepository } from '../src/repositories/status.repository.js'
 
@@ -51,6 +52,7 @@ describe.skipIf(!DATABASE_URL)('Removing a lane that holds ideas, against a live
       { write: async (event) => void audit.push(event) },
       currentUser,
       { now: () => SAVED },
+      new PrismaIdeaRepository(prisma, unitOfWork),
     )
   }
 

@@ -36,7 +36,7 @@
 // anything tested. Flagged here rather than fixed there - `packages/application/**` is out of this
 // slice's globs.
 
-import { ConflictError } from '@collega/application/common'
+import { ConflictError, ValidationError } from '@collega/application/common'
 import { Prisma } from '../generated/prisma/index.js'
 
 /** One hand-written partial unique index this file knows how to translate. */
@@ -70,6 +70,29 @@ const KNOWN_CONSTRAINTS: readonly KnownConstraint[] = [
   },
 ]
 
+/** The text `PrismaBoardRepository.reassignIdeas`'s closing statement fails on, then the title in hex. */
+export const PULL_UNAVAILABLE_MARKER = 'pull-unavailable:'
+
+/**
+ * The item named by `PrismaBoardRepository.reassignIdeas`'s failed check, or `null` for any other
+ * error. That check casts `pull-unavailable:<hex of the title>` to an integer, which Postgres refuses
+ * with SQLSTATE 22P02 and Prisma reports as P2010. The SQLSTATE and the hex marker are both
+ * independent of the server's message language, and the hex keeps quotes, newlines and any length of
+ * title from needing to be parsed out of prose.
+ */
+function pullUnavailableTitle(error: unknown): string | null {
+  if (
+    !(error instanceof Prisma.PrismaClientKnownRequestError) ||
+    error.code !== 'P2010' ||
+    error.meta?.code !== '22P02'
+  ) {
+    return null
+  }
+  const message = typeof error.meta.message === 'string' ? error.meta.message : ''
+  const hex = new RegExp(`${PULL_UNAVAILABLE_MARKER}([0-9a-f]*)`).exec(message)?.[1]
+  return hex === undefined ? null : Buffer.from(hex, 'hex').toString('utf8')
+}
+
 function targetColumns(target: unknown): readonly string[] {
   if (Array.isArray(target)) {
     return target.filter((entry): entry is string => typeof entry === 'string')
@@ -96,6 +119,13 @@ function sameColumnSet(a: readonly string[], b: readonly string[]): boolean {
  * original Prisma error is kept as `.cause` so a caller that wants the underlying detail still can.
  */
 export function translateWriteError(error: unknown): unknown {
+  const unavailableItem = pullUnavailableTitle(error)
+  if (unavailableItem !== null) {
+    return new ValidationError('One or more fields are invalid.', {
+      pullItemIds: [`'${unavailableItem}' is no longer available.`],
+    })
+  }
+
   if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
     return error
   }

@@ -63,6 +63,7 @@ function ideaOn(boardId: string, title: string): Idea {
   return {
     id: `idea-${boardId}`,
     boardId,
+    authorUserId: null,
     statusId: 's1',
     statusName: 'New',
     title,

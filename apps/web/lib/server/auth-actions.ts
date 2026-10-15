@@ -172,7 +172,7 @@ export async function signIn(_previous: LoginState, form: FormData): Promise<Log
   await issueSession(token, body.expiresInSeconds)
 
   // `redirect` signals by throwing, so it must be the last thing and must not sit inside a `try`.
-  redirect(body.requiresPasswordChange ? '/change-password' : '/boards')
+  redirect(body.requiresPasswordChange ? '/change-password' : '/')
 }
 
 /**

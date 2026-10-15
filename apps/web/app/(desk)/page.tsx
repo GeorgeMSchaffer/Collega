@@ -23,14 +23,18 @@ import {
   RowTitle,
   UntrackedTile,
 } from '@/components/home/home-parts'
+import { wording } from '@/components/inbox/inbox-wording'
 import { Topbar } from '@/components/nav/topbar'
 import {
+  getInbox,
   getOrganizationHome,
   getPlatformHome,
   type HomeSprint,
+  type InboxItem,
   type OrganizationHome,
   type PlatformOrganization,
 } from '@/lib/data'
+import { hasInbox } from '@/lib/roles'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { boardCreateDenial, currentUser } from '@/lib/session'
 
@@ -67,11 +71,12 @@ const COLUMN =
 /** Each panel's place in the one-column order; written out so Tailwind sees every class. */
 const ORDER = {
   attention: 'order-1 min-[1100px]:order-none',
-  assigned: 'order-2 min-[1100px]:order-none',
-  sprint: 'order-3 min-[1100px]:order-none',
-  boards: 'order-4 min-[1100px]:order-none',
-  voted: 'order-5 min-[1100px]:order-none',
-  activity: 'order-6 min-[1100px]:order-none',
+  unread: 'order-2 min-[1100px]:order-none',
+  assigned: 'order-3 min-[1100px]:order-none',
+  sprint: 'order-4 min-[1100px]:order-none',
+  boards: 'order-5 min-[1100px]:order-none',
+  voted: 'order-6 min-[1100px]:order-none',
+  activity: 'order-7 min-[1100px]:order-none',
 }
 
 const SMALL_BUTTON = buttonVariants({ variant: 'outline', size: 'sm' })
@@ -86,7 +91,7 @@ function firstName(): string {
 }
 
 async function OrganizationHomeView() {
-  const home = await getOrganizationHome()
+  const [home, unread] = await Promise.all([getOrganizationHome(), getUnreadNotifications()])
   const readOnly = currentUser().role === 'ReadOnly'
   const organization = currentUser().organizationName ?? 'Your organization'
 
@@ -108,12 +113,22 @@ async function OrganizationHomeView() {
         }
       />
 
-      {home.counts.boards === 0 ? <NoBoards /> : <OrganizationDashboard home={home} />}
+      {home.counts.boards === 0 ? (
+        <NoBoards />
+      ) : (
+        <OrganizationDashboard home={home} unread={unread} />
+      )}
     </>
   )
 }
 
-function OrganizationDashboard({ home }: { home: OrganizationHome }) {
+function OrganizationDashboard({
+  home,
+  unread,
+}: {
+  home: OrganizationHome
+  unread: UnreadNotifications
+}) {
   const role = currentUser().role
   // Server-rendered, so an age is as of this render — the same moment the rows were read.
   const now = new Date()
@@ -220,6 +235,30 @@ function OrganizationDashboard({ home }: { home: OrganizationHome }) {
 
         <div className={COLUMN}>
           <Panel
+            id="home-unread"
+            className={ORDER.unread}
+            heading={
+              <>
+                Unread notifications{' '}
+                <span className="font-mono text-xs font-medium text-muted-foreground">
+                  {unread.total}
+                </span>
+              </>
+            }
+            standfirst="Mentions and activity on ideas you follow, newest first."
+          >
+            {unread.rows.length === 0 ? (
+              <EmptyNote>You’re all caught up.</EmptyNote>
+            ) : (
+              <Rows footer={<Link href="/inbox">Open inbox</Link>}>
+                {unread.rows.map((item) => (
+                  <UnreadRow key={item.id} item={item} />
+                ))}
+              </Rows>
+            )}
+          </Panel>
+
+          <Panel
             id="home-assigned"
             className={ORDER.assigned}
             heading={
@@ -268,6 +307,38 @@ function OrganizationDashboard({ home }: { home: OrganizationHome }) {
         </div>
       </div>
     </>
+  )
+}
+
+type UnreadNotifications = { total: number; rows: InboxItem[] }
+
+const UNREAD_ROWS = 5
+
+/** The newest unread notifications, and how many there are in all. */
+async function getUnreadNotifications(): Promise<UnreadNotifications> {
+  if (!hasInbox(currentUser().role)) return { total: 0, rows: [] }
+  const page = await getInbox({ page: 1, pageSize: UNREAD_ROWS, unreadOnly: true })
+  return { total: page.totalCount, rows: page.items }
+}
+
+function UnreadRow({ item }: { item: InboxItem }) {
+  const { verb, tail } = wording(item)
+  return (
+    <Row>
+      <RowTitle
+        href={`/inbox?idea=${encodeURIComponent(item.ideaId)}`}
+        title={item.ideaTitle}
+        sub={
+          <>
+            {item.actor?.name ?? 'Unknown user'} {verb} this{tail}
+            {item.boardName ? ` · ${item.boardName}` : ''}
+          </>
+        }
+      />
+      <time dateTime={item.occurredAtUtc} className="text-xs text-muted-foreground">
+        {item.when}
+      </time>
+    </Row>
   )
 }
 

@@ -20,7 +20,8 @@ import type {
   WireMember,
   WirePage,
 } from '../api/wire'
-import type { IdeaDetail, IdeaFormOptions, IdeaListQuery, IdeaPage } from '../types'
+import { API_MAX_PAGE_SIZE } from '../limits'
+import type { Idea, IdeaDetail, IdeaFormOptions, IdeaListQuery, IdeaPage } from '../types'
 import { failIfRequested } from './latency'
 import { organizationScope } from './scope'
 import { getTagRefs } from './tags'
@@ -168,4 +169,33 @@ export async function getIdea(id: string): Promise<IdeaDetail | null> {
     if (isApiStatus(error, 404) || isApiStatus(error, 400)) return null
     throw error
   }
+}
+
+/**
+ * Starts the lookup of which Issues match a list's filters, to run beside the list itself. The
+ * organization list carries no phase on its items, and Remove from board needs to know (an Issue
+ * returns to Discovery first), so this asks the same question again for the Issues alone. `null`
+ * when the filters already settle it. More than one page of Issues under the same filters would
+ * miss some; the API refuses that detach with its own message.
+ */
+export function startIssueLookup(query: IdeaListQuery): Promise<ReadonlySet<string>> | null {
+  if (query.phase === 'Ideas' || query.phase === 'Issues') return null
+  return getIdeaList({
+    ...query,
+    phase: 'Issues',
+    page: 1,
+    pageSize: API_MAX_PAGE_SIZE,
+    sortBy: null,
+  }).then((issues) => new Set(issues.ideas.map((issue) => issue.id)))
+}
+
+/** Which of a page's rows are Issues, from the filters or the started lookup. */
+export function issueIdsAmong(
+  query: IdeaListQuery,
+  rows: readonly Idea[],
+  lookup: ReadonlySet<string> | null,
+): string[] {
+  if (query.phase === 'Issues') return rows.map((row) => row.id)
+  if (lookup === null) return []
+  return rows.filter((row) => lookup.has(row.id)).map((row) => row.id)
 }

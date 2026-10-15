@@ -4,7 +4,7 @@ import type { Page } from '../common/index.js'
 export type NotificationInput = {
   readonly eventType: NotificationEventType
   readonly organizationId: string
-  readonly boardId: string
+  readonly boardId: string | null
   readonly ideaId: string
   readonly ideaTitle: string
   readonly actorUserId: string
@@ -60,6 +60,8 @@ export type InboxItem = {
 export type InboxQuery = {
   readonly page: number | null
   readonly pageSize: number | null
+  /** `unread=true`: only notifications with no read time. */
+  readonly unreadOnly: boolean
 }
 
 export type InboxPage = Page<InboxItem> & {

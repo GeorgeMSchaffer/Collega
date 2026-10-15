@@ -249,20 +249,20 @@ export class PrismaTagRepository implements TagRepository, IdeasTagsPort, AiTags
     return row === null ? null : fromRow(row)
   }
 
-  /** One grouped query for any number of tags: live ideas per (tag, board). Each idea is on one
-   * board, so a tag's idea count is the sum over its boards. */
+  /** One grouped query for any number of tags: live ideas per (tag, board). Each idea is on at most
+   * one board, so a tag's idea count is the sum over its boards plus its board-less ideas. */
   async usageByTagIds(tagIds: readonly string[]): Promise<ReadonlyMap<string, TagUsage>> {
     if (tagIds.length === 0) {
       return new Map()
     }
     const rows = await this.prisma.$queryRaw<
-      { tag_id: string; board_id: string; board_name: string; idea_count: number }[]
+      { tag_id: string; board_id: string | null; board_name: string | null; idea_count: number }[]
     >(Prisma.sql`
       SELECT idea_tag.tag_id, board.id AS board_id, board.name AS board_name,
         COUNT(DISTINCT idea.id)::int AS idea_count
       FROM idea_tags AS idea_tag
       INNER JOIN ideas AS idea ON idea.id = idea_tag.idea_id
-      INNER JOIN boards AS board ON board.id = idea.board_id
+      LEFT JOIN boards AS board ON board.id = idea.board_id
       WHERE idea_tag.tag_id IN (${Prisma.join(tagIds.map((id) => Prisma.sql`${id}::uuid`))})
         AND idea.is_deleted = FALSE
       GROUP BY idea_tag.tag_id, board.id, board.name
@@ -272,7 +272,10 @@ export class PrismaTagRepository implements TagRepository, IdeasTagsPort, AiTags
     for (const row of rows) {
       const entry = usage.get(row.tag_id) ?? { ideaCount: 0, boards: [] }
       entry.ideaCount += row.idea_count
-      entry.boards.push({ boardId: row.board_id, name: row.board_name })
+      // Ideas with no board count toward the tag but name no board.
+      if (row.board_id !== null && row.board_name !== null) {
+        entry.boards.push({ boardId: row.board_id, name: row.board_name })
+      }
       usage.set(row.tag_id, entry)
     }
     return usage

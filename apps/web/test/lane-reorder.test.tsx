@@ -53,6 +53,7 @@ function idea(id: string, statusId: string): Idea {
   return {
     id,
     boardId: 'board-1',
+    authorUserId: null,
     statusId,
     statusName: statusId,
     title: `Idea ${id}`,
