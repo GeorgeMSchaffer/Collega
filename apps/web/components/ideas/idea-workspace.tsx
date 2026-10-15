@@ -1,7 +1,16 @@
 'use client'
 
 import { Alert, Button, EffortBar, TagChip } from '@collega/design-system'
-import { useLayoutEffect, useMemo, useOptimistic, useRef, useState, useTransition } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useOptimistic,
+  useRef,
+  useState,
+  useTransition,
+} from 'react'
 import {
   type Column,
   ConfirmDialog,
@@ -9,11 +18,15 @@ import {
   ListToolbar,
   MultiSelectFilter,
   Pager,
+  QuickAddRow,
+  type QuickAddValues,
   RowActions,
+  useAddedHighlight,
   useListState,
   ViewSwitch,
 } from '@/components/list'
 import { Icon } from '@/components/list/icons'
+import { TITLE_MAX_LENGTH } from '@/lib/limits'
 import {
   detachOffer,
   engagementDenial,
@@ -93,6 +106,9 @@ export function IdeaWorkspace({
   const config = board ? BOARD_LIST : IDEAS_LIST
   const [state, update] = useListState(config)
   const openDrawer = useDrawerUrl()
+  // The quick-add row's Title, handed to the create form; spent once the form is open.
+  const [prefill, setPrefill] = useState<{ title: string } | null>(null)
+  const quickAdded = useRef(false)
 
   const [trigger, setTrigger] = useState<HTMLElement | null>(null)
   const [removing, setRemoving] = useState<Removing | null>(null)
@@ -205,6 +221,23 @@ export function IdeaWorkspace({
   const canDelete = (idea: { boardId: string | null }) =>
     mayDeleteIdeas(user.role) && !archived(idea.boardId)
   const engagement = engagementDenial(user.role)
+  // Whoever sees the page header's Add New Idea: a role that may write, on a board not archived.
+  const canAdd = denial === null && !board?.isArchived
+  const rowIds = rows.map((row) => row.id).join(',')
+  const highlight = useAddedHighlight(rowIds)
+  const applied = useCallback(() => setPrefill(null), [])
+
+  // The form has read `initial` on mounting, so the Title is spent once it is open.
+  const createOpen = drawer.mode === 'create' && drawer.formOptions !== null
+  useEffect(() => {
+    if (prefill && createOpen) applied()
+  }, [prefill, createOpen, applied])
+
+  const handoff = (values: QuickAddValues) => {
+    setPrefill({ title: values.title ?? '' })
+    quickAdded.current = true
+    openDrawer({ create: true })
+  }
 
   const drawerOpen = drawer.mode !== null
   const view = (ideaId: string, from: HTMLElement) => {
@@ -616,6 +649,27 @@ export function IdeaWorkspace({
               actions={actions}
               empty={empty}
               selectedKey={selectedId}
+              quickAdd={(layout) => (
+                <QuickAddRow
+                  layout={layout}
+                  canAdd={canAdd}
+                  label="Quick add idea"
+                  handoff="drawer"
+                  onHandoff={handoff}
+                  rowIds={rowIds}
+                  testId="ideas-quick-add"
+                  fields={[
+                    {
+                      name: 'title',
+                      label: 'Title',
+                      column: 'title',
+                      required: true,
+                      placeholder: 'Add an idea, then press Enter',
+                      maxLength: TITLE_MAX_LENGTH,
+                    },
+                  ]}
+                />
+              )}
             />
           )}
           <Pager
@@ -654,6 +708,7 @@ export function IdeaWorkspace({
         formOptions={drawer.formOptions}
         createBoards={boards}
         createBoardId={board?.id ?? null}
+        initial={prefill ?? undefined}
         canEdit={drawerIdea ? canEdit(drawerIdea) : false}
         canDelete={drawerIdea ? canDelete(drawerIdea) : false}
         contentLocked={
@@ -665,6 +720,7 @@ export function IdeaWorkspace({
         onEdit={() => drawerIdea && openDrawer({ edit: drawerIdea.id })}
         onView={() => drawerIdea && openDrawer({ view: drawerIdea.id })}
         onClose={() => {
+          quickAdded.current = false
           openDrawer(null)
           setTrigger(null)
         }}
@@ -672,7 +728,12 @@ export function IdeaWorkspace({
           drawerIdea &&
           setRemoving({ id: drawerIdea.id, title: drawerIdea.title, boardId: drawerIdea.boardId })
         }
-        onSaved={(ideaId) => openDrawer({ view: ideaId })}
+        onSaved={(ideaId) => {
+          // Only an idea added through the quick-add row is scrolled to and highlighted.
+          if (quickAdded.current) highlight(ideaId)
+          quickAdded.current = false
+          openDrawer({ view: ideaId })
+        }}
       />
 
       <ConfirmDialog
