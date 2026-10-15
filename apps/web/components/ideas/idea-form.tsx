@@ -114,6 +114,7 @@ export function IdeaForm({
   boardId,
   contentLocked,
   addingIssue,
+  initial,
   onSaved,
   onPendingChange,
 }: {
@@ -131,19 +132,24 @@ export function IdeaForm({
    * ones on offer) and saves through `POST /organizations/{id}/issues`. Absent, it is the idea form.
    */
   addingIssue?: { sprints: readonly Pick<Sprint, 'id' | 'name' | 'state'>[] }
+  /** Values to start with when adding an Issue, from the Backlog's quick-add row. */
+  initial?: { title?: string; effort?: Effort | ''; sprintId?: string } | undefined
   /** `sprintId` is the one an added Issue was put in; empty for the Backlog. */
   onSaved: (ideaId: string, sprintId?: string) => void
   onPendingChange: (pending: boolean) => void
 }) {
   const id = useId()
-  const [draft, setDraft] = useState(() => initialDraft(idea, boardId, options))
+  const [draft, setDraft] = useState(() => ({
+    ...initialDraft(idea, boardId, options),
+    ...(initial?.title ? { title: initial.title } : {}),
+  }))
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({})
   // Lifted out of the tag field so a save can see text that was typed and never chosen.
   const [tagText, setTagText] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
-  const [effort, setEffort] = useState<Effort | ''>('')
-  const [sprintId, setSprintId] = useState('')
+  const [effort, setEffort] = useState<Effort | ''>(initial?.effort ?? '')
+  const [sprintId, setSprintId] = useState(initial?.sprintId ?? '')
 
   useEffect(() => onPendingChange(pending), [pending, onPendingChange])
 
