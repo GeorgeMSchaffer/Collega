@@ -169,37 +169,41 @@ chose **A, the drawer, together with B, the inline quick-add row**:
 1. **Quick-add is a universal pattern** for every non-settings, non-admin grid: a spreadsheet-style new
    row at the top of the list with the minimum fields; Enter submits and the row stays focused for
    rapid entry. It lives in the list and detail pattern (`20-feature-client-ui.md`, "Quick-add row");
-   the header *Add New {Item}* button staying beside the row is the working assumption, not a
-   decision (the sixth open question below).
+   the header *Add New {Item}* button stays beside the row (decided, item 4 below).
 2. **Hand-off rule, contract unchanged.** The API keeps requiring what it requires. When the row cannot
    supply every required field, pressing Enter opens the full drawer form **pre-populated** with the
    row's values, and nothing is created until that form is saved. When the row can supply everything
-   (the Boards list: a name, lanes defaulted to the first two statuses, and a default for
-   `allowUserStatusUpdate`), Enter creates directly, once that default is confirmed (the seventh open
-   question below).
+   (the Boards list: a name, lanes defaulted to the first two statuses, and `allowUserStatusUpdate`
+   sent as `false`), Enter creates directly (decided, item 7 below).
    **Consequence, stated plainly:** idea create requires Problem, Proposed solutions, Impact rationale,
    Priority, Idea type and Business impact, plus the organization's required custom fields (the idea
    form defaults Priority to Medium and Idea type and Business impact to the first active options), so on **Ideas and on the Backlog the
    row always hands off today**. It is a fast way into the pre-populated form, not a way around it. No
    contract is relaxed.
 3. **Scope, from the scoping report.** First wave: the Backlog, the Ideas list, the Boards list (Org
-   Admin or User; Read Only disabled with the reason) and a board page's List view. Not applicable: the Roadmap (no Outcome create route yet), the
+   Admin or User; hidden for Read Only) and a board page's List view. Not applicable: the Roadmap (no Outcome create route yet), the
    Inbox, Home and detail pages. Issue tasks already have an inline add, the reference implementation.
    Sprints and the Sprint board: a weak fit, not in the first wave. A Lanes view's per-lane add: later,
    undecided.
 
-**Still open, not decided (verbatim):**
-- Accidental adds, and whether the toast offers Undo. Undo needs a delete route, which is role-restricted
-  today and absent for boards and Issues.
-- New-row ordering against sort and paging.
-- The Sprint select on the Backlog row.
-- Mobile: hand More fields to the drawer?
-- Whether to keep the header 'Add New {Item}' button next to the row.
-- Read Only presentation; a disabled bar with the reason is the default assumption.
-- The Boards row and `allowUserStatusUpdate`: `contracts/boards.md` makes it a required boolean on
-  `POST /organizations/{organizationId}/boards`; the controller coerces it with `=== true`, so an omitted
-  value becomes `false`, and `BoardService.create` passes it through. Proposal, for the user to confirm:
-  the row sends `false`. Not decided.
+**Decided by the user, 2026-10-15 (these closed the seven questions this amendment first left open):**
+1. **Accidental adds: no Undo.** On Ideas and the Backlog nothing is created until the pre-populated form
+   is saved, so there is nothing to undo. The toast has no Undo action and no delete route is built for
+   this feature.
+2. **Backlog row fields:** Title, Effort and Sprint. All three pre-fill the drawer; Sprint defaults to
+   Backlog.
+3. **Mobile (phone width): the row is hidden.** The header button opens the drawer, full-screen on
+   phones. No `DataTable` mobile card mode is needed for quick-add, so planned slice 194 is dropped from
+   this feature.
+4. **The header *Add New {Item}* button stays** beside the row on every list that has a row. The button
+   opens the empty drawer for a full-detail add; the row is the fast path.
+5. **New-row ordering follows the active sort.** The new row is scrolled into view and highlighted for a
+   few seconds (as the Backlog drawer already does); if paging hides it, the toast says where it went.
+   Nothing is pinned.
+6. **Read Only: the quick-add row is hidden.** The header button still shows its disabled-with-reason
+   state under the Denied rule. This replaces the earlier 'disabled bar' assumption.
+7. **Boards row:** sends `allowUserStatusUpdate` = `false` (what the controller already does when the
+   field is omitted; `contracts/boards.md` makes it a required boolean) and creates directly.
 
 ---
 
