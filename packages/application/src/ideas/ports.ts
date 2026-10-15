@@ -124,6 +124,14 @@ export interface IdeaRepository {
   /** Every `Delivery`-phase idea in one sprint, for sprint completion's carry-over and for
    * unassigning before a sprint is deleted (satisfies `sprints.SprintIssuesPort`). */
   listBySprint(sprintId: string): Promise<readonly Idea[]>
+
+  /**
+   * Live (not deleted) children per parent id, with how many sit in a final lane of their own
+   * board. A parent with no children is absent.
+   */
+  countChildrenByParentIds(
+    parentIds: readonly string[],
+  ): Promise<ReadonlyMap<string, { readonly total: number; readonly done: number }>>
 }
 
 export type DeliveryFilter = {
@@ -251,7 +259,16 @@ export type BoardContext = {
   /** An archived board takes no new ideas, moves or edits (boards rule 13); reads stay open. */
   readonly isArchived: boolean
   readonly keyPrefix: string | null
+  /** Off hides idea types, type fields and upvotes on the board's items (Board References). */
+  readonly ideaFeaturesEnabled: boolean
   readonly swimlanes: readonly SwimlaneInfo[]
+}
+
+/** What a read needs to know about an item's board, for the whole page in one call. */
+export type BoardReadFacts = {
+  readonly ideaFeaturesEnabled: boolean
+  /** Lane status id -> the board that lane references, for the lanes that reference one. */
+  readonly referencedBoardByStatusId: ReadonlyMap<string, string>
 }
 
 export type StatusInfo = {
@@ -282,6 +299,9 @@ export interface BoardsPort {
 
   /** Key prefix per board id, for the whole list in one read. A board with no prefix is absent. */
   getKeyPrefixes(boardIds: readonly string[]): Promise<ReadonlyMap<string, string>>
+
+  /** Read facts per board id, for the whole list in one read. Unknown boards are absent. */
+  getBoardReadFacts(boardIds: readonly string[]): Promise<ReadonlyMap<string, BoardReadFacts>>
 }
 
 /** `<keyPrefix>-<itemNumber>`, or `null` for an item that has no number or whose board has no prefix. */

@@ -215,6 +215,7 @@ describe('IdeaService notifies followers of a status change', () => {
           allowUserStatusUpdate: true,
           isArchived: false,
           keyPrefix: null,
+          ideaFeaturesEnabled: true,
           swimlanes: [
             { statusId: STATUS_1, displayOrder: 0, isFinal: false, referencesBoardId: null },
             { statusId: STATUS_2, displayOrder: 1, isFinal: false, referencesBoardId: null },

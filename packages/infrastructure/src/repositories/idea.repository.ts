@@ -75,6 +75,7 @@ function fromRow(row: IdeaRowFull): Idea {
     organizationId: row.organization_id,
     boardId: row.board_id,
     itemNumber: row.item_number,
+    parentIdeaId: row.parent_idea_id,
     statusId: row.status_id,
     title: row.title,
     description: row.description,
@@ -201,6 +202,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       organization_id: idea.organizationId,
       board_id: idea.boardId,
       item_number: idea.itemNumber,
+      parent_idea_id: idea.parentIdeaId,
       status_id: idea.statusId,
       title: idea.title,
       description: idea.description,
@@ -265,6 +267,31 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       orderBy: [{ created_at_utc: 'asc' }, { title: 'asc' }],
     })
     return rows.map(fromRow)
+  }
+
+  /**
+   * Live children per parent in one grouped query. A child is done when it sits in a final lane of
+   * its OWN board (the join is on the child's board, not the parent's).
+   */
+  async countChildrenByParentIds(
+    parentIds: readonly string[],
+  ): Promise<ReadonlyMap<string, { readonly total: number; readonly done: number }>> {
+    if (parentIds.length === 0) {
+      return new Map()
+    }
+    const rows = await this.prisma.$queryRaw<
+      { parent_id: string; total: number; done: number }[]
+    >(Prisma.sql`
+      SELECT c.parent_idea_id AS parent_id,
+             COUNT(*)::int AS total,
+             COUNT(*) FILTER (WHERE l.is_final)::int AS done
+      FROM ideas c
+      LEFT JOIN board_swimlanes l ON l.board_id = c.board_id AND l.status_id = c.status_id
+      WHERE c.parent_idea_id IN (${Prisma.join(parentIds.map((id) => Prisma.sql`${id}::uuid`))})
+        AND c.is_deleted = false
+      GROUP BY c.parent_idea_id
+    `)
+    return new Map(rows.map((row) => [row.parent_id, { total: row.total, done: row.done }]))
   }
 
   async listBySprint(sprintId: string): Promise<readonly Idea[]> {

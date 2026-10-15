@@ -406,6 +406,7 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
     readonly allowUserStatusUpdate: boolean
     readonly isArchived: boolean
     readonly keyPrefix: string | null
+    readonly ideaFeaturesEnabled: boolean
     readonly swimlanes: readonly SwimlaneInfo[]
   } | null> {
     const board = await this.getById(boardId)
@@ -419,6 +420,7 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
       allowUserStatusUpdate: board.allowUserStatusUpdate,
       isArchived: board.isArchived,
       keyPrefix: board.keyPrefix,
+      ideaFeaturesEnabled: board.ideaFeaturesEnabled,
       swimlanes: board.swimlanes,
     }
   }
@@ -478,6 +480,42 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
     })
     return new Map(
       rows.flatMap((row) => (row.key_prefix === null ? [] : [[row.id, row.key_prefix] as const])),
+    )
+  }
+
+  /** `ideas.BoardsPort.getBoardReadFacts`. */
+  async getBoardReadFacts(boardIds: readonly string[]): Promise<
+    ReadonlyMap<
+      string,
+      {
+        readonly ideaFeaturesEnabled: boolean
+        readonly referencedBoardByStatusId: ReadonlyMap<string, string>
+      }
+    >
+  > {
+    if (boardIds.length === 0) {
+      return new Map()
+    }
+    const rows = await this.prisma.boards.findMany({
+      where: { id: { in: [...boardIds] } },
+      select: {
+        id: true,
+        idea_features_enabled: true,
+        board_swimlanes: { select: { status_id: true, references_board_id: true } },
+      },
+    })
+    return new Map(
+      rows.map((row) => [
+        row.id,
+        {
+          ideaFeaturesEnabled: row.idea_features_enabled,
+          referencedBoardByStatusId: new Map(
+            row.board_swimlanes.flatMap((lane) =>
+              lane.references_board_id ? [[lane.status_id, lane.references_board_id] as const] : [],
+            ),
+          ),
+        },
+      ]),
     )
   }
 

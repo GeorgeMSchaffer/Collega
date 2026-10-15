@@ -62,6 +62,7 @@ export function board(overrides: Partial<BoardContext> = {}): BoardContext {
     allowUserStatusUpdate: false,
     isArchived: false,
     keyPrefix: null,
+    ideaFeaturesEnabled: true,
     swimlanes: [
       { statusId: STATUS_1, displayOrder: 0, isFinal: false, referencesBoardId: null },
       { statusId: STATUS_2, displayOrder: 1, isFinal: false, referencesBoardId: null },
@@ -183,6 +184,8 @@ export function harness(options: {
   fieldValues?: Partial<IdeaFieldValuesPort>
   /** What `getFirstActiveStatusId` answers; `null` models an organization with no active status. */
   firstActiveStatusId?: string | null
+  /** What `countChildrenByParentIds` answers per parent id. */
+  childCounts?: Readonly<Record<string, { total: number; done: number }>>
 }): Harness {
   const boardsById = new Map((options.boards ?? [board()]).map((b) => [b.boardId, b]))
   const ideasById = new Map((options.ideas ?? []).map((i) => [i.id, i]))
@@ -249,6 +252,14 @@ export function harness(options: {
     async listBySprint() {
       return []
     },
+    async countChildrenByParentIds(parentIds) {
+      return new Map(
+        parentIds.flatMap((id) => {
+          const counts = options.childCounts?.[id]
+          return counts ? [[id, counts] as const] : []
+        }),
+      )
+    },
   }
 
   const boards: BoardsPort = {
@@ -274,6 +285,30 @@ export function harness(options: {
       const next = nextItemNumbers.get(boardId) ?? 1
       nextItemNumbers.set(boardId, next + 1)
       return next
+    },
+    async getBoardReadFacts(boardIds) {
+      return new Map(
+        boardIds.flatMap((id) => {
+          const found = boardsById.get(id)
+          return found
+            ? [
+                [
+                  id,
+                  {
+                    ideaFeaturesEnabled: found.ideaFeaturesEnabled,
+                    referencedBoardByStatusId: new Map(
+                      found.swimlanes.flatMap((lane) =>
+                        lane.referencesBoardId
+                          ? [[lane.statusId, lane.referencesBoardId] as const]
+                          : [],
+                      ),
+                    ),
+                  },
+                ] as const,
+              ]
+            : []
+        }),
+      )
     },
     async getKeyPrefixes(boardIds) {
       return new Map(

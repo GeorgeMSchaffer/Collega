@@ -64,6 +64,8 @@ export type Idea = Auditable & {
    * key prefix and never reused. `null` in the pool and on a board without a prefix.
    */
   readonly itemNumber: number | null
+  /** The idea this item is a task of; `null` for an ordinary idea. A task cannot itself be a parent. */
+  readonly parentIdeaId: string | null
   /**
    * The ideation status. Frozen at its last Discovery value on promotion and never cleared:
    * ideation `Complete` and delivery `Complete` are distinct terminal states, and an item in
@@ -110,6 +112,8 @@ export type CreateIdeaProps = {
   readonly boardId: string | null
   /** Allocated by the application layer; omitted or `null` for no key. */
   readonly itemNumber?: number | null
+  /** Set when the idea is a board task of another idea. */
+  readonly parentIdeaId?: string | null
   readonly statusId: string
   readonly title: string
   readonly description: string | null
@@ -283,6 +287,7 @@ export function createIdea(props: CreateIdeaProps): Idea {
     organizationId,
     boardId,
     itemNumber: boardId === null ? null : (props.itemNumber ?? null),
+    parentIdeaId: props.parentIdeaId ?? null,
     statusId,
     title: normalizeTitle(props.title),
     description: normalizeDescription(props.description),

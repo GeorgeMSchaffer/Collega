@@ -50,6 +50,7 @@ import {
   NotFoundError,
   normalizePageRequest,
   UnauthorizedError,
+  UnprocessableError,
   ValidationError,
 } from '../common/index.js'
 import { randomTagColor } from '../tags/random-color.js'
@@ -58,6 +59,7 @@ import type {
   AssignIssueToSprintCommand,
   ChangeDeliveryStatusCommand,
   ChangeIdeaStatusCommand,
+  CreateBoardTaskCommand,
   CreateIdeaCommand,
   CreateIdeaResult,
   CreatePoolIdeaCommand,
@@ -80,6 +82,7 @@ import type {
   MentionDto,
   OrganizationIdeaListQuery,
   PromoteIdeaCommand,
+  TaskCounts,
   UpdateIdeaCommand,
 } from './models.js'
 import {
@@ -90,6 +93,7 @@ import {
 } from './models.js'
 import type {
   BoardContext,
+  BoardReadFacts,
   BoardsPort,
   BusinessImpactSummary,
   CommentsPort,
@@ -324,12 +328,106 @@ export class IdeaService {
     return this.createIdeaRecord(organizationId, null, statusId, command, { effort, sprintId })
   }
 
+  /**
+   * Creates a task of `parentIdeaId` on the board that the parent's current lane references, in
+   * that board's leftmost lane (SPEC/contracts/ideas.md "Tasks and item keys"). The task stores the
+   * organization's first active idea type and business impact (NOT NULL columns) and never exposes
+   * them (Board References Ruling 2).
+   */
+  async createBoardTask(
+    parentIdeaId: string,
+    command: CreateBoardTaskCommand,
+  ): Promise<CreateIdeaResult> {
+    ensureNotDirectSiteAdmin(this.currentUser)
+    this.requireIdeaEditRole()
+
+    const parent = await this.ideaRepository.getById(parentIdeaId, false)
+    if (!parent) {
+      throw new NotFoundError('Idea not found.')
+    }
+    this.ensureOrganizationScope(parent.organizationId)
+    await this.ensureIdeaBoardNotArchived(parent)
+
+    if (parent.parentIdeaId !== null) {
+      throw new UnprocessableError('parentIsTask', 'A task cannot have tasks of its own.')
+    }
+    const parentBoard =
+      parent.boardId === null ? null : await this.boards.getBoardContext(parent.boardId)
+    const referencedBoardId =
+      parentBoard?.swimlanes.find((lane) => lane.statusId === parent.statusId)?.referencesBoardId ??
+      null
+    if (referencedBoardId === null) {
+      throw new UnprocessableError(
+        'parentNotInReferenceLane',
+        'The idea must sit in a lane that references a board.',
+      )
+    }
+
+    const target = await this.boards.getBoardContext(referencedBoardId)
+    if (!target || target.organizationId !== parent.organizationId || target.isArchived) {
+      throw new UnprocessableError('referencedBoardArchived', 'The referenced board is archived.')
+    }
+    const statusId = leftMostStatusId(target)
+    if (!statusId) {
+      throw new ValidationError('One or more fields are invalid.', {
+        statusId: ['The referenced board has no swimlanes to place the task in.'],
+      })
+    }
+
+    const ideaTypes = await this.classification.listIdeaTypesByOrganization(
+      parent.organizationId,
+      false,
+    )
+    const defaultType = ideaTypes[0]
+    if (!defaultType) {
+      throw new UnprocessableError('noDefaultIdeaType', 'The organization has no active idea type.')
+    }
+    const impacts = await this.classification.listBusinessImpactsByOrganization(
+      parent.organizationId,
+      false,
+    )
+    const defaultImpact = impacts[0]
+    if (!defaultImpact) {
+      throw new UnprocessableError(
+        'noDefaultBusinessImpact',
+        'The organization has no active business impact.',
+      )
+    }
+
+    const created = await this.createIdeaRecord(
+      parent.organizationId,
+      target.boardId,
+      statusId,
+      {
+        ...command,
+        ideaTypeId: defaultType.id,
+        businessImpactId: defaultImpact.id,
+        fieldValues: null,
+      },
+      undefined,
+      parent.id,
+    )
+
+    await this.writeAudit({
+      eventType: 'BoardTaskCreated',
+      entityType: 'Idea',
+      entityId: created.ideaId,
+      organizationId: parent.organizationId,
+      intendedActorUserId: this.requireAuthenticatedUserId(),
+      message: `Task '${created.title}' created from idea '${parent.title}'.`,
+      nowUtc: this.clock.now(),
+      metadata: { parentIdeaId: parent.id, boardId: target.boardId },
+    })
+    return created
+  }
+
   private async createIdeaRecord(
     organizationId: string,
     boardId: string | null,
     statusId: string,
     command: Omit<CreateIdeaCommand, 'statusId'>,
     promotion?: { readonly effort: EffortLevel; readonly sprintId: string | null },
+    parentIdeaId: string | null = null,
   ): Promise<CreateIdeaResult> {
     const now = this.clock.now()
     const authorId = this.requireAuthenticatedUserId()
@@ -347,11 +445,15 @@ export class IdeaService {
       'mentionEmails',
     )
 
-    const fieldValues = await this.fieldValues.resolveAndValidate({
-      organizationId: organizationId,
-      ideaTypeId: command.ideaTypeId,
-      submitted: command.fieldValues ?? [],
-    })
+    // A task has no type fields: its stored default type is not shown, so none can be asked for.
+    const fieldValues =
+      parentIdeaId === null
+        ? await this.fieldValues.resolveAndValidate({
+            organizationId: organizationId,
+            ideaTypeId: command.ideaTypeId,
+            submitted: command.fieldValues ?? [],
+          })
+        : []
 
     // Last step before staging: a refusal above must not burn a number.
     const itemNumber = boardId === null ? null : await this.boards.allocateItemNumber(boardId)
@@ -361,6 +463,7 @@ export class IdeaService {
       organizationId: organizationId,
       boardId,
       itemNumber,
+      parentIdeaId,
       statusId,
       title: command.title ?? '',
       description: command.description,
@@ -378,11 +481,13 @@ export class IdeaService {
       nowUtc: now,
     })
 
-    const reconcileScope = await this.fieldValues.getReconcileScope(
-      organizationId,
-      command.ideaTypeId,
-    )
-    idea = replaceIdeaFieldValues(idea, fieldValues, reconcileScope, now, authorId)
+    if (parentIdeaId === null) {
+      const reconcileScope = await this.fieldValues.getReconcileScope(
+        organizationId,
+        command.ideaTypeId,
+      )
+      idea = replaceIdeaFieldValues(idea, fieldValues, reconcileScope, now, authorId)
+    }
     if (promotion) {
       // A new idea has no upvotes, so the support-at-commitment snapshot is 0. Promoted before
       // `add`, so the row is written once, already in Delivery, by the one saveChanges below.
@@ -433,11 +538,12 @@ export class IdeaService {
       ideaId: idea.id,
       boardId: idea.boardId,
       itemKey: this.keyOf(idea, prefixes),
+      parentIdeaId: idea.parentIdeaId,
       statusId: idea.statusId,
       title: idea.title,
       priority,
-      ideaTypeId: idea.ideaTypeId,
-      businessImpactId: idea.businessImpactId,
+      ideaTypeId: parentIdeaId === null ? idea.ideaTypeId : null,
+      businessImpactId: parentIdeaId === null ? idea.businessImpactId : null,
       dueDate: idea.dueDate,
     }
   }
@@ -1001,6 +1107,11 @@ export class IdeaService {
     }
     await this.ensureIdeaBoardNotArchived(idea)
 
+    const children = await this.ideaRepository.countChildrenByParentIds([idea.id])
+    if ((children.get(idea.id)?.total ?? 0) > 0) {
+      throw new UnprocessableError('hasOpenTasks', 'An idea with tasks cannot be deleted.')
+    }
+
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
 
@@ -1380,33 +1491,43 @@ export class IdeaService {
     const currentUserId = this.requireAuthenticatedUserId()
     const upvoted = await this.upvoteCounts.getUpvotedIdeaIds(currentUserId, ideaIds)
     const keyPrefixes = await this.keyPrefixesFor(ideas)
+    const references = await this.referenceContextFor(ideas)
 
-    return ideas.map((idea) => ({
-      ideaId: idea.id,
-      boardId: idea.boardId,
-      itemKey: this.keyOf(idea, keyPrefixes),
-      title: idea.title,
-      priority: idea.priority,
-      ideaTypeId: idea.ideaTypeId,
-      ideaTypeName: this.ideaTypeName(ideaTypeLookup, idea.ideaTypeId),
-      ideaTypeColorHex: this.ideaTypeColorHex(ideaTypeLookup, idea.ideaTypeId),
-      ideaTypeIcon: this.ideaTypeIcon(ideaTypeLookup, idea.ideaTypeId),
-      businessImpactId: idea.businessImpactId,
-      businessImpactName: this.businessImpactName(businessImpactLookup, idea.businessImpactId),
-      businessImpactColor: this.businessImpactColor(businessImpactLookup, idea.businessImpactId),
-      dueDate: idea.dueDate,
-      assignees: this.projectAssignees(idea, userLookup),
-      tagNames: this.projectTagNames(idea, tagLookup),
-      tags: this.projectTags(idea, tagLookup),
-      effort: idea.effort,
-      statusId: idea.statusId,
-      statusName: this.statusName(statusInfo, idea.statusId),
-      upvoteCount: upvoteCounts.get(idea.id) ?? 0,
-      hasUpvoted: upvoted.has(idea.id),
-      commentCount: commentCounts.get(idea.id) ?? 0,
-      authorUserId: idea.authorUserId,
-      createdAtUtc: idea.createdAtUtc,
-    }))
+    return ideas.map((idea) => {
+      const hidden = references.hidesIdeaFeatures(idea)
+      return {
+        ideaId: idea.id,
+        boardId: idea.boardId,
+        itemKey: this.keyOf(idea, keyPrefixes),
+        parentIdeaId: idea.parentIdeaId,
+        taskCounts: references.taskCountsOf(idea),
+        title: idea.title,
+        priority: idea.priority,
+        ideaTypeId: hidden ? null : idea.ideaTypeId,
+        ideaTypeName: hidden ? null : this.ideaTypeName(ideaTypeLookup, idea.ideaTypeId),
+        ideaTypeColorHex: hidden ? null : this.ideaTypeColorHex(ideaTypeLookup, idea.ideaTypeId),
+        ideaTypeIcon: hidden ? null : this.ideaTypeIcon(ideaTypeLookup, idea.ideaTypeId),
+        businessImpactId: hidden ? null : idea.businessImpactId,
+        businessImpactName: hidden
+          ? null
+          : this.businessImpactName(businessImpactLookup, idea.businessImpactId),
+        businessImpactColor: hidden
+          ? null
+          : this.businessImpactColor(businessImpactLookup, idea.businessImpactId),
+        dueDate: idea.dueDate,
+        assignees: this.projectAssignees(idea, userLookup),
+        tagNames: this.projectTagNames(idea, tagLookup),
+        tags: this.projectTags(idea, tagLookup),
+        effort: idea.effort,
+        statusId: idea.statusId,
+        statusName: this.statusName(statusInfo, idea.statusId),
+        upvoteCount: hidden ? 0 : (upvoteCounts.get(idea.id) ?? 0),
+        hasUpvoted: hidden ? false : upvoted.has(idea.id),
+        commentCount: commentCounts.get(idea.id) ?? 0,
+        authorUserId: idea.authorUserId,
+        createdAtUtc: idea.createdAtUtc,
+      }
+    })
   }
 
   /**
@@ -1533,16 +1654,23 @@ export class IdeaService {
 
     const ideaTypeForFields = ideaTypeLookup.get(idea.ideaTypeId) ?? null
 
-    const fieldValues: readonly IdeaFieldValueDto[] = await this.fieldValues.describeForDetail({
-      organizationId: idea.organizationId,
-      ideaTypeId: idea.ideaTypeId,
-      stored: idea.fieldValues,
-    })
-    const formFields = await this.fieldValues.describeFormFields({
-      organizationId: idea.organizationId,
-      ideaTypeId: idea.ideaTypeId,
-      stored: idea.fieldValues,
-    })
+    const references = await this.referenceContextFor([idea])
+    const hidden = references.hidesIdeaFeatures(idea)
+
+    const fieldValues: readonly IdeaFieldValueDto[] = hidden
+      ? []
+      : await this.fieldValues.describeForDetail({
+          organizationId: idea.organizationId,
+          ideaTypeId: idea.ideaTypeId,
+          stored: idea.fieldValues,
+        })
+    const formFields = hidden
+      ? []
+      : await this.fieldValues.describeFormFields({
+          organizationId: idea.organizationId,
+          ideaTypeId: idea.ideaTypeId,
+          stored: idea.fieldValues,
+        })
 
     const mentions: readonly MentionDto[] = mentionUserIds.flatMap((id) => {
       const user = userLookup.get(id)
@@ -1579,19 +1707,25 @@ export class IdeaService {
       ideaId: idea.id,
       boardId: idea.boardId,
       itemKey: this.keyOf(idea, keyPrefixes),
+      parentIdeaId: idea.parentIdeaId,
+      taskCounts: references.taskCountsOf(idea),
       title: idea.title,
       problem: idea.problem,
       proposedSolutions: idea.proposedSolutions,
       impactRationale: idea.impactRationale,
       description: idea.description,
       priority: idea.priority,
-      ideaTypeId: idea.ideaTypeId,
-      ideaTypeName: this.ideaTypeName(ideaTypeLookup, idea.ideaTypeId),
-      ideaTypeColorHex: ideaTypeForFields?.colorHex ?? null,
-      ideaTypeIcon: ideaTypeForFields?.icon ?? null,
-      businessImpactId: idea.businessImpactId,
-      businessImpactName: this.businessImpactName(businessImpactLookup, idea.businessImpactId),
-      businessImpactColor: this.businessImpactColor(businessImpactLookup, idea.businessImpactId),
+      ideaTypeId: hidden ? null : idea.ideaTypeId,
+      ideaTypeName: hidden ? null : this.ideaTypeName(ideaTypeLookup, idea.ideaTypeId),
+      ideaTypeColorHex: hidden ? null : (ideaTypeForFields?.colorHex ?? null),
+      ideaTypeIcon: hidden ? null : (ideaTypeForFields?.icon ?? null),
+      businessImpactId: hidden ? null : idea.businessImpactId,
+      businessImpactName: hidden
+        ? null
+        : this.businessImpactName(businessImpactLookup, idea.businessImpactId),
+      businessImpactColor: hidden
+        ? null
+        : this.businessImpactColor(businessImpactLookup, idea.businessImpactId),
       dueDate: idea.dueDate,
       assignees: this.projectAssignees(idea, userLookup),
       statusId: idea.statusId,
@@ -1600,8 +1734,8 @@ export class IdeaService {
       tags: this.projectTags(idea, tagLookup),
       mentions,
       comments: commentDtos,
-      upvoteCount,
-      hasUpvoted: upvoted.has(idea.id),
+      upvoteCount: hidden ? 0 : upvoteCount,
+      hasUpvoted: hidden ? false : upvoted.has(idea.id),
       isFollowing,
       followerCount,
       commentCount,
@@ -1620,6 +1754,35 @@ export class IdeaService {
       ),
     ]
     return boardIds.length === 0 ? new Map() : this.boards.getKeyPrefixes(boardIds)
+  }
+
+  /**
+   * The board facts and child counts a read needs, each fetched once for the whole set. Idea
+   * features are hidden on a task and on any item of a board that has them switched off; `taskCounts`
+   * exists only on an item whose current lane references a board.
+   */
+  private async referenceContextFor(ideas: readonly Idea[]): Promise<{
+    hidesIdeaFeatures(idea: Idea): boolean
+    taskCountsOf(idea: Idea): TaskCounts | null
+  }> {
+    const boardIds = [...new Set(ideas.flatMap((i) => (i.boardId === null ? [] : [i.boardId])))]
+    const facts: ReadonlyMap<string, BoardReadFacts> =
+      boardIds.length === 0 ? new Map() : await this.boards.getBoardReadFacts(boardIds)
+    const isParentLane = (idea: Idea): boolean =>
+      idea.boardId !== null &&
+      facts.get(idea.boardId)?.referencedBoardByStatusId.has(idea.statusId) === true
+    const parentIds = ideas.filter(isParentLane).map((i) => i.id)
+    const counts =
+      parentIds.length === 0
+        ? new Map()
+        : await this.ideaRepository.countChildrenByParentIds(parentIds)
+    return {
+      hidesIdeaFeatures: (idea) =>
+        idea.parentIdeaId !== null ||
+        (idea.boardId !== null && facts.get(idea.boardId)?.ideaFeaturesEnabled === false),
+      taskCountsOf: (idea) =>
+        isParentLane(idea) ? (counts.get(idea.id) ?? { total: 0, done: 0 }) : null,
+    }
   }
 
   private keyOf(idea: Idea, prefixes: ReadonlyMap<string, string>): string | null {
