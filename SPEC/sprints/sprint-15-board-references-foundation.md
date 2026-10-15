@@ -739,3 +739,18 @@ Expected: `pnpm check` green.
 **Plan 3 — UI.** Statuses page with the reference selector and Kind column; parent drawer with Tasks, sprint chips and blocked locks; child board with sprint header and parent chips; Outcome pages and value table; the demo `Implementation` board and reference lane in the seed, with the board-count reconciliation in `demo-scenario.test.ts`, e2e and the golden accepted-differences. Comps: `comp-s-board-reference.html`, `comp-s-idea-and-outcome.html`.
 
 **Plan 4 — Retire Delivery.** One migration dropping `ideas.phase`, `delivery_status`, the promotion columns, `issue_tasks`, the Delivery enums and the notification event values; delete the roughly 40 Delivery-only files (inventory in this session's research: `packages/domain/src/issue-tasks`, `packages/application/src/issue-tasks`, `apps/api/src/issue-tasks`, `apps/api/src/ideas/delivery.controller.ts`, `apps/web/app/(desk)/delivery/**`, `apps/web/components/delivery/*`, `modules/delivery.ts` in the seed, their tests and `e2e/tests/delivery.spec.ts`); make `sprints.board_id` required; re-record the golden accepted differences; update `SPEC/50-typescript-migration.md` E6 and `SPEC/95-next-sprints.md`. Must be sequenced after the Backlog-add and quick-add work is retired or ported, since both build on the Delivery model.
+
+## Carried into Plan 2 (from the Plan 1 final review)
+
+1. Seeded ideas get no `item_number`, but `contracts/ideas.md` says `itemKey` is null only for a board with no prefix or no board. Plan 2 numbers the seeded ideas, or the contract says un-numbered legacy items get null.
+2. Item numbers against board moves, pull-in and prefix edits: `ux_ideas_board_id_item_number` will collide once numbers exist, and the contract is ambiguous on whether `keyPrefix` can change after keys are issued.
+3. "Deleting an item removes its dependencies in both directions" holds only for a hard delete (FK cascade). Ideas are soft-deleted, so the application must remove the dependencies itself.
+4. Seed and cleanup teardown delete boards before sprints while `sprints.board_id` is ON DELETE RESTRICT. Harmless now; it breaks once a board sprint is seeded (`src/demo-seed/index.ts` ~lines 99 vs 110; `prisma/seed/cleanup-test-data.ts` ~178 vs 198).
+5. `contracts/boards.md` has five 422 rules but four error keys. "Missing or other-org board" is 422 there but 404 in `idea-dependencies.md` and the Outcomes defaults. The archive-while-referenced rule is 422 while existing archive conflicts are 409.
+6. Spec Behavior 5 (late task additions) against the contract (the parent must sit in the reference lane at task creation): the contract should say "move the parent back first".
+7. `key_prefix` has no database CHECK for 2-10 characters A-Z0-9, and the unique index is case-sensitive, so "upper-cased on store" is load-bearing in the application.
+8. Add 422 to the Standard Error Responses list in `SPEC/30-Contracts.md`, and write Roles and Errors for the board-tasks route before Plan 2 implements it.
+9. Task 2 Step 4 text in this plan still says `POST /ideas/{id}/tasks`; the ruling is `/board-tasks`.
+10. The test pinning `''` for a letterless board name in `demo-scenario.test.ts` should be dropped in Plan 2.
+11. The lane-save route that carries `referencesBoardId` and `isFinal` is not named in `contracts/boards.md`.
+12. `seed-rerun.integration.test.ts` failed on its follower test when the reviewer ran it against the local dev DB. Unchecked on `dev`; not caused by this stack as far as known.

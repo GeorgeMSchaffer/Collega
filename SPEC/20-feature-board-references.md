@@ -1,7 +1,7 @@
 # Feature: Board References (Idea → Tasks → Results)
 
-> **Status:** written spec **approved by the owner 2026-10-15**. Nothing is built. Superseding entries in `SPEC/decisions.md` are still to be written.
-> **Supersedes, once approved and logged in `SPEC/decisions.md`:** the Delivery phase, the promotion gate as a
+> **Status:** written spec **approved by the owner 2026-10-15**. Nothing is built. The superseding entry is written (`SPEC/decisions.md` "2026-10-15 — Board References replace the Delivery phase"); Delivery stays in place until Plan 4.
+> **Supersedes (logged in `SPEC/decisions.md`; Delivery stays in place until Plan 4):** the Delivery phase, the promotion gate as a
 > separate step, the fixed delivery status set, Sprint-as-org-container, and checklist Tasks in
 > `SPEC/20-feature-issues-and-delivery.md` (Slice 1). Outcomes (Slice 2) is kept and extended.
 > **Reference rendering:** `SPEC/mockups/comp-s-board-reference.html` (Graphite, three screens).

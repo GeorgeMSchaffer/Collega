@@ -4,6 +4,8 @@ Part of the contract set indexed in [`SPEC/30-Contracts.md`](../30-Contracts.md)
 
 An **idea dependency** says one item cannot start until another is final. Both items are on the same board. No dependency means parallel.
 
+## Idea Dependency Contracts
+
 ### `PUT /api/v1/ideas/{ideaId}/blocked-by`
 
 - **Roles:** anyone who may edit the item. Read Only is refused with `403`.
