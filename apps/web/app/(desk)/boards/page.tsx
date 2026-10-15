@@ -88,6 +88,11 @@ export default async function BoardsPage({ searchParams }: { searchParams: Promi
   // Creating is open to a User too; editing an existing board is not.
   const formDenial = first(search.board) === 'new' ? createDenial : adminDenial
   const form = formDenial === null ? await formFor(search, boards, adminDenial === null) : null
+  // The quick-add row's lanes: the first of the catalog, as the drawer defaults them.
+  const quickAddLaneIds =
+    createDenial === null
+      ? (await getStatuses()).slice(0, SWIMLANE_FLOOR).map((status) => status.id)
+      : []
 
   return (
     <>
@@ -100,6 +105,7 @@ export default async function BoardsPage({ searchParams }: { searchParams: Promi
           adminDenial={adminDenial}
           createDenial={createDenial}
           form={form}
+          quickAddLaneIds={quickAddLaneIds}
         />
       </main>
     </>
