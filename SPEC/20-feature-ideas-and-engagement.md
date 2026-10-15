@@ -89,6 +89,8 @@ Users can create, discuss, organize, and support ideas within their organization
     - **User-association filter** narrows to ideas a chosen user authored or is assigned to (the user search box in `SPEC/Bug Triage.md`), distinct from the caller-scoped `All`/`Created by me`/`Assigned to me` chips.
     - **Column sort** on Title, Created By, Assigned To (alphabetically-first assignee), Status, and Created Date (since 2026-09-27 also Board, Priority, Votes and Tags; `30-Contracts.md` lists the `sortBy` values), ascending or descending, with a stable idea-id tiebreaker so paging is deterministic.
 
+> **Quick-add (2026-10-15).** The Ideas list and a board's List view gain the list pattern's quick-add row (`20-feature-client-ui.md`, "Quick-add row"). Creating an idea requires Problem, Proposed solutions and Impact rationale, so Enter on the row always opens the idea form pre-populated with the row's Title; nothing is created until that form is saved.
+
 ## Organization-Managed Idea Fields
 1. An in-scope Org Admin can create, rename, reorder, and soft-delete Idea Type and Business Impact options; a Site Admin does so only while acting through View As (corrected 2026-09-29, `SPEC/decisions.md` 2026-09-29 "Spec contradictions resolved").
 2. The management surface is **Settings > Idea Fields** at `/settings/organizations/{organizationId}/idea-fields`.
