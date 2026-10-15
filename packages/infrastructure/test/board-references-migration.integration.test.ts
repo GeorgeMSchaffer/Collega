@@ -35,6 +35,9 @@ function withDatabase(url: string, database: string): string {
 }
 
 describe.skipIf(!DATABASE_URL)('Board References migration', () => {
+  // The tests share one database and must run in file order: the board-delete test relies on the
+  // reference made by 'lets a lane reference another board', and the dependency test deletes an
+  // idea and must stay last.
   const database = `collega_mig_probe_${randomUUID().replaceAll('-', '').slice(0, 12)}`
   const admin = new PrismaClient()
   let probe: PrismaClient
@@ -140,14 +143,14 @@ describe.skipIf(!DATABASE_URL)('Board References migration', () => {
   })
 
   it('keeps a key prefix unique within an organization only, and lets unprefixed boards coexist', async () => {
+    const unprefixed = await probe.$queryRaw<{ n: bigint }[]>`
+      SELECT COUNT(*) AS n FROM boards WHERE organization_id = ${ORG_A}::uuid AND key_prefix IS NULL`
+    expect(Number(unprefixed[0]?.n)).toBe(2)
     await probe.$executeRaw`UPDATE boards SET key_prefix = 'CI' WHERE id = ${BOARD_CI}::uuid`
     await probe.$executeRaw`UPDATE boards SET key_prefix = 'CI' WHERE id = ${BOARD_OTHER_ORG}::uuid`
     await expect(
       probe.$executeRaw`UPDATE boards SET key_prefix = 'CI' WHERE id = ${BOARD_IMPL}::uuid`,
     ).rejects.toThrow(/23505.*Key \(organization_id, key_prefix\)=/s)
-    const unprefixed = await probe.$queryRaw<{ n: bigint }[]>`
-      SELECT COUNT(*) AS n FROM boards WHERE key_prefix IS NULL`
-    expect(Number(unprefixed[0]?.n)).toBe(1)
   })
 
   it('refuses a dependency on itself and removes dependencies with either idea', async () => {
@@ -157,12 +160,12 @@ describe.skipIf(!DATABASE_URL)('Board References migration', () => {
     ).rejects.toThrow(/ck_idea_dependencies_no_self/)
 
     await probe.$executeRaw`INSERT INTO idea_dependencies (blocked_idea_id, blocker_idea_id, created_at_utc)
-      VALUES (${TASK_TWO}::uuid, ${TASK}::uuid, ${NOW}::timestamptz)`
+      VALUES (${TASK_TWO}::uuid, ${TASK}::uuid, ${NOW}::timestamptz),
+        (${TASK}::uuid, ${PARENT}::uuid, ${NOW}::timestamptz),
+        (${TASK_TWO}::uuid, ${PARENT}::uuid, ${NOW}::timestamptz)`
     await probe.$executeRaw`DELETE FROM ideas WHERE id = ${TASK}::uuid`
-    const left = await probe.$queryRaw<{ n: bigint }[]>`SELECT COUNT(*) AS n FROM idea_dependencies`
-    expect(Number(left[0]?.n)).toBe(0)
-    const survivor = await probe.$queryRaw<{ n: bigint }[]>`
-      SELECT COUNT(*) AS n FROM ideas WHERE id = ${TASK_TWO}::uuid`
-    expect(Number(survivor[0]?.n)).toBe(1)
+    const left = await probe.$queryRaw<{ blocked: string; blocker: string }[]>`
+      SELECT blocked_idea_id::text AS blocked, blocker_idea_id::text AS blocker FROM idea_dependencies`
+    expect(left).toEqual([{ blocked: TASK_TWO, blocker: PARENT }])
   })
 })
