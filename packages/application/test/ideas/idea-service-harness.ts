@@ -180,6 +180,8 @@ export function harness(options: {
   followers?: Readonly<Record<string, readonly string[]>>
   /** Overrides for the user-defined-field port, e.g. to make a save change a field value. */
   fieldValues?: Partial<IdeaFieldValuesPort>
+  /** What `getFirstActiveStatusId` answers; `null` models an organization with no active status. */
+  firstActiveStatusId?: string | null
 }): Harness {
   const boardsById = new Map((options.boards ?? [board()]).map((b) => [b.boardId, b]))
   const ideasById = new Map((options.ideas ?? []).map((i) => [i.id, i]))
@@ -261,7 +263,7 @@ export function harness(options: {
       return new Map([[STATUS_1, info]])
     },
     async getFirstActiveStatusId() {
-      return STATUS_1
+      return options.firstActiveStatusId === undefined ? STATUS_1 : options.firstActiveStatusId
     },
   }
 
