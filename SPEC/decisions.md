@@ -29,6 +29,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | Date | Decision | Status | Where |
 |---|---|---|---|
 | 2026-10-15 | Board References replace the Delivery phase | active | full below |
+| 2026-10-15 | The four open Backlog Add New Issue readings are decided | active | full below |
 | 2026-10-15 | Issues can be added directly from the Backlog | amended | full below |
 | 2026-10-13 | Boards can pull in existing items, and ideas can have no board | active | full below |
 | 2026-10-13 | Home gets an Unread notifications panel | amended | full below |
@@ -136,6 +137,21 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 - Delivery code stays in place and working until the replacements exist; Plan 4 retires it.
 - The 17 Outcomes questions in `contracts/outcomes.md` are answered in `20-feature-board-references.md` and copied into the contract by the Outcomes backend slice.
 - Entry to a reference lane requires Effort; no per-lane rules.
+## 2026-10-15 — The four open Backlog Add New Issue readings are decided
+
+**Decided by the user**, on the four items slice 187 left open (see "Issues can be added directly
+from the Backlog" below). Applied by slice 211.
+
+1. **Site Admin add-denial wording is kept:** *Act as a member to add issues. Use View As.*
+   (`apps/web/lib/roles.ts`, `issueAddDenial`), although the delivery screens' older wording says
+   "administrator". No code change.
+2. **The Issue drawer's footer Edit follows the spec:** enabled only for the author and an Org Admin
+   (the Backlog row Edit's rule), disabled with the reason *Only the author or an Org Admin can edit
+   this issue.* for other writers. Read Only and Site Admin behaviour is unchanged.
+3. **The Delivery group (Effort, Sprint) stays directly under Title**, as the approved comp draws
+   it; the spec text that placed it after the idea fields was wrong and is corrected.
+4. **The header *Add New Issue* button lives in the page header's action slot** (`PageHeader`
+   `action`), not the topbar; the spec wording is corrected.
 
 ---
 
