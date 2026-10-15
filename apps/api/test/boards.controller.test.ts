@@ -470,7 +470,7 @@ describe('Board reference lane bodies at the HTTP boundary', () => {
     ['ideaFeaturesEnabled', { ideaFeaturesEnabled: 1 }],
   ])('answers 400 keyed %s for a wrongly typed value, on update and create', async (key, extra) => {
     const { controller: boards, persisted } = controller()
-    const body = { name: 'Ideas', swimlanes: SWIMLANES, ...extra }
+    const body = { name: 'Ideas', swimlanes: SWIMLANES, ...extra } as never
 
     for (const call of [boards.update(BOARD, body), boards.create(ORG, body)]) {
       const rendered = render(await thrownBy(call), '/x')
