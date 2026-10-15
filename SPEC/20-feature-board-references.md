@@ -70,13 +70,15 @@ Automatic parent moves, story points or velocity, per-task dates (dates live on 
 
 ## Open questions for the owner
 
-1. ~~The 17 Outcomes questions~~ answered 2026-10-15 below; to be copied into `contracts/outcomes.md` once this spec is approved.
+1. ~~The 17 Outcomes questions~~ answered 2026-10-15 below; ~~to be copied into `contracts/outcomes.md` once this spec is approved~~ done in `contracts/outcomes.md`, 2026-10-15.
 2. ~~Idea-only fields on child cards~~ decided below.
 3. ~~Nested references~~ decided below.
 4. ~~Entry conditions~~ decided below.
 5. ~~Final lane~~ decided below: an explicit `board_swimlanes.is_final` flag.
 
 ## Further decisions (2026-10-15, while answering `contracts/outcomes.md` "Not yet specified")
+
+> **Confirmed and amended, 2026-10-15 (later):** the user decided the 17 questions in `contracts/outcomes.md` ("The 17 open Outcome contract questions are decided", `SPEC/decisions.md`). The individually decided lines below stand. The "defaults accepted without individual review" paragraph is confirmed for Q2 (the shape is new: no Issue key, `{ outcomes, ungrouped }`), Q3, Q5, Q14 and Q15, and superseded where the contract differs (Q6, Q7, Q8, Q11, Q13, Q16, and grouping into a bad Outcome is a `400`).
 
 Decided by the owner:
 - **Final lane:** `board_swimlanes.is_final`, set per lane on the Statuses page (the comp's "Kind" column). A board may have several final lanes; only those count as done. Statuses stay organization-wide and unchanged.
