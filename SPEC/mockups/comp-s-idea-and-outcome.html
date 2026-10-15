@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="graphite">
+<head>
+<meta charset="utf-8">
+<title>Idea with tasks and value (Graphite)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--metric:#5CC8E0;--suggest:#5CC8E0;--suggest-tint:#0F1D21;--suggest-line:#2E6A78;
+--bg:#0F1113;--ink:#E6E8EA;--ink2:#C4CAD0;--muted:#9BA3AB;--line:#22272C;--line2:#2C3238;--card:#16191C;--soft:#1C2024;--rowh:#1A1E22;--thead:#121518;--facts:#1A1E22;--field:#0F1113;
+--pri:#F5A524;--pri-h:#FFC35C;--pri-t:#F5A524;--pri-tint:#2A2418;--pri-ink:#16120A;
+--hot:#E5484D;--hot-t:#FF8A8E;--hot-tint:#2E1719;--ok:#58C781;--ok-t:#58C781;--ok-tint:#13241A;--warn-t:#F5B456;--warn-tint:#2A2418;
+--side:#121518;--side-ink:#AEB5BC;--side-line:#22272C;--side-hover:#1A1E22;--side-on:#1C2024;--side-on-ink:#E6E8EA;--bar:#0B0D0F;--bar-ink:#AEB5BC;
+--av1:#2A2418;--av1i:#F5A524;--av2:#153038;--av2i:#5CC8E0;--av3:#262B30;--av3i:#C4CAD0;--av4:#1C2A20;--av4i:#58C781;
+--r:8px;--rs:6px;--display:"IBM Plex Sans",system-ui,sans-serif;--body:"IBM Plex Sans",system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;--h-weight:600}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--body);display:flex;flex-direction:column}
+button{font:inherit;color:inherit}
+.proto{display:flex;align-items:center;gap:12px;padding:8px 16px;background:var(--bar);color:var(--bar-ink);font-size:13px;flex:none}
+.proto button{background:transparent;border:1px solid #3a4148;border-radius:999px;padding:3px 12px;color:var(--bar-ink);cursor:pointer}
+.proto button[aria-pressed=true]{background:var(--bar-ink);color:var(--bar)}
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);flex:1}
+.side{background:var(--side);border-right:1px solid var(--side-line);padding:14px 10px;display:flex;flex-direction:column;gap:2px;color:var(--side-ink)}
+.brand{display:flex;gap:10px;align-items:center;padding:4px 6px 12px}
+.brand b{display:block;font:600 16px/1.1 var(--display);color:var(--ink)}.brand small{font-size:12px;opacity:.75}
+.mark{display:grid;place-items:center;width:30px;height:30px;border-radius:var(--rs);background:var(--pri);color:var(--pri-ink);font:600 12px var(--display)}
+.navlbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.7;padding:10px 8px 4px}
+.nav{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:var(--rs);color:var(--side-ink)}
+.nav[aria-current=page]{background:var(--side-on);color:var(--side-on-ink);font-weight:600}
+.nav span{flex:1}.nav small{font-weight:600;opacity:.8}
+.me{margin-top:auto;display:flex;gap:10px;align-items:center;padding:10px 6px 2px;border-top:1px solid var(--side-line)}
+.me b{display:block;font-size:13px;color:var(--ink)}.me small{font-size:12px;opacity:.75}
+.main{min-width:0;display:flex;flex-direction:column;position:relative}
+.topbar{display:flex;align-items:center;gap:8px;min-height:52px;padding:8px 24px;border-bottom:1px solid var(--line);background:var(--card)}
+.crumb{color:var(--muted)}.crumb b{color:var(--ink)}
+.work{padding:20px 24px 32px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.pghead{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.pghead h1{margin:0;font:var(--h-weight) 28px/1.15 var(--display);letter-spacing:-.02em}
+.pghead p{margin:4px 0 0;color:var(--muted);max-width:64ch}
+.btn{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13px;height:32px;padding:0 12px;border-radius:var(--rs);border:1px solid var(--line2);background:var(--card);cursor:pointer}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}
+.btn.sm{height:28px;padding:0 10px;font-size:12px}
+.btn.ghost{border-color:transparent;background:transparent}
+.seg{display:inline-flex;background:var(--soft);border-radius:var(--rs);padding:2px}
+.seg span{padding:4px 12px;font-size:13px;color:var(--muted);border-radius:5px}
+.seg span.on{background:var(--card);color:var(--ink);font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:1px 8px;border-radius:999px;background:color-mix(in srgb,var(--tc,var(--muted)) 16%,var(--card));color:color-mix(in srgb,var(--tc,var(--muted)) 62%,var(--ink));border:1px solid color-mix(in srgb,var(--tc,var(--muted)) 30%,transparent)}
+.avs{display:inline-flex}.av{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;font:700 10px var(--body);border:2px solid var(--card);margin-left:-6px}
+.avs .av:first-child{margin-left:0}
+.a1{background:var(--av1);color:var(--av1i)}.a2{background:var(--av2);color:var(--av2i)}.a3{background:var(--av3);color:var(--av3i)}.a4{background:var(--av4);color:var(--av4i)}
+.mono{font-family:var(--mono)}
+/* board */
+.lanes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.lane{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:520px;padding:6px 6px 12px;border-radius:14px;background:color-mix(in srgb,var(--soft) 55%,transparent);border:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
+.lanehd{display:flex;align-items:center;gap:8px;padding:6px 12px;font-weight:600;font-size:13px}
+.lanehd span{flex:1}.lanehd small{font:500 12px var(--mono);opacity:.8}
+.kcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:7px}
+.kcard h4{margin:0;font-size:13px;font-weight:600;line-height:1.35}
+.kcard.sel{outline:2px solid var(--pri);outline-offset:-1px}
+.krow{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.kmeta{font:500 11px var(--mono);color:var(--muted)}
+.prog{display:flex;gap:2px;height:5px;border-radius:3px;overflow:hidden;background:var(--soft)}
+.prog i{display:block;height:100%}
+/* drawer */
+.drawer{position:absolute;top:0;right:0;bottom:0;width:560px;background:var(--card);border-left:1px solid var(--line2);box-shadow:-18px 0 40px rgb(0 0 0/.45);display:flex;flex-direction:column;z-index:5}
+.dhead{display:flex;align-items:flex-start;gap:8px;padding:16px 18px 10px;border-bottom:1px solid var(--line)}
+.eb{font:500 11px var(--mono);color:var(--muted);letter-spacing:.03em}
+.dhead h2{margin:2px 0 0;font:var(--h-weight) 19px/1.25 var(--display)}
+.dbody{flex:1;overflow:auto;padding:16px 18px;display:flex;flex-direction:column;gap:16px}
+.dfoot{display:flex;gap:8px;align-items:center;padding:12px 18px;border-top:1px solid var(--line);background:var(--thead)}
+.sp{flex:1}
+.stepper{display:flex;gap:4px}
+.step{flex:1;text-align:center;font-size:11.5px;font-weight:600;padding:6px 2px;border-radius:var(--rs);background:var(--soft);color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+.step.done{color:var(--ink2);border-bottom-color:var(--ok)}
+.step.cur{background:var(--pri-tint);color:var(--pri-t);border-bottom-color:var(--pri)}
+.suggest{display:flex;gap:10px;align-items:center;background:var(--suggest-tint);border:1px solid var(--suggest-line);border-radius:var(--rs);padding:10px 12px;font-size:13px}
+.suggest b{color:var(--suggest)}
+.suggest .sp{flex:1}
+.sect h3,.lbl{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+.sechd{display:flex;align-items:center;gap:8px;margin-bottom:6px}.sechd h3{margin:0}
+.panel{border:1px solid var(--line);border-radius:var(--rs);background:var(--facts);overflow:hidden}
+table.v{border-collapse:collapse;width:100%}
+table.v th{font:600 11px var(--body);color:var(--muted);text-align:left;padding:7px 12px;background:var(--thead);border-bottom:1px solid var(--line)}
+table.v td{padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
+table.v tr:last-child td{border-bottom:0}
+.r{text-align:right !important;font-variant-numeric:tabular-nums}
+.metric{color:var(--metric);font-weight:600}
+.pend{color:var(--muted);font-size:12px;font-style:italic}
+.task{display:grid;grid-template-columns:20px minmax(0,1fr) 28px 110px;gap:10px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
+.task:last-child{border-bottom:0}
+.task:hover{background:var(--rowh)}
+.ck{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--line2);display:grid;place-items:center;font-size:11px;line-height:1}
+.ck.ok{background:var(--ok);border-color:var(--ok);color:#0F1113}
+.ck.ip{border-color:var(--pri);background:linear-gradient(90deg,var(--pri) 50%,transparent 50%)}
+.task .done-t{color:var(--muted);text-decoration:line-through}
+.st{font-size:12px;font-weight:600;display:inline-flex;gap:6px;align-items:center}
+.st.a{color:var(--muted)}.st.p{color:var(--pri-t)}.st.c{color:var(--ok-t)}
+.addrow{display:flex;gap:8px;padding:8px 12px;color:var(--muted);font-size:13px;border-top:1px solid var(--line)}
+/* outcome page */
+.spr{background:var(--card);border:1px solid var(--line);border-radius:var(--r);display:grid;grid-template-columns:repeat(4,1fr)}
+.spr>div{padding:14px 18px;display:flex;flex-direction:column;gap:4px}
+.spr>div+div{border-left:1px solid var(--line)}
+.spr dt{font:500 10.5px var(--mono);color:var(--muted);letter-spacing:.06em}
+.spr dd{margin:0;font:600 22px var(--display)}
+.spr small{font:500 11px var(--mono);color:var(--muted)}
+.oc{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.oc-h{display:flex;align-items:center;gap:12px;padding:12px 16px;flex-wrap:wrap}
+.oc-h h2{margin:0;font:var(--h-weight) 15px var(--display)}
+.ir{display:grid;grid-template-columns:70px minmax(0,1fr) 150px 130px 130px;align-items:center;gap:12px;min-height:38px;padding:4px 16px;font-size:13px;border-top:1px solid var(--line)}
+.ir.hd{font:600 11px var(--body);color:var(--muted);background:var(--thead);min-height:30px}
+.ir .id{font:500 11px var(--mono);color:var(--muted)}
+.bar{display:flex;align-items:center;gap:8px}
+.bar .t{flex:1;height:6px;border-radius:3px;background:var(--soft);overflow:hidden;position:relative}
+.bar .t i{position:absolute;left:0;top:0;bottom:0;background:var(--metric)}
+.bar small{font:500 11px var(--mono);color:var(--muted);min-width:34px;text-align:right}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="proto"><b>Collega &middot; prototype (Graphite)</b>
+  <button id="t1" aria-pressed="true" onclick="show(1)">Idea detail</button>
+  <button id="t2" aria-pressed="false" onclick="show(2)">Outcome rollup</button>
+  <button id="t3" aria-pressed="false" onclick="show(3)">Task state: prompt to Complete</button>
+</div>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand"><span class="mark">Co</span><div><b>Collega</b><small>Northwind Logistics</small></div></div>
+    <div class="navlbl">Workspace</div>
+    <div class="nav"><span>Home</span></div>
+    <div class="nav" id="nav-boards" aria-current="page"><span>Boards</span><small>3</small></div>
+    <div class="nav"><span>Ideas</span><small>46</small></div>
+    <div class="nav" id="nav-out"><span>Outcomes</span><small>4</small></div>
+    <div class="navlbl">Me</div>
+    <div class="nav"><span>My tasks</span><small>5</small></div>
+    <div class="nav"><span>Inbox</span><small>2</small></div>
+    <div class="me"><span class="av a1" style="margin:0;width:30px;height:30px;font-size:11px">DK</span><div><b>Dana Kim</b><small>Org Admin</small></div></div>
+  </aside>
+
+  <div class="main">
+    <!-- SCREEN 1: board + drawer -->
+    <div id="s1">
+      <div class="topbar"><span class="crumb">Boards / <b>Continuous Improvement</b></span></div>
+      <div class="work" style="padding-right:584px">
+        <div class="pghead"><div><h1>Continuous Improvement</h1><p>Ideas from first spark to proven result.</p></div>
+          <div style="display:flex;gap:8px;align-items:center"><div class="seg"><span class="on">Board</span><span>List</span></div><button class="btn pri">+ New idea</button></div></div>
+        <div class="lanes">
+          <div class="lane"><div class="lanehd"><span>Pending</span><small>4</small></div>
+            <div class="kcard"><h4>Dock scheduling app</h4><div class="krow"><span class="kmeta">CI-31</span><span class="avs"><span class="av a3">LP</span></span></div></div>
+            <div class="kcard"><h4>Reusable pallet wrap</h4><div class="krow"><span class="kmeta">CI-36</span><span class="avs"><span class="av a2">SR</span></span></div></div></div>
+          <div class="lane"><div class="lanehd"><span>Scoping</span><small>3</small></div>
+            <div class="kcard"><h4>Barcode every returned item</h4><div class="krow"><span class="kmeta">CI-28</span><span class="avs"><span class="av a4">MC</span></span></div></div></div>
+          <div class="lane"><div class="lanehd"><span>Approved for Implementation</span><small>2</small></div>
+            <div class="kcard"><h4>Welcome kit for new hires</h4><div class="krow"><span class="kmeta">CI-24 &middot; 0 tasks</span><span class="avs"><span class="av a1">DK</span></span></div></div></div>
+          <div class="lane"><div class="lanehd"><span>Implementation</span><small>3</small></div>
+            <div class="kcard sel"><h4>Cut onboarding time</h4>
+              <div class="prog"><i style="width:75%;background:var(--ok)"></i></div>
+              <div class="krow"><span class="kmeta">CI-19 &middot; 3 of 4 tasks</span><span class="avs"><span class="av a1">DK</span><span class="av a2">LE</span></span></div></div>
+            <div class="kcard"><h4>Buddy program</h4><div class="prog"><i style="width:60%;background:var(--ok)"></i></div><div class="krow"><span class="kmeta">CI-21 &middot; 3 of 5 tasks</span><span class="avs"><span class="av a3">SM</span></span></div></div>
+            <div class="kcard"><h4>LMS refresh</h4><div class="prog"><i style="width:17%;background:var(--ok)"></i></div><div class="krow"><span class="kmeta">CI-22 &middot; 1 of 6 tasks</span><span class="avs"><span class="av a4">JB</span></span></div></div></div>
+          <div class="lane"><div class="lanehd"><span>Completed</span><small>9</small></div>
+            <div class="kcard"><h4>Retire paper timesheets</h4><div class="krow"><span class="kmeta">CI-08</span><span class="chip" style="background:var(--ok-tint);color:var(--ok-t)">$22k realized</span></div></div></div>
+        </div>
+      </div>
+
+      <aside class="drawer">
+        <div class="dhead"><div><div class="eb">CI-19 &middot; CONTINUOUS IMPROVEMENT</div><h2>Cut onboarding time</h2></div><span class="sp"></span><button class="btn ghost sm">Close</button></div>
+        <div class="dbody">
+          <div class="stepper">
+            <div class="step done">Pending</div><div class="step done">Scoping</div><div class="step done">Approved</div><div class="step cur">Implementation</div><div class="step">Completed</div>
+          </div>
+          <div class="suggest" id="sug"><span class="mono" style="color:var(--suggest)">&#10022;</span><div><b>All 4 tasks are complete.</b> Move this idea to Completed?</div><span class="sp"></span><button class="btn sm pri">Move to Completed</button><button class="btn sm ghost">Not yet</button></div>
+
+          <div class="sect"><div class="sechd"><h3>Value</h3><span class="sp"></span><button class="btn sm ghost">Edit</button></div>
+            <div class="panel"><table class="v">
+              <tr><th>Metric</th><th class="r">Projected</th><th class="r">Realized</th></tr>
+              <tr><td>Hours saved / year</td><td class="r">1,200</td><td class="r pend">Measure after Completed</td></tr>
+              <tr><td>Cost saved / year</td><td class="r">$48,000</td><td class="r pend">Measure after Completed</td></tr>
+            </table></div></div>
+
+          <div class="sect"><div class="sechd"><h3>Tasks</h3><span class="mono" style="font-size:11px;color:var(--muted)" id="tcount">4 of 4 done</span><span class="sp"></span><button class="btn sm">+ Add task</button></div>
+            <div class="panel" id="tasks">
+              <div class="task"><span class="ck ok">&#10003;</span><span class="done-t">Draft the onboarding SOP</span><span class="av a1" style="margin:0">DK</span><span class="st c"><span class="dot" style="background:var(--ok)"></span>Complete</span></div>
+              <div class="task"><span class="ck ok">&#10003;</span><span class="done-t">Train regional managers</span><span class="av a2" style="margin:0">LE</span><span class="st c"><span class="dot" style="background:var(--ok)"></span>Complete</span></div>
+              <div class="task"><span class="ck ok">&#10003;</span><span class="done-t">Update LMS courses</span><span class="av a3" style="margin:0">SM</span><span class="st c"><span class="dot" style="background:var(--ok)"></span>Complete</span></div>
+              <div class="task" id="lasttask"><span class="ck ok">&#10003;</span><span class="done-t">Measure time to first shipment</span><span class="av a1" style="margin:0">DK</span><span class="st c"><span class="dot" style="background:var(--ok)"></span>Complete</span></div>
+              <div class="addrow">+ Add a task and press Enter</div>
+            </div></div>
+
+          <div class="sect"><h3>Outcome</h3><span class="tag" style="--tc:#5CC8E0">Faster onboarding &middot; Q4</span></div>
+          <div class="sect"><h3>Provenance</h3><div style="font-size:13px;color:var(--ink2)">Raised by Lee Evans &middot; 31 upvotes &middot; promoted to Approved Sep 22 &middot; <a style="color:var(--pri-t)">12 comments</a></div></div>
+        </div>
+        <div class="dfoot"><span class="mono" style="font-size:11px;color:var(--muted)">Effort: Medium</span><span class="sp"></span><button class="btn">Comment</button></div>
+      </aside>
+    </div>
+
+    <!-- SCREEN 2: outcome -->
+    <div id="s2" class="hide">
+      <div class="topbar"><span class="crumb">Outcomes / <b>Faster onboarding &middot; Q4</b></span></div>
+      <div class="work">
+        <div class="pghead"><div><h1>Faster onboarding</h1><p>New hires reach their first shipment in under 10 days. Oct 1 &ndash; Dec 31.</p></div>
+          <div style="display:flex;gap:8px"><button class="btn">Edit outcome</button><button class="btn pri">+ Add idea</button></div></div>
+        <dl class="spr" style="margin:0">
+          <div><dt>HOURS SAVED / YR</dt><dd class="metric">1,450 <span style="font:500 13px var(--body);color:var(--muted)">of 3,100</span></dd><small>47% of projected, realized</small></div>
+          <div><dt>COST SAVED / YR</dt><dd class="metric">$61,200 <span style="font:500 13px var(--body);color:var(--muted)">of $124k</span></dd><small>49% of projected, realized</small></div>
+          <div><dt>IDEAS</dt><dd>9</dd><small>3 completed &middot; 5 implementing &middot; 1 approved</small></div>
+          <div><dt>TASKS</dt><dd>24 <span style="font:500 13px var(--body);color:var(--muted)">of 31</span></dd><small>6 in progress &middot; 1 not started</small></div>
+        </dl>
+        <div class="oc">
+          <div class="oc-h"><h2>Ideas in this outcome</h2><span class="sp" style="flex:1"></span><div class="seg"><span class="on">All</span><span>Implementing</span><span>Completed</span></div></div>
+          <div class="ir hd"><span>Key</span><span>Idea</span><span>Status</span><span>Tasks</span><span>Realized</span></div>
+          <div class="ir"><span class="id">CI-19</span><span style="font-weight:600">Cut onboarding time</span><span><span class="chip" style="background:var(--pri-tint);color:var(--pri-t)"><span class="dot" style="background:var(--pri)"></span>Implementation</span></span><span class="bar"><span class="t"><i style="width:100%;background:var(--ok)"></i></span><small>4/4</small></span><span class="mono pend">to measure</span></div>
+          <div class="ir"><span class="id">CI-21</span><span style="font-weight:600">Buddy program</span><span><span class="chip" style="background:var(--pri-tint);color:var(--pri-t)"><span class="dot" style="background:var(--pri)"></span>Implementation</span></span><span class="bar"><span class="t"><i style="width:60%;background:var(--ok)"></i></span><small>3/5</small></span><span class="mono pend">to measure</span></div>
+          <div class="ir"><span class="id">CI-22</span><span style="font-weight:600">LMS refresh</span><span><span class="chip" style="background:var(--pri-tint);color:var(--pri-t)"><span class="dot" style="background:var(--pri)"></span>Implementation</span></span><span class="bar"><span class="t"><i style="width:17%;background:var(--ok)"></i></span><small>1/6</small></span><span class="mono pend">to measure</span></div>
+          <div class="ir"><span class="id">CI-24</span><span style="font-weight:600">Welcome kit for new hires</span><span><span class="chip" style="background:var(--soft);color:var(--ink2)"><span class="dot" style="background:var(--muted)"></span>Approved</span></span><span class="bar"><span class="t"></span><small>0/0</small></span><span class="mono pend">&mdash;</span></div>
+          <div class="ir"><span class="id">CI-08</span><span style="font-weight:600">Retire paper timesheets</span><span><span class="chip" style="background:var(--ok-tint);color:var(--ok-t)"><span class="dot" style="background:var(--ok)"></span>Completed</span></span><span class="bar"><span class="t"><i style="width:100%;background:var(--ok)"></i></span><small>7/7</small></span><span class="metric mono" style="font-size:12px">$22,000 &middot; 410h</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function show(n){
+  document.getElementById('s1').classList.toggle('hide', n===2);
+  document.getElementById('s2').classList.toggle('hide', n!==2);
+  [1,2,3].forEach(function(i){document.getElementById('t'+i).setAttribute('aria-pressed', String(i===n));});
+  document.getElementById('nav-boards').setAttribute('aria-current', n!==2 ? 'page' : 'false');
+  document.getElementById('nav-out').setAttribute('aria-current', n===2 ? 'page' : 'false');
+  if(n!==2){
+    var open = n===3;
+    var lt = document.getElementById('lasttask');
+    document.getElementById('sug').style.display = open ? 'none' : 'flex';
+    document.getElementById('tcount').textContent = open ? '3 of 4 done' : '4 of 4 done';
+    lt.innerHTML = open
+      ? '<span class="ck ip"></span><span>Measure time to first shipment</span><span class="av a1" style="margin:0">DK</span><span class="st p"><span class="dot" style="background:var(--pri)"></span>In Progress &#9662;</span>'
+      : '<span class="ck ok">&#10003;</span><span class="done-t">Measure time to first shipment</span><span class="av a1" style="margin:0">DK</span><span class="st c"><span class="dot" style="background:var(--ok)"></span>Complete</span>';
+  }
+}
+</script>
+</body>
+</html>
