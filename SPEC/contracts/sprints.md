@@ -124,3 +124,14 @@ Soft-delete a sprint.
   - **every assigned Issue is unassigned to the backlog first.** No Issue is ever deleted with a sprint; `ideas.sprint_id` is `ON DELETE RESTRICT` precisely so unassignment cannot be skipped.
   - soft-delete, so existing audit references keep resolving. There is no restore endpoint in this release.
   - **not idempotent**: a soft-deleted sprint is gone as far as every route here is concerned, so a second `DELETE` answers `404`, as do `GET`, `PUT`, `start` and `complete` on it. This matches the soft-delete behaviour of statuses and ideas.
+
+## Sprints per board (planned 2026-10-15)
+
+*Specified in `SPEC/20-feature-board-references.md`. Not built until Plan 2.*
+
+- **Item field (added):** `boardId` GUID or `null`. `null` is a sprint from before this change; Plan 4 removes them.
+- **Routes (added):** `GET/POST /api/v1/boards/{boardId}/sprints` list and create a sprint on a board whose `sprintsEnabled` is true; existing `.../organizations/{orgId}/sprints/{id}` routes keep working for reads, start, complete and delete.
+- **Rules:**
+  - Creating a sprint on a board with `sprintsEnabled` false is refused with `422` (`sprintsNotEnabled`).
+  - A sprint holds items from its own board only; an item from another board is refused with `422`.
+  - Completing a sprint returns every item not in a final lane to the backlog (sprint cleared), replacing the delivery-status rule.

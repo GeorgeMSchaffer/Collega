@@ -183,3 +183,22 @@ Persist swimlane reorder immediately after drag-and-drop.
 - **Response:** `204 No Content`
 - **Errors:** `409 Conflict` for an archived board (see archive above).
 - **Rules:** —
+
+## Board References (planned 2026-10-15)
+
+*Specified in `SPEC/20-feature-board-references.md`. Not built until Plan 2. Existing routes keep their shapes; the fields below are added.*
+
+- **Board item fields (added):**
+  - `keyPrefix` string or `null`, 2 to 10 characters `A-Z0-9`, upper-cased on store; unique per organization among boards that have one.
+  - `sprintsEnabled` boolean, default `false`.
+  - `ideaFeaturesEnabled` boolean, default `true`; default `false` for a board when it is first named as a reference target.
+- **Lane item fields (added) on every lane in a board read and write:**
+  - `isFinal` boolean, default `false`. A board may have several final lanes.
+  - `referencesBoardId` GUID or `null`: the board whose tasks this lane hands work to.
+- **Rules:**
+  - A lane may not reference its own board.
+  - A board that is the target of a reference may not itself contain a reference lane, and a board with a reference lane may not be a target (one level at launch).
+  - A lane with ideas in it cannot have `referencesBoardId` changed or removed, and cannot be removed.
+  - A board named as a reference target cannot be archived while a lane references it.
+  - Saving lanes with `referencesBoardId` set to a board outside the organization, an archived board, or a missing board is refused.
+- **Errors:** `422` for each rule above, using the shared error model; message keys named after the rule (`laneReferencesOwnBoard`, `referenceChainNotAllowed`, `laneInUse`, `referenceTargetArchived`).
