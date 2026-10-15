@@ -17,7 +17,9 @@ import type {
   BoardsPort,
   BusinessImpactSummary,
   CommentsPort,
+  DependencyEdge,
   IdeaClassificationPort,
+  IdeaDependenciesPort,
   IdeaFieldValuesPort,
   IdeaFollowersPort,
   IdeaListFilter,
@@ -167,6 +169,8 @@ export type Harness = {
   orgFilters: OrganizationIdeaListFilter[]
   /** Tags `getOrCreate` created, in order, with the colour the service picked for each. */
   createdTags: TagSummary[]
+  /** The blocked-by links; edit it to model existing dependencies. */
+  edges: DependencyEdge[]
 }
 
 export function harness(options: {
@@ -188,6 +192,8 @@ export function harness(options: {
   childCounts?: Readonly<Record<string, { total: number; done: number }>>
   /** Overrides for the classification port, e.g. an organization with no active type. */
   classification?: Partial<IdeaClassificationPort>
+  /** Existing blocked-by links. */
+  dependencies?: readonly DependencyEdge[]
 }): Harness {
   const boardsById = new Map((options.boards ?? [board()]).map((b) => [b.boardId, b]))
   const ideasById = new Map((options.ideas ?? []).map((i) => [i.id, i]))
@@ -500,6 +506,51 @@ export function harness(options: {
     },
   }
 
+  const edges: DependencyEdge[] = [...(options.dependencies ?? [])]
+  const dependencies: IdeaDependenciesPort = {
+    async listBlockerIds(blockedId) {
+      return edges.filter((e) => e.blockedId === blockedId).map((e) => e.blockerId)
+    },
+    async listBlockersByBlockedIds(blockedIds) {
+      const result = new Map<
+        string,
+        { ideaId: string; boardId: string | null; statusId: string; itemNumber: number | null }[]
+      >()
+      for (const edge of edges) {
+        const blocker = ideasById.get(edge.blockerId)
+        if (!blockedIds.includes(edge.blockedId) || !blocker || blocker.isDeleted) {
+          continue
+        }
+        result.set(edge.blockedId, [
+          ...(result.get(edge.blockedId) ?? []),
+          {
+            ideaId: blocker.id,
+            boardId: blocker.boardId,
+            statusId: blocker.statusId,
+            itemNumber: blocker.itemNumber,
+          },
+        ])
+      }
+      return result
+    },
+    async listEdgesForBoard(boardId) {
+      return edges.filter((e) => ideasById.get(e.blockedId)?.boardId === boardId)
+    },
+    async replaceBlockers(blockedId, blockerIds) {
+      const kept = edges.filter((e) => e.blockedId !== blockedId)
+      edges.splice(
+        0,
+        edges.length,
+        ...kept,
+        ...blockerIds.map((blockerId) => ({ blockedId, blockerId })),
+      )
+    },
+    async deleteAllFor(ideaId) {
+      const kept = edges.filter((e) => e.blockedId !== ideaId && e.blockerId !== ideaId)
+      edges.splice(0, edges.length, ...kept)
+    },
+  }
+
   const notificationsPort: NotificationsPort = {
     async notify(input) {
       notifications.push(input)
@@ -522,6 +573,7 @@ export function harness(options: {
       taskRollup,
       notificationsPort,
       followers,
+      dependencies,
       countingUnitOfWork(),
       audit,
       options.currentUser,
@@ -536,6 +588,7 @@ export function harness(options: {
     boardFilters,
     orgFilters,
     createdTags,
+    edges,
   }
 }
 

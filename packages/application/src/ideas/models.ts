@@ -298,6 +298,13 @@ export type IdeaTagDto = {
 
 export type TaskCounts = { readonly total: number; readonly done: number }
 
+/** A blocker of an item; `isFinal` is true when it sits in a final lane of its board. */
+export type BlockedByDto = {
+  readonly ideaId: string
+  readonly itemKey: string | null
+  readonly isFinal: boolean
+}
+
 export type IdeaListItem = {
   readonly ideaId: string
   readonly boardId: string | null
@@ -307,6 +314,8 @@ export type IdeaListItem = {
   readonly parentIdeaId: string | null
   /** Only on an item whose lane references a board; `done` counts children in a final lane of their own board. */
   readonly taskCounts: TaskCounts | null
+  /** The items that must be final before this one can leave its board's first lane. */
+  readonly blockedBy: readonly BlockedByDto[]
   readonly title: string
   readonly priority: string
   /** The type and impact fields are `null` on an item of a board with idea features off, and on a task. */
@@ -340,6 +349,8 @@ export type IdeaDetail = {
   readonly parentIdeaId: string | null
   /** Only on an item whose lane references a board; `done` counts children in a final lane of their own board. */
   readonly taskCounts: TaskCounts | null
+  /** The items that must be final before this one can leave its board's first lane. */
+  readonly blockedBy: readonly BlockedByDto[]
   readonly title: string
   readonly problem: string
   readonly proposedSolutions: readonly string[]

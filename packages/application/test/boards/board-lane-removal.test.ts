@@ -69,7 +69,7 @@ function board(archived = false): Board {
 }
 
 function idea(ideaId: string, statusId: string): LaneIdea {
-  return { ideaId, title: `Idea ${ideaId}`, statusId }
+  return { ideaId, title: `Idea ${ideaId}`, statusId, effort: null }
 }
 
 type MoveCall = {

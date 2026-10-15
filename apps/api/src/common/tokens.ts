@@ -66,6 +66,7 @@ export const PORT_TOKENS = {
   IdeaLookupPort: 'IdeaLookupPort',
   UsersPort: 'UsersPort',
   IdeaFollowersPort: 'IdeaFollowersPort',
+  IdeaDependenciesPort: 'IdeaDependenciesPort',
 
   // Following (packages/application/src/following/ports.ts) --------------------------------------
   IdeaFollowerRepository: 'IdeaFollowerRepository',

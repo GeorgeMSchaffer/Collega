@@ -23,7 +23,7 @@ import type {
 import type { Page } from '@collega/application/common'
 import type { BoardsPort, SwimlaneInfo } from '@collega/application/ideas'
 import type { Board, BoardSwimlane } from '@collega/domain/boards'
-import type { Priority } from '@collega/domain/enums'
+import type { EffortLevel, Priority } from '@collega/domain/enums'
 import { IdeaPhase } from '@collega/domain/enums'
 import type {
   boards as BoardRow,
@@ -183,10 +183,15 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
     }
     const rows = await this.prisma.ideas.findMany({
       where: { ...boardIdeasWhere([boardId]), status_id: { in: [...statusIds] } },
-      select: { id: true, title: true, status_id: true },
+      select: { id: true, title: true, status_id: true, effort: true },
       orderBy: [{ created_at_utc: 'asc' }, { id: 'asc' }],
     })
-    return rows.map((row) => ({ ideaId: row.id, title: row.title, statusId: row.status_id }))
+    return rows.map((row) => ({
+      ideaId: row.id,
+      title: row.title,
+      statusId: row.status_id,
+      effort: row.effort as EffortLevel | null,
+    }))
   }
 
   async moveIdeas(

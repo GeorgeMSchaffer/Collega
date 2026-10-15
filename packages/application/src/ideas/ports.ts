@@ -242,6 +242,40 @@ export interface IssueTaskRollupPort {
   ): Promise<ReadonlyMap<string, { readonly done: number; readonly total: number }>>
 }
 
+// Dependencies (Board References) ----------------------------------------------------------------
+
+/** One blocked-by link: `blockedId` cannot leave its board's first lane until `blockerId` is final. */
+export type DependencyEdge = {
+  readonly blockedId: string
+  readonly blockerId: string
+}
+
+/** A live blocker with what a read needs to describe it. */
+export type BlockerRef = {
+  readonly ideaId: string
+  readonly boardId: string | null
+  readonly statusId: string
+  readonly itemNumber: number | null
+}
+
+export interface IdeaDependenciesPort {
+  listBlockerIds(blockedId: string): Promise<readonly string[]>
+
+  /** Live blockers per blocked id, for the whole list in one read. An item with none is absent. */
+  listBlockersByBlockedIds(
+    blockedIds: readonly string[],
+  ): Promise<ReadonlyMap<string, readonly BlockerRef[]>>
+
+  /** Every link whose blocked item sits on the board. */
+  listEdgesForBoard(boardId: string): Promise<readonly DependencyEdge[]>
+
+  /** Stages replacing the item's blocker set, in the caller's unit of work. */
+  replaceBlockers(blockedId: string, blockerIds: readonly string[], nowUtc: Date): Promise<void>
+
+  /** Stages removing every link the item is part of, in both directions. */
+  deleteAllFor(ideaId: string): Promise<void>
+}
+
 // Boards (B2) ----------------------------------------------------------------------------------
 
 export type SwimlaneInfo = {

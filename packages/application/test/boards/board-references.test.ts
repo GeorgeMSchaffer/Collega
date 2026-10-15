@@ -2,6 +2,7 @@
 // cross-board checks BoardService makes against the organization's stored boards.
 
 import { type Board, createBoard } from '@collega/domain/boards'
+import { EffortLevel } from '@collega/domain/enums'
 import { createStatus, type Status } from '@collega/domain/statuses'
 import { describe, expect, it } from 'vitest'
 import { BoardService } from '../../src/boards/board-service.js'
@@ -75,7 +76,12 @@ function lanesReferencing(boardId: string | null): SwimlaneInput[] {
 function harness(
   boards: readonly Board[],
   statusCounts: readonly BoardStatusIdeaCount[] = [],
-  laneIdeas: readonly { ideaId: string; title: string; statusId: string }[] = [],
+  laneIdeas: readonly {
+    ideaId: string
+    title: string
+    statusId: string
+    effort: EffortLevel | null
+  }[] = [],
 ) {
   const byId = new Map(boards.map((b) => [b.id, b]))
   const saved: Board[] = []
@@ -418,7 +424,7 @@ describe('laneInUse, further cases', () => {
 
   it('keeps the existing 400 for an ordinary lane removed with ideas and no move', async () => {
     const { service } = harness([board('a'), board('b')], held, [
-      { ideaId: 'i1', title: 'Idea', statusId: S1 },
+      { ideaId: 'i1', title: 'Idea', statusId: S1, effort: null },
     ])
 
     await expect(update(service, 'a', keepOnlyS2)).rejects.toBeInstanceOf(ValidationError)
@@ -572,5 +578,31 @@ describe('keyPrefix, further cases', () => {
 
     expect(set).toMatchObject({ sprintsEnabled: true, ideaFeaturesEnabled: false })
     expect(kept).toMatchObject({ sprintsEnabled: false, ideaFeaturesEnabled: true })
+  })
+})
+
+describe('ideaMoves into a reference lane', () => {
+  const lanes: SwimlaneInput[] = [
+    { statusId: S1, order: 0, referencesBoardId: 'b' },
+    { statusId: 'status-3', order: 1 },
+  ]
+  const moves = { ideaMoves: [{ fromStatusId: S2, toStatusId: S1 }] }
+  const idea = (effort: EffortLevel | null) => ({
+    ideaId: 'i1',
+    title: 'Idea',
+    statusId: S2,
+    effort,
+  })
+
+  it('refuses an idea without an Effort', async () => {
+    const { service } = harness([board('a'), board('b')], [], [idea(null)])
+
+    expect(await codeOf(update(service, 'a', lanes, moves))).toBe('effortRequiredForReferenceLane')
+  })
+
+  it('moves an idea that has an Effort', async () => {
+    const { service } = harness([board('a'), board('b')], [], [idea(EffortLevel.Low)])
+
+    await expect(update(service, 'a', lanes, moves)).resolves.toBeDefined()
   })
 })

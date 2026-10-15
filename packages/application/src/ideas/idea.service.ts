@@ -57,6 +57,7 @@ import { randomTagColor } from '../tags/random-color.js'
 import type {
   AddIssueCommand,
   AssignIssueToSprintCommand,
+  BlockedByDto,
   ChangeDeliveryStatusCommand,
   ChangeIdeaStatusCommand,
   CreateBoardTaskCommand,
@@ -97,7 +98,9 @@ import type {
   BoardsPort,
   BusinessImpactSummary,
   CommentsPort,
+  DependencyEdge,
   IdeaClassificationPort,
+  IdeaDependenciesPort,
   IdeaFieldValuesPort,
   IdeaFollowersPort,
   IdeaRepository,
@@ -146,6 +149,7 @@ export class IdeaService {
     private readonly taskRollup: IssueTaskRollupPort,
     private readonly notifications: NotificationsPort,
     private readonly followers: IdeaFollowersPort,
+    private readonly dependencies: IdeaDependenciesPort,
     private readonly unitOfWork: UnitOfWork,
     private readonly auditEvents: AuditEventWriter,
     private readonly currentUser: CurrentUserContext,
@@ -794,6 +798,110 @@ export class IdeaService {
     await this.notifyIdeaFollowers('IdeaEdited', idea, actorId)
   }
 
+  /**
+   * Replaces the item's blocker set (`contracts/idea-dependencies.md`). Every blocker must be a
+   * live item of the caller's organization on the same board, and the new links must not close a
+   * loop of any length.
+   */
+  async setBlockedBy(ideaId: string, ideaIds: readonly string[]): Promise<IdeaDetail> {
+    ensureNotDirectSiteAdmin(this.currentUser)
+    this.requireIdeaEditRole()
+
+    const idea = await this.ideaRepository.getById(ideaId, false)
+    if (!idea) {
+      throw new NotFoundError('Idea not found.')
+    }
+    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureIdeaBoardNotArchived(idea)
+
+    const blockerIds = [...new Set(ideaIds)]
+    if (blockerIds.includes(idea.id)) {
+      throw new UnprocessableError('blockerIsSelf', 'An item cannot block itself.')
+    }
+    for (const blockerId of blockerIds) {
+      const blocker = await this.ideaRepository.getById(blockerId, false)
+      if (!blocker || blocker.organizationId !== idea.organizationId) {
+        throw new NotFoundError('Idea not found.')
+      }
+      if (blocker.boardId === null || blocker.boardId !== idea.boardId) {
+        throw new UnprocessableError(
+          'blockerOnOtherBoard',
+          'A blocker must be on the same board as the item it blocks.',
+        )
+      }
+    }
+
+    if (idea.boardId !== null && blockerIds.length > 0) {
+      const edges = await this.dependencies.listEdgesForBoard(idea.boardId)
+      if (wouldFormCycle(edges, idea.id, blockerIds)) {
+        throw new UnprocessableError('dependencyCycle', 'These blockers would form a cycle.')
+      }
+    }
+
+    const previous = await this.dependencies.listBlockerIds(idea.id)
+    const now = this.clock.now()
+    await this.dependencies.replaceBlockers(idea.id, blockerIds, now)
+    await this.unitOfWork.saveChanges()
+
+    if (!setsEqual(new Set(previous), new Set(blockerIds))) {
+      await this.auditIdea(
+        'IdeaBlockedByChanged',
+        idea,
+        this.requireAuthenticatedUserId(),
+        `Blockers of idea '${idea.title}' changed.`,
+        now,
+        { previousBlockerIds: previous, blockerIds },
+      )
+    }
+    return this.projectDetail(idea)
+  }
+
+  /** A blocked item cannot leave its board's first lane until every blocker is final. */
+  private async ensureNotBlocked(idea: Idea): Promise<void> {
+    const blockers = (await this.blockedByOf([idea])).get(idea.id) ?? []
+    if (blockers.some((blocker) => !blocker.isFinal)) {
+      throw new UnprocessableError(
+        'taskBlocked',
+        'This item is blocked until every item blocking it is final.',
+      )
+    }
+  }
+
+  /** `blockedBy` for the given items, with each blocker's board read once. */
+  private async blockedByOf(
+    ideas: readonly Idea[],
+  ): Promise<ReadonlyMap<string, readonly BlockedByDto[]>> {
+    const links = await this.dependencies.listBlockersByBlockedIds(ideas.map((i) => i.id))
+    if (links.size === 0) {
+      return new Map()
+    }
+    const blockers = [...links.values()].flat()
+    const boardIds = [...new Set(blockers.flatMap((b) => (b.boardId === null ? [] : [b.boardId])))]
+    const contexts = new Map<string, BoardContext | null>()
+    for (const boardId of boardIds) {
+      contexts.set(boardId, await this.boards.getBoardContext(boardId))
+    }
+    const prefixes =
+      boardIds.length === 0 ? new Map<string, string>() : await this.boards.getKeyPrefixes(boardIds)
+    return new Map(
+      [...links].map(([blockedId, refs]) => [
+        blockedId,
+        refs.map((ref) => ({
+          ideaId: ref.ideaId,
+          itemKey: itemKey(
+            ref.boardId === null ? undefined : prefixes.get(ref.boardId),
+            ref.itemNumber,
+          ),
+          isFinal:
+            ref.boardId !== null &&
+            contexts
+              .get(ref.boardId)
+              ?.swimlanes.some((l) => l.statusId === ref.statusId && l.isFinal) === true,
+        })),
+      ]),
+    )
+  }
+
   async changeStatus(ideaId: string, command: ChangeIdeaStatusCommand): Promise<void> {
     // Rule 25: org content is mutated through View As, not directly as a Site Admin.
     ensureNotDirectSiteAdmin(this.currentUser)
@@ -827,6 +935,19 @@ export class IdeaService {
 
     if (idea.statusId === command.statusId) {
       return
+    }
+
+    // The Effort entry rule: a reference lane is where an item gets worked as tasks, which needs
+    // an estimate (Board References Ruling 6).
+    const targetLane = board.swimlanes.find((lane) => lane.statusId === command.statusId)
+    if (targetLane?.referencesBoardId && idea.effort === null) {
+      throw new UnprocessableError(
+        'effortRequiredForReferenceLane',
+        'Set an Effort before moving this idea into a lane that references a board.',
+      )
+    }
+    if (idea.statusId === leftMostStatusId(board)) {
+      await this.ensureNotBlocked(idea)
     }
 
     const now = this.clock.now()
@@ -1117,6 +1238,7 @@ export class IdeaService {
 
     idea = softDeleteIdea(idea, now, actorId)
     await this.ideaRepository.update(idea)
+    await this.dependencies.deleteAllFor(idea.id)
     await this.unitOfWork.saveChanges()
 
     await this.auditIdea('IdeaDeleted', idea, actorId, `Idea '${idea.title}' deleted.`, now, null)
@@ -1492,6 +1614,7 @@ export class IdeaService {
     const upvoted = await this.upvoteCounts.getUpvotedIdeaIds(currentUserId, ideaIds)
     const keyPrefixes = await this.keyPrefixesFor(ideas)
     const references = await this.referenceContextFor(ideas)
+    const blockedBy = await this.blockedByOf(ideas)
 
     return ideas.map((idea) => {
       const hidden = references.hidesIdeaFeatures(idea)
@@ -1501,6 +1624,7 @@ export class IdeaService {
         itemKey: this.keyOf(idea, keyPrefixes),
         parentIdeaId: idea.parentIdeaId,
         taskCounts: references.taskCountsOf(idea),
+        blockedBy: blockedBy.get(idea.id) ?? [],
         title: idea.title,
         priority: idea.priority,
         ideaTypeId: hidden ? null : idea.ideaTypeId,
@@ -1702,6 +1826,7 @@ export class IdeaService {
     })
 
     const keyPrefixes = await this.keyPrefixesFor([idea])
+    const blockedBy = (await this.blockedByOf([idea])).get(idea.id) ?? []
 
     return {
       ideaId: idea.id,
@@ -1709,6 +1834,7 @@ export class IdeaService {
       itemKey: this.keyOf(idea, keyPrefixes),
       parentIdeaId: idea.parentIdeaId,
       taskCounts: references.taskCountsOf(idea),
+      blockedBy,
       title: idea.title,
       problem: idea.problem,
       proposedSolutions: idea.proposedSolutions,
@@ -2412,6 +2538,37 @@ function ideaEdited(before: Idea, after: Idea): boolean {
     !setsEqual(new Set(before.mentionedUserIds), new Set(after.mentionedUserIds)) ||
     !setsEqual(fieldValues(before), fieldValues(after))
   )
+}
+
+/**
+ * True when making `blockerIds` the blockers of `ideaId` closes a loop: some new blocker is
+ * already blocked, however indirectly, by `ideaId`. Depth-first over the board's links, with the
+ * item's own current links ignored because they are being replaced.
+ */
+function wouldFormCycle(
+  edges: readonly DependencyEdge[],
+  ideaId: string,
+  blockerIds: readonly string[],
+): boolean {
+  const blockersOf = new Map<string, string[]>()
+  for (const edge of edges) {
+    if (edge.blockedId !== ideaId) {
+      blockersOf.set(edge.blockedId, [...(blockersOf.get(edge.blockedId) ?? []), edge.blockerId])
+    }
+  }
+  const seen = new Set<string>()
+  const stack = [...blockerIds]
+  while (stack.length > 0) {
+    const current = stack.pop() as string
+    if (current === ideaId) {
+      return true
+    }
+    if (!seen.has(current)) {
+      seen.add(current)
+      stack.push(...(blockersOf.get(current) ?? []))
+    }
+  }
+  return false
 }
 
 function setsEqual(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {

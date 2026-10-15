@@ -22,6 +22,7 @@ import {
   PrismaCommentRepository,
   PrismaFieldDefinitionRepository,
   PrismaFieldsetRepository,
+  PrismaIdeaDependencyRepository,
   PrismaIdeaFieldValuesRepository,
   PrismaIdeaFollowerRepository,
   PrismaIdeaRepository,
@@ -123,6 +124,12 @@ const CONCRETE_ADAPTERS: Provider[] = [
     provide: PrismaIdeaTypeRepository,
     useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
       new PrismaIdeaTypeRepository(prisma, uow),
+    inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
+  },
+  {
+    provide: PrismaIdeaDependencyRepository,
+    useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
+      new PrismaIdeaDependencyRepository(prisma, uow),
     inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
   },
   {
@@ -303,6 +310,7 @@ const PORT_ALIASES: Provider[] = [
   { provide: PORT_TOKENS.IdeaLookupPort, useExisting: IdeaLookupRepository },
   { provide: PORT_TOKENS.UsersPort, useExisting: PrismaUserRepository },
   { provide: PORT_TOKENS.IdeaFollowersPort, useExisting: PrismaIdeaFollowerRepository },
+  { provide: PORT_TOKENS.IdeaDependenciesPort, useExisting: PrismaIdeaDependencyRepository },
 
   { provide: PORT_TOKENS.IdeaFollowerRepository, useExisting: PrismaIdeaFollowerRepository },
 

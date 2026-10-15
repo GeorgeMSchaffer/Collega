@@ -83,6 +83,8 @@ type UpdateIdeaBody = Omit<CreateIdeaBody, 'statusId'>
 
 type ChangeIdeaStatusBody = { statusId?: unknown }
 
+type SetBlockedByBody = { ideaIds?: unknown }
+
 type ReassignIdeaTypeBody = { ideaTypeId?: unknown }
 
 /** `List<Guid>?` - absent stays absent, so the Application layer can tell "not provided" apart. */
@@ -371,6 +373,22 @@ export class IdeasController {
     @Body() body: ReassignIdeaTypeBody,
   ): Promise<void> {
     await this.ideas.reassignIdeaType(organizationId, ideaId, guidOrEmpty(body.ideaTypeId))
+  }
+
+  /** Replaces the item's blocker set; `[]` clears it. */
+  @Put('ideas/:ideaId/blocked-by')
+  @HttpCode(200)
+  async setBlockedBy(
+    @Param('ideaId', UuidParamPipe) ideaId: string,
+    @Body() body: SetBlockedByBody,
+  ): Promise<IdeaDetail> {
+    const ideaIds = guidList(body.ideaIds)
+    if (ideaIds === null) {
+      throw new ValidationError('One or more fields are invalid.', {
+        ideaIds: ['Provide the complete blocker set; use an empty list to clear it.'],
+      })
+    }
+    return this.ideas.setBlockedBy(ideaId, ideaIds)
   }
 
   @Post('ideas/:ideaId/status')

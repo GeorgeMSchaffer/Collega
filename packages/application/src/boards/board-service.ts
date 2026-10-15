@@ -522,6 +522,15 @@ export class BoardService {
         )
         continue
       }
+      if (
+        updated.swimlanes.some((lane) => lane.statusId === toStatusId && lane.referencesBoardId) &&
+        laneIdeas.some((idea) => idea.effort === null)
+      ) {
+        throw new UnprocessableError(
+          'effortRequiredForReferenceLane',
+          'Set an Effort on every idea before moving it into a lane that references a board.',
+        )
+      }
       planned.push({ fromStatusId, toStatusId, ideas: laneIdeas })
     }
     if (problems.size > 0) {
