@@ -71,6 +71,9 @@ describe('addIssue request', () => {
   })
 
   it('sends an empty Sprint as null (the Backlog) and a chosen one as its id', async () => {
+    await addIssue({ ...INPUT, sprintId: '' })
+    expect(post.mock.calls[0]?.[1]).toMatchObject({ sprintId: null })
+    post.mockClear()
     await addIssue({ ...INPUT, sprintId: 'sprint-3' })
     expect(post.mock.calls[0]?.[1]).toMatchObject({ sprintId: 'sprint-3' })
   })

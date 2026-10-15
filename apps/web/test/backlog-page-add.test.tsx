@@ -160,8 +160,7 @@ describe('Backlog row Edit gating', () => {
     expect(screenProps().editableIds).toEqual(['mine', 'theirs'])
   })
 
-  // DEFECT (slice 187): the page filters on mayEditIdeaContent alone, so a Read Only author is
-  // offered a row Edit that the Issue drawer's footer (writeDenial) and the API both refuse.
+  // A role that may not write gets no row Edit, matching the Issue drawer's footer and the API.
   it('offers a Read Only member no Edit even on a row they authored', async () => {
     await renderPage('ReadOnly')
     expect(screenProps().editableIds).toEqual([])
