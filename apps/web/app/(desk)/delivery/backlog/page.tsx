@@ -15,7 +15,7 @@ import {
   getOutcomes,
   getSprints,
 } from '@/lib/data'
-import { issueAddDenial, mayEditIdeaContent } from '@/lib/roles'
+import { issueAddDenial, mayEditIdeaContent, writeDenial } from '@/lib/roles'
 import { requireCurrentUser } from '@/lib/server/current-user'
 
 export const metadata = { title: 'Backlog · Collega' }
@@ -88,7 +88,11 @@ export default async function BacklogPage({
           statuses={statuses}
           sprints={openSprints}
           editableIds={rows
-            .filter((issue) => mayEditIdeaContent(user.role, user.userId, issue.authorUserId))
+            .filter(
+              (issue) =>
+                writeDenial(user.role) === null &&
+                mayEditIdeaContent(user.role, user.userId, issue.authorUserId),
+            )
             .map((issue) => issue.id)}
           canAdd={addDenial === null}
           selectedId={drawer?.issue.id ?? null}
