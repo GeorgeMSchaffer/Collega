@@ -1,5 +1,7 @@
 # Feature: Issues and Delivery (Idea → Execution)
 
+> **Superseded in part, 2026-10-15.** Slice 1 (phase model, promotion gate, fixed delivery statuses, checklist Tasks, org-wide Sprints) is replaced by `SPEC/20-feature-board-references.md`. Slice 2 (Outcomes) stands and is extended there. Until Plan 4 of that spec ships, this document still describes the running code.
+
 > **At a glance** (added 2026-09-28; the text below wins where they differ)
 > - **Scope:** Slice 1 (P0) promotion, Sprints, Tasks; Slice 2 (P1) Outcomes/Roadmap, backend unbuilt.
 > - **Key rules:** an Issue is the same row as its Idea, in Delivery phase; promotion is an explicit gate

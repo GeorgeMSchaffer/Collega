@@ -46,7 +46,7 @@ the idea, and ideas roll up to Outcomes with projected and realized value.
 - Metric types: org-defined, with per-idea `projected` and `realized` numeric values (shape to be settled in the contract; reuse the user-defined fields machinery where it fits).
 - **Removed:** `ideas.phase`, the fixed delivery status enum, `issue_tasks`, the promotion fields. The Effort requirement moves to the entry into a reference lane (decided below).
 - **Kept:** `ideas.outcome_id` (single-parent, top-level ideas). Rollups are derived at read time, never stored.
-- The schema freeze (S0.2) needs a second amendment. No data migration: the seed rebuilds the database.
+- The schema freeze (S0.2) is amended a ninth time (the eighth was ideas with no board, 2026-10-13). No data migration: the seed rebuilds the database.
 
 ## Behavior
 

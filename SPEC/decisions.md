@@ -28,7 +28,8 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
-| 2026-10-15 | Issues can be added directly from the Backlog | active | full below |
+| 2026-10-15 | Board References replace the Delivery phase | active | full below |
+| 2026-10-15 | Issues can be added directly from the Backlog | amended | full below |
 | 2026-10-13 | Boards can pull in existing items, and ideas can have no board | active | full below |
 | 2026-10-13 | Home gets an Unread notifications panel | amended | full below |
 | 2026-10-09 | The S0.2 schema freeze is amended a seventh time, for Outcomes | active | full below |
@@ -122,7 +123,25 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 ---
 
+## 2026-10-15 — Board References replace the Delivery phase
+
+> Supersedes in part: `20-feature-issues-and-delivery.md` Slice 1 (the Discovery/Delivery phase, the promotion gate as a separate step, the fixed delivery status set, checklist Tasks, org-wide Sprints) and the Backlog-of-Issues model behind "Issues can be added directly from the Backlog". Outcomes (Slice 2) stands and is extended. Full design: `SPEC/20-feature-board-references.md`.
+
+**Decided by the user.** An idea has one lifecycle on one board. A board's lane may be a **Board Reference**: it references another board, and entering it lets the idea spawn **tasks** on that board. A task is an `ideas` row on the child board with `parent_idea_id`, so it has the child board's statuses, assignees, tags and (optionally) sprint. Tasks run in parallel unless one names another as a blocker. When every task is in a final lane the parent is offered the move to its next lane; a person confirms, nothing moves automatically. Sprints become a per-board option and hold tasks from many ideas. A board marks done lanes with `board_swimlanes.is_final`. Items are keyed `PREFIX-n` per board. Value is typed metrics, projected then realized, summed per Outcome.
+
+**Why.** The old split made execution a second, narrower tool: tasks had no status flow, could not be sequenced, and could not be time-boxed with the team's other work. One item type reuses every board mechanism instead of rebuilding them for a second entity.
+
+**Consequences.**
+- The S0.2 schema freeze is amended a ninth time (additive columns and one table in Plan 1; the drops come with Plan 4).
+- Delivery code stays in place and working until the replacements exist; Plan 4 retires it.
+- The 17 Outcomes questions in `contracts/outcomes.md` are answered in `20-feature-board-references.md` and copied into the contract by the Outcomes backend slice.
+- Entry to a reference lane requires Effort; no per-lane rules.
+
+---
+
 ## 2026-10-15 — Issues can be added directly from the Backlog
+
+> **Amended 2026-10-15**: the Backlog-of-Issues model (Issues as a separate delivery item with their own backlog) is replaced by "Board References replace the Delivery phase".
 
 **Decided by the user.** The Backlog page gets a way to **add** an Issue directly, and to **edit**
 Issues. Until now an Issue exists only by promoting an idea that was created first
