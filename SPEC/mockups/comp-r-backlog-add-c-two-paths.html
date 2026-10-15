@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="en" data-proto-theme="graphite">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Comp R: Backlog "Add", approach C "Two paths" (slice 185, 2026-10-15). A throwaway review comp for
+     SPEC/20-feature-issues-and-delivery.md "Backlog: add and edit", in comp R's look: the five themes copied from
+     comp-r-board-pull-in.html, Graphite by default. Self-contained; open in a browser. Sample Acme Robotics data is
+     inlined; nothing saves. Type scale: 0.9rem floor, each step x1.125, only those five sizes are used. -->
+<title>Collega Backlog Add Comp C</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&family=Figtree:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Sans:wght@400;500;600;700&family=Lexend:wght@500;600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=Schibsted+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Theme tokens: copied verbatim from comp-r-board-pull-in.html, so the comps stay one palette. */
+:root,:root[data-proto-theme="portico"]{--suggest:#3B6E51;--suggest-tint:#E3EEE7;color-scheme:light;
+--bg:#F1F5F5;--ink:#16292E;--ink2:#2C4247;--muted:#56696D;--line:#DDE6E7;--line2:#C6D3D5;--card:#FFFFFF;--soft:#E8EFF0;--rowh:#F6FAFA;--thead:#F7FAFA;--facts:#F6FAFA;
+--pri:#1F6A80;--pri-h:#185769;--pri-t:#1B5F73;--pri-tint:#E1EEF1;--pri-ink:#FFFFFF;--vote:#F2B28A;--vote-ink:#16292E;
+--hot:#B64A34;--hot-t:#963B28;--hot-tint:#F6E1DB;--ok-t:#3B6E51;--ok-tint:#E3EEE7;--warn-t:#8E4A1F;--warn-tint:#FCEBDF;
+--side:#FFFFFF;--side-ink:#2C4247;--side-line:#DDE6E7;--side-hover:#EEF4F4;--side-on:#E1EEF1;--side-on-ink:#16292E;--bar:#16292E;--bar-ink:#E3EEF0;
+--tag:#E1EEF1;--tag-ink:#1B5566;--av1:#1F6A80;--av1i:#FFFFFF;--av2:#F2B28A;--av2i:#16292E;--av3:#7A5AA6;--av3i:#FFFFFF;--av4:#4F8A6A;--av4i:#FFFFFF;
+--shadow:22 41 46;--r:14px;--rs:10px;--display:"Outfit",ui-sans-serif,system-ui,sans-serif;--body:"Figtree",ui-sans-serif,system-ui,sans-serif;--mono:"DM Mono",ui-monospace,monospace;--h-weight:600}
+:root[data-proto-theme="sera"]{--suggest:#2E6E4C;--suggest-tint:#E1EFE7;--bg:#F3F4F7;--ink:#1C2236;--ink2:#343B52;--muted:#5C6378;--line:#E2E4EC;--line2:#CCD0DC;--soft:#ECEEF3;--rowh:#F7F8FB;--thead:#F7F8FB;--facts:#F5F6FA;
+--pri:#3450A8;--pri-h:#2A4290;--pri-t:#2E4799;--pri-tint:#E6EAF6;--vote:#E3B04B;--vote-ink:#1C2236;--hot:#B8553F;--hot-t:#94402D;--hot-tint:#F6E3DE;--ok-t:#2E6E4C;--ok-tint:#E1EFE7;--warn-t:#83590C;--warn-tint:#FAF0DA;
+--side:#1F2540;--side-ink:#CDD1E3;--side-line:#2D3454;--side-hover:#272E4D;--side-on:#2E3760;--side-on-ink:#FFFFFF;--bar:#0F1426;--bar-ink:#E6E9F5;--tag:#ECEEF3;--tag-ink:#343B52;
+--av1:#3450A8;--av1i:#FFFFFF;--av2:#E3B04B;--av2i:#1C2236;--av3:#B8553F;--av3i:#FFFFFF;--av4:#3E8A62;--av4i:#FFFFFF;--shadow:28 34 54;--r:16px;--display:"Bricolage Grotesque",ui-sans-serif,sans-serif;--body:"DM Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="lagoon"]{--suggest:#2F5F9E;--suggest-tint:#E3ECF8;--bg:#F3F4EF;--ink:#13302B;--ink2:#2A4640;--muted:#5A6B66;--line:#E1E5DF;--line2:#CBD3CB;--soft:#EAEFEA;--rowh:#F7F9F5;--thead:#F7F9F5;--facts:#F5F8F3;
+--pri:#0E6B5C;--pri-h:#0A5649;--pri-t:#0C6154;--pri-tint:#DCEFEA;--vote:#F08A6C;--vote-ink:#13302B;--hot:#C2412D;--hot-t:#9E3322;--hot-tint:#F9E1DA;--ok-t:#2F6B3F;--ok-tint:#E2F0E4;--warn-t:#7A5410;--warn-tint:#F8EDD3;
+--side:#FFFFFF;--side-ink:#2A4640;--side-line:#E1E5DF;--side-hover:#EFF3EE;--side-on:#DCEFEA;--side-on-ink:#13302B;--bar:#0F2A25;--bar-ink:#E2F0EC;--tag:#DCEFEA;--tag-ink:#0C5549;
+--av1:#0E6B5C;--av1i:#FFFFFF;--av2:#F08A6C;--av2i:#13302B;--av3:#3D6FB6;--av3i:#FFFFFF;--av4:#8C6A1F;--av4i:#FFFFFF;--shadow:19 48 43;--r:16px;--rs:12px;--display:"Lexend",ui-sans-serif,sans-serif;--body:"Nunito Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:600}
+:root[data-proto-theme="terrazzo"]{--suggest:#3F6B2E;--suggest-tint:#E6F2DF;--bg:#F5F6F8;--ink:#1E2733;--ink2:#36414F;--muted:#5E6978;--line:#E3E6EB;--line2:#CDD2DA;--soft:#EDF0F3;--rowh:#F8F9FB;--thead:#F8F9FB;--facts:#F6F7F9;
+--pri:#3D5A80;--pri-h:#324B6B;--pri-t:#35507A;--pri-tint:#E4EAF2;--vote:#F4C7C3;--vote-ink:#1E2733;--hot:#B84A4A;--hot-t:#963636;--hot-tint:#F7E2E2;--ok-t:#3F6B2E;--ok-tint:#E6F2DF;--warn-t:#7F5A12;--warn-tint:#F7EDD6;
+--side:#FFFFFF;--side-ink:#36414F;--side-line:#E3E6EB;--side-hover:#F1F3F6;--side-on:#E4EAF2;--side-on-ink:#1E2733;--bar:#1E2733;--bar-ink:#E8ECF2;--tag:#F4E4E1;--tag-ink:#7A3B34;
+--av1:#3D5A80;--av1i:#FFFFFF;--av2:#F4C7C3;--av2i:#1E2733;--av3:#4E7A40;--av3i:#FFFFFF;--av4:#7A5AA6;--av4i:#FFFFFF;--shadow:30 39 51;--r:8px;--rs:6px;--display:"Schibsted Grotesk",ui-sans-serif,sans-serif;--body:"Public Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="graphite"]{color-scheme:dark;--metric:#5CC8E0;--suggest:#5CC8E0;--suggest-tint:#0F1D21;--suggest-line:#2E6A78;
+--bg:#0F1113;--ink:#E6E8EA;--ink2:#C4CAD0;--muted:#9BA3AB;--line:#22272C;--line2:#2C3238;--card:#16191C;--soft:#1C2024;--rowh:#1A1E22;--thead:#121518;--facts:#1A1E22;--field:#0F1113;
+--pri:#F5A524;--pri-h:#FFC35C;--pri-t:#F5A524;--pri-tint:#2A2418;--pri-ink:#16120A;--vote:#2A2418;--vote-ink:#F3E3C3;--me:#2A2418;--me-ink:#F3E3C3;
+--hot:#E5484D;--hot-t:#FF8A8E;--hot-tint:#2E1719;--ok-t:#58C781;--ok-tint:#13241A;--warn-t:#F5B456;--warn-tint:#2A2418;
+--side:#121518;--side-ink:#AEB5BC;--side-line:#22272C;--side-hover:#1A1E22;--side-on:#1C2024;--side-on-ink:#E6E8EA;--bar:#0B0D0F;--bar-ink:#AEB5BC;--tag:#1C2024;--tag-ink:#C4CAD0;
+--av1:#2A2418;--av1i:#F5A524;--av2:#153038;--av2i:#5CC8E0;--av3:#262B30;--av3i:#C4CAD0;--av4:#1C2A20;--av4i:#58C781;--shadow:0 0 0;--r:8px;--rs:6px;
+--display:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;--h-weight:600}
+:root{--metric:var(--pri);--field:var(--card);--suggest-line:var(--suggest);--me:var(--pri);--me-ink:var(--pri-ink);--drawer:clamp(380px,28vw,520px);--drawer-wide:clamp(720px,62vw,1100px)}
+:root{--t0:.9rem;--t1:1.013rem;--t2:1.139rem;--t3:1.281rem;--t4:1.442rem}
+*,*::before,*::after{box-sizing:border-box}
+html,body{min-height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:var(--t0)/1.5 var(--body);min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.i{width:16px;height:16px;flex:none}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+h1,h2,h3,h4{text-wrap:balance;margin:0}
+[hidden]{display:none!important}
+
+/* review chrome (outside the app, as comp R) */
+.proto{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:8px 16px;background:var(--bar);color:var(--bar-ink);font-size:var(--t0)}
+.proto b{font-family:var(--display);font-weight:600}
+.seg{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:0;padding:0;border:0;min-width:0}
+.seg legend{float:left;padding:0 8px 0 0;margin:0;line-height:30px}
+.seg button{border:1px solid color-mix(in srgb,var(--bar-ink) 35%,transparent);background:transparent;color:var(--bar-ink);border-radius:999px;padding:2px 11px;cursor:pointer;min-height:30px}
+.seg button:hover{background:color-mix(in srgb,var(--bar-ink) 15%,transparent)}
+.seg button[aria-pressed="true"]{background:var(--bar-ink);color:var(--bar);border-color:var(--bar-ink);font-weight:700}
+.themepick{display:inline-flex;align-items:center;gap:6px;margin-left:auto}
+.themepick select{border:1px solid color-mix(in srgb,var(--bar-ink) 40%,transparent);border-radius:999px;padding:3px 10px;background:var(--bar);color:var(--bar-ink)}
+@media (min-width:900px){.proto{position:sticky;top:0;z-index:30}}
+
+.wrap{width:100%;max-width:1180px;margin:0 auto;padding:24px 16px 64px;display:flex;flex-direction:column;gap:24px}
+.intro h1{font:var(--h-weight) var(--t4)/1.15 var(--display);letter-spacing:-.02em}
+.intro p{margin:8px 0 0;color:var(--ink2);max-width:80ch}
+.note{border:1px solid var(--line);border-left:4px solid var(--pri);background:var(--card);border-radius:var(--rs);padding:10px 14px;color:var(--ink2);display:flex;flex-direction:column;gap:6px;max-width:110ch}
+.note p{margin:0}.note b{color:var(--ink)}
+.statebar{display:flex;flex-direction:column;gap:10px}
+.statebar h2{font:var(--h-weight) var(--t2)/1.25 var(--display)}
+.statebar .fl{font:500 var(--t0) var(--mono);color:var(--muted);border:1px solid var(--line2);border-radius:4px;padding:0 6px;margin-right:8px}
+.viewas{display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--ink2)}
+.viewas select{max-width:100%;border:1px solid var(--line2);border-radius:var(--rs);padding:3px 8px;background:var(--field)}
+
+/* the app frame: a mock of the desk, with overlays held inside it */
+.app{position:relative;height:820px;display:flex;flex-direction:column;background:var(--bg);border:1px solid var(--line2);border-radius:var(--r);overflow:hidden}
+.topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 20px;background:var(--side);border-bottom:1px solid var(--side-line);color:var(--side-ink)}
+.topbar .crumbs b{color:var(--ink);font-weight:600}
+.topbar .who{margin-left:auto;display:inline-flex;gap:8px;align-items:center}
+.app-main{flex:1;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.pghead{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.pghead h1{font:var(--h-weight) var(--t4)/1.15 var(--display)}
+.pghead p{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.addwrap{position:relative;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.why{color:var(--ink2);display:flex;gap:6px;align-items:center;max-width:30ch;text-align:right;justify-content:flex-end}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:600;font-size:var(--t0);min-height:36px;padding:0 14px;border-radius:var(--rs);border:1px solid var(--line2);background:var(--card);color:var(--ink);cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--pri)}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}.btn.pri:hover{background:var(--pri-h)}
+.btn.ghost{background:transparent}
+.btn[aria-disabled="true"]{background:var(--soft);color:var(--muted);border-style:dashed;cursor:not-allowed}
+.btn[aria-disabled="true"]:hover{border-color:var(--line2)}
+.iconbtn{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer}
+.iconbtn:hover{background:var(--soft);color:var(--ink)}
+.menu{position:absolute;top:calc(100% + 6px);right:0;z-index:5;width:min(340px,calc(100vw - 48px));padding:6px;border:1px solid var(--line2);border-radius:var(--r);background:var(--card);box-shadow:0 12px 32px rgb(var(--shadow)/.4)}
+.addwrap.hasmsg .menu{top:calc(100% + 6px)}
+.menu [role=menuitem]{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;width:100%;text-align:left;background:transparent;border:0;border-radius:var(--rs);padding:10px 12px;cursor:pointer;align-items:start}
+.menu [role=menuitem] svg{grid-row:1/3;margin-top:3px;color:var(--pri-t)}
+.menu [role=menuitem] b{font-weight:600}
+.menu [role=menuitem] span{color:var(--ink2)}
+.menu [role=menuitem]:hover,.menu [role=menuitem]:focus-visible{background:var(--pri-tint)}
+.menu [role=menuitem]:focus-visible{outline-offset:-2px}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+
+.box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;min-width:0}
+.box>.cap{padding:10px 14px;color:var(--ink2);border-top:1px solid var(--line);background:var(--thead)}
+table.tbl{border-collapse:collapse;width:100%}
+.tbl th{font:500 var(--t0) var(--mono);color:var(--muted);text-align:left;padding:8px 14px;background:var(--thead);border-bottom:1px solid var(--line)}
+.tbl td{padding:10px 14px;border-top:1px solid var(--line);vertical-align:middle}
+.tbl tr:first-child td{border-top:0}
+.tbl .ttl{font-weight:600;color:var(--ink)}
+.tbl .num{text-align:right;font-variant-numeric:tabular-nums}
+.tbl .act{text-align:right;white-space:nowrap}
+.tbl tr.new td{background:var(--pri-tint)}
+.tbl tr.new td:first-child{box-shadow:inset 4px 0 0 var(--pri)}
+.eff{display:inline-flex;align-items:center;gap:8px}
+.eff i{display:inline-flex;gap:2px}.eff i s{width:10px;height:6px;border-radius:2px;background:var(--line2);display:block}
+.eff i s.on{background:var(--pri-t)}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:var(--t0);font-weight:600;padding:0 9px;border-radius:999px;white-space:nowrap;background:var(--soft);color:var(--ink2);border:1px solid var(--line2)}
+.chip.nb{border-style:dashed;background:transparent;font-style:italic}
+.chip.ok{background:var(--ok-tint);color:var(--ok-t);border-color:transparent}
+.chip.ro{background:var(--warn-tint);color:var(--warn-t);border-color:transparent}
+.chip.iss{background:var(--pri-tint);color:var(--pri-t);border-color:transparent}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--pri-t);display:inline-block}
+
+/* overlays inside the frame */
+.scrim{position:absolute;inset:0;z-index:10;background:rgb(var(--shadow)/.6);display:grid;place-items:center;padding:20px}
+.scrim.right{place-items:stretch end;padding:0}
+.dlg{background:var(--card);border:1px solid var(--line2);border-radius:var(--r);box-shadow:0 24px 60px rgb(var(--shadow)/.5);width:100%;max-width:480px;max-height:100%;display:flex;flex-direction:column;min-height:0}
+.dlg.wide{max-width:680px}
+.dhead{display:flex;align-items:flex-start;gap:8px;padding:16px 18px 12px;border-bottom:1px solid var(--line)}
+.dhead .eb{font:500 var(--t0) var(--mono);color:var(--muted)}
+.dhead h2,.dhead h3{font:var(--h-weight) var(--t3)/1.25 var(--display)}
+.dhead .x{margin-left:auto;flex:none}
+.dbody{padding:16px 18px;display:flex;flex-direction:column;gap:14px;min-height:0;overflow:auto}
+.dfoot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;padding:12px 18px;border-top:1px solid var(--line);background:var(--thead);border-radius:0 0 var(--r) var(--r)}
+.dfoot .l{margin-right:auto;color:var(--ink2)}
+.dr{border-radius:var(--r) 0 0 var(--r);max-width:480px;height:100%;max-height:none}
+.dr .dfoot{border-radius:0}
+
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field>label,.field .flabel{font-weight:600;color:var(--ink2)}
+.field .req{color:var(--hot-t);font-weight:700}
+.field .opt{color:var(--muted);font-weight:400}
+.field input:not([type=checkbox]):not([type=radio]),.field select,.field textarea{border:1px solid var(--line2);border-radius:var(--rs);min-height:38px;padding:7px 10px;line-height:1.45;width:100%;background:var(--field);color:var(--ink)}
+.field textarea{min-height:76px;resize:vertical}
+.field small{color:var(--muted)}
+.field [aria-invalid="true"]{border-color:var(--hot);background:var(--hot-tint)}
+.err{display:flex;gap:6px;align-items:flex-start;color:var(--hot-t);font-weight:600}
+.err svg{margin-top:3px}
+.alert{display:flex;gap:8px;padding:10px 12px;border-radius:var(--rs);background:var(--hot-tint);border:1px solid var(--hot);color:var(--ink)}
+.alert svg{color:var(--hot-t);margin-top:3px}
+.alert ul{margin:4px 0 0;padding-left:18px}.alert b{color:var(--hot-t)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.disc>button{display:flex;align-items:center;gap:8px;width:100%;background:transparent;border:0;padding:6px 0;cursor:pointer;font-weight:600;color:var(--pri-t);text-align:left}
+.disc>button svg{transition:transform .15s}
+.disc>button[aria-expanded="true"] svg{transform:rotate(90deg)}
+.disc-body{display:flex;flex-direction:column;gap:14px;padding:10px 0 2px;border-top:1px solid var(--line)}
+.callout{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:var(--rs);background:var(--pri-tint);border:1px solid var(--line2)}
+.callout svg{margin-top:3px;color:var(--pri-t)}
+.callout.warn{background:var(--warn-tint)}
+
+/* picker */
+.filters{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:10px}
+.pl{margin:0;padding:0;list-style:none;border:1px solid var(--line);border-radius:var(--rs);overflow:auto;max-height:230px}
+.pl li{border-top:1px solid var(--line)}.pl li:first-child{border-top:0}
+.pr{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;padding:9px 12px;cursor:pointer;align-items:start}
+.pr:hover{background:var(--rowh)}
+.pr input{width:18px;height:18px;margin:3px 0 0;accent-color:var(--pri)}
+.pr:has(input:checked){background:var(--pri-tint)}
+.pr:has(input:focus-visible){outline:2px solid var(--pri);outline-offset:-2px}
+.pr-title{font-weight:600;display:block;color:var(--ink)}
+.pr-meta{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;color:var(--ink2);margin-top:2px}
+.votes{display:inline-flex;gap:5px;align-items:center;font-weight:600;font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap}
+.votes svg{color:var(--pri-t)}
+.cnt{font:500 var(--t0) var(--mono);color:var(--ink2)}
+.panel{border:1px solid var(--line);border-radius:var(--rs);padding:12px;background:var(--thead);display:flex;flex-direction:column;gap:12px}
+.panel h3{font:var(--h-weight) var(--t1) var(--display)}
+.empty{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:32px 16px;border:1px dashed var(--line2);border-radius:var(--rs)}
+.empty h3{font:var(--h-weight) var(--t2) var(--display)}
+.empty p{margin:0;color:var(--ink2);max-width:46ch}
+.empty svg{width:28px;height:28px;color:var(--muted)}
+
+.toast{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);z-index:20;display:flex;gap:10px;align-items:center;max-width:calc(100% - 32px);padding:10px 14px;border-radius:var(--rs);background:var(--ok-tint);color:var(--ink);border:1px solid var(--ok-t);box-shadow:0 12px 32px rgb(var(--shadow)/.4)}
+.toast svg{color:var(--ok-t)}
+.toast b{font-weight:600}
+
+.notes{display:flex;flex-direction:column;gap:14px}
+.notes>h2{font:var(--h-weight) var(--t3)/1.25 var(--display)}
+.rev{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.rev>div{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.rev h3{font:var(--h-weight) var(--t1) var(--display)}
+.rev p,.rev ul{margin:0;color:var(--ink2)}.rev ul{padding-left:18px}
+.rev .tagp{align-self:flex-start;font:500 var(--t0) var(--mono);color:var(--warn-t);background:var(--warn-tint);border-radius:4px;padding:0 6px}
+code{font:var(--t0) var(--mono)}
+
+@media (max-width:700px){
+  .app{height:860px}
+  .app-main{padding:14px}
+  .addwrap{align-items:stretch;width:100%}
+  .addwrap .btn{width:100%}
+  .why{max-width:none;text-align:left;justify-content:flex-start}
+  .scrim{padding:0;place-items:stretch}
+  .dlg,.dlg.wide,.dr{max-width:none;border-radius:0;border:0;height:100%}
+  .dfoot{border-radius:0;position:sticky;bottom:0}
+  .dfoot .btn{flex:1 1 auto}
+  .dfoot .l{flex-basis:100%}
+  .row2,.filters{grid-template-columns:1fr}
+  .pr{grid-template-columns:auto minmax(0,1fr)}
+  .pr .votes{grid-column:2}
+  .pl{max-height:none;overflow:visible}
+  .tbl thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .tbl,.tbl tbody,.tbl tr,.tbl td{display:block}
+  .tbl td{border-top:0;padding:3px 14px}
+  .tbl tr{border-top:1px solid var(--line);padding:8px 0}.tbl tr:first-child{border-top:0}
+  .tbl td[data-l]::before{content:attr(data-l) ": ";font:500 var(--t0) var(--mono);color:var(--muted)}
+  .tbl .num,.tbl .act{text-align:left}
+  .proto .themepick{margin-left:0}
+  .intro h1{font-size:var(--t3)}
+}
+@media (prefers-reduced-motion:reduce){.disc>button svg{transition:none}}
+</style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 2 20h20z"/><path d="M12 10v5M12 18v.5"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-theme" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L19 9l-4-4L4 16z"/></symbol>
+    <symbol id="i-idea" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></symbol>
+    <symbol id="i-issue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l3 3 5-6"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V6M6 11l6-6 6 6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></symbol>
+    <symbol id="i-inbox" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 13h5l1 3h6l1-3h5M5 5h14l2 8v6H3v-6z"/></symbol>
+  </defs>
+</svg>
+
+<div class="proto" role="region" aria-label="Review controls">
+  <b>Collega · Backlog Add · C Two paths</b>
+  <fieldset class="seg" id="seg"><legend>Comp states</legend>
+    <button type="button" data-n="1" aria-pressed="true">1 Menu closed</button>
+    <button type="button" data-n="2" aria-pressed="false">2 Menu open</button>
+    <button type="button" data-n="3" aria-pressed="false">3 New issue</button>
+    <button type="button" data-n="4" aria-pressed="false">4 Errors</button>
+    <button type="button" data-n="5" aria-pressed="false">5 Picker</button>
+    <button type="button" data-n="6" aria-pressed="false">6 Picker empty</button>
+    <button type="button" data-n="7" aria-pressed="false">7 Success</button>
+    <button type="button" data-n="8" aria-pressed="false">8 Read Only</button>
+    <button type="button" data-n="9" aria-pressed="false">9 Edit drawer</button>
+  </fieldset>
+  <label class="themepick" for="theme"><svg class="i" aria-hidden="true"><use href="#i-theme"/></svg><span>Theme</span>
+    <select id="theme"><optgroup label="Light"><option value="terrazzo">Terrazzo</option><option value="portico">Portico</option><option value="sera">Piazza Sera</option><option value="lagoon">Lagoon</option></optgroup><optgroup label="Dark"><option value="graphite" selected>Graphite</option></optgroup></select></label>
+</div>
+
+<main class="wrap">
+<header class="intro">
+  <h1>Backlog: two ways on, one Add menu (approach C, Two paths)</h1>
+  <p>Slice 185, a throwaway comp for review. The Backlog header gets one <b>Add</b> menu with two choices, <b>New issue</b> (a compact dialog) and <b>From an existing idea</b> (a picker that runs the existing Promote). Nothing is built; the UI waits on your approval. Sample data is Acme Robotics; the menu, forms, search, filter and selection are live, nothing saves. Use <b>Comp states</b> above, or click through the app.</p>
+</header>
+
+<section class="statebar" aria-labelledby="st-h">
+  <h2 id="st-h"><span class="fl" id="st-n">1</span><span id="st-t"></span></h2>
+  <div class="note"><p id="st-d"></p></div>
+  <div class="viewas"><label for="viewas">Viewing the picker as</label>
+    <select id="viewas"><option value="admin">Org Admin (sees all eligible ideas)</option><option value="user">User, Noah Contributor (sees only own ideas)</option></select></div>
+</section>
+
+<section class="app" id="app" data-state="1" aria-label="Comp of the Backlog page">
+  <div class="topbar">
+    <span class="crumbs">Acme Robotics · Delivery / <b>Backlog</b></span>
+    <span class="who"><span class="chip" id="rolechip">Org Admin</span></span>
+  </div>
+  <div class="app-main" id="appmain">
+    <div class="pghead">
+      <div>
+        <h1>Backlog</h1>
+        <p>Issues that are committed but not yet in a sprint, most upvoted first. Assigning a sprint moves the row.</p>
+      </div>
+      <div class="addwrap" id="addwrap">
+        <button type="button" class="btn pri" id="addbtn" aria-haspopup="menu" aria-expanded="false" aria-controls="addmenu"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg>Add<svg class="i" aria-hidden="true"><use href="#i-down"/></svg></button>
+        <p class="why" id="addwhy" hidden><svg class="i" aria-hidden="true"><use href="#i-lock"/></svg><span>Read Only members cannot add issues.</span></p>
+        <div class="menu" id="addmenu" role="menu" aria-label="Add to the backlog" data-s="2" hidden>
+          <button type="button" role="menuitem" id="mi-new" tabindex="-1"><svg class="i" aria-hidden="true"><use href="#i-issue"/></svg><b>New issue</b><span>Write a new issue straight into the backlog.</span></button>
+          <hr role="separator">
+          <button type="button" role="menuitem" id="mi-idea" tabindex="-1"><svg class="i" aria-hidden="true"><use href="#i-idea"/></svg><b>From an existing idea</b><span>Promote a Discovery or board-less idea into the backlog.</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="box">
+      <table class="tbl" id="tbl">
+        <thead><tr><th scope="col">Issue</th><th scope="col">Outcome</th><th scope="col">Effort</th><th scope="col" class="num">Votes</th><th scope="col" class="act"><span class="vh">Actions</span></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="cap" id="tblcap"></div>
+    </div>
+  </div>
+
+  <!-- State 3, 4: New issue dialog -->
+  <div class="scrim" id="scr-new" data-s="3,4" hidden>
+    <form class="dlg" id="frm-new" role="dialog" aria-modal="true" aria-labelledby="dn-t" novalidate>
+      <div class="dhead"><div><div class="eb">Backlog</div><h2 id="dn-t">New issue</h2></div>
+        <button type="button" class="iconbtn x" data-close aria-label="Close new issue dialog"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+      <div class="dbody">
+        <div class="alert" id="dn-sum" role="alert" data-s="4" hidden><svg class="i" aria-hidden="true"><use href="#i-alert"/></svg><div><b>2 things need fixing</b><ul><li><a href="#dn-title">Enter a title</a></li><li><a href="#dn-eff">Choose an effort</a></li></ul></div></div>
+        <div class="field"><label for="dn-title">Title <span class="req" aria-hidden="true">*</span><span class="vh">(required)</span></label>
+          <input id="dn-title" name="title" type="text" maxlength="120" autocomplete="off" aria-describedby="dn-title-e">
+          <div class="err" id="dn-title-e" data-s="4" hidden><svg class="i" aria-hidden="true"><use href="#i-alert"/></svg>Enter a title.</div></div>
+        <div class="row2">
+          <div class="field"><label for="dn-eff">Effort <span class="req" aria-hidden="true">*</span><span class="vh">(required)</span></label>
+            <select id="dn-eff" name="effort" aria-describedby="dn-eff-e"><option value="">Choose effort</option><option>Low</option><option>Medium</option><option>High</option></select>
+            <div class="err" id="dn-eff-e" data-s="4" hidden><svg class="i" aria-hidden="true"><use href="#i-alert"/></svg>Choose an effort.</div></div>
+          <div class="field"><label for="dn-spr">Sprint <span class="opt">(optional)</span></label>
+            <select id="dn-spr" name="sprint"><option value="">No sprint (stays in the backlog)</option><option>Sprint 14 · Oct 12 to Oct 25</option><option>Sprint 15 · Oct 26 to Nov 8</option></select></div>
+        </div>
+        <div class="disc">
+          <button type="button" id="dn-dbtn" aria-expanded="false" aria-controls="dn-det"><svg class="i" aria-hidden="true"><use href="#i-chev"/></svg>Add details</button>
+          <div class="disc-body" id="dn-det" hidden>
+            <div class="field"><label for="dn-desc">Description <span class="opt">(optional)</span></label><textarea id="dn-desc" rows="3"></textarea></div>
+            <div class="row2">
+              <div class="field"><label for="dn-out">Outcome <span class="opt">(optional)</span></label><select id="dn-out"><option value="">Ungrouped</option><option>Reliability</option><option>Integrations</option><option>Field operations</option></select></div>
+              <div class="field"><label for="dn-asg">Assignee <span class="opt">(optional)</span></label><select id="dn-asg"><option value="">Unassigned</option><option>Priya Raman</option><option>Marcus Lee</option><option>Noah Contributor</option></select></div>
+            </div>
+            <div class="field"><label for="dn-tags">Tags <span class="opt">(optional)</span></label><input id="dn-tags" type="text" placeholder="hardware, field-ops"><small>The same fields as the idea form, minus the board.</small></div>
+          </div>
+        </div>
+        <p class="callout"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg><span>The issue belongs to no board and starts as Pending.</span></p>
+      </div>
+      <div class="dfoot"><button type="button" class="btn ghost" data-close>Cancel</button><button type="submit" class="btn pri">Add issue</button></div>
+    </form>
+  </div>
+
+  <!-- State 5, 6: existing-idea picker -->
+  <div class="scrim" id="scr-pick" data-s="5,6" hidden>
+    <form class="dlg wide" id="frm-pick" role="dialog" aria-modal="true" aria-labelledby="dp-t" novalidate>
+      <div class="dhead"><div><div class="eb">Backlog</div><h2 id="dp-t">Add from an existing idea</h2></div>
+        <button type="button" class="iconbtn x" data-close aria-label="Close idea picker"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+      <div class="dbody">
+        <div data-s="5" class="pk" style="display:contents">
+          <p class="callout" id="pk-scope"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg><span></span></p>
+          <div class="filters">
+            <div class="field"><label for="pk-q">Search ideas</label><input id="pk-q" type="search" autocomplete="off" placeholder="Title, author or tag" aria-controls="pk-list"></div>
+            <div class="field"><label for="pk-b">Board</label><select id="pk-b"><option value="">All boards</option><option value="__pool">No board (pool)</option><option>Product Roadmap</option><option>Support Triage</option><option>Q2 Planning</option></select></div>
+          </div>
+          <fieldset style="border:0;margin:0;padding:0;min-width:0">
+            <legend class="vh">Idea to add (choose one)</legend>
+            <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:6px"><span class="cnt" id="pk-cnt" aria-live="polite"></span><span class="cnt">Most upvoted first</span></div>
+            <ul class="pl" id="pk-list"></ul>
+            <p class="empty" id="pk-none" hidden style="margin:0">No ideas match. Clear the search or the board filter.</p>
+          </fieldset>
+          <div class="panel">
+            <h3>Add to the backlog</h3>
+            <p style="margin:0;color:var(--ink2)" id="pk-sel">Choose an idea above.</p>
+            <div class="row2">
+              <div class="field"><label for="pk-eff">Effort <span class="req" aria-hidden="true">*</span><span class="vh">(required)</span></label><select id="pk-eff"><option value="">Choose effort</option><option>Low</option><option>Medium</option><option>High</option></select></div>
+              <div class="field"><label for="pk-spr">Sprint <span class="opt">(optional)</span></label><select id="pk-spr"><option value="">No sprint (stays in the backlog)</option><option>Sprint 14 · Oct 12 to Oct 25</option><option>Sprint 15 · Oct 26 to Nov 8</option></select></div>
+            </div>
+            <small style="color:var(--muted)">The upvote count is saved when the idea is promoted. The idea leaves Discovery and keeps its comments and history.</small>
+          </div>
+        </div>
+        <div class="empty" data-s="6" hidden>
+          <svg class="i" aria-hidden="true"><use href="#i-inbox"/></svg>
+          <h3>No ideas are waiting for delivery</h3>
+          <p>Ideas in Discovery and ideas with no board show up here once someone writes them. You can still add an issue directly.</p>
+          <button type="button" class="btn" id="pk-tonew">New issue instead</button>
+        </div>
+      </div>
+      <div class="dfoot" data-s="5,6"><span class="l" id="pk-hint" data-s="5"></span><button type="button" class="btn ghost" data-close>Cancel</button><button type="submit" class="btn pri" id="pk-go" aria-disabled="true" data-s="5">Add to backlog</button></div>
+    </form>
+  </div>
+
+  <!-- State 9: Issue drawer in edit mode -->
+  <div class="scrim right" id="scr-edit" data-s="9" hidden>
+    <form class="dlg dr" role="dialog" aria-modal="true" aria-labelledby="de-t" novalidate>
+      <div class="dhead"><div><div class="eb">ISS-157 · Editing</div><h2 id="de-t">Edit issue</h2></div>
+        <button type="button" class="iconbtn x" data-close aria-label="Close drawer"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+      <div class="dbody">
+        <div class="field"><label for="de-title">Title <span class="req" aria-hidden="true">*</span><span class="vh">(required)</span></label><input id="de-title" type="text" value="Bulk label printing"></div>
+        <div class="field"><label for="de-desc">Description</label><textarea id="de-desc" rows="3">Print shipping labels for a whole pick wave in one go.</textarea></div>
+        <div class="row2">
+          <div class="field"><label for="de-eff">Effort <span class="req" aria-hidden="true">*</span><span class="vh">(required)</span></label><select id="de-eff"><option>Low</option><option>Medium</option><option>High</option></select></div>
+          <div class="field"><label for="de-spr">Sprint</label><select id="de-spr"><option value="">No sprint</option><option>Sprint 14</option><option>Sprint 15</option></select></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label for="de-out">Outcome</label><select id="de-out"><option>Field operations</option><option>Reliability</option><option>Integrations</option><option value="">Ungrouped</option></select></div>
+          <div class="field"><label for="de-sta">Delivery status</label><select id="de-sta"><option>Pending</option><option>Scoping</option><option>Development</option><option>Review</option><option>Complete</option></select></div>
+        </div>
+        <div class="field"><label for="de-asg">Assignee</label><select id="de-asg"><option>Unassigned</option><option>Priya Raman</option><option>Marcus Lee</option></select></div>
+        <p class="callout"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg><span>No board field: a backlog issue added directly has none. Origin, votes at promotion and history stay in the drawer's other tabs.</span></p>
+      </div>
+      <div class="dfoot"><button type="button" class="btn ghost" data-close>Cancel</button><button type="submit" class="btn pri">Save changes</button></div>
+    </form>
+  </div>
+
+  <div class="toast" id="toast" role="status" data-s="7" hidden><svg class="i" aria-hidden="true"><use href="#i-check"/></svg><b id="toast-t">Issue added</b></div>
+</section>
+
+<section class="notes" aria-labelledby="n-h">
+  <h2 id="n-h">Notes</h2>
+  <div class="rev">
+    <div><span class="tagp">DECISION</span><h3>Does "From an existing idea" duplicate Promote?</h3>
+      <p>Yes, on purpose: it is the same command (the Promote use case: Effort required, optional sprint, upvote snapshot, author-or-admin authorization, same audit event), reached from the Backlog instead of from the idea. Weigh: a second door raises discoverability, but the two entry points must never drift (same refusals, same copy, same toast). The idea's own Promote stays.</p></div>
+    <div><span class="tagp">DECISION</span><h3>Dialog or drawer for New issue?</h3>
+      <p>Dialog: three fields is a quick capture and needs no surrounding context. The cost is a split vocabulary, since Edit uses the existing Issue drawer and "Add details" is a dialog expanding toward something the drawer already is. Alternative: open the drawer in create mode and drop the dialog.</p></div>
+    <div><span class="tagp">DECISION</span><h3>Mobile at 390px</h3>
+      <p>Both dialogs become full-height sheets with a sticky footer (Cancel and the primary action share the row). The Add button goes full width, its menu spans the viewport, the table collapses to labelled cards. The picker list stops scrolling on its own so the sheet scrolls once. Resize to 390px to check.</p></div>
+    <div><span class="tagp">DECISION</span><h3>Where a new issue lands</h3>
+      <p>The Backlog sorts by votes, so a New issue (0 votes) lands last, and one added to a sprint is not in this list at all (toast: "Issue added to Sprint 14"). A promoted idea lands by its upvote count (state 7). Focus returns to the Add button; the new row is highlighted and carries a "Just added" chip, so colour is never the only cue.</p></div>
+    <div><span class="tagp">ROLES</span><h3>Who sees what</h3>
+      <p>Read Only: Add and the row Edit actions are disabled and the reason is printed beside the button, not only in a tooltip. User: the picker lists only ideas they authored (promotion is author or admin). Org Admin: every eligible idea. Use "Viewing the picker as" above.</p></div>
+    <div><span class="tagp">A11Y</span><h3>Menu and dialog behaviour</h3>
+      <ul><li>Add is a menu button: aria-haspopup, aria-expanded, Enter/Space/Down opens, arrows move, Esc closes and returns focus to Add.</li>
+      <li>Dialogs: role=dialog, aria-modal, labelled by the heading. Focus moves to Title (or Search in the picker), Tab and Shift+Tab wrap inside, the page behind is inert, Esc and Cancel close and return focus to Add.</li>
+      <li>Errors: a summary with links plus a message under each field, aria-invalid and aria-describedby. Success is announced by the status toast.</li></ul></div>
+  </div>
+  <div class="note"><p><b>Trade-offs of this approach.</b> (1) Two doors to one command: discoverable from one place, but the Backlog and the idea page must stay in lockstep. (2) The Add menu hides both paths one click deep; a single-purpose button would make New issue one click faster for the common case. (3) The picker adds a second dense surface (search, filter, select, then Effort and Sprint), heavier than promoting from the idea you are already reading.</p></div>
+</section>
+</main>
+
+<script>
+(function () {
+'use strict';
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const NOAH = 'Noah Contributor';
+
+const STATES = {
+  1: ['Backlog with the Add menu closed', 'The Backlog header carries one Add menu button. Closed, it looks like any primary button; the chevron says it opens a menu.'],
+  2: ['Add menu open', 'Two choices with a line of help each, so the difference between writing a new issue and promoting an idea is stated where the choice is made.'],
+  3: ['New issue dialog, empty', 'A compact centred dialog: Title and Effort are required, Sprint is optional, and "Add details" discloses the rest of the idea form. No board field and no status field; the callout says why. Try "Add details".'],
+  4: ['New issue, validation errors', 'Submitting with Title and Effort empty. A summary (role=alert) links to each field, each field repeats its message, and the borders are never the only signal. The submit button stays enabled.'],
+  5: ['Existing-idea picker', 'Discovery and board-less pool ideas, searchable, filterable by board, most upvoted first, with upvote count and author. One idea is chosen, then Effort and Sprint. Search and filter are live; switch "Viewing the picker as" to see the User view.'],
+  6: ['Picker, empty state', 'Nothing eligible: say so plainly and offer the other path rather than a dead end.'],
+  7: ['Success', 'The dialog closes, the toast says "Issue added", and the new row sits in its vote-order position, highlighted with a "Just added" chip. With a sprint chosen the toast reads "Issue added to Sprint 14" and no row appears here.'],
+  8: ['Read Only member', 'Add is disabled (aria-disabled, so it stays focusable and readable) with the reason printed beside it, and the row Edit actions are disabled the same way.'],
+  9: ['Edit drawer', 'A row\'s Edit action opens the existing Issue drawer in edit mode, drawn briefly. Status is editable here; it is not on New issue.']
+};
+
+const ISSUES = [
+  { t: 'Fix gripper torque drift', o: 'Reliability', e: 3, v: 14 },
+  { t: 'Pinecone Labs SSO metadata import', o: 'Integrations', e: 2, v: 11 },
+  { t: 'Bulk label printing', o: 'Field operations', e: 1, v: 7 },
+  { t: 'Operator console audit log', o: 'Reliability', e: 2, v: 5 },
+];
+const EFFN = ['', 'Low', 'Medium', 'High'];
+const IDEAS = [
+  { id: 'a', t: 'Warehouse map export to PDF', a: 'Marcus Lee', v: 12, b: 'Product Roadmap', g: 'integrations' },
+  { id: 'b', t: 'Operator console needs a dark mode', a: 'Priya Raman', v: 9, b: null, g: 'ux' },
+  { id: 'c', t: 'Pinecone Labs wants a nightly status export', a: NOAH, v: 8, b: null, g: 'integrations' },
+  { id: 'd', t: 'Calibration reminders for field units', a: NOAH, v: 6, b: null, g: 'field-ops' },
+  { id: 'e', t: 'Self-serve onboarding checklist', a: NOAH, v: 4, b: 'Support Triage', g: 'onboarding' },
+  { id: 'f', t: 'Tablet layout for pick-and-place setup', a: NOAH, v: 3, b: 'Q2 Planning', g: 'ux' },
+  { id: 'g', t: 'Spare gripper pad inventory view', a: 'Marcus Lee', v: 2, b: null, g: 'inventory' },
+];
+
+const app = $('#app'), addbtn = $('#addbtn'), menu = $('#addmenu');
+let state = 1, sel = null, justAdded = null, toastText = 'Issue added';
+const role = () => $('#viewas').value;
+const ic = (n) => `<svg class="i" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+
+function renderRows() {
+  const rows = ISSUES.slice();
+  if (state === 7 && justAdded) {
+    const at = rows.findIndex((r) => r.v < justAdded.v);
+    rows.splice(at < 0 ? rows.length : at, 0, justAdded);
+  }
+  const ro = state === 8;
+  $('#rows').innerHTML = rows.map((r) => `<tr${r.fresh ? ' class="new"' : ''}>
+    <td><span class="ttl">${esc(r.t)}</span>${r.fresh ? ' <span class="chip iss">Just added</span>' : ''}</td>
+    <td data-l="Outcome">${r.o ? `<span class="chip"><span class="dot"></span>${esc(r.o)}</span>` : '<span class="chip nb">Ungrouped</span>'}</td>
+    <td data-l="Effort"><span class="eff"><i aria-hidden="true">${[1, 2, 3].map((n) => `<s${n <= r.e ? ' class="on"' : ''}></s>`).join('')}</i>${EFFN[r.e]}</span></td>
+    <td class="num" data-l="Votes">${r.v}</td>
+    <td class="act"><button type="button" class="btn editbtn"${ro ? ' aria-disabled="true" aria-describedby="addwhy"' : ''} data-edit>${ic('edit')}Edit<span class="vh"> ${esc(r.t)}</span></button></td></tr>`).join('');
+  $('#tblcap').textContent = `${rows.length} issues in the backlog. Vote counts are the snapshot taken at promotion.`;
+}
+
+function visibleIdeas() {
+  const q = $('#pk-q').value.trim().toLowerCase(), b = $('#pk-b').value;
+  return IDEAS.filter((i) => (role() === 'admin' || i.a === NOAH)
+    && (!b || (b === '__pool' ? !i.b : i.b === b))
+    && (!q || (i.t + ' ' + i.a + ' ' + i.g).toLowerCase().includes(q)));
+}
+function renderPicker() {
+  const list = visibleIdeas();
+  if (sel && !list.some((i) => i.id === sel)) sel = null;
+  $('#pk-list').innerHTML = list.map((i) => `<li><label class="pr"><input type="radio" name="idea" value="${i.id}"${sel === i.id ? ' checked' : ''}>
+    <span><span class="pr-title">${esc(i.t)}</span><span class="pr-meta">${i.b ? `<span class="chip">${esc(i.b)}</span>` : '<span class="chip nb">No board</span>'}<span>by ${esc(i.a)}</span><span class="chip">${esc(i.g)}</span></span></span>
+    <span class="votes">${ic('up')}${i.v}<span class="vh"> upvotes</span></span></label></li>`).join('');
+  $('#pk-none').hidden = list.length > 0;
+  $('#pk-list').hidden = list.length === 0;
+  $('#pk-cnt').textContent = `${list.length} idea${list.length === 1 ? '' : 's'}`;
+  $('#pk-scope span').textContent = role() === 'admin'
+    ? 'Showing every eligible idea in Acme Robotics: Discovery ideas on boards, and ideas with no board.'
+    : 'Showing ideas you wrote. Only an idea\'s author or an Org Admin can promote it.';
+  const it = IDEAS.find((i) => i.id === sel);
+  $('#pk-sel').innerHTML = it ? `Adding <b>${esc(it.t)}</b> with ${it.v} upvotes.` : 'Choose an idea above.';
+  updateGo();
+}
+function updateGo() {
+  const ok = sel && $('#pk-eff').value;
+  const go = $('#pk-go');
+  go.setAttribute('aria-disabled', ok ? 'false' : 'true');
+  $('#pk-hint').textContent = ok ? '' : (sel ? 'Choose an effort to continue.' : 'Choose an idea and an effort to continue.');
+}
+
+function setState(n, focus) {
+  state = n; app.dataset.state = n;
+  $$('[data-s]').forEach((el) => { el.hidden = !el.dataset.s.split(',').includes(String(n)); });
+  $$('#seg button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.n === n)));
+  $('#st-n').textContent = n; $('#st-t').textContent = STATES[n][0]; $('#st-d').textContent = STATES[n][1];
+  const ro = n === 8;
+  addbtn.setAttribute('aria-disabled', String(ro));
+  addbtn.setAttribute('aria-expanded', String(n === 2));
+  if (ro) addbtn.setAttribute('aria-describedby', 'addwhy'); else addbtn.removeAttribute('aria-describedby');
+  $('#addwhy').hidden = !ro;
+  const rc = $('#rolechip');
+  rc.textContent = ro ? 'Read Only' : (role() === 'admin' ? 'Org Admin' : 'User');
+  rc.className = 'chip' + (ro ? ' ro' : '');
+  if (n === 3 || n === 4) {
+    if (n === 3) { $('#frm-new').reset(); $('#dn-det').hidden = true; $('#dn-dbtn').setAttribute('aria-expanded', 'false'); }
+    const bad = n === 4;
+    $('#dn-title').setAttribute('aria-invalid', String(bad)); $('#dn-eff').setAttribute('aria-invalid', String(bad));
+    if (n === 4) { $('#frm-new').reset(); }
+  }
+  if (n === 5) { sel = role() === 'admin' ? 'b' : 'c'; $('#pk-q').value = ''; $('#pk-b').value = ''; $('#pk-eff').value = 'Medium'; $('#pk-spr').value = 'Sprint 14 · Oct 12 to Oct 25'; }
+  if (n === 7) {
+    justAdded = { t: 'Operator console needs a dark mode', o: '', e: 2, v: 9, fresh: true };
+    toastText = 'Issue added';
+    $('#toast-t').textContent = toastText;
+  } else justAdded = null;
+  renderRows(); renderPicker();
+  if (focus === 'menu') $('#mi-new').focus();
+  else if (focus === 'title' && (n === 3)) $('#dn-title').focus();
+  else if (focus === 'search' && n === 5) $('#pk-q').focus();
+}
+
+// segmented states and theme
+$('#seg').addEventListener('click', (e) => { const b = e.target.closest('button[data-n]'); if (b) setState(+b.dataset.n); });
+$('#theme').addEventListener('change', (e) => { document.documentElement.dataset.protoTheme = e.target.value; });
+$('#viewas').addEventListener('change', () => { setState(state); });
+
+// Add menu button
+addbtn.addEventListener('click', () => { if (addbtn.getAttribute('aria-disabled') === 'true') return; setState(state === 2 ? 1 : 2, state === 2 ? null : 'menu'); });
+addbtn.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown' && addbtn.getAttribute('aria-disabled') !== 'true') { e.preventDefault(); setState(2, 'menu'); } });
+menu.addEventListener('keydown', (e) => {
+  const items = $$('[role=menuitem]', menu), i = items.indexOf(document.activeElement);
+  if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+  else if (e.key === 'Home') { e.preventDefault(); items[0].focus(); }
+  else if (e.key === 'End') { e.preventDefault(); items[items.length - 1].focus(); }
+  else if (e.key === 'Escape') { setState(1); addbtn.focus(); }
+  else if (e.key === 'Tab') setState(1);
+});
+$('#mi-new').addEventListener('click', () => setState(3, 'title'));
+$('#mi-idea').addEventListener('click', () => setState(5, 'search'));
+document.addEventListener('click', (e) => { if (state === 2 && !e.target.closest('#addwrap')) setState(1); });
+
+// dialogs: close, Escape, Tab wrap (the real focus trap, kept simple here)
+$$('[data-close]').forEach((b) => b.addEventListener('click', () => { setState(1); addbtn.focus(); }));
+app.addEventListener('keydown', (e) => {
+  const dlg = e.target.closest('[role=dialog]');
+  if (!dlg) return;
+  if (e.key === 'Escape') { setState(1); addbtn.focus(); return; }
+  if (e.key !== 'Tab') return;
+  const f = $$('button,input,select,textarea,a[href]', dlg).filter((x) => !x.closest('[hidden]') && x.getAttribute('aria-disabled') !== 'x');
+  if (!f.length) return;
+  if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+  else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+});
+
+// New issue
+$('#dn-dbtn').addEventListener('click', () => {
+  const open = $('#dn-dbtn').getAttribute('aria-expanded') !== 'true';
+  $('#dn-dbtn').setAttribute('aria-expanded', String(open)); $('#dn-det').hidden = !open;
+});
+$('#frm-new').addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (!$('#dn-title').value.trim() || !$('#dn-eff').value) {
+    const t = $('#dn-title').value, f = $('#dn-eff').value, s = $('#dn-spr').value;
+    setState(4); $('#dn-title').value = t; $('#dn-eff').value = f; $('#dn-spr').value = s; $('#dn-title').focus(); return;
+  }
+  const sp = $('#dn-spr').value.split(' · ')[0], t = $('#dn-title').value.trim(), eff = EFFN.indexOf($('#dn-eff').value);
+  setState(7);
+  toastText = sp ? 'Issue added to ' + sp : 'Issue added'; $('#toast-t').textContent = toastText;
+  justAdded = sp ? null : { t, o: '', e: eff, v: 0, fresh: true }; renderRows();
+  addbtn.focus();
+});
+
+// Picker
+$('#pk-q').addEventListener('input', renderPicker);
+$('#pk-b').addEventListener('change', renderPicker);
+$('#pk-eff').addEventListener('change', updateGo);
+$('#pk-list').addEventListener('change', (e) => { if (e.target.name === 'idea') { sel = e.target.value; const it = IDEAS.find((i) => i.id === sel); $('#pk-sel').innerHTML = `Adding <b>${esc(it.t)}</b> with ${it.v} upvotes.`; updateGo(); } });
+$('#pk-tonew').addEventListener('click', () => setState(3, 'title'));
+$('#frm-pick').addEventListener('submit', (e) => {
+  e.preventDefault();
+  if ($('#pk-go').getAttribute('aria-disabled') === 'true') { (sel ? $('#pk-eff') : $('#pk-q')).focus(); return; }
+  const it = IDEAS.find((i) => i.id === sel), sp = $('#pk-spr').value.split(' · ')[0], eff = EFFN.indexOf($('#pk-eff').value);
+  setState(7);
+  toastText = sp ? 'Issue added to ' + sp : 'Issue added'; $('#toast-t').textContent = toastText;
+  justAdded = sp ? null : { t: it.t, o: '', e: eff, v: it.v, fresh: true }; renderRows();
+  addbtn.focus();
+});
+
+// Edit
+$('#rows').addEventListener('click', (e) => { const b = e.target.closest('[data-edit]'); if (b && b.getAttribute('aria-disabled') !== 'true') setState(9); });
+$('#scr-edit form').addEventListener('submit', (e) => { e.preventDefault(); setState(1); addbtn.focus(); });
+
+setState(1);
+})();
+</script>

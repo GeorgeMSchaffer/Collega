@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en" data-proto-theme="graphite">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Comp R, Backlog add, approach B: inline quick-add row (2026-10-15). Throwaway review comp. Themes copied from
+     comp-r-portico-prototype.html (Graphite default). Type scale: 0.9rem floor, each step x1.125 (0.9, 1.013, 1.139, 1.281, 1.442rem) and nothing else.
+     Self-contained; nothing saves. Sample Acme Robotics data inlined. -->
+<title>Collega Backlog Quick-add Comp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&family=Figtree:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Sans:wght@400;500;600;700&family=Lexend:wght@500;600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=Schibsted+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Theme tokens: copied verbatim from comp-r-portico-prototype.html, so the two comps stay one palette. */
+:root,:root[data-proto-theme="portico"]{--suggest:#3B6E51;--suggest-tint:#E3EEE7;color-scheme:light;
+--bg:#F1F5F5;--ink:#16292E;--ink2:#2C4247;--muted:#56696D;--line:#DDE6E7;--line2:#C6D3D5;--card:#FFFFFF;--soft:#E8EFF0;--rowh:#F6FAFA;--thead:#F7FAFA;--facts:#F6FAFA;
+--pri:#1F6A80;--pri-h:#185769;--pri-t:#1B5F73;--pri-tint:#E1EEF1;--pri-ink:#FFFFFF;--vote:#F2B28A;--vote-ink:#16292E;
+--hot:#B64A34;--hot-t:#963B28;--hot-tint:#F6E1DB;--ok-t:#3B6E51;--ok-tint:#E3EEE7;--warn-t:#8E4A1F;--warn-tint:#FCEBDF;
+--side:#FFFFFF;--side-ink:#2C4247;--side-line:#DDE6E7;--side-hover:#EEF4F4;--side-on:#E1EEF1;--side-on-ink:#16292E;--bar:#16292E;--bar-ink:#E3EEF0;
+--tag:#E1EEF1;--tag-ink:#1B5566;--av1:#1F6A80;--av1i:#FFFFFF;--av2:#F2B28A;--av2i:#16292E;--av3:#7A5AA6;--av3i:#FFFFFF;--av4:#4F8A6A;--av4i:#FFFFFF;
+--shadow:22 41 46;--r:14px;--rs:10px;--display:"Outfit",ui-sans-serif,system-ui,sans-serif;--body:"Figtree",ui-sans-serif,system-ui,sans-serif;--mono:"DM Mono",ui-monospace,monospace;--h-weight:600}
+:root[data-proto-theme="sera"]{--suggest:#2E6E4C;--suggest-tint:#E1EFE7;--bg:#F3F4F7;--ink:#1C2236;--ink2:#343B52;--muted:#5C6378;--line:#E2E4EC;--line2:#CCD0DC;--soft:#ECEEF3;--rowh:#F7F8FB;--thead:#F7F8FB;--facts:#F5F6FA;
+--pri:#3450A8;--pri-h:#2A4290;--pri-t:#2E4799;--pri-tint:#E6EAF6;--vote:#E3B04B;--vote-ink:#1C2236;--hot:#B8553F;--hot-t:#94402D;--hot-tint:#F6E3DE;--ok-t:#2E6E4C;--ok-tint:#E1EFE7;--warn-t:#83590C;--warn-tint:#FAF0DA;
+--side:#1F2540;--side-ink:#CDD1E3;--side-line:#2D3454;--side-hover:#272E4D;--side-on:#2E3760;--side-on-ink:#FFFFFF;--bar:#0F1426;--bar-ink:#E6E9F5;--tag:#ECEEF3;--tag-ink:#343B52;
+--av1:#3450A8;--av1i:#FFFFFF;--av2:#E3B04B;--av2i:#1C2236;--av3:#B8553F;--av3i:#FFFFFF;--av4:#3E8A62;--av4i:#FFFFFF;--shadow:28 34 54;--r:16px;--display:"Bricolage Grotesque",ui-sans-serif,sans-serif;--body:"DM Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="lagoon"]{--suggest:#2F5F9E;--suggest-tint:#E3ECF8;--bg:#F3F4EF;--ink:#13302B;--ink2:#2A4640;--muted:#5A6B66;--line:#E1E5DF;--line2:#CBD3CB;--soft:#EAEFEA;--rowh:#F7F9F5;--thead:#F7F9F5;--facts:#F5F8F3;
+--pri:#0E6B5C;--pri-h:#0A5649;--pri-t:#0C6154;--pri-tint:#DCEFEA;--vote:#F08A6C;--vote-ink:#13302B;--hot:#C2412D;--hot-t:#9E3322;--hot-tint:#F9E1DA;--ok-t:#2F6B3F;--ok-tint:#E2F0E4;--warn-t:#7A5410;--warn-tint:#F8EDD3;
+--side:#FFFFFF;--side-ink:#2A4640;--side-line:#E1E5DF;--side-hover:#EFF3EE;--side-on:#DCEFEA;--side-on-ink:#13302B;--bar:#0F2A25;--bar-ink:#E2F0EC;--tag:#DCEFEA;--tag-ink:#0C5549;
+--av1:#0E6B5C;--av1i:#FFFFFF;--av2:#F08A6C;--av2i:#13302B;--av3:#3D6FB6;--av3i:#FFFFFF;--av4:#8C6A1F;--av4i:#FFFFFF;--shadow:19 48 43;--r:16px;--rs:12px;--display:"Lexend",ui-sans-serif,sans-serif;--body:"Nunito Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:600}
+:root[data-proto-theme="terrazzo"]{--suggest:#3F6B2E;--suggest-tint:#E6F2DF;--bg:#F5F6F8;--ink:#1E2733;--ink2:#36414F;--muted:#5E6978;--line:#E3E6EB;--line2:#CDD2DA;--soft:#EDF0F3;--rowh:#F8F9FB;--thead:#F8F9FB;--facts:#F6F7F9;
+--pri:#3D5A80;--pri-h:#324B6B;--pri-t:#35507A;--pri-tint:#E4EAF2;--vote:#F4C7C3;--vote-ink:#1E2733;--hot:#B84A4A;--hot-t:#963636;--hot-tint:#F7E2E2;--ok-t:#3F6B2E;--ok-tint:#E6F2DF;--warn-t:#7F5A12;--warn-tint:#F7EDD6;
+--side:#FFFFFF;--side-ink:#36414F;--side-line:#E3E6EB;--side-hover:#F1F3F6;--side-on:#E4EAF2;--side-on-ink:#1E2733;--bar:#1E2733;--bar-ink:#E8ECF2;--tag:#F4E4E1;--tag-ink:#7A3B34;
+--av1:#3D5A80;--av1i:#FFFFFF;--av2:#F4C7C3;--av2i:#1E2733;--av3:#4E7A40;--av3i:#FFFFFF;--av4:#7A5AA6;--av4i:#FFFFFF;--shadow:30 39 51;--r:8px;--rs:6px;--display:"Schibsted Grotesk",ui-sans-serif,sans-serif;--body:"Public Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="graphite"]{color-scheme:dark;--metric:#5CC8E0;--suggest:#5CC8E0;--suggest-tint:#0F1D21;--suggest-line:#2E6A78;
+--bg:#0F1113;--ink:#E6E8EA;--ink2:#C4CAD0;--muted:#9BA3AB;--line:#22272C;--line2:#2C3238;--card:#16191C;--soft:#1C2024;--rowh:#1A1E22;--thead:#121518;--facts:#1A1E22;--field:#0F1113;
+--pri:#F5A524;--pri-h:#FFC35C;--pri-t:#F5A524;--pri-tint:#2A2418;--pri-ink:#16120A;--vote:#2A2418;--vote-ink:#F3E3C3;--me:#2A2418;--me-ink:#F3E3C3;
+--hot:#E5484D;--hot-t:#FF8A8E;--hot-tint:#2E1719;--ok-t:#58C781;--ok-tint:#13241A;--warn-t:#F5B456;--warn-tint:#2A2418;
+--side:#121518;--side-ink:#AEB5BC;--side-line:#22272C;--side-hover:#1A1E22;--side-on:#1C2024;--side-on-ink:#E6E8EA;--bar:#0B0D0F;--bar-ink:#AEB5BC;--tag:#1C2024;--tag-ink:#C4CAD0;
+--av1:#2A2418;--av1i:#F5A524;--av2:#153038;--av2i:#5CC8E0;--av3:#262B30;--av3i:#C4CAD0;--av4:#1C2A20;--av4i:#58C781;--shadow:0 0 0;--r:8px;--rs:6px;
+--display:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;--h-weight:600}
+:root{--metric:var(--pri);--field:var(--card);--suggest-line:var(--suggest);--me:var(--pri);--me-ink:var(--pri-ink);--drawer:clamp(380px,28vw,520px);--drawer-wide:clamp(720px,62vw,1100px)}
+
+:root{--s1:.9rem;--s2:1.013rem;--s3:1.139rem;--s4:1.281rem;--s5:1.442rem;--drawer:clamp(380px,32vw,520px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:var(--s2)/1.5 var(--body);min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.i{width:16px;height:16px;flex:none}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+h1,h2,h3,h4{text-wrap:balance;margin:0}
+
+.proto{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:8px 16px;background:var(--bar);color:var(--bar-ink);font-size:var(--s1)}
+.proto b{font-family:var(--display);font-weight:600}
+.seg{display:flex;flex-wrap:wrap;gap:4px;border:0;margin:0;padding:0;min-width:0}
+.seg legend{float:left;margin-right:8px;padding:0;line-height:30px}
+.seg button{border:1px solid color-mix(in srgb,var(--bar-ink) 35%,transparent);background:transparent;color:var(--bar-ink);border-radius:999px;padding:2px 10px;min-height:30px;cursor:pointer;font-size:var(--s1)}
+.seg button:hover{background:color-mix(in srgb,var(--bar-ink) 15%,transparent)}
+.seg button[aria-pressed="true"]{background:var(--bar-ink);color:var(--bar);border-color:var(--bar-ink);font-weight:600}
+.themepick{display:inline-flex;align-items:center;gap:6px;margin-left:auto}
+.themepick select{border:1px solid color-mix(in srgb,var(--bar-ink) 40%,transparent);border-radius:999px;padding:3px 10px;background:var(--bar);color:var(--bar-ink);font-size:var(--s1)}
+@media (min-width:900px){.proto{position:sticky;top:0;z-index:30}}
+
+.wrap{max-width:1240px;margin:0 auto;padding:24px 16px 64px;display:flex;flex-direction:column;gap:28px}
+.intro h1{font:var(--h-weight) var(--s5)/1.2 var(--display);letter-spacing:-.01em}
+.intro p{margin:8px 0 0;color:var(--ink2);max-width:80ch;font-size:var(--s2)}
+.stage{background:var(--soft);border:1px solid var(--line);border-radius:var(--r);padding:20px 16px;display:grid;gap:16px;grid-template-columns:minmax(0,1fr);align-items:start}
+@media (min-width:1100px){.stage.withdrawer{grid-template-columns:minmax(0,1fr) var(--drawer)}}
+.statebar{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;color:var(--ink2);font-size:var(--s1)}
+.statebar b{font-family:var(--display);color:var(--ink);font-size:var(--s2)}
+
+.page-h{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;margin-bottom:12px}
+.page-h h2{font:var(--h-weight) var(--s4)/1.25 var(--display)}
+.page-h p{margin:0;color:var(--muted);font-size:var(--s1)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:600;font-size:var(--s1);min-height:38px;padding:0 14px;border-radius:var(--rs);border:1px solid var(--line2);background:var(--card);color:var(--ink);cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn:hover{border-color:var(--pri)}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}.btn.pri:hover{background:var(--pri-h)}
+.btn.sm{min-height:32px;padding:0 10px}
+.btn[aria-busy="true"]{opacity:.85;cursor:progress}
+.linkbtn{background:none;border:0;padding:4px 2px;color:var(--pri-t);cursor:pointer;font-size:var(--s1);font-weight:600;text-decoration:underline;text-underline-offset:3px;min-height:32px}
+.spin{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+
+.box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;min-width:0}
+
+.qa{border-bottom:1px solid var(--line2);background:var(--thead);padding:10px 14px}
+.qa-row{display:grid;grid-template-columns:minmax(0,1fr) 150px 190px auto;gap:10px;align-items:start}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field>label{font-weight:600;font-size:var(--s1);color:var(--ink2)}
+.field input:not([type=checkbox]),.field select,.field textarea{border:1px solid var(--line2);border-radius:var(--rs);min-height:38px;padding:7px 10px;font-size:var(--s1);width:100%;background:var(--field);color:var(--ink)}
+.field textarea{min-height:76px;resize:vertical}
+.field .opt{font-weight:400;color:var(--muted)}
+.field .req{color:var(--hot-t)}
+.field .err{display:none;gap:5px;align-items:flex-start;color:var(--hot-t);font-size:var(--s1);font-weight:600}
+.field.bad .err{display:flex}
+.field.bad input,.field.bad select{border-color:var(--hot);background:var(--hot-tint)}
+::placeholder{color:var(--muted);opacity:1}
+.qa-act{display:flex;flex-direction:column}
+.qa-act .btn{margin-top:calc(var(--s1) * 1.5 + 4px)}
+.qa-foot{display:flex;flex-wrap:wrap;gap:2px 16px;align-items:center;margin-top:6px;color:var(--muted);font-size:var(--s1)}
+.qa-foot .defaults b{color:var(--ink2);font-weight:600}
+.qa-foot kbd{font:500 var(--s1) var(--mono);border:1px solid var(--line2);border-radius:4px;padding:0 5px;background:var(--card);color:var(--ink2)}
+.qa.saving .field input,.qa.saving .field select{background:var(--soft);color:var(--muted)}
+
+.more{display:none;border-top:1px dashed var(--line2);margin-top:10px;padding-top:12px}
+.qa.open .more{display:block}
+.more h3{font:var(--h-weight) var(--s3) var(--display);margin-bottom:2px}
+.more>p{margin:0 0 12px;color:var(--muted);font-size:var(--s1)}
+.mgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.mgrid .wide{grid-column:1/-1}
+.mgrid h4{grid-column:1/-1;font:500 var(--s1) var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);border-top:1px solid var(--line);padding-top:10px}
+.more-act{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:14px}
+
+.ro{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 14px;border-bottom:1px dashed var(--line2);background:var(--soft);color:var(--ink2);font-size:var(--s1)}
+.ro[hidden]{display:none}
+.ro svg{color:var(--muted)}
+.ro .fake{flex:1 1 220px;border:1px dashed var(--line2);border-radius:var(--rs);padding:8px 10px;color:var(--muted);cursor:not-allowed}
+
+.tscroll{overflow-x:auto}
+table.tbl{border-collapse:collapse;width:100%;font-size:var(--s1)}
+.tbl th{font:500 var(--s1) var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 14px;background:var(--thead);border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:10px 14px;border-top:1px solid var(--line);vertical-align:middle}
+.tbl tbody tr:first-child td{border-top:0}
+.tbl tr.new td{background:var(--pri-tint)}
+.tbl tr.new td:first-child{box-shadow:inset 3px 0 0 var(--pri)}
+.tbl tr.sel td{background:var(--rowh)}
+.tbl .key{font:500 var(--s1) var(--mono);color:var(--muted)}
+.tbl .ttl button{background:none;border:0;padding:0;text-align:left;cursor:pointer;font-weight:600;color:var(--ink)}
+.tbl .ttl button:hover{text-decoration:underline}
+.tbl .inline-edit{width:100%;min-height:34px;border:1px solid var(--pri);border-radius:var(--rs);padding:4px 8px;background:var(--field);font-size:var(--s1)}
+.badge{display:inline-block;margin-left:8px;font-size:var(--s1);font-weight:600;color:var(--pri-t)}
+.muted{color:var(--muted)}
+.eff{display:inline-flex;gap:8px;align-items:center;white-space:nowrap}
+.effbar{display:inline-flex;gap:2px}.effbar i{width:10px;height:6px;border-radius:2px;background:var(--line2)}
+.effbar.e1 i:nth-child(-n+1),.effbar.e2 i:nth-child(-n+2),.effbar.e3 i{background:var(--pri)}
+.rowact{text-align:right;white-space:nowrap}
+.av{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--av2);color:var(--av2i);font-size:var(--s1);font-weight:600}
+.av.none{background:transparent;border:1px dashed var(--line2);color:var(--muted)}
+
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:50;background:var(--card);border:1px solid var(--ok-t);color:var(--ink);border-radius:var(--rs);padding:10px 16px;box-shadow:0 12px 32px rgb(var(--shadow)/.35);display:none;align-items:center;gap:10px;font-size:var(--s1);max-width:calc(100vw - 32px)}
+.toast.show{display:flex}
+.toast svg{color:var(--ok-t)}
+.toast span{color:var(--muted)}
+
+.dr{background:var(--card);border:1px solid var(--line2);border-radius:var(--r);box-shadow:0 12px 32px rgb(var(--shadow)/.18);display:none;flex-direction:column;overflow:hidden;min-width:0}
+.dr.show{display:flex}
+.dhead{display:flex;align-items:flex-start;gap:8px;padding:14px 16px 10px;border-bottom:1px solid var(--line)}
+.dhead .eb{font:500 var(--s1) var(--mono);color:var(--muted)}
+.dhead h3{font:var(--h-weight) var(--s3)/1.25 var(--display);margin-top:2px}
+.dhead .x{margin-left:auto;width:40px;height:40px;border-radius:8px;border:0;background:transparent;color:var(--muted);cursor:pointer;display:grid;place-items:center}
+.dhead .x:hover{background:var(--soft);color:var(--ink)}
+.dbody{padding:14px 16px;display:grid;gap:12px}
+.dbody p{margin:0;font-size:var(--s1);color:var(--muted)}
+.dfoot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--line);background:var(--thead)}
+
+.notes{border:1px solid var(--line);border-left:4px solid var(--pri);background:var(--card);border-radius:var(--rs);padding:16px 18px;display:grid;gap:14px;max-width:110ch}
+.notes h2{font:var(--h-weight) var(--s4) var(--display)}
+.notes h3{font:var(--h-weight) var(--s2) var(--display);margin-bottom:4px}
+.notes li{color:var(--ink2);font-size:var(--s1)}
+.notes ul{margin:0;padding-left:20px;display:grid;gap:6px}
+.notes b{color:var(--ink)}
+.notes .q li{color:var(--ink2)}
+.notes .q b{color:var(--warn-t)}
+.notes code{font:500 var(--s1) var(--mono)}
+
+@media (max-width:700px){
+  .qa-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .qa-row .f-title{grid-column:1/-1}
+  .qa-act{grid-column:1/-1}.qa-act .btn{margin-top:0;width:100%;min-height:44px}
+  .field input:not([type=checkbox]),.field select{min-height:44px}
+  .mgrid{grid-template-columns:minmax(0,1fr)}
+  .tbl thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .tbl,.tbl tbody,.tbl tr,.tbl td{display:block}
+  .tbl tr{padding:10px 14px;border-top:1px solid var(--line);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px}
+  .tbl tbody tr:first-child{border-top:0}
+  .tbl td{border:0!important;padding:0!important;background:none!important;box-shadow:none!important}
+  .tbl tr.new{background:var(--pri-tint);box-shadow:inset 3px 0 0 var(--pri)}
+  .tbl td.c-key{grid-column:1;grid-row:1}
+  .tbl td.c-ttl{grid-column:1/-1;grid-row:2}
+  .tbl td.c-eff{grid-column:1;grid-row:3}
+  .tbl td.c-spr{grid-column:1;grid-row:4}
+  .tbl td.c-who{grid-column:2;grid-row:1;justify-self:end}
+  .tbl td.rowact{grid-column:2;grid-row:3/5;align-self:end}
+  .rowact .btn{min-height:44px}
+  .themepick{margin-left:0}
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></symbol>
+<symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+<symbol id="i-theme" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v18"/></symbol>
+</svg>
+
+<header class="proto">
+  <b>Comp R &middot; Backlog add &middot; B Inline quick-add</b>
+  <fieldset class="seg" id="states"><legend>Comp states</legend></fieldset>
+  <label class="themepick" for="theme"><svg class="i" aria-hidden="true"><use href="#i-theme"/></svg><span>Theme</span>
+    <select id="theme"><option value="graphite" selected>Graphite</option><option value="terrazzo">Terrazzo</option><option value="portico">Portico</option><option value="sera">Sera</option><option value="lagoon">Lagoon</option></select></label>
+</header>
+
+<main class="wrap">
+  <section class="intro">
+    <h1>Backlog: add an issue without leaving the list</h1>
+    <p>A quick-add row sits above the Backlog table. Title and Effort are all it asks for; Enter adds the issue and the row stays focused for the next one. &ldquo;More fields&rdquo; opens the full form in the same row. Switch states above, or just use it: type a title, pick an effort, press Enter.</p>
+  </section>
+
+  <div class="statebar"><b id="stname"></b><span id="stdesc"></span></div>
+
+  <div class="stage" id="stage">
+    <section aria-labelledby="bl-h">
+      <div class="page-h"><h2 id="bl-h">Backlog</h2><p id="blcount"></p></div>
+      <div class="box">
+        <div id="qaslot">
+        <form class="qa" id="qa" novalidate aria-label="Quick add issue">
+          <div class="qa-row">
+            <div class="field f-title" id="f-title">
+              <label for="q-title">Title <span class="req" aria-hidden="true">*</span></label>
+              <input id="q-title" name="title" autocomplete="off" placeholder="Add an issue, then press Enter" aria-describedby="e-title">
+              <span class="err" id="e-title"><svg class="i" aria-hidden="true"><use href="#i-warn"/></svg>Enter a title.</span>
+            </div>
+            <div class="field" id="f-eff">
+              <label for="q-eff">Effort <span class="req" aria-hidden="true">*</span></label>
+              <select id="q-eff" name="effort" aria-describedby="e-eff"><option value="">Choose effort</option><option>Low</option><option>Medium</option><option>High</option></select>
+              <span class="err" id="e-eff"><svg class="i" aria-hidden="true"><use href="#i-warn"/></svg>Choose an effort.</span>
+            </div>
+            <div class="field" id="f-spr">
+              <label for="q-spr">Sprint <span class="opt">(optional)</span></label>
+              <select id="q-spr" name="sprint"><option>Backlog</option><option>Sprint 14 (current)</option><option>Sprint 15</option></select>
+            </div>
+            <div class="qa-act"><button class="btn" type="submit" id="q-add">Add</button></div>
+          </div>
+          <div class="qa-foot">
+            <button type="button" class="linkbtn" id="more-btn" aria-expanded="false" aria-controls="more">More fields</button>
+            <span class="defaults">Idea type <b>Improvement</b> &middot; Business impact <b>Revenue growth</b> (organization defaults)</span>
+            <span><kbd>Enter</kbd> adds &middot; <kbd>Esc</kbd> clears</span>
+          </div>
+          <div class="more" id="more">
+            <h3>All fields</h3>
+            <p>Fill in as much as you like. The same Add button saves everything at once.</p>
+            <div class="mgrid">
+              <div class="field"><label for="m-type">Idea type</label><select id="m-type"><option>Improvement</option><option>New capability</option><option>Defect</option></select></div>
+              <div class="field"><label for="m-imp">Business impact</label><select id="m-imp"><option>Revenue growth</option><option>Cost reduction</option><option>Risk reduction</option></select></div>
+              <div class="field wide"><label for="m-prob">Problem <span class="opt">(optional)</span></label><textarea id="m-prob" placeholder="What is going wrong today?"></textarea></div>
+              <div class="field wide"><label for="m-sol">Proposed solutions <span class="opt">(optional)</span></label><textarea id="m-sol"></textarea></div>
+              <div class="field wide"><label for="m-rat">Impact rationale <span class="opt">(optional)</span></label><textarea id="m-rat"></textarea></div>
+              <div class="field wide"><label for="m-sum">Summary <span class="opt">(optional)</span></label><textarea id="m-sum"></textarea></div>
+              <div class="field"><label for="m-tags">Tags <span class="opt">(optional)</span></label><input id="m-tags" placeholder="Comma separated"></div>
+              <div class="field"><label for="m-who">Assignees <span class="opt">(optional)</span></label><select id="m-who"><option>Unassigned</option><option>Maya Collaborator</option><option>Noah Contributor</option></select></div>
+              <h4>Custom fields</h4>
+              <div class="field"><label for="m-seg">Customer segment <span class="opt">(optional)</span></label><input id="m-seg"></div>
+              <div class="field"><label for="m-rel">Target release <span class="opt">(optional)</span></label><input id="m-rel" placeholder="e.g. 2026.4"></div>
+            </div>
+            <div class="more-act"><button type="button" class="btn" id="less-btn">Fewer fields</button></div>
+          </div>
+        </form>
+        </div>
+        <div class="ro" id="ro" hidden><svg class="i" aria-hidden="true"><use href="#i-lock"/></svg><span class="fake" aria-disabled="true">Add an issue</span><span>Read Only members cannot add issues.</span></div>
+        <div class="tscroll">
+        <table class="tbl" aria-label="Backlog issues">
+          <thead><tr><th scope="col">Key</th><th scope="col">Issue</th><th scope="col">Effort</th><th scope="col">Sprint</th><th scope="col">Assignee</th><th scope="col"><span class="vh">Actions</span></th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+        </div>
+      </div>
+    </section>
+
+    <aside class="dr" id="dr" role="dialog" aria-labelledby="dr-h" aria-modal="false">
+      <div class="dhead"><div><div class="eb" id="dr-key">ISS-34 &middot; edit</div><h3 id="dr-h">Edit issue</h3></div>
+        <button class="x" type="button" id="dr-x" aria-label="Close drawer"><svg class="i" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+      <div class="dbody">
+        <div class="field"><label for="d-title">Title <span class="req" aria-hidden="true">*</span></label><input id="d-title"></div>
+        <div class="field"><label for="d-eff">Effort <span class="req" aria-hidden="true">*</span></label><select id="d-eff"><option>Low</option><option>Medium</option><option>High</option></select></div>
+        <div class="field"><label for="d-spr">Sprint</label><select id="d-spr"><option>Backlog</option><option>Sprint 14 (current)</option><option>Sprint 15</option></select></div>
+        <div class="field"><label for="d-type">Idea type</label><select id="d-type"><option>Improvement</option><option>New capability</option><option>Defect</option></select></div>
+        <div class="field"><label for="d-imp">Business impact</label><select id="d-imp"><option>Revenue growth</option><option>Cost reduction</option></select></div>
+        <div class="field"><label for="d-prob">Problem</label><textarea id="d-prob">Finance copies figures into a spreadsheet every Monday.</textarea></div>
+        <p>Proposed solutions, impact rationale, summary, tags, assignees and custom fields follow, as in the full form.</p>
+      </div>
+      <div class="dfoot"><button class="btn" type="button" id="dr-cancel">Cancel</button><button class="btn pri" type="button" id="dr-save">Save changes</button></div>
+    </aside>
+  </div>
+
+  <section class="notes" aria-labelledby="n-h">
+    <h2 id="n-h">Notes</h2>
+    <div><h3>Behaviour</h3><ul>
+      <li><b>Enter</b> in Title or either select submits. <b>Escape</b> closes More fields first if open, otherwise clears the row; a further Escape leaves the row. Add is always clickable, because a dead button cannot say why. With nothing typed it is an outline button; once Title and Effort are both set it turns primary.</li>
+      <li>Errors appear beside the control they belong to (&ldquo;Enter a title.&rdquo;, &ldquo;Choose an effort.&rdquo;), the field gets <code>aria-invalid</code>, and focus goes to the first invalid one.</li>
+      <li>On success the row is inserted at the top of the table and highlighted. Title and Effort clear, Sprint keeps its value (people usually batch into one sprint), focus returns to Title, a polite live region announces the result, and the toast reads &ldquo;Issue added&rdquo;.</li>
+      <li>Edit: a row&rsquo;s Edit button opens the existing Issue drawer in edit mode. Double-clicking a title renames it in place (Enter saves, Escape cancels); this is optional and works in any state with rows.</li>
+      <li>Read Only members get a disabled bar in place of the row, with the reason as visible text: &ldquo;Read Only members cannot add issues.&rdquo;</li>
+    </ul></div>
+    <div class="q"><h3>Decisions to weigh</h3><ul>
+      <li><b>Mobile at 390px.</b> The row stacks: Title full width, Effort and Sprint side by side, Add full width at 44px height. Table rows become cards (key and assignee on the first line, then title, effort, sprint, Edit). Open question: should More fields hand off to the drawer on small screens, since a long form inside a list row scrolls awkwardly?</li>
+      <li><b>Accidental adds.</b> Enter submits, so a stray Enter after a half-typed title adds a half-typed issue. Mitigations: Effort is required (a deliberate second choice), the new row is highlighted, and the toast should carry an Undo link (not drawn). Without Undo this is the main risk of the approach.</li>
+      <li><b>Defaults hiding required-by-org fields.</b> The quick path sends only the API minimum, with Idea type and Business impact defaulted to the organization&rsquo;s first active values. The defaults are printed under the row so they are not silent. If an organization requires something else (a custom field, say), the quick row cannot satisfy it. Proposed handling: the row opens More fields automatically with the missing field flagged, rather than failing.</li>
+      <li><b>A sprint other than Backlog.</b> An issue added to Sprint 14 does not belong in the Backlog list, so no row appears; the toast says where it went. Alternative: drop the Sprint select from the quick row and leave sprint planning to the sprint screen.</li>
+      <li><b>Keyboard and desktop first.</b> The pattern shines for batches typed from a list; it is weaker for someone adding one issue with detail.</li>
+    </ul></div>
+  </section>
+</main>
+
+<div class="toast" id="toast" aria-hidden="true"><svg class="i" aria-hidden="true"><use href="#i-check"/></svg><b id="toast-main">Issue added</b><span id="toast-sub"></span></div>
+<div class="vh" id="live" role="status" aria-live="polite"></div>
+
+<script>
+const STATES=[
+ [1,'Backlog','The quick-add row above the table, empty. Add is an outline button until Title and Effort are set.'],
+ [2,'Typing','Title and Effort filled in. Add turns primary; Enter submits.'],
+ [3,'Validation','Add pressed with Title empty and Effort missing. Messages sit beside the controls.'],
+ [4,'Saving','Request in flight. Controls are disabled and Add shows a spinner.'],
+ [5,'Added','New row highlighted, quick-add cleared and refocused, toast and live-region announcement.'],
+ [6,'Expanded','More fields opens the full form inside the same row.'],
+ [7,'Read Only','The row is replaced by a disabled bar that states the reason.'],
+ [8,'Edit drawer','Row Edit opens the existing Issue drawer in edit mode.']];
+const BASE=[
+ {k:'ISS-34',t:'Automate weekly reporting',e:'Medium',s:'Backlog',w:'MC'},
+ {k:'ISS-33',t:'Validate the customer feedback loop',e:'Low',s:'Backlog',w:'NC'},
+ {k:'ISS-31',t:'Add proactive alerts for stalled deliveries',e:'High',s:'Backlog',w:null},
+ {k:'ISS-29',t:'Standardize the intake checklist',e:'Low',s:'Backlog',w:'MC'},
+ {k:'ISS-27',t:'Retire the legacy export step',e:'Medium',s:'Backlog',w:null}];
+let ISSUES=[],seq=37,newKey=null,selKey=null,ro=false,saving=false;
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const E={Low:1,Medium:2,High:3};
+function renderRows(){
+ $('rows').innerHTML=ISSUES.map(i=>`<tr class="${i.k===newKey?'new':''} ${i.k===selKey?'sel':''}">
+ <td class="c-key"><span class="key">${i.k}</span></td>
+ <td class="c-ttl ttl"><button type="button" data-inline="${i.k}" title="Double-click to rename">${esc(i.t)}</button>${i.k===newKey?'<span class="badge">New</span>':''}</td>
+ <td class="c-eff"><span class="eff"><span class="effbar e${E[i.e]}" aria-hidden="true"><i></i><i></i><i></i></span>${i.e}</span></td>
+ <td class="c-spr muted">${i.s}</td>
+ <td class="c-who">${i.w?`<span class="av" role="img" aria-label="Assigned">${i.w}</span>`:'<span class="av none" role="img" aria-label="Unassigned">&ndash;</span>'}</td>
+ <td class="rowact"><button class="btn sm" type="button" data-edit="${i.k}" aria-label="Edit ${esc(i.t)}">Edit</button></td></tr>`).join('');
+ $('blcount').textContent=ISSUES.length+' issues waiting';
+}
+function clearErr(){['f-title','f-eff'].forEach(f=>$(f).classList.remove('bad'));$('q-title').removeAttribute('aria-invalid');$('q-eff').removeAttribute('aria-invalid')}
+function refreshAdd(){const ok=$('q-title').value.trim()&&$('q-eff').value;$('q-add').className='btn'+(ok?' pri':'')}
+function setMore(o){$('qa').classList.toggle('open',o);$('more-btn').setAttribute('aria-expanded',o);$('more-btn').textContent=o?'Fewer fields':'More fields'}
+function setBusy(b){saving=b;$('qa').setAttribute('aria-busy',b);
+ ['q-title','q-eff','q-spr'].forEach(i=>$(i).disabled=b);$('qa').classList.toggle('saving',b);
+ $('q-add').setAttribute('aria-busy',b);$('q-add').innerHTML=b?'<span class="spin" aria-hidden="true"></span>Adding…':'Add'}
+function toast(main,sub){$('toast-main').textContent=main;$('toast-sub').textContent=sub?'· '+sub:'';$('toast').classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>$('toast').classList.remove('show'),3500)}
+function validate(){clearErr();let first=null;
+ if(!$('q-title').value.trim()){$('f-title').classList.add('bad');$('q-title').setAttribute('aria-invalid','true');first=first||$('q-title')}
+ if(!$('q-eff').value){$('f-eff').classList.add('bad');$('q-eff').setAttribute('aria-invalid','true');first=first||$('q-eff')}
+ return first}
+function commit(){
+ const sp=$('q-spr').value.replace(' (current)',''),title=$('q-title').value.trim(),eff=$('q-eff').value,k='ISS-'+(seq++);
+ if(sp==='Backlog'){ISSUES.unshift({k,t:title,e:eff,s:sp,w:null});newKey=k;renderRows()}
+ setBusy(false);$('q-title').value='';$('q-eff').value='';refreshAdd();setMore(false);
+ toast('Issue added',sp==='Backlog'?'':'in '+sp+', so it is not listed here');
+ $('live').textContent=sp==='Backlog'?`Issue added: ${title}, ${eff} effort, at the top of the Backlog.`:`Issue added: ${title}, in ${sp}. It is not shown in the Backlog list.`;
+ $('q-title').focus()}
+function submit(){
+ if(saving)return;
+ const f=validate();
+ if(f){f.focus();$('live').textContent='Issue not added. '+$('qa').querySelectorAll('.bad').length+' field needs attention.';return}
+ setBusy(true);setTimeout(commit,700)}
+$('qa').addEventListener('submit',e=>{e.preventDefault();submit()});
+$('qa').addEventListener('input',()=>{refreshAdd();if($('q-title').value.trim()){$('f-title').classList.remove('bad');$('q-title').removeAttribute('aria-invalid')}});
+$('q-eff').addEventListener('change',()=>{if($('q-eff').value){$('f-eff').classList.remove('bad');$('q-eff').removeAttribute('aria-invalid')}});
+$('qa').addEventListener('keydown',e=>{if(e.key!=='Escape'||saving)return;
+ if($('qa').classList.contains('open')){setMore(false);$('more-btn').focus()}
+ else if($('q-title').value||$('q-eff').value){$('q-title').value='';$('q-eff').value='';clearErr();refreshAdd();$('q-title').focus()}
+ else document.activeElement.blur()});
+$('more-btn').onclick=()=>setMore(!$('qa').classList.contains('open'));
+$('less-btn').onclick=()=>{setMore(false);$('more-btn').focus()};
+function openDrawer(k){selKey=k;const i=ISSUES.find(x=>x.k===k);$('dr-key').textContent=k+' · edit';$('d-title').value=i.t;$('d-eff').value=i.e;$('d-spr').value=i.s;
+ $('dr').classList.add('show');$('stage').classList.add('withdrawer');renderRows();$('d-title').focus({preventScroll:true})}
+function closeDrawer(){selKey=null;$('dr').classList.remove('show');$('stage').classList.remove('withdrawer');renderRows()}
+$('rows').addEventListener('click',e=>{const b=e.target.closest('[data-edit]');if(b)openDrawer(b.dataset.edit)});
+$('rows').addEventListener('dblclick',e=>{const b=e.target.closest('[data-inline]');if(!b)return;
+ const i=ISSUES.find(x=>x.k===b.dataset.inline),inp=document.createElement('input');inp.className='inline-edit';inp.value=i.t;inp.setAttribute('aria-label','Rename '+i.t);
+ b.replaceWith(inp);inp.focus();inp.select();let done=false;
+ const fin=ok=>{if(done)return;done=true;if(ok&&inp.value.trim()){i.t=inp.value.trim();toast('Title updated')}renderRows()};
+ inp.addEventListener('keydown',ev=>{if(ev.key==='Enter')fin(true);if(ev.key==='Escape')fin(false)});inp.addEventListener('blur',()=>fin(false))});
+$('dr-x').onclick=closeDrawer;$('dr-cancel').onclick=closeDrawer;
+$('dr-save').onclick=()=>{const i=ISSUES.find(x=>x.k===selKey);i.t=$('d-title').value.trim()||i.t;i.e=$('d-eff').value;closeDrawer();toast('Changes saved')};
+function setRO(r){ro=r;$('qaslot').hidden=r;$('ro').hidden=!r}
+function fresh(){ISSUES=BASE.map(x=>({...x}));seq=37;newKey=null;closeDrawer();setRO(false);setBusy(false);setMore(false);clearErr();
+ $('q-title').value='';$('q-eff').value='';$('q-spr').selectedIndex=0;$('toast').classList.remove('show');refreshAdd();renderRows()}
+function setState(n){fresh();
+ if(n===2||n===4||n===6){$('q-title').value='Export board to CSV';$('q-eff').value='Low'}
+ if(n===3)validate();
+ if(n===4)setBusy(true);
+ if(n===5){ISSUES.unshift({k:'ISS-37',t:'Export board to CSV',e:'Low',s:'Backlog',w:null});seq=38;newKey='ISS-37';renderRows();toast('Issue added');$('live').textContent='Issue added: Export board to CSV, Low effort, at the top of the Backlog.'}
+ if(n===6)setMore(true);
+ if(n===7)setRO(true);
+ if(n===8)openDrawer('ISS-34');
+ refreshAdd();
+ document.querySelectorAll('#states button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.n===n)));
+ const s=STATES[n-1];$('stname').textContent=n+'. '+s[1];$('stdesc').textContent=s[2];
+ if(n===5)$('q-title').focus({preventScroll:true})}
+$('states').insertAdjacentHTML('beforeend',STATES.map(s=>`<button type="button" data-n="${s[0]}" aria-pressed="false">${s[0]} ${s[1]}</button>`).join(''));
+$('states').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setState(+b.dataset.n)});
+$('theme').addEventListener('change',e=>{document.documentElement.dataset.protoTheme=e.target.value});
+setState(1);
+</script>
+</html>
