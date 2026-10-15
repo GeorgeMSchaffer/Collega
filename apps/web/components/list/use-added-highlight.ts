@@ -20,8 +20,13 @@ export function useAddedHighlight(
   useEffect(() => {
     if (!added) return
     const row = document.querySelector<HTMLElement>(selectorFor(added))
-    if (!row) return
+    if (!row) {
+      // Not in this page of the list: give up after a while so a later page change does not fire it.
+      const giveUp = setTimeout(() => setAdded(null), 4000)
+      return () => clearTimeout(giveUp)
+    }
     row.scrollIntoView({ block: 'nearest' })
+    // React does not own this attribute, so setting it on the element directly is safe.
     row.dataset.added = ''
     const timer = setTimeout(() => {
       delete row.dataset.added

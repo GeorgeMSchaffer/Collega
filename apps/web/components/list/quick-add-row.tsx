@@ -164,7 +164,8 @@ export function QuickAddRow({
     setErrors(found)
     setFormError(general)
     const first = fields.find((f) => found[f.name])
-    if (first) focusField(first.name)
+    // Deferred: after a server refusal the controls are still disabled until `saving` clears.
+    if (first) requestAnimationFrame(() => focusField(first.name))
     const count = Object.keys(found).length
     setAnnouncement(
       count === 0
@@ -216,8 +217,8 @@ export function QuickAddRow({
     if (!result.ok) return refuse(result.errors, result.error)
     const message = result.message ?? 'Added'
     clearAfterAdd()
+    // The toast is itself a status region, so the row does not announce the success a second time.
     showToast(message)
-    setAnnouncement(message)
     highlight(result.id ?? null)
     // The controls were disabled while saving; focus can only land once they are enabled again.
     requestAnimationFrame(() => focusField(titleField?.name ?? ''))
