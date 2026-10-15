@@ -22,6 +22,7 @@ import type {
 } from '@collega/application/boards'
 import type { Page } from '@collega/application/common'
 import type { BoardsPort, SwimlaneInfo } from '@collega/application/ideas'
+import type { SprintBoardsPort } from '@collega/application/sprints'
 import type { Board, BoardSwimlane } from '@collega/domain/boards'
 import type { EffortLevel, Priority } from '@collega/domain/enums'
 import { IdeaPhase } from '@collega/domain/enums'
@@ -76,7 +77,9 @@ function boardIdeasWhere(boardIds: readonly string[]): Prisma.ideasWhereInput {
   return { board_id: { in: [...boardIds] }, is_deleted: false, phase: IdeaPhase.Discovery }
 }
 
-export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort, BoardsPort {
+export class PrismaBoardRepository
+  implements BoardRepository, AiBoardLookupPort, BoardsPort, SprintBoardsPort
+{
   constructor(
     private readonly prisma: PrismaClient,
     private readonly unitOfWork: PrismaUnitOfWork,
@@ -427,6 +430,27 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
       keyPrefix: board.keyPrefix,
       ideaFeaturesEnabled: board.ideaFeaturesEnabled,
       swimlanes: board.swimlanes,
+    }
+  }
+
+  /** `sprints.SprintBoardsPort.getSprintBoard`. */
+  async getSprintBoard(boardId: string): Promise<{
+    readonly id: string
+    readonly organizationId: string
+    readonly sprintsEnabled: boolean
+    readonly isArchived: boolean
+    readonly finalStatusIds: readonly string[]
+  } | null> {
+    const board = await this.getById(boardId)
+    if (!board) {
+      return null
+    }
+    return {
+      id: board.id,
+      organizationId: board.organizationId,
+      sprintsEnabled: board.sprintsEnabled,
+      isArchived: board.isArchived,
+      finalStatusIds: board.swimlanes.filter((lane) => lane.isFinal).map((lane) => lane.statusId),
     }
   }
 

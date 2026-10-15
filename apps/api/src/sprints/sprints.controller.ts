@@ -106,6 +106,24 @@ export class SprintsController {
     return { ...sprint, issues }
   }
 
+  /** A board's sprints (Board References). 422 `sprintsNotEnabled` on create when the board has them off. */
+  @Get('boards/:boardId/sprints')
+  async listForBoard(
+    @Param('boardId', UuidParamPipe) boardId: string,
+    @Query() query: Record<string, unknown>,
+  ): Promise<readonly SprintItem[]> {
+    return this.sprints.listForBoard(boardId, sprintStateFilter(query.state))
+  }
+
+  @Post('boards/:boardId/sprints')
+  @HttpCode(201)
+  async createForBoard(
+    @Param('boardId', UuidParamPipe) boardId: string,
+    @Body() body: SprintBody,
+  ): Promise<SprintItem> {
+    return this.sprints.createForBoard(boardId, toCommand(body))
+  }
+
   @Post('organizations/:organizationId/sprints')
   @HttpCode(201)
   async create(

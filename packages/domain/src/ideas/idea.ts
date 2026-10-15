@@ -564,6 +564,19 @@ export function assignIdeaToSprint(
 }
 
 /**
+ * Board-sprint membership: sets or clears `sprintId` with no phase guard, because a board item
+ * (a task or a card) is not a Delivery-phase Issue. The same-board rule is the application's.
+ */
+export function setIdeaBoardSprint(
+  idea: Idea,
+  sprintId: string | null,
+  nowUtc: Date,
+  actorUserId: string | null,
+): Idea {
+  return markUpdated({ ...idea, sprintId }, nowUtc, actorUserId)
+}
+
+/**
  * The two mutations above are meaningless on a Discovery item, and the contract answers `400`
  * there (not the `409` a wrong-phase promotion gets) - so this raises the field-keyed
  * `IdeaDomainError` the Application layer already maps to a 400.

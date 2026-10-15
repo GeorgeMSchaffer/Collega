@@ -333,6 +333,7 @@ const PORT_ALIASES: Provider[] = [
   { provide: PORT_TOKENS.SprintRepository, useExisting: PrismaSprintRepository },
   { provide: PORT_TOKENS.SprintIssuesPort, useExisting: PrismaIdeaRepository },
   { provide: PORT_TOKENS.SprintUsersPort, useExisting: PrismaUserRepository },
+  { provide: PORT_TOKENS.SprintBoardsPort, useExisting: PrismaBoardRepository },
 
   { provide: PORT_TOKENS.IssueTaskRepository, useExisting: PrismaIssueTaskRepository },
   { provide: PORT_TOKENS.IssueTaskIdeaPort, useExisting: PrismaIdeaRepository },

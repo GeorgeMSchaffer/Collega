@@ -141,6 +141,8 @@ export type DeliveryFilter = {
   /** True reads the backlog: Delivery items with no sprint. */
   readonly backlogOnly: boolean
   readonly deliveryStatus: DeliveryStatus | null
+  /** Set when reading a board sprint: its items are board cards and tasks, in any phase. */
+  readonly anyPhase?: boolean
 }
 
 // Notifications (B4) -----------------------------------------------------------------------
@@ -226,6 +228,8 @@ export type SprintSummary = {
   readonly endDate: string
   readonly state: SprintState
   readonly isDeleted: boolean
+  /** Absent or `null` on a sprint from before sprints were per board. */
+  readonly boardId?: string | null
 }
 
 export interface SprintLookupPort {

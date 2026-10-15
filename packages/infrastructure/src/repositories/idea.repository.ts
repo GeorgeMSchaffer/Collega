@@ -258,7 +258,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       where: {
         organization_id: filter.organizationId,
         is_deleted: false,
-        phase: Phase.Delivery,
+        ...(filter.anyPhase ? {} : { phase: Phase.Delivery }),
         ...(filter.backlogOnly ? { sprint_id: null } : {}),
         ...(filter.sprintId ? { sprint_id: filter.sprintId } : {}),
         ...(filter.deliveryStatus ? { delivery_status: filter.deliveryStatus } : {}),
@@ -311,23 +311,29 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       return new Map()
     }
 
-    const grouped = await this.prisma.ideas.groupBy({
-      by: ['sprint_id', 'delivery_status'],
-      where: { sprint_id: { in: [...sprintIds] }, is_deleted: false },
-      _count: { _all: true },
-    })
+    // Legacy sprints count Complete as done; a board sprint counts an item done when it sits in a
+    // final lane of its own board.
+    const rows = await this.prisma.$queryRaw<
+      { sprint_id: string; issue_count: number; done_count: number }[]
+    >(Prisma.sql`
+      SELECT i.sprint_id AS sprint_id,
+             COUNT(*)::int AS issue_count,
+             COUNT(*) FILTER (
+               WHERE CASE WHEN s.board_id IS NULL
+                          THEN i.delivery_status = 'Complete'::"DeliveryStatus"
+                          ELSE COALESCE(l.is_final, FALSE) END
+             )::int AS done_count
+      FROM ideas i
+      JOIN sprints s ON s.id = i.sprint_id
+      LEFT JOIN board_swimlanes l ON l.board_id = i.board_id AND l.status_id = i.status_id
+      WHERE i.sprint_id IN (${Prisma.join(sprintIds.map((id) => Prisma.sql`${id}::uuid`))})
+        AND i.is_deleted = FALSE
+      GROUP BY i.sprint_id
+    `)
 
     const counts = new Map<string, SprintIssueCounts>()
-    for (const group of grouped) {
-      if (!group.sprint_id) {
-        continue
-      }
-      const current = counts.get(group.sprint_id) ?? { issueCount: 0, doneCount: 0 }
-      const count = group._count._all
-      counts.set(group.sprint_id, {
-        issueCount: current.issueCount + count,
-        doneCount: current.doneCount + (group.delivery_status === Delivery.Complete ? count : 0),
-      })
+    for (const row of rows) {
+      counts.set(row.sprint_id, { issueCount: row.issue_count, doneCount: row.done_count })
     }
     return counts
   }

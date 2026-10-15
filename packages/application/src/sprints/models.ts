@@ -35,6 +35,8 @@ export type SprintItem = {
   readonly startDate: string
   readonly endDate: string
   readonly ownerUserId: string | null
+  /** `null` for a sprint from before sprints were per board. */
+  readonly boardId: string | null
   readonly ownerDisplayName: string | null
   readonly state: SprintState
   readonly issueCount: number

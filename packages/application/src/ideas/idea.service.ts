@@ -29,6 +29,7 @@ import {
   replaceIdeaMentions,
   replaceIdeaTags,
   returnIdeaToDiscovery,
+  setIdeaBoardSprint,
   setIdeaEffort,
   softDeleteIdea,
   updateIdeaContent,
@@ -1138,13 +1139,30 @@ export class IdeaService {
 
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
-    const sprintId = await this.resolveAssignableSprint(idea.organizationId, command.sprintId)
+    const target = await this.resolveAssignableSprintSummary(idea.organizationId, command.sprintId)
+    const sprintId = target?.id ?? null
     if (idea.sprintId === sprintId) {
       return
     }
     const previousSprintId = idea.sprintId
 
-    idea = runDelivery(assignIdeaToSprint, idea, sprintId, now, actorId)
+    // Board sprints (Ruling 8) work for any item on the board, so the Delivery-phase guard applies
+    // only when neither the new nor the current sprint belongs to a board.
+    const current =
+      previousSprintId && !target ? await this.sprints.getById(previousSprintId) : null
+    if (target?.boardId) {
+      if (idea.boardId !== target.boardId) {
+        throw new UnprocessableError(
+          'sprintItemOnOtherBoard',
+          'A sprint holds items from its own board only.',
+        )
+      }
+      idea = setIdeaBoardSprint(idea, sprintId, now, actorId)
+    } else if (current?.boardId) {
+      idea = setIdeaBoardSprint(idea, sprintId, now, actorId)
+    } else {
+      idea = runDelivery(assignIdeaToSprint, idea, sprintId, now, actorId)
+    }
 
     await this.ideaRepository.update(idea)
     await this.unitOfWork.saveChanges()
@@ -1176,11 +1194,13 @@ export class IdeaService {
     this.ensureOrganizationScope(organizationId)
 
     const sprintId = trimOrNull(query.sprintId)
+    const boardSprint = sprintId ? (await this.sprints.getById(sprintId))?.boardId : null
     const ideas = await this.ideaRepository.listDelivery({
       organizationId,
       sprintId,
       backlogOnly: sprintId === null,
       deliveryStatus: parseOptionalDeliveryStatus(query.deliveryStatus),
+      ...(boardSprint ? { anyPhase: true } : {}),
     })
 
     return this.projectDeliveryCards(organizationId, ideas)
@@ -1735,6 +1755,13 @@ export class IdeaService {
     organizationId: string,
     sprintId: string | null,
   ): Promise<string | null> {
+    return (await this.resolveAssignableSprintSummary(organizationId, sprintId))?.id ?? null
+  }
+
+  private async resolveAssignableSprintSummary(
+    organizationId: string,
+    sprintId: string | null,
+  ): Promise<SprintSummary | null> {
     const trimmed = trimOrNull(sprintId)
     if (trimmed === null) {
       return null
@@ -1751,7 +1778,7 @@ export class IdeaService {
         sprintId: ['A completed sprint cannot take new issues.'],
       })
     }
-    return sprint.id
+    return sprint
   }
 
   private async projectDetail(idea: Idea): Promise<IdeaDetail> {

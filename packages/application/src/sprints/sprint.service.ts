@@ -9,7 +9,7 @@
 
 import { randomUUID } from 'node:crypto'
 import { DeliveryStatus, Role, type SprintState, UserStatus } from '@collega/domain/enums'
-import { assignIdeaToSprint } from '@collega/domain/ideas'
+import { assignIdeaToSprint, type Idea, setIdeaBoardSprint } from '@collega/domain/ideas'
 import {
   completeSprint,
   createSprint,
@@ -23,16 +23,20 @@ import {
   type AuditEventWriter,
   attributeAudit,
   type Clock,
+  ConflictError,
   type CurrentUserContext,
   ensureNotDirectSiteAdmin,
   ForbiddenError,
   NotFoundError,
   UnauthorizedError,
   type UnitOfWork,
+  UnprocessableError,
   ValidationError,
 } from '../common/index.js'
 import type { CreateSprintCommand, SprintItem, UpdateSprintCommand } from './models.js'
 import type {
+  SprintBoard,
+  SprintBoardsPort,
   SprintIssueCounts,
   SprintIssuesPort,
   SprintRepository,
@@ -50,6 +54,7 @@ export class SprintService {
     private readonly auditEvents: AuditEventWriter,
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
+    private readonly boards: SprintBoardsPort,
   ) {}
 
   async list(organizationId: string, state: SprintState | null): Promise<readonly SprintItem[]> {
@@ -57,6 +62,14 @@ export class SprintService {
 
     const sprints = await this.sprints.listByOrganization(organizationId, state)
     return this.project(sprints)
+  }
+
+  /** A board's sprints. Readable like the organization list; the board's own organization is the scope. */
+  async listForBoard(boardId: string, state: SprintState | null): Promise<readonly SprintItem[]> {
+    const board = await this.requireBoard(boardId)
+    this.ensureReadScope(board.organizationId)
+
+    return this.project(await this.sprints.listByBoard(board.id, state))
   }
 
   async get(organizationId: string, sprintId: string): Promise<SprintItem> {
@@ -96,6 +109,45 @@ export class SprintService {
       name: sprint.name,
       startDate: sprint.startDate,
       endDate: sprint.endDate,
+    })
+
+    return toItem(sprint, NO_ISSUES, await this.ownerName(sprint.ownerUserId))
+  }
+
+  async createForBoard(boardId: string, command: CreateSprintCommand): Promise<SprintItem> {
+    const board = await this.requireBoard(boardId)
+    this.ensureAdminScope(board.organizationId)
+    if (board.isArchived) {
+      throw new ConflictError('This board is archived. Unarchive it before adding sprints.')
+    }
+    if (!board.sprintsEnabled) {
+      throw new UnprocessableError('sprintsNotEnabled', 'Sprints are not enabled on this board.')
+    }
+
+    const now = this.clock.now()
+    const ownerUserId = await this.resolveOwner(board.organizationId, command.ownerUserId)
+
+    const sprint = runDomain(createSprint, {
+      id: randomUUID(),
+      organizationId: board.organizationId,
+      name: command.name ?? '',
+      goal: command.goal,
+      startDate: command.startDate ?? '',
+      endDate: command.endDate ?? '',
+      ownerUserId,
+      boardId: board.id,
+      nowUtc: now,
+      actorUserId: this.currentUser.userId,
+    })
+
+    await this.sprints.add(sprint)
+    await this.unitOfWork.saveChanges()
+
+    await this.audit('SprintCreated', sprint, `Sprint '${sprint.name}' created.`, now, {
+      name: sprint.name,
+      startDate: sprint.startDate,
+      endDate: sprint.endDate,
+      boardId: board.id,
     })
 
     return toItem(sprint, NO_ISSUES, await this.ownerName(sprint.ownerUserId))
@@ -171,9 +223,20 @@ export class SprintService {
     const sprint = runDomain(completeSprint, existing, now, this.currentUser.userId)
 
     const assigned = await this.issues.listBySprint(sprint.id)
-    const carriedOver = assigned.filter((idea) => idea.deliveryStatus !== DeliveryStatus.Complete)
-    for (const idea of carriedOver) {
-      await this.issues.update(assignIdeaToSprint(idea, null, now, this.currentUser.userId))
+    let carriedOver: readonly Idea[]
+    if (sprint.boardId === null) {
+      carriedOver = assigned.filter((idea) => idea.deliveryStatus !== DeliveryStatus.Complete)
+      for (const idea of carriedOver) {
+        await this.issues.update(assignIdeaToSprint(idea, null, now, this.currentUser.userId))
+      }
+    } else {
+      // A board sprint: done is "in a final lane", and carry-over has no phase to fail on.
+      const board = await this.requireBoard(sprint.boardId)
+      const final = new Set(board.finalStatusIds)
+      carriedOver = assigned.filter((idea) => !final.has(idea.statusId))
+      for (const idea of carriedOver) {
+        await this.issues.update(setIdeaBoardSprint(idea, null, now, this.currentUser.userId))
+      }
     }
 
     await this.sprints.save(sprint)
@@ -201,8 +264,9 @@ export class SprintService {
 
     const now = this.clock.now()
     const assigned = await this.issues.listBySprint(existing.id)
+    const unassign = existing.boardId === null ? assignIdeaToSprint : setIdeaBoardSprint
     for (const idea of assigned) {
-      await this.issues.update(assignIdeaToSprint(idea, null, now, this.currentUser.userId))
+      await this.issues.update(unassign(idea, null, now, this.currentUser.userId))
     }
 
     const sprint = runDomain(softDeleteSprint, existing, now, this.currentUser.userId)
@@ -285,6 +349,15 @@ export class SprintService {
     return sprint
   }
 
+  /** A missing board is a 404; the caller's organization is checked by the read or admin scope. */
+  private async requireBoard(boardId: string): Promise<SprintBoard> {
+    const board = await this.boards.getSprintBoard(boardId)
+    if (!board) {
+      throw new NotFoundError('Board not found.')
+    }
+    return board
+  }
+
   /** Any member of the organization may read sprints (spec Permissions: "View Sprint board,
    * backlog, and provenance" is ticked for every role, Read Only included). */
   private ensureReadScope(organizationId: string): void {
@@ -360,6 +433,7 @@ function toItem(
     startDate: sprint.startDate,
     endDate: sprint.endDate,
     ownerUserId: sprint.ownerUserId,
+    boardId: sprint.boardId,
     ownerDisplayName,
     state: sprint.state,
     issueCount: counts.issueCount,
