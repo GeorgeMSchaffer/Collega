@@ -186,6 +186,8 @@ export function harness(options: {
   firstActiveStatusId?: string | null
   /** What `countChildrenByParentIds` answers per parent id. */
   childCounts?: Readonly<Record<string, { total: number; done: number }>>
+  /** Overrides for the classification port, e.g. an organization with no active type. */
+  classification?: Partial<IdeaClassificationPort>
 }): Harness {
   const boardsById = new Map((options.boards ?? [board()]).map((b) => [b.boardId, b]))
   const ideasById = new Map((options.ideas ?? []).map((i) => [i.id, i]))
@@ -407,6 +409,7 @@ export function harness(options: {
     async listBusinessImpactsByOrganization(organizationId) {
       return businessImpacts.filter((b) => b.organizationId === organizationId)
     },
+    ...options.classification,
   }
 
   const baseFieldValues: IdeaFieldValuesPort = {
