@@ -340,3 +340,21 @@ Soft-delete an idea while preserving its row and audit history.
 - **Rules:**
   - normal board, list, and detail endpoints exclude soft-deleted ideas
   - no restore endpoint is exposed in this release
+
+## Tasks and item keys (planned 2026-10-15)
+
+*Specified in `SPEC/20-feature-board-references.md`. Not built until Plan 2.*
+
+- **Item fields (added):**
+  - `itemKey` string or `null`: `<board keyPrefix>-<itemNumber>`, e.g. `CI-19`; `null` for an item on a board with no prefix or no board. Assigned once, never reused.
+  - `parentIdeaId` GUID or `null`: set on a task. A task's board must be the board referenced by a lane the parent currently sits in when the task is created.
+  - `blockedBy` array of `{ ideaId, itemKey, isFinal }`: the tasks that must be final before this one can leave its board's first lane.
+  - `taskCounts` object `{ total, done }` on an item whose lane references a board: `done` counts children in a final lane.
+- **Routes (added):**
+  - `POST /api/v1/ideas/{ideaId}/board-tasks` creates a task on the referenced board. Body: the idea create body, minus `boardId`. Success `201` with the task. Named `board-tasks` so it does not collide with the checklist routes in `contracts/issue-tasks.md`, which stay until Plan 4 retires them; Plan 4 may then rename it to `/tasks`.
+  - `PUT /api/v1/ideas/{ideaId}/blocked-by` replaces the blocker set. Body `{ "ideaIds": [...] }`. Details in `contracts/idea-dependencies.md`.
+- **Rules:**
+  - Moving an idea into a reference lane requires `effort` to be set; otherwise `422` (`effortRequiredForReferenceLane`).
+  - A task cannot itself be a parent (no sub-tasks at launch) and cannot be grouped under an Outcome; both `422`.
+  - Moving an idea out of a reference lane with open tasks is allowed and does not touch the tasks.
+  - A task cannot leave its board's first lane while any blocker is not in a final lane; `422` (`taskBlocked`).

@@ -5,6 +5,7 @@
 
 import { DEFAULT_IDEA_TYPES } from '@collega/application/organizations'
 import { describe, expect, it } from 'vitest'
+import { demoKeyPrefix } from '../src/demo-seed/modules/boards-and-statuses.js'
 import { fieldsSeed } from '../src/demo-seed/modules/fields.js'
 import {
   DEMO_ACCOUNTS,
@@ -60,6 +61,26 @@ describe('demo scenario organizations', () => {
   it('keeps the original organizations at 11 generic ideas per board, 44 in all', () => {
     expect(IDEA_SCENARIOS).toHaveLength(11)
     expect(ORIGINALS.reduce((n, o) => n + o.boards.length * IDEA_SCENARIOS.length, 0)).toBe(44)
+  })
+
+  it('derives a distinct, non-empty key prefix for every board in an organization', () => {
+    for (const org of DEMO_ORGANIZATIONS) {
+      const prefixes = org.boards.map((board) => demoKeyPrefix(board.name))
+      expect(prefixes.every((prefix) => prefix.length >= 2)).toBe(true)
+      expect(new Set(prefixes).size).toBe(prefixes.length)
+    }
+  })
+
+  it("gives the first organization's original boards the prefixes IDEA and OPPO", () => {
+    const first = DEMO_ORGANIZATIONS[0]
+    const prefixByName = Object.fromEntries(
+      first?.boards.map((board) => [board.name, demoKeyPrefix(board.name)]) ?? [],
+    )
+    expect(prefixByName).toMatchObject({ Ideas: 'IDEA', Opportunities: 'OPPO' })
+  })
+
+  it('returns an empty prefix for a board name with no letters', () => {
+    expect(demoKeyPrefix('123 !?')).toBe('')
   })
 })
 

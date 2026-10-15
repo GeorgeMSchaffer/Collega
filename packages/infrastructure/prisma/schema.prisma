@@ -68,11 +68,15 @@ model board_swimlanes {
   board_id      String   @db.Uuid
   status_id     String   @db.Uuid
   display_order Int
-  boards        boards   @relation(fields: [board_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_board_swimlanes_boards_board_id")
+  references_board_id String?  @db.Uuid
+  is_final            Boolean  @default(false)
+  boards        boards   @relation("swimlane_board", fields: [board_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_board_swimlanes_boards_board_id")
+  referenced_board    boards?  @relation("swimlane_reference", fields: [references_board_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "FK_board_swimlanes_boards_references_board_id")
   statuses      statuses @relation(fields: [status_id], references: [id], onUpdate: NoAction, map: "FK_board_swimlanes_statuses_status_id")
 
   @@unique([board_id, status_id], map: "ux_board_swimlanes_board_id_status_id")
   @@index([status_id], map: "IX_board_swimlanes_status_id")
+  @@index([references_board_id], map: "ix_board_swimlanes_references_board_id")
 }
 
 model boards {
@@ -87,9 +91,16 @@ model boards {
   updated_at_utc           DateTime          @db.Timestamptz(6)
   created_by_user_id       String?           @db.Uuid
   updated_by_user_id       String?           @db.Uuid
-  board_swimlanes          board_swimlanes[]
+  sprints_enabled          Boolean           @default(false)
+  idea_features_enabled    Boolean           @default(true)
+  key_prefix               String?           @db.VarChar(10)
+  next_item_number         Int               @default(1)
+  board_swimlanes          board_swimlanes[] @relation("swimlane_board")
+  referencing_swimlanes    board_swimlanes[] @relation("swimlane_reference")
+  sprints                  sprints[]
   organizations            organizations     @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_boards_organizations_organization_id")
 
+  @@unique([organization_id, key_prefix], map: "ux_boards_organization_id_key_prefix")
   @@index([organization_id], map: "ix_boards_organization_id")
 }
 
@@ -310,6 +321,20 @@ model idea_followers {
   @@index([user_id], map: "IX_idea_followers_user_id")
 }
 
+/// "blocked" cannot leave its board's first lane until "blocker" is in a final lane
+/// (SPEC/20-feature-board-references.md). The same-board rule and cycle check live in the
+/// Application layer; the database refuses only a self-dependency.
+model idea_dependencies {
+  blocked_idea_id String   @db.Uuid
+  blocker_idea_id String   @db.Uuid
+  created_at_utc  DateTime @db.Timestamptz(6)
+  blocked         ideas    @relation("dependency_blocked", fields: [blocked_idea_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_idea_dependencies_ideas_blocked_idea_id")
+  blocker         ideas    @relation("dependency_blocker", fields: [blocker_idea_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_idea_dependencies_ideas_blocker_idea_id")
+
+  @@id([blocked_idea_id, blocker_idea_id], map: "PK_idea_dependencies")
+  @@index([blocker_idea_id], map: "ix_idea_dependencies_blocker_idea_id")
+}
+
 model idea_upvotes {
   id             String   @id(map: "PK_idea_upvotes") @db.Uuid
   idea_id        String   @db.Uuid
@@ -354,6 +379,12 @@ model ideas {
   promoted_by_user_id       String?             @db.Uuid
   upvote_count_at_promotion Int?
   outcome_id                String?             @db.Uuid
+  parent_idea_id            String?             @db.Uuid
+  item_number               Int?
+  parent_idea               ideas?              @relation("idea_parent", fields: [parent_idea_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "FK_ideas_ideas_parent_idea_id")
+  child_ideas               ideas[]             @relation("idea_parent")
+  blocked_by                idea_dependencies[] @relation("dependency_blocked")
+  blocking                  idea_dependencies[] @relation("dependency_blocker")
   comments                  comments[]
   idea_assignees            idea_assignees[]
   idea_field_values         idea_field_values[]
@@ -375,6 +406,8 @@ model ideas {
   @@index([organization_id, phase], map: "ix_ideas_organization_id_phase")
   @@index([sprint_id], map: "ix_ideas_sprint_id")
   @@index([outcome_id], map: "ix_ideas_outcome_id")
+  @@index([parent_idea_id], map: "ix_ideas_parent_idea_id")
+  @@unique([board_id, item_number], map: "ux_ideas_board_id_item_number")
 }
 
 model impersonation_sessions {
@@ -514,10 +547,13 @@ model sprints {
   updated_at_utc     DateTime      @db.Timestamptz(6)
   created_by_user_id String?       @db.Uuid
   updated_by_user_id String?       @db.Uuid
+  board_id           String?       @db.Uuid
   ideas              ideas[]
+  boards             boards?       @relation(fields: [board_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "FK_sprints_boards_board_id")
   organizations      organizations @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_sprints_organizations_organization_id")
 
   @@index([organization_id, state], map: "ix_sprints_organization_id_state")
+  @@index([board_id, state], map: "ix_sprints_board_id_state")
 }
 
 model statuses {
