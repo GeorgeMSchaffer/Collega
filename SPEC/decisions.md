@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-15 | Issues can be added directly from the Backlog | active | full below |
 | 2026-10-13 | Boards can pull in existing items, and ideas can have no board | active | full below |
 | 2026-10-13 | Home gets an Unread notifications panel | amended | full below |
 | 2026-10-09 | The S0.2 schema freeze is amended a seventh time, for Outcomes | active | full below |
@@ -46,7 +47,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-10-01 | The S0.2 schema freeze is amended a fifth time, for idea followers and read state | active | full below |
 | 2026-10-01 | The Home dashboard comp is approved as drawn | amended | full below |
 | 2026-10-01 | Following an idea, and an in-app notification inbox | active | full below |
-| 2026-10-01 | The View As banner names only the target | active | full below |
+| 2026-10-01 | The View As banner names only the target | active | [2026-09-29 to 2026-10-01](decisions/archive-2026-09-29-to-2026-10-01.md) |
 | 2026-10-01 | The View As candidate order, and F1 closes | active | [2026-09-29 to 2026-10-01](decisions/archive-2026-09-29-to-2026-10-01.md) |
 | 2026-09-30 | What the MVP release includes | active | [2026-09-29 to 2026-10-01](decisions/archive-2026-09-29-to-2026-10-01.md) |
 | 2026-09-30 | The prompt-eval thresholds stand, confirmed against the v1 baseline | active | [2026-09-29 to 2026-10-01](decisions/archive-2026-09-29-to-2026-10-01.md) |
@@ -118,6 +119,47 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-15 — Issues can be added directly from the Backlog
+
+**Decided by the user.** The Backlog page gets a way to **add** an Issue directly, and to **edit**
+Issues. Until now an Issue exists only by promoting an idea that was created first
+(`20-feature-issues-and-delivery.md`, "Promotion"). The user decided the feature and **who may add**:
+any member who can create ideas, with author-creates semantics, the same set that may promote their
+own idea. That is a User or Org Admin of the organization (a Site Admin through View As, acting as the
+target); Read Only and a direct Site Admin cannot. Specified in `SPEC/20-feature-issues-and-delivery.md`
+("Backlog: add and edit") and `SPEC/contracts/delivery.md` (`POST /organizations/{organizationId}/issues`).
+
+**Implementation readings, for the user to overrule.** The assistant chose these defaults while
+specifying; none was put to the user:
+
+1. **One atomic route**, `POST /api/v1/organizations/{organizationId}/issues`, creates a board-less idea
+   with the pool create's fields, limits and validation, and promotes it in the same commit: phase
+   `Delivery`, `deliveryStatus` `Pending`, a required `effort`, an optional `sprintId` (null or omitted
+   is the backlog), `promotedAtUtc` and `promotedByUserId` set to the creator, `upvoteCountAtPromotion`
+   0. Two calls (pool create, then promote) were rejected: a failure between them would leave a
+   Discovery idea the user meant to be an Issue.
+2. **The ideation status** is the organization's first active status, as for a pool idea.
+3. **Audit and notification** follow the two existing actions: `IdeaCreated` as the pool create writes
+   it and `IdeaPromotedToIssue` as promote writes it. The `IdeaPromoted` notification goes to followers
+   other than the actor, as promote does; the author is the actor, so only assignees, who follow
+   automatically, can receive it.
+4. **No board.** The new Issue belongs to no board. It can be pulled onto a board only after Return to
+   Discovery, by the existing rule (`20-feature-board-pull-in.md` rule 14).
+5. **Editing** uses the idea form the Issue drawer already specifies. An Issue has no board and no lane,
+   so the edit form carries no board or status field, and no Effort field either (`PUT /ideas/{ideaId}`
+   refuses `effort` on a Delivery item).
+
+**Amends the Delivery contracts preamble.** `contracts/delivery.md` says there is "no `/issues` root".
+That sentence is about addressing an existing Issue and stays true for every route that takes an
+`{ideaId}`; the new route is the one creation route and sits under the organization, like the pool
+create. The preamble now says so.
+
+**No schema change**: `ideas.board_id` has been nullable since the eighth amendment (2026-10-13), and
+every column the route sets exists. **Golden corpus unaffected**: the route is new and no recorded case
+calls it.
 
 ---
 
@@ -531,12 +573,3 @@ panel for now. Panels marked "Needs" stay placeholders.
 The inbox is a new screen, so it is comp-first. The follower list needs a schema change, which
 amends the S0.2 freeze a fifth time. Specified in slice 149, built after the user reviews the comp.
 
----
-
-## 2026-10-01 — The View As banner names only the target
-
-**Decided by the user** during ad-hoc testing: the banner reads *Viewing as: {Name}*, smaller and in
-the theme's own tokens, with the Stop button. The acting admin's name leaves the visible text and
-stays in the banner's accessible text and a tooltip. This supersedes in part
-`20-feature-view-as.md` rule 22 (both identities named on screen, and the comp's wording); the banner
-stays persistent, non-dismissable and on every screen, and every action is still attributed to both.
