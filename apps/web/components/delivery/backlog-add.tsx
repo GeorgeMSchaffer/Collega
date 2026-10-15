@@ -1,12 +1,12 @@
 'use client'
 
 import { Button } from '@collega/design-system'
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { IdeaForm } from '@/components/ideas/idea-form'
 import { useDrawerUrl } from '@/components/ideas/use-drawer-url'
-import { Drawer } from '@/components/list'
+import { Drawer, useAddedHighlight } from '@/components/list'
 import { Icon } from '@/components/list/icons'
-import type { IdeaFormOptions, Sprint } from '@/lib/types'
+import type { Effort, IdeaFormOptions, Sprint } from '@/lib/types'
 import { useToast } from './toast'
 
 /**
@@ -38,6 +38,20 @@ export function RowEditButton({ ideaId, title }: { ideaId: string; title: string
   )
 }
 
+/** What the quick-add row hands to the create drawer; `sprintId` is empty for the Backlog. */
+export type BacklogPrefill = { title: string; effort: Effort | ''; sprintId: string }
+
+/** Sets a controlled control's value the way typing would, so React's onChange sees it. */
+function setNative(
+  element: HTMLInputElement | HTMLSelectElement,
+  proto: object,
+  value: string,
+  event: 'input' | 'change',
+) {
+  Object.getOwnPropertyDescriptor(proto, 'value')?.set?.call(element, value)
+  element.dispatchEvent(new Event(event, { bubbles: true }))
+}
+
 /**
  * The create drawer (comp A): the idea form with Effort and Sprint and no Board or Status, open
  * while `?new` is in the URL. On success it switches to the new Issue in view mode and confirms
@@ -45,47 +59,56 @@ export function RowEditButton({ ideaId, title }: { ideaId: string; title: string
  * with no votes it sorts last.
  *
  * `options` is null while the drawer is closed (the page reads the catalogs only when asked), and
- * `rowIds` is the Backlog's current rows, which is how the effect learns the refreshed list has
+ * `rowIds` is the Backlog's current rows, which is how the highlight learns the refreshed list has
  * the new one in it.
+ *
+ * `prefill` is the quick-add row's Title, Effort and Sprint. The idea form owns its state and takes
+ * no initial values, so they are entered through its controls once it has mounted, then
+ * `onPrefillApplied` clears them so a later open from the header button starts empty.
  */
 export function BacklogAdd({
   options,
   sprints,
   rowIds,
+  prefill = null,
+  onPrefillApplied,
 }: {
   options: IdeaFormOptions | null
   /** Non-completed sprints only. */
   sprints: readonly Pick<Sprint, 'id' | 'name' | 'state'>[]
   rowIds: string
+  prefill?: BacklogPrefill | null
+  onPrefillApplied?: () => void
 }) {
   const openDrawer = useDrawerUrl()
   const formId = useId()
   const [saving, setSaving] = useState(false)
   const [toast, showToast] = useToast()
-  const [added, setAdded] = useState<string | null>(null)
+  const highlight = useAddedHighlight(rowIds)
+  const formRef = useRef<HTMLDivElement>(null)
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: rowIds is the trigger — the row exists only once the refreshed list arrives.
   useEffect(() => {
-    if (!added) return
-    const row = document.querySelector<HTMLElement>(`[data-issue-id="${CSS.escape(added)}"]`)
-    if (!row) return
-    row.scrollIntoView({ block: 'nearest' })
-    row.dataset.added = ''
-    const timer = setTimeout(() => {
-      delete row.dataset.added
-      setAdded(null)
-    }, 4000)
-    return () => {
-      clearTimeout(timer)
-      delete row.dataset.added
+    const root = formRef.current
+    if (!prefill || !options || !root) return
+    const title = root.querySelector<HTMLInputElement>('[data-error-key="title"]')
+    if (title && prefill.title) setNative(title, HTMLInputElement.prototype, prefill.title, 'input')
+    if (prefill.effort) {
+      for (const radio of root.querySelectorAll<HTMLInputElement>('input[type="radio"]')) {
+        if (radio.value === prefill.effort) radio.click()
+      }
     }
-  }, [added, rowIds])
+    const sprint = root.querySelector<HTMLSelectElement>('[data-error-key="sprintId"]')
+    if (sprint && prefill.sprintId) {
+      setNative(sprint, HTMLSelectElement.prototype, prefill.sprintId, 'change')
+    }
+    onPrefillApplied?.()
+  }, [prefill, options, onPrefillApplied])
 
   const saved = (ideaId: string, sprintId?: string) => {
     const sprint = sprints.find((candidate) => candidate.id === sprintId)
     showToast(sprint ? `Issue added to ${sprint.name}` : 'Issue added')
     // Only a Backlog row has a place in this list to be found.
-    setAdded(sprint ? null : ideaId)
+    highlight(sprint ? null : ideaId)
     openDrawer({ view: ideaId })
   }
 
@@ -108,17 +131,19 @@ export function BacklogAdd({
         }
       >
         {options ? (
-          <IdeaForm
-            formId={formId}
-            idea={null}
-            options={options}
-            boards={null}
-            boardId={null}
-            contentLocked={false}
-            addingIssue={{ sprints }}
-            onSaved={saved}
-            onPendingChange={setSaving}
-          />
+          <div ref={formRef}>
+            <IdeaForm
+              formId={formId}
+              idea={null}
+              options={options}
+              boards={null}
+              boardId={null}
+              contentLocked={false}
+              addingIssue={{ sprints }}
+              onSaved={saved}
+              onPendingChange={setSaving}
+            />
+          </div>
         ) : null}
       </Drawer>
       {toast}
