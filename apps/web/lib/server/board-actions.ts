@@ -173,6 +173,50 @@ async function save(
   return null
 }
 
+/**
+ * The Boards list's quick-add row: a board from just a name, on the lanes the page chose (the
+ * catalog's first two statuses, as the drawer defaults them) with `allowUserStatusUpdate` off. The
+ * same `POST /organizations/{id}/boards` as the drawer; a refusal comes back keyed by field so the
+ * row can mark the name.
+ */
+export async function quickAddBoard(
+  name: string,
+  statusIds: string[],
+): Promise<
+  | { ok: true; boardId: string }
+  | { ok: false; error: string | null; errors: Record<string, string> }
+> {
+  const organizationId = await actingOrganizationId()
+  if (organizationId === null) {
+    return {
+      ok: false,
+      error: 'An App Admin belongs to no organization. Use View As to act as an administrator.',
+      errors: {},
+    }
+  }
+
+  try {
+    const created = await apiPostReturning<{ boardId: string }>(
+      apiPath`/organizations/${organizationId}/boards`,
+      {
+        name,
+        description: '',
+        allowUserStatusUpdate: false,
+        swimlanes: statusIds.map((statusId, order) => ({ statusId, order })),
+      },
+    )
+    revalidatePath('/', 'layout')
+    return { ok: true, boardId: created.boardId }
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 400) {
+      const { name: nameError, ...rest } = error.errors
+      const other = Object.values(rest).join(' ')
+      if (nameError) return { ok: false, error: other || null, errors: { name: nameError } }
+    }
+    return { ok: false, error: refusal(error), errors: {} }
+  }
+}
+
 export async function createBoard(
   _previous: BoardFormState,
   form: FormData,
