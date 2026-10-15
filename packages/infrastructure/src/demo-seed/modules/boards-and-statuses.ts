@@ -3,6 +3,14 @@ import type { PrismaClient } from '../../generated/prisma/client.js'
 import type { SeedModule } from '../types.js'
 import { DEMO_ORGANIZATIONS, seedId } from './scenario.js'
 
+/** Letters of the name, upper-cased, first four: "Ideas" -> "IDEA", "Opportunities" -> "OPPO". */
+export function demoKeyPrefix(boardName: string): string {
+  return boardName
+    .replace(/[^A-Za-z]/g, '')
+    .toUpperCase()
+    .slice(0, 4)
+}
+
 /**
  * Wave B2's contribution: the five default statuses per organization, the two demo boards, and the
  * swimlanes that join them.
@@ -50,6 +58,7 @@ export const boardsAndStatusesSeed: SeedModule = {
           update: {
             name: board.name,
             description: board.description,
+            key_prefix: demoKeyPrefix(board.name),
             created_by_user_id: creatorId,
           },
           create: {
@@ -57,6 +66,7 @@ export const boardsAndStatusesSeed: SeedModule = {
             organization_id: organizationId,
             name: board.name,
             description: board.description,
+            key_prefix: demoKeyPrefix(board.name),
             allow_user_status_update: true,
             created_at_utc: now,
             updated_at_utc: now,
