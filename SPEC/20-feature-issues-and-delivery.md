@@ -303,11 +303,12 @@ All under `/api/v1`, org-scoped, following existing conventions and problem-deta
 | Method | Route | Body | Permission |
 |---|---|---|---|
 | `POST` | `/ideas/{ideaId}/promote` | `{ "effort": "Medium", "sprintId": "<guid|null>", "note": "<optional>" }` | Author or in-scope admin |
+| `POST` | `/organizations/{orgId}/issues` | the pool create's fields plus `{ "effort": "Medium", "sprintId": "<guid|null>" }` (added 2026-10-15) | User or Org Admin |
 | `POST` | `/ideas/{ideaId}/return-to-discovery` | — | In-scope admin |
 | `PUT` | `/ideas/{ideaId}/delivery-status` | `{ "deliveryStatus": "Development" }` | Author, assignee, or in-scope admin |
 | `PUT` | `/ideas/{ideaId}/sprint` | `{ "sprintId": "<guid|null>" }` | In-scope admin |
 
-`effort` is **required** on `promote`. Promoting an already-Delivery item → `409`. A delivery-status or sprint change on a Discovery item → `400`.
+`effort` is **required** on `promote` and on `POST /organizations/{orgId}/issues`, which creates a board-less idea and promotes it in one commit (2026-10-15; the Backlog's *Add issue*). Promoting an already-Delivery item → `409`. A delivery-status or sprint change on a Discovery item → `400`.
 
 ### Sprints (Admin only for management; read available to all org members)
 
@@ -421,6 +422,21 @@ An Issue selected on the Sprint board, the Backlog or (once Outcomes exist) the 
 - **Footer:** Edit (the idea form, as for ideas) where the role may edit.
 - **Data:** the delivery card, `GET /ideas/{ideaId}` and `GET /ideas/{ideaId}/tasks`. From a board it uses the card in hand; from a **deep link** (`?idea={ideaId}` on a delivery screen) or **`/delivery/issues/{ideaId}`** (kept for existing links) the card comes from **`GET /ideas/{ideaId}/delivery`** — the single-Issue read the user added on 2026-09-28 (`30-Contracts.md`), replacing the web app's fetch of every sprint and the backlog to find one Issue.
 
+#### Backlog: add and edit (2026-10-15)
+
+Decided by the user 2026-10-15 (`decisions.md` "Issues can be added directly from the Backlog"): the Backlog page can **add** an Issue directly and exposes **Edit**. Items marked *proposed* are the assistant's readings, for the user to overrule. Comp R draws no Backlog screen; the page as built on the Slice 1 API is the reference, and the add form below is on the list and detail pattern's drawer.
+
+- **Add issue** is a button in the page header's actions, primary, beside the existing *Start {sprint}* action (its exact place is for the comp). It follows the Denied rule (`20-feature-client-ui.md`): shown to every role and **disabled with a reason** for a role that may not add (Read Only), never omitted; a Site Admin acting directly sees no Backlog, and through View As gets the target's button. The roles that may add are those of `POST /organizations/{orgId}/issues`: User and Org Admin. *Proposed reason text:* *Read Only members cannot add issues.*
+- **The create drawer** opens over the Backlog in create mode (eyebrow *New issue*): the idea form's fields in its order and with its limits and custom fields — Title, Problem, Proposed solutions, Impact rationale, Summary, Priority, Idea type, Business impact, Due date, Assignees, Tags — then **Effort** (required, Low, Medium or High, no default, as the promotion gate has none) and **Sprint** (optional, defaulting to *Backlog*; the choices are Backlog and every `Planned` or `Active` sprint). There is **no Board field** (the Issue has no board) and **no Status field** (an Issue has no ideation lane; delivery status starts at `Pending`). Footer: Cancel and *Add issue*. API field errors sit beside their fields, `effort` and `sprintId` included.
+- **On success** the drawer switches to the new Issue in view mode (`?idea={ideaId}`), a toast confirms it, and the Backlog refreshes: with *Backlog* chosen the row appears in the list, and with a sprint chosen the Issue is in that sprint, so it is not on the Backlog and the toast says which sprint. The drawer reads the Issue through `GET /ideas/{ideaId}/delivery`, so it opens either way. *Proposed copy:* *Issue added* and *Issue added to {sprint name}*.
+- **Sprint choice is open to everyone who may add.** `PUT /ideas/{ideaId}/sprint` is an in-scope admin's, but the promotion gate already lets an author choose the sprint, and the add form follows the gate.
+- **Provenance** on a directly added Issue reads as for any Issue (raised by and promoted by the same person, *0 upvotes at promotion*); whether it says *Added directly* is for the comp.
+- **After adding**, the Issue behaves as any other. It has no board, so it can be pulled onto one only after an Org Admin's Return to Discovery (`20-feature-board-pull-in.md` rule 14), which puts it in the pool.
+- **The empty state** (*Nothing waiting*) gains *Add issue* as its action beside *Open the ideas board*, disabled with the reason for a role that may not add, and its line *New issues arrive here when an idea is promoted from a board* no longer holds: it says issues arrive by promotion or by being added here.
+- **Edit** is offered where the Issue drawer already puts it (the footer; "The Issue in the drawer" above) and, new, as a row action on each Backlog row, which opens the same edit drawer. It is the author's and an in-scope Org Admin's (`PUT /ideas/{ideaId}`): other roles see the footer Edit disabled with a reason, and the row action hidden (the Denied rule's row-action exception).
+- **The edit form of an Issue** is the idea form prefilled, saving through `PUT /ideas/{ideaId}`. It carries no Board field (the route has none), no Status field (the route has none, and an Issue sits in no lane), and **no Effort field**, because the route refuses `effort` on a `Delivery` item and the estimate was set at the gate. Sprint and delivery status keep their own controls in the drawer's facts. A board-less Issue and an Issue promoted from a board show the same form.
+- **A comp is required first.** The Add issue button's place in the header, the Effort and Sprint fields' place in the form, and the row action are not settled by comp R, so per `AGENTS.md` a throwaway HTML comp in `SPEC/mockups/` is reviewed before any production React. This section does not draw one.
+
 #### Roadmap (comp R)
 
 **Sprint 11 builds the screen, not the backend** (answered 2026-09-28: "UI now, backend later"). The Outcomes backend — Slice 2's table, entity, service, routes and roadmap read — is a gap for a later sprint (`30-Contracts.md` Delivery preamble; `decisions.md` 2026-09-28). So the Roadmap is built in two layers:
@@ -463,6 +479,7 @@ An Issue selected on the Sprint board, the Backlog or (once Outcomes exist) the 
 | Action | Site Admin | Org Admin (own org) | User | Read Only |
 |---|:--:|:--:|:--:|:--:|
 | Promote idea → Issue | ✓ | ✓ | Author only | |
+| Add an Issue directly from the Backlog *(2026-10-15)* | ✓ | ✓ | ✓ | |
 | Return Issue → Discovery | ✓ | ✓ | | |
 | Change delivery status | ✓ | ✓ | Author or assignee | |
 | Create / start / complete / edit / delete sprints | ✓ | ✓ | | |
