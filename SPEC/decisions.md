@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-15 | Cutover follow-up: migration check, SITE_ADMIN_PASSWORD, App Admin in the README, rollback wording | active | full below |
 | 2026-10-15 | The 17 open Outcome contract questions are decided | active | full below |
 | 2026-10-15 | Board References replace the Delivery phase | active | full below |
 | 2026-10-15 | The four open Backlog Add New Issue readings are decided | active | full below |
@@ -122,6 +123,17 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-15 — Cutover follow-up: migration check, SITE_ADMIN_PASSWORD, App Admin in the README, rollback wording
+
+**Decided by the user**, from the slice 213 follow-up.
+
+1. **The additive-migrations check is wider.** `SPEC/50-cutover-runbook.md` §1 check 5 and `SPEC/50-vercel-deployment.md` §10 now cover loosened constraints (dropping `NOT NULL`, e.g. `20261013000000_allow_ideas_without_board`) and dropped indexes (e.g. in `20261001000000_add_idea_followers_and_inbox`) that the running code relies on, not only dropped or renamed columns and tables. This release goes onto a fresh production database, so the check passes trivially; the rule stands for later releases.
+2. **`SITE_ADMIN_PASSWORD` stays as documented for this release; no code change.** A tracker follow-up records stopping the API's runtime requirement for it (`apps/api/src/common/config/fragments/site-admin.ts` reads it via `required()`; only the build-time bootstrap uses it), so it can be removed after first login.
+3. **"App Admin" in operator docs only.** `README.md` (demo-credentials table, the `db:bootstrap-admin` row, the staging-database note, the configured-admin footnote) and the tracker's owner-side row say App Admin where they describe the UI role. Env var names (`SITE_ADMIN_*`), the `SiteAdmin` role value, log strings, API error text, `SPEC/20-*` feature specs and contracts are unchanged (consistent with 2026-10-04).
+4. **Rollback wording follows the runbook.** Code rolls back (the previous deployment keeps serving; repointing `DATABASE_URL` at the old database is the database swap's rollback); the database does not roll back with a code rollback. `SPEC/50-vercel-deployment.md` §10 no longer says "the rollback unit is the database".
 
 ---
 

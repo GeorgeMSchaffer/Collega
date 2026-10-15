@@ -44,7 +44,7 @@ request, or a commit.**
 | 2 | Playwright suite green | `pnpm test:e2e` against a scratch local database (`e2e/AGENTS.md`); it is not part of CI | anyone |
 | 3 | `SPEC/Bug Triage.md` `TODO` empty, or each open item accepted for this release by the owner | read the section | anyone; acceptance is **Owner** |
 | 4 | Golden replay triage recorded — **not a gate** | the last replay's counts and the fix / accept / do-better call on each unexplained difference, written down (`SPEC/decisions.md` 2026-09-11). An unrunnable or unclean replay blocks nothing | anyone |
-| 5 | The pending migrations are additive | read every directory under `packages/infrastructure/prisma/migrations/` newer than production's last applied one; nothing drops or renames a column or table that the currently deployed code still reads (`SPEC/50-vercel-deployment.md` §10) | anyone |
+| 5 | The pending migrations are additive | read every directory under `packages/infrastructure/prisma/migrations/` newer than production's last applied one; nothing drops or renames a column or table, loosens a constraint (drops `NOT NULL`, as `20261013000000_allow_ideas_without_board` does), or drops an index (as `20261001000000_add_idea_followers_and_inbox` does) that the currently deployed code still relies on (`SPEC/50-vercel-deployment.md` §10). This release goes onto a fresh production database, so the check passes trivially; the rule stands for later releases | anyone |
 
 ### `collega-api` environment variables — **Owner**
 
