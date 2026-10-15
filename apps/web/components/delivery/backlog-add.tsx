@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@collega/design-system'
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { IdeaForm } from '@/components/ideas/idea-form'
 import { useDrawerUrl } from '@/components/ideas/use-drawer-url'
 import { Drawer, useAddedHighlight } from '@/components/list'
@@ -41,17 +41,6 @@ export function RowEditButton({ ideaId, title }: { ideaId: string; title: string
 /** What the quick-add row hands to the create drawer; `sprintId` is empty for the Backlog. */
 export type BacklogPrefill = { title: string; effort: Effort | ''; sprintId: string }
 
-/** Sets a controlled control's value the way typing would, so React's onChange sees it. */
-function setNative(
-  element: HTMLInputElement | HTMLSelectElement,
-  proto: object,
-  value: string,
-  event: 'input' | 'change',
-) {
-  Object.getOwnPropertyDescriptor(proto, 'value')?.set?.call(element, value)
-  element.dispatchEvent(new Event(event, { bubbles: true }))
-}
-
 /**
  * The create drawer (comp A): the idea form with Effort and Sprint and no Board or Status, open
  * while `?new` is in the URL. On success it switches to the new Issue in view mode and confirms
@@ -62,9 +51,8 @@ function setNative(
  * `rowIds` is the Backlog's current rows, which is how the highlight learns the refreshed list has
  * the new one in it.
  *
- * `prefill` is the quick-add row's Title, Effort and Sprint. The idea form owns its state and takes
- * no initial values, so they are entered through its controls once it has mounted, then
- * `onPrefillApplied` clears them so a later open from the header button starts empty.
+ * `prefill` is the quick-add row's Title, Effort and Sprint, handed to the form as its initial
+ * values; `onPrefillApplied` clears them so a later open from the header button starts empty.
  */
 export function BacklogAdd({
   options,
@@ -85,23 +73,10 @@ export function BacklogAdd({
   const [saving, setSaving] = useState(false)
   const [toast, showToast] = useToast()
   const highlight = useAddedHighlight(rowIds)
-  const formRef = useRef<HTMLDivElement>(null)
 
+  // The form has read `initial` on mounting, so the values are spent once it is open.
   useEffect(() => {
-    const root = formRef.current
-    if (!prefill || !options || !root) return
-    const title = root.querySelector<HTMLInputElement>('[data-error-key="title"]')
-    if (title && prefill.title) setNative(title, HTMLInputElement.prototype, prefill.title, 'input')
-    if (prefill.effort) {
-      for (const radio of root.querySelectorAll<HTMLInputElement>('input[type="radio"]')) {
-        if (radio.value === prefill.effort) radio.click()
-      }
-    }
-    const sprint = root.querySelector<HTMLSelectElement>('[data-error-key="sprintId"]')
-    if (sprint && prefill.sprintId) {
-      setNative(sprint, HTMLSelectElement.prototype, prefill.sprintId, 'change')
-    }
-    onPrefillApplied?.()
+    if (prefill && options) onPrefillApplied?.()
   }, [prefill, options, onPrefillApplied])
 
   const saved = (ideaId: string, sprintId?: string) => {
@@ -131,7 +106,7 @@ export function BacklogAdd({
         }
       >
         {options ? (
-          <div ref={formRef}>
+          <div>
             <IdeaForm
               formId={formId}
               idea={null}
@@ -140,6 +115,7 @@ export function BacklogAdd({
               boardId={null}
               contentLocked={false}
               addingIssue={{ sprints }}
+              initial={prefill ?? undefined}
               onSaved={saved}
               onPendingChange={setSaving}
             />
