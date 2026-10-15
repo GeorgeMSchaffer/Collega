@@ -46,6 +46,8 @@ Organizations can manage idea boards using configurable status swimlanes.
 10. Each status has an admin-controlled `SortOrder` (integer): its default position in the organization's status catalog (e.g. the Settings > Statuses list, and the default order offered when configuring a new board's swimlanes).
     - Distinct from a board's own swimlane order, which a board can reorder by drag-and-drop without changing the organization-level catalog order.
 
+> **Quick-add (2026-10-15).** The Boards list gains the list pattern's quick-add row for an Org Admin or User (Read Only disabled with the reason; `20-feature-client-ui.md`, "Quick-add row"). `POST /organizations/{orgId}/boards` requires `name`, `allowUserStatusUpdate` and at least two swimlanes, so the row asks for the name and defaults the lanes to the first two statuses; what it sends for `allowUserStatusUpdate` is an open question (proposal: `false`, which the controller already coerces an omitted value to; see `decisions.md` 2026-10-15). Once that default is confirmed, Enter creates the board directly.
+
 ## Board Rules
 1. A board is a collection of ideas organized by swimlanes.
 2. Each swimlane maps to a status.
