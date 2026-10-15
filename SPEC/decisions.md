@@ -161,7 +161,6 @@ create. The preamble now says so.
 every column the route sets exists. **Golden corpus unaffected**: the route is new and no recorded case
 calls it.
 
-
 **Amendment, 2026-10-15 (decided by the user): the UI is comp A with comp B, and quick-add becomes a
 pattern.** Three comps were drawn on `feature/185-backlog-add-comps`
 (`SPEC/mockups/comp-r-backlog-add-a-drawer.html`, `-b-inline.html` and `-c-two-paths.html`). The user
@@ -170,18 +169,21 @@ chose **A, the drawer, together with B, the inline quick-add row**:
 1. **Quick-add is a universal pattern** for every non-settings, non-admin grid: a spreadsheet-style new
    row at the top of the list with the minimum fields; Enter submits and the row stays focused for
    rapid entry. It lives in the list and detail pattern (`20-feature-client-ui.md`, "Quick-add row");
-   the header *Add New {Item}* button remains the primary creation action.
+   the header *Add New {Item}* button staying beside the row is the working assumption, not a
+   decision (the sixth open question below).
 2. **Hand-off rule, contract unchanged.** The API keeps requiring what it requires. When the row cannot
    supply every required field, pressing Enter opens the full drawer form **pre-populated** with the
    row's values, and nothing is created until that form is saved. When the row can supply everything
-   (the Boards list: a name, lanes defaulted to the first two statuses), Enter creates directly.
-   **Consequence, stated plainly:** idea create requires Problem, Proposed solutions and Impact
-   rationale, plus the organization's required custom fields (Idea type and Business impact default to
-   the first active options, as the idea form preselects them), so on **Ideas and on the Backlog the
+   (the Boards list: a name, lanes defaulted to the first two statuses, and a default for
+   `allowUserStatusUpdate`), Enter creates directly, once that default is confirmed (the seventh open
+   question below).
+   **Consequence, stated plainly:** idea create requires Problem, Proposed solutions, Impact rationale,
+   Priority, Idea type and Business impact, plus the organization's required custom fields (the idea
+   form defaults Priority to Medium and Idea type and Business impact to the first active options), so on **Ideas and on the Backlog the
    row always hands off today**. It is a fast way into the pre-populated form, not a way around it. No
    contract is relaxed.
 3. **Scope, from the scoping report.** First wave: the Backlog, the Ideas list, the Boards list (Org
-   Admin) and a board page's List view. Not applicable: the Roadmap (no Outcome create route yet), the
+   Admin or User; Read Only disabled with the reason) and a board page's List view. Not applicable: the Roadmap (no Outcome create route yet), the
    Inbox, Home and detail pages. Issue tasks already have an inline add, the reference implementation.
    Sprints and the Sprint board: a weak fit, not in the first wave. A Lanes view's per-lane add: later,
    undecided.
@@ -192,9 +194,13 @@ chose **A, the drawer, together with B, the inline quick-add row**:
 - New-row ordering against sort and paging.
 - The Sprint select on the Backlog row.
 - Mobile: hand More fields to the drawer?
-- Whether to keep the header *Add New {Item}* button next to the row. (The pattern line above says it
-  remains the primary creation action; this question is whether it stays beside the row on every screen.)
+- Whether to keep the header 'Add New {Item}' button next to the row.
 - Read Only presentation; a disabled bar with the reason is the default assumption.
+- The Boards row and `allowUserStatusUpdate`: `contracts/boards.md` makes it a required boolean on
+  `POST /organizations/{organizationId}/boards`; the controller coerces it with `=== true`, so an omitted
+  value becomes `false`, and `BoardService.create` passes it through. Proposal, for the user to confirm:
+  the row sends `false`. Not decided.
+
 ---
 
 ## 2026-10-13 — Boards can pull in existing items, and ideas can have no board
