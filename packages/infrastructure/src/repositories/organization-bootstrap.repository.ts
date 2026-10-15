@@ -70,7 +70,11 @@ export class OrganizationBootstrapRepository implements OrganizationBootstrapPor
       organizationId,
       name: DEFAULT_BOARD_NAME,
       allowUserStatusUpdate: true,
-      orderedStatusIds: statuses.map((s) => s.id),
+      orderedLanes: statuses.map((s) => ({
+        statusId: s.id,
+        isFinal: false,
+        referencesBoardId: null,
+      })),
       nowUtc,
       actorUserId,
     })

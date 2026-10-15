@@ -65,7 +65,11 @@ function controller(): { controller: BoardsController; persisted: Board[] } {
     organizationId: ORG,
     name: 'Ideas',
     allowUserStatusUpdate: true,
-    orderedStatusIds: [STATUS_1, STATUS_2],
+    orderedLanes: [STATUS_1, STATUS_2].map((statusId) => ({
+      statusId,
+      isFinal: false,
+      referencesBoardId: null,
+    })),
     nowUtc: NOW,
     actorUserId: ADMIN,
   })
@@ -310,6 +314,54 @@ describe('Board ideaMoves at the HTTP boundary', () => {
         errors: { ideaMoves: ['A move must come from a lane this save removes.'] },
       },
     })
+    expect(persisted).toHaveLength(0)
+  })
+})
+
+describe('Board reference lanes and flags at the HTTP boundary', () => {
+  it('passes isFinal, referencesBoardId, keyPrefix and the flags through to the command', async () => {
+    const commands: UpdateBoardCommand[] = []
+    const service = {
+      update: async (_boardId: string, command: UpdateBoardCommand) => {
+        commands.push(command)
+        return {} as never
+      },
+    } as unknown as BoardService
+
+    await new BoardsController(service).update(BOARD, {
+      name: 'Ideas',
+      keyPrefix: 'ab',
+      sprintsEnabled: true,
+      swimlanes: [
+        { statusId: STATUS_1, order: 0, isFinal: true, referencesBoardId: 'other' },
+        { statusId: STATUS_2, order: 1 },
+      ],
+    })
+
+    expect(commands[0]).toMatchObject({
+      keyPrefix: 'ab',
+      sprintsEnabled: true,
+      ideaFeaturesEnabled: undefined,
+      swimlanes: [
+        { statusId: STATUS_1, order: 0, isFinal: true, referencesBoardId: 'other' },
+        { statusId: STATUS_2, order: 1, isFinal: false, referencesBoardId: null },
+      ],
+    })
+  })
+
+  it('answers 422 with the rule key when a lane references its own board', async () => {
+    const { controller: boards, persisted } = controller()
+
+    const error = await thrownBy(
+      boards.update(BOARD, {
+        name: 'Ideas',
+        swimlanes: [{ statusId: STATUS_1, order: 0, referencesBoardId: BOARD }, SWIMLANES[1] ?? {}],
+      }),
+    )
+
+    const rendered = render(error, `/api/v1/boards/${BOARD}`)
+    expect(rendered.status).toBe(422)
+    expect(JSON.stringify(rendered.body)).toContain('laneReferencesOwnBoard')
     expect(persisted).toHaveLength(0)
   })
 })

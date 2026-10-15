@@ -21,7 +21,7 @@ import type {
   UserName,
 } from '@collega/application/boards'
 import type { Page } from '@collega/application/common'
-import type { BoardsPort } from '@collega/application/ideas'
+import type { BoardsPort, SwimlaneInfo } from '@collega/application/ideas'
 import type { Board, BoardSwimlane } from '@collega/domain/boards'
 import type { Priority } from '@collega/domain/enums'
 import { IdeaPhase } from '@collega/domain/enums'
@@ -39,7 +39,12 @@ type BoardRowWithSwimlanes = BoardRow & { board_swimlanes: SwimlaneRow[] }
 function boardFromRow(row: BoardRowWithSwimlanes): Board {
   const swimlanes: BoardSwimlane[] = [...row.board_swimlanes]
     .sort((a, b) => a.display_order - b.display_order)
-    .map((s) => ({ statusId: s.status_id, displayOrder: s.display_order }))
+    .map((s) => ({
+      statusId: s.status_id,
+      displayOrder: s.display_order,
+      isFinal: s.is_final,
+      referencesBoardId: s.references_board_id,
+    }))
 
   return {
     id: row.id,
@@ -50,6 +55,10 @@ function boardFromRow(row: BoardRowWithSwimlanes): Board {
     swimlanes,
     isArchived: row.is_archived,
     archivedAtUtc: row.archived_at_utc,
+    keyPrefix: row.key_prefix,
+    sprintsEnabled: row.sprints_enabled,
+    ideaFeaturesEnabled: row.idea_features_enabled,
+    nextItemNumber: row.next_item_number,
     createdAtUtc: row.created_at_utc,
     updatedAtUtc: row.updated_at_utc,
     createdByUserId: row.created_by_user_id,
@@ -378,7 +387,8 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
     readonly name: string
     readonly allowUserStatusUpdate: boolean
     readonly isArchived: boolean
-    readonly swimlanes: readonly { readonly statusId: string; readonly displayOrder: number }[]
+    readonly keyPrefix: string | null
+    readonly swimlanes: readonly SwimlaneInfo[]
   } | null> {
     const board = await this.getById(boardId)
     if (!board) {
@@ -390,6 +400,7 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
       name: board.name,
       allowUserStatusUpdate: board.allowUserStatusUpdate,
       isArchived: board.isArchived,
+      keyPrefix: board.keyPrefix,
       swimlanes: board.swimlanes,
     }
   }
@@ -437,6 +448,10 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
           allow_user_status_update: board.allowUserStatusUpdate,
           is_archived: board.isArchived,
           archived_at_utc: board.archivedAtUtc,
+          key_prefix: board.keyPrefix,
+          sprints_enabled: board.sprintsEnabled,
+          idea_features_enabled: board.ideaFeaturesEnabled,
+          next_item_number: board.nextItemNumber,
           created_at_utc: board.createdAtUtc,
           updated_at_utc: board.updatedAtUtc,
           created_by_user_id: board.createdByUserId,
@@ -459,6 +474,11 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
           allow_user_status_update: board.allowUserStatusUpdate,
           is_archived: board.isArchived,
           archived_at_utc: board.archivedAtUtc,
+          key_prefix: board.keyPrefix,
+          sprints_enabled: board.sprintsEnabled,
+          idea_features_enabled: board.ideaFeaturesEnabled,
+          // next_item_number is deliberately absent: only the atomic allocation increments it, and
+          // a save from a stale copy must never move it backwards.
           updated_at_utc: board.updatedAtUtc,
           updated_by_user_id: board.updatedByUserId,
         },
@@ -478,6 +498,8 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
       board_id: board.id,
       status_id: swimlane.statusId,
       display_order: swimlane.displayOrder,
+      is_final: swimlane.isFinal,
+      references_board_id: swimlane.referencesBoardId,
     }))
   }
 }

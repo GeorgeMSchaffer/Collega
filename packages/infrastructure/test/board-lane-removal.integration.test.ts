@@ -329,7 +329,15 @@ describe.skipIf(!DATABASE_URL)('Removing a lane that holds ideas, against a live
     await boards.save(
       updateBoard(
         existing,
-        { name: 'Lanes', allowUserStatusUpdate: true, orderedStatusIds: [NEW, DONE] },
+        {
+          name: 'Lanes',
+          allowUserStatusUpdate: true,
+          orderedLanes: [NEW, DONE].map((statusId) => ({
+            statusId,
+            isFinal: false,
+            referencesBoardId: null,
+          })),
+        },
         SAVED,
         adminId,
       ),

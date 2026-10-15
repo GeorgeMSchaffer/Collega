@@ -27,13 +27,21 @@ import {
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 /** One entry of a request's `swimlanes` array - `SwimlaneRequest` on the .NET side. */
-type SwimlaneBody = { statusId?: string; order?: number }
+type SwimlaneBody = {
+  statusId?: string
+  order?: number
+  isFinal?: boolean
+  referencesBoardId?: string | null
+}
 
 type CreateBoardBody = {
   name?: string
   description?: string | null
   allowUserStatusUpdate?: boolean
   swimlanes?: readonly SwimlaneBody[]
+  keyPrefix?: string | null
+  sprintsEnabled?: boolean
+  ideaFeaturesEnabled?: boolean
   pullItemIds?: unknown
 }
 
@@ -92,7 +100,26 @@ function toSwimlaneInputs(swimlanes: unknown): readonly SwimlaneInput[] {
     statusId: typeof entry?.statusId === 'string' ? entry.statusId : '',
     // `int`, not `int?`, on the .NET record - an absent order bound to 0 rather than failing.
     order: typeof entry?.order === 'number' ? entry.order : 0,
+    isFinal: entry?.isFinal === true,
+    referencesBoardId:
+      typeof entry?.referencesBoardId === 'string' ? entry.referencesBoardId : null,
   }))
+}
+
+/** As `toDescription`: absent stays `undefined` (on `PUT`, "leave it alone"), `null` clears. */
+function toKeyPrefix(keyPrefix: unknown): string | null | undefined {
+  if (keyPrefix === undefined || keyPrefix === null || typeof keyPrefix === 'string') {
+    return keyPrefix
+  }
+  throw new RequestValidationError({ keyPrefix: ['Key prefix must be a string.'] })
+}
+
+/** A flag the body did not send stays `undefined`, which leaves the stored value (or default). */
+function toFlag(name: string, value: unknown): boolean | undefined {
+  if (value === undefined || typeof value === 'boolean') {
+    return value
+  }
+  throw new RequestValidationError({ [name]: [`${name} must be true or false.`] })
 }
 
 /**
@@ -186,6 +213,9 @@ export class BoardsController {
       // A .NET `bool` (not `bool?`): an absent value bound to false.
       allowUserStatusUpdate: body.allowUserStatusUpdate === true,
       swimlanes: toSwimlaneInputs(body.swimlanes),
+      keyPrefix: toKeyPrefix(body.keyPrefix),
+      sprintsEnabled: toFlag('sprintsEnabled', body.sprintsEnabled),
+      ideaFeaturesEnabled: toFlag('ideaFeaturesEnabled', body.ideaFeaturesEnabled),
       pullItemIds: toPullItemIds(body.pullItemIds),
     })
   }
@@ -207,6 +237,9 @@ export class BoardsController {
       description: toDescription(body.description),
       allowUserStatusUpdate: body.allowUserStatusUpdate === true,
       swimlanes: toSwimlaneInputs(body.swimlanes),
+      keyPrefix: toKeyPrefix(body.keyPrefix),
+      sprintsEnabled: toFlag('sprintsEnabled', body.sprintsEnabled),
+      ideaFeaturesEnabled: toFlag('ideaFeaturesEnabled', body.ideaFeaturesEnabled),
       ideaMoves: toIdeaMoves(body.ideaMoves),
       pullItemIds: toPullItemIds(body.pullItemIds),
     })
