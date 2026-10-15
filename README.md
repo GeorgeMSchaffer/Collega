@@ -427,7 +427,7 @@ What each role can do:
 - **Org Admin** — creates, edits, moves and administers everything in its organization.
 - **User** — creates and edits ideas, moves them subject to the board's own setting.
 - **Read Only** — reads, comments and upvotes; authoring is refused, with the reason shown.
-- **Site Admin** — every organization; creates organizations and users directly, and changes
+- **App Admin** (the `SiteAdmin` role in code and specs) — every organization; creates organizations and users directly, and changes
   organization content (boards, ideas) only through View As.
 
 The full roster — every address, display name and organization — is [`demo.md`](demo.md).
