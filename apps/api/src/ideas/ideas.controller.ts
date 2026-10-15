@@ -75,6 +75,9 @@ type CreateIdeaBody = {
   fieldValues?: unknown
 }
 
+/** `POST /organizations/{organizationId}/issues`: the create shape plus the promotion's fields. */
+type AddIssueBody = CreateIdeaBody & { effort?: unknown; sprintId?: unknown }
+
 /** `PUT /ideas/{ideaId}` - `UpdateIdeaRequest`: the create shape minus `statusId`. */
 type UpdateIdeaBody = Omit<CreateIdeaBody, 'statusId'>
 
@@ -295,6 +298,25 @@ export class IdeasController {
     validateFields(ideaBodyRules(body))
 
     return this.ideas.createInPool(organizationId, newIdeaFields(body))
+  }
+
+  /** Creates an idea with no board and promotes it in the same commit (an Issue added directly).
+   * The pool create's body plus `effort` and `sprintId`; `statusId` is ignored. Validation runs
+   * inside the service, after authorization, as the contract orders them. */
+  @Post('organizations/:organizationId/issues')
+  @HttpCode(201)
+  async addIssue(
+    @Param('organizationId', UuidParamPipe) organizationId: string,
+    @Body() body: AddIssueBody,
+  ): Promise<CreateIdeaResult> {
+    return this.ideas.addIssue(organizationId, () => {
+      validateFields(ideaBodyRules(body))
+      return {
+        ...newIdeaFields(body),
+        effort: optional(body.effort) ?? '',
+        sprintId: optionalGuid(body.sprintId),
+      }
+    })
   }
 
   @Get('ideas/:ideaId')
