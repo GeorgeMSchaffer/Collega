@@ -26,9 +26,10 @@ Shared by every route below:
   (create, update, reorder, delete) and grouping an Issue are an in-scope Org Admin's. User and
   Read Only are refused with `403`.
   - **A Site Admin mutates only through View As**, as for sprints: acting directly, every mutation
-    is refused with `403`. **Reads are refused the same way**: a Site Admin acting directly gets
-    `403` on every route here, `GET`s included, and reads only through View As (decision 10;
-    `SPEC/decisions.md` 2026-10-04). There is no direct read route.
+    is refused with `403`. **Unlike sprints** (`contracts/sprints.md` lets a direct Site Admin
+    read), reads are refused too here: a Site Admin acting directly gets `403` on every route,
+    `GET`s included, and reads only through View As (decision 10; `SPEC/decisions.md`
+    2026-10-04). There is no direct read route.
 - **Item fields** (stored, returned by every route that returns an Outcome):
   - `outcomeId`
   - `organizationId`
@@ -106,8 +107,9 @@ Create an Outcome.
   - `name` required; `description` optional; `targetStartDate` and `targetEndDate` required, end on
     or after start; `ownerUserId` optional; `color` optional (absent or `null`: random palette
     colour, decision 5).
-- **Response:** `201` with the created Outcome item including its rollup (`issueCount` 0,
-  `doneCount` 0, `sprintStart` and `sprintEnd` `null`) (decision 8).
+- **Response:** `201` with the created Outcome item including its rollup (`ideaCount`,
+  `doneIdeaCount`, `taskCount`, `doneTaskCount` 0, the metric totals zero, `sprintStart` and
+  `sprintEnd` `null`) (decision 8).
 - **Errors:**
   - `400` `name` is blank or over 120 characters; `description` is
     over 1000 characters; a date is missing or not a valid date; `targetEndDate` is before
@@ -118,6 +120,7 @@ Create an Outcome.
   - `404` the organization does not exist or is outside caller scope
 - **Rules:**
   - **Names may duplicate (decision 4):** no uniqueness check, no index, no schema change.
+  - Audit: `OutcomeCreated` carrying the Outcome's fields (decision 11).
   - **Placement (decision 17).** A new Outcome is appended: `sortOrder` is the current maximum
     plus 1 among non-deleted Outcomes, `0` when there are none.
 
@@ -140,7 +143,8 @@ Update name, description, window, owner and colour.
 - **Roles:** in-scope admin. A direct Site Admin is refused.
 - **Request:** body — a **full replacement** of `name`, `description`, `targetStartDate`,
   `targetEndDate` and `ownerUserId`, with the same field rules as create (decision 9). `color` is
-  accepted: absent leaves it unchanged, `null` is a `400`, a value is validated as on create.
+  accepted: absent leaves it unchanged, `null` is a `400` keyed `color` with the invalid-colour text
+  `"Color must be a valid #RRGGBB color."`, a value is validated as on create.
   The form's "Issues under this outcome" checklist is **not** part of this write: the client sends
   one `PUT /ideas/{ideaId}/outcomes` per Issue whose grouping changed.
 - **Response:** `200` with the updated Outcome item including its rollup (decision 8).
@@ -163,7 +167,8 @@ Set the roadmap's row order.
 - **Response:** `204`, no body (decision 8).
 - **Errors:** `401`; `403` as for create; `404` the organization is outside caller scope; `400`
   keyed `orderedIds` for an id that is unknown, duplicated in the list, soft-deleted or belongs to
-  another organization (and `"Ordered Ids is required."` when the property is absent).
+  another organization, and for an empty list (`"Ordered Ids is required."` when the property is
+  absent).
 - **Rules:** `order` is a literal path segment, not an Outcome id: declare this route before
   `PUT .../outcomes/{id}` (as `contracts/issue-tasks.md` does for its `order` route).
 
@@ -195,7 +200,8 @@ Set or clear an Issue's single Outcome.
 - **Response:** `200` with `{ "ideaId": <guid>, "outcomeId": <guid|null> }` (decision 8).
 - **Errors:** `401`; `403` as for create; `404` the idea does not exist or is outside caller scope;
   `400` keyed `outcomeId`: the Outcome does not exist, is soft-deleted, or belongs to another
-  organization — `"Outcome not found."`; `422` the item has a parent (decision 12).
+  organization — `"Outcome not found."`; `422` the item has a parent (decision 12). A `404` idea
+  takes precedence over a `400` `outcomeId`.
 - **Rules:**
   - **Eligibility (decision 12, `SPEC/20-feature-board-references.md`):** any item with no
     parent, in any status, on any board, including a standalone card on a child board, can be
@@ -220,7 +226,8 @@ The roadmap read.
   - `outcomes` — every non-deleted Outcome in `sortOrder`: the item fields and the flat rollup
     (decision 1), plus `issues`, an array of
     `{ ideaId, title, deliveryStatusId, effort, assigneeUserIds, sprintId, sprintStart, sprintEnd }`.
-  - `ungrouped` — the Issues under no Outcome, with the same fields.
+  - `ungrouped` — the items under no Outcome, with the same fields. Cards that have a parent are
+    excluded: they roll up through their parent.
   - **No Issue key is returned**; keys remain a gap.
 - **Errors:** `401`; `403` a Site Admin acting directly; `404` the organization does not exist or
   is outside caller scope.
