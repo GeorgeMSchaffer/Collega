@@ -271,6 +271,22 @@ export interface BoardsPort {
   /** The organization's first non-deleted status in sort order: the status a pool idea starts
    * with. `null` when it has none. */
   getFirstActiveStatusId(organizationId: string): Promise<string | null>
+
+  /**
+   * Takes the board's next item number and returns it, or `null` when the board has no key prefix.
+   * One awaited atomic statement, so two concurrent creates never share a number. It commits on its
+   * own, outside the unit of work: a later failed commit leaks the number, which "never reused"
+   * allows (Board References Ruling 5).
+   */
+  allocateItemNumber(boardId: string): Promise<number | null>
+
+  /** Key prefix per board id, for the whole list in one read. A board with no prefix is absent. */
+  getKeyPrefixes(boardIds: readonly string[]): Promise<ReadonlyMap<string, string>>
+}
+
+/** `<keyPrefix>-<itemNumber>`, or `null` for an item that has no number or whose board has no prefix. */
+export function itemKey(keyPrefix: string | undefined, itemNumber: number | null): string | null {
+  return keyPrefix !== undefined && itemNumber !== null ? `${keyPrefix}-${itemNumber}` : null
 }
 
 /** The left-most swimlane's status - the default for new ideas (rule #27). A plain function

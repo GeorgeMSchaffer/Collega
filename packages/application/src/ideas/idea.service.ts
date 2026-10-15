@@ -110,7 +110,7 @@ import type {
   UserSummary,
   UsersPort,
 } from './ports.js'
-import { hasSwimlaneForStatus, leftMostStatusId } from './ports.js'
+import { hasSwimlaneForStatus, itemKey, leftMostStatusId } from './ports.js'
 
 /** Mirrors Domain.Tags.Tag.NameMaxLength (B4-owned). Duplicated rather than imported: Ideas does
  * not depend on Tags' domain, only on `TagsPort` (see the report's cross-partition-duplication
@@ -353,10 +353,14 @@ export class IdeaService {
       submitted: command.fieldValues ?? [],
     })
 
+    // Last step before staging: a refusal above must not burn a number.
+    const itemNumber = boardId === null ? null : await this.boards.allocateItemNumber(boardId)
+
     let idea = createIdeaOrThrow({
       id: randomUUID(),
       organizationId: organizationId,
       boardId,
+      itemNumber,
       statusId,
       title: command.title ?? '',
       description: command.description,
@@ -424,9 +428,11 @@ export class IdeaService {
       await this.notifyIdeaFollowers('IdeaPromoted', idea, authorId)
     }
 
+    const prefixes = await this.keyPrefixesFor([idea])
     return {
       ideaId: idea.id,
       boardId: idea.boardId,
+      itemKey: this.keyOf(idea, prefixes),
       statusId: idea.statusId,
       title: idea.title,
       priority,
@@ -1299,6 +1305,7 @@ export class IdeaService {
           id: randomUUID(),
           organizationId,
           boardId,
+          itemNumber: await this.boards.allocateItemNumber(boardId),
           statusId,
           title,
           description,
@@ -1372,10 +1379,12 @@ export class IdeaService {
     const commentCounts = await this.comments.countByIdeaIds(ideaIds)
     const currentUserId = this.requireAuthenticatedUserId()
     const upvoted = await this.upvoteCounts.getUpvotedIdeaIds(currentUserId, ideaIds)
+    const keyPrefixes = await this.keyPrefixesFor(ideas)
 
     return ideas.map((idea) => ({
       ideaId: idea.id,
       boardId: idea.boardId,
+      itemKey: this.keyOf(idea, keyPrefixes),
       title: idea.title,
       priority: idea.priority,
       ideaTypeId: idea.ideaTypeId,
@@ -1564,9 +1573,12 @@ export class IdeaService {
       }
     })
 
+    const keyPrefixes = await this.keyPrefixesFor([idea])
+
     return {
       ideaId: idea.id,
       boardId: idea.boardId,
+      itemKey: this.keyOf(idea, keyPrefixes),
       title: idea.title,
       problem: idea.problem,
       proposedSolutions: idea.proposedSolutions,
@@ -1598,6 +1610,20 @@ export class IdeaService {
       author: this.projectAuthor(idea, userLookup),
       createdAtUtc: idea.createdAtUtc,
     }
+  }
+
+  /** One batched read of the key prefixes of the boards the given ideas sit on. */
+  private async keyPrefixesFor(ideas: readonly Idea[]): Promise<ReadonlyMap<string, string>> {
+    const boardIds = [
+      ...new Set(
+        ideas.flatMap((i) => (i.boardId !== null && i.itemNumber !== null ? [i.boardId] : [])),
+      ),
+    ]
+    return boardIds.length === 0 ? new Map() : this.boards.getKeyPrefixes(boardIds)
+  }
+
+  private keyOf(idea: Idea, prefixes: ReadonlyMap<string, string>): string | null {
+    return itemKey(idea.boardId === null ? undefined : prefixes.get(idea.boardId), idea.itemNumber)
   }
 
   private async loadTagLookup(tagIds: readonly string[]): Promise<ReadonlyMap<string, TagSummary>> {

@@ -188,6 +188,7 @@ export function harness(options: {
   const ideasById = new Map((options.ideas ?? []).map((i) => [i.id, i]))
   const usersById = new Map((options.users ?? [summary()]).map((u) => [u.id, u]))
   const sprintsById = new Map((options.sprints ?? []).map((s) => [s.id, s]))
+  const nextItemNumbers = new Map<string, number>()
 
   const saved: Idea[] = []
   const added: Idea[] = []
@@ -265,6 +266,22 @@ export function harness(options: {
     },
     async getFirstActiveStatusId() {
       return options.firstActiveStatusId === undefined ? STATUS_1 : options.firstActiveStatusId
+    },
+    async allocateItemNumber(boardId) {
+      if (!boardsById.get(boardId)?.keyPrefix) {
+        return null
+      }
+      const next = nextItemNumbers.get(boardId) ?? 1
+      nextItemNumbers.set(boardId, next + 1)
+      return next
+    },
+    async getKeyPrefixes(boardIds) {
+      return new Map(
+        boardIds.flatMap((id) => {
+          const prefix = boardsById.get(id)?.keyPrefix
+          return prefix ? [[id, prefix] as const] : []
+        }),
+      )
     },
   }
 

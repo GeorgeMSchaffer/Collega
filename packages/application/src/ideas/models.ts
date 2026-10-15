@@ -292,6 +292,8 @@ export type IdeaTagDto = {
 export type IdeaListItem = {
   readonly ideaId: string
   readonly boardId: string | null
+  /** `<board keyPrefix>-<itemNumber>`; `null` on a board without a prefix or with no board. */
+  readonly itemKey: string | null
   readonly title: string
   readonly priority: string
   readonly ideaTypeId: string
@@ -319,6 +321,7 @@ export type IdeaListItem = {
 export type IdeaDetail = {
   readonly ideaId: string
   readonly boardId: string | null
+  readonly itemKey: string | null
   readonly title: string
   readonly problem: string
   readonly proposedSolutions: readonly string[]
@@ -365,6 +368,7 @@ export type IdeaDetail = {
 export type CreateIdeaResult = {
   readonly ideaId: string
   readonly boardId: string | null
+  readonly itemKey: string | null
   readonly statusId: string
   readonly title: string
   readonly priority: string

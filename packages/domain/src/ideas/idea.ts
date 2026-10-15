@@ -60,6 +60,11 @@ export type Idea = Auditable & {
   /** `null` for an idea in the organization's pool (SPEC/20-feature-board-pull-in.md). */
   readonly boardId: string | null
   /**
+   * Position in the board's key sequence, assigned once when the idea lands on a board that has a
+   * key prefix and never reused. `null` in the pool and on a board without a prefix.
+   */
+  readonly itemNumber: number | null
+  /**
    * The ideation status. Frozen at its last Discovery value on promotion and never cleared:
    * ideation `Complete` and delivery `Complete` are distinct terminal states, and an item in
    * Delivery keeps both.
@@ -103,6 +108,8 @@ export type CreateIdeaProps = {
   readonly organizationId: string
   /** `null` creates the idea in the pool. */
   readonly boardId: string | null
+  /** Allocated by the application layer; omitted or `null` for no key. */
+  readonly itemNumber?: number | null
   readonly statusId: string
   readonly title: string
   readonly description: string | null
@@ -275,6 +282,7 @@ export function createIdea(props: CreateIdeaProps): Idea {
     id,
     organizationId,
     boardId,
+    itemNumber: boardId === null ? null : (props.itemNumber ?? null),
     statusId,
     title: normalizeTitle(props.title),
     description: normalizeDescription(props.description),
@@ -384,7 +392,7 @@ export function detachIdeaFromBoard(idea: Idea, nowUtc: Date, actorUserId: strin
   if (idea.boardId === null) {
     return idea
   }
-  return markUpdated({ ...idea, boardId: null }, nowUtc, actorUserId)
+  return markUpdated({ ...idea, boardId: null, itemNumber: null }, nowUtc, actorUserId)
 }
 
 /**
@@ -411,6 +419,8 @@ export function pullIdeaOntoBoard(
     {
       ...pulled,
       boardId: assertRequiredId('boardId', boardId, 'Board id is required.'),
+      // The number belongs to the board it was issued on; the new board issues its own.
+      itemNumber: null,
       statusId: assertRequiredId('statusId', statusId, 'Status id is required.'),
     },
     nowUtc,
