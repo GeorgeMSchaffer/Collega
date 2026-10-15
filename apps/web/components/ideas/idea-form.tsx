@@ -9,15 +9,19 @@ import {
   useState,
   useTransition,
 } from 'react'
+import { IssueDeliveryFields } from '@/components/delivery/issue-delivery-fields'
 import { Icon } from '@/components/list/icons'
 import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from '@/lib/limits'
+import { addIssue } from '@/lib/server/delivery-actions'
 import { saveIdea } from '@/lib/server/idea-actions'
 import type {
   BoardRef,
+  Effort,
   IdeaDetail,
   IdeaFormField,
   IdeaFormOptions,
   MemberOption,
+  Sprint,
   TagRef,
 } from '@/lib/types'
 import { PRIORITIES } from './idea-list-config'
@@ -109,6 +113,7 @@ export function IdeaForm({
   boards,
   boardId,
   contentLocked,
+  addingIssue,
   onSaved,
   onPendingChange,
 }: {
@@ -121,7 +126,13 @@ export function IdeaForm({
   /** The board preselected when creating from a board's page; none from the Ideas list. */
   boardId: string | null
   contentLocked: boolean
-  onSaved: (ideaId: string) => void
+  /**
+   * Adding an Issue directly from the Backlog: the form gains Effort and Sprint (`sprints` are the
+   * ones on offer) and saves through `POST /organizations/{id}/issues`. Absent, it is the idea form.
+   */
+  addingIssue?: { sprints: readonly Pick<Sprint, 'id' | 'name' | 'state'>[] }
+  /** `sprintId` is the one an added Issue was put in; empty for the Backlog. */
+  onSaved: (ideaId: string, sprintId?: string) => void
   onPendingChange: (pending: boolean) => void
 }) {
   const id = useId()
@@ -131,6 +142,8 @@ export function IdeaForm({
   const [tagText, setTagText] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+  const [effort, setEffort] = useState<Effort | ''>('')
+  const [sprintId, setSprintId] = useState('')
 
   useEffect(() => onPendingChange(pending), [pending, onPendingChange])
 
@@ -154,6 +167,7 @@ export function IdeaForm({
   function check(): Record<string, string> {
     const found: Record<string, string> = {}
     if (!draft.title.trim()) found.title = required('Title')
+    if (addingIssue && !effort) found.effort = 'Choose an effort.'
     if (!draft.problem.trim()) found.problem = required('Problem')
     if (!draft.solutions.some((s) => s.trim())) {
       found.proposedSolutions = 'Add at least one proposed solution.'
@@ -185,9 +199,7 @@ export function IdeaForm({
     }
 
     startTransition(async () => {
-      const result = await saveIdea({
-        ideaId: idea?.id ?? null,
-        boardId: draft.boardId,
+      const input = {
         title: draft.title,
         problem: draft.problem,
         proposedSolutions: draft.solutions.filter((s) => s.trim()),
@@ -204,9 +216,13 @@ export function IdeaForm({
           fieldDefinitionId: field.id,
           value: draft.fields[field.id] ?? '',
         })),
-      })
+      }
+      const result =
+        addingIssue && effort
+          ? await addIssue({ ...input, effort, sprintId })
+          : await saveIdea({ ...input, ideaId: idea?.id ?? null, boardId: draft.boardId })
       if (result.ok) {
-        onSaved(result.ideaId)
+        onSaved(result.ideaId, addingIssue ? sprintId : undefined)
       } else {
         setErrors(result.errors)
         setError(result.error)
@@ -228,6 +244,7 @@ export function IdeaForm({
     'dueDate',
     'tagNames',
     'assigneeUserIds',
+    ...(addingIssue ? ['effort', 'sprintId'] : []),
     ...customFields.map((field) => field.name),
   ])
   const unplaced = Object.entries(errors).filter(([key]) => !placed.has(key))
@@ -297,6 +314,17 @@ export function IdeaForm({
           aria-invalid={errors.title ? true : undefined}
         />
       </Field>
+
+      {addingIssue ? (
+        <IssueDeliveryFields
+          effort={effort}
+          sprintId={sprintId}
+          sprints={addingIssue.sprints}
+          errors={errors}
+          onEffort={setEffort}
+          onSprint={setSprintId}
+        />
+      ) : null}
 
       <Field
         htmlFor={fid('problem')}

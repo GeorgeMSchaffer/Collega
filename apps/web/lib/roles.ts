@@ -45,6 +45,17 @@ export function boardCreateDenial(role: Role): string | null {
 }
 
 /**
+ * Whether the role may add an Issue directly from the Backlog: a User or an Org Admin, the roles of
+ * `POST /organizations/{id}/issues` (`20-feature-issues-and-delivery.md` "Backlog: add and edit").
+ * A Site Admin is sent to View As, where the role is the target's.
+ */
+export function issueAddDenial(role: Role): string | null {
+  if (role === 'SiteAdmin') return 'Act as a member to add issues. Use View As.'
+  if (role === 'ReadOnly') return 'Read Only members cannot add issues.'
+  return null
+}
+
+/**
  * Whether the role may engage - vote and comment - which is a different question from whether it
  * may edit. A Read Only account deliberately keeps engagement; a Site Admin has neither, being
  * outside the organization entirely.
