@@ -35,6 +35,15 @@ export type CreateIdeaCommand = {
  * idea does not choose. */
 export type CreatePoolIdeaCommand = Omit<CreateIdeaCommand, 'statusId'>
 
+/** `POST /organizations/{organizationId}/issues`: the pool create's fields plus the promotion's
+ * `effort` and `sprintId`. */
+export type AddIssueCommand = CreatePoolIdeaCommand & {
+  /** Required: `Low`, `Medium` or `High`. */
+  readonly effort: string
+  /** `null` adds the Issue to the delivery backlog. */
+  readonly sprintId: string | null
+}
+
 export type UpdateIdeaCommand = {
   readonly title: string
   readonly description: string | null

@@ -54,6 +54,7 @@ import {
 } from '../common/index.js'
 import { randomTagColor } from '../tags/random-color.js'
 import type {
+  AddIssueCommand,
   AssignIssueToSprintCommand,
   ChangeDeliveryStatusCommand,
   ChangeIdeaStatusCommand,
@@ -292,11 +293,43 @@ export class IdeaService {
     return this.createIdeaRecord(organizationId, null, statusId, command)
   }
 
+  /**
+   * Adds an Issue directly: a pool idea created and promoted in one unit of work, so a failure can
+   * never leave a Discovery idea the caller meant to be an Issue (SPEC/contracts/delivery.md,
+   * `POST /organizations/{organizationId}/issues`).
+   *
+   * `readCommand` runs after authorization, not before: the contract evaluates authorization
+   * before validation, so a caller who may not add an Issue learns nothing about the fields. The
+   * controller passes its request parsing and field validation in as that callback.
+   */
+  async addIssue(
+    organizationId: string,
+    readCommand: () => AddIssueCommand,
+  ): Promise<CreateIdeaResult> {
+    ensureNotDirectSiteAdmin(this.currentUser)
+    this.requireIdeaEditRole()
+    this.ensureOrganizationScope(organizationId)
+
+    const command = readCommand()
+    const effort = parseEffort(command.effort)
+    const sprintId = await this.resolveAssignableSprint(organizationId, command.sprintId)
+
+    const statusId = await this.boards.getFirstActiveStatusId(organizationId)
+    if (!statusId) {
+      throw new ValidationError('One or more fields are invalid.', {
+        statusId: ['The organization has no active status to place the idea in.'],
+      })
+    }
+
+    return this.createIdeaRecord(organizationId, null, statusId, command, { effort, sprintId })
+  }
+
   private async createIdeaRecord(
     organizationId: string,
     boardId: string | null,
     statusId: string,
     command: Omit<CreateIdeaCommand, 'statusId'>,
+    promotion?: { readonly effort: EffortLevel; readonly sprintId: string | null },
   ): Promise<CreateIdeaResult> {
     const now = this.clock.now()
     const authorId = this.requireAuthenticatedUserId()
@@ -346,6 +379,17 @@ export class IdeaService {
       command.ideaTypeId,
     )
     idea = replaceIdeaFieldValues(idea, fieldValues, reconcileScope, now, authorId)
+    if (promotion) {
+      // A new idea has no upvotes, so the support-at-commitment snapshot is 0. Promoted before
+      // `add`, so the row is written once, already in Delivery, by the one saveChanges below.
+      idea = runDelivery(
+        promoteIdeaToIssue,
+        idea,
+        { ...promotion, currentUpvoteCount: 0 },
+        now,
+        authorId,
+      )
+    }
 
     await this.ideaRepository.add(idea)
     // The author and each assignee follow automatically (SPEC/20-feature-idea-following.md 4-5).
@@ -358,9 +402,27 @@ export class IdeaService {
       statusId: idea.statusId,
     })
     await this.emitFieldValueAudit(idea, new Map(), authorId, now)
+    if (promotion) {
+      await this.auditIdea(
+        'IdeaPromotedToIssue',
+        idea,
+        authorId,
+        `Idea '${idea.title}' promoted to an issue.`,
+        now,
+        {
+          effort: promotion.effort,
+          sprintId: promotion.sprintId,
+          upvoteCountAtPromotion: 0,
+          note: null,
+        },
+      )
+    }
 
     // Notify everyone mentioned in the new idea body (SPEC/20-feature-notifications.md trigger #1).
     await this.notifyMentions(idea, mentionIds, authorId)
+    if (promotion) {
+      await this.notifyIdeaFollowers('IdeaPromoted', idea, authorId)
+    }
 
     return {
       ideaId: idea.id,
