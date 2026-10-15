@@ -655,3 +655,114 @@ describe('pulling into a reference lane', () => {
     expect(accepted.moved).toHaveLength(1)
   })
 })
+
+describe('Effort entry rule: the edges of ideaMoves and pull', () => {
+  const lanes: SwimlaneInput[] = [
+    { statusId: S1, order: 0, referencesBoardId: 'b' },
+    { statusId: 'status-3', order: 1 },
+  ]
+  const moves = { ideaMoves: [{ fromStatusId: S2, toStatusId: S1 }] }
+  const laneIdea = (ideaId: string, effort: EffortLevel | null) => ({
+    ideaId,
+    title: ideaId,
+    statusId: S2,
+    effort,
+  })
+
+  it('refuses the whole move when only one of several ideas has no Effort, and moves nothing', async () => {
+    const h = harness(
+      [board('a'), board('b')],
+      [],
+      [laneIdea('i1', EffortLevel.Low), laneIdea('i2', null), laneIdea('i3', EffortLevel.High)],
+    )
+
+    expect(await codeOf(update(h.service, 'a', lanes, moves))).toBe(
+      'effortRequiredForReferenceLane',
+    )
+    expect(h.saved).toHaveLength(0)
+  })
+
+  it('does not ask for Effort when the target lane is an ordinary one', async () => {
+    const h = harness([board('a'), board('b')], [], [laneIdea('i1', null)])
+
+    await expect(
+      update(h.service, 'a', lanes, { ideaMoves: [{ fromStatusId: S2, toStatusId: 'status-3' }] }),
+    ).resolves.toBeDefined()
+  })
+
+  it('does not ask for Effort when no lane references a board', async () => {
+    const h = harness([board('a')], [], [laneIdea('i1', null)])
+
+    await expect(
+      update(
+        h.service,
+        'a',
+        [
+          { statusId: S1, order: 0 },
+          { statusId: 'status-3', order: 1 },
+        ],
+        moves,
+      ),
+    ).resolves.toBeDefined()
+  })
+
+  const pooledAt = (statusId: string, effort: EffortLevel | null): Idea => ({
+    ...createIdea({
+      id: '22222222-2222-4222-8222-222222222222',
+      organizationId: ORG_A,
+      boardId: null,
+      statusId,
+      title: 'Pooled',
+      description: null,
+      problem: 'p',
+      proposedSolutions: ['s'],
+      impactRationale: 'r',
+      priority: Priority.Medium,
+      ideaTypeId: 't',
+      businessImpactId: 'i',
+      dueDate: null,
+      authorUserId: 'author',
+      assigneeUserIds: [],
+      tagIds: [],
+      mentionedUserIds: [],
+      nowUtc: NOW,
+    }),
+    effort,
+  })
+  const pull = { pullItemIds: ['22222222-2222-4222-8222-222222222222'] }
+
+  it('refuses a pull whose kept status is a reference lane, when Effort is unset', async () => {
+    const keptLanes: SwimlaneInput[] = [
+      { statusId: S1, order: 0 },
+      { statusId: S2, order: 1, referencesBoardId: 'b' },
+    ]
+    const h = harness([board('a'), board('b')], [], [], [pooledAt(S2, null)])
+
+    expect(await codeOf(update(h.service, 'a', keptLanes, pull))).toBe(
+      'effortRequiredForReferenceLane',
+    )
+    expect(h.saved).toHaveLength(0)
+    expect(h.moved).toHaveLength(0)
+  })
+
+  it('lets an item with no Effort be pulled into an ordinary lane of a board that has a reference lane', async () => {
+    // The item's own status S1 is ordinary on this board; the reference lane is S2.
+    const ordinaryLanes: SwimlaneInput[] = [
+      { statusId: S1, order: 0 },
+      { statusId: S2, order: 1, referencesBoardId: 'b' },
+    ]
+    const h = harness([board('a'), board('b')], [], [], [pooledAt(S1, null)])
+
+    await update(h.service, 'a', ordinaryLanes, pull)
+
+    expect(h.moved).toHaveLength(1)
+  })
+
+  it('lets an item with no Effort be pulled when no lane references a board', async () => {
+    const h = harness([board('a')], [], [], [pooledAt('unused-status', null)])
+
+    await update(h.service, 'a', LANES, pull)
+
+    expect(h.moved).toHaveLength(1)
+  })
+})
