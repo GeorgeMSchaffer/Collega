@@ -592,16 +592,21 @@ pnpm --filter @collega/infrastructure db:bootstrap-organization
 
 ## 10. Rollback posture
 
-**The rollback unit is the database, not a previous stack.** `SPEC/50-typescript-migration.md` §7
-settled this: the .NET stack was never deployed, so there is nothing to fall back to, and after F6
-there is no .NET code either. What follows is that statement made operational.
+**Code rolls back; the database does not, and there is no older stack behind either.**
+`SPEC/50-typescript-migration.md` §7 settled the last part: the .NET stack was never deployed, so there is
+nothing to fall back to, and after F6 there is no .NET code either. What follows is that statement made
+operational, and it matches `SPEC/50-cutover-runbook.md` §3.
 
 - **Code rolls back instantly and by itself.** Vercel keeps every deployment; Instant Rollback
   repoints production at the previous one in seconds, per project. Roll back `collega` (web) and
-  `collega-api` **together** unless you know the pair is compatible.
+  `collega-api` **together** unless you know the pair is compatible. The previous deployment keeps
+  serving; at the release's database swap, repointing `DATABASE_URL` at the old database is that
+  step's rollback (runbook §2 step 2).
 - **The database does not roll back with it.** A rollback restores code against a schema that has
   already moved. So: **every migration must be backward-compatible with the deployment before it**
-  — add columns and tables, do not drop or rename them in the same release that stops using them.
+  — add columns and tables, do not drop or rename them in the same release that stops using them,
+  and do not loosen a constraint (drop `NOT NULL`) or drop an index the previous deployment relies on.
+  A fresh production database passes this trivially; the rule stands for later releases.
   Drop in a later, separate deployment, once the rollback window has closed. A migration that
   breaks this rule is the point of no return for that release, and should be announced as one
   rather than discovered.
