@@ -12,7 +12,7 @@ export function ThemePicker() {
   return (
     <label
       htmlFor="theme-picker"
-      className="m-0 inline-flex items-center gap-1.5 text-[13px] font-normal text-muted-foreground"
+      className="m-0 inline-flex items-center gap-1.5 text-xs font-normal text-muted-foreground"
     >
       <svg
         viewBox="0 0 24 24"
@@ -30,7 +30,7 @@ export function ThemePicker() {
         id="theme-picker"
         value={theme}
         onChange={(event) => setTheme(event.target.value as Theme)}
-        className="h-[var(--control-h-sm)] w-auto cursor-pointer rounded-full py-0 text-[13px] text-foreground"
+        className="h-[var(--control-h-sm)] w-auto cursor-pointer rounded-full py-0 text-xs text-foreground"
       >
         {GROUPS.map((group) => (
           <optgroup key={group} label={group}>

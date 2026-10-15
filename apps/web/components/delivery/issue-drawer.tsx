@@ -24,7 +24,7 @@ import type { IssueDrawerData } from './load-issue-drawer'
 function Fact({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="min-w-0">
-      <dt className="font-mono text-[10.5px] uppercase tracking-[0.06em] text-muted-foreground">
+      <dt className="font-mono text-xs uppercase tracking-[0.06em] text-muted-foreground">
         {label}
       </dt>
       <dd className="m-0 mt-0.5 flex flex-wrap items-center gap-1 text-sm font-medium">
@@ -134,11 +134,11 @@ export function IssueDrawer({
         <>
           <dl className="m-0 grid grid-cols-2 gap-3 rounded-md bg-muted/60 p-3">
             <div className="min-w-0">
-              <dt className="font-mono text-[10.5px] uppercase tracking-[0.06em] text-muted-foreground">
+              <dt className="font-mono text-xs uppercase tracking-[0.06em] text-muted-foreground">
                 {canWork ? (
                   <label
                     htmlFor={statusId}
-                    className="m-0 font-mono text-[10.5px] font-medium text-muted-foreground"
+                    className="m-0 font-mono text-xs font-medium text-muted-foreground"
                   >
                     Status
                   </label>
@@ -180,7 +180,7 @@ export function IssueDrawer({
               {issue.sprint ? (
                 <>
                   {issue.sprint.name}
-                  <span className="font-mono text-[11px] text-muted-foreground">
+                  <span className="font-mono text-xs text-muted-foreground">
                     {issue.sprint.window}
                   </span>
                 </>

@@ -206,7 +206,7 @@ export function CommentBox({
         onChange={(event) => setBody(event.target.value)}
       />
       {state.error ? (
-        <p className="m-0 text-[0.8rem] font-medium text-destructive" role="status">
+        <p className="m-0 text-xs font-medium text-destructive" role="status">
           {state.error}
         </p>
       ) : null}

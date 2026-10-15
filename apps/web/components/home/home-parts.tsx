@@ -41,7 +41,7 @@ export function KpiRow({
       {kpis.map((kpi) => (
         <Tile key={kpi.label}>
           <Meta caps>{kpi.label}</Meta>
-          <span className="self-start font-heading text-[26px] leading-tight font-semibold tabular-nums sm:text-3xl">
+          <span className="self-start font-heading text-2xl leading-tight font-semibold tabular-nums sm:text-3xl">
             {kpi.href ? (
               <Link href={kpi.href} className="text-foreground no-underline hover:underline">
                 {kpi.value}
@@ -115,10 +115,7 @@ export function Panel({
     <section aria-labelledby={id} className={cn('flex min-w-0 flex-col gap-2.5', className)}>
       <div className="flex items-start gap-2.5">
         <div className="min-w-0 flex-1">
-          <h2
-            id={id}
-            className="m-0 flex items-center gap-2 text-[17px] leading-snug font-semibold"
-          >
+          <h2 id={id} className="m-0 flex items-center gap-2 text-base leading-snug font-semibold">
             {heading}
           </h2>
           {standfirst ? (

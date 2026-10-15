@@ -20,7 +20,7 @@ export function EffortBar({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 whitespace-nowrap font-mono text-[11px] font-medium text-muted-foreground',
+        'inline-flex items-center gap-1.5 whitespace-nowrap font-mono text-xs font-medium text-muted-foreground',
         className,
       )}
       {...props}

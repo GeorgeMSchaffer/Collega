@@ -125,7 +125,7 @@ export function CardActions({
       ) : null}
 
       {error ? (
-        <p className="m-0 w-full text-[0.8rem] font-medium text-destructive" role="status">
+        <p className="m-0 w-full text-xs font-medium text-destructive" role="status">
           {error}
         </p>
       ) : null}

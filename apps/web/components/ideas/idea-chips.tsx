@@ -63,7 +63,7 @@ export function People({
         <Avatar
           key={person.id}
           initials={person.initials}
-          className="-ml-1.5 size-6 border-2 border-card text-[10px] first:ml-0"
+          className="-ml-1.5 size-6 border-2 border-card text-xs first:ml-0"
         />
       ))}
       {people.length > max ? (

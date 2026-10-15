@@ -103,7 +103,7 @@ export function IssueTasks({
         >
           Tasks
         </h3>
-        <span className="font-mono text-[11px] text-muted-foreground">
+        <span className="font-mono text-xs text-muted-foreground">
           {done} of {shown.length} done
         </span>
       </div>

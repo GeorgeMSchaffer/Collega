@@ -134,10 +134,7 @@ export default async function BacklogPage({
                         <td className="px-4 py-2.5 text-muted-foreground">{status?.name}</td>
                         <td className="px-4 py-2.5">
                           {issue.assigneeInitials ? (
-                            <Avatar
-                              initials={issue.assigneeInitials}
-                              className="size-6 text-[10px]"
-                            />
+                            <Avatar initials={issue.assigneeInitials} className="size-6 text-xs" />
                           ) : (
                             <span className="text-xs text-muted-foreground">Unassigned</span>
                           )}

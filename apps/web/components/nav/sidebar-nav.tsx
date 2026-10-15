@@ -36,7 +36,7 @@ export function SidebarNav({
     <aside className="flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar p-2 text-sidebar-foreground max-md:w-full max-md:flex-row max-md:flex-wrap max-md:items-center max-md:border-r-0 max-md:border-b">
       {/* Sidebar tokens only in here: one theme (Piazza Sera) gives the rail a dark ground. */}
       <div className="flex items-center gap-2 px-2 py-3 text-base font-semibold text-sidebar-accent-foreground">
-        <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary text-[11px] font-bold text-primary-foreground">
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
           CG
         </span>
         <b>Collega</b>

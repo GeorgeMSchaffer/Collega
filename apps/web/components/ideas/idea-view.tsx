@@ -7,7 +7,7 @@ import { People, PriorityMarker, StatusMarker, TagList } from './idea-chips'
 function Fact({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="min-w-0">
-      <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</dt>
+      <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
       <dd className="m-0 mt-0.5 flex flex-wrap items-center gap-1 text-sm font-medium">
         {children}
       </dd>
@@ -134,7 +134,7 @@ export function IdeaView({
                 {/* An author the API could not resolve is left unattributed rather than named. */}
                 <Avatar
                   initials={comment.author?.initials ?? '—'}
-                  className="mt-0.5 size-6 text-[10px]"
+                  className="mt-0.5 size-6 text-xs"
                 />
                 <div className="min-w-0">
                   <div className="text-xs text-muted-foreground">

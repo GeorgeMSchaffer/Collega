@@ -63,7 +63,7 @@ function ZoomSwitch({ value, onChange }: { value: Zoom; onChange: (zoom: Zoom) =
           aria-pressed={zoom === value}
           onClick={() => onChange(zoom)}
           className={cn(
-            'rounded-sm px-3 py-1 text-[13px] text-muted-foreground hover:text-foreground',
+            'rounded-sm px-3 py-1 text-xs text-muted-foreground hover:text-foreground',
             zoom === value && 'bg-card font-semibold text-foreground shadow-xs',
           )}
         >
@@ -99,7 +99,7 @@ function SprintRow({ sprint, range }: { sprint: Sprint; range: RoadmapWindow }) 
 
   const label = `${sprint.doneCount} / ${sprint.issueCount} DONE`
   const bar = cn(
-    '@container absolute top-3 flex h-6 items-center rounded-sm font-mono text-[10.5px] font-medium whitespace-nowrap',
+    '@container absolute top-3 flex h-6 items-center rounded-sm font-mono text-xs font-medium whitespace-nowrap',
     sprint.state === 'Active' && 'border border-primary bg-accent text-foreground',
     sprint.state === 'Planned' &&
       'border border-dashed border-muted-foreground bg-card text-foreground',
@@ -128,7 +128,7 @@ function SprintRow({ sprint, range }: { sprint: Sprint; range: RoadmapWindow }) 
 
   return (
     <li className={ROW}>
-      <div className="flex min-w-0 items-center gap-2 px-4 text-[13px]">
+      <div className="flex min-w-0 items-center gap-2 px-4 text-xs">
         <span className="truncate" title={sprint.name}>
           {sprint.name}
           {sprint.state === 'Active' ? null : (

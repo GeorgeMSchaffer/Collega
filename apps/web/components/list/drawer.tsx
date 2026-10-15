@@ -94,15 +94,13 @@ export function Drawer({
       <div className="flex items-start gap-2 border-b px-[18px] pt-4 pb-2.5">
         <div className="min-w-0">
           {eyebrow ? (
-            <div className="font-mono text-[11px] tracking-wide text-muted-foreground">
-              {eyebrow}
-            </div>
+            <div className="font-mono text-xs tracking-wide text-muted-foreground">{eyebrow}</div>
           ) : null}
           <h2
             ref={heading}
             id={headingId}
             tabIndex={-1}
-            className="m-0 mt-0.5 text-[19px] leading-tight text-balance focus:outline-none"
+            className="m-0 mt-0.5 text-lg leading-tight text-balance focus:outline-none"
           >
             {title}
           </h2>

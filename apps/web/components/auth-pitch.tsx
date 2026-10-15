@@ -37,7 +37,7 @@ function BoardPreview() {
           key={lane.label}
           className="flex min-h-[170px] flex-col gap-1.5 rounded-lg border border-sidebar-border bg-background p-1.5"
         >
-          <div className="flex items-center gap-1.5 overflow-hidden px-0.5 font-mono text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-1.5 overflow-hidden px-0.5 font-mono text-xs text-muted-foreground">
             <span className={`size-1.5 shrink-0 rounded-full ${lane.dot}`} />
             {lane.label}
           </div>
@@ -88,7 +88,7 @@ export function AuthPitch({
           {points.map((point, i) => (
             // Static copy in source order; there is no id to key on and the list never reorders.
             // biome-ignore lint/suspicious/noArrayIndexKey: fixed, non-reordering static list
-            <li key={i} className="flex items-start gap-2.5 text-[15px] leading-snug">
+            <li key={i} className="flex items-start gap-2.5 text-sm leading-snug">
               <Check />
               <span>{point}</span>
             </li>

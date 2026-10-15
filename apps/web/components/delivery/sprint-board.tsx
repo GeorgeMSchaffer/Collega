@@ -57,7 +57,7 @@ function Badge({ tone, children }: { tone: 'success' | 'warning' | 'muted'; chil
   return (
     <span
       className={cn(
-        'rounded-[4px] border border-current px-1.5 font-mono text-[10.5px] font-medium leading-[18px] tracking-[0.04em]',
+        'rounded-[4px] border border-current px-1.5 font-mono text-xs font-medium leading-[18px] tracking-[0.04em]',
         tone === 'success' && 'text-success',
         tone === 'warning' && 'text-warning',
         tone === 'muted' && 'text-muted-foreground',
@@ -74,7 +74,7 @@ function StripCell({ term, children }: { term: string; children: ReactNode }) {
       <dt>
         <Meta caps>{term}</Meta>
       </dt>
-      <dd className="m-0 flex flex-wrap items-center gap-2 font-mono text-[13px] font-medium">
+      <dd className="m-0 flex flex-wrap items-center gap-2 font-mono text-xs font-medium">
         {children}
       </dd>
     </div>
@@ -309,13 +309,13 @@ export function SprintBoard({
                   {/* The status colour is data, so it tints the header against the theme's card
                       and ink rather than standing alone as a raw fill. */}
                   <div
-                    className="flex items-center gap-2 rounded-t-xl rounded-b-sm px-3 py-1.5 text-[13px] font-semibold"
+                    className="flex items-center gap-2 rounded-t-xl rounded-b-sm px-3 py-1.5 text-xs font-semibold"
                     style={{
                       background: `color-mix(in srgb, ${status.color} 14%, var(--card))`,
                       color: `color-mix(in srgb, ${status.color} 55%, var(--foreground))`,
                     }}
                   >
-                    <h2 className="m-0 flex-1 text-[13px] font-semibold">{status.name}</h2>
+                    <h2 className="m-0 flex-1 text-xs font-semibold">{status.name}</h2>
                     <span className="font-mono text-xs font-medium opacity-80">
                       {inLane.length}
                       <span className="sr-only"> issues</span>
@@ -359,7 +359,7 @@ export function SprintBoard({
                                 role="img"
                                 aria-label="Unassigned"
                                 title="Unassigned"
-                                className="inline-grid size-6 place-items-center rounded-full border border-dashed border-input text-[10px] text-muted-foreground"
+                                className="inline-grid size-6 place-items-center rounded-full border border-dashed border-input text-xs text-muted-foreground"
                               >
                                 —
                               </span>
@@ -369,7 +369,7 @@ export function SprintBoard({
                             type="button"
                             data-issue={issue.id}
                             onClick={(event) => open(issue.id, event.currentTarget)}
-                            className="text-left text-[13px] leading-snug font-semibold hover:text-accent-foreground hover:underline"
+                            className="text-left text-xs leading-snug font-semibold hover:text-accent-foreground hover:underline"
                           >
                             {issue.title}
                           </button>

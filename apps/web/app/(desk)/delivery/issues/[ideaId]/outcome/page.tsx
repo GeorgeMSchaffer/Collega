@@ -105,7 +105,7 @@ export default async function SetOutcomePage({ params }: { params: Promise<{ ide
 
           <div className="flex flex-col gap-1 border-b px-6 py-4">
             <div className="flex items-start gap-3">
-              <span className="font-mono text-[0.68rem] uppercase tracking-wider text-muted-foreground">
+              <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
                 Set outcome
               </span>
               <Link

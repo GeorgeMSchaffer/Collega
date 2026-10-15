@@ -95,7 +95,7 @@ export function IdeaCard({
             const target = event.key === 'ArrowLeft' ? previousStatusId : nextStatusId
             if (target && !event.repeat) onKeyMove(target)
           }}
-          className="text-left text-[13px] leading-snug font-semibold hover:text-accent-foreground hover:underline"
+          className="text-left text-xs leading-snug font-semibold hover:text-accent-foreground hover:underline"
         >
           {idea.title}
         </button>

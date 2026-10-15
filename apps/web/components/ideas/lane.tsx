@@ -180,7 +180,7 @@ export function Lane({
         }}
         onDragEnd={() => reorder?.onDragEnd()}
         className={cn(
-          'flex items-center gap-2 rounded-t-xl rounded-b-sm px-3 py-1.5 text-[13px] font-semibold',
+          'flex items-center gap-2 rounded-t-xl rounded-b-sm px-3 py-1.5 text-xs font-semibold',
           draggable && 'cursor-grab active:cursor-grabbing',
         )}
         style={{

@@ -30,17 +30,14 @@ export function Pager({
   const to = Math.min(total, current * size)
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2.5 text-[13px] text-muted-foreground">
-      <label
-        htmlFor={sizeId}
-        className="m-0 inline-flex items-center gap-1.5 text-[13px] font-normal"
-      >
+    <div className="flex flex-wrap items-center justify-between gap-2.5 text-xs text-muted-foreground">
+      <label htmlFor={sizeId} className="m-0 inline-flex items-center gap-1.5 text-xs font-normal">
         Show
         <select
           id={sizeId}
           value={size}
           onChange={(event) => onSizeChange(Number(event.target.value) as PageSize)}
-          className="h-[var(--control-h-sm)] w-auto py-0 text-[13px] text-foreground"
+          className="h-[var(--control-h-sm)] w-auto py-0 text-xs text-foreground"
         >
           {PAGE_SIZES.map((n) => (
             <option key={n} value={n}>
