@@ -5,7 +5,7 @@ import { SprintState } from '@collega/domain/enums'
 import { describe, expect, it } from 'vitest'
 import { UnprocessableError } from '../../src/common/index.js'
 import { ORG_A, orgAdmin } from '../support/fixtures.js'
-import { BOARD_A, BOARD_B, harness, idea } from './idea-service-harness.js'
+import { BOARD_A, BOARD_B, CREATE, harness, idea } from './idea-service-harness.js'
 
 function boardSprint(boardId: string) {
   return {
@@ -59,5 +59,37 @@ describe('IdeaService.assignToSprint on a board sprint', () => {
     await service.assignToSprint('idea-1', { sprintId: null })
 
     expect(saved[0]?.sprintId).toBeNull()
+  })
+})
+
+describe('board sprints on the legacy paths', () => {
+  it('refuses promoting an idea of another board into a board sprint', async () => {
+    const { service, saved } = harness({
+      currentUser: orgAdmin(ORG_A),
+      ideas: [idea()],
+      sprints: [boardSprint(BOARD_B)],
+    })
+
+    const error = await service
+      .promote('idea-1', { effort: 'Medium', sprintId: 'sprint-board', note: null })
+      .catch((e: unknown) => e)
+
+    expect(error).toMatchObject({ code: 'sprintItemOnOtherBoard' })
+    expect(saved).toHaveLength(0)
+  })
+
+  it('refuses adding an Issue (no board) into a board sprint', async () => {
+    const { boardId: _b, statusId: _s, ...pool } = CREATE as typeof CREATE & { boardId?: string }
+    const { service, added } = harness({
+      currentUser: orgAdmin(ORG_A),
+      sprints: [boardSprint(BOARD_A)],
+    })
+
+    const error = await service
+      .addIssue(ORG_A, () => ({ ...pool, effort: 'Medium', sprintId: 'sprint-board' }))
+      .catch((e: unknown) => e)
+
+    expect(error).toMatchObject({ code: 'sprintItemOnOtherBoard' })
+    expect(added).toHaveLength(0)
   })
 })

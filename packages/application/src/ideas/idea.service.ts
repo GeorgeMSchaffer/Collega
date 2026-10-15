@@ -321,7 +321,7 @@ export class IdeaService {
 
     const command = readCommand()
     const effort = parseEffort(command.effort)
-    const sprintId = await this.resolveAssignableSprint(organizationId, command.sprintId)
+    const sprintId = await this.resolveAssignableSprint(organizationId, command.sprintId, null)
 
     const statusId = await this.boards.getFirstActiveStatusId(organizationId)
     if (!statusId) {
@@ -1011,7 +1011,11 @@ export class IdeaService {
     await this.ensureIdeaBoardNotArchived(idea)
 
     const effort = parseEffort(command.effort)
-    const sprintId = await this.resolveAssignableSprint(idea.organizationId, command.sprintId)
+    const sprintId = await this.resolveAssignableSprint(
+      idea.organizationId,
+      command.sprintId,
+      idea.boardId,
+    )
     const currentUpvoteCount = await this.upvoteCounts.countByIdea(idea.id)
 
     idea = runDelivery(
@@ -1754,8 +1758,17 @@ export class IdeaService {
   private async resolveAssignableSprint(
     organizationId: string,
     sprintId: string | null,
+    itemBoardId: string | null,
   ): Promise<string | null> {
-    return (await this.resolveAssignableSprintSummary(organizationId, sprintId))?.id ?? null
+    const sprint = await this.resolveAssignableSprintSummary(organizationId, sprintId)
+    // A board sprint holds items of its own board only; a new Issue has no board.
+    if (sprint?.boardId && sprint.boardId !== itemBoardId) {
+      throw new UnprocessableError(
+        'sprintItemOnOtherBoard',
+        'A sprint holds items from its own board only.',
+      )
+    }
+    return sprint?.id ?? null
   }
 
   private async resolveAssignableSprintSummary(
