@@ -2,6 +2,7 @@
 
 import { Button, Dot, EffortBar, Marker, Select } from '@collega/design-system'
 import { type ReactNode, useId, useOptimistic, useState, useTransition } from 'react'
+import { GatedAction } from '@/components/common/gated-action'
 import { People, TagList } from '@/components/ideas/idea-chips'
 import { IdeaForm } from '@/components/ideas/idea-form'
 import { BoardChip, IdeaView } from '@/components/ideas/idea-view'
@@ -96,10 +97,20 @@ export function IssueDrawer({
       </Button>
     </>
   ) : canEdit ? (
-    <Button onClick={() => openDrawer({ edit: data.issue.id })}>
-      <Icon name="edit" />
-      Edit
-    </Button>
+    <GatedAction
+      id={`${formId}-why-edit`}
+      label="Edit"
+      denial={
+        mayEditIdeaContent(user.role, user.userId, data.idea.authorUserId)
+          ? null
+          : 'Only the author or an Org Admin can edit this issue.'
+      }
+    >
+      <Button onClick={() => openDrawer({ edit: data.issue.id })}>
+        <Icon name="edit" />
+        Edit
+      </Button>
+    </GatedAction>
   ) : null
 
   return (

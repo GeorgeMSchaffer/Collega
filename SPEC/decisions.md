@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-15 | The four open Backlog Add New Issue readings are decided | active | full below |
 | 2026-10-15 | Issues can be added directly from the Backlog | active | full below |
 | 2026-10-13 | Boards can pull in existing items, and ideas can have no board | active | full below |
 | 2026-10-13 | Home gets an Unread notifications panel | amended | full below |
@@ -119,6 +120,24 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-15 — The four open Backlog Add New Issue readings are decided
+
+**Decided by the user**, on the four items slice 187 left open (see "Issues can be added directly
+from the Backlog" below). Applied by slice 211.
+
+1. **Site Admin add-denial wording is kept:** *Act as a member to add issues. Use View As.*
+   (`apps/web/lib/roles.ts`, `issueAddDenial`), although the delivery screens' older wording says
+   "administrator". No code change.
+2. **The Issue drawer's footer Edit follows the spec:** enabled only for the author and an Org Admin
+   (the Backlog row Edit's rule), disabled with the reason *Only the author or an Org Admin can edit
+   this issue.* for other writers. Read Only and Site Admin behaviour is unchanged.
+3. **The Delivery group (Effort, Sprint) stays directly under Title**, as the approved comp draws
+   it; the spec text that placed it after the idea fields was wrong and is corrected.
+4. **The header *Add New Issue* button lives in the page header's action slot** (`PageHeader`
+   `action`), not the topbar; the spec wording is corrected.
 
 ---
 
