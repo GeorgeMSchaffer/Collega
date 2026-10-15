@@ -27,6 +27,7 @@ export function IdeaDrawer({
   formOptions,
   createBoards,
   createBoardId,
+  initial,
   canEdit,
   canDelete,
   contentLocked,
@@ -49,6 +50,8 @@ export function IdeaDrawer({
   /** Boards a new idea may go on, beside "No board". */
   createBoards: BoardRef[] | null
   createBoardId: string | null
+  /** The quick-add row's Title, for the create form to start with. */
+  initial?: { title?: string } | undefined
   canEdit: boolean
   canDelete: boolean
   contentLocked: boolean
@@ -129,6 +132,7 @@ export function IdeaDrawer({
           options={formOptions}
           boards={mode === 'create' ? createBoards : null}
           boardId={mode === 'create' ? createBoardId : null}
+          initial={mode === 'create' ? initial : undefined}
           contentLocked={mode === 'edit' && contentLocked}
           onSaved={onSaved}
           onPendingChange={setSaving}
