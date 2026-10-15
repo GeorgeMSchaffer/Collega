@@ -351,7 +351,7 @@ Soft-delete an idea while preserving its row and audit history.
   - `blockedBy` array of `{ ideaId, itemKey, isFinal }`: the tasks that must be final before this one can leave its board's first lane.
   - `taskCounts` object `{ total, done }` on an item whose lane references a board: `done` counts children in a final lane.
 - **Routes (added):**
-  - `POST /api/v1/ideas/{ideaId}/tasks` creates a task on the referenced board. Body: the idea create body, minus `boardId`. Success `201` with the task.
+  - `POST /api/v1/ideas/{ideaId}/board-tasks` creates a task on the referenced board. Body: the idea create body, minus `boardId`. Success `201` with the task. Named `board-tasks` so it does not collide with the checklist routes in `contracts/issue-tasks.md`, which stay until Plan 4 retires them; Plan 4 may then rename it to `/tasks`.
   - `PUT /api/v1/ideas/{ideaId}/blocked-by` replaces the blocker set. Body `{ "ideaIds": [...] }`. Details in `contracts/idea-dependencies.md`.
 - **Rules:**
   - Moving an idea into a reference lane requires `effort` to be set; otherwise `422` (`effortRequiredForReferenceLane`).

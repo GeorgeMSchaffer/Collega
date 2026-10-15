@@ -127,11 +127,11 @@ Soft-delete a sprint.
 
 ## Sprints per board (planned 2026-10-15)
 
-*Specified in `SPEC/20-feature-board-references.md`. Not built until Plan 2.*
+*Specified in `SPEC/20-feature-board-references.md`. Not built until Plan 2. Until Plan 4, org-wide sprints (`boardId` null) behave exactly as described earlier in this file.*
 
 - **Item field (added):** `boardId` GUID or `null`. `null` is a sprint from before this change; Plan 4 removes them.
 - **Routes (added):** `GET/POST /api/v1/boards/{boardId}/sprints` list and create a sprint on a board whose `sprintsEnabled` is true; existing `.../organizations/{orgId}/sprints/{id}` routes keep working for reads, start, complete and delete.
 - **Rules:**
   - Creating a sprint on a board with `sprintsEnabled` false is refused with `422` (`sprintsNotEnabled`).
   - A sprint holds items from its own board only; an item from another board is refused with `422`.
-  - Completing a sprint returns every item not in a final lane to the backlog (sprint cleared), replacing the delivery-status rule.
+  - Completing a sprint that has a `boardId` returns every item not in a final lane to the backlog (sprint cleared). A sprint with `boardId` null keeps the delivery-status rule above until Plan 4 retires it.
