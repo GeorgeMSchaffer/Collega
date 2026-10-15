@@ -239,6 +239,8 @@ export interface IssueTaskRollupPort {
 export type SwimlaneInfo = {
   readonly statusId: string
   readonly displayOrder: number
+  readonly isFinal: boolean
+  readonly referencesBoardId: string | null
 }
 
 export type BoardContext = {
@@ -248,6 +250,7 @@ export type BoardContext = {
   readonly allowUserStatusUpdate: boolean
   /** An archived board takes no new ideas, moves or edits (boards rule 13); reads stay open. */
   readonly isArchived: boolean
+  readonly keyPrefix: string | null
   readonly swimlanes: readonly SwimlaneInfo[]
 }
 

@@ -116,3 +116,8 @@ export function impersonating(options: {
 
 /** The four roles, for `it.each` matrices. */
 export const ALL_ROLES = [Role.SiteAdmin, Role.OrgAdmin, Role.User, Role.ReadOnly] as const
+
+/** Plain lanes (not final, no reference) on the given statuses, for `createBoard`. */
+export function lanes(...statusIds: string[]) {
+  return statusIds.map((statusId) => ({ statusId, isFinal: false, referencesBoardId: null }))
+}

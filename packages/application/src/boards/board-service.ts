@@ -10,8 +10,10 @@ import {
   BoardArchivedError,
   BoardInvariantError,
   createBoard,
+  disableIdeaFeatures,
   MIN_SWIMLANES,
   reorderBoardSwimlanes,
+  type SwimlaneLane,
   unarchiveBoard,
   updateBoard,
 } from '@collega/domain/boards'
@@ -32,6 +34,7 @@ import {
   type Page,
   UnauthorizedError,
   type UnitOfWork,
+  UnprocessableError,
   ValidationError,
 } from '../common/index.js'
 import type { IdeaRepository } from '../ideas/index.js'
@@ -134,6 +137,9 @@ export class BoardService {
         tagCount: tags.length,
         isArchived: board.isArchived,
         archivedAtUtc: board.archivedAtUtc,
+        keyPrefix: board.keyPrefix,
+        sprintsEnabled: board.sprintsEnabled,
+        ideaFeaturesEnabled: board.ideaFeaturesEnabled,
       }
     })
   }
@@ -143,7 +149,7 @@ export class BoardService {
     await this.ensureOrganizationExists(organizationId)
 
     const statusLookup = await this.loadStatusLookup(organizationId)
-    const orderedStatusIds = validateAndOrderSwimlanes(command.swimlanes, statusLookup)
+    const orderedLanes = validateAndOrderSwimlanes(command.swimlanes, statusLookup)
 
     const now = this.clock.now()
     const board = runDomain(createBoard, {
@@ -152,12 +158,19 @@ export class BoardService {
       name: command.name,
       description: command.description ?? null,
       allowUserStatusUpdate: command.allowUserStatusUpdate,
-      orderedStatusIds,
+      orderedLanes,
+      keyPrefix: command.keyPrefix,
+      sprintsEnabled: command.sprintsEnabled,
+      ideaFeaturesEnabled: command.ideaFeaturesEnabled,
       nowUtc: now,
       actorUserId: this.currentUser.userId,
     })
+    const organizationBoards = await this.boards.listByOrganization(organizationId)
+    ensureKeyPrefixFree(board, organizationBoards)
+    const newTargets = planReferences(board, organizationBoards)
     const pull = await this.planPull(organizationId, board, command.pullItemIds ?? [], now)
     await this.boards.add(board)
+    await this.disableTargetIdeaFeatures(newTargets, now)
     if (pull !== null) {
       await this.stagePull(board.id, pull, now)
     }
@@ -202,7 +215,7 @@ export class BoardService {
     this.ensureAdminScope(existing.organizationId)
 
     const statusLookup = await this.loadStatusLookup(existing.organizationId)
-    const orderedStatusIds = validateAndOrderSwimlanes(command.swimlanes, statusLookup)
+    const orderedLanes = validateAndOrderSwimlanes(command.swimlanes, statusLookup)
 
     const now = this.clock.now()
     const board = runDomain(
@@ -212,15 +225,32 @@ export class BoardService {
         name: command.name,
         description: command.description,
         allowUserStatusUpdate: command.allowUserStatusUpdate,
-        orderedStatusIds,
+        orderedLanes,
+        keyPrefix: command.keyPrefix,
+        sprintsEnabled: command.sprintsEnabled,
+        ideaFeaturesEnabled: command.ideaFeaturesEnabled,
       },
       now,
       this.currentUser.userId,
     )
+    const organizationBoards = await this.boards.listByOrganization(existing.organizationId)
+    if (board.keyPrefix !== existing.keyPrefix) {
+      // Ruling 4: the prefix is editable only until the first key is issued.
+      if (existing.nextItemNumber > 1) {
+        throw new UnprocessableError(
+          'keyPrefixLocked',
+          'The key prefix cannot change once an item key has been issued on this board.',
+        )
+      }
+      ensureKeyPrefixFree(board, organizationBoards)
+    }
+    const newTargets = planReferences(board, organizationBoards)
+    await this.ensureReferenceLanesFree(existing, board)
     const moves = await this.planIdeaMoves(existing, board, command.ideaMoves ?? [], statusLookup)
     const pull = await this.planPull(board.organizationId, board, command.pullItemIds ?? [], now)
 
     await this.boards.save(board)
+    await this.disableTargetIdeaFeatures(newTargets, now)
     for (const move of moves) {
       await this.boards.moveIdeas(
         board.id,
@@ -508,7 +538,7 @@ export class BoardService {
 
     this.ensureAdminScope(existing.organizationId)
 
-    const orderedStatusIds = orderSwimlaneInputs(command.swimlanes)
+    const orderedStatusIds = orderSwimlaneInputs(command.swimlanes).map((lane) => lane.statusId)
     if (new Set(orderedStatusIds).size !== orderedStatusIds.length) {
       throw new ValidationError('One or more fields are invalid.', {
         swimlanes: ['A board cannot list the same status twice.'],
@@ -553,7 +583,23 @@ export class BoardService {
    * org-content write. Archiving an archived board succeeds and changes nothing.
    */
   async archive(boardId: string): Promise<void> {
-    await this.setArchived(boardId, archiveBoard, 'BoardArchived', 'archived')
+    await this.setArchived(boardId, archiveBoard, 'BoardArchived', 'archived', async (existing) => {
+      if (existing.isArchived) {
+        return
+      }
+      const organizationBoards = await this.boards.listByOrganization(existing.organizationId)
+      const referenced = organizationBoards.some(
+        (other) =>
+          other.id !== existing.id &&
+          other.swimlanes.some((lane) => lane.referencesBoardId === existing.id),
+      )
+      if (referenced) {
+        throw new UnprocessableError(
+          'referenceTargetArchived',
+          'A board that a lane references cannot be archived.',
+        )
+      }
+    })
   }
 
   /** Brings an archived board back unchanged. Unarchiving an active board changes nothing. */
@@ -566,6 +612,7 @@ export class BoardService {
     transition: (board: Board, nowUtc: Date, actorUserId: string | null) => Board,
     eventType: string,
     verb: string,
+    guard?: (existing: Board) => Promise<void>,
   ): Promise<void> {
     const existing = await this.boards.getById(boardId)
     if (existing === null) {
@@ -573,6 +620,7 @@ export class BoardService {
     }
 
     this.ensureAdminScope(existing.organizationId)
+    await guard?.(existing)
 
     const now = this.clock.now()
     const board = transition(existing, now, this.currentUser.userId)
@@ -590,6 +638,43 @@ export class BoardService {
       now,
       null,
     )
+  }
+
+  /**
+   * Ruling 6: a lane that references a board cannot have the reference changed or removed, nor be
+   * removed, while it holds ideas - an `ideaMoves` entry does not lift it, since the ideas there are
+   * parents of tasks on the referenced board.
+   */
+  private async ensureReferenceLanesFree(existing: Board, updated: Board): Promise<void> {
+    const kept = new Map(updated.swimlanes.map((lane) => [lane.statusId, lane]))
+    const changed = existing.swimlanes.filter(
+      (lane) =>
+        lane.referencesBoardId !== null &&
+        kept.get(lane.statusId)?.referencesBoardId !== lane.referencesBoardId,
+    )
+    if (changed.length === 0) {
+      return
+    }
+    const counts = await this.boards.countIdeasByBoardAndStatus([existing.id])
+    const inUse = changed.some((lane) =>
+      counts.some((row) => row.statusId === lane.statusId && row.ideaCount > 0),
+    )
+    if (inUse) {
+      throw new UnprocessableError(
+        'laneInUse',
+        'A lane that references a board cannot change or lose its reference while it holds ideas.',
+      )
+    }
+  }
+
+  /** A board first named as a reference target stops offering idea features (contracts/boards.md). */
+  private async disableTargetIdeaFeatures(targets: readonly Board[], now: Date): Promise<void> {
+    for (const target of targets) {
+      const updated = disableIdeaFeatures(target, now, this.currentUser.userId)
+      if (updated !== target) {
+        await this.boards.save(updated)
+      }
+    }
   }
 
   private async loadStatusLookup(organizationId: string): Promise<ReadonlyMap<string, Status>> {
@@ -818,8 +903,66 @@ function invalidIdeaMoves(messages: readonly string[]): ValidationError {
   return new ValidationError('One or more fields are invalid.', { ideaMoves: [...messages] })
 }
 
-function orderSwimlaneInputs(swimlanes: readonly SwimlaneInput[]): readonly string[] {
-  return [...swimlanes].sort((a, b) => a.order - b.order).map((swimlane) => swimlane.statusId)
+function orderSwimlaneInputs(swimlanes: readonly SwimlaneInput[]): readonly SwimlaneInput[] {
+  return [...swimlanes].sort((a, b) => a.order - b.order)
+}
+
+/** A `keyPrefix` already used by another board of the organization is a `409`. */
+function ensureKeyPrefixFree(board: Board, organizationBoards: readonly Board[]): void {
+  if (
+    board.keyPrefix !== null &&
+    organizationBoards.some((other) => other.id !== board.id && other.keyPrefix === board.keyPrefix)
+  ) {
+    throw new ConflictError('keyPrefixTaken')
+  }
+}
+
+/**
+ * The reference rules for `board`'s lanes against the organization's stored boards
+ * (contracts/boards.md "Board References"), checked in this order: own board, missing or archived
+ * target, one level only. Returns the targets this save names for the first time, whose idea
+ * features are then turned off.
+ */
+function planReferences(board: Board, organizationBoards: readonly Board[]): readonly Board[] {
+  const referencedIds = [
+    ...new Set(board.swimlanes.flatMap((lane) => lane.referencesBoardId ?? [])),
+  ]
+  if (referencedIds.length === 0) {
+    return []
+  }
+  if (referencedIds.includes(board.id)) {
+    throw new UnprocessableError('laneReferencesOwnBoard', 'A lane cannot reference its own board.')
+  }
+  const targets: Board[] = []
+  for (const id of referencedIds) {
+    const target = organizationBoards.find((other) => other.id === id)
+    if (target === undefined || target.isArchived) {
+      throw new UnprocessableError(
+        'referencesBoardInvalid',
+        'A lane can reference only an active board of this organization.',
+      )
+    }
+    targets.push(target)
+  }
+  const targetsHaveReferences = targets.some((target) =>
+    target.swimlanes.some((lane) => lane.referencesBoardId !== null),
+  )
+  const isTarget = organizationBoards.some(
+    (other) =>
+      other.id !== board.id && other.swimlanes.some((lane) => lane.referencesBoardId === board.id),
+  )
+  if (targetsHaveReferences || isTarget) {
+    throw new UnprocessableError(
+      'referenceChainNotAllowed',
+      'A board that references another board cannot itself be referenced.',
+    )
+  }
+  return targets.filter(
+    (target) =>
+      !organizationBoards.some((other) =>
+        other.swimlanes.some((lane) => lane.referencesBoardId === target.id),
+      ),
+  )
 }
 
 /**
@@ -830,8 +973,9 @@ function orderSwimlaneInputs(swimlanes: readonly SwimlaneInput[]): readonly stri
 function validateAndOrderSwimlanes(
   swimlanes: readonly SwimlaneInput[],
   statusLookup: ReadonlyMap<string, Status>,
-): readonly string[] {
-  const orderedStatusIds = orderSwimlaneInputs(swimlanes)
+): readonly SwimlaneLane[] {
+  const ordered = orderSwimlaneInputs(swimlanes)
+  const orderedStatusIds = ordered.map((lane) => lane.statusId)
 
   if (orderedStatusIds.length < MIN_SWIMLANES) {
     throw new ValidationError('One or more fields are invalid.', {
@@ -854,7 +998,11 @@ function validateAndOrderSwimlanes(
     }
   }
 
-  return orderedStatusIds
+  return ordered.map((lane) => ({
+    statusId: lane.statusId,
+    isFinal: lane.isFinal === true,
+    referencesBoardId: lane.referencesBoardId?.trim() || null,
+  }))
 }
 
 /**
@@ -893,6 +1041,9 @@ function toDetail(board: Board, statusLookup: ReadonlyMap<string, Status>): Boar
     swimlanes: buildSwimlaneDetails(board, statusLookup),
     isArchived: board.isArchived,
     archivedAtUtc: board.archivedAtUtc,
+    keyPrefix: board.keyPrefix,
+    sprintsEnabled: board.sprintsEnabled,
+    ideaFeaturesEnabled: board.ideaFeaturesEnabled,
   }
 }
 
@@ -925,6 +1076,8 @@ function buildSwimlaneDetails(
         statusColor: status?.color ?? '',
         order: swimlane.displayOrder,
         statusIsDeleted: status?.isDeleted ?? false,
+        isFinal: swimlane.isFinal,
+        referencesBoardId: swimlane.referencesBoardId,
       }
     })
 }

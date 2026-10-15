@@ -20,6 +20,7 @@ import {
   countingUnitOfWork,
   fixedClock,
   impersonating,
+  lanes,
   NOW,
   ORG_A,
   orgAdmin,
@@ -60,7 +61,7 @@ function board(archived = false): Board {
     organizationId: ORG_A,
     name: 'Acme Board',
     allowUserStatusUpdate: false,
-    orderedStatusIds: [NEW, REVIEW, DONE],
+    orderedLanes: lanes(NEW, REVIEW, DONE),
     nowUtc: NOW,
     actorUserId: 'seed',
   })

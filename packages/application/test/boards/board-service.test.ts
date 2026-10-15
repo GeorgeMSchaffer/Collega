@@ -30,6 +30,7 @@ import {
   countingUnitOfWork,
   fixedClock,
   impersonating,
+  lanes,
   member,
   NOW,
   ORG_A,
@@ -62,7 +63,7 @@ function board(overrides: { id?: string; organizationId?: string; name?: string 
     organizationId: overrides.organizationId ?? ORG_A,
     name: overrides.name ?? 'Acme Board',
     allowUserStatusUpdate: false,
-    orderedStatusIds: [STATUS_1, STATUS_2],
+    orderedLanes: lanes(STATUS_1, STATUS_2),
     nowUtc: NOW,
     actorUserId: 'seed',
   })
@@ -439,7 +440,7 @@ describe('BoardService list card aggregates', () => {
       name: `Board ${id}`,
       allowUserStatusUpdate: false,
       // Deliberately not the statuses' own sort order: lanes follow the board, not the status.
-      orderedStatusIds: [STATUS_3, STATUS_1, STATUS_2],
+      orderedLanes: lanes(STATUS_3, STATUS_1, STATUS_2),
       nowUtc: NOW,
       actorUserId: createdByUserId,
     })

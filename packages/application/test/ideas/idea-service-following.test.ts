@@ -214,9 +214,10 @@ describe('IdeaService notifies followers of a status change', () => {
           name: 'Acme Board',
           allowUserStatusUpdate: true,
           isArchived: false,
+          keyPrefix: null,
           swimlanes: [
-            { statusId: STATUS_1, displayOrder: 0 },
-            { statusId: STATUS_2, displayOrder: 1 },
+            { statusId: STATUS_1, displayOrder: 0, isFinal: false, referencesBoardId: null },
+            { statusId: STATUS_2, displayOrder: 1, isFinal: false, referencesBoardId: null },
           ],
         },
       ],

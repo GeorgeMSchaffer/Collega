@@ -61,9 +61,10 @@ export function board(overrides: Partial<BoardContext> = {}): BoardContext {
     name: 'Acme Board',
     allowUserStatusUpdate: false,
     isArchived: false,
+    keyPrefix: null,
     swimlanes: [
-      { statusId: STATUS_1, displayOrder: 0 },
-      { statusId: STATUS_2, displayOrder: 1 },
+      { statusId: STATUS_1, displayOrder: 0, isFinal: false, referencesBoardId: null },
+      { statusId: STATUS_2, displayOrder: 1, isFinal: false, referencesBoardId: null },
     ],
     ...overrides,
   }
