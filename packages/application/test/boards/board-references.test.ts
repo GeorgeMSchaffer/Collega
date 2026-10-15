@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest'
 import { BoardService } from '../../src/boards/board-service.js'
 import type { SwimlaneInput } from '../../src/boards/models.js'
 import type { BoardRepository, BoardStatusIdeaCount } from '../../src/boards/ports.js'
-import { ConflictError, UnprocessableError } from '../../src/common/index.js'
+import { ConflictError, UnprocessableError, ValidationError } from '../../src/common/index.js'
 import type { IdeaRepository } from '../../src/ideas/ports.js'
 import type { StatusRepository } from '../../src/statuses/ports.js'
 import {
@@ -72,7 +72,11 @@ function lanesReferencing(boardId: string | null): SwimlaneInput[] {
   ]
 }
 
-function harness(boards: readonly Board[], statusCounts: readonly BoardStatusIdeaCount[] = []) {
+function harness(
+  boards: readonly Board[],
+  statusCounts: readonly BoardStatusIdeaCount[] = [],
+  laneIdeas: readonly { ideaId: string; title: string; statusId: string }[] = [],
+) {
   const byId = new Map(boards.map((b) => [b.id, b]))
   const saved: Board[] = []
   const added: Board[] = []
@@ -92,8 +96,8 @@ function harness(boards: readonly Board[], statusCounts: readonly BoardStatusIde
     async countIdeasByBoardAndStatus() {
       return statusCounts
     },
-    async listLaneIdeas() {
-      return []
+    async listLaneIdeas(_boardId: string, statusIds: readonly string[]) {
+      return laneIdeas.filter((idea) => statusIds.includes(idea.statusId))
     },
     async moveIdeas() {},
     async reassignIdeas() {},
@@ -322,5 +326,251 @@ describe('keyPrefix', () => {
     const { service } = harness([board('a', { keyPrefix: 'AB', nextItemNumber: 5 })])
 
     await expect(update(service, 'a', LANES)).resolves.toMatchObject({ keyPrefix: 'AB' })
+  })
+})
+
+describe('lane references on create', () => {
+  const create = (service: BoardService, swimlanes: SwimlaneInput[]) =>
+    service.create(ORG_A, { name: 'New', allowUserStatusUpdate: false, swimlanes })
+
+  it.each([
+    ['missing', 'nope', [board('b')]],
+    ['archived', 'b', [{ ...board('b'), isArchived: true }]],
+    ['in another organization', 'b', [board('b', { organizationId: ORG_B })]],
+  ])('refuses a %s target as referencesBoardInvalid', async (_label, target, boards) => {
+    const { service, added } = harness(boards)
+
+    expect(await codeOf(create(service, lanesReferencing(target)))).toBe('referencesBoardInvalid')
+    expect(added).toHaveLength(0)
+  })
+
+  it('refuses a target that has a reference lane of its own', async () => {
+    const { service, added } = harness([board('b', { referencesBoardId: 'c' }), board('c')])
+
+    expect(await codeOf(create(service, lanesReferencing('b')))).toBe('referenceChainNotAllowed')
+    expect(added).toHaveLength(0)
+  })
+
+  it('turns idea features off on a first-named target, and saves it once for two lanes', async () => {
+    const { service, saved } = harness([board('b')])
+
+    await create(service, [
+      { statusId: S1, order: 0, referencesBoardId: 'b' },
+      { statusId: S2, order: 1, referencesBoardId: 'b' },
+    ])
+
+    expect(saved.map((b) => [b.id, b.ideaFeaturesEnabled])).toEqual([['b', false]])
+  })
+
+  it('does not touch a target that is already named by another lane', async () => {
+    const { service, saved } = harness([board('b'), board('c', { referencesBoardId: 'b' })])
+
+    await create(service, lanesReferencing('b'))
+
+    expect(saved).toHaveLength(0)
+  })
+})
+
+describe('laneInUse, further cases', () => {
+  const held = [{ boardId: 'a', statusId: S1, ideaCount: 2 }]
+  const keepOnlyS2: SwimlaneInput[] = [
+    { statusId: S2, order: 0 },
+    { statusId: 'status-3', order: 1 },
+  ]
+
+  it('refuses removing a reference lane that holds ideas with no idea move, ahead of the move rule', async () => {
+    const { service } = harness([board('a', { referencesBoardId: 'b' }), board('b')], held)
+
+    expect(await codeOf(update(service, 'a', keepOnlyS2))).toBe('laneInUse')
+  })
+
+  it('allows removing an empty reference lane', async () => {
+    const { service, saved } = harness([board('a', { referencesBoardId: 'b' }), board('b')])
+
+    await update(service, 'a', keepOnlyS2)
+
+    expect(saved.map((b) => b.id)).toEqual(['a'])
+  })
+
+  it('is not raised by ideas in a different lane than the one whose reference changes', async () => {
+    const { service } = harness(
+      [board('a', { referencesBoardId: 'b' }), board('b'), board('c')],
+      [{ boardId: 'a', statusId: S2, ideaCount: 4 }],
+    )
+
+    await expect(update(service, 'a', lanesReferencing('c'))).resolves.toBeDefined()
+  })
+
+  it('is not raised by a zero count row', async () => {
+    const { service } = harness(
+      [board('a', { referencesBoardId: 'b' }), board('b')],
+      [{ boardId: 'a', statusId: S1, ideaCount: 0 }],
+    )
+
+    await expect(update(service, 'a', lanesReferencing(null))).resolves.toBeDefined()
+  })
+
+  it('allows giving a reference to an ordinary lane that holds ideas', async () => {
+    const { service } = harness([board('a'), board('b')], held)
+
+    await expect(update(service, 'a', lanesReferencing('b'))).resolves.toBeDefined()
+  })
+
+  it('keeps the existing 400 for an ordinary lane removed with ideas and no move', async () => {
+    const { service } = harness([board('a'), board('b')], held, [
+      { ideaId: 'i1', title: 'Idea', statusId: S1 },
+    ])
+
+    await expect(update(service, 'a', keepOnlyS2)).rejects.toBeInstanceOf(ValidationError)
+  })
+
+  it('refuses before anything is written', async () => {
+    const { service, saved } = harness(
+      [board('a', { referencesBoardId: 'b' }), board('b'), board('c')],
+      held,
+    )
+
+    await codeOf(update(service, 'a', lanesReferencing('c')))
+
+    expect(saved).toHaveLength(0)
+  })
+})
+
+describe('reference rules write nothing when they refuse', () => {
+  it.each([
+    ['own board', lanesReferencing('a'), [board('a'), board('b')]],
+    ['invalid target', lanesReferencing('nope'), [board('a')]],
+    [
+      'chain',
+      lanesReferencing('b'),
+      [board('a'), board('b', { referencesBoardId: 'c' }), board('c')],
+    ],
+  ])('%s', async (_label, swimlanes, boards) => {
+    const { service, saved } = harness(boards)
+
+    await codeOf(update(service, 'a', swimlanes))
+
+    expect(saved).toHaveLength(0)
+  })
+})
+
+describe('archive guard, further cases', () => {
+  it('allows archiving a board no lane references', async () => {
+    const { service, saved } = harness([
+      board('a', { referencesBoardId: 'b' }),
+      board('b'),
+      board('c'),
+    ])
+
+    await service.archive('c')
+
+    expect(saved.map((b) => b.id)).toEqual(['c'])
+  })
+
+  it('saves nothing when the guard refuses', async () => {
+    const { service, saved } = harness([board('a', { referencesBoardId: 'b' }), board('b')])
+
+    await codeOf(service.archive('b'))
+
+    expect(saved).toHaveLength(0)
+  })
+
+  it('allows archiving a board once no lane references it', async () => {
+    const { service } = harness([board('a'), board('b')])
+
+    await expect(service.archive('b')).resolves.toBeUndefined()
+  })
+})
+
+describe('archived board and lane saves', () => {
+  it('refuses a PUT on an archived board with 409, not a reference rule', async () => {
+    const { service } = harness([{ ...board('a'), isArchived: true }, board('b')])
+
+    await expect(update(service, 'a', lanesReferencing('b'))).rejects.toBeInstanceOf(ConflictError)
+  })
+})
+
+describe('reorder keeps stored lane flags', () => {
+  it('moves the flags with their lanes and ignores flags in the request', async () => {
+    const { service, saved } = harness([board('a', { referencesBoardId: 'b' }), board('b')])
+
+    await service.reorderSwimlanes('a', {
+      swimlanes: [
+        { statusId: S2, order: 0, isFinal: false, referencesBoardId: 'zzz' },
+        { statusId: S1, order: 1, isFinal: true },
+      ],
+    })
+
+    expect(saved[0]?.swimlanes.map((l) => [l.statusId, l.isFinal, l.referencesBoardId])).toEqual([
+      [S2, true, null],
+      [S1, false, 'b'],
+    ])
+  })
+})
+
+describe('keyPrefix, further cases', () => {
+  it('rejects a malformed prefix as a validation error keyed keyPrefix', async () => {
+    const { service } = harness([board('a')])
+
+    for (const keyPrefix of ['x', 'AB-1', 'ABCDEFGHIJK']) {
+      const error = await update(service, 'a', LANES, { keyPrefix }).catch((e: unknown) => e)
+      expect(error).toBeInstanceOf(ValidationError)
+      expect(JSON.stringify((error as ValidationError).failures)).toContain('keyPrefix')
+    }
+  })
+
+  it('does not treat a different case of the stored prefix as a change on a locked board', async () => {
+    const { service } = harness([board('a', { keyPrefix: 'AB', nextItemNumber: 9 })])
+
+    await expect(update(service, 'a', LANES, { keyPrefix: 'ab' })).resolves.toMatchObject({
+      keyPrefix: 'AB',
+    })
+  })
+
+  it('locks setting a first prefix once a number has been issued', async () => {
+    const { service } = harness([board('a', { nextItemNumber: 2 })])
+
+    expect(await codeOf(update(service, 'a', LANES, { keyPrefix: 'AB' }))).toBe('keyPrefixLocked')
+  })
+
+  it('does not collide with a prefix in another organization', async () => {
+    const { service } = harness([
+      board('a'),
+      board('b', { keyPrefix: 'AB', organizationId: ORG_B }),
+    ])
+
+    await expect(update(service, 'a', LANES, { keyPrefix: 'AB' })).resolves.toMatchObject({
+      keyPrefix: 'AB',
+    })
+  })
+
+  it('refuses a locked change before reporting a duplicate', async () => {
+    const { service } = harness([
+      board('a', { keyPrefix: 'AB', nextItemNumber: 2 }),
+      board('b', { keyPrefix: 'CD' }),
+    ])
+
+    expect(await codeOf(update(service, 'a', LANES, { keyPrefix: 'CD' }))).toBe('keyPrefixLocked')
+  })
+
+  it('saves nothing on a refused prefix change', async () => {
+    const { service, saved } = harness([board('a', { keyPrefix: 'AB', nextItemNumber: 2 })])
+
+    await codeOf(update(service, 'a', LANES, { keyPrefix: 'CD' }))
+
+    expect(saved).toHaveLength(0)
+  })
+
+  it('stores the flags it is given and keeps them when omitted', async () => {
+    const { service } = harness([board('a')])
+
+    const set = await update(service, 'a', LANES, {
+      sprintsEnabled: true,
+      ideaFeaturesEnabled: false,
+    })
+    const kept = await update(service, 'a', LANES)
+
+    expect(set).toMatchObject({ sprintsEnabled: true, ideaFeaturesEnabled: false })
+    expect(kept).toMatchObject({ sprintsEnabled: false, ideaFeaturesEnabled: true })
   })
 })
