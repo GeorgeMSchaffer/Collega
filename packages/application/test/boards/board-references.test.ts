@@ -2,7 +2,8 @@
 // cross-board checks BoardService makes against the organization's stored boards.
 
 import { type Board, createBoard } from '@collega/domain/boards'
-import { EffortLevel } from '@collega/domain/enums'
+import { EffortLevel, Priority } from '@collega/domain/enums'
+import { createIdea, type Idea } from '@collega/domain/ideas'
 import { createStatus, type Status } from '@collega/domain/statuses'
 import { describe, expect, it } from 'vitest'
 import { BoardService } from '../../src/boards/board-service.js'
@@ -82,10 +83,12 @@ function harness(
     statusId: string
     effort: EffortLevel | null
   }[] = [],
+  ideas: readonly Idea[] = [],
 ) {
   const byId = new Map(boards.map((b) => [b.id, b]))
   const saved: Board[] = []
   const added: Board[] = []
+  const moved: unknown[] = []
   const repository = {
     async add(b: Board) {
       added.push(b)
@@ -106,7 +109,9 @@ function harness(
       return laneIdeas.filter((idea) => statusIds.includes(idea.statusId))
     },
     async moveIdeas() {},
-    async reassignIdeas() {},
+    async reassignIdeas(_boardId: string, items: readonly unknown[]) {
+      moved.push(...items)
+    },
   } as unknown as BoardRepository
   const allStatuses = [status(S1), status(S2), status('status-3')]
   const statuses = {
@@ -126,9 +131,13 @@ function harness(
     recordingAudit(),
     orgAdmin(ORG_A),
     fixedClock(),
-    {} as IdeaRepository,
+    {
+      async getById(id: string) {
+        return ideas.find((i) => i.id === id) ?? null
+      },
+    } as unknown as IdeaRepository,
   )
-  return { service, saved, added }
+  return { service, saved, added, moved }
 }
 
 async function codeOf(promise: Promise<unknown>): Promise<string> {
@@ -604,5 +613,45 @@ describe('ideaMoves into a reference lane', () => {
     const { service } = harness([board('a'), board('b')], [], [idea(EffortLevel.Low)])
 
     await expect(update(service, 'a', lanes, moves)).resolves.toBeDefined()
+  })
+})
+
+describe('pulling into a reference lane', () => {
+  const pooled = (effort: EffortLevel | null): Idea => ({
+    ...createIdea({
+      id: '11111111-1111-4111-8111-111111111111',
+      organizationId: ORG_A,
+      boardId: null,
+      statusId: 'unused-status',
+      title: 'Pooled',
+      description: null,
+      problem: 'p',
+      proposedSolutions: ['s'],
+      impactRationale: 'r',
+      priority: Priority.Medium,
+      ideaTypeId: 't',
+      businessImpactId: 'i',
+      dueDate: null,
+      authorUserId: 'author',
+      assigneeUserIds: [],
+      tagIds: [],
+      mentionedUserIds: [],
+      nowUtc: NOW,
+    }),
+    effort,
+  })
+  const pull = { pullItemIds: ['11111111-1111-4111-8111-111111111111'] }
+
+  it('refuses an item without an Effort and writes nothing, then accepts it with one', async () => {
+    const refused = harness([board('a'), board('b')], [], [], [pooled(null)])
+    expect(await codeOf(update(refused.service, 'a', lanesReferencing('b'), pull))).toBe(
+      'effortRequiredForReferenceLane',
+    )
+    expect(refused.saved).toHaveLength(0)
+    expect(refused.moved).toHaveLength(0)
+
+    const accepted = harness([board('a'), board('b')], [], [], [pooled(EffortLevel.Low)])
+    await update(accepted.service, 'a', lanesReferencing('b'), pull)
+    expect(accepted.moved).toHaveLength(1)
   })
 })

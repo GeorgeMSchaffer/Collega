@@ -364,6 +364,7 @@ export class BoardService {
     const laneOrder = [...board.swimlanes].sort((a, b) => a.displayOrder - b.displayOrder)
     const laneStatusIds = new Set(laneOrder.map((lane) => lane.statusId))
     const leftmostStatusId = laneOrder[0]?.statusId ?? ''
+    const lanesByStatus = new Map(laneOrder.map((lane) => [lane.statusId, lane]))
 
     const problems: string[] = []
     const items: PlannedPull[] = []
@@ -379,6 +380,13 @@ export class BoardService {
         return
       }
       const statusId = laneStatusIds.has(before.statusId) ? before.statusId : leftmostStatusId
+      // The Effort entry rule holds on a pull too (Board References Ruling 6).
+      if (before.effort === null && lanesByStatus.get(statusId)?.referencesBoardId) {
+        throw new UnprocessableError(
+          'effortRequiredForReferenceLane',
+          `Set an Effort on '${before.title}' before pulling it into a lane that references a board.`,
+        )
+      }
       items.push({
         before,
         after: pullIdeaOntoBoard(before, board.id, statusId, now, this.currentUser.userId),
