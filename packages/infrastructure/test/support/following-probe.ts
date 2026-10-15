@@ -69,6 +69,8 @@ export function probeOrg(prisma: PrismaClient) {
     organizationId,
     boardId,
     statusId,
+    ideaTypeId,
+    impactId,
     newUser,
     newIdea,
 
