@@ -106,20 +106,18 @@ export function BacklogAdd({
         }
       >
         {options ? (
-          <div>
-            <IdeaForm
-              formId={formId}
-              idea={null}
-              options={options}
-              boards={null}
-              boardId={null}
-              contentLocked={false}
-              addingIssue={{ sprints }}
-              initial={prefill ?? undefined}
-              onSaved={saved}
-              onPendingChange={setSaving}
-            />
-          </div>
+          <IdeaForm
+            formId={formId}
+            idea={null}
+            options={options}
+            boards={null}
+            boardId={null}
+            contentLocked={false}
+            addingIssue={{ sprints }}
+            initial={prefill ?? undefined}
+            onSaved={saved}
+            onPendingChange={setSaving}
+          />
         ) : null}
       </Drawer>
       {toast}

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { GatedAction } from '@/components/common/gated-action'
 import { PageHeader } from '@/components/common/page-header'
 import { AdminAction } from '@/components/delivery/admin-action'
-import { AddIssueButton, BacklogAdd } from '@/components/delivery/backlog-add'
+import { AddIssueButton } from '@/components/delivery/backlog-add'
 import { BacklogScreen } from '@/components/delivery/backlog-screen'
 import { IssueDrawer } from '@/components/delivery/issue-drawer'
 import { loadIssueDrawer } from '@/components/delivery/load-issue-drawer'
@@ -82,41 +82,37 @@ export default async function BacklogPage({
           </Alert>
         ) : null}
 
-        {rows.length === 0 ? (
-          <EmptyState
-            heading="Nothing waiting"
-            action={
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                <GatedAction id="why-add-issue-empty" label="Add issue" denial={addDenial}>
-                  <AddIssueButton label="Add issue" />
-                </GatedAction>
-                <Link href="/boards" className={buttonVariants({ variant: 'outline' })}>
-                  Open the ideas board
-                </Link>
-              </div>
-            }
-          >
-            Every committed issue is in a sprint. New issues arrive here when an idea is promoted
-            from a board or when one is added here.
-          </EmptyState>
-        ) : (
-          <BacklogScreen
-            rows={rows}
-            outcomes={outcomes}
-            statuses={statuses}
-            sprints={openSprints}
-            editableIds={rows
-              .filter((issue) => mayEditIdeaContent(user.role, user.userId, issue.authorUserId))
-              .map((issue) => issue.id)}
-            canAdd={addDenial === null}
-            selectedId={drawer?.issue.id ?? null}
-            options={formOptions}
-          />
-        )}
+        <BacklogScreen
+          rows={rows}
+          outcomes={outcomes}
+          statuses={statuses}
+          sprints={openSprints}
+          editableIds={rows
+            .filter((issue) => mayEditIdeaContent(user.role, user.userId, issue.authorUserId))
+            .map((issue) => issue.id)}
+          canAdd={addDenial === null}
+          selectedId={drawer?.issue.id ?? null}
+          options={formOptions}
+          empty={
+            <EmptyState
+              heading="Nothing waiting"
+              action={
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <GatedAction id="why-add-issue-empty" label="Add issue" denial={addDenial}>
+                    <AddIssueButton label="Add issue" />
+                  </GatedAction>
+                  <Link href="/boards" className={buttonVariants({ variant: 'outline' })}>
+                    Open the ideas board
+                  </Link>
+                </div>
+              }
+            >
+              Every committed issue is in a sprint. New issues arrive here when an idea is promoted
+              from a board or when one is added here.
+            </EmptyState>
+          }
+        />
       </main>
-      {rows.length === 0 ? (
-        <BacklogAdd options={formOptions} sprints={openSprints} rowIds="" />
-      ) : null}
       <IssueDrawer data={drawer} editing={editing} />
     </>
   )
