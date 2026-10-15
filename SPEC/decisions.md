@@ -41,18 +41,18 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-10-04 | Users create boards; managing them stays Org Admin | active | full below |
 | 2026-10-04 | One Enter adds a tag on the idea form | active | full below |
 | 2026-10-04 | Graphite is the default theme | active | full below |
-| 2026-10-04 | Fieldsets: reusable groups of fields, attached to idea types | active | full below |
-| 2026-10-01 | The Home comp is a visual guide; the spec wins | active | full below |
-| 2026-10-01 | The follow and inbox questions are answered | active | full below |
-| 2026-10-01 | The S0.2 schema freeze is amended a fifth time, for idea followers and read state | active | full below |
-| 2026-10-01 | The Home dashboard comp is approved as drawn | amended | full below |
-| 2026-10-01 | Following an idea, and an in-app notification inbox | active | full below |
-| 2026-10-01 | The View As banner names only the target | active | [2026-09-29 to 2026-10-01](decisions/archive-2026-09-29-to-2026-10-01.md) |
-| 2026-10-01 | The View As candidate order, and F1 closes | active | [2026-09-29 to 2026-10-01](decisions/archive-2026-09-29-to-2026-10-01.md) |
-| 2026-09-30 | What the MVP release includes | active | [2026-09-29 to 2026-10-01](decisions/archive-2026-09-29-to-2026-10-01.md) |
-| 2026-09-30 | The prompt-eval thresholds stand, confirmed against the v1 baseline | active | [2026-09-29 to 2026-10-01](decisions/archive-2026-09-29-to-2026-10-01.md) |
-| 2026-09-29 | How the cutover is run | active | [2026-09-29 to 2026-10-01](decisions/archive-2026-09-29-to-2026-10-01.md) |
-| 2026-09-29 | Board lanes reorder by dragging the header, with buttons as the fallback | active | [2026-09-29 to 2026-10-01](decisions/archive-2026-09-29-to-2026-10-01.md) |
+| 2026-10-04 | Fieldsets: reusable groups of fields, attached to idea types | active | [2026-09-29 to 2026-10-04](decisions/archive-2026-09-29-to-2026-10-04.md) |
+| 2026-10-01 | The Home comp is a visual guide; the spec wins | active | [2026-09-29 to 2026-10-04](decisions/archive-2026-09-29-to-2026-10-04.md) |
+| 2026-10-01 | The follow and inbox questions are answered | active | [2026-09-29 to 2026-10-04](decisions/archive-2026-09-29-to-2026-10-04.md) |
+| 2026-10-01 | The S0.2 schema freeze is amended a fifth time, for idea followers and read state | active | [2026-09-29 to 2026-10-04](decisions/archive-2026-09-29-to-2026-10-04.md) |
+| 2026-10-01 | The Home dashboard comp is approved as drawn | amended | [2026-09-29 to 2026-10-04](decisions/archive-2026-09-29-to-2026-10-04.md) |
+| 2026-10-01 | Following an idea, and an in-app notification inbox | active | [2026-09-29 to 2026-10-04](decisions/archive-2026-09-29-to-2026-10-04.md) |
+| 2026-10-01 | The View As banner names only the target | active | [2026-09-29 to 2026-10-04](decisions/archive-2026-09-29-to-2026-10-04.md) |
+| 2026-10-01 | The View As candidate order, and F1 closes | active | [2026-09-29 to 2026-10-04](decisions/archive-2026-09-29-to-2026-10-04.md) |
+| 2026-09-30 | What the MVP release includes | active | [2026-09-29 to 2026-10-04](decisions/archive-2026-09-29-to-2026-10-04.md) |
+| 2026-09-30 | The prompt-eval thresholds stand, confirmed against the v1 baseline | active | [2026-09-29 to 2026-10-04](decisions/archive-2026-09-29-to-2026-10-04.md) |
+| 2026-09-29 | How the cutover is run | active | [2026-09-29 to 2026-10-04](decisions/archive-2026-09-29-to-2026-10-04.md) |
+| 2026-09-29 | Board lanes reorder by dragging the header, with buttons as the fallback | active | [2026-09-29 to 2026-10-04](decisions/archive-2026-09-29-to-2026-10-04.md) |
 | 2026-09-29 | Contracts and wording written from the code | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-29 | Removing a lane moves its ideas | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
 | 2026-09-29 | The test harnesses reuse sessions; the auth rate limits stay | active | [2026-09-27 to 2026-09-29](decisions/archive-2026-09-27-to-2026-09-29.md) |
@@ -161,6 +161,40 @@ create. The preamble now says so.
 every column the route sets exists. **Golden corpus unaffected**: the route is new and no recorded case
 calls it.
 
+
+**Amendment, 2026-10-15 (decided by the user): the UI is comp A with comp B, and quick-add becomes a
+pattern.** Three comps were drawn on `feature/185-backlog-add-comps`
+(`SPEC/mockups/comp-r-backlog-add-a-drawer.html`, `-b-inline.html` and `-c-two-paths.html`). The user
+chose **A, the drawer, together with B, the inline quick-add row**:
+
+1. **Quick-add is a universal pattern** for every non-settings, non-admin grid: a spreadsheet-style new
+   row at the top of the list with the minimum fields; Enter submits and the row stays focused for
+   rapid entry. It lives in the list and detail pattern (`20-feature-client-ui.md`, "Quick-add row");
+   the header *Add New {Item}* button remains the primary creation action.
+2. **Hand-off rule, contract unchanged.** The API keeps requiring what it requires. When the row cannot
+   supply every required field, pressing Enter opens the full drawer form **pre-populated** with the
+   row's values, and nothing is created until that form is saved. When the row can supply everything
+   (the Boards list: a name, lanes defaulted to the first two statuses), Enter creates directly.
+   **Consequence, stated plainly:** idea create requires Problem, Proposed solutions and Impact
+   rationale, plus the organization's required custom fields (Idea type and Business impact default to
+   the first active options, as the idea form preselects them), so on **Ideas and on the Backlog the
+   row always hands off today**. It is a fast way into the pre-populated form, not a way around it. No
+   contract is relaxed.
+3. **Scope, from the scoping report.** First wave: the Backlog, the Ideas list, the Boards list (Org
+   Admin) and a board page's List view. Not applicable: the Roadmap (no Outcome create route yet), the
+   Inbox, Home and detail pages. Issue tasks already have an inline add, the reference implementation.
+   Sprints and the Sprint board: a weak fit, not in the first wave. A Lanes view's per-lane add: later,
+   undecided.
+
+**Still open, not decided (verbatim):**
+- Accidental adds, and whether the toast offers Undo. Undo needs a delete route, which is role-restricted
+  today and absent for boards and Issues.
+- New-row ordering against sort and paging.
+- The Sprint select on the Backlog row.
+- Mobile: hand More fields to the drawer?
+- Whether to keep the header *Add New {Item}* button next to the row. (The pattern line above says it
+  remains the primary creation action; this question is whether it stays beside the row on every screen.)
+- Read Only presentation; a disabled bar with the reason is the default assumption.
 ---
 
 ## 2026-10-13 — Boards can pull in existing items, and ideas can have no board
@@ -407,169 +441,3 @@ Terrazzo stays the bare `:root` in `packages/design-system/src/globals.css`: the
 `global-error.tsx`, which deliberately renders without the design system. Moving the bare block
 would change every comp's reference rendering for no product gain. The comps' own pickers still open
 on Terrazzo; they are review artefacts, not the app.
-
----
-
-## 2026-10-04 — Fieldsets: reusable groups of fields, attached to idea types
-
-**Decided by the user.** An Org Admin groups existing custom fields into a named **fieldset**, and an idea
-type selects individual fields *and* fieldsets. This **supersedes the 2026-08-10 model note** in
-`SPEC/20-feature-idea-type-fields.md` that dropped the reusable "Field Set" entity in favour of direct
-type-to-field mapping (that rewrite predates this log and was never an entry here, so it is marked
-superseded where it lives: the two feature specs and the contract).
-
-- **Live references.** A type points at a fieldset; it does not copy it. Editing a fieldset changes
-  every type that uses it, at once.
-- **Effective order** (`SPEC/20-feature-idea-type-fields.md`, "Effective-field resolution"): the type's
-  direct fields in their order, then each attached fieldset in its order with its members in their
-  order. A field reached twice appears once, at its first position; a direct field wins over a
-  fieldset and keeps its per-type required flag. A fieldset-sourced field uses the field's global
-  `is_required`. There is no per-set required override.
-- **Mode.** `Curated` when the type has any direct field or any attached fieldset, otherwise
-  `AllActiveFields`. A type whose fieldsets resolve to no active field stays `Curated`.
-- **Soft-deleted or inactive fields** are skipped by the resolver; the membership row survives.
-- **Deleting a fieldset is refused with `409` while any type uses it**; the UI shows "Used by N types".
-- **Detaching a fieldset** hides its fields and stops validating them; stored `idea_field_values` are
-  kept, as with any Curated edit today.
-- **Names** are unique per organization, case-insensitively.
-- **Permissions** as field definitions: an in-scope Org Admin writes, members read, a Site Admin acting
-  directly is refused with `403`.
-
-**The S0.2 schema freeze is amended a sixth time.** Under the 2026-09-11 rule — the freeze stands, and
-each change to `schema.prisma` needs its own entry here — this is that entry, and not a general licence.
-Additive, no backfill:
-
-- **New table `fieldsets`** (`id`, `organization_id`, `name`, `normalized_name`, `description`,
-  `display_order`, `created_at_utc`, `updated_at_utc`, `created_by_user_id`, `updated_by_user_id`),
-  unique on (`organization_id`, `normalized_name`), indexed on (`organization_id`, `display_order`).
-- **New table `fieldset_fields`** (`id`, `fieldset_id`, `field_definition_id`, `display_order`), unique
-  on (`fieldset_id`, `field_definition_id`), indexed on `field_definition_id`; `ON DELETE CASCADE` from
-  `fieldsets`, no action from `field_definitions`.
-- **New table `idea_type_fieldsets`** (`id`, `idea_type_id`, `fieldset_id`, `display_order`), unique on
-  (`idea_type_id`, `fieldset_id`), indexed on `fieldset_id`; `ON DELETE CASCADE` from `idea_types`, no
-  action from `fieldsets` (which makes the delete refusal a database guarantee too).
-- **Not covered:** a per-set required override, fieldset soft delete, and nested fieldsets.
-
-**Golden corpus.** Idea-type reads and effective-field items gain additive keys (`fieldsetIds`,
-`fieldsets`, `source`), and the fieldset routes are new, so the replay may differ there. The backend
-slice checks whether `tools/golden/src/diff.ts` tolerates additive keys and records anything else in
-`tools/golden/src/accepted.ts`. The corpus is not re-recorded.
-
-Contracts: `SPEC/contracts/fieldsets.md` (new) and `SPEC/contracts/idea-type-fields.md`.
-
----
-
-## 2026-10-01 — The Home comp is a visual guide; the spec wins
-
-**Decided by the user**, amending "The Home dashboard comp is approved as drawn" below:
-`SPEC/mockups/comp-r-home-dashboard.html` is a visual guide, and where it differs from
-`20-feature-client-ui.md` § Home the spec wins — in particular *every number is a filtered query the
-viewer can open*, showing the same set it counts, and every KPI tile carries a one-line definition.
-Slice 156 aligns Home with that:
-
-- **Assigned to me** and **You created** open `/ideas?scope=assigned` and `/ideas?scope=created`, in
-  either phase as they count; Assigned's critical share opens `scope=assigned&priority=Critical`, and
-  the Assigned panel gains a *View all*. `/ideas` reads `scope` and `phase` from the URL and shows
-  them as removable toolbar chips.
-- **Critical & high** and the queue's *View all* add `phase=Ideas`, so the list no longer includes
-  Issues the count leaves out.
-- **The greeting's ideas** are the live boards' own counts, so an archived board's ideas are not
-  counted beside "0 boards", and the number opens `/ideas?phase=Ideas` (naming the live boards when one
-  is archived). Its boards open `/boards`.
-- **The greeting's delivery issues** are every Issue (`/ideas?phase=Issues`), which it links to. This
-  replaces the earlier entry's "in flight" figure (backlog plus Planned and Active sprints), which no
-  list shows; the words "in flight" go. The sprint panel's backlog figure links to the Backlog.
-- **The *Not tracked yet* tile** says in one line why its three figures are not counted.
-- **Site Admin:** *Ideas* is the live boards' counts, and the delivery issues every Issue, in each
-  organization, matching the member view. *Boards* and *Ideas* stay unlinked: no screen lists them
-  across organizations for that role, so they cannot meet the rule until one exists.
-
-- **Archived boards (decided by the user, answering slice 156's open question):** ideas on archived
-  boards are left out of every idea figure on Home — the queue, Critical & high, Most upvoted, Assigned
-  to me, You created and the critical share — and when any board is archived each link names the live
-  boards (`board=`), as the greeting's does, so every count still matches its list.
-
-The earlier entry's other answers stand.
-
----
-
-## 2026-10-01 — The follow and inbox questions are answered
-
-**Decided by the user**, answering the sixteen questions slice 149 left open in
-`20-feature-idea-following.md` (now its "Answered 2026-10-01" section, with each answer). Fifteen take
-the recommended default: a removed assignee keeps following; one new type, `IdeaEdited`; delivery-status
-moves go to followers; commenting does not follow; one row per person per action, the mention winning;
-a Site Admin as themselves cannot follow and has no inbox; nothing here is audited; the inbox shows 90
-days and keeps older rows; deleted ideas' notifications are hidden; a row opens the drawer over the
-inbox; only opening a row, or Mark all read, marks read; under View As it is the target's inbox; the
-count refreshes on navigation and every 60 s; unread is ink and bold, no hue; the toggle shows the count
-only.
-
-**Addendum, 2026-10-01 (owner):** each inbox row shows its board name, as the approved comp does (*You
-follow this idea · Opportunities*). This supersedes the contract's "no board name is sent". The name is
-the idea's **current** board, read at query time through `ideas.board_id`, not captured on the event
-(unlike `status_name`, which is history); no schema change. Feature rule 23a; `boardName` in
-`contracts/notifications.md`.
-
-**Q13 differs:** a status row **names the new status** (*moved {idea} to In Review*). That needs
-`notification_events.status_name`, added to the amendment below, captured at write time.
-
----
-
-## 2026-10-01 — The S0.2 schema freeze is amended a fifth time, for idea followers and read state
-
-**Follows from the user's decision below** ("The follower list needs a schema change, which amends the
-S0.2 freeze a fifth time"). Under the 2026-09-11 rule — the freeze stands, and each change to
-`schema.prisma` needs its own entry here — this is that entry, and it is not a general licence. The
-columns are slice 149's proposal (`20-feature-idea-following.md` rules 36–39), confirmed when the user
-reviews that slice; the build slice writes the migration.
-
-- **New table `idea_followers`** (`id`, `idea_id`, `user_id`, `created_at_utc`), shaped like
-  `idea_upvotes`: unique on (`idea_id`, `user_id`), indexed on `user_id`, `ON DELETE CASCADE` from
-  `ideas`, no action from `users`.
-- **`notification_events.status_name VARCHAR(100) NULL`** (added with the answers entry above): the new
-  status's name for the two status events, captured at write time, so a later rename does not rewrite
-  history. A narrow typed column rather than JSON metadata, because no other type needs a detail.
-- **`notification_events.read_at_utc TIMESTAMPTZ(6) NULL`**, `NULL` meaning unread, and an index on
-  (`recipient_user_id`, `occurred_at_utc` DESC) replacing the one on `recipient_user_id` alone.
-- **`NotificationEventType` gains `IdeaEdited`** (value 7).
-- **The migration backfills** the author and every assignee of each idea that is not soft-deleted as
-  followers, so today's recipients keep hearing.
-- **Not covered:** a general metadata column on `notification_events`, a follow source column, and any
-  purge of old notifications. Each would need its own amendment.
-
-**Golden corpus.** `GET /ideas/{ideaId}` and `PUT /ideas/{ideaId}` gain `isFollowing` and
-`followerCount`, so the replay will differ there. Those differences are accepted, and the backend
-slice records them in `tools/golden/src/accepted.ts`.
-
----
-
-## 2026-10-01 — The Home dashboard comp is approved as drawn
-
-**Decided by the user**: build Home from `SPEC/mockups/comp-r-home-dashboard.html` (slice 150) as
-it stands. The comp's nine open questions take the comp's own answers: the greeting's "in flight"
-counts the backlog plus the Planned and Active sprints' `issueCount`; Complete-lane ideas count as
-"still on a board" until status categories exist; the new tiles and panels stay (You created,
-Assigned to me list, Most upvoted); the Assigned list keeps the default phase (Issues included); with
-two Active sprints the one ending first shows; Read Only keeps the Assigned tile and panel; the Site
-Admin fan-out stands; the Site Admin tile reads *Ideas* with the served total; no "Unread for you"
-panel for now. Panels marked "Needs" stay placeholders.
-
----
-
-## 2026-10-01 — Following an idea, and an in-app notification inbox
-
-**Decided by the user** during ad-hoc testing, answering the questions put before specifying it:
-
-1. **Anyone who can see an idea can follow or unfollow it for themselves**, Read Only included.
-   Following is a read and grants no access. Nobody adds or removes other people as followers.
-2. **The author and every assignee follow automatically** and can unfollow.
-3. **Followers are notified of** a new comment, a status change, promotion to an issue, and an edit or
-   reassignment (the last is a new event type). For comments and status changes this replaces the
-   "author + assignee" recipients in `20-feature-notifications.md`.
-4. **Delivery is an in-app inbox** — unread count and a list. Email comes later, once a provider is
-   configured; guaranteed delivery stays deferred.
-
-The inbox is a new screen, so it is comp-first. The follower list needs a schema change, which
-amends the S0.2 freeze a fifth time. Specified in slice 149, built after the user reviews the comp.
-
