@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-15 | The 17 open Outcome contract questions are decided | active | full below |
 | 2026-10-15 | Board References replace the Delivery phase | active | full below |
 | 2026-10-15 | The four open Backlog Add New Issue readings are decided | active | full below |
 | 2026-10-15 | Issues can be added directly from the Backlog | amended | full below |
@@ -121,6 +122,28 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-15 — The 17 open Outcome contract questions are decided
+
+> Supersedes in part: the "defaults proposed and accepted without individual review" paragraph of "Further decisions" in `SPEC/20-feature-board-references.md`, where it differs (listed below). The lines of that section that the owner decided individually are confirmed, not changed.
+
+**Decided by the user**, on the 17 questions `SPEC/contracts/outcomes.md` ended with, then corrected the same day after the answers were checked against `SPEC/20-feature-board-references.md`. The contract carries each rule in its route section and lists the 17 under "Decided 2026-10-15", numbered as before.
+
+**Confirmed from board-references (decided there individually):** Q1 the Board References rollup (`ideaCount`/`doneIdeaCount` with an item in a final lane done, `taskCount`/`doneTaskCount` over child cards, projected and realized totals per metric type, `sprintStart`/`sprintEnd` from the tasks' sprints, `null` when none; quarter placement and State computed by the client); Q4 names may duplicate, no uniqueness constraint; Q9 grouping saved per item with `PUT /ideas/{id}/outcomes`, the Outcome write carries no item list and accepts `color`; Q10 a Site Admin is refused on every Outcome route, reads included, and reads only through View As (2026-10-04); Q12 scope: any item with no parent, in any status, on any board, standalone child-board cards included, a card with a parent is a `422`; Q17 appended at the end of the order.
+
+**Superseding board-references' unreviewed defaults:** Q2 the roadmap read has no Issue key (and `ungrouped` Issues); Q6 the list is paged (`page`, `pageSize`, default 20, clamped 1-100), the roadmap read is not; Q7 reorder body `{ "orderedIds": [...] }`, partial allowed, `sortOrder` renumbered `0..n-1`, bad ids a `400` (not `outcomeIds` matching exactly); Q8 reorder is `204` (create `201`, update `200`, delete `204`, grouping `200` + `{ ideaId, outcomeId }`); Q11 fuller audit payloads (Created/Deleted carry the fields, Updated carries old and new per changed field and is written only on change, grouping carries item and from/to ids and names), a no-op writes nothing, no notifications; Q13 `ownerUserId` only, no `ownerDisplayName`; Q16 a repeat `DELETE` of a deleted Outcome of the organization is `204` (never existed or other organization: `404`); grouping into an unknown, soft-deleted or other-organization Outcome is a `400` on `outcomeId`, not `404`.
+
+**Also decided:** Q3 shared validation templates and camelCase keys, shared `403`/`404` text; Q5 colour as tags (upper-case, random on create when absent or `null`, unchanged when absent on update, `null` on update a `400`); Q14 dates `YYYY-MM-DD`; Q15 soft-deleted Outcomes excluded from every read and from grouping, no restore.
+
+**Why.** The Outcomes backend was blocked on these answers (`SPEC/implementation-agent-tracker.md`); recording them lets the backend slice build against a closed contract.
+
+**Consequences.**
+- **No schema change from this slice:** names may duplicate, so there is no index and no freeze amendment (Board References was the ninth; this adds none).
+- Q1's metric-type totals are flat on the Outcome, but their property shape waits for the metric-types contract.
+- The Outcome write carries no item list; the web client sends one grouping `PUT` per changed item.
+- `SPEC/20-feature-issues-and-delivery.md` and `SPEC/30-Contracts.md` gain pointers only.
 
 ---
 

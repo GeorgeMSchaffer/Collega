@@ -358,6 +358,8 @@ All under `/api/v1`, org-scoped, following existing conventions and problem-deta
 | `GET` | `/organizations/{orgId}/roadmap` | Roadmap grid (`?granularity=quarter|sprint`) — *granularity superseded 2026-09-28: the client draws the axis; see `GetRoadmapAsync`* |
 | `PUT` | `/ideas/{ideaId}/outcomes` | Set an Issue's outcome grouping — body `{ "outcomeId": <guid|null> }`; null ungroups |
 
+*Decided 2026-10-15: the list is paged, the roadmap read is unpaged and separate, reorder takes `orderedIds`, and a Site Admin acting directly is refused on every route (reads through View As). Statuses, bodies and every other rule: `contracts/outcomes.md`, which wins where this table is silent or differs.*
+
 ---
 
 ## Audit & Notifications
