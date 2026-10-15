@@ -245,6 +245,9 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
           data: {
             board_id: boardId,
             status_id: item.toStatusId,
+            // The old board's number means nothing here (and could collide with one issued here);
+            // the allocation below issues this board's own.
+            item_number: null,
             updated_at_utc: nowUtc,
             updated_by_user_id: actorUserId,
             ...(item.returnsToDiscovery
@@ -252,6 +255,21 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
               : {}),
           },
         }),
+      )
+      // Inside the batch, unlike `allocateItemNumber`: the target may be staged in this same save,
+      // and a pull that fails the check below must not burn numbers. A board without a prefix
+      // allocates nothing, so the subselect is null and the item stays unnumbered.
+      this.unitOfWork.enqueue(
+        this.prisma.$executeRaw(Prisma.sql`
+          WITH issued AS (
+            UPDATE boards SET next_item_number = next_item_number + 1
+            WHERE id = ${boardId}::uuid AND key_prefix IS NOT NULL
+            RETURNING next_item_number - 1 AS item_number
+          )
+          UPDATE ideas SET item_number = (SELECT issued.item_number FROM issued)
+          WHERE id = ${item.ideaId}::uuid AND board_id = ${boardId}::uuid
+            AND updated_at_utc = ${nowUtc}::timestamptz
+        `),
       )
     }
     this.unitOfWork.enqueue(
@@ -435,6 +453,32 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
       select: { id: true },
     })
     return row?.id ?? null
+  }
+
+  /** `ideas.BoardsPort.allocateItemNumber`: awaited and committed on its own, outside the unit of
+   * work (Board References Ruling 5; precedent `tag.repository.ts` `getOrCreate`). The row lock the
+   * UPDATE takes serializes concurrent creates, so each reads a distinct counter value. */
+  async allocateItemNumber(boardId: string): Promise<number | null> {
+    const rows = await this.prisma.$queryRaw<{ item_number: number }[]>(Prisma.sql`
+      UPDATE boards SET next_item_number = next_item_number + 1
+      WHERE id = ${boardId}::uuid AND key_prefix IS NOT NULL
+      RETURNING next_item_number - 1 AS item_number
+    `)
+    return rows[0]?.item_number ?? null
+  }
+
+  /** `ideas.BoardsPort.getKeyPrefixes`. */
+  async getKeyPrefixes(boardIds: readonly string[]): Promise<ReadonlyMap<string, string>> {
+    if (boardIds.length === 0) {
+      return new Map()
+    }
+    const rows = await this.prisma.boards.findMany({
+      where: { id: { in: [...boardIds] }, key_prefix: { not: null } },
+      select: { id: true, key_prefix: true },
+    })
+    return new Map(
+      rows.flatMap((row) => (row.key_prefix === null ? [] : [[row.id, row.key_prefix] as const])),
+    )
   }
 
   async add(board: Board): Promise<void> {
