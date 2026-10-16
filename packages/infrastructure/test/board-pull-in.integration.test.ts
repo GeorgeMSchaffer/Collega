@@ -367,12 +367,12 @@ describe.skipIf(!DATABASE_URL)('Board pull-in, against a live database', () => {
       expect(await prisma.issue_tasks.count({ where: { idea_id: issue } })).toBe(1)
     })
 
-    it('clears a board sprint, both dependency directions and the parent, but leaves a legacy sprint', async () => {
+    // A task cannot be pulled (decided 2026-10-16), so no pulled item has a parent to clear.
+    it('clears a board sprint and both dependency directions, but leaves a legacy sprint', async () => {
       const source = await newBoard()
       const sourceSprint = await newSprint(source)
       const legacySprint = await newSprint(null)
-      const parent = await newIdea({ boardId: source })
-      const leaving = await newIdea({ boardId: source, sprintId: sourceSprint, parentId: parent })
+      const leaving = await newIdea({ boardId: source, sprintId: sourceSprint })
       const legacy = await newIdea({ boardId: source, sprintId: legacySprint })
       const neighbour = await newIdea({ boardId: source })
       await prisma.idea_dependencies.createMany({
@@ -393,7 +393,6 @@ describe.skipIf(!DATABASE_URL)('Board pull-in, against a live database', () => {
       expect(await row(leaving)).toMatchObject({
         board_id: target,
         sprint_id: null,
-        parent_idea_id: null,
       })
       expect(
         await prisma.idea_dependencies.count({

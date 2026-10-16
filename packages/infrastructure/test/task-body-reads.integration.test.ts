@@ -344,12 +344,12 @@ describe.skipIf(!DATABASE_URL)('Task reads next to ideas, against a live databas
         page: { page: 1, pageSize: 50 },
       })
 
-    it('shows a null priority for a task and the stored one for an idea', async () => {
+    // A task is never a pull candidate (decided 2026-10-16), so only the idea is offered.
+    it('leaves a task out and shows the stored priority for an idea', async () => {
       const task = await candidates('Task early')
       const idea = await candidates('Alpha')
 
-      expect(task.items).toHaveLength(1)
-      expect(task.items[0]?.priority).toBeNull()
+      expect(task.items).toHaveLength(0)
       expect(idea.items).toHaveLength(1)
       expect(idea.items[0]?.priority).toBe('Critical')
     })
