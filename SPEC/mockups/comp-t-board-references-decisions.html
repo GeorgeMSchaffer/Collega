@@ -736,10 +736,6 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
         <div class="cfgrow"><span class="grip">&#8942;&#8942;</span><b>Scoping</b><span>Active</span><span class="note">&mdash;</span><span></span></div>
         <div class="cfgrow" style="background:var(--rowh)"><span class="grip">&#8942;&#8942;</span><b>Approved for Implementation</b><span>Active</span>
           <span class="sel"><span>None</span><span>&#9662;</span></span><span></span></div>
-        <div style="padding:0 16px 12px 50px;background:var(--rowh);display:flex;flex-direction:column;gap:4px">
-          <button class="sw" role="switch" aria-checked="false" aria-disabled="true" aria-describedby="h-off"><i></i><span>Auto-create one task on entry</span></button>
-          <span class="helper" id="h-off">Choose a board reference first. Auto-create needs a board to put the task on.</span>
-        </div>
         <div class="cfgrow" style="background:var(--rowh)"><span class="grip">&#8942;&#8942;</span><span><b>Implementation</b> <span class="refpill">&#8627; board reference</span></span><span>Active</span>
           <span class="sel"><span>Implementation board</span><span>&#9662;</span></span><span style="text-align:right"><button class="btn sm ghost">Remove</button></span></div>
         <div style="padding:0 16px 14px 50px;background:var(--rowh);display:flex;flex-direction:column;gap:4px">
@@ -756,22 +752,17 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
         <div class="note">Removing the board reference turns the switch off in the same step, with an inline note (below). If a save carried the switch on with no reference, the server would answer <code>422 autoCreateTaskRequiresReference</code>; this form never lets you get there.</div>
         <div class="note">3 ideas currently sit in Implementation, so this reference can't be changed to another board while they do.</div>
       </div>
-      <div class="frame"><h2><span class="fl">A</span>After Remove on the reference, with the switch on</h2>
+      <div class="frame"><h2><span class="fl">A</span>After Remove on the reference, with the switch on: the switch goes away</h2>
         <div class="fb">
           <div class="bl" style="margin:0">
             <div class="cfgrow" style="background:var(--rowh)"><span class="grip">&#8942;&#8942;</span><span><b>Implementation</b></span><span>Active</span>
               <span class="sel"><span>None</span><span>&#9662;</span></span><span></span></div>
             <div style="padding:0 16px 14px 50px;background:var(--rowh);display:flex;flex-direction:column;gap:4px">
-              <button class="sw" role="switch" aria-checked="false" aria-disabled="true" aria-describedby="h-auto-off"><i></i><span>Auto-create one task on entry</span></button>
               <span class="helper" id="h-auto-off" role="status">Auto-create turned off &mdash; it needs a referenced board.</span>
             </div>
           </div>
-          <div class="note">The reference and the switch change together and save in one step; there is no second save and no confirmation. Putting a reference back does not turn the switch on again.</div>
+          <div class="note">The reference and the switch change together and save in one step; there is no second save and no confirmation. The switch is shown only on lanes that reference a board, so it is gone here; putting a reference back does not turn it on again.</div>
         </div></div>
-      <div class="oq"><b>Open questions</b>
-        <ul>
-          <li>Switch placement: a second line under the row (drawn) or a column in the row? A column does not fit at phone width.</li>
-        </ul></div>
     </div>
   </section>
 
