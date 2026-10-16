@@ -40,11 +40,13 @@ import type {
 } from '../../src/ideas/ports.js'
 import type { IdeaMetricValuesPort } from '../../src/metric-types/ports.js'
 import {
+  type CountingUnitOfWork,
   countingUnitOfWork,
   fixedClock,
   NOW,
   ORG_A,
   ORG_B,
+  type RecordingAudit,
   recordingAudit,
 } from '../support/fixtures.js'
 
@@ -163,6 +165,8 @@ export type Harness = {
   saved: Idea[]
   added: Idea[]
   audit: ReturnType<typeof recordingAudit>
+  /** The unit of work the service commits through; `saves` counts its commits. */
+  unitOfWork: CountingUnitOfWork
   notifications: NotificationInput[]
   /** Who follows each idea; edit it to model an unfollow or a follower who is not the author. */
   followersByIdea: Map<string, Set<string>>
@@ -199,6 +203,8 @@ export function harness(options: {
   classification?: Partial<IdeaClassificationPort>
   /** Existing blocked-by links. */
   dependencies?: readonly DependencyEdge[]
+  /** Replaces the recording audit writer, e.g. to note what had been committed at each write. */
+  audit?: RecordingAudit
 }): Harness {
   const boardsById = new Map((options.boards ?? [board()]).map((b) => [b.boardId, b]))
   const ideasById = new Map((options.ideas ?? []).map((i) => [i.id, i]))
@@ -564,7 +570,8 @@ export function harness(options: {
     },
   }
 
-  const audit = recordingAudit()
+  const audit = options.audit ?? recordingAudit()
+  const unitOfWork = countingUnitOfWork()
 
   return {
     service: new IdeaService(
@@ -581,7 +588,7 @@ export function harness(options: {
       notificationsPort,
       followers,
       dependencies,
-      countingUnitOfWork(),
+      unitOfWork,
       audit,
       options.currentUser,
       fixedClock(),
@@ -591,6 +598,7 @@ export function harness(options: {
     saved,
     added,
     audit,
+    unitOfWork,
     notifications,
     followersByIdea,
     boardFilters,
