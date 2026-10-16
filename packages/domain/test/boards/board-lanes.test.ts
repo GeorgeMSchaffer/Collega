@@ -111,7 +111,11 @@ describe('updateBoard and reorderBoardSwimlanes with lanes and flags', () => {
       fieldOf(() =>
         updateBoard(
           create(),
-          { name: 'x', allowUserStatusUpdate: false, orderedLanes: [LANES[0]!, LANES[0]!] },
+          {
+            name: 'x',
+            allowUserStatusUpdate: false,
+            orderedLanes: [...LANES.slice(0, 1), ...LANES.slice(0, 1)],
+          },
           LATER,
           null,
         ),

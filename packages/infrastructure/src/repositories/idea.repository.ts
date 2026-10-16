@@ -29,7 +29,7 @@ import type {
 } from '@collega/application/ideas'
 import type { SprintIssueCounts, SprintIssuesPort } from '@collega/application/sprints'
 import type { DeliveryStatus, EffortLevel, IdeaPhase, Priority } from '@collega/domain/enums'
-import { DeliveryStatus as Delivery, IdeaPhase as Phase } from '@collega/domain/enums'
+import { IdeaPhase as Phase } from '@collega/domain/enums'
 import type { Idea, IdeaFieldValueRecord } from '@collega/domain/ideas'
 import type {
   idea_assignees as AssigneeRow,
@@ -290,7 +290,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       FROM ideas c
       LEFT JOIN board_swimlanes l ON l.board_id = c.board_id AND l.status_id = c.status_id
       WHERE c.parent_idea_id IN (${Prisma.join(parentIds.map((id) => Prisma.sql`${id}::uuid`))})
-        AND c.is_deleted = false
+        AND c.is_deleted = FALSE
       GROUP BY c.parent_idea_id
     `)
     return new Map(rows.map((row) => [row.parent_id, { total: row.total, done: row.done }]))

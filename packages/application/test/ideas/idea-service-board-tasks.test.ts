@@ -6,7 +6,6 @@ import { describe, expect, it } from 'vitest'
 import { UnprocessableError } from '../../src/common/index.js'
 import { orgAdmin } from '../support/fixtures.js'
 import {
-  BOARD_A,
   BOARD_B,
   board,
   CREATE,

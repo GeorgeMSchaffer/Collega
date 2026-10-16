@@ -1507,7 +1507,9 @@ export class IdeaService {
         statusId = matched
       }
       if (board.swimlanes.find((lane) => lane.statusId === statusId)?.referencesBoardId) {
-        reject('Effort is required to enter a lane that references a board, so a row cannot be imported into one.')
+        reject(
+          'Effort is required to enter a lane that references a board, so a row cannot be imported into one.',
+        )
         continue
       }
 

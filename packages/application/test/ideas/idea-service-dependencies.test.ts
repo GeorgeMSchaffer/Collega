@@ -199,9 +199,9 @@ describe('create and CSV import: Effort entry rule', () => {
   it('refuses creating an idea in a reference lane, and allows an ordinary lane', async () => {
     const h = harness({ currentUser: orgAdmin(), boards: [PARENT_BOARD] })
 
-    expect(
-      await codeOf(h.service.create(BOARD_B, { ...CREATE, statusId: STATUS_2 })),
-    ).toBe('effortRequiredForReferenceLane')
+    expect(await codeOf(h.service.create(BOARD_B, { ...CREATE, statusId: STATUS_2 }))).toBe(
+      'effortRequiredForReferenceLane',
+    )
     expect(h.added).toHaveLength(0)
 
     await h.service.create(BOARD_B, { ...CREATE, statusId: STATUS_1 })

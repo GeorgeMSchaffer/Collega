@@ -146,7 +146,7 @@ export class PrismaOutcomeRepository implements OutcomeRepository, OutcomeReadsP
       FROM ideas i
       LEFT JOIN board_swimlanes l ON l.board_id = i.board_id AND l.status_id = i.status_id
       WHERE i.outcome_id IN (${uuidList(outcomeIds)})
-        AND i.is_deleted = false
+        AND i.is_deleted = FALSE
       GROUP BY i.outcome_id
     `)
     const taskRows = await this.prisma.$queryRaw<
@@ -166,10 +166,10 @@ export class PrismaOutcomeRepository implements OutcomeRepository, OutcomeReadsP
       FROM ideas c
       JOIN ideas p ON p.id = c.parent_idea_id
       LEFT JOIN board_swimlanes l ON l.board_id = c.board_id AND l.status_id = c.status_id
-      LEFT JOIN sprints s ON s.id = c.sprint_id AND s.is_deleted = false
+      LEFT JOIN sprints s ON s.id = c.sprint_id AND s.is_deleted = FALSE
       WHERE p.outcome_id IN (${uuidList(outcomeIds)})
-        AND p.is_deleted = false
-        AND c.is_deleted = false
+        AND p.is_deleted = FALSE
+        AND c.is_deleted = FALSE
       GROUP BY p.outcome_id
     `)
 
@@ -229,9 +229,9 @@ export class PrismaOutcomeRepository implements OutcomeRepository, OutcomeReadsP
              TO_CHAR(s.start_date, 'YYYY-MM-DD') AS sprint_start,
              TO_CHAR(s.end_date, 'YYYY-MM-DD') AS sprint_end
       FROM ideas i
-      LEFT JOIN sprints s ON s.id = i.sprint_id AND s.is_deleted = false
+      LEFT JOIN sprints s ON s.id = i.sprint_id AND s.is_deleted = FALSE
       WHERE i.outcome_id IN (${uuidList(outcomeIds)})
-        AND i.is_deleted = false
+        AND i.is_deleted = FALSE
       ORDER BY i.created_at_utc ASC, i.title ASC
     `)
     for (const row of rows) {
@@ -259,11 +259,11 @@ export class PrismaOutcomeRepository implements OutcomeRepository, OutcomeReadsP
              TO_CHAR(s.start_date, 'YYYY-MM-DD') AS sprint_start,
              TO_CHAR(s.end_date, 'YYYY-MM-DD') AS sprint_end
       FROM ideas i
-      LEFT JOIN sprints s ON s.id = i.sprint_id AND s.is_deleted = false
+      LEFT JOIN sprints s ON s.id = i.sprint_id AND s.is_deleted = FALSE
       WHERE i.organization_id = ${organizationId}::uuid
         AND i.outcome_id IS NULL
         AND i.parent_idea_id IS NULL
-        AND i.is_deleted = false
+        AND i.is_deleted = FALSE
       ORDER BY i.created_at_utc ASC, i.title ASC
     `)
     return rows.map(toIdea)
