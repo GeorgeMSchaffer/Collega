@@ -6,6 +6,7 @@
 > `SPEC/20-feature-issues-and-delivery.md` (Slice 1). Outcomes (Slice 2) is kept and extended.
 > **Reference rendering:** `SPEC/mockups/comp-s-board-reference.html` (Graphite, three screens).
 > **Review comp (2026-10-16, awaiting review):** `SPEC/mockups/comp-t-board-references-decisions.html` draws the metric types, Value section, task drawer, reference-lane lock, lane setting, pull picker and Outcome totals. Not a reference until approved.
+> **Review comp (2026-10-16, awaiting review):** `SPEC/mockups/comp-u-board-references-core.html` draws the core pieces comp T depends on: lanes editor, idea board, work board, parent drawer Tasks, Effort field and blockers. Strings marked COPY PROPOSED and its open questions are not decided.
 
 ## Problem
 
