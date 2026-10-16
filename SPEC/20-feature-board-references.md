@@ -37,7 +37,7 @@ the idea, and ideas roll up to Outcomes with projected and realized value.
 | Sprints | Per child board (`boards.sprints_enabled`), **cross-idea**: one sprint holds tasks from many parents. Unfinished tasks return to the backlog on completion. |
 | Standalone cards | Allowed. A child-board card with no parent is simply not part of any idea's rollup. |
 | Board settings | **No board-admin role.** The new settings (reference and final lanes, key prefix, idea features, auto-create-one-task) are an Org Admin's, like every board setting; any User may still create a board (`SPEC/decisions.md` 2026-10-04, reconfirmed 2026-10-16). |
-| Value | **Typed metrics, projected vs realized.** Projected is set while scoping; realized is typically entered after the idea's final status (not enforced; decided 2026-10-16). Outcomes sum each metric type. |
+| Value | **Typed metrics, projected vs realized.** Projected is set while scoping; realized is typically entered after the idea's final status (not enforced; decided 2026-10-16), and may be entered on an archived board. Outcomes sum each metric type. |
 
 ## Data model (all columns nullable unless noted)
 
@@ -57,12 +57,13 @@ the idea, and ideas roll up to Outcomes with projected and realized value.
 1. **Entering a reference status:** a normal move. The idea's drawer shows a Tasks section with "+ Add task". A new task is a card in the referenced board's first status. Entering with zero tasks is allowed.
 2. **Task flow:** tasks use the child board's statuses, assignees, comments, tags and sprint. Blocked tasks show a lock.
 3. **Completion prompt:** when all tasks are final, the idea shows "All N tasks are complete. Move to <next status>?" with Move and Not yet.
-4. **Lock:** while any task is not in a final lane the card cannot leave the lane, nor its board by detach or by being pulled onto another board; it shows "Waiting on N tasks" and a move is refused (`parentHasOpenTasks`). An Org Admin can force the move with a required reason (audited); the tasks remain on the child board. With no tasks there is nothing to wait on. A lane set to auto-create creates one task on entry (parent's title, child board's first lane).
+4. **Lock:** while any task is not in a final lane the card cannot leave the lane, nor its board by detach or by being pulled onto another board; it shows "Waiting on N tasks" and a move is refused (`parentHasOpenTasks`). An Org Admin can force the move with a required reason (audited); the tasks remain on the child board. With no tasks there is nothing to wait on. A lane set to auto-create creates one task on every entry, by status move, pull or bulk lane move (parent's title, child board's first lane; decided 2026-10-16).
 5. **Late additions:** adding a task to an idea already past the reference status prompts "Move back to <status>?".
 6. **Guards:** a reference lane cannot be removed or re-pointed while ideas sit in it; a board cannot be archived while a lane references it.
 7. **Rollups:** `N of M tasks` on the idea card and drawer; per-Outcome idea, task and value totals (projected and realized, by metric type).
 8. **Visibility:** child cards show a `↳ <parent key>` chip; standalone cards show none.
-9. **Roles:** unchanged. Site Admin mutates only through View As; Org Admins configure reference statuses and metric types.
+9. **Tasks:** a task is editable by its author or an Org Admin in its task fields only (title, description, assignees, tags), and is never pulled onto another board (decided 2026-10-16).
+10. **Roles:** unchanged. Site Admin mutates only through View As; Org Admins configure reference statuses and metric types.
 
 ## UI
 

@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-16 | Board References follow-ups: auto-create on every entry, tasks not pullable, task editing, metrics on archived boards, Site Admin detail metrics | active | full below |
 | 2026-10-16 | Metric types are an organization table with projected and realized values per item | active | full below |
 | 2026-10-16 | A reference lane locks its card until its tasks are final | active | full below |
 | 2026-10-15 | Cutover follow-up: migration check, SITE_ADMIN_PASSWORD, App Admin in the README, rollback wording | active | full below |
@@ -125,6 +126,29 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-16 — Board References follow-ups: auto-create on every entry, tasks not pullable, task editing, metrics on archived boards, Site Admin detail metrics
+
+> Amends: "A reference lane locks its card until its tasks are final" (2026-10-16), whose auto-create-on-entry hand-off is widened from the status move to every way a card enters a lane; "Board References replace the Delivery phase" (2026-10-15), which left editing a task and pulling one unspecified; and "Metric types are an organization table with projected and realized values per item" (2026-10-16), whose idea-detail default for a Site Admin and whose silence on archived boards are settled here. Everything else in those entries stands.
+
+**Decided by the user.**
+
+1. **Auto-create fires on every entry.** A card entering an `autoCreateTask` lane by any path gets its one task: a status move, a pull from another board (`pullItemIds`), or a bulk lane move (`ideaMoves` on a board edit). Same transaction as the entry; a failure rolls the whole write back.
+2. **Tasks are never pull candidates.** An item with a parent is left out of the pull picker and refused if its id is sent in `pullItemIds`. A task lives on the board its parent's reference lane points to; moving it would break the lock and the rollup.
+3. **Tasks are editable, task fields only.** The author or an Org Admin may edit a task's `title`, `description`, `assigneeUserIds` and `tagNames` through `PUT /ideas/{ideaId}`. Idea-only fields are not taken (ignored, as on create) and stay `null` on read; sprint and blockers keep their own routes. Read Only never; a direct Site Admin as for any idea update.
+4. **Metric writes stay open on an archived board.** `PUT /ideas/{ideaId}/metrics` is allowed when the card's board is archived. This is a deliberate exception to `20-feature-boards-and-statuses.md` rule 13 (an archived board is read-only), because realized values often arrive after the work is finished and the board archived.
+5. **A direct Site Admin gets `metrics: []` in the idea detail.** The metric-types contract's "refused on every route, reads included" wins over the detail returning the array; the Site Admin sees values through View As.
+
+**Why.** (1) The lane's setting is a promise about the lane, not about one route; a card that arrives by pull or board edit would otherwise sit in a hand-off lane with nothing to wait on. (2) A task moved off its board escapes the lock and the rollup, and the picker has no use for it. (3) A task whose title or assignee cannot be corrected forces delete and re-create, losing its key and history. (4) Realized value is the point of the feature and is known last. (5) One reading of the Site Admin rule, with no exception for the detail.
+
+**Rejected.** Auto-create on the status move only (leaves a pull or board edit bypassing the hand-off); letting a task be pulled, with the parent's lock re-checked; leaving tasks uneditable; editing idea-only fields on a task; refusing metric writes on an archived board like every other write; the detail refusing a direct Site Admin with `403`.
+
+**Consequences.**
+- `contracts/ideas.md` (status move, task update, detail `metrics`), `contracts/boards.md` (`autoCreateTask`, "Pulling items", pull candidates), `contracts/metric-types.md` and rule 13 of `20-feature-boards-and-statuses.md` are amended; `20-feature-board-references.md` follows.
+- **Backend follow-up, not yet scheduled:** auto-create on pull and on `ideaMoves` (today only the status move creates the task); the `pullItemIds` refusal and the picker filter for tasks; the task branch of the idea update; the archived-board exception on the metrics write; `metrics: []` for a direct Site Admin.
+- QA slice 244's `it.fails` cases, the CSV Idea Type and Business Impact cells, are a defect to fix with that backend work, not a behaviour to keep.
 
 ---
 

@@ -79,7 +79,7 @@ An item's values.
   flagged, so the drawer can show it read-only.
 - **Errors:** `401`; `403`; `404` the idea does not exist or is outside caller scope.
 - **Rules:** the idea detail read (`contracts/ideas.md`) returns the same array as `metrics`. A
-  card with a parent returns `[]`.
+  card with a parent returns `[]`. The detail returns `[]` to a direct Site Admin rather than refusing the read (decided 2026-10-16); this route still refuses one with `403`.
 
 ### `PUT /api/v1/ideas/{ideaId}/metrics`
 Replace an item's values.
@@ -101,6 +101,7 @@ Replace an item's values.
     counts a parent and its tasks twice.
   - **Realized has no gate.** It may be set in any lane; the UI emphasises it once the item is in a
     final lane.
+  - **Open on an archived board (decided 2026-10-16).** The write is allowed when the item's board is archived: realized values often arrive after the work is done and the board archived. A deliberate exception to rule 13 of `20-feature-boards-and-statuses.md`; every other write to the item stays refused there.
   - A type is named by `400`, not `404`, because it is a body field, as for `outcomeId` in
     `contracts/outcomes.md`.
   - Audit: `IdeaMetricsChanged` (before and after). No notification. No change is a no-op with no
