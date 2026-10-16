@@ -56,6 +56,11 @@ const WIRE_DETAIL: WireIdeaDetail = {
   createdAtUtc: '2026-09-04T03:55:41.000Z',
   isFollowing: false,
   followerCount: 0,
+  itemKey: null,
+  parentIdeaId: null,
+  taskCounts: null,
+  blockedBy: [],
+  metrics: [],
 }
 
 const TASK_DETAIL: WireIdeaDetail = {
@@ -104,6 +109,10 @@ describe('toIdea', () => {
       tagNames: [],
       tags: [],
       effort: null,
+      itemKey: null,
+      parentIdeaId: null,
+      taskCounts: null,
+      blockedBy: [],
       statusId: 's-1',
       statusName: 'New',
       upvoteCount: 0,

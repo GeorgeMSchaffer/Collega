@@ -60,6 +60,10 @@ function idea(id: string, effort: Idea['effort']): Idea {
     upvotes: 0,
     hasUpvoted: false,
     effort,
+    itemKey: null,
+    parentIdeaId: null,
+    taskCounts: null,
+    blockedBy: [],
   }
 }
 

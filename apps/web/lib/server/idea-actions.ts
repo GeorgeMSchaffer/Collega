@@ -73,9 +73,10 @@ export type SaveIdeaResult =
 /**
  * The message to show for a refusal, or a rethrow for anything that is not one.
  *
- * 400, 403, 404 and 409 are all *answers* — the field was empty, the role may not, the id belongs to
- * another organization, the board is archived — and each one belongs beside the control that was
- * pressed. A 500 is not an answer, and rethrowing lands it on the error boundary.
+ * 400, 403, 404, 409 and 422 are all *answers* — the field was empty, the role may not, the id belongs
+ * to another organization, the board is archived, a Board References rule refused the move
+ * (`parentHasOpenTasks`, `taskBlocked`; `detail` is the rule key until the API sends a message) —
+ * and each one belongs beside the control that was pressed. A 500 is not an answer, and rethrowing lands it on the error boundary.
  *
  * 401 means the session ended between rendering and pressing the button: the same ordinary end of a
  * session `requireCurrentUser` redirects for, so it redirects to the same place.
@@ -83,7 +84,7 @@ export type SaveIdeaResult =
 function refusal(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 401) redirect('/login?expired=1')
-    if ([400, 403, 404, 409].includes(error.status)) return error.detail
+    if ([400, 403, 404, 409, 422].includes(error.status)) return error.detail
   }
   throw error
 }

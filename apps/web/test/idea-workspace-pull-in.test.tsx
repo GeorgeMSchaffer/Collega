@@ -70,6 +70,10 @@ function idea(id: string, boardId: string | null, authorUserId: string | null = 
     upvotes: 0,
     hasUpvoted: false,
     effort: null,
+    itemKey: null,
+    parentIdeaId: null,
+    taskCounts: null,
+    blockedBy: [],
   }
 }
 

@@ -77,6 +77,10 @@ function ideaOn(boardId: string, title: string): Idea {
     upvotes: 0,
     hasUpvoted: false,
     effort: null,
+    itemKey: null,
+    parentIdeaId: null,
+    taskCounts: null,
+    blockedBy: [],
   }
 }
 
@@ -150,6 +154,9 @@ function boardOverview(name: string, overrides: Partial<BoardOverview> = {}): Bo
     userStatusMoves: false,
     isArchived: false,
     archivedOn: null,
+    keyPrefix: null,
+    sprintsEnabled: false,
+    ideaFeaturesEnabled: true,
     ...overrides,
   }
 }

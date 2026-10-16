@@ -40,6 +40,10 @@ const WIRE_IDEA: WireIdeaListItem = {
   tagNames: [],
   tags: [],
   effort: null,
+  itemKey: 'ASM-4',
+  parentIdeaId: null,
+  taskCounts: { total: 3, done: 1 },
+  blockedBy: [{ ideaId: 'b-1', itemKey: 'ASM-2', isFinal: false }],
   statusId: '3f7b0a3c-1d9e-4a2b-8c55-2f0f9c1d7e41',
   statusName: 'New / Pending',
   upvoteCount: 0,
@@ -120,6 +124,10 @@ describe('toIdea', () => {
       upvotes: 0,
       hasUpvoted: false,
       effort: null,
+      itemKey: 'ASM-4',
+      parentIdeaId: null,
+      taskCounts: { total: 3, done: 1 },
+      blockedBy: [{ ideaId: 'b-1', itemKey: 'ASM-2', isFinal: false }],
     })
   })
 

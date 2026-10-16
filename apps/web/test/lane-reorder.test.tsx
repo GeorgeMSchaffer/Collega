@@ -67,6 +67,10 @@ function idea(id: string, statusId: string): Idea {
     upvotes: 0,
     hasUpvoted: false,
     effort: null,
+    itemKey: null,
+    parentIdeaId: null,
+    taskCounts: null,
+    blockedBy: [],
   }
 }
 

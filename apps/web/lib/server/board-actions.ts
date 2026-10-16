@@ -23,6 +23,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { ApiError, apiPath, apiPost, apiPostReturning, apiPut } from '../api/client'
+import type { LaneFlags } from '../types'
 import { actingOrganizationId } from './current-user'
 
 /**
@@ -47,8 +48,11 @@ export type BoardDrawerState = {
 function refusal(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 401) redirect('/login?expired=1')
-    // 409 is an archived board: its settings are frozen until it is unarchived.
-    if ([400, 403, 404, 409].includes(error.status)) return error.detail
+    // 409 is an archived board: its settings are frozen until it is unarchived. 422 is a Board
+    // References rule (`referencesBoardInvalid`, `laneInUse`, ...) whose `detail` is the rule key
+    // until the API sends a message; it shows as it arrives, and a later `message` member lands in
+    // `ApiError.detail` rather than here.
+    if ([400, 403, 404, 409, 422].includes(error.status)) return error.detail
   }
   throw error
 }
@@ -81,6 +85,12 @@ function refusedSave(error: unknown): { error: string | null; pullErrors: string
  * sorts on it, so any increasing sequence would render the same board; a dense one is the one that
  * survives a round trip unchanged, which is what makes the edit form show what was saved.
  *
+ * **Lane flags travel with the form.** `PUT` rebuilds every lane from the request, and an absent
+ * `isFinal`, `referencesBoardId` or `autoCreateTask` means false or none, so a save that sent only
+ * `{statusId, order}` wiped them. The edit form carries the flags it was loaded with as one hidden
+ * `laneFlags` field (status id to flags), and each lane sends its own back; a lane the person just
+ * added has none and sends the defaults. Nothing on this form edits them.
+ *
  * An unchecked checkbox posts nothing at all, which is why `allowUserStatusUpdate` is a presence
  * test rather than a value read — `String(form.get(...))` would be `"null"`, a truthy string, and
  * the setting would be impossible to turn off.
@@ -89,11 +99,15 @@ function boardBody(form: FormData): {
   name: string
   description: string
   allowUserStatusUpdate: boolean
-  swimlanes: { statusId: string; order: number }[]
+  swimlanes: ({ statusId: string; order: number } & LaneFlags)[]
   pullItemIds?: string[]
 } {
   // Left out when empty, so a save that pulls nothing is the request it was before the step existed.
   const pullItemIds = form.getAll('pullItemIds').map(String)
+  const flags = JSON.parse(String(form.get('laneFlags') ?? '{}')) as Record<
+    string,
+    Partial<LaneFlags> | undefined
+  >
   return {
     name: String(form.get('name') ?? ''),
     // Always sent, blank included: on `PUT` an absent description means "leave it", so emptying the
@@ -103,6 +117,9 @@ function boardBody(form: FormData): {
     swimlanes: form.getAll('swimlaneIds').map((statusId, order) => ({
       statusId: String(statusId),
       order,
+      isFinal: flags[String(statusId)]?.isFinal ?? false,
+      referencesBoardId: flags[String(statusId)]?.referencesBoardId ?? null,
+      autoCreateTask: flags[String(statusId)]?.autoCreateTask ?? false,
     })),
     ...(pullItemIds.length > 0 ? { pullItemIds } : {}),
   }

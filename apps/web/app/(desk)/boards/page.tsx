@@ -11,8 +11,18 @@ import {
 } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { boardAdminDenial, boardCreateDenial, currentUser } from '@/lib/session'
+import type { BoardLane, LaneFlags } from '@/lib/types'
 
 export const metadata = { title: 'Boards · Collega' }
+
+function laneFlagsOf(lanes: BoardLane[]): Record<string, LaneFlags> {
+  return Object.fromEntries(
+    lanes.map(({ id, isFinal, referencesBoardId, autoCreateTask }) => [
+      id,
+      { isFinal, referencesBoardId, autoCreateTask },
+    ]),
+  )
+}
 
 type Search = Record<string, string | string[] | undefined>
 
@@ -64,6 +74,7 @@ async function formFor(
     description: board.description ?? '',
     userStatusMoves: board.allowUserStatusUpdate,
     swimlaneIds: board.lanes.map((lane) => lane.id),
+    laneFlags: laneFlagsOf(board.lanes),
     laneIdeaCounts: Object.fromEntries(listed.lanes.map((lane) => [lane.id, lane.ideaCount])),
     // A lane whose status has since been archived is missing from the catalog; merging it in keeps
     // it visible and removable rather than silently dropped on the next save (as Settings does).

@@ -20,7 +20,7 @@ import { SwimlanePicker } from '@/components/settings/swimlane-picker'
 import { PULL_ITEM_CAP } from '@/lib/limits'
 import type { BoardFormState } from '@/lib/server/board-actions'
 import { createBoard, saveBoard } from '@/lib/server/board-actions'
-import type { PullCandidate, Status } from '@/lib/types'
+import type { LaneFlags, PullCandidate, Status } from '@/lib/types'
 
 const IDLE: BoardFormState = { error: null }
 
@@ -47,6 +47,7 @@ export function BoardForm({
   defaultDescription = '',
   userStatusMoves,
   swimlaneIds,
+  laneFlags,
   laneIdeaCounts,
   statuses,
   submitLabel,
@@ -59,6 +60,8 @@ export function BoardForm({
   defaultDescription?: string
   userStatusMoves: boolean
   swimlaneIds: string[]
+  /** The board's lane flags as loaded, keyed by status id, sent back on save so they survive. */
+  laneFlags?: Readonly<Record<string, LaneFlags>> | undefined
   /** Live ideas per lane of the board being edited, keyed by status id. */
   laneIdeaCounts?: Readonly<Record<string, number>> | undefined
   /** Drilled to `SwimlanePicker`, which is a client component and cannot read them itself. */
@@ -90,6 +93,7 @@ export function BoardForm({
               defaultDescription={defaultDescription}
               userStatusMoves={userStatusMoves}
               swimlaneIds={swimlaneIds}
+              laneFlags={laneFlags}
               laneIdeaCounts={laneIdeaCounts}
               statuses={statuses}
               pull={
@@ -187,6 +191,7 @@ export function BoardFields({
   defaultDescription = '',
   userStatusMoves,
   swimlaneIds,
+  laneFlags,
   laneIdeaCounts = {},
   statuses,
   sectionHeading: SectionHeading = 'h2',
@@ -197,6 +202,8 @@ export function BoardFields({
   defaultDescription?: string
   userStatusMoves: boolean
   swimlaneIds: string[]
+  /** Posted as one hidden field so a save returns each lane's flags; absent on create. */
+  laneFlags?: Readonly<Record<string, LaneFlags>> | undefined
   /** Live ideas per lane of the board being edited; absent on create, where nothing is removed. */
   laneIdeaCounts?: Readonly<Record<string, number>> | undefined
   statuses: Status[]
@@ -226,6 +233,9 @@ export function BoardFields({
   return (
     <>
       {boardId === null ? null : <input type="hidden" name="boardId" value={boardId} />}
+      {laneFlags ? (
+        <input type="hidden" name="laneFlags" value={JSON.stringify(laneFlags)} />
+      ) : null}
 
       {pull?.setup.archived ? (
         <Alert variant="note" role="status" className="mb-4">

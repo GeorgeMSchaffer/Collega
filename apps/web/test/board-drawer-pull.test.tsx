@@ -39,6 +39,8 @@ function item(index: number): PullCandidate {
     phase: 'Discovery',
     tags: [],
     isMine: true,
+    priority: null,
+    upvotes: 0,
   }
 }
 
