@@ -207,7 +207,8 @@ beforeEach(() => {
   localStorage.clear()
 })
 
-describe('Home for a member of an organization', () => {
+// These render the whole Home page and exceed the 5 s default when the full suite loads every core.
+describe('Home for a member of an organization', { timeout: 30_000 }, () => {
   it.each([['OrgAdmin'], ['User']] as const)(
     'greets %s with what needs them and the organization counts',
     async (role) => {
@@ -359,7 +360,7 @@ describe('Home for a member of an organization', () => {
   })
 })
 
-describe('Home for an organization with no boards', () => {
+describe('Home for an organization with no boards', { timeout: 30_000 }, () => {
   beforeEach(() => {
     readers.getOrganizationHome.mockResolvedValue(
       orgHome({ counts: { ideas: 0, boards: 0, issues: 0 }, boards: [] }),
@@ -392,7 +393,7 @@ describe('Home for an organization with no boards', () => {
   })
 })
 
-describe('Home for an App Admin', () => {
+describe('Home for an App Admin', { timeout: 30_000 }, () => {
   it('shows the platform roll-up and never reads an organization’s home', async () => {
     await renderHome('SiteAdmin')
     expect(readers.getOrganizationHome).not.toHaveBeenCalled()

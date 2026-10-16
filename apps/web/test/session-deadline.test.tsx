@@ -97,7 +97,9 @@ function find(node: ReactNode, type: unknown): ReactElement<Record<string, unkno
   return find(element.props.children, type)
 }
 
-describe('desk layout wiring of IdleSignOut', () => {
+// The first test cold-imports the whole desk layout tree, which outlasts the 5 s default when
+// the full suite loads every core.
+describe('desk layout wiring of IdleSignOut', { timeout: 30_000 }, () => {
   async function idleProps() {
     // A signed-in cookie so the layout's own identity step is satisfied through the API stub.
     cookieStore.value = tokenWith({ exp: NOW / 1000 + 600 })
