@@ -137,6 +137,7 @@ Update board name or selected statuses.
   - already on this board: `'{title}' is already on this board.`
   - in a sprint: `'{title}' is in a sprint, so it cannot be pulled. Move it back to the backlog first.`
   - an Issue, for a User: `'{title}' is an issue, and only an Org Admin can pull issues.`
+  - in a reference lane with open tasks (added 2026-10-16): `'{title}' is waiting on {n} open tasks, so it cannot be pulled.` An Org Admin may override with a non-empty `forceReason` on the request (`403` for anyone else); audited as `IdeaMovedPastOpenTasks`.
   - an idea a User did not author: `You can pull only ideas you created; '{title}' was created by someone else.`
 - **Placement** (rule 13): the lanes are those this same save leaves — after any lane removal and its `ideaMoves` on a `PUT`. An item whose status is a lane keeps it; any other lands in the board's leftmost lane and takes that lane's status. The model has no card position, so cards in a lane are ordered by the list sort as before; a pull neither adds nor changes a position, and the response and the audit list items oldest first.
 - **Backlog Issues** (rule 14): returned to Discovery first (delivery status and sprint cleared; effort, the promotion snapshot and tasks kept), then placed. The archived-board refusal of the standalone `return-to-discovery` does not apply: the Issue is leaving that board.

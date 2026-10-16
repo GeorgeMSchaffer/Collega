@@ -140,6 +140,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 **Consequences.**
 - One additive column: `board_swimlanes.auto_create_task boolean default false` (a further S0.2 amendment, with the next schema slice).
 - New rule and error `parentHasOpenTasks` on moves out of a reference lane; new audit event `IdeaMovedPastOpenTasks`.
+- **Every exit is locked (decided 2026-10-16).** The lock also covers leaving the board by detach (`DELETE /api/v1/ideas/{ideaId}/board`) and by being pulled onto another board (`pullItemIds`). Same error, same Org Admin override with a reason, same audit event. Otherwise detach or pull would sidestep it.
 - The backend slices already merged (220-232, 234) need a follow-up slice for the lock, the override and auto-create; the UI shows the lock and the lane setting.
 
 ---

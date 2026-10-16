@@ -314,12 +314,13 @@ Move an idea to another board status.
 Remove an idea from its board, leaving it in the organization's pool (added 2026-10-13, `20-feature-board-pull-in.md` rules 5, 6 and 19).
 
 - **Roles:** the idea's author, or an Org Admin of its organization (a Site Admin through View As, acting as the target); the caller must be a User or Org Admin, so a Read Only author is refused. A Site Admin acting as themselves is refused.
-- **Request:** —
+- **Request:** optional body `{ "forceReason": string }`, Org Admin only (added 2026-10-16); otherwise —
 - **Response:** `204 No Content`
 - **Errors:**
   - `403` the caller is neither the author nor an Org Admin, is Read Only, or is a Site Admin acting as themselves
   - `404` the idea does not exist, is deleted, or belongs to another organization
   - `409` the idea is an Issue ("An issue cannot be removed from its board; return it to discovery first."), or its board is archived and the caller is not an Org Admin ("The board is archived, so only an Org Admin can remove its ideas.")
+  - `422` (`parentHasOpenTasks`) the idea sits in a reference lane and any of its tasks is not in a final lane (added 2026-10-16). An Org Admin may send `forceReason` (non-empty text) in the request body to override; any other role sending it gets `403`. Audited as `IdeaMovedPastOpenTasks`; the tasks stay on the child board.
 - **Rules:**
   - **Idempotent.** An idea already in the pool answers `204` with nothing written: no `updated_at_utc` stamp, no audit event. An Issue is refused (`409`) whether or not it has a board.
   - The idea keeps its status, tags, assignees, comments, upvotes and followers; `updatedAtUtc` is stamped. No notification is sent.
