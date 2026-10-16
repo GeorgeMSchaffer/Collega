@@ -133,5 +133,5 @@ Soft-delete a sprint.
 - **Routes (added):** `GET/POST /api/v1/boards/{boardId}/sprints` list and create a sprint on a board whose `sprintsEnabled` is true; existing `.../organizations/{orgId}/sprints/{id}` routes keep working for reads, start, complete and delete.
 - **Rules:**
   - Creating a sprint on a board with `sprintsEnabled` false is refused with `422` (`sprintsNotEnabled`).
-  - A sprint holds items from its own board only; an item from another board is refused with `422`.
+  - A sprint holds items from its own board only; an item from another board is refused with `422` (`sprintItemOnOtherBoard`).
   - Completing a sprint that has a `boardId` returns every item not in a final lane to the backlog (sprint cleared). A sprint with `boardId` null keeps the delivery-status rule above until Plan 4 retires it.

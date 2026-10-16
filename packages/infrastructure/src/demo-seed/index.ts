@@ -95,6 +95,8 @@ export async function resetDemoSeed(prisma: PrismaClient): Promise<number> {
   await remove(prisma.issue_tasks.deleteMany({ where: byIdea }))
   await remove(prisma.notification_events.deleteMany({ where: org }))
   await remove(prisma.ideas.deleteMany({ where: org }))
+  // Sprints can belong to a board (sprints.board_id), so they go before the boards do.
+  await remove(prisma.sprints.deleteMany({ where: org }))
   await remove(prisma.board_swimlanes.deleteMany({ where: { boards: org } }))
   await remove(prisma.boards.deleteMany({ where: org }))
   await remove(prisma.idea_type_fieldsets.deleteMany({ where: { idea_types: org } }))
@@ -107,7 +109,6 @@ export async function resetDemoSeed(prisma: PrismaClient): Promise<number> {
   await remove(prisma.statuses.deleteMany({ where: org }))
   await remove(prisma.tags.deleteMany({ where: org }))
   await remove(prisma.business_impacts.deleteMany({ where: org }))
-  await remove(prisma.sprints.deleteMany({ where: org }))
   await remove(prisma.ai_usage_records.deleteMany({ where: org }))
   await remove(
     prisma.impersonation_sessions.deleteMany({

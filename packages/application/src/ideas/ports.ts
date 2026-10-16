@@ -124,6 +124,14 @@ export interface IdeaRepository {
   /** Every `Delivery`-phase idea in one sprint, for sprint completion's carry-over and for
    * unassigning before a sprint is deleted (satisfies `sprints.SprintIssuesPort`). */
   listBySprint(sprintId: string): Promise<readonly Idea[]>
+
+  /**
+   * Live (not deleted) children per parent id, with how many sit in a final lane of their own
+   * board. A parent with no children is absent.
+   */
+  countChildrenByParentIds(
+    parentIds: readonly string[],
+  ): Promise<ReadonlyMap<string, { readonly total: number; readonly done: number }>>
 }
 
 export type DeliveryFilter = {
@@ -133,6 +141,8 @@ export type DeliveryFilter = {
   /** True reads the backlog: Delivery items with no sprint. */
   readonly backlogOnly: boolean
   readonly deliveryStatus: DeliveryStatus | null
+  /** Set when reading a board sprint: its items are board cards and tasks, in any phase. */
+  readonly anyPhase?: boolean
 }
 
 // Notifications (B4) -----------------------------------------------------------------------
@@ -218,6 +228,8 @@ export type SprintSummary = {
   readonly endDate: string
   readonly state: SprintState
   readonly isDeleted: boolean
+  /** Absent or `null` on a sprint from before sprints were per board. */
+  readonly boardId?: string | null
 }
 
 export interface SprintLookupPort {
@@ -234,11 +246,47 @@ export interface IssueTaskRollupPort {
   ): Promise<ReadonlyMap<string, { readonly done: number; readonly total: number }>>
 }
 
+// Dependencies (Board References) ----------------------------------------------------------------
+
+/** One blocked-by link: `blockedId` cannot leave its board's first lane until `blockerId` is final. */
+export type DependencyEdge = {
+  readonly blockedId: string
+  readonly blockerId: string
+}
+
+/** A live blocker with what a read needs to describe it. */
+export type BlockerRef = {
+  readonly ideaId: string
+  readonly boardId: string | null
+  readonly statusId: string
+  readonly itemNumber: number | null
+}
+
+export interface IdeaDependenciesPort {
+  listBlockerIds(blockedId: string): Promise<readonly string[]>
+
+  /** Live blockers per blocked id, for the whole list in one read. An item with none is absent. */
+  listBlockersByBlockedIds(
+    blockedIds: readonly string[],
+  ): Promise<ReadonlyMap<string, readonly BlockerRef[]>>
+
+  /** Every link whose blocked item sits on the board. */
+  listEdgesForBoard(boardId: string): Promise<readonly DependencyEdge[]>
+
+  /** Stages replacing the item's blocker set, in the caller's unit of work. */
+  replaceBlockers(blockedId: string, blockerIds: readonly string[], nowUtc: Date): Promise<void>
+
+  /** Stages removing every link the item is part of, in both directions. */
+  deleteAllFor(ideaId: string): Promise<void>
+}
+
 // Boards (B2) ----------------------------------------------------------------------------------
 
 export type SwimlaneInfo = {
   readonly statusId: string
   readonly displayOrder: number
+  readonly isFinal: boolean
+  readonly referencesBoardId: string | null
 }
 
 export type BoardContext = {
@@ -248,7 +296,17 @@ export type BoardContext = {
   readonly allowUserStatusUpdate: boolean
   /** An archived board takes no new ideas, moves or edits (boards rule 13); reads stay open. */
   readonly isArchived: boolean
+  readonly keyPrefix: string | null
+  /** Off hides idea types, type fields and upvotes on the board's items (Board References). */
+  readonly ideaFeaturesEnabled: boolean
   readonly swimlanes: readonly SwimlaneInfo[]
+}
+
+/** What a read needs to know about an item's board, for the whole page in one call. */
+export type BoardReadFacts = {
+  readonly ideaFeaturesEnabled: boolean
+  /** Lane status id -> the board that lane references, for the lanes that reference one. */
+  readonly referencedBoardByStatusId: ReadonlyMap<string, string>
 }
 
 export type StatusInfo = {
@@ -268,6 +326,25 @@ export interface BoardsPort {
   /** The organization's first non-deleted status in sort order: the status a pool idea starts
    * with. `null` when it has none. */
   getFirstActiveStatusId(organizationId: string): Promise<string | null>
+
+  /**
+   * Takes the board's next item number and returns it, or `null` when the board has no key prefix.
+   * One awaited atomic statement, so two concurrent creates never share a number. It commits on its
+   * own, outside the unit of work: a later failed commit leaks the number, which "never reused"
+   * allows (Board References Ruling 5).
+   */
+  allocateItemNumber(boardId: string): Promise<number | null>
+
+  /** Key prefix per board id, for the whole list in one read. A board with no prefix is absent. */
+  getKeyPrefixes(boardIds: readonly string[]): Promise<ReadonlyMap<string, string>>
+
+  /** Read facts per board id, for the whole list in one read. Unknown boards are absent. */
+  getBoardReadFacts(boardIds: readonly string[]): Promise<ReadonlyMap<string, BoardReadFacts>>
+}
+
+/** `<keyPrefix>-<itemNumber>`, or `null` for an item that has no number or whose board has no prefix. */
+export function itemKey(keyPrefix: string | undefined, itemNumber: number | null): string | null {
+  return keyPrefix !== undefined && itemNumber !== null ? `${keyPrefix}-${itemNumber}` : null
 }
 
 /** The left-most swimlane's status - the default for new ideas (rule #27). A plain function

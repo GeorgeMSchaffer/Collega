@@ -66,6 +66,7 @@ export const PORT_TOKENS = {
   IdeaLookupPort: 'IdeaLookupPort',
   UsersPort: 'UsersPort',
   IdeaFollowersPort: 'IdeaFollowersPort',
+  IdeaDependenciesPort: 'IdeaDependenciesPort',
 
   // Following (packages/application/src/following/ports.ts) --------------------------------------
   IdeaFollowerRepository: 'IdeaFollowerRepository',
@@ -94,6 +95,13 @@ export const PORT_TOKENS = {
   SprintRepository: 'SprintRepository',
   SprintIssuesPort: 'SprintIssuesPort',
   SprintUsersPort: 'SprintUsersPort',
+  SprintBoardsPort: 'SprintBoardsPort',
+
+  // Outcomes (packages/application/src/outcomes/ports.ts) ---------------------------------------
+  OutcomeRepository: 'OutcomeRepository',
+  OutcomeReadsPort: 'OutcomeReadsPort',
+  OutcomeIdeasPort: 'OutcomeIdeasPort',
+  OutcomeUsersPort: 'OutcomeUsersPort',
 
   // Issue tasks (packages/application/src/issue-tasks/ports.ts) ----------------------------------
   IssueTaskRepository: 'IssueTaskRepository',

@@ -59,6 +59,16 @@ const KNOWN_CONSTRAINTS: readonly KnownConstraint[] = [
     message: 'A fieldset with this name already exists in this organization.',
   },
   {
+    modelName: 'boards',
+    columns: ['organization_id', 'key_prefix'],
+    message: 'keyPrefixTaken',
+  },
+  {
+    modelName: 'ideas',
+    columns: ['board_id', 'item_number'],
+    message: 'itemNumberTaken',
+  },
+  {
     modelName: 'impersonation_sessions',
     columns: ['real_user_id'],
     message: 'This user already has an open View As session.',

@@ -216,7 +216,9 @@ describe.skipIf(!DATABASE_URL)('Removing a lane that holds ideas, against a live
       new PrismaUnitOfWork(prisma),
     ).listLaneIdeas(boardId, [REVIEW])
 
-    expect(ideas).toEqual([{ ideaId: live, title: `Probe idea ${live}`, statusId: REVIEW }])
+    expect(ideas).toEqual([
+      { ideaId: live, title: `Probe idea ${live}`, statusId: REVIEW, effort: null },
+    ])
   })
 
   it('moves the live Discovery ideas and leaves soft-deleted ideas and Issues where they were', async () => {
@@ -329,7 +331,15 @@ describe.skipIf(!DATABASE_URL)('Removing a lane that holds ideas, against a live
     await boards.save(
       updateBoard(
         existing,
-        { name: 'Lanes', allowUserStatusUpdate: true, orderedStatusIds: [NEW, DONE] },
+        {
+          name: 'Lanes',
+          allowUserStatusUpdate: true,
+          orderedLanes: [NEW, DONE].map((statusId) => ({
+            statusId,
+            isFinal: false,
+            referencesBoardId: null,
+          })),
+        },
         SAVED,
         adminId,
       ),

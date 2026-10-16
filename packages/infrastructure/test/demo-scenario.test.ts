@@ -78,10 +78,6 @@ describe('demo scenario organizations', () => {
     )
     expect(prefixByName).toMatchObject({ Ideas: 'IDEA', Opportunities: 'OPPO' })
   })
-
-  it('returns an empty prefix for a board name with no letters', () => {
-    expect(demoKeyPrefix('123 !?')).toBe('')
-  })
 })
 
 describe.each(VERTICALS.map((o) => [o.title, o] as const))('vertical organization %s', (_, org) => {

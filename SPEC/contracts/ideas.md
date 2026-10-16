@@ -261,7 +261,7 @@ Return full idea detail.
 - **Rules:**
   - `author` and `createdAtUtc` were added 2026-09-10: the detail header renders "by {author} on {date}" and had no source for either. `author` is the full persona rather than the bare `authorUserId` the list item carries, so the name renders without a second request per idea opened. It is nullable only because `ideas.author_user_id` carries no foreign key; no code path deletes a user, so a `null` there is data damage rather than an ordinary case to design a label for.
   - `ideaTypeColorHex`, `ideaTypeIcon` and `fieldValues` were **missing from this document, not from the endpoint** — all three have been returned since long before the 2026-09-10 additions above, and the recorded corpus carries them. Written down 2026-09-10 because a contract that omits fields the endpoint really answers misleads every reader of it; nothing about the response changed.
-  - There is deliberately **no** `reference` field. The comps show `IDEA-101`, but no reference column exists and the Prisma schema is frozen at S0.2 — a real reference needs a per-organization sequence and therefore a schema amendment slice.
+  - There is deliberately **no** `reference` field. The comps show `IDEA-101`, but no reference column exists and the Prisma schema is frozen at S0.2 — a real reference needs a per-organization sequence and therefore a schema amendment slice. (Superseded for boards with a key prefix: "Tasks and item keys" below adds `itemKey`.)
   - `PUT /api/v1/ideas/{ideaId}` answers this same detail shape, and carries both fields with it.
 
 ### `PUT /api/v1/ideas/{ideaId}`
@@ -340,6 +340,7 @@ Soft-delete an idea while preserving its row and audit history.
 - **Rules:**
   - normal board, list, and detail endpoints exclude soft-deleted ideas
   - no restore endpoint is exposed in this release
+  - an idea with live child tasks cannot be deleted: `422` `hasOpenTasks`
 
 ## Tasks and item keys (planned 2026-10-15)
 
@@ -351,7 +352,11 @@ Soft-delete an idea while preserving its row and audit history.
   - `blockedBy` array of `{ ideaId, itemKey, isFinal }`: the tasks that must be final before this one can leave its board's first lane.
   - `taskCounts` object `{ total, done }` on an item whose lane references a board: `done` counts children in a final lane.
 - **Routes (added):**
-  - `POST /api/v1/ideas/{ideaId}/board-tasks` creates a task on the referenced board. Body: the idea create body, minus `boardId`. Success `201` with the task. Named `board-tasks` so it does not collide with the checklist routes in `contracts/issue-tasks.md`, which stay until Plan 4 retires them; Plan 4 may then rename it to `/tasks`.
+  - `POST /api/v1/ideas/{ideaId}/board-tasks` creates a task on the referenced board. Body: the idea create body, minus `boardId`. Success `201` with the task.
+    - **Roles:** anyone who may edit the parent idea; Read Only `403`; a direct Site Admin `403`.
+    - **Errors:** `401`; `403`; `404` the parent is missing or out of scope; `422` `parentNotInReferenceLane`, `parentIsTask`, `referencedBoardArchived`, `noDefaultIdeaType`, `noDefaultBusinessImpact`.
+    - Late additions require moving the parent back into the reference lane first.
+    - Named `board-tasks` so it does not collide with the checklist routes in `contracts/issue-tasks.md`, which stay until Plan 4 retires them; Plan 4 may then rename it to `/tasks`.
   - `PUT /api/v1/ideas/{ideaId}/blocked-by` replaces the blocker set. Body `{ "ideaIds": [...] }`. Details in `contracts/idea-dependencies.md`.
 - **Rules:**
   - Moving an idea into a reference lane requires `effort` to be set; otherwise `422` (`effortRequiredForReferenceLane`).

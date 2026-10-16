@@ -2,7 +2,7 @@
 // Prisma; this feature only depends on the shapes below, never on Prisma or Nest directly.
 
 import type { Board } from '@collega/domain/boards'
-import type { IdeaPhase } from '@collega/domain/enums'
+import type { EffortLevel, IdeaPhase } from '@collega/domain/enums'
 import type { Page } from '../common/index.js'
 import type { PullCandidate } from './models.js'
 
@@ -127,6 +127,8 @@ export type LaneIdea = {
   readonly ideaId: string
   readonly title: string
   readonly statusId: string
+  /** For the Effort entry rule when a move lands in a lane that references a board. */
+  readonly effort: EffortLevel | null
 }
 
 export type BoardStatusIdeaCount = {

@@ -11,6 +11,8 @@ import {
   updateBoard,
 } from '../../src/boards/index.js'
 
+const lanes = (...statusIds: string[]) =>
+  statusIds.map((statusId) => ({ statusId, isFinal: false, referencesBoardId: null }))
 const NOW = new Date('2026-09-27T12:00:00.000Z')
 const LATER = new Date('2026-09-28T12:00:00.000Z')
 
@@ -21,7 +23,7 @@ function create(description?: string | null): Board {
     name: 'Ideas',
     description,
     allowUserStatusUpdate: false,
-    orderedStatusIds: ['status-1', 'status-2'],
+    orderedLanes: lanes('status-1', 'status-2'),
     nowUtc: NOW,
     actorUserId: 'user-1',
   })
@@ -34,7 +36,7 @@ function update(board: Board, description?: string | null): Board {
       name: board.name,
       description,
       allowUserStatusUpdate: board.allowUserStatusUpdate,
-      orderedStatusIds: board.swimlanes.map((swimlane) => swimlane.statusId),
+      orderedLanes: board.swimlanes,
     },
     LATER,
     'user-2',

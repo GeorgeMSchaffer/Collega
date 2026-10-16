@@ -6,6 +6,10 @@ import type { IdeaPhase, Priority } from '@collega/domain/enums'
 export type SwimlaneInput = {
   readonly statusId: string
   readonly order: number
+  /** Absent is `false`. A board may have several final lanes. */
+  readonly isFinal?: boolean | undefined
+  /** The board whose tasks this lane hands work to; absent or `null` is none. */
+  readonly referencesBoardId?: string | null | undefined
 }
 
 export type CreateBoardCommand = {
@@ -14,6 +18,10 @@ export type CreateBoardCommand = {
   readonly description?: string | null | undefined
   readonly allowUserStatusUpdate: boolean
   readonly swimlanes: readonly SwimlaneInput[]
+  /** Absent or blank: no key prefix. */
+  readonly keyPrefix?: string | null | undefined
+  readonly sprintsEnabled?: boolean | undefined
+  readonly ideaFeaturesEnabled?: boolean | undefined
   /** Ideas and backlog Issues to pull onto the new board (SPEC/20-feature-board-pull-in.md). At
    * most 100; absent or empty pulls nothing. */
   readonly pullItemIds?: readonly string[] | undefined
@@ -25,6 +33,10 @@ export type UpdateBoardCommand = {
   readonly description?: string | null | undefined
   readonly allowUserStatusUpdate: boolean
   readonly swimlanes: readonly SwimlaneInput[]
+  /** Absent leaves the stored value unchanged; `null` or blank clears the prefix. */
+  readonly keyPrefix?: string | null | undefined
+  readonly sprintsEnabled?: boolean | undefined
+  readonly ideaFeaturesEnabled?: boolean | undefined
   /** Where the ideas in each removed lane go. Absent is none; required per removed lane that
    * still holds live ideas (SPEC/contracts/boards.md `PUT /boards/{boardId}`). */
   readonly ideaMoves?: readonly IdeaMoveInput[] | undefined
@@ -65,6 +77,9 @@ export type BoardListItem = {
   /** Archived in place of deletion (2026-09-27); listed only with `includeArchived`. */
   readonly isArchived: boolean
   readonly archivedAtUtc: Date | null
+  readonly keyPrefix: string | null
+  readonly sprintsEnabled: boolean
+  readonly ideaFeaturesEnabled: boolean
 }
 
 export type BoardListQuery = {
@@ -99,6 +114,8 @@ export type SwimlaneDetail = {
   readonly statusColor: string
   readonly order: number
   readonly statusIsDeleted: boolean
+  readonly isFinal: boolean
+  readonly referencesBoardId: string | null
 }
 
 /** Shape matches `GET /boards/{id}` detail. */
@@ -112,6 +129,9 @@ export type BoardDetail = {
   /** The same two fields the list item carries, so a board's own page can open read-only. */
   readonly isArchived: boolean
   readonly archivedAtUtc: Date | null
+  readonly keyPrefix: string | null
+  readonly sprintsEnabled: boolean
+  readonly ideaFeaturesEnabled: boolean
 }
 
 /** A `PUT /boards/{boardId}` result: the detail, plus what was pulled when the save pulled. */

@@ -22,6 +22,7 @@ import {
   PrismaCommentRepository,
   PrismaFieldDefinitionRepository,
   PrismaFieldsetRepository,
+  PrismaIdeaDependencyRepository,
   PrismaIdeaFieldValuesRepository,
   PrismaIdeaFollowerRepository,
   PrismaIdeaRepository,
@@ -31,6 +32,7 @@ import {
   PrismaIssueTaskRepository,
   PrismaNotificationEventRepository,
   PrismaOrganizationRepository,
+  PrismaOutcomeRepository,
   PrismaSprintRepository,
   PrismaStatusRepository,
   PrismaTagRepository,
@@ -126,6 +128,12 @@ const CONCRETE_ADAPTERS: Provider[] = [
     inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
   },
   {
+    provide: PrismaIdeaDependencyRepository,
+    useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
+      new PrismaIdeaDependencyRepository(prisma, uow),
+    inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
+  },
+  {
     provide: PrismaIdeaFollowerRepository,
     useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
       new PrismaIdeaFollowerRepository(prisma, uow),
@@ -152,6 +160,12 @@ const CONCRETE_ADAPTERS: Provider[] = [
     provide: PrismaIssueTaskRepository,
     useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
       new PrismaIssueTaskRepository(prisma, uow),
+    inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
+  },
+  {
+    provide: PrismaOutcomeRepository,
+    useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
+      new PrismaOutcomeRepository(prisma, uow),
     inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
   },
   {
@@ -303,6 +317,7 @@ const PORT_ALIASES: Provider[] = [
   { provide: PORT_TOKENS.IdeaLookupPort, useExisting: IdeaLookupRepository },
   { provide: PORT_TOKENS.UsersPort, useExisting: PrismaUserRepository },
   { provide: PORT_TOKENS.IdeaFollowersPort, useExisting: PrismaIdeaFollowerRepository },
+  { provide: PORT_TOKENS.IdeaDependenciesPort, useExisting: PrismaIdeaDependencyRepository },
 
   { provide: PORT_TOKENS.IdeaFollowerRepository, useExisting: PrismaIdeaFollowerRepository },
 
@@ -325,6 +340,12 @@ const PORT_ALIASES: Provider[] = [
   { provide: PORT_TOKENS.SprintRepository, useExisting: PrismaSprintRepository },
   { provide: PORT_TOKENS.SprintIssuesPort, useExisting: PrismaIdeaRepository },
   { provide: PORT_TOKENS.SprintUsersPort, useExisting: PrismaUserRepository },
+  { provide: PORT_TOKENS.SprintBoardsPort, useExisting: PrismaBoardRepository },
+
+  { provide: PORT_TOKENS.OutcomeRepository, useExisting: PrismaOutcomeRepository },
+  { provide: PORT_TOKENS.OutcomeReadsPort, useExisting: PrismaOutcomeRepository },
+  { provide: PORT_TOKENS.OutcomeIdeasPort, useExisting: PrismaIdeaRepository },
+  { provide: PORT_TOKENS.OutcomeUsersPort, useExisting: PrismaUserRepository },
 
   { provide: PORT_TOKENS.IssueTaskRepository, useExisting: PrismaIssueTaskRepository },
   { provide: PORT_TOKENS.IssueTaskIdeaPort, useExisting: PrismaIdeaRepository },

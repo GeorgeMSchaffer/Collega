@@ -21,9 +21,10 @@ import type {
   UserName,
 } from '@collega/application/boards'
 import type { Page } from '@collega/application/common'
-import type { BoardsPort } from '@collega/application/ideas'
+import type { BoardsPort, SwimlaneInfo } from '@collega/application/ideas'
+import type { SprintBoardsPort } from '@collega/application/sprints'
 import type { Board, BoardSwimlane } from '@collega/domain/boards'
-import type { Priority } from '@collega/domain/enums'
+import type { EffortLevel, Priority } from '@collega/domain/enums'
 import { IdeaPhase } from '@collega/domain/enums'
 import type {
   boards as BoardRow,
@@ -39,7 +40,12 @@ type BoardRowWithSwimlanes = BoardRow & { board_swimlanes: SwimlaneRow[] }
 function boardFromRow(row: BoardRowWithSwimlanes): Board {
   const swimlanes: BoardSwimlane[] = [...row.board_swimlanes]
     .sort((a, b) => a.display_order - b.display_order)
-    .map((s) => ({ statusId: s.status_id, displayOrder: s.display_order }))
+    .map((s) => ({
+      statusId: s.status_id,
+      displayOrder: s.display_order,
+      isFinal: s.is_final,
+      referencesBoardId: s.references_board_id,
+    }))
 
   return {
     id: row.id,
@@ -50,6 +56,10 @@ function boardFromRow(row: BoardRowWithSwimlanes): Board {
     swimlanes,
     isArchived: row.is_archived,
     archivedAtUtc: row.archived_at_utc,
+    keyPrefix: row.key_prefix,
+    sprintsEnabled: row.sprints_enabled,
+    ideaFeaturesEnabled: row.idea_features_enabled,
+    nextItemNumber: row.next_item_number,
     createdAtUtc: row.created_at_utc,
     updatedAtUtc: row.updated_at_utc,
     createdByUserId: row.created_by_user_id,
@@ -67,7 +77,9 @@ function boardIdeasWhere(boardIds: readonly string[]): Prisma.ideasWhereInput {
   return { board_id: { in: [...boardIds] }, is_deleted: false, phase: IdeaPhase.Discovery }
 }
 
-export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort, BoardsPort {
+export class PrismaBoardRepository
+  implements BoardRepository, AiBoardLookupPort, BoardsPort, SprintBoardsPort
+{
   constructor(
     private readonly prisma: PrismaClient,
     private readonly unitOfWork: PrismaUnitOfWork,
@@ -174,10 +186,15 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
     }
     const rows = await this.prisma.ideas.findMany({
       where: { ...boardIdeasWhere([boardId]), status_id: { in: [...statusIds] } },
-      select: { id: true, title: true, status_id: true },
+      select: { id: true, title: true, status_id: true, effort: true },
       orderBy: [{ created_at_utc: 'asc' }, { id: 'asc' }],
     })
-    return rows.map((row) => ({ ideaId: row.id, title: row.title, statusId: row.status_id }))
+    return rows.map((row) => ({
+      ideaId: row.id,
+      title: row.title,
+      statusId: row.status_id,
+      effort: row.effort as EffortLevel | null,
+    }))
   }
 
   async moveIdeas(
@@ -236,6 +253,11 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
           data: {
             board_id: boardId,
             status_id: item.toStatusId,
+            // The old board's number means nothing here (and could collide with one issued here);
+            // the allocation below issues this board's own.
+            item_number: null,
+            // A task off the referenced board is no longer that parent's task.
+            parent_idea_id: null,
             updated_at_utc: nowUtc,
             updated_by_user_id: actorUserId,
             ...(item.returnsToDiscovery
@@ -243,6 +265,35 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
               : {}),
           },
         }),
+      )
+      // Sprints and dependencies are same-board only: leaving the board ends both. A legacy
+      // (board-less) sprint is untouched.
+      this.unitOfWork.enqueue(
+        this.prisma.$executeRaw(Prisma.sql`
+          UPDATE ideas SET sprint_id = NULL
+          WHERE id = ${item.ideaId}::uuid AND board_id = ${boardId}::uuid
+            AND sprint_id IN (SELECT sprints.id FROM sprints WHERE sprints.board_id IS NOT NULL)
+        `),
+      )
+      this.unitOfWork.enqueue(
+        this.prisma.idea_dependencies.deleteMany({
+          where: { OR: [{ blocked_idea_id: item.ideaId }, { blocker_idea_id: item.ideaId }] },
+        }),
+      )
+      // Inside the batch, unlike `allocateItemNumber`: the target may be staged in this same save,
+      // and a pull that fails the check below must not burn numbers. A board without a prefix
+      // allocates nothing, so the subselect is null and the item stays unnumbered.
+      this.unitOfWork.enqueue(
+        this.prisma.$executeRaw(Prisma.sql`
+          WITH issued AS (
+            UPDATE boards SET next_item_number = next_item_number + 1
+            WHERE id = ${boardId}::uuid AND key_prefix IS NOT NULL
+            RETURNING next_item_number - 1 AS item_number
+          )
+          UPDATE ideas SET item_number = (SELECT issued.item_number FROM issued)
+          WHERE id = ${item.ideaId}::uuid AND board_id = ${boardId}::uuid
+            AND updated_at_utc = ${nowUtc}::timestamptz
+        `),
       )
     }
     this.unitOfWork.enqueue(
@@ -378,7 +429,9 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
     readonly name: string
     readonly allowUserStatusUpdate: boolean
     readonly isArchived: boolean
-    readonly swimlanes: readonly { readonly statusId: string; readonly displayOrder: number }[]
+    readonly keyPrefix: string | null
+    readonly ideaFeaturesEnabled: boolean
+    readonly swimlanes: readonly SwimlaneInfo[]
   } | null> {
     const board = await this.getById(boardId)
     if (!board) {
@@ -390,7 +443,30 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
       name: board.name,
       allowUserStatusUpdate: board.allowUserStatusUpdate,
       isArchived: board.isArchived,
+      keyPrefix: board.keyPrefix,
+      ideaFeaturesEnabled: board.ideaFeaturesEnabled,
       swimlanes: board.swimlanes,
+    }
+  }
+
+  /** `sprints.SprintBoardsPort.getSprintBoard`. */
+  async getSprintBoard(boardId: string): Promise<{
+    readonly id: string
+    readonly organizationId: string
+    readonly sprintsEnabled: boolean
+    readonly isArchived: boolean
+    readonly finalStatusIds: readonly string[]
+  } | null> {
+    const board = await this.getById(boardId)
+    if (!board) {
+      return null
+    }
+    return {
+      id: board.id,
+      organizationId: board.organizationId,
+      sprintsEnabled: board.sprintsEnabled,
+      isArchived: board.isArchived,
+      finalStatusIds: board.swimlanes.filter((lane) => lane.isFinal).map((lane) => lane.statusId),
     }
   }
 
@@ -426,6 +502,68 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
     return row?.id ?? null
   }
 
+  /** `ideas.BoardsPort.allocateItemNumber`: awaited and committed on its own, outside the unit of
+   * work (Board References Ruling 5; precedent `tag.repository.ts` `getOrCreate`). The row lock the
+   * UPDATE takes serializes concurrent creates, so each reads a distinct counter value. */
+  async allocateItemNumber(boardId: string): Promise<number | null> {
+    const rows = await this.prisma.$queryRaw<{ item_number: number }[]>(Prisma.sql`
+      UPDATE boards SET next_item_number = next_item_number + 1
+      WHERE id = ${boardId}::uuid AND key_prefix IS NOT NULL
+      RETURNING next_item_number - 1 AS item_number
+    `)
+    return rows[0]?.item_number ?? null
+  }
+
+  /** `ideas.BoardsPort.getKeyPrefixes`. */
+  async getKeyPrefixes(boardIds: readonly string[]): Promise<ReadonlyMap<string, string>> {
+    if (boardIds.length === 0) {
+      return new Map()
+    }
+    const rows = await this.prisma.boards.findMany({
+      where: { id: { in: [...boardIds] }, key_prefix: { not: null } },
+      select: { id: true, key_prefix: true },
+    })
+    return new Map(
+      rows.flatMap((row) => (row.key_prefix === null ? [] : [[row.id, row.key_prefix] as const])),
+    )
+  }
+
+  /** `ideas.BoardsPort.getBoardReadFacts`. */
+  async getBoardReadFacts(boardIds: readonly string[]): Promise<
+    ReadonlyMap<
+      string,
+      {
+        readonly ideaFeaturesEnabled: boolean
+        readonly referencedBoardByStatusId: ReadonlyMap<string, string>
+      }
+    >
+  > {
+    if (boardIds.length === 0) {
+      return new Map()
+    }
+    const rows = await this.prisma.boards.findMany({
+      where: { id: { in: [...boardIds] } },
+      select: {
+        id: true,
+        idea_features_enabled: true,
+        board_swimlanes: { select: { status_id: true, references_board_id: true } },
+      },
+    })
+    return new Map(
+      rows.map((row) => [
+        row.id,
+        {
+          ideaFeaturesEnabled: row.idea_features_enabled,
+          referencedBoardByStatusId: new Map(
+            row.board_swimlanes.flatMap((lane) =>
+              lane.references_board_id ? [[lane.status_id, lane.references_board_id] as const] : [],
+            ),
+          ),
+        },
+      ]),
+    )
+  }
+
   async add(board: Board): Promise<void> {
     this.unitOfWork.enqueue(
       this.prisma.boards.create({
@@ -437,6 +575,10 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
           allow_user_status_update: board.allowUserStatusUpdate,
           is_archived: board.isArchived,
           archived_at_utc: board.archivedAtUtc,
+          key_prefix: board.keyPrefix,
+          sprints_enabled: board.sprintsEnabled,
+          idea_features_enabled: board.ideaFeaturesEnabled,
+          next_item_number: board.nextItemNumber,
           created_at_utc: board.createdAtUtc,
           updated_at_utc: board.updatedAtUtc,
           created_by_user_id: board.createdByUserId,
@@ -459,6 +601,11 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
           allow_user_status_update: board.allowUserStatusUpdate,
           is_archived: board.isArchived,
           archived_at_utc: board.archivedAtUtc,
+          key_prefix: board.keyPrefix,
+          sprints_enabled: board.sprintsEnabled,
+          idea_features_enabled: board.ideaFeaturesEnabled,
+          // next_item_number is deliberately absent: only the atomic allocation increments it, and
+          // a save from a stale copy must never move it backwards.
           updated_at_utc: board.updatedAtUtc,
           updated_by_user_id: board.updatedByUserId,
         },
@@ -478,6 +625,8 @@ export class PrismaBoardRepository implements BoardRepository, AiBoardLookupPort
       board_id: board.id,
       status_id: swimlane.statusId,
       display_order: swimlane.displayOrder,
+      is_final: swimlane.isFinal,
+      references_board_id: swimlane.referencesBoardId,
     }))
   }
 }

@@ -42,8 +42,18 @@ export class BoardArchivedError extends Error {
   }
 }
 
-export type BoardSwimlane = {
+export const KEY_PREFIX_MIN_LENGTH = 2
+export const KEY_PREFIX_MAX_LENGTH = 10
+const KEY_PREFIX_PATTERN = /^[A-Z0-9]+$/
+
+/** A requested lane: the status, whether it is a final lane, and the board it hands work to. */
+export type SwimlaneLane = {
   readonly statusId: string
+  readonly isFinal: boolean
+  readonly referencesBoardId: string | null
+}
+
+export type BoardSwimlane = SwimlaneLane & {
   readonly displayOrder: number
 }
 
@@ -59,6 +69,12 @@ export type Board = Auditable & {
   /** Archived in place of deletion (rule 13): kept with its lanes and ideas, but read-only. */
   readonly isArchived: boolean
   readonly archivedAtUtc: Date | null
+  /** 2 to 10 `A-Z0-9`, upper-cased; `null` when the board issues no item keys. */
+  readonly keyPrefix: string | null
+  readonly sprintsEnabled: boolean
+  readonly ideaFeaturesEnabled: boolean
+  /** The number the next item on this board takes. Never written back from a stale copy. */
+  readonly nextItemNumber: number
 }
 
 /**
@@ -96,8 +112,29 @@ function normalizeDescription(description: string | null): string | null {
   return trimmed
 }
 
-/** Turns a caller-ordered list of status ids into dense, validated swimlanes. */
-function toSwimlanes(orderedStatusIds: readonly string[]): readonly BoardSwimlane[] {
+/** Upper-cases and validates a key prefix; blank or `null` is none. */
+function normalizeKeyPrefix(keyPrefix: string | null): string | null {
+  const trimmed = keyPrefix?.trim() ?? ''
+  if (trimmed.length === 0) {
+    return null
+  }
+  const upper = trimmed.toUpperCase()
+  if (
+    upper.length < KEY_PREFIX_MIN_LENGTH ||
+    upper.length > KEY_PREFIX_MAX_LENGTH ||
+    !KEY_PREFIX_PATTERN.test(upper)
+  ) {
+    throw new BoardInvariantError(
+      'keyPrefix',
+      `Key prefix must be ${KEY_PREFIX_MIN_LENGTH} to ${KEY_PREFIX_MAX_LENGTH} characters, A-Z and 0-9 only.`,
+    )
+  }
+  return upper
+}
+
+/** Turns caller-ordered lanes into dense, validated swimlanes. */
+function toSwimlanes(orderedLanes: readonly SwimlaneLane[]): readonly BoardSwimlane[] {
+  const orderedStatusIds = orderedLanes.map((lane) => lane.statusId)
   if (orderedStatusIds.length < MIN_SWIMLANES) {
     throw new BoardInvariantError(
       'swimlanes',
@@ -107,12 +144,17 @@ function toSwimlanes(orderedStatusIds: readonly string[]): readonly BoardSwimlan
   if (new Set(orderedStatusIds).size !== orderedStatusIds.length) {
     throw new BoardInvariantError('swimlanes', 'A board cannot list the same status twice.')
   }
-  return orderedStatusIds.map((statusId, displayOrder) => ({ statusId, displayOrder }))
+  return orderedLanes.map((lane, displayOrder) => ({
+    statusId: lane.statusId,
+    isFinal: lane.isFinal,
+    referencesBoardId: lane.referencesBoardId,
+    displayOrder,
+  }))
 }
 
 /**
- * Creates a board with its swimlanes. `orderedStatusIds` must contain at least `MIN_SWIMLANES`
- * distinct status ids; display order follows the given sequence.
+ * Creates a board with its swimlanes. `orderedLanes` must contain at least `MIN_SWIMLANES`
+ * lanes on distinct statuses; display order follows the given sequence.
  */
 export function createBoard(params: {
   readonly id: string
@@ -120,7 +162,10 @@ export function createBoard(params: {
   readonly name: string
   readonly description?: string | null | undefined
   readonly allowUserStatusUpdate: boolean
-  readonly orderedStatusIds: readonly string[]
+  readonly orderedLanes: readonly SwimlaneLane[]
+  readonly keyPrefix?: string | null | undefined
+  readonly sprintsEnabled?: boolean | undefined
+  readonly ideaFeaturesEnabled?: boolean | undefined
   readonly nowUtc: Date
   readonly actorUserId: string | null
 }): Board {
@@ -129,7 +174,8 @@ export function createBoard(params: {
   }
   const name = requireName(params.name)
   const description = normalizeDescription(params.description ?? null)
-  const swimlanes = toSwimlanes(params.orderedStatusIds)
+  const swimlanes = toSwimlanes(params.orderedLanes)
+  const keyPrefix = normalizeKeyPrefix(params.keyPrefix ?? null)
 
   return {
     id: params.id,
@@ -140,6 +186,10 @@ export function createBoard(params: {
     swimlanes,
     isArchived: false,
     archivedAtUtc: null,
+    keyPrefix,
+    sprintsEnabled: params.sprintsEnabled ?? false,
+    ideaFeaturesEnabled: params.ideaFeaturesEnabled ?? true,
+    nextItemNumber: 1,
     ...markCreated(params.nowUtc, params.actorUserId),
   }
 }
@@ -149,8 +199,8 @@ export function createBoard(params: {
  * (SPEC/30-Contracts.md `PUT /boards/{id}`). `orderedStatusIds` may add or remove statuses
  * relative to the current swimlanes but must keep at least `MIN_SWIMLANES` distinct statuses
  * (rule #3) and may only draw from the organization's statuses (subset support, validated by the
- * Application layer). An `undefined` description leaves the current one in place; `null` or blank
- * clears it.
+ * Application layer). An `undefined` description, key prefix or flag leaves the current one in
+ * place; a `null` or blank description or key prefix clears it.
  */
 export function updateBoard(
   board: Board,
@@ -158,7 +208,10 @@ export function updateBoard(
     readonly name: string
     readonly description?: string | null | undefined
     readonly allowUserStatusUpdate: boolean
-    readonly orderedStatusIds: readonly string[]
+    readonly orderedLanes: readonly SwimlaneLane[]
+    readonly keyPrefix?: string | null | undefined
+    readonly sprintsEnabled?: boolean | undefined
+    readonly ideaFeaturesEnabled?: boolean | undefined
   },
   nowUtc: Date,
   actorUserId: string | null,
@@ -167,10 +220,21 @@ export function updateBoard(
   const name = requireName(params.name)
   const description =
     params.description === undefined ? board.description : normalizeDescription(params.description)
-  const swimlanes = toSwimlanes(params.orderedStatusIds)
+  const swimlanes = toSwimlanes(params.orderedLanes)
+  const keyPrefix =
+    params.keyPrefix === undefined ? board.keyPrefix : normalizeKeyPrefix(params.keyPrefix)
 
   return markUpdated(
-    { ...board, name, description, allowUserStatusUpdate: params.allowUserStatusUpdate, swimlanes },
+    {
+      ...board,
+      name,
+      description,
+      allowUserStatusUpdate: params.allowUserStatusUpdate,
+      swimlanes,
+      keyPrefix,
+      sprintsEnabled: params.sprintsEnabled ?? board.sprintsEnabled,
+      ideaFeaturesEnabled: params.ideaFeaturesEnabled ?? board.ideaFeaturesEnabled,
+    },
     nowUtc,
     actorUserId,
   )
@@ -188,7 +252,13 @@ export function reorderBoardSwimlanes(
   actorUserId: string | null,
 ): Board {
   requireNotArchived(board)
-  const swimlanes = toSwimlanes(orderedStatusIds)
+  const byStatus = new Map(board.swimlanes.map((swimlane) => [swimlane.statusId, swimlane]))
+  // An id the board does not have carries no flags; the same-set check below refuses it.
+  const swimlanes = toSwimlanes(
+    orderedStatusIds.map(
+      (statusId) => byStatus.get(statusId) ?? { statusId, isFinal: false, referencesBoardId: null },
+    ),
+  )
 
   const current = new Set(board.swimlanes.map((swimlane) => swimlane.statusId))
   const requested = new Set(orderedStatusIds)
@@ -208,6 +278,17 @@ function requireNotArchived(board: Board): void {
   if (board.isArchived) {
     throw new BoardArchivedError()
   }
+}
+
+/**
+ * Turns the idea features off, as happens when a board is first named as a reference target
+ * (SPEC/contracts/boards.md "Board References"). Idempotent.
+ */
+export function disableIdeaFeatures(board: Board, nowUtc: Date, actorUserId: string | null): Board {
+  if (!board.ideaFeaturesEnabled) {
+    return board
+  }
+  return markUpdated({ ...board, ideaFeaturesEnabled: false }, nowUtc, actorUserId)
 }
 
 /**

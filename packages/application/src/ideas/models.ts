@@ -31,6 +31,13 @@ export type CreateIdeaCommand = {
   readonly fieldValues: readonly IdeaFieldValueWrite[] | null
 }
 
+/** `POST /ideas/{ideaId}/board-tasks`: the create shape minus the board, status, type, impact and
+ * fields. The task takes the organization's default type and impact (Board References Ruling 2). */
+export type CreateBoardTaskCommand = Omit<
+  CreateIdeaCommand,
+  'statusId' | 'ideaTypeId' | 'businessImpactId' | 'fieldValues'
+>
+
 /** `POST /organizations/{organizationId}/ideas`: the create shape without `statusId`, which a pool
  * idea does not choose. */
 export type CreatePoolIdeaCommand = Omit<CreateIdeaCommand, 'statusId'>
@@ -289,18 +296,36 @@ export type IdeaTagDto = {
   readonly color: string
 }
 
+export type TaskCounts = { readonly total: number; readonly done: number }
+
+/** A blocker of an item; `isFinal` is true when it sits in a final lane of its board. */
+export type BlockedByDto = {
+  readonly ideaId: string
+  readonly itemKey: string | null
+  readonly isFinal: boolean
+}
+
 export type IdeaListItem = {
   readonly ideaId: string
   readonly boardId: string | null
+  /** `<board keyPrefix>-<itemNumber>`; `null` on a board without a prefix or with no board. */
+  readonly itemKey: string | null
+  /** Set on a task: the idea it was created from. */
+  readonly parentIdeaId: string | null
+  /** Only on an item whose lane references a board; `done` counts children in a final lane of their own board. */
+  readonly taskCounts: TaskCounts | null
+  /** The items that must be final before this one can leave its board's first lane. */
+  readonly blockedBy: readonly BlockedByDto[]
   readonly title: string
   readonly priority: string
-  readonly ideaTypeId: string
-  readonly ideaTypeName: string
+  /** The type and impact fields are `null` on an item of a board with idea features off, and on a task. */
+  readonly ideaTypeId: string | null
+  readonly ideaTypeName: string | null
   readonly ideaTypeColorHex: string | null
   readonly ideaTypeIcon: string | null
-  readonly businessImpactId: string
-  readonly businessImpactName: string
-  readonly businessImpactColor: string
+  readonly businessImpactId: string | null
+  readonly businessImpactName: string | null
+  readonly businessImpactColor: string | null
   readonly dueDate: string | null
   readonly assignees: readonly IdeaAssigneeDto[]
   readonly tagNames: readonly string[]
@@ -319,19 +344,27 @@ export type IdeaListItem = {
 export type IdeaDetail = {
   readonly ideaId: string
   readonly boardId: string | null
+  readonly itemKey: string | null
+  /** Set on a task: the idea it was created from. */
+  readonly parentIdeaId: string | null
+  /** Only on an item whose lane references a board; `done` counts children in a final lane of their own board. */
+  readonly taskCounts: TaskCounts | null
+  /** The items that must be final before this one can leave its board's first lane. */
+  readonly blockedBy: readonly BlockedByDto[]
   readonly title: string
   readonly problem: string
   readonly proposedSolutions: readonly string[]
   readonly impactRationale: string
   readonly description: string | null
   readonly priority: string
-  readonly ideaTypeId: string
-  readonly ideaTypeName: string
+  /** The type and impact fields are `null` on an item of a board with idea features off, and on a task. */
+  readonly ideaTypeId: string | null
+  readonly ideaTypeName: string | null
   readonly ideaTypeColorHex: string | null
   readonly ideaTypeIcon: string | null
-  readonly businessImpactId: string
-  readonly businessImpactName: string
-  readonly businessImpactColor: string
+  readonly businessImpactId: string | null
+  readonly businessImpactName: string | null
+  readonly businessImpactColor: string | null
   readonly dueDate: string | null
   readonly assignees: readonly IdeaAssigneeDto[]
   readonly statusId: string
@@ -365,11 +398,14 @@ export type IdeaDetail = {
 export type CreateIdeaResult = {
   readonly ideaId: string
   readonly boardId: string | null
+  readonly itemKey: string | null
+  readonly parentIdeaId: string | null
   readonly statusId: string
   readonly title: string
   readonly priority: string
-  readonly ideaTypeId: string
-  readonly businessImpactId: string
+  /** `null` on a board task: the stored default is not exposed. */
+  readonly ideaTypeId: string | null
+  readonly businessImpactId: string | null
   readonly dueDate: string | null
 }
 

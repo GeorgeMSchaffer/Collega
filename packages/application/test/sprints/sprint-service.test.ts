@@ -17,9 +17,17 @@ import { createIdea, promoteIdeaToIssue } from '@collega/domain/ideas'
 import { createSprint, type Sprint, softDeleteSprint, startSprint } from '@collega/domain/sprints'
 import { describe, expect, it } from 'vitest'
 import type { CurrentUserContext } from '../../src/common/index.js'
-import { ForbiddenError, NotFoundError, ValidationError } from '../../src/common/index.js'
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  UnprocessableError,
+  ValidationError,
+} from '../../src/common/index.js'
 import type { CreateSprintCommand } from '../../src/sprints/models.js'
 import type {
+  SprintBoard,
+  SprintBoardsPort,
   SprintIssuesPort,
   SprintRepository,
   SprintUserSummary,
@@ -106,6 +114,7 @@ function harness(options: {
   sprints?: readonly Sprint[]
   issues?: readonly Idea[]
   users?: readonly SprintUserSummary[]
+  boards?: readonly SprintBoard[]
 }) {
   const byId = new Map((options.sprints ?? [sprint()]).map((s) => [s.id, s]))
   const usersById = new Map((options.users ?? []).map((u) => [u.id, u]))
@@ -123,6 +132,11 @@ function harness(options: {
           s.organizationId === organizationId &&
           !s.isDeleted &&
           (state === null || s.state === state),
+      )
+    },
+    async listByBoard(boardId, state) {
+      return [...byId.values()].filter(
+        (s) => s.boardId === boardId && !s.isDeleted && (state === null || s.state === state),
       )
     },
     async add(s) {
@@ -154,6 +168,13 @@ function harness(options: {
     },
   }
 
+  const boardsById = new Map((options.boards ?? []).map((b) => [b.id, b]))
+  const boards: SprintBoardsPort = {
+    async getSprintBoard(id) {
+      return boardsById.get(id) ?? null
+    },
+  }
+
   const audit = recordingAudit()
 
   return {
@@ -165,6 +186,7 @@ function harness(options: {
       audit,
       options.currentUser,
       fixedClock(),
+      boards,
     ),
     added,
     saved,
@@ -419,5 +441,462 @@ describe('SprintService projection', () => {
     const result = await service.list(ORG_A, SprintState.Active)
 
     expect(result.map((s) => s.sprintId)).toEqual(['sprint-active'])
+  })
+})
+
+describe('SprintService board sprints', () => {
+  const BOARD = 'board-a'
+  const board = (over: Partial<SprintBoard> = {}): SprintBoard => ({
+    id: BOARD,
+    organizationId: ORG_A,
+    sprintsEnabled: true,
+    isArchived: false,
+    finalStatusIds: ['status-done'],
+    ...over,
+  })
+  const boardSprint = () =>
+    startSprint(
+      createSprint({
+        id: 'sprint-board',
+        organizationId: ORG_A,
+        name: 'Board sprint',
+        goal: null,
+        startDate: '2026-09-01',
+        endDate: '2026-09-14',
+        ownerUserId: null,
+        boardId: BOARD,
+        nowUtc: NOW,
+        actorUserId: 'seed',
+      }),
+      NOW,
+      'seed',
+    )
+  const card = (id: string, statusId: string): Idea => ({
+    ...issue({ id, sprintId: 'sprint-board' }),
+    phase: IdeaPhase.Discovery,
+    deliveryStatus: null,
+    statusId,
+  })
+
+  it('refuses to create a sprint on a board with sprints off', async () => {
+    const { service } = harness({
+      currentUser: orgAdmin(ORG_A),
+      boards: [board({ sprintsEnabled: false })],
+    })
+
+    await expect(service.createForBoard(BOARD, CREATE)).rejects.toMatchObject({
+      code: 'sprintsNotEnabled',
+    })
+    await expect(service.createForBoard(BOARD, CREATE)).rejects.toBeInstanceOf(UnprocessableError)
+  })
+
+  it('creates a sprint carrying the board id', async () => {
+    const { service, added } = harness({ currentUser: orgAdmin(ORG_A), boards: [board()] })
+
+    const item = await service.createForBoard(BOARD, CREATE)
+
+    expect(item.boardId).toBe(BOARD)
+    expect(added[0]?.boardId).toBe(BOARD)
+  })
+
+  it('completes by returning only items outside a final lane, whatever their phase', async () => {
+    const { service, issueUpdates, audit } = harness({
+      currentUser: orgAdmin(ORG_A),
+      boards: [board()],
+      sprints: [boardSprint()],
+      issues: [card('open', 'status-1'), card('done', 'status-done')],
+    })
+
+    await service.complete(ORG_A, 'sprint-board')
+
+    expect(issueUpdates.map((i) => i.id)).toEqual(['open'])
+    expect(issueUpdates[0]?.sprintId).toBeNull()
+    expect(JSON.parse(audit.events[0]?.metadataJson ?? '{}')).toMatchObject({
+      carriedOverIssueCount: 1,
+    })
+  })
+
+  it('clears every item when a board sprint is deleted', async () => {
+    const { service, issueUpdates } = harness({
+      currentUser: orgAdmin(ORG_A),
+      boards: [board()],
+      sprints: [boardSprint()],
+      issues: [card('open', 'status-1'), card('done', 'status-done')],
+    })
+
+    await service.delete(ORG_A, 'sprint-board')
+
+    expect(issueUpdates.map((i) => i.sprintId)).toEqual([null, null])
+  })
+})
+
+// QA for "Sprints per board" (SPEC/contracts/sprints.md, plan Ruling 9): the guards on the board
+// routes, completion carry-over by final lane, and the legacy (boardId null) path left untouched.
+describe('SprintService board sprints: create and list guards', () => {
+  const BOARD = 'board-a'
+  const board = (over: Partial<SprintBoard> = {}): SprintBoard => ({
+    id: BOARD,
+    organizationId: ORG_A,
+    sprintsEnabled: true,
+    isArchived: false,
+    finalStatusIds: ['status-done'],
+    ...over,
+  })
+  const onBoard = (id: string, boardId: string | null, started = false) => {
+    const created = createSprint({
+      id,
+      organizationId: ORG_A,
+      name: id,
+      goal: null,
+      startDate: '2026-09-01',
+      endDate: '2026-09-14',
+      ownerUserId: null,
+      boardId,
+      nowUtc: NOW,
+      actorUserId: 'seed',
+    })
+    return started ? startSprint(created, NOW, 'seed') : created
+  }
+
+  it('answers 404 for an unknown board on create and list', async () => {
+    const { service, added } = harness({ currentUser: orgAdmin(ORG_A), boards: [] })
+
+    await expect(service.createForBoard(BOARD, CREATE)).rejects.toBeInstanceOf(NotFoundError)
+    await expect(service.listForBoard(BOARD, null)).rejects.toBeInstanceOf(NotFoundError)
+    expect(added).toHaveLength(0)
+  })
+
+  it('refuses an archived board with 409 before looking at sprintsEnabled', async () => {
+    const { service, added } = harness({
+      currentUser: orgAdmin(ORG_A),
+      boards: [board({ isArchived: true, sprintsEnabled: false })],
+    })
+
+    await expect(service.createForBoard(BOARD, CREATE)).rejects.toBeInstanceOf(ConflictError)
+    expect(added).toHaveLength(0)
+  })
+
+  it('refuses sprintsNotEnabled as a 422 and writes nothing', async () => {
+    const { service, added, audit } = harness({
+      currentUser: orgAdmin(ORG_A),
+      boards: [board({ sprintsEnabled: false })],
+    })
+
+    const error = await service.createForBoard(BOARD, CREATE).catch((e: unknown) => e)
+
+    expect(error).toBeInstanceOf(UnprocessableError)
+    expect(error).toMatchObject({ code: 'sprintsNotEnabled' })
+    expect(added).toHaveLength(0)
+    expect(audit.events).toHaveLength(0)
+  })
+
+  it.each([
+    ['a Member', member(ORG_A)],
+    ['a Read Only user', readOnly(ORG_A)],
+  ])('refuses create for %s with 403', async (_label, currentUser) => {
+    const { service, added } = harness({ currentUser, boards: [board()] })
+
+    await expect(service.createForBoard(BOARD, CREATE)).rejects.toBeInstanceOf(ForbiddenError)
+    expect(added).toHaveLength(0)
+  })
+
+  it('refuses create for a Site Admin acting as themselves', async () => {
+    const { service, added } = harness({ currentUser: siteAdmin(), boards: [board()] })
+
+    await expect(service.createForBoard(BOARD, CREATE)).rejects.toBeInstanceOf(ForbiddenError)
+    expect(added).toHaveLength(0)
+  })
+
+  it('answers 404 to an Org Admin of another organization on create', async () => {
+    const { service, added } = harness({ currentUser: orgAdmin(ORG_B), boards: [board()] })
+
+    await expect(service.createForBoard(BOARD, CREATE)).rejects.toBeInstanceOf(NotFoundError)
+    expect(added).toHaveLength(0)
+  })
+
+  it('lets a View As session in the board organization create', async () => {
+    const { service, added } = harness({
+      currentUser: impersonating({
+        targetUserId: 'org-admin-1',
+        targetRole: Role.OrgAdmin,
+        targetOrganizationId: ORG_A,
+      }),
+      boards: [board()],
+    })
+
+    await service.createForBoard(BOARD, CREATE)
+
+    expect(added[0]?.boardId).toBe(BOARD)
+  })
+
+  it('stores the new sprint Planned under the board organization and audits the board', async () => {
+    const { service, added, audit } = harness({
+      currentUser: orgAdmin(ORG_A),
+      boards: [board()],
+    })
+
+    const item = await service.createForBoard(BOARD, CREATE)
+
+    expect(item).toMatchObject({
+      boardId: BOARD,
+      organizationId: ORG_A,
+      state: SprintState.Planned,
+      issueCount: 0,
+      doneCount: 0,
+    })
+    expect(added[0]?.organizationId).toBe(ORG_A)
+    expect(audit.events[0]?.eventType).toBe('SprintCreated')
+    expect(JSON.parse(audit.events[0]?.metadataJson ?? '{}')).toMatchObject({ boardId: BOARD })
+  })
+
+  it('rejects an owner outside the organization on a board sprint', async () => {
+    const { service, added } = harness({ currentUser: orgAdmin(ORG_A), boards: [board()] })
+
+    await expect(
+      service.createForBoard(BOARD, { ...CREATE, ownerUserId: 'nobody' }),
+    ).rejects.toBeInstanceOf(ValidationError)
+    expect(added).toHaveLength(0)
+  })
+
+  it('validates the date window as for an organization sprint', async () => {
+    const { service } = harness({ currentUser: orgAdmin(ORG_A), boards: [board()] })
+
+    await expect(
+      service.createForBoard(BOARD, { ...CREATE, startDate: '2026-09-28', endDate: '2026-09-15' }),
+    ).rejects.toBeInstanceOf(ValidationError)
+  })
+
+  it('lists only the board sprints, filtered by state, for any member of the organization', async () => {
+    const sprints = [
+      onBoard('s-board-planned', BOARD),
+      onBoard('s-board-active', BOARD, true),
+      onBoard('s-other-board', 'board-z'),
+      onBoard('s-legacy', null),
+    ]
+    for (const currentUser of [orgAdmin(ORG_A), member(ORG_A), readOnly(ORG_A), siteAdmin()]) {
+      const { service } = harness({ currentUser, boards: [board()], sprints })
+
+      expect((await service.listForBoard(BOARD, null)).map((s) => s.sprintId).sort()).toEqual([
+        's-board-active',
+        's-board-planned',
+      ])
+      expect(
+        (await service.listForBoard(BOARD, SprintState.Active)).map((s) => s.sprintId),
+      ).toEqual(['s-board-active'])
+    }
+  })
+
+  it('answers 404 to another organization listing the board', async () => {
+    const { service } = harness({ currentUser: member(ORG_B), boards: [board()] })
+
+    await expect(service.listForBoard(BOARD, null)).rejects.toBeInstanceOf(NotFoundError)
+  })
+
+  it('projects boardId null for a legacy sprint on the organization list', async () => {
+    const { service } = harness({
+      currentUser: orgAdmin(ORG_A),
+      sprints: [onBoard('s-legacy', null), onBoard('s-board', BOARD)],
+    })
+
+    const byId = new Map((await service.list(ORG_A, null)).map((s) => [s.sprintId, s]))
+
+    expect(byId.get('s-legacy')?.boardId).toBeNull()
+    expect(byId.get('s-board')?.boardId).toBe(BOARD)
+  })
+})
+
+describe('SprintService completing and deleting by sprint kind', () => {
+  const BOARD = 'board-a'
+  const FINAL_A = 'status-done'
+  const FINAL_B = 'status-shipped'
+  const board = (over: Partial<SprintBoard> = {}): SprintBoard => ({
+    id: BOARD,
+    organizationId: ORG_A,
+    sprintsEnabled: true,
+    isArchived: false,
+    finalStatusIds: [FINAL_A, FINAL_B],
+    ...over,
+  })
+  const make = (id: string, boardId: string | null, started = true) => {
+    const created = createSprint({
+      id,
+      organizationId: ORG_A,
+      name: id,
+      goal: null,
+      startDate: '2026-09-01',
+      endDate: '2026-09-14',
+      ownerUserId: null,
+      boardId,
+      nowUtc: NOW,
+      actorUserId: 'seed',
+    })
+    return started ? startSprint(created, NOW, 'seed') : created
+  }
+  /** A board item: Discovery phase, no delivery status, sitting in `statusId`. */
+  const item = (id: string, statusId: string, sprintId = 'sprint-board'): Idea => ({
+    ...issue({ id, sprintId }),
+    phase: IdeaPhase.Discovery,
+    deliveryStatus: null,
+    statusId,
+  })
+  const carried = (audit: { events: readonly { metadataJson?: string | null }[] }) =>
+    JSON.parse(audit.events[0]?.metadataJson ?? '{}').carriedOverIssueCount
+
+  it('carries over none when all items sit in final lanes (either final lane)', async () => {
+    const { service, issueUpdates, audit, saved } = harness({
+      currentUser: orgAdmin(ORG_A),
+      boards: [board()],
+      sprints: [make('sprint-board', BOARD)],
+      issues: [item('a', FINAL_A), item('b', FINAL_B)],
+    })
+
+    await service.complete(ORG_A, 'sprint-board')
+
+    expect(issueUpdates).toHaveLength(0)
+    expect(carried(audit)).toBe(0)
+    expect(saved[0]?.state).toBe(SprintState.Completed)
+  })
+
+  it('carries over every item when none sit in a final lane', async () => {
+    const { service, issueUpdates, audit } = harness({
+      currentUser: orgAdmin(ORG_A),
+      boards: [board()],
+      sprints: [make('sprint-board', BOARD)],
+      issues: [item('a', 'status-1'), item('b', 'status-2')],
+    })
+
+    await service.complete(ORG_A, 'sprint-board')
+
+    expect(issueUpdates.map((i) => i.id)).toEqual(['a', 'b'])
+    expect(issueUpdates.every((i) => i.sprintId === null)).toBe(true)
+    expect(carried(audit)).toBe(2)
+  })
+
+  it('treats a board with no final lane as nothing done', async () => {
+    const { service, issueUpdates } = harness({
+      currentUser: orgAdmin(ORG_A),
+      boards: [board({ finalStatusIds: [] })],
+      sprints: [make('sprint-board', BOARD)],
+      issues: [item('a', FINAL_A)],
+    })
+
+    await service.complete(ORG_A, 'sprint-board')
+
+    expect(issueUpdates.map((i) => i.id)).toEqual(['a'])
+  })
+
+  it('carries over a mixed set: only the non-final items go back to the backlog', async () => {
+    const { service, issueUpdates, audit } = harness({
+      currentUser: orgAdmin(ORG_A),
+      boards: [board()],
+      sprints: [make('sprint-board', BOARD)],
+      issues: [item('open', 'status-1'), item('done', FINAL_A), item('shipped', FINAL_B)],
+    })
+
+    await service.complete(ORG_A, 'sprint-board')
+
+    expect(issueUpdates.map((i) => i.id)).toEqual(['open'])
+    expect(carried(audit)).toBe(1)
+  })
+
+  it('ignores delivery status on a board sprint: Complete outside a final lane is carried over', async () => {
+    const { service, issueUpdates } = harness({
+      currentUser: orgAdmin(ORG_A),
+      boards: [board()],
+      sprints: [make('sprint-board', BOARD)],
+      issues: [
+        {
+          ...issue({ id: 'delivery', sprintId: 'sprint-board' }),
+          statusId: 'status-1',
+          deliveryStatus: DeliveryStatus.Complete,
+        },
+      ],
+    })
+
+    await service.complete(ORG_A, 'sprint-board')
+
+    expect(issueUpdates.map((i) => i.id)).toEqual(['delivery'])
+  })
+
+  it('does not consult the board for a legacy sprint and keeps the delivery-status rule', async () => {
+    const { service, issueUpdates, audit } = harness({
+      currentUser: orgAdmin(ORG_A),
+      boards: [],
+      sprints: [make('sprint-legacy', null)],
+      issues: [
+        // Sits in a status that is final on some board, but is not Complete: still carried over.
+        { ...issue({ id: 'dev', sprintId: 'sprint-legacy' }), statusId: FINAL_A },
+        issue({ id: 'done', sprintId: 'sprint-legacy', deliveryStatus: DeliveryStatus.Complete }),
+      ],
+    })
+
+    await service.complete(ORG_A, 'sprint-legacy')
+
+    expect(issueUpdates.map((i) => i.id)).toEqual(['dev'])
+    expect(carried(audit)).toBe(1)
+  })
+
+  it('answers 404 when the board of a board sprint no longer resolves', async () => {
+    const { service, saved } = harness({
+      currentUser: orgAdmin(ORG_A),
+      boards: [],
+      sprints: [make('sprint-board', BOARD)],
+      issues: [item('a', 'status-1')],
+    })
+
+    await expect(service.complete(ORG_A, 'sprint-board')).rejects.toBeInstanceOf(NotFoundError)
+    expect(saved).toHaveLength(0)
+  })
+
+  it('still refuses completing a board sprint that is not Active', async () => {
+    const { service, issueUpdates } = harness({
+      currentUser: orgAdmin(ORG_A),
+      boards: [board()],
+      sprints: [make('sprint-board', BOARD, false)],
+      issues: [item('a', 'status-1')],
+    })
+
+    await expect(service.complete(ORG_A, 'sprint-board')).rejects.toBeDefined()
+    expect(issueUpdates).toHaveLength(0)
+  })
+
+  it('refuses a Member completing or deleting a board sprint', async () => {
+    const { service, issueUpdates } = harness({
+      currentUser: member(ORG_A),
+      boards: [board()],
+      sprints: [make('sprint-board', BOARD)],
+      issues: [item('a', 'status-1')],
+    })
+
+    await expect(service.complete(ORG_A, 'sprint-board')).rejects.toBeInstanceOf(ForbiddenError)
+    await expect(service.delete(ORG_A, 'sprint-board')).rejects.toBeInstanceOf(ForbiddenError)
+    expect(issueUpdates).toHaveLength(0)
+  })
+
+  it('deleting a board sprint clears items in any phase and lane, and soft-deletes it', async () => {
+    const { service, issueUpdates, saved } = harness({
+      currentUser: orgAdmin(ORG_A),
+      boards: [],
+      sprints: [make('sprint-board', BOARD)],
+      issues: [item('open', 'status-1'), item('done', FINAL_A)],
+    })
+
+    await service.delete(ORG_A, 'sprint-board')
+
+    expect(issueUpdates.map((i) => i.sprintId)).toEqual([null, null])
+    expect(saved[0]?.isDeleted).toBe(true)
+  })
+
+  it('deleting a legacy sprint still unassigns through the Delivery path', async () => {
+    const { service, issueUpdates, saved } = harness({
+      currentUser: orgAdmin(ORG_A),
+      sprints: [make('sprint-legacy', null)],
+      issues: [issue({ id: 'dev', sprintId: 'sprint-legacy' })],
+    })
+
+    await service.delete(ORG_A, 'sprint-legacy')
+
+    expect(issueUpdates.map((i) => i.sprintId)).toEqual([null])
+    expect(saved[0]?.isDeleted).toBe(true)
   })
 })

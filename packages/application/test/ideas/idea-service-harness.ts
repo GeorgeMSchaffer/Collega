@@ -17,7 +17,9 @@ import type {
   BoardsPort,
   BusinessImpactSummary,
   CommentsPort,
+  DependencyEdge,
   IdeaClassificationPort,
+  IdeaDependenciesPort,
   IdeaFieldValuesPort,
   IdeaFollowersPort,
   IdeaListFilter,
@@ -61,9 +63,11 @@ export function board(overrides: Partial<BoardContext> = {}): BoardContext {
     name: 'Acme Board',
     allowUserStatusUpdate: false,
     isArchived: false,
+    keyPrefix: null,
+    ideaFeaturesEnabled: true,
     swimlanes: [
-      { statusId: STATUS_1, displayOrder: 0 },
-      { statusId: STATUS_2, displayOrder: 1 },
+      { statusId: STATUS_1, displayOrder: 0, isFinal: false, referencesBoardId: null },
+      { statusId: STATUS_2, displayOrder: 1, isFinal: false, referencesBoardId: null },
     ],
     ...overrides,
   }
@@ -163,8 +167,12 @@ export type Harness = {
   followersByIdea: Map<string, Set<string>>
   boardFilters: IdeaListFilter[]
   orgFilters: OrganizationIdeaListFilter[]
+  /** Every `listDelivery` filter the service sent the repository. */
+  deliveryFilters: Parameters<IdeaRepository['listDelivery']>[0][]
   /** Tags `getOrCreate` created, in order, with the colour the service picked for each. */
   createdTags: TagSummary[]
+  /** The blocked-by links; edit it to model existing dependencies. */
+  edges: DependencyEdge[]
 }
 
 export function harness(options: {
@@ -182,16 +190,24 @@ export function harness(options: {
   fieldValues?: Partial<IdeaFieldValuesPort>
   /** What `getFirstActiveStatusId` answers; `null` models an organization with no active status. */
   firstActiveStatusId?: string | null
+  /** What `countChildrenByParentIds` answers per parent id. */
+  childCounts?: Readonly<Record<string, { total: number; done: number }>>
+  /** Overrides for the classification port, e.g. an organization with no active type. */
+  classification?: Partial<IdeaClassificationPort>
+  /** Existing blocked-by links. */
+  dependencies?: readonly DependencyEdge[]
 }): Harness {
   const boardsById = new Map((options.boards ?? [board()]).map((b) => [b.boardId, b]))
   const ideasById = new Map((options.ideas ?? []).map((i) => [i.id, i]))
   const usersById = new Map((options.users ?? [summary()]).map((u) => [u.id, u]))
   const sprintsById = new Map((options.sprints ?? []).map((s) => [s.id, s]))
+  const nextItemNumbers = new Map<string, number>()
 
   const saved: Idea[] = []
   const added: Idea[] = []
   const notifications: NotificationInput[] = []
   const boardFilters: IdeaListFilter[] = []
+  const deliveryFilters: Parameters<IdeaRepository['listDelivery']>[0][] = []
   const orgFilters: OrganizationIdeaListFilter[] = []
   const tagsById = new Map((options.tags ?? []).map((t) => [t.id, t]))
   const createdTags: TagSummary[] = []
@@ -240,12 +256,21 @@ export function harness(options: {
       return []
     },
     async listDelivery(filter) {
+      deliveryFilters.push(filter)
       return [...ideasById.values()].filter(
         (i) => i.organizationId === filter.organizationId && i.phase === IdeaPhase.Delivery,
       )
     },
     async listBySprint() {
       return []
+    },
+    async countChildrenByParentIds(parentIds) {
+      return new Map(
+        parentIds.flatMap((id) => {
+          const counts = options.childCounts?.[id]
+          return counts ? [[id, counts] as const] : []
+        }),
+      )
     },
   }
 
@@ -264,6 +289,46 @@ export function harness(options: {
     },
     async getFirstActiveStatusId() {
       return options.firstActiveStatusId === undefined ? STATUS_1 : options.firstActiveStatusId
+    },
+    async allocateItemNumber(boardId) {
+      if (!boardsById.get(boardId)?.keyPrefix) {
+        return null
+      }
+      const next = nextItemNumbers.get(boardId) ?? 1
+      nextItemNumbers.set(boardId, next + 1)
+      return next
+    },
+    async getBoardReadFacts(boardIds) {
+      return new Map(
+        boardIds.flatMap((id) => {
+          const found = boardsById.get(id)
+          return found
+            ? [
+                [
+                  id,
+                  {
+                    ideaFeaturesEnabled: found.ideaFeaturesEnabled,
+                    referencedBoardByStatusId: new Map(
+                      found.swimlanes.flatMap((lane) =>
+                        lane.referencesBoardId
+                          ? [[lane.statusId, lane.referencesBoardId] as const]
+                          : [],
+                      ),
+                    ),
+                  },
+                ] as const,
+              ]
+            : []
+        }),
+      )
+    },
+    async getKeyPrefixes(boardIds) {
+      return new Map(
+        boardIds.flatMap((id) => {
+          const prefix = boardsById.get(id)?.keyPrefix
+          return prefix ? [[id, prefix] as const] : []
+        }),
+      )
     },
   }
 
@@ -354,6 +419,7 @@ export function harness(options: {
     async listBusinessImpactsByOrganization(organizationId) {
       return businessImpacts.filter((b) => b.organizationId === organizationId)
     },
+    ...options.classification,
   }
 
   const baseFieldValues: IdeaFieldValuesPort = {
@@ -444,6 +510,51 @@ export function harness(options: {
     },
   }
 
+  const edges: DependencyEdge[] = [...(options.dependencies ?? [])]
+  const dependencies: IdeaDependenciesPort = {
+    async listBlockerIds(blockedId) {
+      return edges.filter((e) => e.blockedId === blockedId).map((e) => e.blockerId)
+    },
+    async listBlockersByBlockedIds(blockedIds) {
+      const result = new Map<
+        string,
+        { ideaId: string; boardId: string | null; statusId: string; itemNumber: number | null }[]
+      >()
+      for (const edge of edges) {
+        const blocker = ideasById.get(edge.blockerId)
+        if (!blockedIds.includes(edge.blockedId) || !blocker || blocker.isDeleted) {
+          continue
+        }
+        result.set(edge.blockedId, [
+          ...(result.get(edge.blockedId) ?? []),
+          {
+            ideaId: blocker.id,
+            boardId: blocker.boardId,
+            statusId: blocker.statusId,
+            itemNumber: blocker.itemNumber,
+          },
+        ])
+      }
+      return result
+    },
+    async listEdgesForBoard(boardId) {
+      return edges.filter((e) => ideasById.get(e.blockedId)?.boardId === boardId)
+    },
+    async replaceBlockers(blockedId, blockerIds) {
+      const kept = edges.filter((e) => e.blockedId !== blockedId)
+      edges.splice(
+        0,
+        edges.length,
+        ...kept,
+        ...blockerIds.map((blockerId) => ({ blockedId, blockerId })),
+      )
+    },
+    async deleteAllFor(ideaId) {
+      const kept = edges.filter((e) => e.blockedId !== ideaId && e.blockerId !== ideaId)
+      edges.splice(0, edges.length, ...kept)
+    },
+  }
+
   const notificationsPort: NotificationsPort = {
     async notify(input) {
       notifications.push(input)
@@ -466,6 +577,7 @@ export function harness(options: {
       taskRollup,
       notificationsPort,
       followers,
+      dependencies,
       countingUnitOfWork(),
       audit,
       options.currentUser,
@@ -479,7 +591,9 @@ export function harness(options: {
     followersByIdea,
     boardFilters,
     orgFilters,
+    deliveryFilters,
     createdTags,
+    edges,
   }
 }
 

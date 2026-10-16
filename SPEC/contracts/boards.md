@@ -192,7 +192,7 @@ Persist swimlane reorder immediately after drag-and-drop.
   - `keyPrefix` string or `null`, 2 to 10 characters `A-Z0-9`, upper-cased on store; unique per organization among boards that have one.
   - `sprintsEnabled` boolean, default `false`.
   - `ideaFeaturesEnabled` boolean, default `true`; default `false` for a board when it is first named as a reference target.
-- **Lane item fields (added) on every lane in a board read and write:**
+- **Lane item fields (added) on every lane in a board read and write.** The lane-save routes that carry `isFinal` and `referencesBoardId` are `PUT /api/v1/boards/{boardId}`, `POST /api/v1/organizations/{organizationId}/boards` and `POST /api/v1/boards/{boardId}/swimlanes/reorder`:
   - `isFinal` boolean, default `false`. A board may have several final lanes.
   - `referencesBoardId` GUID or `null`: the board whose tasks this lane hands work to.
 - **Rules:**
@@ -200,5 +200,7 @@ Persist swimlane reorder immediately after drag-and-drop.
   - A board that is the target of a reference may not itself contain a reference lane, and a board with a reference lane may not be a target (one level at launch).
   - A lane with ideas in it cannot have `referencesBoardId` changed or removed, and cannot be removed.
   - A board named as a reference target cannot be archived while a lane references it.
-  - Saving lanes with `referencesBoardId` set to a board outside the organization, an archived board, or a missing board is refused.
-- **Errors:** `422` for each rule above, using the shared error model; message keys named after the rule (`laneReferencesOwnBoard`, `referenceChainNotAllowed`, `laneInUse`, `referenceTargetArchived`).
+  - Saving lanes with `referencesBoardId` set to a board outside the organization, an archived board, or a missing board is refused with `422` `referencesBoardInvalid`.
+  - `keyPrefix` can change only while no item key has been issued on the board; afterwards `422` `keyPrefixLocked`. A `keyPrefix` already used by another board in the organization is `409` `keyPrefixTaken`.
+  - The archive-while-referenced rule is `422` `referenceTargetArchived`, the only archive error with that status; the existing archive conflicts stay `409`.
+- **Errors:** `422` for each rule above, using the shared error model; message keys named after the rule (`laneReferencesOwnBoard`, `referenceChainNotAllowed`, `laneInUse`, `referenceTargetArchived`, `referencesBoardInvalid`), plus `keyPrefixLocked` (`422`) and `keyPrefixTaken` (`409`).

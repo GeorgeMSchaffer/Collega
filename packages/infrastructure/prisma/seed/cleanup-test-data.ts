@@ -171,6 +171,8 @@ async function main(): Promise<void> {
           }),
       ],
       ['ideas', () => prisma.ideas.deleteMany({ where: { id: { in: ideaIds } } })],
+      // Sprints can belong to a board (sprints.board_id), so they go before the boards do.
+      ['sprints', () => prisma.sprints.deleteMany({ where: org })],
       [
         'board_swimlanes',
         () => prisma.board_swimlanes.deleteMany({ where: { board_id: { in: boardIds } } }),
@@ -195,7 +197,6 @@ async function main(): Promise<void> {
       ['statuses', () => prisma.statuses.deleteMany({ where: org })],
       ['tags', () => prisma.tags.deleteMany({ where: org })],
       ['business_impacts', () => prisma.business_impacts.deleteMany({ where: org })],
-      ['sprints', () => prisma.sprints.deleteMany({ where: org })],
       ['ai_usage_records', () => prisma.ai_usage_records.deleteMany({ where: org })],
       // Both ends reference users, so this has to clear before the accounts do.
       [

@@ -29,6 +29,7 @@ Defines the system contracts that implementations must follow.
 - `401 Unauthorized`: the caller is not authenticated or the authentication token is missing, expired, or invalid.
 - `403 Forbidden`: the caller is authenticated but not permitted to perform the requested action in the current scope.
 - `404 Not Found`: the targeted resource does not exist or is not visible within the caller's authorized scope.
+- `422 Unprocessable Entity`: the request is well-formed and the caller may make it, but a named business rule refuses it. The body is Problem Details whose message is the rule key (for example `laneInUse`).
 
 ## Collection Conventions
 - Organization, user, idea, and comment list endpoints support pagination in MVP.

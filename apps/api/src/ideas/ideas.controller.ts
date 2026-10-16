@@ -83,6 +83,8 @@ type UpdateIdeaBody = Omit<CreateIdeaBody, 'statusId'>
 
 type ChangeIdeaStatusBody = { statusId?: unknown }
 
+type SetBlockedByBody = { ideaIds?: unknown }
+
 type ReassignIdeaTypeBody = { ideaTypeId?: unknown }
 
 /** `List<Guid>?` - absent stays absent, so the Application layer can tell "not provided" apart. */
@@ -287,6 +289,20 @@ export class IdeasController {
     })
   }
 
+  /** A task on the board the parent's lane references. The body is the idea create body minus the
+   * board; `ideaTypeId`, `businessImpactId`, `statusId` and `fieldValues` are ignored if sent. */
+  @Post('ideas/:ideaId/board-tasks')
+  @HttpCode(201)
+  async createBoardTask(
+    @Param('ideaId', UuidParamPipe) ideaId: string,
+    @Body() body: CreateIdeaBody,
+  ): Promise<CreateIdeaResult> {
+    validateFields(ideaBodyRules(body))
+
+    const { ideaTypeId, businessImpactId, fieldValues: _fields, ...fields } = newIdeaFields(body)
+    return this.ideas.createBoardTask(ideaId, fields)
+  }
+
   /** An idea with no board. The body is the board create's minus `statusId`, which is ignored if
    * sent: the status is the organization's first active one. */
   @Post('organizations/:organizationId/ideas')
@@ -357,6 +373,22 @@ export class IdeasController {
     @Body() body: ReassignIdeaTypeBody,
   ): Promise<void> {
     await this.ideas.reassignIdeaType(organizationId, ideaId, guidOrEmpty(body.ideaTypeId))
+  }
+
+  /** Replaces the item's blocker set; `[]` clears it. */
+  @Put('ideas/:ideaId/blocked-by')
+  @HttpCode(200)
+  async setBlockedBy(
+    @Param('ideaId', UuidParamPipe) ideaId: string,
+    @Body() body: SetBlockedByBody,
+  ): Promise<IdeaDetail> {
+    const ideaIds = guidList(body.ideaIds)
+    if (ideaIds === null) {
+      throw new ValidationError('One or more fields are invalid.', {
+        ideaIds: ['Provide the complete blocker set; use an empty list to clear it.'],
+      })
+    }
+    return this.ideas.setBlockedBy(ideaId, ideaIds)
   }
 
   @Post('ideas/:ideaId/status')
