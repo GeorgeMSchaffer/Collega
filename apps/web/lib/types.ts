@@ -195,6 +195,20 @@ export type Status = {
 }
 
 /**
+ * A status as one board uses it: the lane's display fields plus its Board References flags
+ * (`contracts/boards.md`). `isFinal` marks where an item counts as done, `referencesBoardId` is the
+ * board whose tasks the lane hands work to, and `autoCreateTask` makes entering the lane create one.
+ */
+export type BoardLane = Status & {
+  isFinal: boolean
+  referencesBoardId: string | null
+  autoCreateTask: boolean
+}
+
+/** The Board References flags of a lane, keyed by status id on the board form so a save sends them back. */
+export type LaneFlags = Pick<BoardLane, 'isFinal' | 'referencesBoardId' | 'autoCreateTask'>
+
+/**
  * A board as `/settings/boards` administers it, which is a different question from what the
  * workspace list shows.
  *
@@ -315,6 +329,9 @@ export type BoardOverview = {
   userStatusMoves: boolean
   isArchived: boolean
   archivedOn: string | null
+  keyPrefix: string | null
+  sprintsEnabled: boolean
+  ideaFeaturesEnabled: boolean
 }
 
 /**
@@ -328,12 +345,15 @@ export type BoardOverview = {
 export type BoardWithLanes = {
   id: string
   name: string
-  lanes: Status[]
+  lanes: BoardLane[]
   /** Whether a plain User may move a card between lanes, or only an administrator. */
   allowUserStatusUpdate: boolean
   description: string | null
   /** An archived board opens read-only (`20-feature-boards-and-statuses.md` rule 13). */
   isArchived: boolean
+  keyPrefix: string | null
+  sprintsEnabled: boolean
+  ideaFeaturesEnabled: boolean
 }
 
 /**
@@ -365,6 +385,8 @@ export type PullCandidate = {
   phase: string
   tags: string[]
   isMine: boolean
+  priority: Priority | null
+  upvotes: number
 }
 
 export type PullCandidatePage = {
@@ -440,6 +462,14 @@ export type Idea = {
   hasUpvoted: boolean
   /** Optional in Discovery. The idea detail does not carry it, so a detail's is always null. */
   effort: Effort | null
+  /** `<board prefix>-<number>`; null on a board without a prefix, and in the pool. */
+  itemKey: string | null
+  /** Set on a task: the idea it was created from. */
+  parentIdeaId: string | null
+  /** Only on an item in a lane that references a board; `done` counts tasks in a final lane. */
+  taskCounts: { total: number; done: number } | null
+  /** Items that must be final before this one leaves its board's first lane. */
+  blockedBy: { ideaId: string; itemKey: string | null; isFinal: boolean }[]
 }
 
 /**
@@ -566,6 +596,8 @@ export type IdeaDetail = Idea & {
   /** The reader's own follow state, and the follower count the toggle shows. */
   isFollowing: boolean
   followerCount: number
+  /** The item's metric values; empty for a card with a parent (`contracts/metric-types.md`). */
+  metrics: IdeaMetric[]
 }
 
 /** `NotificationEventType`, as the inbox sends it. */
@@ -836,4 +868,83 @@ export type PlatformHome = {
   kpis: HomeKpi[]
   /** Largest first by ideas. */
   organizations: PlatformOrganization[]
+}
+
+// Board References: metric types, Outcomes with rollups, board sprints (slice 260). Appended; the
+// screens that draw them come later.
+
+/** An organization's metric type (`contracts/metric-types.md`). */
+export type MetricType = {
+  id: string
+  name: string
+  /** Null when the type has no unit. */
+  unit: string | null
+  isArchived: boolean
+}
+
+/** One stored value on an item, with the type it belongs to. Null is "not entered". */
+export type IdeaMetric = {
+  metricTypeId: string
+  name: string
+  unit: string | null
+  isArchived: boolean
+  projected: number | null
+  realized: number | null
+}
+
+/** One Outcome's sum for an active metric type; a sum with no number in it is null. */
+export type MetricTotal = {
+  metricTypeId: string
+  name: string
+  unit: string | null
+  projected: number | null
+  realized: number | null
+}
+
+/** A top-level item grouped under an Outcome, as the Outcome page and the roadmap draw it. */
+export type OutcomeIdea = {
+  id: string
+  title: string
+  statusId: string
+  effort: Effort | null
+  assigneeUserIds: string[]
+  sprintId: string | null
+  /** `YYYY-MM-DD`. */
+  sprintStart: string | null
+  sprintEnd: string | null
+}
+
+/** An Outcome with its rollup. `OutcomeIdea` rows come with the detail and the roadmap only. */
+export type OutcomeSummary = {
+  id: string
+  name: string
+  description: string | null
+  /** `YYYY-MM-DD`. */
+  targetStartDate: string
+  targetEndDate: string
+  ownerUserId: string | null
+  sortOrder: number
+  color: string
+  ideaCount: number
+  doneIdeaCount: number
+  taskCount: number
+  doneTaskCount: number
+  sprintStart: string | null
+  sprintEnd: string | null
+  metricTotals: MetricTotal[]
+}
+
+export type OutcomeWithIdeas = OutcomeSummary & { ideas: OutcomeIdea[] }
+
+export type OutcomeSummaryPage = {
+  outcomes: OutcomeSummary[]
+  page: number
+  pageSize: number
+  totalCount: number
+}
+
+/** `GET /organizations/{id}/roadmap`: every Outcome in order, and the items under none. */
+export type OutcomeRoadmap = {
+  outcomes: OutcomeWithIdeas[]
+  ungrouped: OutcomeIdea[]
 }

@@ -6,7 +6,9 @@
  * separation exists to prevent. They are a domain enum with no endpoint behind them, so
  * `getDeliveryStatuses` reads `DELIVERY_STATUSES` in `lib/display.ts`; that file says why.
  *
- * **Sprints and issues are real. Outcomes are not, and cannot be.** Slice 1 of Issues-and-Delivery
+ * **Sprints and issues are real. The Roadmap's outcomes are still empty.** (The API has Outcome
+ * routes now and `./outcomes` reads them; the three readers below stay empty until the Roadmap
+ * screen is switched over.) Slice 1 of Issues-and-Delivery
  * shipped the promotion gate, sprints, the delivery query and tasks. Outcomes are Slice 2, and
  * nothing of them exists: no `outcomes` table in the frozen schema, no entity, no service, no
  * route. `SPEC/30-Contracts.md` "Delivery Contracts" says it outright — "The Slice 2 Outcome and
@@ -32,10 +34,18 @@
  */
 
 import { toIssue, toIssueTask, toMemberOption, toSprint } from '../api/adapt'
-import { apiGet, apiPath, isApiStatus } from '../api/client'
+import { apiGet, apiPath, isApiStatus, withQuery } from '../api/client'
 import type { WireDeliveryCard, WireIssueTask, WireMember, WireSprint } from '../api/wire'
 import { DELIVERY_STATUSES } from '../display'
-import type { DeliveryStatus, Issue, IssueTask, MemberOption, Outcome, Sprint } from '../types'
+import type {
+  DeliveryStatus,
+  Issue,
+  IssueTask,
+  MemberOption,
+  Outcome,
+  Sprint,
+  SprintState,
+} from '../types'
 import { failIfRequested, resolve } from './latency'
 import { organizationScope } from './scope'
 
@@ -123,6 +133,27 @@ export async function getSprint(id: string | null): Promise<Sprint | null> {
     )
   } catch (error) {
     if (isApiStatus(error, 404)) return null
+    throw error
+  }
+}
+
+/**
+ * One board's sprints (`GET /boards/{id}/sprints`), optionally narrowed to one state. Empty for a
+ * board the reader cannot see.
+ */
+export async function getBoardSprints(boardId: string, state?: SprintState): Promise<Sprint[]> {
+  failIfRequested('getBoardSprints')
+
+  const params = new URLSearchParams()
+  if (state) params.set('state', state)
+  try {
+    const sprints = await apiGet<readonly WireSprint[]>(
+      'getBoardSprints',
+      withQuery(apiPath`/boards/${boardId}/sprints`, params),
+    )
+    return sprints.map(toSprint)
+  } catch (error) {
+    if (isApiStatus(error, 404) || isApiStatus(error, 400)) return []
     throw error
   }
 }

@@ -43,6 +43,10 @@
  * than keeping three invented themes beside live issues. `lib/data/delivery.ts` argues it properly.
  * The roadmap therefore renders its empty state, which is the true thing to render.
  *
+ * **Since then the API grew the Outcome and metric-type routes**, and `./outcomes` and `./metrics`
+ * read them. Nothing calls them yet: the Roadmap stays on the empty readers above until a later
+ * slice decides to switch it over.
+ *
  * **Identity does not live here** — see `lib/session.ts` for why it stays synchronous, and
  * `lib/server/current-user.ts` for the one place it is fetched.
  */
@@ -53,5 +57,7 @@ export * from './delivery'
 export * from './home'
 export * from './ideas'
 export * from './inbox'
+export * from './metrics'
+export * from './outcomes'
 export * from './tags'
 export * from './view-as'

@@ -28,6 +28,8 @@ function candidate(over: Partial<PullCandidate> = {}): PullCandidate {
     phase: 'Discovery',
     tags: [],
     isMine: true,
+    priority: null,
+    upvotes: 0,
     ...over,
   }
 }

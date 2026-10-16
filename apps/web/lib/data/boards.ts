@@ -40,6 +40,7 @@ export { SWIMLANE_FLOOR } from '../limits'
 export type {
   Board,
   BoardAdmin,
+  BoardLane,
   BoardOverview,
   BoardRef,
   BoardWithLanes,
@@ -121,6 +122,9 @@ export async function getBoard(id: string): Promise<BoardWithLanes | null> {
       allowUserStatusUpdate: board.allowUserStatusUpdate,
       description: board.description,
       isArchived: board.isArchived,
+      keyPrefix: board.keyPrefix,
+      sprintsEnabled: board.sprintsEnabled,
+      ideaFeaturesEnabled: board.ideaFeaturesEnabled,
       // Deleted statuses still hold ideas that have to go somewhere, so their lane stays on the
       // board — hiding it would silently drop cards off a screen that claims to show all of them.
       lanes: [...board.swimlanes].sort((a, b) => a.order - b.order).map(swimlaneToStatus),

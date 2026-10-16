@@ -35,7 +35,7 @@ export type CreateSprintResult =
 function refusal(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 401) redirect('/login?expired=1')
-    if ([400, 403, 404, 409].includes(error.status)) return error.detail
+    if ([400, 403, 404, 409, 422].includes(error.status)) return error.detail
   }
   throw error
 }

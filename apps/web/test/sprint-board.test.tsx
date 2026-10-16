@@ -121,6 +121,10 @@ function ideaFor(item: Issue): IdeaDetail {
     upvotes: 3,
     hasUpvoted: false,
     effort: null,
+    itemKey: null,
+    parentIdeaId: null,
+    taskCounts: null,
+    blockedBy: [],
     problem: 'A problem',
     proposedSolutions: [],
     impactRationale: 'Because',
@@ -137,6 +141,7 @@ function ideaFor(item: Issue): IdeaDetail {
     comments: [],
     isFollowing: false,
     followerCount: 0,
+    metrics: [],
   }
 }
 

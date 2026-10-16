@@ -228,6 +228,10 @@ function idea(id: string, title: string): Idea {
     upvotes: 0,
     hasUpvoted: false,
     effort: null,
+    itemKey: null,
+    parentIdeaId: null,
+    taskCounts: null,
+    blockedBy: [],
   }
 }
 
@@ -355,6 +359,9 @@ function overview(name: string): BoardOverview {
     userStatusMoves: false,
     isArchived: false,
     archivedOn: null,
+    keyPrefix: null,
+    sprintsEnabled: false,
+    ideaFeaturesEnabled: true,
   }
 }
 

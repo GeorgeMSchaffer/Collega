@@ -67,6 +67,9 @@ function board(over: Partial<BoardOverview> = {}): BoardOverview {
     userStatusMoves: true,
     isArchived: false,
     archivedOn: null,
+    keyPrefix: null,
+    sprintsEnabled: false,
+    ideaFeaturesEnabled: true,
     ...over,
   }
 }
