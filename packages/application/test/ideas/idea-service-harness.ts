@@ -38,6 +38,7 @@ import type {
   UserSummary,
   UsersPort,
 } from '../../src/ideas/ports.js'
+import type { IdeaMetricValuesPort } from '../../src/metric-types/ports.js'
 import {
   countingUnitOfWork,
   fixedClock,
@@ -188,6 +189,8 @@ export function harness(options: {
   followers?: Readonly<Record<string, readonly string[]>>
   /** Overrides for the user-defined-field port, e.g. to make a save change a field value. */
   fieldValues?: Partial<IdeaFieldValuesPort>
+  /** The metric-value reader behind `IdeaDetail.metrics`; omitted, as in a host that has none. */
+  metricValues?: Pick<IdeaMetricValuesPort, 'listByIdea'>
   /** What `getFirstActiveStatusId` answers; `null` models an organization with no active status. */
   firstActiveStatusId?: string | null
   /** What `countChildrenByParentIds` answers per parent id. */
@@ -583,6 +586,7 @@ export function harness(options: {
       options.currentUser,
       fixedClock(),
       options.random ?? { nextInt: () => 0 },
+      options.metricValues,
     ),
     saved,
     added,
