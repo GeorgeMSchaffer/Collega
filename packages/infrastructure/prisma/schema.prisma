@@ -70,6 +70,7 @@ model board_swimlanes {
   display_order Int
   references_board_id String?  @db.Uuid
   is_final            Boolean  @default(false)
+  auto_create_task    Boolean  @default(false)
   boards        boards   @relation("swimlane_board", fields: [board_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_board_swimlanes_boards_board_id")
   referenced_board    boards?  @relation("swimlane_reference", fields: [references_board_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "FK_board_swimlanes_boards_references_board_id")
   statuses      statuses @relation(fields: [status_id], references: [id], onUpdate: NoAction, map: "FK_board_swimlanes_statuses_status_id")
@@ -335,6 +336,21 @@ model idea_dependencies {
   @@index([blocker_idea_id], map: "ix_idea_dependencies_blocker_idea_id")
 }
 
+/// One projected and one realized number per metric type on an item that has no parent
+/// (SPEC/contracts/metric-types.md). The pair is the key. Values go with the idea; a metric type is
+/// archived, never deleted, so its values stay.
+model idea_metric_values {
+  idea_id        String       @db.Uuid
+  metric_type_id String       @db.Uuid
+  projected      Decimal?     @db.Decimal(17, 2)
+  realized       Decimal?     @db.Decimal(17, 2)
+  ideas          ideas        @relation(fields: [idea_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_idea_metric_values_ideas_idea_id")
+  metric_types   metric_types @relation(fields: [metric_type_id], references: [metric_type_id], onDelete: Restrict, onUpdate: NoAction, map: "FK_idea_metric_values_metric_types_metric_type_id")
+
+  @@id([idea_id, metric_type_id], map: "PK_idea_metric_values")
+  @@index([metric_type_id], map: "ix_idea_metric_values_metric_type_id")
+}
+
 model idea_upvotes {
   id             String   @id(map: "PK_idea_upvotes") @db.Uuid
   idea_id        String   @db.Uuid
@@ -389,6 +405,7 @@ model ideas {
   idea_assignees            idea_assignees[]
   idea_field_values         idea_field_values[]
   idea_followers            idea_followers[]
+  idea_metric_values        idea_metric_values[]
   idea_mentions             idea_mentions[]
   idea_tags                 idea_tags[]
   idea_upvotes              idea_upvotes[]
@@ -497,11 +514,28 @@ model organizations {
   fieldsets                  fieldsets[]
   idea_types                 idea_types[]
   ideas                      ideas[]
+  metric_types               metric_types[]
   outcomes                   outcomes[]
   sprints                    sprints[]
   statuses                   statuses[]
   tags                       tags[]
   users                      users[]
+}
+
+/// An organization-defined measure (cost saved, hours, revenue) that items carry projected and
+/// realized values for. Names may repeat; removal sets `is_archived`.
+model metric_types {
+  metric_type_id     String               @id(map: "PK_metric_types") @db.Uuid
+  organization_id    String               @db.Uuid
+  name               String               @db.VarChar(80)
+  unit               String?              @db.VarChar(20)
+  is_archived        Boolean              @default(false)
+  created_at_utc     DateTime             @db.Timestamptz(6)
+  updated_at_utc     DateTime             @db.Timestamptz(6)
+  organizations      organizations        @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_metric_types_organizations_organization_id")
+  idea_metric_values idea_metric_values[]
+
+  @@index([organization_id], map: "ix_metric_types_organization_id")
 }
 
 /// A dated grouping lens over Issues (Issues-and-Delivery Slice 2). Single-parent: an Issue's
