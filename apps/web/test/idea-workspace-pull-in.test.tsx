@@ -88,10 +88,7 @@ const FORM_OPTIONS: IdeaFormOptions = {
   tags: [],
 }
 
-function renderIdeas(
-  role: Role,
-  extra: Partial<React.ComponentProps<typeof IdeaWorkspace>> = {},
-) {
+function renderIdeas(role: Role, extra: Partial<React.ComponentProps<typeof IdeaWorkspace>> = {}) {
   render(
     as(
       role,

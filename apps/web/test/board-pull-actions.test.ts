@@ -57,9 +57,18 @@ describe('creating a board with a pull', () => {
   })
 
   it('returns every per-item refusal as pullErrors and no banner when only pullItemIds was refused', async () => {
-    const messages = ["'Slow conveyor' is on another board.", 'You may pull only ideas you created.']
+    const messages = [
+      "'Slow conveyor' is on another board.",
+      'You may pull only ideas you created.',
+    ]
     post.mockRejectedValue(
-      new ApiError(400, '/organizations/org-1/boards', 'Validation failed', {}, { pullItemIds: messages }),
+      new ApiError(
+        400,
+        '/organizations/org-1/boards',
+        'Validation failed',
+        {},
+        { pullItemIds: messages },
+      ),
     )
     expect(await createBoard(IDLE, form(['i-1', 'i-2']))).toEqual({
       error: null,
@@ -102,9 +111,15 @@ describe('editing a board with a pull', () => {
 
   it('returns the per-item refusals for an edit too', async () => {
     put.mockRejectedValue(
-      new ApiError(400, '/boards/b-9', 'Validation failed', {}, {
-        pullItemIds: ['Idea i-3 is already on this board.'],
-      }),
+      new ApiError(
+        400,
+        '/boards/b-9',
+        'Validation failed',
+        {},
+        {
+          pullItemIds: ['Idea i-3 is already on this board.'],
+        },
+      ),
     )
     const data = form(['i-3'])
     data.set('boardId', 'b-9')

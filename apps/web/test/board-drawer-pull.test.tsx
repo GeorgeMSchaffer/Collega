@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { type BoardFormData, BoardDrawer } from '@/components/boards/board-drawer'
+import { BoardDrawer, type BoardFormData } from '@/components/boards/board-drawer'
 import type { PullSetup } from '@/components/settings/pull-step'
 import { createBoardInPlace, saveBoardInPlace } from '@/lib/server/board-actions'
 import type { PullCandidate } from '@/lib/types'
@@ -19,6 +19,7 @@ vi.mock('@/lib/server/board-actions', () => ({
 
 const create = vi.mocked(createBoardInPlace)
 const save = vi.mocked(saveBoardInPlace)
+const posted = () => create.mock.calls[0]?.[1] as FormData
 
 const STATUSES = [
   { id: 's-new', name: 'New', color: '#111' },
@@ -93,7 +94,8 @@ function drawer(pull: PullSetup | undefined, over: Partial<BoardFormData> = {}) 
 }
 
 const step = () => screen.getByRole('button', { name: /Add existing items/ })
-const submitButton = () => screen.getByRole('button', { name: /^Create board|^Save changes|Saving/ })
+const submitButton = () =>
+  screen.getByRole('button', { name: /^Create board|^Save changes|Saving/ })
 
 // The row's accessible name runs the title into "by Ada" with no space, so `\b` would not match.
 const ideaNamed = (index: number) => new RegExp(`Idea ${index}(?!\\d)`)
@@ -169,7 +171,7 @@ describe('the save button and the pull', () => {
     drawer(setup(), { name: 'Assembly' })
     fireEvent.click(submitButton())
     await waitFor(() => expect(create).toHaveBeenCalled())
-    expect((create.mock.calls[0]?.[1] as FormData).getAll('pullItemIds')).toEqual([])
+    expect(posted().getAll('pullItemIds')).toEqual([])
   })
 })
 
@@ -198,7 +200,7 @@ describe('the 100-item cap on save', () => {
     fireEvent.click(boxes()[100] as HTMLInputElement)
     fireEvent.click(submitButton())
     await waitFor(() => expect(create).toHaveBeenCalled())
-    expect((create.mock.calls[0]?.[1] as FormData).getAll('pullItemIds')).toHaveLength(100)
+    expect(posted().getAll('pullItemIds')).toHaveLength(100)
   }, 30_000)
 })
 

@@ -22,7 +22,8 @@ const POOL = (pool: number) => (url: URL) => {
   return { items: [], totalCount: total, page: 1, pageSize: 1 }
 }
 
-const requested = () => vi.mocked(apiGet).mock.calls.map(([, path]) => new URL(String(path), 'http://api.test'))
+const requested = () =>
+  vi.mocked(apiGet).mock.calls.map(([, path]) => new URL(String(path), 'http://api.test'))
 
 function wire(pool: number) {
   vi.mocked(apiGet).mockReset()
@@ -75,11 +76,14 @@ describe('the Needs a board tile reader', () => {
     expect(poolReads().map((url) => url.searchParams.get('phase'))).toEqual(['Ideas'])
   })
 
-  it.each(['User', 'ReadOnly'] as const)('gives %s no tile, and never asks for the pool', async (role) => {
-    actAs(role)
-    expect(await tile()).toBeUndefined()
-    expect(poolReads()).toEqual([])
-  })
+  it.each(['User', 'ReadOnly'] as const)(
+    'gives %s no tile, and never asks for the pool',
+    async (role) => {
+      actAs(role)
+      expect(await tile()).toBeUndefined()
+      expect(poolReads()).toEqual([])
+    },
+  )
 
   it('hides the tile at zero', async () => {
     wire(0)
@@ -98,7 +102,8 @@ describe('the Needs a board tile reader', () => {
     expect(home.counts.ideas).toBe(30)
     for (const url of requested().filter((u) => u.pathname.endsWith('/ideas'))) {
       // The Issues count is the delivery figure, not an idea figure.
-      if (url.searchParams.get('boardId') === 'none' || url.searchParams.get('phase') === 'Issues') continue
+      if (url.searchParams.get('boardId') === 'none' || url.searchParams.get('phase') === 'Issues')
+        continue
       expect(url.searchParams.getAll('boardId')).toEqual(['b-live'])
     }
   })

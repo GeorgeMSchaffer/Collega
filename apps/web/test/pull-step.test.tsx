@@ -209,7 +209,9 @@ describe('PullStep selection', () => {
   })
 
   it('removes an item from the summary with its remove control', () => {
-    const { container } = render(<Harness initial={[candidate({ id: 'i-9', title: 'Burnt fuse' })]} />)
+    const { container } = render(
+      <Harness initial={[candidate({ id: 'i-9', title: 'Burnt fuse' })]} />,
+    )
     open()
     fireEvent.click(screen.getByRole('button', { name: 'Remove Burnt fuse' }))
     expect(hiddenIds(container)).toEqual([])
@@ -219,7 +221,9 @@ describe('PullStep selection', () => {
 
 describe('PullStep 100-item cap', () => {
   const many = (count: number) =>
-    Array.from({ length: count }, (_, index) => candidate({ id: `i-${index}`, title: `Idea ${index}` }))
+    Array.from({ length: count }, (_, index) =>
+      candidate({ id: `i-${index}`, title: `Idea ${index}` }),
+    )
 
   it('shows no warning at exactly the cap', () => {
     render(<Harness initial={many(PULL_ITEM_CAP)} />)
@@ -273,9 +277,9 @@ describe('PullStep refusals', () => {
     render(<Harness initial={[candidate()]} refused={REFUSALS} />)
     const alert = screen.getByRole('alert')
     expect(document.activeElement).toBe(alert)
-    expect(screen.getByRole('button', { name: /Add existing items/ }).getAttribute('aria-expanded')).toBe(
-      'true',
-    )
+    expect(
+      screen.getByRole('button', { name: /Add existing items/ }).getAttribute('aria-expanded'),
+    ).toBe('true')
     expect(screen.getByText('Needs attention')).toBeTruthy()
     expect(alert.textContent).toContain('Nothing was saved.')
     expect(alert.textContent).toContain('The board was not created.')
