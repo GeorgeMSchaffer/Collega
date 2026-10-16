@@ -1602,8 +1602,11 @@ export class IdeaService {
         (idea.parentIdeaId === null ? idea.proposedSolutions : []).join('\n'),
         idea.parentIdeaId === null ? idea.impactRationale : '',
         idea.parentIdeaId === null ? idea.priority : '',
-        this.ideaTypeName(ideaTypeLookup, idea.ideaTypeId),
-        this.businessImpactName(businessImpactLookup, idea.businessImpactId),
+        // A task's stored type and impact are NOT NULL placeholders that no read shows.
+        idea.parentIdeaId === null ? this.ideaTypeName(ideaTypeLookup, idea.ideaTypeId) : '',
+        idea.parentIdeaId === null
+          ? this.businessImpactName(businessImpactLookup, idea.businessImpactId)
+          : '',
         this.statusName(statusInfo, idea.statusId),
         idea.dueDate ?? '',
         this.projectTagNames(idea, tagLookup).join(', '),
