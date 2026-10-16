@@ -36,7 +36,7 @@ the idea, and ideas roll up to Outcomes with projected and realized value.
 | Sequencing | **Blocked-by links.** No links means parallel. A blocked task cannot leave its board's first status until blockers are final. |
 | Sprints | Per child board (`boards.sprints_enabled`), **cross-idea**: one sprint holds tasks from many parents. Unfinished tasks return to the backlog on completion. |
 | Standalone cards | Allowed. A child-board card with no parent is simply not part of any idea's rollup. |
-| Value | **Typed metrics, projected vs realized.** Projected is set while scoping; realized is entered after the idea's final status. Outcomes sum each metric type. |
+| Value | **Typed metrics, projected vs realized.** Projected is set while scoping; realized is typically entered after the idea's final status (not enforced; decided 2026-10-16). Outcomes sum each metric type. |
 
 ## Data model (all columns nullable unless noted)
 
@@ -46,10 +46,10 @@ the idea, and ideas roll up to Outcomes with projected and realized value.
 - `ideas.parent_idea_id` → `ideas` (self). A parent must sit in a status that references the child's board when the child is created.
 - `idea_dependencies(blocked_idea_id, blocker_idea_id)`, both `ideas`; unique pair; cycles rejected; both ideas on the same board.
 - `sprints.board_id` (required once sprints are per board) and `boards.sprints_enabled boolean default false`.
-- Metric types: org-defined, with per-idea `projected` and `realized` numeric values (shape to be settled in the contract; reuse the user-defined fields machinery where it fits).
+- Metric types: org-defined, with per-idea `projected` and `realized` numeric values in a new `metric_types` table, not the user-defined fields (decided 2026-10-16; `contracts/metric-types.md`).
 - **Removed:** `ideas.phase`, the fixed delivery status enum, `issue_tasks`, the promotion fields. The Effort requirement moves to the entry into a reference lane (decided below).
 - **Kept:** `ideas.outcome_id` (single-parent, top-level ideas). Rollups are derived at read time, never stored.
-- The schema freeze (S0.2) is amended a ninth time (the eighth was ideas with no board, 2026-10-13). No data migration: the seed rebuilds the database.
+- The schema freeze (S0.2) is amended a ninth time (the eighth was ideas with no board, 2026-10-13); the tenth (2026-10-16) adds the metric-type tables and `board_swimlanes.auto_create_task`. No data migration: the seed rebuilds the database.
 
 ## Behavior
 

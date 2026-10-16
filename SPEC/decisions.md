@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-16 | Metric types are an organization table with projected and realized values per item | active | full below |
 | 2026-10-16 | A reference lane locks its card until its tasks are final | active | full below |
 | 2026-10-15 | Cutover follow-up: migration check, SITE_ADMIN_PASSWORD, App Admin in the README, rollback wording | active | full below |
 | 2026-10-15 | The 17 open Outcome contract questions are decided | active | full below |
@@ -127,6 +128,25 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 ---
 
+## 2026-10-16 — Metric types are an organization table with projected and realized values per item
+
+> Amends: "The 17 open Outcome contract questions are decided" (2026-10-15), whose Q1 left the metric totals' shape to this contract, and "Board References replace the Delivery phase" (2026-10-15), whose board-task create body is narrowed below. Everything else in those entries stands.
+
+**Decided by the user.** A metric type is a row in a new `metric_types` table, owned by the organization and managed by an Org Admin: a name (duplicates allowed) and a free-text unit. Only items with no parent carry values: one projected and one realized number per type, written as a whole set with `PUT /ideas/{ideaId}/metrics` by whoever may edit the item. Realized values are not gated on a final lane. Removing a type archives it and keeps its values. An Outcome returns `metricTotals`, one entry per active type with a value under it. The routes and rules are in `contracts/metric-types.md`.
+
+**Why.** Outcomes span boards, so their totals only line up if types are shared across the organization. A unit is enough to show a number without a format engine. Values on top-level items alone mean a rollup never counts a parent and its tasks twice. Archiving keeps realized history when a type is retired.
+
+**Rejected.** Reusing the user-defined fields machinery (a field holds one value per item, not a projected and realized pair, and is shown on the idea form, not summed); per-board types; a fixed global list; a kind enum (percent does not sum); values on tasks; refusing realized values outside a final lane; unique names.
+
+**Defaults the user may overrule.** Values are decimals with two places, and negatives are allowed. Any member reads the types. A Site Admin works only through View As, reads included. The idea detail read returns `metrics`. The contract's shapes are the assistant's too: name max 80 and unit max 20 characters, `unit` nullable; archive and restore through `PUT` with `isArchived`; a separate `GET /ideas/{ideaId}/metrics` that includes values on archived types, flagged; `?includeArchived`, unpaged, ordered by creation; an unknown type in the body is `400`; an item with a parent is refused with `422` `taskCannotCarryMetrics`; totals skip soft-deleted items and items with a parent; the audit event names; no notification; a unit change does not convert values.
+
+**Consequences.**
+- The S0.2 schema freeze is amended a tenth time: `metric_types` (`metric_type_id`, `organization_id`, `name`, `unit`, `is_archived`, timestamps) and `idea_metric_values` (`idea_id`, `metric_type_id`, `projected`, `realized`, unique on the pair). The same amendment carries slice 236's `board_swimlanes.auto_create_task`.
+- Slice 233 builds on that schema.
+- **Board-task create body (decided by the user the same day):** `POST /ideas/{ideaId}/board-tasks` takes `title` (required), `description`, `assigneeUserIds` and `tagNames`; the idea-only fields are `null` on a task (`contracts/ideas.md`). This replaces "the idea create body, minus `boardId`".
+
+---
+
 ## 2026-10-16 — A reference lane locks its card until its tasks are final
 
 > Amends: "Board References replace the Delivery phase" (2026-10-15), whose "Leaving early" rule (leave a reference lane with open tasks, after a warning) is replaced. Everything else in that entry stands.
@@ -138,7 +158,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 **Rejected.** A travelling card that leaves its board for the child board (two mechanisms, loses the parent's key, Outcome and history); three or more board levels (lock and rollup cost); a lock with no override.
 
 **Consequences.**
-- One additive column: `board_swimlanes.auto_create_task boolean default false` (a further S0.2 amendment, with the next schema slice).
+- One additive column: `board_swimlanes.auto_create_task boolean default false` (carried by the tenth S0.2 amendment, "Metric types are an organization table...", 2026-10-16).
 - New rule and error `parentHasOpenTasks` on moves out of a reference lane; new audit event `IdeaMovedPastOpenTasks`.
 - **Every exit is locked (decided 2026-10-16).** The lock also covers leaving the board by detach (`DELETE /api/v1/ideas/{ideaId}/board`) and by being pulled onto another board (`pullItemIds`). Same error, same Org Admin override with a reason, same audit event. Otherwise detach or pull would sidestep it.
 - The backend slices already merged (220-232, 234) need a follow-up slice for the lock, the override and auto-create; the UI shows the lock and the lane setting.
