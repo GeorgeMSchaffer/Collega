@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-16 | A reference lane locks its card until its tasks are final | active | full below |
 | 2026-10-15 | Cutover follow-up: migration check, SITE_ADMIN_PASSWORD, App Admin in the README, rollback wording | active | full below |
 | 2026-10-15 | The 17 open Outcome contract questions are decided | active | full below |
 | 2026-10-15 | Board References replace the Delivery phase | active | full below |
@@ -123,6 +124,23 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-16 — A reference lane locks its card until its tasks are final
+
+> Amends: "Board References replace the Delivery phase" (2026-10-15), whose "Leaving early" rule (leave a reference lane with open tasks, after a warning) is replaced. Everything else in that entry stands.
+
+**Decided by the user.** A card in a reference lane cannot leave it while any of its tasks is not in a final lane. The card shows "Waiting on N tasks". An Org Admin may force the move by giving a reason; it is audited. A lane may also be set to **auto-create one task on entry** (the hand-off): the task takes the card's title and starts in the child board's first lane, and the parent waits on it. With the setting off, people add tasks by hand (fan-out). Entering a lane with no tasks leaves the card unlocked, since there is nothing to wait on. Nesting stays at two boards (idea board → work board). The completion prompt still needs a person to confirm.
+
+**Why.** The owner wants workflows that hand work to other workflows (Trello's flow with Jira's breakdown): a vetted idea runs on a project board whose tasks must finish before the idea is done. A warning on early exit did not express that. A hard lock does, and the Org Admin override avoids the stuck-card failure of strict gates. Fan-out with the lock covers the hand-off case too, so there is one mechanism, not two.
+
+**Rejected.** A travelling card that leaves its board for the child board (two mechanisms, loses the parent's key, Outcome and history); three or more board levels (lock and rollup cost); a lock with no override.
+
+**Consequences.**
+- One additive column: `board_swimlanes.auto_create_task boolean default false` (a further S0.2 amendment, with the next schema slice).
+- New rule and error `parentHasOpenTasks` on moves out of a reference lane; new audit event `IdeaMovedPastOpenTasks`.
+- The backend slices already merged (220-232, 234) need a follow-up slice for the lock, the override and auto-create; the UI shows the lock and the lane setting.
 
 ---
 

@@ -195,6 +195,7 @@ Persist swimlane reorder immediately after drag-and-drop.
 - **Lane item fields (added) on every lane in a board read and write.** The lane-save routes that carry `isFinal` and `referencesBoardId` are `PUT /api/v1/boards/{boardId}`, `POST /api/v1/organizations/{organizationId}/boards` and `POST /api/v1/boards/{boardId}/swimlanes/reorder`:
   - `isFinal` boolean, default `false`. A board may have several final lanes.
   - `referencesBoardId` GUID or `null`: the board whose tasks this lane hands work to.
+  - `autoCreateTask` boolean, default `false`: entering the lane creates one task on the referenced board. Setting it on a lane with no `referencesBoardId` is `422` `autoCreateTaskRequiresReference`.
 - **Rules:**
   - A lane may not reference its own board.
   - A board that is the target of a reference may not itself contain a reference lane, and a board with a reference lane may not be a target (one level at launch).

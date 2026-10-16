@@ -361,5 +361,6 @@ Soft-delete an idea while preserving its row and audit history.
 - **Rules:**
   - Moving an idea into a reference lane requires `effort` to be set; otherwise `422` (`effortRequiredForReferenceLane`).
   - A task cannot itself be a parent (no sub-tasks at launch) and cannot be grouped under an Outcome; both `422`.
-  - Moving an idea out of a reference lane with open tasks is allowed and does not touch the tasks.
+  - Moving an idea out of a reference lane while any of its tasks is not in a final lane is refused with `422` (`parentHasOpenTasks`). An Org Admin may send `forceReason` (non-empty text) on the move to override; any other role sending it gets `403`. The override is audited as `IdeaMovedPastOpenTasks` (reason, open task count) and does not touch the tasks.
+  - Moving an idea into a lane with `autoCreateTask` creates one task on the referenced board in the same transaction (the idea's title, the board's first lane); a failure rolls the move back.
   - A task cannot leave its board's first lane while any blocker is not in a final lane; `422` (`taskBlocked`).
