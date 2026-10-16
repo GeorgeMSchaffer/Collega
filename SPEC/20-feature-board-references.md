@@ -5,6 +5,7 @@
 > separate step, the fixed delivery status set, Sprint-as-org-container, and checklist Tasks in
 > `SPEC/20-feature-issues-and-delivery.md` (Slice 1). Outcomes (Slice 2) is kept and extended.
 > **Reference rendering:** `SPEC/mockups/comp-s-board-reference.html` (Graphite, three screens).
+> **Review comp (2026-10-16, awaiting review):** `SPEC/mockups/comp-t-board-references-decisions.html` draws the metric types, Value section, task drawer, reference-lane lock, lane setting, pull picker and Outcome totals. Not a reference until approved.
 
 ## Problem
 
