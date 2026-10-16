@@ -6,6 +6,7 @@
 // Skipped unless `DATABASE_URL` is set. It builds its own organization and removes it afterwards.
 
 import { randomUUID } from 'node:crypto'
+import type { AutoCreateTaskPort } from '@collega/application/boards'
 import { BoardService } from '@collega/application/boards'
 import {
   ConflictError,
@@ -54,6 +55,7 @@ describe.skipIf(!DATABASE_URL)('Board lane rules against a live database', () =>
       currentUser,
       { now: () => SAVED },
       new PrismaIdeaRepository(prisma, unitOfWork),
+      {} as AutoCreateTaskPort,
     )
   }
 

@@ -4,6 +4,7 @@
 import type { Board } from '@collega/domain/boards'
 import type { EffortLevel, IdeaPhase } from '@collega/domain/enums'
 import type { Page } from '../common/index.js'
+import type { AutoCreateTaskParent } from '../ideas/models.js'
 import type { PullCandidate } from './models.js'
 
 export interface BoardRepository {
@@ -72,6 +73,18 @@ export interface BoardRepository {
     toStatusId: string,
     nowUtc: Date,
     actorUserId: string | null,
+  ): Promise<void>
+
+  /**
+   * Stages a check, after `moveIdeas`, that every given idea landed in `toStatusId` in this save.
+   * A miss fails the whole save with a `400` keyed `ideaMoves` naming the idea. Used only where a
+   * move auto-creates a task, which must not be committed for an idea that never entered the lane.
+   */
+  verifyIdeasMoved(
+    boardId: string,
+    ideas: readonly { readonly ideaId: string; readonly title: string }[],
+    toStatusId: string,
+    nowUtc: Date,
   ): Promise<void>
 
   /**
@@ -158,4 +171,16 @@ export type UserName = {
  */
 export interface OrganizationExistenceLookup {
   existsById(organizationId: string): Promise<boolean>
+}
+
+/**
+ * The auto-create on entering an `autoCreateTask` lane by a pull or an `ideaMoves` entry. Satisfied
+ * by `IdeaService`, which owns the one task-creation path: it stages the task in this save's unit
+ * of work and hands back what to run once the save has committed (its audit entries).
+ */
+export interface AutoCreateTaskPort {
+  stageAutoCreatedTask(
+    parent: AutoCreateTaskParent,
+    referencedBoardId: string,
+  ): Promise<() => Promise<void>>
 }

@@ -303,15 +303,15 @@ describe('CSV export of a task', () => {
   })
 
   // The task stores the organization's default type and impact only because the columns are NOT
-  // NULL; every read hides them (Board References Ruling 2), but the export still names them.
+  // NULL; every read hides them (Board References Ruling 2), the export included.
   // contracts/ideas.md "Tasks and item keys": ideaTypeId and businessImpactId are null on a task.
-  it.fails('blanks the Idea Type cell on a task (defect: the export names the stored default)', async () => {
+  it('blanks the Idea Type cell on a task', async () => {
     const { column, row } = await exported()
 
     expect(row('A task')[column('Idea Type')]).toBe('')
   })
 
-  it.fails('blanks the Business Impact cell on a task (defect: the export names the stored default)', async () => {
+  it('blanks the Business Impact cell on a task', async () => {
     const { column, row } = await exported()
 
     expect(row('A task')[column('Business Impact')]).toBe('')

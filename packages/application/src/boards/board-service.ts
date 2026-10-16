@@ -38,6 +38,7 @@ import {
   ValidationError,
 } from '../common/index.js'
 import {
+  type AutoCreateTaskParent,
   IDEA_MOVED_PAST_OPEN_TASKS,
   type IdeaRepository,
   movedPastOpenTasksAudit,
@@ -63,7 +64,12 @@ import type {
   UpdateBoardCommand,
   UpdateBoardResult,
 } from './models.js'
-import type { BoardRepository, LaneIdea, OrganizationExistenceLookup } from './ports.js'
+import type {
+  AutoCreateTaskPort,
+  BoardRepository,
+  LaneIdea,
+  OrganizationExistenceLookup,
+} from './ports.js'
 
 export class BoardService {
   constructor(
@@ -75,6 +81,7 @@ export class BoardService {
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
     private readonly ideas: IdeaRepository,
+    private readonly tasks: AutoCreateTaskPort,
   ) {}
 
   async list(
@@ -187,6 +194,7 @@ export class BoardService {
     if (pull !== null) {
       await this.stagePull(board.id, pull, now)
     }
+    const finishTasks = await this.stageAutoCreatedTasks(board, pulledEntries(pull))
     await this.unitOfWork.saveChanges()
 
     await this.audit(
@@ -198,6 +206,9 @@ export class BoardService {
       { name: board.name, swimlaneCount: board.swimlanes.length, ...pullAuditCounts(pull) },
     )
     await this.auditPull(organizationId, board, pull, now)
+    for (const finish of finishTasks) {
+      await finish()
+    }
 
     return {
       boardId: board.id,
@@ -280,10 +291,35 @@ export class BoardService {
         now,
         this.currentUser.userId,
       )
+      // A move skips an idea someone moved out of the lane meanwhile. Into an auto-create lane that
+      // would commit a task for an idea that never entered it, so there a miss refuses the save.
+      if (board.swimlanes.find((lane) => lane.statusId === move.toStatusId)?.autoCreateTask) {
+        await this.boards.verifyIdeasMoved(
+          board.id,
+          move.ideas.map((idea) => ({ ideaId: idea.ideaId, title: idea.title })),
+          move.toStatusId,
+          now,
+        )
+      }
     }
     if (pull !== null) {
       await this.stagePull(board.id, pull, now)
     }
+    const finishTasks = await this.stageAutoCreatedTasks(board, [
+      // A board with a reference lane is never a reference target, so it holds no tasks.
+      ...moves.flatMap((move) =>
+        move.ideas.map((idea) => ({
+          parent: {
+            id: idea.ideaId,
+            organizationId: board.organizationId,
+            title: idea.title,
+            parentIdeaId: null,
+          },
+          statusId: move.toStatusId,
+        })),
+      ),
+      ...pulledEntries(pull),
+    ])
     await this.unitOfWork.saveChanges()
 
     await this.audit(
@@ -315,6 +351,9 @@ export class BoardService {
       }
     }
     await this.auditPull(board.organizationId, board, pull, now)
+    for (const finish of finishTasks) {
+      await finish()
+    }
 
     return { ...toDetail(board, statusLookup), ...pulledItemsOf(pull) }
   }
@@ -467,6 +506,26 @@ export class BoardService {
         ? new Map<string, { readonly total: number; readonly done: number }>()
         : await this.ideas.countChildrenByParentIds(parentIds)
     return (idea) => openTasksHoldingExit(inReferenceLane(idea), counts.get(idea.id))
+  }
+
+  /**
+   * Stages the one task of every card this save places in an `autoCreateTask` lane, by a pull or
+   * an `ideaMoves` entry (SPEC/contracts/boards.md, decided 2026-10-16). Staged before the save's
+   * commit, so a refused task fails the whole save; the returned callbacks write the tasks' audit
+   * entries after it.
+   */
+  private async stageAutoCreatedTasks(
+    board: Board,
+    entering: readonly { readonly parent: AutoCreateTaskParent; readonly statusId: string }[],
+  ): Promise<readonly (() => Promise<void>)[]> {
+    const finishers: (() => Promise<void>)[] = []
+    for (const { parent, statusId } of entering) {
+      const lane = board.swimlanes.find((swimlane) => swimlane.statusId === statusId)
+      if (lane?.autoCreateTask && lane.referencesBoardId !== null) {
+        finishers.push(await this.tasks.stageAutoCreatedTask(parent, lane.referencesBoardId))
+      }
+    }
+    return finishers
   }
 
   private async stagePull(boardId: string, pull: PullPlan, now: Date): Promise<void> {
@@ -936,6 +995,9 @@ function pullRefusal(idea: Idea, boardId: string, role: Role, userId: string): s
   if (idea.boardId === boardId) {
     return `'${idea.title}' is already on this board.`
   }
+  if (idea.parentIdeaId !== null) {
+    return `'${idea.title}' is a task, so it cannot be pulled. Tasks stay on their parent's reference board.`
+  }
   if (idea.phase === IdeaPhase.Delivery) {
     if (idea.sprintId !== null) {
       return `'${idea.title}' is in a sprint, so it cannot be pulled. Move it back to the backlog first.`
@@ -949,6 +1011,13 @@ function pullRefusal(idea: Idea, boardId: string, role: Role, userId: string): s
     return `You can pull only ideas you created; '${idea.title}' was created by someone else.`
   }
   return null
+}
+
+/** Each pulled item and the lane it lands in, oldest first. */
+function pulledEntries(
+  pull: PullPlan | null,
+): { readonly parent: AutoCreateTaskParent; readonly statusId: string }[] {
+  return (pull?.items ?? []).map(({ after }) => ({ parent: after, statusId: after.statusId }))
 }
 
 function pullAuditCounts(pull: PullPlan | null): Record<string, number> {

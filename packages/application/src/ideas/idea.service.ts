@@ -59,6 +59,7 @@ import { randomTagColor } from '../tags/random-color.js'
 import type {
   AddIssueCommand,
   AssignIssueToSprintCommand,
+  AutoCreateTaskParent,
   BlockedByDto,
   ChangeDeliveryStatusCommand,
   ChangeIdeaStatusCommand,
@@ -87,6 +88,7 @@ import type {
   PromoteIdeaCommand,
   TaskCounts,
   UpdateIdeaCommand,
+  UpdateTaskCommand,
 } from './models.js'
 import {
   IDEA_CSV_CORE_COLUMNS,
@@ -375,22 +377,50 @@ export class IdeaService {
   }
 
   /**
-   * `createBoardTask` after authorization: the reference-lane guards, then the task. Also the
-   * auto-create on entering a lane with `autoCreateTask`, where `parent` is the moved idea whose
-   * move is staged but not yet committed - the task's `saveChanges` commits both together.
+   * Stages the one task a card gets on entering an `autoCreateTask` lane by a pull or a bulk lane
+   * move (SPEC/contracts/boards.md "Pulling items"), for `BoardService`: the card's title, the
+   * referenced board's first lane. Nothing is committed - the caller's own `saveChanges` commits
+   * the task with the board write, so a refusal here fails the whole save - and the returned
+   * callback writes the task's audit entries once that commit has happened.
    */
+  async stageAutoCreatedTask(
+    parent: AutoCreateTaskParent,
+    referencedBoardId: string,
+  ): Promise<() => Promise<void>> {
+    const finish = await this.stageBoardTask(parent, referencedBoardId, autoTaskCommand(parent))
+    return async () => {
+      await finish()
+    }
+  }
+
+  /** `createBoardTask` after authorization: the task on the board the parent's lane references. */
   private async addBoardTask(
     parent: Idea,
     command: CreateBoardTaskCommand,
   ): Promise<CreateIdeaResult> {
-    if (parent.parentIdeaId !== null) {
-      throw new UnprocessableError('parentIsTask', 'A task cannot have tasks of its own.')
-    }
     const parentBoard =
       parent.boardId === null ? null : await this.boards.getBoardContext(parent.boardId)
     const referencedBoardId =
       parentBoard?.swimlanes.find((lane) => lane.statusId === parent.statusId)?.referencesBoardId ??
       null
+    const finish = await this.stageBoardTask(parent, referencedBoardId, command)
+    await this.unitOfWork.saveChanges()
+    return finish()
+  }
+
+  /**
+   * The one task-creation path: the reference-lane guards, then the task staged on
+   * `referencedBoardId`'s leftmost lane. The caller commits; the returned callback writes the
+   * audit entries after that commit and answers the created task.
+   */
+  private async stageBoardTask(
+    parent: AutoCreateTaskParent,
+    referencedBoardId: string | null,
+    command: CreateBoardTaskCommand,
+  ): Promise<() => Promise<CreateIdeaResult>> {
+    if (parent.parentIdeaId !== null) {
+      throw new UnprocessableError('parentIsTask', 'A task cannot have tasks of its own.')
+    }
     if (referencedBoardId === null) {
       throw new UnprocessableError(
         'parentNotInReferenceLane',
@@ -429,7 +459,7 @@ export class IdeaService {
       )
     }
 
-    const created = await this.createIdeaRecord(
+    const finishRecord = await this.stageIdeaRecord(
       parent.organizationId,
       target.boardId,
       statusId,
@@ -451,17 +481,20 @@ export class IdeaService {
       parent.id,
     )
 
-    await this.writeAudit({
-      eventType: 'BoardTaskCreated',
-      entityType: 'Idea',
-      entityId: created.ideaId,
-      organizationId: parent.organizationId,
-      intendedActorUserId: this.requireAuthenticatedUserId(),
-      message: `Task '${created.title}' created from idea '${parent.title}'.`,
-      nowUtc: this.clock.now(),
-      metadata: { parentIdeaId: parent.id, boardId: target.boardId },
-    })
-    return created
+    return async () => {
+      const created = await finishRecord()
+      await this.writeAudit({
+        eventType: 'BoardTaskCreated',
+        entityType: 'Idea',
+        entityId: created.ideaId,
+        organizationId: parent.organizationId,
+        intendedActorUserId: this.requireAuthenticatedUserId(),
+        message: `Task '${created.title}' created from idea '${parent.title}'.`,
+        nowUtc: this.clock.now(),
+        metadata: { parentIdeaId: parent.id, boardId: target.boardId },
+      })
+      return created
+    }
   }
 
   private async createIdeaRecord(
@@ -470,8 +503,24 @@ export class IdeaService {
     statusId: string,
     command: Omit<CreateIdeaCommand, 'statusId'>,
     promotion?: { readonly effort: EffortLevel; readonly sprintId: string | null },
-    parentIdeaId: string | null = null,
   ): Promise<CreateIdeaResult> {
+    const finish = await this.stageIdeaRecord(organizationId, boardId, statusId, command, promotion)
+    await this.unitOfWork.saveChanges()
+    return finish()
+  }
+
+  /**
+   * Validates and stages a new item without committing it. The returned callback runs what must
+   * follow the commit - audits, notifications - and answers the created item.
+   */
+  private async stageIdeaRecord(
+    organizationId: string,
+    boardId: string | null,
+    statusId: string,
+    command: Omit<CreateIdeaCommand, 'statusId'>,
+    promotion?: { readonly effort: EffortLevel; readonly sprintId: string | null },
+    parentIdeaId: string | null = null,
+  ): Promise<() => Promise<CreateIdeaResult>> {
     const now = this.clock.now()
     const authorId = this.requireAuthenticatedUserId()
     const priority = parsePriority(command.priority)
@@ -533,7 +582,7 @@ export class IdeaService {
     }
     if (promotion) {
       // A new idea has no upvotes, so the support-at-commitment snapshot is 0. Promoted before
-      // `add`, so the row is written once, already in Delivery, by the one saveChanges below.
+      // `add`, so the row is written once, already in Delivery, by the caller's one saveChanges.
       idea = runDelivery(
         promoteIdeaToIssue,
         idea,
@@ -546,8 +595,20 @@ export class IdeaService {
     await this.ideaRepository.add(idea)
     // The author and each assignee follow automatically (SPEC/20-feature-idea-following.md 4-5).
     await this.addFollowers(idea.id, [authorId, ...assigneeIds], now)
-    await this.unitOfWork.saveChanges()
+    const staged = idea
+    return () => this.finishIdeaRecord(staged, priority, mentionIds, authorId, now, promotion)
+  }
 
+  /** What follows the commit of an item `stageIdeaRecord` staged. */
+  private async finishIdeaRecord(
+    idea: Idea,
+    priority: Priority,
+    mentionIds: readonly string[],
+    authorId: string,
+    now: Date,
+    promotion?: { readonly effort: EffortLevel; readonly sprintId: string | null },
+  ): Promise<CreateIdeaResult> {
+    const parentIdeaId = idea.parentIdeaId
     await this.auditIdea('IdeaCreated', idea, authorId, `Idea '${idea.title}' created.`, now, {
       title: idea.title,
       priority: parentIdeaId === null ? priority : null,
@@ -627,7 +688,7 @@ export class IdeaService {
       idea,
       board,
       forceReason,
-      `'${idea.title}' is waiting on {n} open tasks, so it cannot be removed from its board.`,
+      `'${idea.title}' is waiting on {n} open tasks, so it cannot be removed from the board.`,
     )
 
     idea = detached
@@ -792,6 +853,94 @@ export class IdeaService {
     // specific mention row for this same save (feature rules 12 and 18).
     if (edited) {
       await this.notifyIdeaFollowers('IdeaEdited', idea, actorId, { exclude: newMentions })
+    }
+
+    return this.projectDetail(idea)
+  }
+
+  /**
+   * Whether `ideaId` is a task the caller can see, so the update route knows which body to read: a
+   * task takes only its four fields. `false` for anything missing or out of scope, which leaves the
+   * idea path to report it exactly as before.
+   */
+  async isTask(ideaId: string): Promise<boolean> {
+    const idea = await this.ideaRepository.getById(ideaId, false)
+    return (
+      idea !== null &&
+      idea.parentIdeaId !== null &&
+      (this.currentUser.role === Role.SiteAdmin ||
+        this.currentUser.organizationId === idea.organizationId)
+    )
+  }
+
+  /**
+   * `PUT /ideas/{ideaId}` on a task (SPEC/contracts/ideas.md "Updating a task", decided
+   * 2026-10-16): the author or an in-scope Org Admin changes the title, description, assignees and
+   * tags under the idea update's rules. Everything else on the row is left as it is, and no
+   * mention notification is sent.
+   */
+  async updateTask(ideaId: string, command: UpdateTaskCommand): Promise<IdeaDetail> {
+    ensureNotDirectSiteAdmin(this.currentUser)
+    this.requireIdeaEditRole()
+
+    let idea = await this.ideaRepository.getById(ideaId, false)
+    if (!idea) {
+      throw new NotFoundError('Idea not found.')
+    }
+    this.ensureOrganizationScope(idea.organizationId)
+    if (idea.parentIdeaId === null) {
+      // Only if it stopped being a task since the route asked.
+      throw new ConflictError('This item is no longer a task.')
+    }
+    await this.ensureIdeaBoardNotArchived(idea)
+
+    const now = this.clock.now()
+    const actorId = this.requireAuthenticatedUserId()
+    if (!this.canAdministerIdeaContent(idea, actorId)) {
+      throw new ForbiddenError('Only the author or an Org Admin can edit this task.')
+    }
+
+    const before = idea
+    const existingAssignees = [...idea.assigneeUserIds]
+    const assigneeIds = await this.resolveAssignees(
+      idea.organizationId,
+      command.assigneeUserIds,
+      existingAssignees,
+    )
+    const tagIds = await this.resolveTags(idea.organizationId, command.tagNames, now, actorId)
+
+    idea = runDomain(
+      updateIdeaContent,
+      idea,
+      {
+        title: command.title ?? '',
+        description: command.description,
+        // Not taken on a task: the stored placeholders stay.
+        problem: idea.problem,
+        proposedSolutions: idea.proposedSolutions,
+        impactRationale: idea.impactRationale,
+        priority: idea.priority,
+        businessImpactId: idea.businessImpactId,
+        dueDate: idea.dueDate,
+      },
+      now,
+      actorId,
+    )
+    idea = runDomain(replaceIdeaAssignees, idea, assigneeIds, now, actorId)
+    idea = runDomain(replaceIdeaTags, idea, tagIds, now, actorId)
+    const edited = ideaEdited(before, idea)
+
+    await this.ideaRepository.update(idea)
+    await this.addFollowers(
+      idea.id,
+      assigneeIds.filter((id) => !existingAssignees.includes(id)),
+      now,
+    )
+    await this.unitOfWork.saveChanges()
+
+    await this.auditIdea('IdeaUpdated', idea, actorId, `Idea '${idea.title}' updated.`, now, null)
+    if (edited) {
+      await this.notifyIdeaFollowers('IdeaEdited', idea, actorId)
     }
 
     return this.projectDetail(idea)
@@ -1043,7 +1192,7 @@ export class IdeaService {
       idea,
       board,
       forceReason,
-      `'${idea.title}' is waiting on {n} open tasks, so it cannot leave its lane.`,
+      `'${idea.title}' is waiting on {n} open tasks, so it cannot be moved.`,
     )
 
     const now = this.clock.now()
@@ -1052,18 +1201,13 @@ export class IdeaService {
 
     idea = changeIdeaStatus(idea, command.statusId, now, actorId)
     await this.ideaRepository.update(idea)
-    if (targetLane?.autoCreateTask) {
-      // The hand-off: one task on the referenced board, staged beside the move so the task's
-      // `saveChanges` commits both, and a refused or failed task leaves the move uncommitted.
-      await this.addBoardTask(idea, {
-        title: idea.title,
-        description: null,
-        assigneeUserIds: null,
-        tagNames: null,
-      })
-    } else {
-      await this.unitOfWork.saveChanges()
-    }
+    // The hand-off: one task on the referenced board, staged beside the move so one commit takes
+    // both, and a refused or failed task leaves the move uncommitted.
+    const finishTask = targetLane?.autoCreateTask
+      ? await this.stageBoardTask(idea, targetLane.referencesBoardId, autoTaskCommand(idea))
+      : null
+    await this.unitOfWork.saveChanges()
+    await finishTask?.()
 
     await this.auditIdea(
       'IdeaStatusChanged',
@@ -1458,8 +1602,11 @@ export class IdeaService {
         (idea.parentIdeaId === null ? idea.proposedSolutions : []).join('\n'),
         idea.parentIdeaId === null ? idea.impactRationale : '',
         idea.parentIdeaId === null ? idea.priority : '',
-        this.ideaTypeName(ideaTypeLookup, idea.ideaTypeId),
-        this.businessImpactName(businessImpactLookup, idea.businessImpactId),
+        // A task's stored type and impact are NOT NULL placeholders that no read shows.
+        idea.parentIdeaId === null ? this.ideaTypeName(ideaTypeLookup, idea.ideaTypeId) : '',
+        idea.parentIdeaId === null
+          ? this.businessImpactName(businessImpactLookup, idea.businessImpactId)
+          : '',
         this.statusName(statusInfo, idea.statusId),
         idea.dueDate ?? '',
         this.projectTagNames(idea, tagLookup).join(', '),
@@ -1980,8 +2127,10 @@ export class IdeaService {
 
     const keyPrefixes = await this.keyPrefixesFor([idea])
     const blockedBy = (await this.blockedByOf([idea])).get(idea.id) ?? []
+    // A direct Site Admin is refused metric reads and sees values only through View As
+    // (SPEC/contracts/metric-types.md), so the detail answers `[]` rather than refusing.
     const metrics =
-      idea.parentIdeaId === null && this.metricValues
+      idea.parentIdeaId === null && this.metricValues && this.currentUser.role !== Role.SiteAdmin
         ? await this.metricValues.listByIdea(idea.id)
         : []
 
@@ -2760,6 +2909,11 @@ function isValidIsoDate(value: string): boolean {
   return (
     date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
   )
+}
+
+/** An auto-created task takes the card's title and nothing else. */
+function autoTaskCommand(parent: AutoCreateTaskParent): CreateBoardTaskCommand {
+  return { title: parent.title, description: null, assigneeUserIds: null, tagNames: null }
 }
 
 function parsePriority(value: string | null): Priority {

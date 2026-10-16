@@ -231,7 +231,8 @@ describe.skipIf(!DATABASE_URL)('Outcomes against a live database', () => {
           name: 'Old',
           unit: null,
           is_archived: true,
-          created_at_utc: AT,
+          // A second later, so the types' order (created first) is not left to a tie.
+          created_at_utc: new Date(AT.getTime() + 1000),
           updated_at_utc: AT,
         },
       ],

@@ -128,7 +128,7 @@ describe('changeStatus: the lock on leaving a reference lane', () => {
     expect(error).toBeInstanceOf(UnprocessableError)
     expect(error).toMatchObject({
       code: 'parentHasOpenTasks',
-      message: `'${TITLE}' is waiting on 2 open tasks, so it cannot leave its lane.`,
+      message: `'${TITLE}' is waiting on 2 open tasks, so it cannot be moved.`,
     })
     expectNothingChanged(h)
   })
@@ -151,7 +151,7 @@ describe('changeStatus: the lock on leaving a reference lane', () => {
     const error = await failure(h.service.changeStatus('idea-1', { statusId: STATUS_3 }))
 
     expect(error).toMatchObject({
-      message: `'${TITLE}' is waiting on 1 open tasks, so it cannot leave its lane.`,
+      message: `'${TITLE}' is waiting on 1 open tasks, so it cannot be moved.`,
     })
   })
 
@@ -466,7 +466,7 @@ describe('detachFromBoard: the lock', () => {
     expect(error).toBeInstanceOf(UnprocessableError)
     expect(error).toMatchObject({
       code: 'parentHasOpenTasks',
-      message: `'${TITLE}' is waiting on 2 open tasks, so it cannot be removed from its board.`,
+      message: `'${TITLE}' is waiting on 2 open tasks, so it cannot be removed from the board.`,
     })
     expectNothingChanged(h)
   })

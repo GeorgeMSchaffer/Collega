@@ -1,5 +1,6 @@
 import { ValidationError } from '@collega/application/common'
 import {
+  type CreateBoardTaskCommand,
   type CreateIdeaResult,
   type IdeaDetail,
   type IdeaFieldValueWrite,
@@ -143,6 +144,23 @@ function ideaBodyRules(body: CreateIdeaBody): Record<string, FieldRules> {
       maxLength: IMPACT_RATIONALE_MAX_LENGTH,
     },
     priority: { value: body.priority, required: true },
+  }
+}
+
+/** A task's body, on create and on update: the idea-only fields are not taken. */
+function taskBodyRules(body: UpdateIdeaBody): Record<string, FieldRules> {
+  return {
+    title: { value: body.title, required: true, maxLength: TITLE_MAX_LENGTH },
+    description: { value: body.description, maxLength: DESCRIPTION_MAX_LENGTH },
+  }
+}
+
+function taskFields(body: UpdateIdeaBody): CreateBoardTaskCommand {
+  return {
+    title: body.title ?? '',
+    description: optional(body.description),
+    assigneeUserIds: guidList(body.assigneeUserIds),
+    tagNames: stringList('tagNames', body.tagNames),
   }
 }
 
@@ -301,17 +319,9 @@ export class IdeasController {
     @Param('ideaId', UuidParamPipe) ideaId: string,
     @Body() body: CreateIdeaBody,
   ): Promise<CreateIdeaResult> {
-    validateFields({
-      title: { value: body.title, required: true, maxLength: TITLE_MAX_LENGTH },
-      description: { value: body.description, maxLength: DESCRIPTION_MAX_LENGTH },
-    })
+    validateFields(taskBodyRules(body))
 
-    return this.ideas.createBoardTask(ideaId, {
-      title: body.title ?? '',
-      description: optional(body.description),
-      assigneeUserIds: guidList(body.assigneeUserIds),
-      tagNames: stringList('tagNames', body.tagNames),
-    })
+    return this.ideas.createBoardTask(ideaId, taskFields(body))
   }
 
   /** An idea with no board. The body is the board create's minus `statusId`, which is ignored if
@@ -356,6 +366,12 @@ export class IdeasController {
     @Param('ideaId', UuidParamPipe) ideaId: string,
     @Body() body: UpdateIdeaBody,
   ): Promise<IdeaDetail> {
+    // A task takes only its four fields; the idea-only ones are ignored, not validated.
+    if (await this.ideas.isTask(ideaId)) {
+      validateFields(taskBodyRules(body))
+      return this.ideas.updateTask(ideaId, taskFields(body))
+    }
+
     validateFields(ideaBodyRules(body))
 
     return this.ideas.update(ideaId, {

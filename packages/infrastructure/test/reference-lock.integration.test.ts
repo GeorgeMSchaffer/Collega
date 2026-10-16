@@ -13,7 +13,7 @@
 
 import { randomUUID } from 'node:crypto'
 import { BoardService } from '@collega/application/boards'
-import type { CurrentUserContext } from '@collega/application/common'
+import { type CurrentUserContext, ValidationError } from '@collega/application/common'
 import { IdeaService } from '@collega/application/ideas'
 import { Role } from '@collega/domain/enums'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -72,9 +72,21 @@ describe.skipIf(!DATABASE_URL)(
       role: Role.User,
     }
 
-    function services(currentUser: CurrentUserContext = admin) {
+    /** `afterLaneRead` runs once a board save has read the lanes it removes, before it commits. */
+    function services(
+      currentUser: CurrentUserContext = admin,
+      afterLaneRead?: () => Promise<void>,
+    ) {
       const unitOfWork = new PrismaUnitOfWork(prisma)
       const boards = new PrismaBoardRepository(prisma, unitOfWork)
+      if (afterLaneRead) {
+        const read = boards.listLaneIdeas.bind(boards)
+        boards.listLaneIdeas = async (boardId, statusIds) => {
+          const ideas = await read(boardId, statusIds)
+          await afterLaneRead()
+          return ideas
+        }
+      }
       const ideas = new PrismaIdeaRepository(prisma, unitOfWork)
       const audit = new PrismaAuditEventWriter(prisma)
       const clock = { now: () => SAVED }
@@ -107,6 +119,7 @@ describe.skipIf(!DATABASE_URL)(
         currentUser,
         clock,
         ideas,
+        ideaService,
       )
       return { ideaService, boardService }
     }
@@ -276,6 +289,48 @@ describe.skipIf(!DATABASE_URL)(
           ...stamps,
         },
       })
+    })
+
+    it('refuses an ideaMoves save into an auto-create lane when a planned idea left the lane meanwhile, rolling it all back', async () => {
+      const child = await newBoard([{ statusId: S_OPEN }, { statusId: S_DONE, isFinal: true }])
+      const board = await newBoard([
+        { statusId: S_NEW },
+        { statusId: S_AUTO, refs: child, auto: true },
+        { statusId: S_OUT },
+      ])
+      const stays = await newIdea({ boardId: board, statusId: S_OUT, title: 'Stays' })
+      const leaves = await newIdea({ boardId: board, statusId: S_OUT, title: 'Leaves' })
+      const { boardService } = services(admin, async () => {
+        await prisma.ideas.update({ where: { id: leaves }, data: { status_id: S_NEW } })
+      })
+
+      const error = await boardService
+        .update(board, {
+          name: 'Moved meanwhile',
+          allowUserStatusUpdate: true,
+          swimlanes: [
+            { statusId: S_NEW, order: 0 },
+            { statusId: S_AUTO, order: 1, referencesBoardId: child, autoCreateTask: true },
+          ],
+          ideaMoves: [{ fromStatusId: S_OUT, toStatusId: S_AUTO }],
+        })
+        .catch((caught: unknown) => caught)
+
+      expect(error).toBeInstanceOf(ValidationError)
+      expect((error as ValidationError).failures).toEqual({
+        ideaMoves: ["'Leaves' is no longer in that lane."],
+      })
+      expect(await statusOf(stays)).toBe(S_OUT)
+      expect(await statusOf(leaves)).toBe(S_NEW)
+      expect(await prisma.ideas.count({ where: { parent_idea_id: { in: [stays, leaves] } } })).toBe(
+        0,
+      )
+      expect(await prisma.board_swimlanes.count({ where: { board_id: board } })).toBe(3)
+      expect(
+        await prisma.audit_events.count({
+          where: { entity_id: { in: [board, stays, leaves] } },
+        }),
+      ).toBe(0)
     })
 
     afterAll(async () => {

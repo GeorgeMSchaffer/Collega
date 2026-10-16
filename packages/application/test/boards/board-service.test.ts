@@ -9,6 +9,7 @@ import { Role } from '@collega/domain/enums'
 import { createStatus, type Status, softDeleteStatus } from '@collega/domain/statuses'
 import { describe, expect, it } from 'vitest'
 import { BoardService } from '../../src/boards/board-service.js'
+import type { AutoCreateTaskPort } from '../../src/boards/index.js'
 import type { CreateBoardCommand, UpdateBoardCommand } from '../../src/boards/models.js'
 import type {
   BoardRepository,
@@ -134,6 +135,7 @@ function harness(options: {
       return []
     },
     async moveIdeas() {},
+    async verifyIdeasMoved() {},
     async reassignIdeas() {},
     async listPullCandidates() {
       return { items: [], page: 1, pageSize: 20, totalCount: 0 }
@@ -178,6 +180,7 @@ function harness(options: {
       options.currentUser,
       fixedClock(),
       {} as IdeaRepository,
+      {} as AutoCreateTaskPort,
     ),
     added,
     saved,

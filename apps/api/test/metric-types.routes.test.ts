@@ -187,10 +187,9 @@ describe('Metric type request parsing', () => {
     },
   )
 
-  // KNOWN DEVIATION (a): the contract makes every PUT field required ("full replacement"), so a
-  // body with no `unit`, or a unit that is not a string or null, is a 400 keyed `unit`. The
-  // controller reads both through `optional()` as null and succeeds. Reported to the owner.
-  it.fails('update refuses a body with no unit (deviation a: accepted as null today)', async () => {
+  // The contract makes every PUT field required ("full replacement"), so a body with no `unit`, or
+  // a unit that is not a string or null, is a 400 keyed `unit`.
+  it('update refuses a body with no unit', async () => {
     const { controller } = controllerOver()
 
     const error = await thrownBy(controller.update(ORG, MT1, { name: 'N', isArchived: false }))
@@ -198,7 +197,7 @@ describe('Metric type request parsing', () => {
     expect(Object.keys(renderProblem(error, URL).body.errors as object)).toEqual(['unit'])
   })
 
-  it.fails('update refuses a unit that is not a string (deviation a: accepted as null today)', async () => {
+  it('update refuses a unit that is not a string', async () => {
     const { controller } = controllerOver()
 
     const error = await thrownBy(

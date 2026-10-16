@@ -4,6 +4,7 @@
 // and removes it afterwards.
 
 import { randomUUID } from 'node:crypto'
+import type { AutoCreateTaskPort } from '@collega/application/boards'
 import { BoardService } from '@collega/application/boards'
 import type { CurrentUserContext } from '@collega/application/common'
 import { Role } from '@collega/domain/enums'
@@ -52,6 +53,7 @@ describe.skipIf(!DATABASE_URL)('Item numbers QA, against a live database', () =>
       currentUser,
       { now: () => SAVED },
       ideas,
+      {} as AutoCreateTaskPort,
     )
     return { unitOfWork, boards, ideas, boardService }
   }
