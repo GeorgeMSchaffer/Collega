@@ -284,7 +284,7 @@ Update idea content.
   - `mentionEmails` optional string array
   - `effort` optional string: `Low`, `Medium`, or `High` — the optional Discovery-phase effort estimate (added 2026-09-11, Issues and Delivery Slice 1)
 - **Response:** the detail shape of `GET /api/v1/ideas/{ideaId}` (stated there).
-- **Updating a task (an item with a parent; decided 2026-10-16):** the same route, task fields only. The author or an in-scope Org Admin may change `title`, `description`, `assigneeUserIds` and `tagNames`, under the rules above; `title` is required. `problem`, `proposedSolutions`, `impactRationale`, `priority`, `ideaTypeId`, `businessImpactId`, `dueDate`, `effort` and `mentionEmails` are not taken: they are ignored if sent, as on `POST …/board-tasks`, are not required, and stay `null` (or `[]`) on read. Sprint and blockers keep their own routes. Read Only `403`; a direct Site Admin as for any idea update.
+- **Updating a task (an item with a parent; decided 2026-10-16):** the same route, task fields only. The author or an in-scope Org Admin may change `title`, `description`, `assigneeUserIds` and `tagNames`, under the rules above; `title` is required. `problem`, `proposedSolutions`, `impactRationale`, `priority`, `ideaTypeId`, `businessImpactId`, `dueDate`, `effort` and `mentionEmails` are not taken: they are ignored if sent, as on `POST …/board-tasks`, and are not required. The idea-only fields that are read stay `null` (or `[]`); `mentionEmails` has no read field and no mention notification is sent. Sprint and blockers keep their own routes. Read Only `403`; a direct Site Admin as for any idea update.
 - **Errors:**
   - unauthorized description changes return `403 Forbidden`.
   - unauthorized assignment changes return `403 Forbidden`.

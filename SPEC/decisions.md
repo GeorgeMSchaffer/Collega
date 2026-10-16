@@ -146,6 +146,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 **Rejected.** Auto-create on the status move only (leaves a pull or board edit bypassing the hand-off); letting a task be pulled, with the parent's lock re-checked; leaving tasks uneditable; editing idea-only fields on a task; refusing metric writes on an archived board like every other write; the detail refusing a direct Site Admin with `403`.
 
 **Consequences.**
+- `20-feature-board-pull-in.md` (rules 9 and 10, the picker) excludes tasks.
 - `contracts/ideas.md` (status move, task update, detail `metrics`), `contracts/boards.md` (`autoCreateTask`, "Pulling items", pull candidates), `contracts/metric-types.md` and rule 13 of `20-feature-boards-and-statuses.md` are amended; `20-feature-board-references.md` follows.
 - **Backend follow-up, not yet scheduled:** auto-create on pull and on `ideaMoves` (today only the status move creates the task); the `pullItemIds` refusal and the picker filter for tasks; the task branch of the idea update; the archived-board exception on the metrics write; `metrics: []` for a direct Site Admin.
 - QA slice 244's `it.fails` cases, the CSV Idea Type and Business Impact cells, are a defect to fix with that backend work, not a behaviour to keep.
