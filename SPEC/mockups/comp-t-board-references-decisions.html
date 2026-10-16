@@ -267,7 +267,7 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
 .kcard.locked{border-color:var(--warn-t)}
 .waiting{display:inline-flex;align-items:center;gap:6px;font:600 11.5px var(--body);color:var(--warn-t);background:var(--warn-tint);border-radius:4px;padding:1px 8px}
 .kcard.nodrag{cursor:not-allowed}
-.tip{align-self:flex-start;background:var(--bar);color:var(--bar-ink);border:1px solid var(--bar-line);border-radius:6px;padding:4px 9px;font-size:12px;font-weight:600;max-width:100%;overflow-wrap:anywhere}
+.tip{align-self:flex-start;background:var(--bar);color:var(--bar-ink);border:1px solid var(--line2);border-radius:6px;padding:4px 9px;font-size:12px;font-weight:600;max-width:100%;overflow-wrap:anywhere}
 .menu div[aria-disabled=true]{opacity:.55;cursor:not-allowed}
 .menu div .lnk{margin-left:auto;color:var(--pri-t);font-weight:600;font-size:12px}
 .act{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:var(--rs);overflow:hidden}
@@ -454,6 +454,13 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
           <span></span><span></span><span class="acts"><button class="btn sm pri">Add type</button></span></div>
       </div>
 
+      <div class="dlg" role="dialog" aria-labelledby="ar-t" style="max-width:460px">
+        <div class="dlg-h"><h3 id="ar-t">Archive 'Hours saved'?</h3></div>
+        <div class="dlg-b"><span>3 items keep their values; it stops counting in Outcome totals. You can restore it.</span></div>
+        <div class="dlg-f"><button class="btn">Cancel</button><button class="btn pri">Archive</button></div>
+      </div>
+      <div class="note">Shown when Archive is pressed on a type that items hold values for (here, 3 items). A type nothing uses archives at once, with no dialog.</div>
+
       <div class="notes"><h3>Notes</h3>
         <ul>
           <li>Rows are in created order. There is no drag reorder; the order is the order of the value table in every drawer.</li>
@@ -462,10 +469,6 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
           <li><b>Show archived</b> is off when the page opens and is not remembered: leave and return and it is off again. Turn it on (above) to see archived rows and Restore.</li>
           <li><b>Org Admin</b> sees the add row and the Edit, Archive and Restore actions. <b>User</b> and <b>Read Only</b> see the same list with those controls gone (try the switch above).</li>
           <li>Source: <code>contracts/metric-types.md</code>, decision "Metric types are an organization table" (2026-10-16).</li>
-        </ul></div>
-      <div class="oq"><b>Open questions</b>
-        <ul>
-          <li>Archiving a type used by ideas: no confirmation drawn, because nothing is lost. Add one anyway?</li>
         </ul></div>
     </div>
   </section>
@@ -486,11 +489,11 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
                   <div class="vt">
                     <div class="vt-row hd"><span>Metric</span><span style="text-align:right">Projected</span><span style="text-align:right">Realized</span></div>
                     <div class="vt-row"><div class="nm">Hours saved<small>unit: h</small></div>
-                      <div class="field"><span class="in num"><input aria-label="Hours saved projected" value="1,200.00"><span class="u">h</span></span></div>
+                      <div class="field"><span class="in num"><input aria-label="Hours saved projected" value="1200.00"><span class="u">h</span></span></div>
                       <div class="field"><span class="in num"><input aria-label="Hours saved realized" placeholder="Not yet"><span class="u">h</span></span></div></div>
                     <div class="vt-row"><div class="nm">Cost savings<small>unit: $</small></div>
-                      <div class="field"><span class="in num"><input aria-label="Cost savings projected" value="48,000.00"><span class="u">$</span></span></div>
-                      <div class="field"><span class="in num"><input aria-label="Cost savings realized" value="-1,250.00"><span class="u">$</span></span><span class="helper">Negatives are allowed, for example an overspend.</span></div></div>
+                      <div class="field"><span class="in num"><input aria-label="Cost savings projected" value="48000.00"><span class="u">$</span></span></div>
+                      <div class="field"><span class="in num"><input aria-label="Cost savings realized" value="-1250.00"><span class="u">$</span></span><span class="helper">Negatives are allowed, for example an overspend.</span></div></div>
                     <div class="vt-row"><div class="nm">Defects avoided<small>no unit</small></div>
                       <div class="field"><span class="in num err"><input aria-label="Defects avoided projected" aria-invalid="true" aria-describedby="e-p" value="12.345"></span><span class="errtxt" id="e-p" role="alert">Projected must have at most 2 decimal places.</span></div>
                       <div class="field"><span class="in num"><input aria-label="Defects avoided realized" placeholder="Not yet"></span></div></div>
@@ -528,8 +531,8 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
                       <div class="field"><span class="in num"><input aria-label="Hours saved projected" value="410.00"><span class="u">h</span></span></div>
                       <div class="field"><span class="in num"><input aria-label="Hours saved realized" value="388.50"><span class="u">h</span></span></div></div>
                     <div class="vt-row"><div class="nm">Cost savings<small>unit: $</small></div>
-                      <div class="field"><span class="in num"><input aria-label="Cost savings projected" value="25,000.00"><span class="u">$</span></span></div>
-                      <div class="field"><span class="in num"><input aria-label="Cost savings realized" value="22,000.00"><span class="u">$</span></span></div></div>
+                      <div class="field"><span class="in num"><input aria-label="Cost savings projected" value="25000.00"><span class="u">$</span></span></div>
+                      <div class="field"><span class="in num"><input aria-label="Cost savings realized" value="22000.00"><span class="u">$</span></span></div></div>
                     <div class="vt-foot"><button class="btn pri sm">Save values</button><span class="sp"></span><span class="note">Allowed on an archived board, by decision. The tint blocks nothing.</span></div>
                   </div>
                 </div>
@@ -543,12 +546,10 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
             <aside class="drawer static" aria-label="Idea drawer, CI-19, App Admin">
               <div class="dhead"><div><div class="eb">CI-19 &middot; CONTINUOUS IMPROVEMENT</div><h2>Cut onboarding time</h2></div><span class="sp"></span><button class="btn ghost sm">Close</button></div>
               <div class="dbody">
-                <div class="sect"><div class="sechd"><h3>Value</h3></div>
-                  <div class="banner"><span class="ic">i</span><span>Values are visible through View As.</span></div>
-                </div>
+                <div class="banner"><span class="ic">i</span><span>Values are visible through View As.</span></div>
               </div>
             </aside>
-            <div class="note">The detail returns <code>metrics: []</code> for a direct Site Admin (shown as App Admin), so the whole table is replaced by this line. View As an organization member shows the table in A.</div>
+            <div class="note">The detail returns <code>metrics: []</code> for a direct Site Admin (shown as App Admin), so the whole Value section, heading included, is replaced by this line. View As an organization member shows the table in A.</div>
           </div>
         </div>
       </div>
@@ -556,6 +557,7 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
         <ul>
           <li>Rows are the active metric types, in created order, plus any archived type that already holds a value (flagged, read only).</li>
           <li>Numbers: two decimal places, negatives allowed. The unit always follows the number ("12,500.00 $", "120 h"). The thousands separator is the browser locale's, so a German browser shows 12.500,00.</li>
+          <li>Inside a field the value is unformatted (25000.00); display formatting with separators applies outside the field, in read-only cells, the Outcome and the list.</li>
           <li>Entry: the field takes digits, one ".", and a leading "-"; typed commas are stripped as you type, so "1,200" and "1200" both end as 1200.</li>
           <li>When the idea is in a final lane (frame B, Completed) the Realized column header is tinted and reads "Realized &mdash; enter now". Frame A is in a lane that is not final, so its header is plain. Nothing is blocked either way.</li>
           <li>Source: <code>contracts/metric-types.md</code> (<code>PUT /ideas/{ideaId}/metrics</code>), decision 4 of "Board References follow-ups" (2026-10-16).</li>
@@ -649,7 +651,7 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
               <div role="menuitem">Open</div><div role="menuitem">Copy link</div><hr>
               <div class="on" role="menuitem">Move anyway&hellip; <small>Org Admin</small></div>
             </div>
-            <div class="note">Reached from the card menu, the disabled menu item in C, or the picker row in D. Never by dragging.</div>
+            <div class="note">Reached from the card menu, the separate override item in C, or the picker row in D. Never by dragging.</div>
             <div class="dlg" role="dialog" aria-labelledby="dl-t">
               <div class="dlg-h"><h3 id="dl-t">Move past 3 open tasks?</h3></div>
               <div class="dlg-b">
@@ -681,7 +683,7 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
               <div class="on" role="menuitem" aria-disabled="true">&#128274; Remove from board <small>Waiting on 3 tasks</small></div>
               <div role="menuitem"><span class="lnk">Remove anyway&hellip;</span></div>
             </div>
-            <div class="note">The Org Admin's disabled item has the override right under it. "Remove anyway&hellip;" opens the dialog in B, titled "Remove from board anyway?" with the button "Remove anyway", the same required reason and the same audit event. If a request still gets through (a race), the server answers <code>'Cut onboarding time' is waiting on 3 open tasks, so it cannot be removed from the board.</code></div>
+            <div class="note">The Org Admin's disabled item has a separate override item right under it. "Remove anyway&hellip;" opens the dialog in B, titled "Remove from board anyway?" with the button "Remove anyway", the same required reason and the same audit event. If a request still gets through (a race), the server answers <code>'Cut onboarding time' is waiting on 3 open tasks, so it cannot be removed from the board.</code></div>
           </div></div>
 
         <div class="frame"><h2><span class="fl">D</span>Pull picker: the card's row is disabled</h2>
@@ -718,7 +720,7 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
         <ul>
           <li>The lock shows only when a reference-lane card has open tasks. A card with no tasks shows "0 tasks" and moves freely.</li>
           <li>Every control is disabled up front with the same text, "Waiting on N tasks": the card (not draggable), Remove from board, and the card's row in another board's picker. The server still refuses with <code>422 parentHasOpenTasks</code> for a request that gets past them.</li>
-          <li>Only an Org Admin is offered the override (<code>forceReason</code>; anyone else sending it gets <code>403</code>), from the card menu, the disabled menu item or the picker row. Never by drag.</li>
+          <li>Only an Org Admin is offered the override (<code>forceReason</code>; anyone else sending it gets <code>403</code>), from the card menu, a separate override item next to the disabled one, or the picker row. Never by drag.</li>
           <li>The dialog's confirm button is disabled until a reason is typed, so an empty reason can never be sent and no error text is needed.</li>
           <li>"Waiting on N tasks" counts tasks not in a final lane; the progress bar is tasks done of total.</li>
           <li>Source: decisions "A reference lane locks its card until its tasks are final" and "Board References UI" (2026-10-16); <code>contracts/ideas.md</code>, <code>contracts/boards.md</code> "Pulling items".</li>

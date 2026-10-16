@@ -114,6 +114,7 @@ Update board name or selected statuses.
     - `toStatusId` not among `swimlanes`: `Ideas can only move to a lane that stays on the board.`
     - `fromStatusId` not a lane this save removes: `A move must come from a lane this save removes.`
     - the same `fromStatusId` twice: `A removed lane can move its ideas to one lane only.`
+    - a planned card no longer in its `fromStatusId` at commit, when `toStatusId` is an `autoCreateTask` lane (decided 2026-10-16): `'{title}' is no longer in that lane.` Only the first such card is named.
 - **Rules:**
   - The ideas a removal concerns are the lane's **live `Discovery` ideas** — the population `ideaCount` and `laneCounts` count. Soft-deleted ideas and promoted Issues keep their status: an Issue's ideation status is frozen at promotion for provenance (`20-feature-issues-and-delivery.md`), and a soft-deleted idea's is part of its retained record.
   - One target per removed lane, not one for the whole save, so a save that drops two lanes can send their ideas to different places; a client that wants one destination sends the same `toStatusId` for each.
