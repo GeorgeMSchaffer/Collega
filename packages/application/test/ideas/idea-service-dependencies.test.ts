@@ -8,6 +8,7 @@ import {
   BOARD_A,
   BOARD_B,
   board,
+  CREATE,
   harness,
   idea,
   STATUS_1,
@@ -191,5 +192,58 @@ describe('delete removes dependencies in both directions', () => {
     await h.service.delete('a')
 
     expect(h.edges).toEqual([{ blockedId: 'c', blockerId: 'b' }])
+  })
+})
+
+describe('create and CSV import: Effort entry rule', () => {
+  it('refuses creating an idea in a reference lane, and allows an ordinary lane', async () => {
+    const h = harness({ currentUser: orgAdmin(), boards: [PARENT_BOARD] })
+
+    expect(
+      await codeOf(h.service.create(BOARD_B, { ...CREATE, statusId: STATUS_2 })),
+    ).toBe('effortRequiredForReferenceLane')
+    expect(h.added).toHaveLength(0)
+
+    await h.service.create(BOARD_B, { ...CREATE, statusId: STATUS_1 })
+    expect(h.added).toHaveLength(1)
+  })
+
+  it('refuses the default lane when the leftmost lane references a board', async () => {
+    const leftReference = board({
+      swimlanes: [
+        { statusId: STATUS_1, displayOrder: 0, isFinal: false, referencesBoardId: BOARD_B },
+      ],
+    })
+    const h = harness({ currentUser: orgAdmin(), boards: [leftReference] })
+
+    expect(await codeOf(h.service.create(BOARD_A, CREATE))).toBe('effortRequiredForReferenceLane')
+  })
+
+  it('rejects a CSV row landing in a reference lane', async () => {
+    const leftReference = board({
+      swimlanes: [
+        { statusId: STATUS_1, displayOrder: 0, isFinal: false, referencesBoardId: BOARD_B },
+      ],
+    })
+    const h = harness({ currentUser: orgAdmin(), boards: [leftReference] })
+
+    const result = await h.service.importBoardIdeas(BOARD_A, [
+      {
+        rowNumber: 1,
+        cells: new Map(
+          Object.entries({
+            title: 'Row',
+            priority: 'Medium',
+            'idea type': 'Improvement',
+            'business impact': 'Medium',
+            status: 'New',
+          }),
+        ),
+      },
+    ])
+
+    expect(result.createdCount).toBe(0)
+    expect(result.rejectedCount).toBe(1)
+    expect(JSON.stringify(result.rows)).toContain('Effort')
   })
 })

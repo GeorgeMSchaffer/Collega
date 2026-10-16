@@ -425,8 +425,15 @@ describe('laneInUse, further cases', () => {
     await expect(update(service, 'a', lanesReferencing(null))).resolves.toBeDefined()
   })
 
-  it('allows giving a reference to an ordinary lane that holds ideas', async () => {
-    const { service } = harness([board('a'), board('b')], held)
+  it('refuses giving a reference to an ordinary lane that holds ideas', async () => {
+    const { service, saved } = harness([board('a'), board('b')], held)
+
+    expect(await codeOf(update(service, 'a', lanesReferencing('b')))).toBe('laneInUse')
+    expect(saved).toHaveLength(0)
+  })
+
+  it('allows giving a reference to an ordinary lane that holds no ideas', async () => {
+    const { service } = harness([board('a'), board('b')])
 
     await expect(update(service, 'a', lanesReferencing('b'))).resolves.toBeDefined()
   })

@@ -360,10 +360,25 @@ describe.skipIf(!DATABASE_URL)('Board lane rules against a live database', () =>
     ])
   })
 
-  it('allows giving a reference to a lane that holds ideas', async () => {
+  it('refuses giving a reference to a lane that holds ideas', async () => {
     const target = await newBoard()
     const id = await newBoard()
     await newIdea(id, S1)
+
+    expect(
+      await codeOf(
+        service().update(
+          id,
+          body([{ statusId: S1, referencesBoardId: target }, { statusId: S2 }, { statusId: S3 }]),
+        ),
+      ),
+    ).toBe('laneInUse')
+    expect((await lanesOf(id))[0]?.[2]).toBeNull()
+  })
+
+  it('allows giving a reference to a lane that holds no ideas', async () => {
+    const target = await newBoard()
+    const id = await newBoard()
 
     await service().update(
       id,

@@ -658,17 +658,19 @@ export class BoardService {
   }
 
   /**
-   * Ruling 6: a lane that references a board cannot have the reference changed or removed, nor be
-   * removed, while it holds ideas - an `ideaMoves` entry does not lift it, since the ideas there are
-   * parents of tasks on the referenced board.
+   * Ruling 6, tightened to contracts/boards.md: a lane that holds ideas cannot have
+   * `referencesBoardId` given, changed or removed, and a reference lane cannot be removed - an
+   * `ideaMoves` entry does not lift it, since the ideas there are parents of tasks on the
+   * referenced board. An ordinary lane may still be removed (with moves).
    */
   private async ensureReferenceLanesFree(existing: Board, updated: Board): Promise<void> {
     const kept = new Map(updated.swimlanes.map((lane) => [lane.statusId, lane]))
-    const changed = existing.swimlanes.filter(
-      (lane) =>
-        lane.referencesBoardId !== null &&
-        kept.get(lane.statusId)?.referencesBoardId !== lane.referencesBoardId,
-    )
+    const changed = existing.swimlanes.filter((lane) => {
+      const after = kept.get(lane.statusId)
+      return after === undefined
+        ? lane.referencesBoardId !== null
+        : after.referencesBoardId !== lane.referencesBoardId
+    })
     if (changed.length === 0) {
       return
     }
@@ -679,7 +681,7 @@ export class BoardService {
     if (inUse) {
       throw new UnprocessableError(
         'laneInUse',
-        'A lane that references a board cannot change or lose its reference while it holds ideas.',
+        'A lane that holds ideas cannot have its referenced board changed.',
       )
     }
   }

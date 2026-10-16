@@ -276,6 +276,14 @@ export class IdeaService {
       })
     }
 
+    // Effort is required to enter a reference lane and a new idea has none (Ruling 6).
+    if (board.swimlanes.find((lane) => lane.statusId === statusId)?.referencesBoardId) {
+      throw new UnprocessableError(
+        'effortRequiredForReferenceLane',
+        'Set an Effort on the idea before moving it into a lane that references a board.',
+      )
+    }
+
     return this.createIdeaRecord(board.organizationId, boardId, statusId, command)
   }
 
@@ -1497,6 +1505,10 @@ export class IdeaService {
           continue
         }
         statusId = matched
+      }
+      if (board.swimlanes.find((lane) => lane.statusId === statusId)?.referencesBoardId) {
+        reject('Effort is required to enter a lane that references a board, so a row cannot be imported into one.')
+        continue
       }
 
       let dueDate: string | null = null
