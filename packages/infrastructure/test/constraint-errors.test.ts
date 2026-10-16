@@ -20,10 +20,13 @@
 // The original version of this file matched on the constraint NAME, which never appears in a real
 // Prisma error for these indexes; this test is what would have caught that before it shipped.
 
-import { ConflictError } from '@collega/application/common'
+import { ConflictError, ValidationError } from '@collega/application/common'
 import { describe, expect, it } from 'vitest'
 import { Prisma } from '../src/generated/prisma/index.js'
-import { translateWriteError } from '../src/persistence/constraint-errors.js'
+import {
+  PULL_UNAVAILABLE_MARKER,
+  translateWriteError,
+} from '../src/persistence/constraint-errors.js'
 
 function p2002(modelName: string, target: readonly string[]): Prisma.PrismaClientKnownRequestError {
   return new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
@@ -124,6 +127,70 @@ describe('translateWriteError', () => {
 
   it('leaves a plain error untouched', () => {
     const error = new Error('boom')
+    expect(translateWriteError(error)).toBe(error)
+  })
+})
+
+describe('translateWriteError: the pull guard (reassignIdeas closing check)', () => {
+  const hex = (text: string) => Buffer.from(text, 'utf8').toString('hex')
+  // Postgres refuses CAST('pull-unavailable:<hex>' AS integer) with 22P02; Prisma reports P2010.
+  const p2010 = (message: string, sqlstate = '22P02') =>
+    new Prisma.PrismaClientKnownRequestError('Raw query failed', {
+      code: 'P2010',
+      clientVersion: '6.19.3',
+      meta: { code: sqlstate, message },
+    })
+  const castFailure = (title: string) =>
+    p2010(`invalid input syntax for type integer: "${PULL_UNAVAILABLE_MARKER}${hex(title)}"`)
+
+  it('becomes a pullItemIds validation error naming the item', () => {
+    const result = translateWriteError(castFailure('Fix the printer'))
+    expect(result).toBeInstanceOf(ValidationError)
+    expect((result as ValidationError).failures).toEqual({
+      pullItemIds: ["'Fix the printer' is no longer available."],
+    })
+  })
+
+  it('round-trips quotes, newlines and non-ASCII titles through the hex', () => {
+    const title = 'He said "no"\nline two é中'
+    const result = translateWriteError(castFailure(title)) as ValidationError
+    expect(result.failures.pullItemIds).toEqual([`'${title}' is no longer available.`])
+  })
+
+  it('reads the marker out of a longer server message', () => {
+    const result = translateWriteError(
+      p2010(
+        `ERROR: invalid input syntax for type integer: "${PULL_UNAVAILABLE_MARKER}${hex('A')}"\nCONTEXT: SQL`,
+      ),
+    ) as ValidationError
+    expect(result.failures.pullItemIds).toEqual(["'A' is no longer available."])
+  })
+
+  it.each([
+    ['another SQLSTATE', p2010(`${PULL_UNAVAILABLE_MARKER}${hex('A')}`, '23505')],
+    ['a P2010 with no marker', p2010('syntax error at or near "SELECT"')],
+    [
+      'a P2010 with no message',
+      new Prisma.PrismaClientKnownRequestError('x', {
+        code: 'P2010',
+        clientVersion: '6',
+        meta: { code: '22P02' },
+      }),
+    ],
+    [
+      'a different Prisma code',
+      new Prisma.PrismaClientKnownRequestError('x', {
+        code: 'P2025',
+        clientVersion: '6',
+        meta: { code: '22P02', message: `${PULL_UNAVAILABLE_MARKER}${hex('A')}` },
+      }),
+    ],
+  ])('leaves %s untouched', (_label, error) => {
+    expect(translateWriteError(error)).toBe(error)
+  })
+
+  it('leaves a plain Error untouched', () => {
+    const error = new Error(`${PULL_UNAVAILABLE_MARKER}${hex('A')}`)
     expect(translateWriteError(error)).toBe(error)
   })
 })
