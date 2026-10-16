@@ -2124,8 +2124,10 @@ export class IdeaService {
 
     const keyPrefixes = await this.keyPrefixesFor([idea])
     const blockedBy = (await this.blockedByOf([idea])).get(idea.id) ?? []
+    // A direct Site Admin is refused metric reads and sees values only through View As
+    // (SPEC/contracts/metric-types.md), so the detail answers `[]` rather than refusing.
     const metrics =
-      idea.parentIdeaId === null && this.metricValues
+      idea.parentIdeaId === null && this.metricValues && this.currentUser.role !== Role.SiteAdmin
         ? await this.metricValues.listByIdea(idea.id)
         : []
 
