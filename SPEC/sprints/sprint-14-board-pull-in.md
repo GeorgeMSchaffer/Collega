@@ -1,6 +1,6 @@
 # Sprint 14 — Board pull-in and ideas with no board
 
-**Status:** In progress. Slices 178, 179, 180, 182 and 183 are built and independently reviewed (2026-10-13; each approved, review fixes applied). 181 and 184, the QA slices, remain. Planned 2026-10-13; the user answered Q1–Q6 the same day (`SPEC/20-feature-board-pull-in.md`, "Answered questions") and approved the comp as drawn.
+**Status:** Complete 2026-10-16: QA slices 181 and 184 merged into `dev` (reviewer approved). Earlier: Slices 178, 179, 180, 182 and 183 are built and independently reviewed (2026-10-13; each approved, review fixes applied). 181 and 184, the QA slices, remain. Planned 2026-10-13; the user answered Q1–Q6 the same day (`SPEC/20-feature-board-pull-in.md`, "Answered questions") and approved the comp as drawn.
 
 **Goal:** creating or editing a board can pull in existing items (Discovery ideas from other boards, backlog Issues returned to Discovery, and ideas with no board), an idea may belong to no board, and Home shows an Org Admin how many ideas still need one. Authority: `SPEC/20-feature-board-pull-in.md`; `SPEC/decisions.md` 2026-10-13 ("Boards can pull in existing items, and ideas can have no board", which also records the eighth S0.2 schema amendment).
 
