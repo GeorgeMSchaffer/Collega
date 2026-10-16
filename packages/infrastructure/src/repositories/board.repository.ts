@@ -325,6 +325,8 @@ export class PrismaBoardRepository
     const conditions: Prisma.Sql[] = [
       Prisma.sql`i.organization_id = ${filter.organizationId}::uuid`,
       Prisma.sql`i.is_deleted = FALSE`,
+      // A task is never eligible: it stays on its parent's reference board.
+      Prisma.sql`i.parent_idea_id IS NULL`,
     ]
     switch (filter.source) {
       case 'unassigned':

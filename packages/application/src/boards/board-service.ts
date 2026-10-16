@@ -936,6 +936,9 @@ function pullRefusal(idea: Idea, boardId: string, role: Role, userId: string): s
   if (idea.boardId === boardId) {
     return `'${idea.title}' is already on this board.`
   }
+  if (idea.parentIdeaId !== null) {
+    return `'${idea.title}' is a task, so it cannot be pulled. Tasks stay on their parent's reference board.`
+  }
   if (idea.phase === IdeaPhase.Delivery) {
     if (idea.sprintId !== null) {
       return `'${idea.title}' is in a sprint, so it cannot be pulled. Move it back to the backlog first.`
