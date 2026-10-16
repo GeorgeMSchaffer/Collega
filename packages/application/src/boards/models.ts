@@ -10,6 +10,8 @@ export type SwimlaneInput = {
   readonly isFinal?: boolean | undefined
   /** The board whose tasks this lane hands work to; absent or `null` is none. */
   readonly referencesBoardId?: string | null | undefined
+  /** Absent is `false`. Requires `referencesBoardId`. */
+  readonly autoCreateTask?: boolean | undefined
 }
 
 export type CreateBoardCommand = {
@@ -25,6 +27,8 @@ export type CreateBoardCommand = {
   /** Ideas and backlog Issues to pull onto the new board (SPEC/20-feature-board-pull-in.md). At
    * most 100; absent or empty pulls nothing. */
   readonly pullItemIds?: readonly string[] | undefined
+  /** An Org Admin's reason for pulling items past open tasks in a reference lane. */
+  readonly forceReason?: string | null | undefined
 }
 
 export type UpdateBoardCommand = {
@@ -42,6 +46,8 @@ export type UpdateBoardCommand = {
   readonly ideaMoves?: readonly IdeaMoveInput[] | undefined
   /** As on create; applied after `ideaMoves`, against the lanes the save leaves. */
   readonly pullItemIds?: readonly string[] | undefined
+  /** As on create. */
+  readonly forceReason?: string | null | undefined
 }
 
 /** One removed lane's ideas, and the lane that stays on the board they move to. */
@@ -116,6 +122,7 @@ export type SwimlaneDetail = {
   readonly statusIsDeleted: boolean
   readonly isFinal: boolean
   readonly referencesBoardId: string | null
+  readonly autoCreateTask: boolean
 }
 
 /** Shape matches `GET /boards/{id}` detail. */

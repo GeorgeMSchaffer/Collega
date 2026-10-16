@@ -119,6 +119,13 @@ import type {
   UsersPort,
 } from './ports.js'
 import { hasSwimlaneForStatus, itemKey, leftMostStatusId } from './ports.js'
+import {
+  IDEA_MOVED_PAST_OPEN_TASKS,
+  movedPastOpenTasksAudit,
+  openTasksHoldingExit,
+  PARENT_HAS_OPEN_TASKS,
+  readForceReason,
+} from './reference-lane-lock.js'
 
 /** Mirrors Domain.Tags.Tag.NameMaxLength (B4-owned). Duplicated rather than imported: Ideas does
  * not depend on Tags' domain, only on `TagsPort` (see the report's cross-partition-duplication
@@ -361,6 +368,18 @@ export class IdeaService {
     this.ensureOrganizationScope(parent.organizationId)
     await this.ensureIdeaBoardNotArchived(parent)
 
+    return this.addBoardTask(parent, command)
+  }
+
+  /**
+   * `createBoardTask` after authorization: the reference-lane guards, then the task. Also the
+   * auto-create on entering a lane with `autoCreateTask`, where `parent` is the moved idea whose
+   * move is staged but not yet committed - the task's `saveChanges` commits both together.
+   */
+  private async addBoardTask(
+    parent: Idea,
+    command: CreateBoardTaskCommand,
+  ): Promise<CreateIdeaResult> {
     if (parent.parentIdeaId !== null) {
       throw new UnprocessableError('parentIsTask', 'A task cannot have tasks of its own.')
     }
@@ -574,9 +593,10 @@ export class IdeaService {
    * rules 5, 6 and 19). The author or an Org Admin; an Issue is a conflict; an archived board's
    * ideas may be detached by an Org Admin only. Idempotent, and silent: no notification.
    */
-  async detachFromBoard(ideaId: string): Promise<void> {
+  async detachFromBoard(ideaId: string, forceReasonInput?: string | null): Promise<void> {
     ensureNotDirectSiteAdmin(this.currentUser)
     this.requireIdeaEditRole()
+    const forceReason = readForceReason(forceReasonInput, this.requireAuthenticatedRole())
 
     let idea = await this.ideaRepository.getById(ideaId, false)
     if (!idea) {
@@ -600,6 +620,12 @@ export class IdeaService {
     if (board?.isArchived && !this.canAdministerIdeaContent(idea, null, true)) {
       throw new ConflictError('The board is archived, so only an Org Admin can remove its ideas.')
     }
+    const openTasks = await this.ensureMayLeaveReferenceLane(
+      idea,
+      board,
+      forceReason,
+      `'${idea.title}' is waiting on {n} open tasks, so it cannot be removed from its board.`,
+    )
 
     idea = detached
     // Board sprints and dependencies are same-board only; a legacy sprint is untouched.
@@ -618,6 +644,7 @@ export class IdeaService {
       now,
       { fromBoardId: previousBoardId, toBoardId: null },
     )
+    await this.auditMovedPastOpenTasks(idea, actorId, now, openTasks, forceReason)
   }
 
   async getById(ideaId: string): Promise<IdeaDetail> {
@@ -878,6 +905,44 @@ export class IdeaService {
     return this.projectDetail(idea)
   }
 
+  /**
+   * The reference-lane lock on an exit from `board` (a move, or a detach): refused with
+   * `parentHasOpenTasks` while any task is not final, unless an Org Admin gave a reason. Returns
+   * the open task count the exit passes, 0 when nothing held it. `{n}` in `refusal` is the count.
+   */
+  private async ensureMayLeaveReferenceLane(
+    idea: Idea,
+    board: BoardContext | null,
+    forceReason: string | null,
+    refusal: string,
+  ): Promise<number> {
+    const inReferenceLane =
+      board?.swimlanes.some((lane) => lane.statusId === idea.statusId && lane.referencesBoardId) ===
+      true
+    const counts = inReferenceLane
+      ? (await this.ideaRepository.countChildrenByParentIds([idea.id])).get(idea.id)
+      : undefined
+    const openTasks = openTasksHoldingExit(inReferenceLane, counts)
+    if (openTasks > 0 && forceReason === null) {
+      throw new UnprocessableError(PARENT_HAS_OPEN_TASKS, refusal.replace('{n}', String(openTasks)))
+    }
+    return openTasks
+  }
+
+  private async auditMovedPastOpenTasks(
+    idea: Idea,
+    actorId: string,
+    now: Date,
+    openTasks: number,
+    forceReason: string | null,
+  ): Promise<void> {
+    if (openTasks === 0 || forceReason === null) {
+      return
+    }
+    const { message, metadata } = movedPastOpenTasksAudit(idea.title, openTasks, forceReason)
+    await this.auditIdea(IDEA_MOVED_PAST_OPEN_TASKS, idea, actorId, message, now, metadata)
+  }
+
   /** A blocked item cannot leave its board's first lane until every blocker is final. */
   private async ensureNotBlocked(idea: Idea): Promise<void> {
     const blockers = (await this.blockedByOf([idea])).get(idea.id) ?? []
@@ -927,7 +992,7 @@ export class IdeaService {
   async changeStatus(ideaId: string, command: ChangeIdeaStatusCommand): Promise<void> {
     // Rule 25: org content is mutated through View As, not directly as a Site Admin.
     ensureNotDirectSiteAdmin(this.currentUser)
-    this.requireAuthenticatedRole()
+    const forceReason = readForceReason(command.forceReason, this.requireAuthenticatedRole())
 
     let idea = await this.ideaRepository.getById(ideaId, false)
     if (!idea) {
@@ -971,6 +1036,12 @@ export class IdeaService {
     if (idea.statusId === leftMostStatusId(board)) {
       await this.ensureNotBlocked(idea)
     }
+    const openTasks = await this.ensureMayLeaveReferenceLane(
+      idea,
+      board,
+      forceReason,
+      `'${idea.title}' is waiting on {n} open tasks, so it cannot leave its lane.`,
+    )
 
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
@@ -978,7 +1049,18 @@ export class IdeaService {
 
     idea = changeIdeaStatus(idea, command.statusId, now, actorId)
     await this.ideaRepository.update(idea)
-    await this.unitOfWork.saveChanges()
+    if (targetLane?.autoCreateTask) {
+      // The hand-off: one task on the referenced board, staged beside the move so the task's
+      // `saveChanges` commits both, and a refused or failed task leaves the move uncommitted.
+      await this.addBoardTask(idea, {
+        title: idea.title,
+        description: null,
+        assigneeUserIds: null,
+        tagNames: null,
+      })
+    } else {
+      await this.unitOfWork.saveChanges()
+    }
 
     await this.auditIdea(
       'IdeaStatusChanged',
@@ -988,6 +1070,7 @@ export class IdeaService {
       now,
       { fromStatusId: previousStatusId, toStatusId: command.statusId },
     )
+    await this.auditMovedPastOpenTasks(idea, actorId, now, openTasks, forceReason)
 
     // Notify the idea's followers of the move (SPEC/20-feature-notifications.md trigger #4), naming
     // the lane as it is called now (SPEC/20-feature-idea-following.md rule 37).
