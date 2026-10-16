@@ -59,8 +59,15 @@ export class MetricTypesController {
     @Param('metricTypeId', UuidParamPipe) metricTypeId: string,
     @Body() body: MetricTypeBody,
   ): Promise<MetricTypeItem> {
-    if (typeof body.isArchived !== 'boolean') {
-      throw new RequestValidationError({ isArchived: ['Is Archived is required.'] })
+    // A full replacement: every field is required, `unit` as text or an explicit null.
+    const unitInvalid = body.unit !== null && typeof body.unit !== 'string'
+    if (unitInvalid || typeof body.isArchived !== 'boolean') {
+      throw new RequestValidationError({
+        ...(unitInvalid ? { unit: ['Unit is required.'] } : {}),
+        ...(typeof body.isArchived !== 'boolean'
+          ? { isArchived: ['Is Archived is required.'] }
+          : {}),
+      })
     }
     return this.metricTypes.update(organizationId, metricTypeId, {
       name: optional(body.name) ?? '',
