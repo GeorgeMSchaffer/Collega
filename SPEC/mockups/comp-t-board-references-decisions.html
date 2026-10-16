@@ -4,9 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Collega Board References, decisions of 2026-10-16 (comp T)</title>
-<!-- Comp T: throwaway review comp. Draws the three 2026-10-16 decisions (metric types; reference-lane lock; Board References follow-ups)
-     on the comp-s screens. Theme tokens are comp R's five themes (Graphite by default); the rules are comp-s's, with additions at the end.
-     Not a reference until approved. Copy marked COPY PROPOSED is not in a contract. -->
+<!-- Comp T: throwaway review comp. Draws the 2026-10-16 decisions (metric types; reference-lane lock; Board References follow-ups; and the
+     owner's UI decisions of the same day, SPEC/decisions.md "Board References UI") on the comp-s screens. Theme tokens are comp R's five themes
+     (Graphite by default); the rules are comp-s's, with additions at the end. Not a reference until approved. Copy marked COPY PROPOSED is
+     not yet in a contract or decision; open questions are the ones the owner has not answered. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&family=Figtree:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Lexend:wght@500;600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=Schibsted+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
@@ -265,8 +266,28 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
 /* lock, toast, dialog, menu */
 .kcard.locked{border-color:var(--warn-t)}
 .waiting{display:inline-flex;align-items:center;gap:6px;font:600 11.5px var(--body);color:var(--warn-t);background:var(--warn-tint);border-radius:4px;padding:1px 8px}
-.kcard.ghost{border:1.5px dashed var(--hot);opacity:.9}
-.lane.deny{border:1.5px dashed var(--hot);background:var(--hot-tint)}
+.kcard.nodrag{cursor:not-allowed}
+.tip{align-self:flex-start;background:var(--bar);color:var(--bar-ink);border:1px solid var(--bar-line);border-radius:6px;padding:4px 9px;font-size:12px;font-weight:600;max-width:100%;overflow-wrap:anywhere}
+.menu div[aria-disabled=true]{opacity:.55;cursor:not-allowed}
+.menu div .lnk{margin-left:auto;color:var(--pri-t);font-weight:600;font-size:12px}
+.act{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:var(--rs);overflow:hidden}
+.act li{display:flex;gap:10px;padding:10px 12px;font-size:13px;align-items:flex-start;border-top:1px solid var(--line);min-width:0}
+.act li:first-child{border-top:0}
+.act li>div{min-width:0;overflow-wrap:anywhere}
+.act .av{margin-left:0;flex:none}
+.act small{display:block;color:var(--muted);font:500 11px var(--mono);margin-top:2px}
+.vt-row.hd .rz{background:var(--pri-tint);color:var(--pri-t);border-radius:4px;padding:3px 8px;text-align:right}
+.pk li.dis{opacity:.85}
+.pk li.dis .cb{border-style:dashed;opacity:.6}
+.pk li .go{margin-top:6px}
+.meter.over::after{content:"";position:absolute;right:0;top:0;bottom:0;width:4px;background:var(--hot)}
+.mcard .big.neg{color:var(--hot-t)}
+.brk{border-top:1px solid var(--line);margin-top:4px;padding-top:6px;display:flex;flex-direction:column}
+.brk-row{display:grid;grid-template-columns:minmax(0,1fr) 92px 92px;gap:8px;font-size:12px;padding:3px 0;align-items:baseline}
+.brk-row.hd{font:600 11px var(--body);color:var(--muted)}
+.brk-row .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.brk-row .id{font:500 11px var(--mono);color:var(--muted);margin-right:4px}
+.brk-row .ti{overflow-wrap:anywhere}
 .toast{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--hot);border-left-width:4px;border-radius:var(--rs);padding:10px 12px;font-size:13px;box-shadow:0 10px 28px rgb(0 0 0/.3)}
 .toast b{display:block}
 .dlg{border:1px solid var(--line2);border-radius:var(--r);background:var(--card);box-shadow:0 18px 44px rgb(0 0 0/.4);overflow:hidden}
@@ -362,12 +383,12 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
   <summary>Screen index: what each screen shows and which decision it draws</summary>
   <ol>
     <li><button onclick="go(1)"><b>1 &middot; Settings, Metric types</b><span>Org Admin list, add, edit, archive, restore, includeArchived. Read-only for User and Read Only.</span></button></li>
-    <li><button onclick="go(2)"><b>2 &middot; Idea drawer, Value</b><span>Projected vs realized, whole-set Save, archived type, validation, archived board.</span></button></li>
-    <li><button onclick="go(3)"><b>3 &middot; Task drawer</b><span>Task fields only, sprint and blockers chips, parent link. No Value section.</span></button></li>
-    <li><button onclick="go(4)"><b>4 &middot; Reference-lane lock</b><span>Waiting on 3 tasks, refused move, Move anyway, detach, pull refusal, completion prompt.</span></button></li>
-    <li><button onclick="go(5)"><b>5 &middot; Statuses, lane row</b><span>Reference selector plus Auto-create one task on entry.</span></button></li>
-    <li><button onclick="go(6)"><b>6 &middot; Pull picker</b><span>Tasks are never listed; one line says why.</span></button></li>
-    <li><button onclick="go(7)"><b>7 &middot; Outcome page</b><span>metricTotals, done counts, sprint span, State chip, empty state.</span></button></li>
+    <li><button onclick="go(2)"><b>2 &middot; Idea drawer, Value</b><span>Unit after the number, whole-set Save, Realized tint in a final lane, archived board, App Admin hint.</span></button></li>
+    <li><button onclick="go(3)"><b>3 &middot; Task drawer</b><span>Task fields, status select, sprint and blockers chips, parent link. No Value section.</span></button></li>
+    <li><button onclick="go(4)"><b>4 &middot; Reference-lane lock</b><span>Card cannot be dragged, disabled Remove and picker row, Org Admin Move anyway, reason dialog, activity entry.</span></button></li>
+    <li><button onclick="go(5)"><b>5 &middot; Statuses, lane row</b><span>Reference selector plus Auto-create one task on entry; auto-off note when the reference is removed.</span></button></li>
+    <li><button onclick="go(6)"><b>6 &middot; Pull picker</b><span>Tasks are never listed; a hidden-tasks line shows only when a search would have matched them.</span></button></li>
+    <li><button onclick="go(7)"><b>7 &middot; Outcome page</b><span>metricTotals meters (over, negative, not yet), per-idea breakdown, done counts, State chip, empty state.</span></button></li>
   </ol>
 </details>
 
@@ -400,8 +421,8 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
       <div class="banner adm-hide" id="mt-ro" style="display:none"><span class="ic">i</span><span>You can see the metric types but only an Org Admin can add or change them.</span></div>
 
       <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
-        <button class="sw" id="inc" role="switch" aria-checked="true" aria-label="Show archived types"><i></i><span>Show archived</span></button>
-        <span class="urlhint" id="inc-url">GET /metric-types?includeArchived=true</span>
+        <button class="sw" id="inc" role="switch" aria-checked="false" aria-label="Show archived types"><i></i><span>Show archived</span></button>
+        <span class="urlhint" id="inc-url">GET /metric-types</span>
       </div>
 
       <div class="mt" role="table" aria-label="Metric types">
@@ -415,16 +436,16 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
           <span class="field"><label class="lbl2" for="e-unit" style="margin:0 0 3px">Unit</label><span class="in"><input id="e-unit" value="USD"></span></span>
           <span><span class="chip ok"><span class="dot" style="background:var(--ok)"></span>Active</span></span><span class="mono-s">Oct 2, 2026</span>
           <span class="acts adm"><button class="btn sm pri">Save</button><button class="btn sm ghost">Cancel</button></span>
-          <span class="mt-sub banner warn" style="margin-top:2px"><span class="ic">!</span><span>Changing the unit from <code>$</code> to <code>USD</code> does not convert any stored values. A saved 48,000.00 stays 48,000.00, now shown as USD. This is shown once on edit, before Save. <span class="prop">COPY PROPOSED</span></span></span></div>
+          <span class="mt-sub banner warn" role="status" style="margin-top:2px"><span class="ic">!</span><span><b>Existing values are not converted.</b> Changing the unit from <code>$</code> to <code>USD</code> leaves a saved 48,000.00 as 48,000.00, now shown as 48,000.00 USD. Shown inline while the unit is being edited, before Save.</span></span></div>
 
         <div class="mt-row" role="row"><span class="ix mono-s">3</span><span class="nm">Defects avoided</span><span class="mono-s">No unit</span><span><span class="chip ok"><span class="dot" style="background:var(--ok)"></span>Active</span></span><span class="mono-s">Oct 9, 2026</span>
           <span class="acts adm"><button class="btn sm">Edit</button><button class="btn sm ghost">Archive</button></span></div>
 
-        <div class="mt-row arch" role="row" data-arch="1"><span class="ix mono-s">4</span><span class="nm">Cost savings</span><span class="mono">&euro;</span><span><span class="chip mute"><span class="dot" style="background:var(--muted)"></span>Archived</span></span><span class="mono-s">Oct 3, 2026</span>
+        <div class="mt-row arch" role="row" data-arch="1" style="display:none"><span class="ix mono-s">4</span><span class="nm">Cost savings</span><span class="mono">&euro;</span><span><span class="chip mute"><span class="dot" style="background:var(--muted)"></span>Archived</span></span><span class="mono-s">Oct 3, 2026</span>
           <span class="acts adm"><button class="btn sm">Edit</button><button class="btn sm ghost">Restore</button></span>
           <span class="mt-sub note">Archived. Its values stay on ideas, hidden from value entry and from Outcome totals until restored. The name repeats an active type, which is allowed.</span></div>
 
-        <div class="mt-row arch" role="row" data-arch="1"><span class="ix mono-s">5</span><span class="nm">Cycle time</span><span class="mono">days</span><span><span class="chip mute"><span class="dot" style="background:var(--muted)"></span>Archived</span></span><span class="mono-s">Oct 6, 2026</span>
+        <div class="mt-row arch" role="row" data-arch="1" style="display:none"><span class="ix mono-s">5</span><span class="nm">Cycle time</span><span class="mono">days</span><span><span class="chip mute"><span class="dot" style="background:var(--muted)"></span>Archived</span></span><span class="mono-s">Oct 6, 2026</span>
           <span class="acts adm"><button class="btn sm">Edit</button><button class="btn sm ghost">Restore</button></span></div>
 
         <div class="mt-row mt-add adm" role="row"><span class="ix mono-s">+</span>
@@ -437,14 +458,13 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
         <ul>
           <li>Rows are in created order. There is no drag reorder; the order is the order of the value table in every drawer.</li>
           <li>There is no delete. Archive hides a type and keeps its values; Restore brings both back. Names may repeat.</li>
-          <li>A unit change does not convert values. The unit is free text shown beside the number.</li>
+          <li>A unit change does not convert values; the inline warning on edit says so. The unit is free text shown after the number ("12,500.00 $", "120 h").</li>
+          <li><b>Show archived</b> is off when the page opens and is not remembered: leave and return and it is off again. Turn it on (above) to see archived rows and Restore.</li>
           <li><b>Org Admin</b> sees the add row and the Edit, Archive and Restore actions. <b>User</b> and <b>Read Only</b> see the same list with those controls gone (try the switch above).</li>
           <li>Source: <code>contracts/metric-types.md</code>, decision "Metric types are an organization table" (2026-10-16).</li>
         </ul></div>
       <div class="oq"><b>Open questions</b>
         <ul>
-          <li>The warning about unit changes: shown inline while editing (drawn here) or only in help text? The contract says only "a unit change does not convert values".</li>
-          <li>Show archived: default off per the route. Drawn on so Restore is visible; should the choice be remembered per browser?</li>
           <li>Archiving a type used by ideas: no confirmation drawn, because nothing is lost. Add one anyway?</li>
         </ul></div>
     </div>
@@ -503,14 +523,14 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
                 <div class="field"><span class="lbl2">Description</span><span class="in ro ta">Move all depot timesheets to the scanner app and stop printing the weekly packs.</span></div>
                 <div class="sect"><div class="sechd"><h3>Value</h3><span class="chip pri">Open for edits</span></div>
                   <div class="vt">
-                    <div class="vt-row hd"><span>Metric</span><span style="text-align:right">Projected</span><span style="text-align:right;color:var(--pri-t)">Realized &middot; enter now</span></div>
+                    <div class="vt-row hd"><span>Metric</span><span style="text-align:right">Projected</span><span class="rz">Realized &mdash; enter now</span></div>
                     <div class="vt-row"><div class="nm">Hours saved<small>unit: h</small></div>
                       <div class="field"><span class="in num"><input aria-label="Hours saved projected" value="410.00"><span class="u">h</span></span></div>
                       <div class="field"><span class="in num"><input aria-label="Hours saved realized" value="388.50"><span class="u">h</span></span></div></div>
                     <div class="vt-row"><div class="nm">Cost savings<small>unit: $</small></div>
                       <div class="field"><span class="in num"><input aria-label="Cost savings projected" value="25,000.00"><span class="u">$</span></span></div>
                       <div class="field"><span class="in num"><input aria-label="Cost savings realized" value="22,000.00"><span class="u">$</span></span></div></div>
-                    <div class="vt-foot"><button class="btn pri sm">Save values</button><span class="sp"></span><span class="note">Allowed on an archived board, by decision.</span></div>
+                    <div class="vt-foot"><button class="btn pri sm">Save values</button><span class="sp"></span><span class="note">Allowed on an archived board, by decision. The tint blocks nothing.</span></div>
                   </div>
                 </div>
               </div>
@@ -518,20 +538,31 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
             </aside>
           </div>
         </div>
+        <div class="frame"><h2><span class="fl">C</span>Direct App Admin, no View As: Value is replaced</h2>
+          <div class="fb">
+            <aside class="drawer static" aria-label="Idea drawer, CI-19, App Admin">
+              <div class="dhead"><div><div class="eb">CI-19 &middot; CONTINUOUS IMPROVEMENT</div><h2>Cut onboarding time</h2></div><span class="sp"></span><button class="btn ghost sm">Close</button></div>
+              <div class="dbody">
+                <div class="sect"><div class="sechd"><h3>Value</h3></div>
+                  <div class="banner"><span class="ic">i</span><span>Values are visible through View As.</span></div>
+                </div>
+              </div>
+            </aside>
+            <div class="note">The detail returns <code>metrics: []</code> for a direct Site Admin (shown as App Admin), so the whole table is replaced by this line. View As an organization member shows the table in A.</div>
+          </div>
+        </div>
       </div>
       <div class="notes"><h3>Notes</h3>
         <ul>
           <li>Rows are the active metric types, in created order, plus any archived type that already holds a value (flagged, read only).</li>
-          <li>Numbers: two decimal places, negatives allowed, the unit sits beside the number as muted text.</li>
+          <li>Numbers: two decimal places, negatives allowed. The unit always follows the number ("12,500.00 $", "120 h"). The thousands separator is the browser locale's, so a German browser shows 12.500,00.</li>
+          <li>Entry: the field takes digits, one ".", and a leading "-"; typed commas are stripped as you type, so "1,200" and "1200" both end as 1200.</li>
+          <li>When the idea is in a final lane (frame B, Completed) the Realized column header is tinted and reads "Realized &mdash; enter now". Frame A is in a lane that is not final, so its header is plain. Nothing is blocked either way.</li>
           <li>Source: <code>contracts/metric-types.md</code> (<code>PUT /ideas/{ideaId}/metrics</code>), decision 4 of "Board References follow-ups" (2026-10-16).</li>
         </ul></div>
       <div class="oq"><b>Open questions</b>
         <ul>
-          <li>"The UI emphasises realized once the item is in a final lane" is not specified further. Drawn as a tinted, labelled column header on B; is that the intended emphasis?</li>
-          <li>Where the unit goes for currency: after the number (drawn, one rule for free text) or before it for symbols like <code>$</code>?</li>
-          <li>Number entry: thousands separators are drawn on display and in the field. Accept both typed forms (<code>1200</code>, <code>1,200</code>)?</li>
           <li>On an archived board, should the unlocked Value be called out (drawn: a chip) or just be quietly editable?</li>
-          <li>A direct Site Admin gets <code>metrics: []</code> in the detail: what does the Value section show them? Not drawn; Site Admins work through View As.</li>
         </ul></div>
     </div>
   </section>
@@ -545,7 +576,8 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
         <aside class="drawer static" aria-label="Task drawer, IMPL-48">
           <div class="dhead"><div><div class="eb">IMPL-48 &middot; IMPLEMENTATION</div><h2>Train regional managers</h2></div><span class="sp"></span><button class="btn ghost sm">Close</button></div>
           <div class="dbody">
-            <div class="chiprow"><span class="plink" title="Open the parent idea">&#8627; CI-19 &middot; Cut onboarding time</span><span class="chip pri"><span class="dot" style="background:var(--pri)"></span>In Progress</span></div>
+            <div class="chiprow"><span class="plink" title="Open the parent idea">&#8627; CI-19 &middot; Cut onboarding time</span></div>
+            <div class="field"><span class="lbl2" id="t-st-l">Status</span><span class="sel" role="combobox" aria-labelledby="t-st-l" aria-expanded="false"><span class="chip pri"><span class="dot" style="background:var(--pri)"></span>In Progress</span><span>&#9662;</span></span><span class="helper">The same status select as an idea. Dragging on the board still works.</span></div>
             <div class="field"><label class="lbl2" for="t-title">Title</label><span class="in"><input id="t-title" value="Train regional managers"></span></div>
             <div class="field"><label class="lbl2" for="t-desc">Description</label><span class="in ta"><textarea id="t-desc" rows="3">Two half-day sessions per region using the new SOP and the updated LMS courses.</textarea></span></div>
             <div class="field"><span class="lbl2">Assignees</span><div class="tagrow"><span class="avs"><span class="av a2">LE</span><span class="av a1">DK</span></span><span style="font-size:13px">Lee Evans, Dana Kim</span><button class="btn sm ghost">+ Assign</button></div></div>
@@ -565,21 +597,17 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
           <div class="notes"><h3>Notes</h3>
             <ul>
               <li>Editable through <code>PUT /ideas/{ideaId}</code>: title, description, assignees, tags. Title is required.</li>
-              <li>Status moves with the board; sprint and blockers use their own routes and save immediately, which is why they sit under a plain label rather than inside the form.</li>
+              <li>Status changes in the drawer (the select) as well as by dragging. It honours the board's <code>allowUserStatusUpdate</code> exactly as an idea does: where a User may not change status, the select is read only. Sprint and blockers use their own routes and save immediately, which is why they sit under a plain label rather than inside the form.</li>
+              <li>The task has its own key (IMPL-48), from the board's key prefix.</li>
               <li>The parent chip shows the key (CI-19) and opens the parent. It matches the <code>&#8627;</code> chip on the card.</li>
               <li>There is no Value section, so <code>422 taskCannotCarryMetrics</code> cannot be reached from the UI.</li>
-              <li>Not the author or an Org Admin: the same drawer with every field read only (below). Read Only never edits.</li>
+              <li>Not the author or an Org Admin: the same drawer with every field, status included, read only (below). Read Only never edits.</li>
             </ul></div>
           <div class="frame"><h2><span class="fl">R</span>Same drawer, someone who may not edit</h2>
             <div class="fb">
+              <div class="field"><span class="lbl2">Status</span><span class="in ro">In Progress</span></div>
               <div class="field"><span class="lbl2">Title</span><span class="in ro">Train regional managers</span></div>
               <div class="note">Fields read only. Sprint and blockers follow the existing sprint and dependency rules.</div></div></div>
-          <div class="oq"><b>Open questions</b>
-            <ul>
-              <li>A non-author User on a task: confirm read only, as for ideas they did not write (drawn above).</li>
-              <li>The task's own key (IMPL-48) is drawn; confirm child-board cards use the board's key prefix.</li>
-              <li>Status change inside the drawer (drawn as a chip) or only by dragging on the board?</li>
-            </ul></div>
         </div>
       </div>
     </div>
@@ -589,32 +617,39 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
   <section id="v4" class="hide" data-nav="nv-board" aria-labelledby="h1-4">
     <div class="topbar"><span class="crumb">Boards / <b>Continuous Improvement</b></span></div>
     <div class="work">
-      <div class="pghead"><div><h1 id="h1-4">Reference-lane lock</h1><p>A card in a reference lane stays until its tasks are final. Every way out is covered: move, remove from board, pull.</p></div></div>
+      <div class="pghead"><div><h1 id="h1-4">Reference-lane lock</h1><p>A card in a reference lane stays until its tasks are final. It cannot be dragged, removed from the board or pulled. An Org Admin can override from a menu or a picker row, never by drag.</p></div></div>
 
       <div class="lanes" aria-label="Continuous Improvement board">
         <div class="lane"><div class="lanehd"><span>Pending</span><small>4</small></div></div>
         <div class="lane"><div class="lanehd"><span>Scoping</span><small>3</small></div></div>
         <div class="lane"><div class="lanehd"><span>Approved</span><small>2</small></div></div>
         <div class="lane" style="min-height:240px"><div class="lanehd"><span>Implementation</span> <small>3</small></div>
-          <div class="kcard locked selected"><h4>Cut onboarding time</h4>
+          <div class="kcard locked selected nodrag" aria-describedby="tip-lock"><h4>Cut onboarding time</h4>
             <div class="prog"><i style="width:25%;background:var(--ok)"></i></div>
             <span class="waiting">&#128274; Waiting on 3 tasks</span>
             <div class="krow"><span class="kmeta">CI-19 &middot; 1 of 4 tasks</span><span class="avs"><span class="av a1">DK</span></span></div></div>
+          <div class="tip" id="tip-lock" role="tooltip">Waiting on 3 tasks</div>
           <div class="kcard"><h4>Buddy program</h4><div class="prog"><i style="width:100%;background:var(--ok)"></i></div><div class="krow"><span class="kmeta">CI-21 &middot; 5 of 5 tasks</span><span class="avs"><span class="av a3">SM</span></span></div></div></div>
-        <div class="lane deny" style="min-height:240px"><div class="lanehd"><span>Completed</span><small>9</small></div>
-          <div class="kcard ghost"><h4>Cut onboarding time</h4><span class="kmeta">Not allowed here yet</span></div></div>
+        <div class="lane" style="min-height:240px"><div class="lanehd"><span>Completed</span><small>9</small></div></div>
       </div>
+      <div class="note">Pressing the locked card shows the tooltip and nothing lifts. No lane highlights as a drop target and a drop on another lane is not accepted, so there is no snap back.</div>
 
       <div class="stage">
-        <div class="frame"><h2><span class="fl">A</span>Refused move, as a User</h2>
+        <div class="frame"><h2><span class="fl">A</span>A User: what they see</h2>
           <div class="fb">
-            <div class="toast" role="alert"><span style="font-weight:700;color:var(--hot-t)">&#9888;</span><div><b>Can't move CI-19</b>'Cut onboarding time' is waiting on 3 open tasks, so it cannot be moved. <span class="prop">COPY PROPOSED</span></div></div>
-            <div class="note">The card snaps back to Implementation. The toast reuses the sentence the contract gives for a pull, changed to "moved". The same refusal answers a status change made in the drawer.</div>
-            <div class="seg" style="align-self:flex-start"><span class="on">User</span><span>Org Admin sees A + B</span></div>
+            <div class="tip" role="tooltip">Waiting on 3 tasks</div>
+            <div class="note">The tooltip is on the card (above) and on every disabled control below. For a status change made in the drawer, the server's refusal appears as a toast:</div>
+            <div class="toast" role="alert"><span style="font-weight:700;color:var(--hot-t)">&#9888;</span><div><b>Can't move CI-19</b>'Cut onboarding time' is waiting on 3 open tasks, so it cannot be moved.</div></div>
+            <div class="note">The select snaps back to Implementation. The same toast text answers a request that slips past the up-front block.</div>
           </div></div>
 
         <div class="frame"><h2><span class="fl">B</span>Org Admin: Move anyway</h2>
           <div class="fb">
+            <div class="menu" role="menu" aria-label="Card actions, CI-19, Org Admin">
+              <div role="menuitem">Open</div><div role="menuitem">Copy link</div><hr>
+              <div class="on" role="menuitem">Move anyway&hellip; <small>Org Admin</small></div>
+            </div>
+            <div class="note">Reached from the card menu, the disabled menu item in C, or the picker row in D. Never by dragging.</div>
             <div class="dlg" role="dialog" aria-labelledby="dl-t">
               <div class="dlg-h"><h3 id="dl-t">Move past 3 open tasks?</h3></div>
               <div class="dlg-b">
@@ -625,55 +660,68 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
                   <li><span>Update LMS courses</span><span class="st a"><span class="dot" style="background:var(--muted)"></span>Pending</span></li>
                 </ul>
                 <div class="field"><label class="lbl2" for="reason">Reason (required)</label>
-                  <span class="in ta" id="reason-w"><textarea id="reason" rows="2" placeholder="Why is this idea moving before its tasks are done?" aria-required="true" aria-describedby="reason-e"></textarea></span>
-                  <span class="errtxt" id="reason-e" hidden>A reason is required to move past open tasks. <span class="prop">COPY PROPOSED</span></span></div>
+                  <span class="in ta"><textarea id="reason" rows="2" placeholder="Why is this idea moving before its tasks are done?" aria-required="true"></textarea></span>
+                  <span class="helper">Move anyway stays disabled until a reason is typed.</span></div>
                 <div class="note">Recorded in the audit log as <code>IdeaMovedPastOpenTasks</code> with your reason and the open task count. The tasks are not changed.</div>
               </div>
               <div class="dlg-f"><button class="btn">Cancel</button><button class="btn dng" id="go-anyway" disabled>Move anyway</button></div>
             </div>
           </div></div>
 
-        <div class="frame"><h2><span class="fl">C</span>Remove from board</h2>
+        <div class="frame"><h2><span class="fl">C</span>Remove from board is disabled</h2>
           <div class="fb">
-            <div class="menu" role="menu" aria-label="Row actions, CI-19">
+            <div class="lbl">User</div>
+            <div class="menu" role="menu" aria-label="Row actions, CI-19, User">
               <div role="menuitem">Open</div><div role="menuitem">Copy link</div><hr>
-              <div class="on" role="menuitem">&#128274; Remove from board <small>Waiting on 3 tasks</small></div>
+              <div class="on" role="menuitem" aria-disabled="true" title="Waiting on 3 tasks">&#128274; Remove from board <small>Waiting on 3 tasks</small></div>
             </div>
-            <div class="toast" role="alert"><span style="font-weight:700;color:var(--hot-t)">&#9888;</span><div><b>Can't remove CI-19</b>'Cut onboarding time' is waiting on 3 open tasks, so it cannot be removed from the board. <span class="prop">COPY PROPOSED</span></div></div>
-            <div class="note">An Org Admin gets the dialog in B with the title "Remove from board anyway?" and the button "Remove anyway". Same reason field, same audit event.</div>
+            <div class="lbl">Org Admin</div>
+            <div class="menu" role="menu" aria-label="Row actions, CI-19, Org Admin">
+              <div role="menuitem">Open</div><div role="menuitem">Copy link</div><hr>
+              <div class="on" role="menuitem" aria-disabled="true">&#128274; Remove from board <small>Waiting on 3 tasks</small></div>
+              <div role="menuitem"><span class="lnk">Remove anyway&hellip;</span></div>
+            </div>
+            <div class="note">The Org Admin's disabled item has the override right under it. "Remove anyway&hellip;" opens the dialog in B, titled "Remove from board anyway?" with the button "Remove anyway", the same required reason and the same audit event. If a request still gets through (a race), the server answers <code>'Cut onboarding time' is waiting on 3 open tasks, so it cannot be removed from the board.</code></div>
           </div></div>
 
-        <div class="frame"><h2><span class="fl">D</span>Pulled onto another board</h2>
+        <div class="frame"><h2><span class="fl">D</span>Pull picker: the card's row is disabled</h2>
           <div class="fb">
-            <div class="banner hot" role="alert"><span class="ic">!</span><span><b>Nothing was saved.</b> 1 item in "Add existing items" could not be pulled.<br>'Cut onboarding time' is waiting on 3 open tasks, so it cannot be pulled.</span></div>
+            <div class="lbl">User</div>
             <ul class="pk">
-              <li><span class="cb on">&#10003;</span><span><b>Cut onboarding time</b><span class="meta"><span>by Dana Kim</span><span class="chip mute">Continuous Improvement</span><span class="waiting">&#128274; Waiting on 3 tasks</span></span></span></li>
+              <li class="dis" aria-disabled="true"><span class="cb"></span><span><b>Cut onboarding time</b><span class="meta"><span>by Dana Kim</span><span class="chip mute">Continuous Improvement</span><span class="waiting">&#128274; Waiting on 3 tasks</span></span></span></li>
             </ul>
-            <div class="field"><label class="lbl2" for="pull-reason">Org Admin only: reason for pulling it anyway</label><span class="in"><input id="pull-reason" placeholder="Required to override"></span></div>
-            <div class="note">The sentence is the contract's own. Without a reason the save is refused; with one it is audited as <code>IdeaMovedPastOpenTasks</code>.</div>
+            <div class="lbl">Org Admin</div>
+            <ul class="pk">
+              <li class="dis" aria-disabled="true"><span class="cb"></span><span><b>Cut onboarding time</b><span class="meta"><span>by Dana Kim</span><span class="chip mute">Continuous Improvement</span><span class="waiting">&#128274; Waiting on 3 tasks</span></span><button class="btn sm go">Pull anyway&hellip;</button></span></li>
+            </ul>
+            <div class="note">The row cannot be ticked. "Pull anyway&hellip;" opens the override dialog with the required reason. A stale request that names the card is still refused with <code>'Cut onboarding time' is waiting on 3 open tasks, so it cannot be pulled.</code>, and an Org Admin may override with <code>forceReason</code>.</div>
           </div></div>
 
-        <div class="frame" style="grid-column:1/-1"><h2><span class="fl">E</span>All tasks complete: the completion prompt</h2>
+        <div class="frame"><h2><span class="fl">E</span>All tasks complete: the completion prompt</h2>
           <div class="fb">
             <div class="suggest"><span class="mono" style="color:var(--suggest)">&#10022;</span><div><b>All 4 tasks are complete.</b> Move to Completed?</div><span class="sp"></span><button class="btn sm pri">Move</button><button class="btn sm ghost">Not yet</button></div>
             <div class="kcard" style="max-width:320px"><h4>Cut onboarding time</h4><div class="prog"><i style="width:100%;background:var(--ok)"></i></div><div class="krow"><span class="kmeta">CI-19 &middot; 4 of 4 tasks</span><span class="avs"><span class="av a1">DK</span></span></div></div>
             <div class="note">The lock is gone once the last task is final, but nothing moves by itself: a person confirms. The prompt sits at the top of the drawer, as in the earlier comp.</div>
+          </div></div>
+
+        <div class="frame"><h2><span class="fl">F</span>The activity entry for an override</h2>
+          <div class="fb">
+            <ul class="act" aria-label="Activity, CI-19">
+              <li><span class="av a1">DK</span><div><b>Dana Kim</b> Moved past 3 open tasks &mdash; Client signed off; the remaining tasks are post-launch cleanup.<small>Oct 16, 2026 &middot; 14:05</small></div></li>
+              <li><span class="av a3">SM</span><div><b>Sam Mora</b> moved this to Implementation.<small>Oct 14, 2026 &middot; 09:12</small></div></li>
+            </ul>
+            <div class="note">The reason is shown verbatim after "Moved past N open tasks &mdash;", with who did it and when.</div>
           </div></div>
       </div>
 
       <div class="notes"><h3>Notes</h3>
         <ul>
           <li>The lock shows only when a reference-lane card has open tasks. A card with no tasks shows "0 tasks" and moves freely.</li>
-          <li>The refusal is <code>422 parentHasOpenTasks</code>. An Org Admin repeats the request with <code>forceReason</code>; anyone else sending it gets <code>403</code>, so only Org Admins are ever offered the dialog.</li>
+          <li>Every control is disabled up front with the same text, "Waiting on N tasks": the card (not draggable), Remove from board, and the card's row in another board's picker. The server still refuses with <code>422 parentHasOpenTasks</code> for a request that gets past them.</li>
+          <li>Only an Org Admin is offered the override (<code>forceReason</code>; anyone else sending it gets <code>403</code>), from the card menu, the disabled menu item or the picker row. Never by drag.</li>
+          <li>The dialog's confirm button is disabled until a reason is typed, so an empty reason can never be sent and no error text is needed.</li>
           <li>"Waiting on N tasks" counts tasks not in a final lane; the progress bar is tasks done of total.</li>
-          <li>Source: decision "A reference lane locks its card until its tasks are final" (2026-10-16); <code>contracts/ideas.md</code>, <code>contracts/boards.md</code> "Pulling items".</li>
-        </ul></div>
-      <div class="oq"><b>Open questions</b>
-        <ul>
-          <li>The move and detach refusal sentences are not in the contracts (only the pull sentence is). Both are marked proposed.</li>
-          <li>Is "Remove from board" disabled up front, or enabled and refused when used (drawn)? The same question for a pull candidate in a locked lane, drawn as refused at save, matching the existing pull refusal.</li>
-          <li>Dialog empty-reason message and whether the audit note shows verbatim (drawn) are not specified.</li>
-          <li>A drag the server will refuse: block it up front (the lane marked not allowed) or let it drop and snap back? Drawn as both cues for review.</li>
+          <li>Source: decisions "A reference lane locks its card until its tasks are final" and "Board References UI" (2026-10-16); <code>contracts/ideas.md</code>, <code>contracts/boards.md</code> "Pulling items".</li>
         </ul></div>
     </div>
   </section>
@@ -698,6 +746,7 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
         <div style="padding:0 16px 14px 50px;background:var(--rowh);display:flex;flex-direction:column;gap:4px">
           <button class="sw" id="auto" role="switch" aria-checked="true" aria-describedby="h-on"><i></i><span>Auto-create one task on entry</span></button>
           <span class="helper" id="h-on">A card entering this lane gets one task named after it, in the first lane of <b>Implementation board</b> (Pending). The card then waits on it. <span class="prop">COPY PROPOSED</span></span>
+          <span class="helper">Cards already in this lane are not changed.</span>
           <span class="helper">Applies however the card arrives: a status move, a pull from another board, or a bulk lane move when a board is edited. If creating the task fails, the whole change is rolled back.</span>
         </div>
         <div class="cfgrow"><span class="grip">&#8942;&#8942;</span><b>Completed</b><span>Final</span><span class="note">&mdash;</span><span></span></div>
@@ -705,14 +754,24 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
       <div class="panel" style="padding:14px 16px;display:flex;flex-direction:column;gap:6px">
         <div class="lbl">What this does</div>
         <div style="font-size:13px;color:var(--ink2)">With the switch <b>on</b>, one task is created for every card that enters <b>Implementation</b>, and the card waits on it. With it <b>off</b>, people add tasks by hand, as many as they need, and the card still waits on whatever exists.</div>
-        <div class="note">Removing the board reference turns the switch off. If you try to save the switch on with no reference, the server answers <code>422 autoCreateTaskRequiresReference</code>; this form never lets you get there.</div>
+        <div class="note">Removing the board reference turns the switch off in the same step, with an inline note (below). If a save carried the switch on with no reference, the server would answer <code>422 autoCreateTaskRequiresReference</code>; this form never lets you get there.</div>
         <div class="note">3 ideas currently sit in Implementation, so this reference can't be changed to another board while they do.</div>
       </div>
+      <div class="frame"><h2><span class="fl">A</span>After Remove on the reference, with the switch on</h2>
+        <div class="fb">
+          <div class="bl" style="margin:0">
+            <div class="cfgrow" style="background:var(--rowh)"><span class="grip">&#8942;&#8942;</span><span><b>Implementation</b></span><span>Active</span>
+              <span class="sel"><span>None</span><span>&#9662;</span></span><span></span></div>
+            <div style="padding:0 16px 14px 50px;background:var(--rowh);display:flex;flex-direction:column;gap:4px">
+              <button class="sw" role="switch" aria-checked="false" aria-disabled="true" aria-describedby="h-auto-off"><i></i><span>Auto-create one task on entry</span></button>
+              <span class="helper" id="h-auto-off" role="status">Auto-create turned off &mdash; it needs a referenced board.</span>
+            </div>
+          </div>
+          <div class="note">The reference and the switch change together and save in one step; there is no second save and no confirmation. Putting a reference back does not turn the switch on again.</div>
+        </div></div>
       <div class="oq"><b>Open questions</b>
         <ul>
           <li>Switch placement: a second line under the row (drawn) or a column in the row? A column does not fit at phone width.</li>
-          <li>Removing the reference while the switch is on: switch clears silently (drawn in the notes) or asks first?</li>
-          <li>Turning it on does not touch cards already in the lane (only entries create tasks). Say so in the helper text?</li>
         </ul></div>
     </div>
   </section>
@@ -721,42 +780,47 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
   <section id="v6" class="hide" data-nav="nv-board" aria-labelledby="h1-6">
     <div class="topbar"><span class="crumb">Boards / Client Onboarding / <b>Edit board</b></span></div>
     <div class="work">
-      <div class="pghead"><div><h1 id="h1-6">Pull picker: tasks are not listed</h1><p>Editing the Client Onboarding board, step "Add existing items", tab "Ideas on other boards".</p></div></div>
+      <div class="pghead"><div><h1 id="h1-6">Pull picker: tasks are not listed</h1><p>Editing the Client Onboarding board, step "Add existing items", tab "Ideas on other boards". The picker says nothing about tasks unless a search would have matched them.</p></div></div>
       <div class="stage">
-        <aside class="drawer static" aria-label="Edit board">
+        <aside class="drawer static" aria-label="Edit board, search matched tasks">
           <div class="dhead"><div><div class="eb">EDIT BOARD</div><h2>Client Onboarding</h2></div><span class="sp"></span><button class="btn ghost sm">Close</button></div>
           <div class="dbody">
-            <div class="sect"><div class="sechd"><h3>Add existing items</h3><span class="mono-s">2 selected</span></div>
+            <div class="sect"><div class="sechd"><h3>Add existing items</h3><span class="mono-s">1 selected</span></div>
               <div class="tabs2" role="tablist"><span>Unassigned ideas<span class="n">3</span></span><span class="on" role="tab" aria-selected="true">Ideas on other boards<span class="n">4</span></span><span>Backlog Issues<span class="n">2</span></span></div>
-              <p class="note" style="margin:8px 0">Tasks aren't listed. A task stays on the board its parent's reference lane points to. <span class="prop">COPY PROPOSED</span></p>
+              <div class="field" style="margin-top:8px"><span class="in"><input aria-label="Search" value="train"></span></div>
+              <p class="note" style="margin:8px 0" role="status">2 tasks are hidden &mdash; they stay on their parent's board.</p>
               <ul class="pk">
-                <li><span class="cb on">&#10003;</span><span><b>Dock scheduling app</b><span class="meta"><span>by Lena Park</span><span class="chip mute">Continuous Improvement</span><span class="chip mute"><span class="dot" style="background:var(--muted)"></span>Pending</span></span></span></li>
-                <li><span class="cb on">&#10003;</span><span><b>Replace badge printer</b><span class="meta"><span>by Dana Kim</span><span class="chip mute">Implementation</span><span class="chip pri"><span class="dot" style="background:var(--pri)"></span>In Progress</span><span class="mono-s">standalone</span></span></span></li>
-                <li><span class="cb"></span><span><b>Barcode every returned item</b><span class="meta"><span>by Marta Cruz</span><span class="chip mute">Continuous Improvement</span><span class="chip mute"><span class="dot" style="background:var(--muted)"></span>Scoping</span></span></span></li>
-                <li><span class="cb"></span><span><b>Reusable pallet wrap</b><span class="meta"><span>by Sam Rao</span><span class="chip mute">Continuous Improvement</span><span class="chip mute"><span class="dot" style="background:var(--muted)"></span>Pending</span></span></span></li>
+                <li><span class="cb on">&#10003;</span><span><b>Train-the-trainer playbook</b><span class="meta"><span>by Lena Park</span><span class="chip mute">Continuous Improvement</span><span class="chip mute"><span class="dot" style="background:var(--muted)"></span>Scoping</span></span></span></li>
               </ul>
             </div>
           </div>
           <div class="dfoot"><button class="btn pri">Save changes</button><button class="btn">Cancel</button></div>
         </aside>
         <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
-          <div class="frame"><h2><span class="fl">&#8856;</span>Left out of the list</h2>
+          <div class="frame"><h2><span class="fl">B</span>No search, or a search that matches no task: no line</h2>
+            <div class="fb">
+              <div class="tabs2" role="tablist"><span>Unassigned ideas<span class="n">3</span></span><span class="on" role="tab" aria-selected="true">Ideas on other boards<span class="n">4</span></span><span>Backlog Issues<span class="n">2</span></span></div>
+              <ul class="pk">
+                <li><span class="cb on">&#10003;</span><span><b>Dock scheduling app</b><span class="meta"><span>by Lena Park</span><span class="chip mute">Continuous Improvement</span><span class="chip mute"><span class="dot" style="background:var(--muted)"></span>Pending</span></span></span></li>
+                <li><span class="cb"></span><span><b>Replace badge printer</b><span class="meta"><span>by Dana Kim</span><span class="chip mute">Implementation</span><span class="chip pri"><span class="dot" style="background:var(--pri)"></span>In Progress</span><span class="mono-s">standalone</span></span></span></li>
+                <li><span class="cb"></span><span><b>Barcode every returned item</b><span class="meta"><span>by Marta Cruz</span><span class="chip mute">Continuous Improvement</span><span class="chip mute"><span class="dot" style="background:var(--muted)"></span>Scoping</span></span></span></li>
+              </ul>
+              <div class="note">There is no standing note about tasks. A person who never searches for one never reads about them.</div>
+            </div></div>
+          <div class="frame"><h2><span class="fl">&#8856;</span>What "train" would have matched (not drawn in the real picker)</h2>
             <div class="fb">
               <ul class="pk" style="opacity:.75">
                 <li><span class="cb" style="border-style:dashed"></span><span><s>Train regional managers</s> <span class="plink">&#8627; CI-19</span><span class="meta"><span>Implementation</span><span>a task</span></span></span></li>
-                <li><span class="cb" style="border-style:dashed"></span><span><s>Update LMS courses</s> <span class="plink">&#8627; CI-19</span><span class="meta"><span>Implementation</span><span>a task</span></span></span></li>
+                <li><span class="cb" style="border-style:dashed"></span><span><s>Train facilitators</s> <span class="plink">&#8627; CI-21</span><span class="meta"><span>Implementation</span><span>a task</span></span></span></li>
               </ul>
-              <div class="note">Shown here only to explain the omission; the real picker draws nothing for them. If a stale request still names one, the server refuses: <code>'{title}' is a task, so it cannot be pulled. Tasks stay on their parent's reference board.</code> It cannot be overridden, even by an Org Admin.</div>
+              <div class="note">Shown only to explain the count in A. If a stale request still names a task, the server refuses: <code>'{title}' is a task, so it cannot be pulled. Tasks stay on their parent's reference board.</code> It cannot be overridden, even by an Org Admin.</div>
             </div></div>
           <div class="notes"><h3>Notes</h3>
             <ul>
+              <li>The line appears only when the search would have matched one or more tasks, and reads "N tasks are hidden &mdash; they stay on their parent's board." with the real count. It sits under the tabs, on the tab where those tasks would have appeared.</li>
               <li>Counts on the tabs exclude tasks. Standalone cards on a work board (no parent, drawn: Replace badge printer) are listed as usual.</li>
-              <li>The helper is one line under the tabs, shown on the tab where tasks would otherwise appear. Source: decision 2, "Board References follow-ups" (2026-10-16).</li>
-            </ul></div>
-          <div class="oq"><b>Open questions</b>
-            <ul>
-              <li>Show the helper on every tab, or only "Ideas on other boards" (drawn)? Tasks can only be on other boards, so the other tabs never hold one.</li>
-              <li>Is the explanation worth a permanent line for people who never see a task here, or a hint that appears only when the organization uses reference lanes?</li>
+              <li>The picker read needs a hidden-task count for the current search: a contract addition for a later backend slice, recorded in the 2026-10-16 decision.</li>
+              <li>Source: decision 2, "Board References follow-ups", and "Board References UI" (2026-10-16).</li>
             </ul></div>
         </div>
       </div>
@@ -789,19 +853,39 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
         <div class="mtot">
           <div class="mcard"><span class="nm">Hours saved</span>
             <div class="big">1,450.50 <small>h realized</small></div>
-            <div class="meter" role="img" aria-label="Realized 1,450.50 of 3,100.00 hours projected, 47 percent"><i style="width:47%"></i></div>
-            <div class="mrow"><span>Projected <b>3,100.00 h</b></span><span>47% realized</span></div></div>
+            <div class="meter" role="img" aria-label="Realized 1,450.50 h of 3,100.00 h projected, 47 percent"><i style="width:47%"></i></div>
+            <div class="mrow"><span>Projected <b>3,100.00 h</b></span><span>47% realized</span></div>
+            <div class="brk" role="table" aria-label="Hours saved by idea"><div class="brk-row hd" role="row"><span>Idea</span><span class="n">Projected</span><span class="n">Realized</span></div><div class="brk-row"><span><span class="id">CI-19</span><span class="ti">Cut onboarding time</span></span><span class="n">1,200.00 h</span><span class="n"><span class="pend">Not yet</span></span></div><div class="brk-row"><span><span class="id">CI-21</span><span class="ti">Buddy program</span></span><span class="n">1,500.00 h</span><span class="n">1,450.50 h</span></div><div class="brk-row"><span><span class="id">CI-24</span><span class="ti">Welcome kit</span></span><span class="n">400.00 h</span><span class="n"><span class="pend">Not yet</span></span></div></div></div>
           <div class="mcard"><span class="nm">Cost savings</span>
             <div class="big">61,200.00 <small>$ realized</small></div>
-            <div class="meter" role="img" aria-label="Realized 61,200.00 of 124,000.00 dollars projected, 49 percent"><i style="width:49%"></i></div>
-            <div class="mrow"><span>Projected <b>124,000.00 $</b></span><span>49% realized</span></div></div>
+            <div class="meter" role="img" aria-label="Realized 61,200.00 $ of 124,000.00 $ projected, 49 percent"><i style="width:49%"></i></div>
+            <div class="mrow"><span>Projected <b>124,000.00 $</b></span><span>49% realized</span></div>
+            <div class="brk" role="table" aria-label="Cost savings by idea"><div class="brk-row hd" role="row"><span>Idea</span><span class="n">Projected</span><span class="n">Realized</span></div><div class="brk-row"><span><span class="id">CI-19</span><span class="ti">Cut onboarding time</span></span><span class="n">48,000.00 $</span><span class="n">-1,250.00 $</span></div><div class="brk-row"><span><span class="id">CI-21</span><span class="ti">Buddy program</span></span><span class="n">60,000.00 $</span><span class="n">62,450.00 $</span></div><div class="brk-row"><span><span class="id">CI-24</span><span class="ti">Welcome kit</span></span><span class="n">16,000.00 $</span><span class="n"><span class="pend">Not yet</span></span></div></div></div>
           <div class="mcard"><span class="nm">Defects avoided</span>
-            <div class="big">Not yet <small>no realized value</small></div>
+            <div class="big">Realized: not yet</div>
             <div class="meter" role="img" aria-label="Nothing realized yet of 40.00 projected"></div>
-            <div class="mrow"><span>Projected <b>40.00</b></span><span class="note">realized adds in once entered</span></div></div>
+            <div class="mrow"><span>Projected <b>40.00</b></span><span class="note">realized adds in once entered</span></div>
+            <div class="brk" role="table" aria-label="Defects avoided by idea"><div class="brk-row hd" role="row"><span>Idea</span><span class="n">Projected</span><span class="n">Realized</span></div><div class="brk-row"><span><span class="id">CI-19</span><span class="ti">Cut onboarding time</span></span><span class="n">25.00</span><span class="n"><span class="pend">Not yet</span></span></div><div class="brk-row"><span><span class="id">CI-24</span><span class="ti">Welcome kit</span></span><span class="n">15.00</span><span class="n"><span class="pend">Not yet</span></span></div></div></div>
         </div>
-        <div class="note" style="margin-top:6px">Totals add the values on this Outcome's ideas only. Tasks carry no values, so nothing is counted twice. A total with no numbers entered is empty, not zero.</div>
+        <div class="note" style="margin-top:6px">Totals add the values on this Outcome's ideas only. Tasks carry no values, so nothing is counted twice. A total with no numbers entered is empty, not zero. Under each card the ideas that make up the totals are listed with their own values.</div>
       </div>
+
+      <div class="frame"><h2><span class="fl">A</span>The meter at its edges</h2>
+        <div class="fb">
+          <div class="mtot">
+            <div class="mcard"><span class="nm">Training hours</span>
+            <div class="big">1,180.00 <small>h realized</small></div>
+            <div class="meter over" role="img" aria-label="Realized 1,180.00 h of 1,000.00 h projected, over projected, meter full"><i style="width:100%"></i></div>
+            <div class="mrow"><span>Projected <b>1,000.00 h</b></span><span><span class="chip warn">over projected</span> 118% realized</span></div>
+            <div class="brk" role="table" aria-label="Training hours by idea"><div class="brk-row hd" role="row"><span>Idea</span><span class="n">Projected</span><span class="n">Realized</span></div><div class="brk-row"><span><span class="id">CI-19</span><span class="ti">Cut onboarding time</span></span><span class="n">600.00 h</span><span class="n">700.00 h</span></div><div class="brk-row"><span><span class="id">CI-21</span><span class="ti">Buddy program</span></span><span class="n">400.00 h</span><span class="n">480.00 h</span></div></div></div>
+            <div class="mcard"><span class="nm">Cost avoidance</span>
+            <div class="big neg">-1,250.00 <small>$ realized</small></div>
+            <div class="meter" role="img" aria-label="Realized -1,250.00 $ of 8,000.00 $ projected, below zero, meter empty"></div>
+            <div class="mrow"><span>Projected <b>8,000.00 $</b></span><span>realized is below zero</span></div>
+            <div class="brk" role="table" aria-label="Cost avoidance by idea"><div class="brk-row hd" role="row"><span>Idea</span><span class="n">Projected</span><span class="n">Realized</span></div><div class="brk-row"><span><span class="id">CI-19</span><span class="ti">Cut onboarding time</span></span><span class="n">5,000.00 $</span><span class="n">-1,250.00 $</span></div><div class="brk-row"><span><span class="id">CI-24</span><span class="ti">Welcome kit</span></span><span class="n">3,000.00 $</span><span class="n"><span class="pend">Not yet</span></span></div></div></div>
+          </div>
+          <div class="note">Realized above projected: the meter stops at 100% and an "over projected" marker (the red end cap and the chip) says so; the percentage stays exact. A negative total: the meter is empty and the number is in the danger colour. Both are also written out in words, so colour is never the only signal.</div>
+        </div></div>
 
       <div class="oc">
         <div class="oc-h"><h2>Ideas in this outcome</h2><span class="sp" style="flex:1"></span><div class="seg"><span class="on">All</span><span>Implementing</span><span>Completed</span></div></div>
@@ -824,16 +908,14 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
 
       <div class="notes"><h3>Notes</h3>
         <ul>
-          <li>One card per active metric type that has a value under this Outcome, in created order: the realized total large, the meter is realized against projected, both numbers with the unit.</li>
-          <li>The meter is clipped at 100% when realized passes projected; the number keeps the real figure. A negative or empty realized total draws an empty meter. Colour is never the only signal: every figure is also written out.</li>
+          <li>One card per active metric type that has a value under this Outcome, in created order: the realized total large, the meter is realized against projected, both numbers with the unit after them. A type with only projected values still gets a card, with an empty meter and "Realized: not yet".</li>
+          <li>The meter is clipped at 100% with an "over projected" marker when realized passes projected; a negative total shows an empty meter and the number in the danger colour; the numbers are always exact.</li>
+          <li><b>Per-idea breakdown (needs a contract addition).</b> The cards list each idea's key, title, projected and realized under the type's totals. <code>metricTotals</code> returns totals only today, so the per-idea values need a contract addition in a later backend slice; this comp draws the decided design, and the contract shape is not set here.</li>
           <li>Source: <code>contracts/outcomes.md</code> and <code>contracts/metric-types.md</code> "Outcome totals"; State is not returned by the API.</li>
         </ul></div>
       <div class="oq"><b>Open questions</b>
         <ul>
-          <li>How a negative total or one above projected is drawn is not specified (drawn: clipped meter, true number).</li>
-          <li>Whether a card appears for a type with only projected or only realized values. Drawn: yes, with "Not yet" for the missing side.</li>
           <li>The empty state could link to Settings for an Org Admin; not drawn because the empty case is about ideas lacking values, not types.</li>
-          <li>Per-idea values in the list below the totals were left out because the contract returns totals only.</li>
         </ul></div>
     </div>
   </section>
@@ -874,6 +956,7 @@ function go(n){
     }
     s.onclick=pick;s.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();pick()}};
   });
+  w.querySelectorAll('[data-arch]').forEach(function(x){x.style.display='none'});
   var inc=document.getElementById('inc');
   inc.onclick=function(){
     var on=inc.getAttribute('aria-checked')!=='true';
@@ -882,9 +965,8 @@ function go(n){
     document.getElementById('inc-url').textContent='GET /metric-types'+(on?'?includeArchived=true':'');
   };
   // screen 4: the reason gates Move anyway
-  var r=document.getElementById('reason'),g=document.getElementById('go-anyway'),e=document.getElementById('reason-e'),rw=document.getElementById('reason-w');
-  function chk(touched){var ok=r.value.trim().length>0;g.disabled=!ok;e.hidden=ok||!touched;rw.classList.toggle('err',!ok&&touched)}
-  r.addEventListener('input',function(){chk(true)});r.addEventListener('blur',function(){chk(true)});
+  var r=document.getElementById('reason'),g=document.getElementById('go-anyway');
+  r.addEventListener('input',function(){g.disabled=r.value.trim().length===0});
   // screen 5: auto-create switch
   var a=document.getElementById('auto');a.onclick=function(){a.setAttribute('aria-checked',String(a.getAttribute('aria-checked')!=='true'))};
 })();

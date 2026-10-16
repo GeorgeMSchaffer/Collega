@@ -26,7 +26,7 @@ It is the reference for `SPEC/20-feature-client-ui.md` "List and detail pattern"
 
 ## Comp T — Board References decisions (2026-10-16, awaiting review)
 
-`comp-t-board-references-decisions.html` is a throwaway review comp (Graphite by default, comp R's theme picker) for the three 2026-10-16 decisions: Settings, Metric types; the Value section; the task drawer; the reference-lane lock and Move anyway; the lane's auto-create setting; the pull picker without tasks; the Outcome page with metric totals. Extends `comp-s-board-reference.html` and `comp-s-idea-and-outcome.html`. Copy marked COPY PROPOSED is not in a contract. Not a reference until approved.
+`comp-t-board-references-decisions.html` is a throwaway review comp (Graphite by default, comp R's theme picker) for the 2026-10-16 decisions, updated for the owner's UI decisions of the same day (`SPEC/decisions.md` "Board References UI"): Settings, Metric types (unit warning, Show archived off by default); the Value section (unit after the number, Realized tint, App Admin hint); the task drawer with its status select; the reference-lane lock (non-draggable card, disabled Remove and picker row, Org Admin override dialog, activity entry); the lane's auto-create setting and its auto-off note; the pull picker with its conditional hidden-tasks line; the Outcome page with metric meters (over, negative, not yet) and a per-idea breakdown. Extends `comp-s-board-reference.html` and `comp-s-idea-and-outcome.html`. Copy marked COPY PROPOSED and the boxed open questions are not yet decided. Not a reference until approved.
 
 ## Comp R — Home dashboard (2026-10-01, slice 150, approved 2026-10-01)
 

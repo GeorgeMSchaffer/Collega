@@ -322,7 +322,7 @@ Remove an idea from its board, leaving it in the organization's pool (added 2026
   - `403` the caller is neither the author nor an Org Admin, is Read Only, or is a Site Admin acting as themselves
   - `404` the idea does not exist, is deleted, or belongs to another organization
   - `409` the idea is an Issue ("An issue cannot be removed from its board; return it to discovery first."), or its board is archived and the caller is not an Org Admin ("The board is archived, so only an Org Admin can remove its ideas.")
-  - `422` (`parentHasOpenTasks`) the idea sits in a reference lane and any of its tasks is not in a final lane (added 2026-10-16). An Org Admin may send `forceReason` (non-empty text) in the request body to override; any other role sending it gets `403`. Audited as `IdeaMovedPastOpenTasks`; the tasks stay on the child board.
+  - `422` (`parentHasOpenTasks`) the idea sits in a reference lane and any of its tasks is not in a final lane (added 2026-10-16). An Org Admin may send `forceReason` (non-empty text) in the request body to override; any other role sending it gets `403`. Message (decided 2026-10-16): `'{title}' is waiting on {n} open tasks, so it cannot be removed from the board.` Audited as `IdeaMovedPastOpenTasks`; the tasks stay on the child board.
 - **Rules:**
   - **Idempotent.** An idea already in the pool answers `204` with nothing written: no `updated_at_utc` stamp, no audit event. An Issue is refused (`409`) whether or not it has a board.
   - The idea keeps its status, tags, assignees, comments, upvotes and followers; `updatedAtUtc` is stamped. No notification is sent.
@@ -364,7 +364,7 @@ Soft-delete an idea while preserving its row and audit history.
 - **Rules:**
   - Moving an idea into a reference lane requires `effort` to be set; otherwise `422` (`effortRequiredForReferenceLane`).
   - A task cannot itself be a parent (no sub-tasks at launch) and cannot be grouped under an Outcome; both `422`.
-  - Moving an idea out of a reference lane while any of its tasks is not in a final lane is refused with `422` (`parentHasOpenTasks`). An Org Admin may send `forceReason` (non-empty text) on the move to override; any other role sending it gets `403`. The override is audited as `IdeaMovedPastOpenTasks` (reason, open task count) and does not touch the tasks.
+  - Moving an idea out of a reference lane while any of its tasks is not in a final lane is refused with `422` (`parentHasOpenTasks`). An Org Admin may send `forceReason` (non-empty text) on the move to override; any other role sending it gets `403`. The override is audited as `IdeaMovedPastOpenTasks` (reason, open task count) and does not touch the tasks. The refusal message (decided 2026-10-16) is `'{title}' is waiting on {n} open tasks, so it cannot be moved.` The override's reason is shown verbatim in the activity entry (`Moved past {n} open tasks — {reason}`, with who and when).
   - A card entering a lane with `autoCreateTask` by any path (this route, a pull with `pullItemIds`, or a bulk lane move with `ideaMoves` on a board edit; decided 2026-10-16) gets one task on the referenced board in the same transaction (the card's title, the board's first lane); a failure rolls the whole write back.
   - An item with a parent is never pulled onto another board (`contracts/boards.md`, "Pulling items").
   - A task cannot leave its board's first lane while any blocker is not in a final lane; `422` (`taskBlocked`).

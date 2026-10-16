@@ -28,13 +28,14 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-16 | Board References UI: lock, task drawer, lane auto-create, metric display, Outcome totals | active | full below |
 | 2026-10-16 | Board References follow-ups: auto-create on every entry, tasks not pullable, task editing, metrics on archived boards, Site Admin detail metrics | active | full below |
 | 2026-10-16 | Metric types are an organization table with projected and realized values per item | active | full below |
 | 2026-10-16 | A reference lane locks its card until its tasks are final | active | full below |
 | 2026-10-15 | Cutover follow-up: migration check, SITE_ADMIN_PASSWORD, App Admin in the README, rollback wording | active | full below |
 | 2026-10-15 | The 17 open Outcome contract questions are decided | active | full below |
 | 2026-10-15 | Board References replace the Delivery phase | active | full below |
-| 2026-10-15 | The four open Backlog Add New Issue readings are decided | active | full below |
+| 2026-10-15 | The four open Backlog Add New Issue readings are decided | active | [2026-10-04 to 2026-10-15](decisions/archive-2026-10-04-to-2026-10-15.md) |
 | 2026-10-15 | Issues can be added directly from the Backlog | amended | [2026-10-04 to 2026-10-15](decisions/archive-2026-10-04-to-2026-10-15.md) |
 | 2026-10-13 | Boards can pull in existing items, and ideas can have no board | active | [2026-10-04 to 2026-10-15](decisions/archive-2026-10-04-to-2026-10-15.md) |
 | 2026-10-13 | Home gets an Unread notifications panel | amended | [2026-10-04 to 2026-10-15](decisions/archive-2026-10-04-to-2026-10-15.md) |
@@ -126,6 +127,32 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-16 — Board References UI: lock, task drawer, lane auto-create, metric display, Outcome totals
+
+> Amends: "A reference lane locks its card until its tasks are final" (2026-10-16), whose bulk-move behaviour into a hand-off lane, refusal texts and UI are settled here; "Board References follow-ups" (2026-10-16) item 1, whose silent skip on `ideaMoves` no longer holds for an `autoCreateTask` lane; and "Metric types are an organization table..." (2026-10-16), whose display and Outcome totals are fixed here. Everything else in those entries stands.
+
+**Decided by the user.**
+
+1. **Bulk-move race.** A board save whose `ideaMoves` targets an `autoCreateTask` lane is refused as a whole, `400` keyed `ideaMoves`, "'{title}' is no longer in that lane.", if any planned card is no longer in its `fromStatusId` at commit. Moves into ordinary lanes keep the silent skip. Already built in slice 246.
+2. **Refusal texts** (backend already uses them): status move "'{title}' is waiting on {n} open tasks, so it cannot be moved."; detach "'{title}' is waiting on {n} open tasks, so it cannot be removed from the board."
+3. **Lock UI.** A locked card cannot be dragged; other lanes do not accept the drop, with a "Waiting on N tasks" tooltip. "Remove from board" and the card's row in another board's pull picker are disabled up front with the same text. An Org Admin gets "Move anyway" or the override from the same places (card menu, the disabled menu item, the picker row), never by drag. The override dialog's confirm button is disabled until a reason is typed, so there is no empty-reason error. The activity entry shows the reason verbatim: "Moved past 3 open tasks — <reason>", with who and when.
+4. **Task drawer.** Status changes from the drawer (the idea status select, honouring the board's `allowUserStatusUpdate`) as well as by dragging. A non-author User sees it read only. A task has its own item key (IMPL-48).
+5. **Lane auto-create switch.** Removing the lane's board reference turns auto-create off, with the inline note "Auto-create turned off — it needs a referenced board.", saved in one step. Turning it on leaves cards already in the lane alone; the helper says "Cards already in this lane are not changed."
+6. **Metric values.** The unit always follows the number ("12,500.00 $", "120 h"). Display uses the browser locale's thousands separator; input takes digits, one ".", a leading "-", and strips typed commas. The unit-change warning "Existing values are not converted." shows inline while a type's unit is edited. "Show archived" on the metric types list is off by default and not remembered. When an idea is in a final lane, the Realized column header is tinted and reads "Realized — enter now"; nothing is blocked. A direct App Admin (Site Admin without View As) sees "Values are visible through View As." in place of the Value section.
+7. **Outcome page.** The meter is clipped at 100% with an "over projected" marker when realized exceeds projected; a negative total shows an empty meter and the number in the danger colour; numbers are always exact. A type with only projected values gets a card with an empty meter, "Realized: not yet". The page shows per-idea values: a breakdown under each type card (idea key, title, projected, realized).
+8. **Pull picker.** No standing note about tasks. "N tasks are hidden — they stay on their parent's board." appears only when the search would have matched tasks.
+
+**Why.** (1) A card that slips into a hand-off lane without its task defeats the lane's promise, and a whole-save refusal is the only way to avoid that without half-applying a board edit. (2) The texts match the pull sentence. (3) A control the server will refuse is better disabled with its reason than offered and refused; keeping the override off the drag path stops it happening by accident, and a required reason at the button means nothing is audited without one. (4) Status is the field people most expect to change in a drawer. (5) A switch that is on with no reference is an invalid state; saying so inline beats a server error, and leaving existing cards alone keeps the setting predictable. (6) One rule for unit placement and number entry removes the symbol-before-or-after question. (7) Owners reading an Outcome want to see which ideas make up a total. (8) A permanent note is noise for people who never meet a task in the picker.
+
+**Rejected.** Silent skip for a card that left the lane before a hand-off move; letting a locked card be dragged and snapping it back; an override through drag; an empty-reason error; status changeable only by dragging; asking before auto-create clears; converting values on a unit change; remembering "Show archived"; totals only on the Outcome page; a permanent tasks line in the picker.
+
+**Consequences.**
+- `contracts/boards.md` (`ideaMoves` rules) and `contracts/ideas.md` (`parentHasOpenTasks`) are amended; the UI section of `20-feature-board-references.md` points here; `comp-t-board-references-decisions.html` is updated to match.
+- **Contract additions needed, for later backend slices (shapes not set here):** per-idea projected and realized values for each metric type on the Outcome read (`metricTotals` returns totals only today); a hidden-task count on the pull picker read for the current search.
+- UI work follows the comp once the owner approves it. Still open in the comp: archive confirmation for a used metric type, how an unlocked Value is called out on an archived board, the empty Outcome state's Settings link, and switch placement on the Statuses row.
 
 ---
 
@@ -236,21 +263,3 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 - Delivery code stays in place and working until the replacements exist; Plan 4 retires it.
 - The 17 Outcomes questions in `contracts/outcomes.md` are answered in `20-feature-board-references.md` and copied into the contract by the Outcomes backend slice.
 - Entry to a reference lane requires Effort; no per-lane rules.
-## 2026-10-15 — The four open Backlog Add New Issue readings are decided
-
-**Decided by the user**, on the four items slice 187 left open (see "Issues can be added directly
-from the Backlog" below). Applied by slice 211.
-
-1. **Site Admin add-denial wording is kept:** *Act as a member to add issues. Use View As.*
-   (`apps/web/lib/roles.ts`, `issueAddDenial`), although the delivery screens' older wording says
-   "administrator". No code change.
-2. **The Issue drawer's footer Edit follows the spec:** enabled only for the author and an Org Admin
-   (the Backlog row Edit's rule), disabled with the reason *Only the author or an Org Admin can edit
-   this issue.* for other writers. Read Only and Site Admin behaviour is unchanged.
-3. **The Delivery group (Effort, Sprint) stays directly under Title**, as the approved comp draws
-   it; the spec text that placed it after the idea fields was wrong and is corrected.
-4. **The header *Add New Issue* button lives in the page header's action slot** (`PageHeader`
-   `action`), not the topbar; the spec wording is corrected.
-
----
-
