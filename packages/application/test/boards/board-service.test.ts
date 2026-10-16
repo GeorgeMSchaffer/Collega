@@ -135,6 +135,7 @@ function harness(options: {
       return []
     },
     async moveIdeas() {},
+    async verifyIdeasMoved() {},
     async reassignIdeas() {},
     async listPullCandidates() {
       return { items: [], page: 1, pageSize: 20, totalCount: 0 }

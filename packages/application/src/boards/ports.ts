@@ -76,6 +76,18 @@ export interface BoardRepository {
   ): Promise<void>
 
   /**
+   * Stages a check, after `moveIdeas`, that every given idea landed in `toStatusId` in this save.
+   * A miss fails the whole save with a `400` keyed `ideaMoves` naming the idea. Used only where a
+   * move auto-creates a task, which must not be committed for an idea that never entered the lane.
+   */
+  verifyIdeasMoved(
+    boardId: string,
+    ideas: readonly { readonly ideaId: string; readonly title: string }[],
+    toStatusId: string,
+    nowUtc: Date,
+  ): Promise<void>
+
+  /**
    * Stages filing the given items onto `boardId`, in the same unit of work as the board's own add
    * or save (SPEC/20-feature-board-pull-in.md rules 13 to 16). Each item is written only if it is
    * still as `from` describes it; one that is not - moved, deleted or promoted since it was read -

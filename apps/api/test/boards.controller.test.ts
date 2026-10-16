@@ -95,6 +95,7 @@ function controller(otherBoards: readonly Board[] = []): {
     getUserNames: async () => new Map(),
     listLaneIdeas: async () => [],
     moveIdeas: async () => {},
+    verifyIdeasMoved: async () => {},
     reassignIdeas: async () => {},
     listPullCandidates: async () => ({ items: [], page: 1, pageSize: 20, totalCount: 0 }),
   }

@@ -31,7 +31,10 @@ import type {
   board_swimlanes as SwimlaneRow,
 } from '../generated/prisma/index.js'
 import { Prisma } from '../generated/prisma/index.js'
-import { PULL_UNAVAILABLE_MARKER } from '../persistence/constraint-errors.js'
+import {
+  MOVE_UNAVAILABLE_MARKER,
+  PULL_UNAVAILABLE_MARKER,
+} from '../persistence/constraint-errors.js'
 import type { PrismaClient } from '../persistence/prisma-client.js'
 import type { PrismaUnitOfWork } from '../persistence/unit-of-work.js'
 
@@ -220,6 +223,40 @@ export class PrismaBoardRepository
         },
         data: { status_id: toStatusId, updated_at_utc: nowUtc, updated_by_user_id: actorUserId },
       }),
+    )
+  }
+
+  /**
+   * The closing check of `reassignIdeas`, for a lane move: each idea on the board in `toStatusId`
+   * with `updated_at_utc = nowUtc`, which ties the row to this save's `moveIdeas`. The first one
+   * missing is cast to an integer as a marker, Postgres refuses it, and the batch rolls back
+   * (`translateWriteError` turns it into the keyed 400).
+   */
+  async verifyIdeasMoved(
+    boardId: string,
+    ideas: readonly { readonly ideaId: string; readonly title: string }[],
+    toStatusId: string,
+    nowUtc: Date,
+  ): Promise<void> {
+    if (ideas.length === 0) {
+      return
+    }
+    this.unitOfWork.enqueue(
+      this.prisma.$queryRaw(Prisma.sql`
+        SELECT CAST(COALESCE(
+          (SELECT ${MOVE_UNAVAILABLE_MARKER} || encode(convert_to(expected.title, 'UTF8'), 'hex')
+           FROM UNNEST(${ideas.map((idea) => idea.ideaId)}::uuid[], ${ideas.map((idea) => idea.title)}::text[])
+             WITH ORDINALITY AS expected(idea_id, title, position)
+           WHERE NOT EXISTS (
+             SELECT 1 FROM ideas AS landed
+             WHERE landed.id = expected.idea_id
+               AND landed.board_id = ${boardId}::uuid
+               AND landed.status_id = ${toStatusId}::uuid
+               AND landed.updated_at_utc = ${nowUtc}::timestamptz
+           )
+           ORDER BY expected.position
+           LIMIT 1), '0') AS integer) AS verified
+      `),
     )
   }
 

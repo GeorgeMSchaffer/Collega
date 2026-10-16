@@ -291,6 +291,16 @@ export class BoardService {
         now,
         this.currentUser.userId,
       )
+      // A move skips an idea someone moved out of the lane meanwhile. Into an auto-create lane that
+      // would commit a task for an idea that never entered it, so there a miss refuses the save.
+      if (board.swimlanes.find((lane) => lane.statusId === move.toStatusId)?.autoCreateTask) {
+        await this.boards.verifyIdeasMoved(
+          board.id,
+          move.ideas.map((idea) => ({ ideaId: idea.ideaId, title: idea.title })),
+          move.toStatusId,
+          now,
+        )
+      }
     }
     if (pull !== null) {
       await this.stagePull(board.id, pull, now)

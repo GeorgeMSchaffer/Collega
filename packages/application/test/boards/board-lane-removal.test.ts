@@ -131,6 +131,7 @@ function harness(
       log.push('move')
       moves.push({ boardId, ideaIds, fromStatusId, toStatusId, nowUtc, actorUserId })
     },
+    async verifyIdeasMoved() {},
     async reassignIdeas() {},
     async listPullCandidates() {
       return { items: [], page: 1, pageSize: 20, totalCount: 0 }
