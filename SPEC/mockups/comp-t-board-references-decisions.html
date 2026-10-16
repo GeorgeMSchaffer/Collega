@@ -6,8 +6,8 @@
 <title>Collega Board References, decisions of 2026-10-16 (comp T)</title>
 <!-- Comp T: throwaway review comp. Draws the 2026-10-16 decisions (metric types; reference-lane lock; Board References follow-ups; and the
      owner's UI decisions of the same day, SPEC/decisions.md "Board References UI") on the comp-s screens. Theme tokens are comp R's five themes
-     (Graphite by default); the rules are comp-s's, with additions at the end. Not a reference until approved. Copy marked COPY PROPOSED is
-     not yet in a contract or decision; open questions are the ones the owner has not answered. -->
+     (Graphite by default); the rules are comp-s's, with additions at the end. Not a reference until approved. All copy is decided
+     (SPEC/decisions.md "Board References UI"); no open questions remain. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&family=Figtree:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Lexend:wght@500;600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=Schibsted+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
@@ -652,7 +652,7 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
             <div class="dlg" role="dialog" aria-labelledby="dl-t">
               <div class="dlg-h"><h3 id="dl-t">Move past 3 open tasks?</h3></div>
               <div class="dlg-b">
-                <span>'Cut onboarding time' (CI-19) is waiting on these tasks. Moving it to <b>Completed</b> leaves them open on the Implementation board. <span class="prop">COPY PROPOSED</span></span>
+                <span>'Cut onboarding time' (CI-19) is waiting on these tasks. Moving it to <b>Completed</b> leaves them open on the Implementation board.</span>
                 <ul class="opentasks">
                   <li><span>Train regional managers</span><span class="st p"><span class="dot" style="background:var(--pri)"></span>In Progress</span></li>
                   <li><span>Measure time to first shipment</span><span class="st a"><span class="dot" style="background:var(--muted)"></span>Pending</span></li>
@@ -740,7 +740,7 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
           <span class="sel"><span>Implementation board</span><span>&#9662;</span></span><span style="text-align:right"><button class="btn sm ghost">Remove</button></span></div>
         <div style="padding:0 16px 14px 50px;background:var(--rowh);display:flex;flex-direction:column;gap:4px">
           <button class="sw" id="auto" role="switch" aria-checked="true" aria-describedby="h-on"><i></i><span>Auto-create one task on entry</span></button>
-          <span class="helper" id="h-on">A card entering this lane gets one task named after it, in the first lane of <b>Implementation board</b> (Pending). The card then waits on it. <span class="prop">COPY PROPOSED</span></span>
+          <span class="helper" id="h-on">A card entering this lane gets one task named after it, in the first lane of <b>Implementation board</b> (Pending). The card then waits on it.</span>
           <span class="helper">Cards already in this lane are not changed.</span>
           <span class="helper">Applies however the card arrives: a status move, a pull from another board, or a bulk lane move when a board is edited. If creating the task fails, the whole change is rolled back.</span>
         </div>
