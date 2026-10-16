@@ -47,9 +47,27 @@ function fieldOf(fn: () => unknown): string {
 describe('createBoard lanes and flags', () => {
   it('keeps both lane fields and allows several final lanes', () => {
     expect(create().swimlanes).toEqual([
-      { statusId: 'status-1', displayOrder: 0, isFinal: false, referencesBoardId: 'board-9' },
-      { statusId: 'status-2', displayOrder: 1, isFinal: true, referencesBoardId: null },
-      { statusId: 'status-3', displayOrder: 2, isFinal: true, referencesBoardId: null },
+      {
+        statusId: 'status-1',
+        displayOrder: 0,
+        isFinal: false,
+        referencesBoardId: 'board-9',
+        autoCreateTask: false,
+      },
+      {
+        statusId: 'status-2',
+        displayOrder: 1,
+        isFinal: true,
+        referencesBoardId: null,
+        autoCreateTask: false,
+      },
+      {
+        statusId: 'status-3',
+        displayOrder: 2,
+        isFinal: true,
+        referencesBoardId: null,
+        autoCreateTask: false,
+      },
     ])
   })
 
@@ -132,9 +150,27 @@ describe('updateBoard and reorderBoardSwimlanes with lanes and flags', () => {
     )
 
     expect(reordered.swimlanes).toEqual([
-      { statusId: 'status-3', displayOrder: 0, isFinal: true, referencesBoardId: null },
-      { statusId: 'status-1', displayOrder: 1, isFinal: false, referencesBoardId: 'board-9' },
-      { statusId: 'status-2', displayOrder: 2, isFinal: true, referencesBoardId: null },
+      {
+        statusId: 'status-3',
+        displayOrder: 0,
+        isFinal: true,
+        referencesBoardId: null,
+        autoCreateTask: false,
+      },
+      {
+        statusId: 'status-1',
+        displayOrder: 1,
+        isFinal: false,
+        referencesBoardId: 'board-9',
+        autoCreateTask: false,
+      },
+      {
+        statusId: 'status-2',
+        displayOrder: 2,
+        isFinal: true,
+        referencesBoardId: null,
+        autoCreateTask: false,
+      },
     ])
   })
 })

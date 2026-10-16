@@ -45,6 +45,7 @@ function boardFromRow(row: BoardRowWithSwimlanes): Board {
       displayOrder: s.display_order,
       isFinal: s.is_final,
       referencesBoardId: s.references_board_id,
+      autoCreateTask: s.auto_create_task,
     }))
 
   return {
@@ -627,6 +628,7 @@ export class PrismaBoardRepository
       display_order: swimlane.displayOrder,
       is_final: swimlane.isFinal,
       references_board_id: swimlane.referencesBoardId,
+      auto_create_task: swimlane.autoCreateTask === true,
     }))
   }
 }

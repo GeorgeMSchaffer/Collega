@@ -81,7 +81,11 @@ type AddIssueBody = CreateIdeaBody & { effort?: unknown; sprintId?: unknown }
 /** `PUT /ideas/{ideaId}` - `UpdateIdeaRequest`: the create shape minus `statusId`. */
 type UpdateIdeaBody = Omit<CreateIdeaBody, 'statusId'>
 
-type ChangeIdeaStatusBody = { statusId?: unknown }
+type ChangeIdeaStatusBody = { statusId?: unknown; forceReason?: unknown }
+
+/** `DELETE /ideas/{ideaId}/board`'s optional body: an Org Admin's override of the reference-lane
+ * lock. */
+type DetachFromBoardBody = { forceReason?: unknown }
 
 type SetBlockedByBody = { ideaIds?: unknown }
 
@@ -404,14 +408,20 @@ export class IdeasController {
     @Param('ideaId', UuidParamPipe) ideaId: string,
     @Body() body: ChangeIdeaStatusBody,
   ): Promise<void> {
-    await this.ideas.changeStatus(ideaId, { statusId: guidOrEmpty(body.statusId) })
+    await this.ideas.changeStatus(ideaId, {
+      statusId: guidOrEmpty(body.statusId),
+      forceReason: optional(body.forceReason),
+    })
   }
 
   /** Removes an idea from its board; it joins the organization's pool. Idempotent. */
   @Delete('ideas/:ideaId/board')
   @HttpCode(204)
-  async detachFromBoard(@Param('ideaId', UuidParamPipe) ideaId: string): Promise<void> {
-    await this.ideas.detachFromBoard(ideaId)
+  async detachFromBoard(
+    @Param('ideaId', UuidParamPipe) ideaId: string,
+    @Body() body: DetachFromBoardBody | undefined,
+  ): Promise<void> {
+    await this.ideas.detachFromBoard(ideaId, optional(body?.forceReason))
   }
 
   /** Soft delete. Administrative even for the idea's own author - the corpus pins that. */

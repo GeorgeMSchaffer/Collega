@@ -46,11 +46,14 @@ export const KEY_PREFIX_MIN_LENGTH = 2
 export const KEY_PREFIX_MAX_LENGTH = 10
 const KEY_PREFIX_PATTERN = /^[A-Z0-9]+$/
 
-/** A requested lane: the status, whether it is a final lane, and the board it hands work to. */
+/** A requested lane: the status, whether it is a final lane, the board it hands work to, and
+ * whether entering it creates a task there. */
 export type SwimlaneLane = {
   readonly statusId: string
   readonly isFinal: boolean
   readonly referencesBoardId: string | null
+  /** Absent is `false`; a stored lane always carries it. */
+  readonly autoCreateTask?: boolean | undefined
 }
 
 export type BoardSwimlane = SwimlaneLane & {
@@ -148,6 +151,7 @@ function toSwimlanes(orderedLanes: readonly SwimlaneLane[]): readonly BoardSwiml
     statusId: lane.statusId,
     isFinal: lane.isFinal,
     referencesBoardId: lane.referencesBoardId,
+    autoCreateTask: lane.autoCreateTask === true,
     displayOrder,
   }))
 }

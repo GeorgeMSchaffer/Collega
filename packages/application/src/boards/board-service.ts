@@ -37,7 +37,13 @@ import {
   UnprocessableError,
   ValidationError,
 } from '../common/index.js'
-import type { IdeaRepository } from '../ideas/index.js'
+import {
+  IDEA_MOVED_PAST_OPEN_TASKS,
+  type IdeaRepository,
+  movedPastOpenTasksAudit,
+  openTasksHoldingExit,
+  readForceReason,
+} from '../ideas/index.js'
 import type { StatusRepository } from '../statuses/index.js'
 import type {
   BoardDetail,
@@ -145,7 +151,8 @@ export class BoardService {
   }
 
   async create(organizationId: string, command: CreateBoardCommand): Promise<CreateBoardResult> {
-    this.ensureCreateScope(organizationId)
+    const role = this.ensureCreateScope(organizationId)
+    const forceReason = readForceReason(command.forceReason, role)
     await this.ensureOrganizationExists(organizationId)
 
     const statusLookup = await this.loadStatusLookup(organizationId)
@@ -168,7 +175,13 @@ export class BoardService {
     const organizationBoards = await this.boards.listByOrganization(organizationId)
     ensureKeyPrefixFree(board, organizationBoards)
     const newTargets = planReferences(board, organizationBoards)
-    const pull = await this.planPull(organizationId, board, command.pullItemIds ?? [], now)
+    const pull = await this.planPull(
+      organizationId,
+      board,
+      command.pullItemIds ?? [],
+      forceReason,
+      now,
+    )
     await this.boards.add(board)
     await this.disableTargetIdeaFeatures(newTargets, now)
     if (pull !== null) {
@@ -213,6 +226,7 @@ export class BoardService {
     }
 
     this.ensureAdminScope(existing.organizationId)
+    const forceReason = readForceReason(command.forceReason, this.requireAuthenticatedRole())
 
     const statusLookup = await this.loadStatusLookup(existing.organizationId)
     const orderedLanes = validateAndOrderSwimlanes(command.swimlanes, statusLookup)
@@ -247,7 +261,13 @@ export class BoardService {
     const newTargets = planReferences(board, organizationBoards)
     await this.ensureReferenceLanesFree(existing, board)
     const moves = await this.planIdeaMoves(existing, board, command.ideaMoves ?? [], statusLookup)
-    const pull = await this.planPull(board.organizationId, board, command.pullItemIds ?? [], now)
+    const pull = await this.planPull(
+      board.organizationId,
+      board,
+      command.pullItemIds ?? [],
+      forceReason,
+      now,
+    )
 
     await this.boards.save(board)
     await this.disableTargetIdeaFeatures(newTargets, now)
@@ -341,6 +361,7 @@ export class BoardService {
     organizationId: string,
     board: Board,
     requested: readonly string[],
+    forceReason: string | null,
     now: Date,
   ): Promise<PullPlan | null> {
     if (requested.length === 0) {
@@ -360,6 +381,7 @@ export class BoardService {
     const role = this.requireAuthenticatedRole()
     const userId = this.requireAuthenticatedUserId()
     const found = await Promise.all(requested.map((id) => this.ideas.getById(id, true)))
+    const openTasksOf = await this.openTasksHoldingPull(found, board.id)
 
     const laneOrder = [...board.swimlanes].sort((a, b) => a.displayOrder - b.displayOrder)
     const laneStatusIds = new Set(laneOrder.map((lane) => lane.statusId))
@@ -379,6 +401,14 @@ export class BoardService {
         problems.push(problem)
         return
       }
+      // The reference-lane lock: being pulled away is an exit from the source board's lane.
+      const openTasks = openTasksOf(before)
+      if (openTasks > 0 && forceReason === null) {
+        problems.push(
+          `'${before.title}' is waiting on ${openTasks} open tasks, so it cannot be pulled.`,
+        )
+        return
+      }
       const statusId = laneStatusIds.has(before.statusId) ? before.statusId : leftmostStatusId
       // The Effort entry rule holds on a pull too (Board References Ruling 6).
       if (before.effort === null && lanesByStatus.get(statusId)?.referencesBoardId) {
@@ -390,6 +420,7 @@ export class BoardService {
       items.push({
         before,
         after: pullIdeaOntoBoard(before, board.id, statusId, now, this.currentUser.userId),
+        forced: openTasks > 0 && forceReason !== null ? { openTasks, reason: forceReason } : null,
       })
     })
     if (problems.length > 0) {
@@ -402,6 +433,40 @@ export class BoardService {
         compareStrings(a.before.id, b.before.id),
     )
     return { items }
+  }
+
+  /** Open tasks holding each found item in a reference lane of the board it is pulled from. */
+  private async openTasksHoldingPull(
+    found: readonly (Idea | null)[],
+    targetBoardId: string,
+  ): Promise<(idea: Idea) => number> {
+    const sourceBoardIds = [
+      ...new Set(
+        found.flatMap((idea) =>
+          idea?.boardId && idea.boardId !== targetBoardId ? [idea.boardId] : [],
+        ),
+      ),
+    ]
+    const sourceBoards = await Promise.all(sourceBoardIds.map((id) => this.boards.getById(id)))
+    const referenceLanes = new Set(
+      sourceBoards.flatMap((source) =>
+        source === null
+          ? []
+          : source.swimlanes
+              .filter((lane) => lane.referencesBoardId !== null)
+              .map((lane) => laneKey(source.id, lane.statusId)),
+      ),
+    )
+    const inReferenceLane = (idea: Idea): boolean =>
+      idea.boardId !== null && referenceLanes.has(laneKey(idea.boardId, idea.statusId))
+    const parentIds = found.flatMap((idea) =>
+      idea !== null && inReferenceLane(idea) ? [idea.id] : [],
+    )
+    const counts =
+      parentIds.length === 0
+        ? new Map<string, { readonly total: number; readonly done: number }>()
+        : await this.ideas.countChildrenByParentIds(parentIds)
+    return (idea) => openTasksHoldingExit(inReferenceLane(idea), counts.get(idea.id))
   }
 
   private async stagePull(boardId: string, pull: PullPlan, now: Date): Promise<void> {
@@ -431,7 +496,7 @@ export class BoardService {
     pull: PullPlan | null,
     now: Date,
   ): Promise<void> {
-    for (const { before, after } of pull?.items ?? []) {
+    for (const { before, after, forced } of pull?.items ?? []) {
       await this.auditIdea(
         'IdeaBoardChanged',
         organizationId,
@@ -459,6 +524,16 @@ export class BoardService {
           now,
           { previousSprintId: before.sprintId },
         )
+      }
+      if (forced !== null) {
+        const { message, metadata } = movedPastOpenTasksAudit(
+          before.title,
+          forced.openTasks,
+          forced.reason,
+        )
+        await this.auditIdea(IDEA_MOVED_PAST_OPEN_TASKS, organizationId, before.id, message, now, {
+          ...metadata,
+        })
       }
     }
   }
@@ -838,7 +913,12 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 
 /** The ideas as read and as they will be saved, oldest first. */
 type PullPlan = { readonly items: readonly PlannedPull[] }
-type PlannedPull = { readonly before: Idea; readonly after: Idea }
+type PlannedPull = {
+  readonly before: Idea
+  readonly after: Idea
+  /** Set when an Org Admin's reason took the item past open tasks in a reference lane. */
+  readonly forced: { readonly openTasks: number; readonly reason: string } | null
+}
 
 function invalidPullItems(messages: readonly string[]): ValidationError {
   return new ValidationError('One or more fields are invalid.', { pullItemIds: [...messages] })
@@ -1017,11 +1097,19 @@ function validateAndOrderSwimlanes(
     }
   }
 
-  return ordered.map((lane) => ({
+  const lanes = ordered.map((lane) => ({
     statusId: lane.statusId,
     isFinal: lane.isFinal === true,
     referencesBoardId: lane.referencesBoardId?.trim() || null,
+    autoCreateTask: lane.autoCreateTask === true,
   }))
+  if (lanes.some((lane) => lane.autoCreateTask && lane.referencesBoardId === null)) {
+    throw new UnprocessableError(
+      'autoCreateTaskRequiresReference',
+      'A lane can create a task on entry only when it references a board.',
+    )
+  }
+  return lanes
 }
 
 /**
@@ -1097,6 +1185,7 @@ function buildSwimlaneDetails(
         statusIsDeleted: status?.isDeleted ?? false,
         isFinal: swimlane.isFinal,
         referencesBoardId: swimlane.referencesBoardId,
+        autoCreateTask: swimlane.autoCreateTask === true,
       }
     })
 }

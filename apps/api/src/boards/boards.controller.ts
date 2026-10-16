@@ -32,6 +32,7 @@ type SwimlaneBody = {
   order?: number
   isFinal?: boolean
   referencesBoardId?: string | null
+  autoCreateTask?: boolean
 }
 
 type CreateBoardBody = {
@@ -43,6 +44,7 @@ type CreateBoardBody = {
   sprintsEnabled?: boolean
   ideaFeaturesEnabled?: boolean
   pullItemIds?: unknown
+  forceReason?: unknown
 }
 
 /** One entry of `PUT`'s `ideaMoves` (added 2026-09-29): a removed lane and where its ideas go. */
@@ -103,6 +105,7 @@ function toSwimlaneInputs(swimlanes: unknown): readonly SwimlaneInput[] {
     isFinal: entry?.isFinal === true,
     referencesBoardId:
       typeof entry?.referencesBoardId === 'string' ? entry.referencesBoardId : null,
+    autoCreateTask: entry?.autoCreateTask === true,
   }))
 }
 
@@ -217,6 +220,7 @@ export class BoardsController {
       sprintsEnabled: toFlag('sprintsEnabled', body.sprintsEnabled),
       ideaFeaturesEnabled: toFlag('ideaFeaturesEnabled', body.ideaFeaturesEnabled),
       pullItemIds: toPullItemIds(body.pullItemIds),
+      forceReason: optional(body.forceReason),
     })
   }
 
@@ -242,6 +246,7 @@ export class BoardsController {
       ideaFeaturesEnabled: toFlag('ideaFeaturesEnabled', body.ideaFeaturesEnabled),
       ideaMoves: toIdeaMoves(body.ideaMoves),
       pullItemIds: toPullItemIds(body.pullItemIds),
+      forceReason: optional(body.forceReason),
     })
   }
 

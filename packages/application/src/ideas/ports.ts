@@ -287,6 +287,8 @@ export type SwimlaneInfo = {
   readonly displayOrder: number
   readonly isFinal: boolean
   readonly referencesBoardId: string | null
+  /** Entering the lane creates one task on the referenced board; absent is `false`. */
+  readonly autoCreateTask?: boolean | undefined
 }
 
 export type BoardContext = {

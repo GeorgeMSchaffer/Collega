@@ -85,6 +85,8 @@ export type UpdateIdeaCommand = {
 
 export type ChangeIdeaStatusCommand = {
   readonly statusId: string
+  /** An Org Admin's reason for moving out of a reference lane past open tasks. */
+  readonly forceReason?: string | null | undefined
 }
 
 // Delivery (Issues-and-Delivery Slice 1) --------------------------------------------------------
