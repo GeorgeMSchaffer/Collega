@@ -167,6 +167,8 @@ export type Harness = {
   followersByIdea: Map<string, Set<string>>
   boardFilters: IdeaListFilter[]
   orgFilters: OrganizationIdeaListFilter[]
+  /** Every `listDelivery` filter the service sent the repository. */
+  deliveryFilters: Parameters<IdeaRepository['listDelivery']>[0][]
   /** Tags `getOrCreate` created, in order, with the colour the service picked for each. */
   createdTags: TagSummary[]
   /** The blocked-by links; edit it to model existing dependencies. */
@@ -205,6 +207,7 @@ export function harness(options: {
   const added: Idea[] = []
   const notifications: NotificationInput[] = []
   const boardFilters: IdeaListFilter[] = []
+  const deliveryFilters: Parameters<IdeaRepository['listDelivery']>[0][] = []
   const orgFilters: OrganizationIdeaListFilter[] = []
   const tagsById = new Map((options.tags ?? []).map((t) => [t.id, t]))
   const createdTags: TagSummary[] = []
@@ -253,6 +256,7 @@ export function harness(options: {
       return []
     },
     async listDelivery(filter) {
+      deliveryFilters.push(filter)
       return [...ideasById.values()].filter(
         (i) => i.organizationId === filter.organizationId && i.phase === IdeaPhase.Delivery,
       )
@@ -587,6 +591,7 @@ export function harness(options: {
     followersByIdea,
     boardFilters,
     orgFilters,
+    deliveryFilters,
     createdTags,
     edges,
   }
