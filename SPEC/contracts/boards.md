@@ -125,9 +125,9 @@ Update board name or selected statuses.
 ### Pulling items (`pullItemIds`, added 2026-10-13, slice 180)
 `POST …/boards` and `PUT …/boards/{boardId}` file existing items onto the board in the same save (`20-feature-board-pull-in.md` rules 9 to 18).
 
-- **Eligible** (rule 10): an item of the caller's organization, not deleted, that is a Discovery idea with no board; a Discovery idea on another board, live or archived; or a backlog Issue (Delivery phase, no sprint). **Never the board's own ideas** — naming one on `PUT` is refused, and so is an Issue already on that board. An Issue in a sprint is refused.
+- **Eligible** (rule 10): an item of the caller's organization, not deleted, **with no parent (a task is never eligible; decided 2026-10-16)**, that is a Discovery idea with no board; a Discovery idea on another board, live or archived; or a backlog Issue (Delivery phase, no sprint). **Never the board's own ideas** — naming one on `PUT` is refused, and so is an Issue already on that board. An Issue in a sprint is refused.
 - **Rights** (rule 11), evaluated against the effective role (the target's, through View As): an **Org Admin** may pull anything eligible; a **User** only Discovery ideas they authored (so in practice only on create, because `PUT` is Org Admin only); **Issues are Org Admin only**. Read Only cannot create a board (`403`, unchanged) and a direct Site Admin is refused every board write (`403`, unchanged).
-- **Refusal** (rule 12): `400`, title `One or more fields are invalid.`, keyed `pullItemIds`, nothing saved — a new board is not created, an edit changes nothing (not even its lanes). A malformed request (the cap, a non-array, the first malformed id, a repeated id) reports one message; the per-item problems below (not found, no longer available, already on the board, in a sprint, rights) are all reported together, one message each, naming the item by title:
+- **Refusal** (rule 12): `400`, title `One or more fields are invalid.`, keyed `pullItemIds`, nothing saved — a new board is not created, an edit changes nothing (not even its lanes). A malformed request (the cap, a non-array, the first malformed id, a repeated id) reports one message; the per-item problems below (not found, no longer available, already on the board, in a sprint, a task, waiting on open tasks, rights) are all reported together, one message each, naming the item by title:
   - more than 100 ids: `At most 100 items can be pulled in one save.`
   - not an array of ids (any other JSON value, or a non-string entry): `Pull item ids must be an array of ids.`
   - an entry that is not a GUID: `'{value}' is not a valid item id.`
@@ -136,9 +136,11 @@ Update board name or selected statuses.
   - deleted, or gone/moved/promoted between the picker and the commit: `'{title}' is no longer available.`
   - already on this board: `'{title}' is already on this board.`
   - in a sprint: `'{title}' is in a sprint, so it cannot be pulled. Move it back to the backlog first.`
+  - a task, meaning an item with a parent (added 2026-10-16): `'{title}' is a task, so it cannot be pulled. Tasks stay on their parent's reference board.` Not overridable by `forceReason`.
   - an Issue, for a User: `'{title}' is an issue, and only an Org Admin can pull issues.`
   - in a reference lane with open tasks (added 2026-10-16): `'{title}' is waiting on {n} open tasks, so it cannot be pulled.` An Org Admin may override with a non-empty `forceReason` on the request (`403` for anyone else); audited as `IdeaMovedPastOpenTasks`.
   - an idea a User did not author: `You can pull only ideas you created; '{title}' was created by someone else.`
+- **Auto-create** (decided 2026-10-16): a pulled item placed in an `autoCreateTask` lane gets its one task in this same transaction; a failure fails the whole save. The same holds for an item an `ideaMoves` entry sends into such a lane.
 - **Placement** (rule 13): the lanes are those this same save leaves — after any lane removal and its `ideaMoves` on a `PUT`. An item whose status is a lane keeps it; any other lands in the board's leftmost lane and takes that lane's status. The model has no card position, so cards in a lane are ordered by the list sort as before; a pull neither adds nor changes a position, and the response and the audit list items oldest first.
 - **Backlog Issues** (rule 14): returned to Discovery first (delivery status and sprint cleared; effort, the promotion snapshot and tasks kept), then placed. The archived-board refusal of the standalone `return-to-discovery` does not apply: the Issue is leaving that board.
 - **One commit** (rule 16): the board, its lanes, `ideaMoves` and every pulled item commit in one transaction. Each item is written only if it is still as it was read (board, status, phase, sprint), so one that changed in between fails the whole save with the `'{title}' is no longer available.` refusal above. `updated_at_utc` and `updated_by_user_id` are stamped on each item. **No notification is sent and followers are unchanged** (rule 15).
@@ -157,7 +159,7 @@ The pull picker's read (added 2026-10-13, slice 180). One tab per `source`; each
   - `page`, `pageSize` — the standard paging (default 20, 1–100)
 - **Response:** `200`: `{ items, page, pageSize, totalCount }`, oldest first, then title, then id. Each item: `ideaId`, `title`, `authorUserId`, `authorName`, `boardId` and `boardName` (`null` in the pool), `statusId`, `statusName`, `phase`, `tags` (names, alphabetical), `priority`, `upvoteCount`, `isMine`.
 - **Errors:** `400` (`source`), `401`, `403`, `404`.
-- **Rules:** a read only. The list can be stale by the time the form is saved; `pullItemIds` is checked again then.
+- **Rules:** items with a parent are never offered (decided 2026-10-16). A read only. The list can be stale by the time the form is saved; `pullItemIds` is checked again then.
 
 ### `POST /api/v1/boards/{boardId}/archive` and `POST /api/v1/boards/{boardId}/unarchive`
 Archive a board, or bring it back (added 2026-09-27; `decisions.md`). Until then boards had no delete endpoint or action; archiving replaces that absence.
@@ -196,7 +198,7 @@ Persist swimlane reorder immediately after drag-and-drop.
 - **Lane item fields (added) on every lane in a board read and write.** The lane-save routes that carry `isFinal` and `referencesBoardId` are `PUT /api/v1/boards/{boardId}`, `POST /api/v1/organizations/{organizationId}/boards` and `POST /api/v1/boards/{boardId}/swimlanes/reorder`:
   - `isFinal` boolean, default `false`. A board may have several final lanes.
   - `referencesBoardId` GUID or `null`: the board whose tasks this lane hands work to.
-  - `autoCreateTask` boolean, default `false`: entering the lane creates one task on the referenced board. Setting it on a lane with no `referencesBoardId` is `422` `autoCreateTaskRequiresReference`.
+  - `autoCreateTask` boolean, default `false`: every entry into the lane (a status move, a pull with `pullItemIds`, a bulk lane move with `ideaMoves`; decided 2026-10-16) creates one task on the referenced board, in the same transaction; a failure rolls the write back. Setting it on a lane with no `referencesBoardId` is `422` `autoCreateTaskRequiresReference`.
 - **Rules:**
   - A lane may not reference its own board.
   - A board that is the target of a reference may not itself contain a reference lane, and a board with a reference lane may not be a target (one level at launch).

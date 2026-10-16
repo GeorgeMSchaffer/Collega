@@ -85,11 +85,11 @@ board where it now belongs.
    for a new board and for an existing live board's edit, gains an optional step, *Add existing
    items*, with three tabs: **Unassigned ideas**, **Ideas on other boards** and **Backlog Issues**
    (the last shown only to an Org Admin). Each tab searches by title and filters by tag and author,
-   and lists items of the caller's organization only, **never the board's own ideas**. An archived
+   and lists items of the caller's organization only, **never the board's own ideas** and **never a task** (an item with a parent; 2026-10-16). An archived
    board takes no pull: it is read-only and the edit already refuses (`409`). When one edit both
    removes a lane and pulls items, the lane removal and its `ideaMoves` apply first, and rule 13
    places pulled items on the board's lanes as they stand after that save.
-10. **What is eligible.** An item must belong to the organization, not be deleted, and be one of:
+10. **What is eligible.** An item must belong to the organization, not be deleted, have no parent (a task is never eligible, and is refused if named; 2026-10-16), and be one of:
     - a **Discovery idea with no board**;
     - a **Discovery idea on another board**, live or archived (never the target board's own);
     - a **backlog Issue**: `Delivery` phase, no sprint.

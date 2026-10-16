@@ -167,6 +167,6 @@ Every rule and decided default in `contracts/outcomes.md`, role matrix (Org Admi
 
 ## Self-review against the spec
 
-- **Spec coverage.** Behavior 1–4 (Task 6, 8), 6 (Task 2), 7 (Task 12–13), 9 (all tasks reuse existing role helpers). Data model: lanes/final (2), keys (4), parent (6), dependencies (8), sprints (10), Outcomes (12–13). Effort entry (8). Plan 1 carried items: 1–3 → Task 4/8/9 and Rulings 3, 9; 4 → Task 4; 5, 8, 9, 11 → Task 0; 6 → Task 0 and 6; 7 → Task 2; 10 → Task 4; 12 → noted for the first task that runs the seed integration tests.
+- **Spec coverage.** Behavior 1–4 (Task 6, 8), 6 (Task 2), 7 (Task 12–13), 10 (all tasks reuse existing role helpers). Data model: lanes/final (2), keys (4), parent (6), dependencies (8), sprints (10), Outcomes (12–13). Effort entry (8). Plan 1 carried items: 1–3 → Task 4/8/9 and Rulings 3, 9; 4 → Task 4; 5, 8, 9, 11 → Task 0; 6 → Task 0 and 6; 7 → Task 2; 10 → Task 4; 12 → noted for the first task that runs the seed integration tests.
 - **Open for the owner.** Task 13's metric shape was decided 2026-10-16. Order against Sprint 14's QA slices (181, 184) and the cutover is the owner's call.
 - **Not here.** UI (Plan 3), removals (Plan 4). The UI plan needs: the lane-save shape, `itemKey`, `taskCounts`, `blockedBy`, sprint reads, the Outcome routes — all fixed by Tasks 0–14.

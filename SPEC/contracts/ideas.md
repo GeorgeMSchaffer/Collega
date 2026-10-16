@@ -225,7 +225,7 @@ Return full idea detail.
   - `proposedSolutions` string array (added 2026-09-27)
   - `impactRationale` string (added 2026-09-27)
   - `description` string or `null`
-  - `metrics` array, the item's projected and realized values as `GET /ideas/{ideaId}/metrics` returns them; `[]` for a card with a parent (added 2026-10-16, `contracts/metric-types.md`)
+  - `metrics` array, the item's projected and realized values as `GET /ideas/{ideaId}/metrics` returns them; `[]` for a card with a parent (added 2026-10-16, `contracts/metric-types.md`) and `[]` for a direct Site Admin, who sees values only through View As (decided 2026-10-16)
   - `priority`
   - `ideaTypeId`
   - `ideaTypeName`
@@ -284,6 +284,7 @@ Update idea content.
   - `mentionEmails` optional string array
   - `effort` optional string: `Low`, `Medium`, or `High` — the optional Discovery-phase effort estimate (added 2026-09-11, Issues and Delivery Slice 1)
 - **Response:** the detail shape of `GET /api/v1/ideas/{ideaId}` (stated there).
+- **Updating a task (an item with a parent; decided 2026-10-16):** the same route, task fields only. The author or an in-scope Org Admin may change `title`, `description`, `assigneeUserIds` and `tagNames`, under the rules above; `title` is required. `problem`, `proposedSolutions`, `impactRationale`, `priority`, `ideaTypeId`, `businessImpactId`, `dueDate`, `effort` and `mentionEmails` are not taken: they are ignored if sent, as on `POST …/board-tasks`, and are not required. The idea-only fields that are read stay `null` (or `[]`); `mentionEmails` has no read field and no mention notification is sent. Sprint and blockers keep their own routes. Read Only `403`; a direct Site Admin as for any idea update.
 - **Errors:**
   - unauthorized description changes return `403 Forbidden`.
   - unauthorized assignment changes return `403 Forbidden`.
@@ -364,5 +365,6 @@ Soft-delete an idea while preserving its row and audit history.
   - Moving an idea into a reference lane requires `effort` to be set; otherwise `422` (`effortRequiredForReferenceLane`).
   - A task cannot itself be a parent (no sub-tasks at launch) and cannot be grouped under an Outcome; both `422`.
   - Moving an idea out of a reference lane while any of its tasks is not in a final lane is refused with `422` (`parentHasOpenTasks`). An Org Admin may send `forceReason` (non-empty text) on the move to override; any other role sending it gets `403`. The override is audited as `IdeaMovedPastOpenTasks` (reason, open task count) and does not touch the tasks.
-  - Moving an idea into a lane with `autoCreateTask` creates one task on the referenced board in the same transaction (the idea's title, the board's first lane); a failure rolls the move back.
+  - A card entering a lane with `autoCreateTask` by any path (this route, a pull with `pullItemIds`, or a bulk lane move with `ideaMoves` on a board edit; decided 2026-10-16) gets one task on the referenced board in the same transaction (the card's title, the board's first lane); a failure rolls the whole write back.
+  - An item with a parent is never pulled onto another board (`contracts/boards.md`, "Pulling items").
   - A task cannot leave its board's first lane while any blocker is not in a final lane; `422` (`taskBlocked`).
