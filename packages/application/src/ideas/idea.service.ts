@@ -413,6 +413,14 @@ export class IdeaService {
       statusId,
       {
         ...command,
+        // Not taken on a task, but the columns are NOT NULL: the title stands in, and reads do not
+        // show it.
+        problem: command.title,
+        proposedSolutions: [command.title],
+        impactRationale: command.title,
+        priority: 'Medium',
+        dueDate: null,
+        mentionEmails: null,
         ideaTypeId: defaultType.id,
         businessImpactId: defaultImpact.id,
         fieldValues: null,

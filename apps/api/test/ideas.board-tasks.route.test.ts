@@ -18,10 +18,6 @@ const URL = `/api/v1/ideas/${PARENT}/board-tasks`
 
 const VALID = {
   title: 'Wire the form',
-  problem: 'Nothing sends the form.',
-  proposedSolutions: ['Post it.'],
-  impactRationale: 'Unblocks the parent.',
-  priority: 'Medium',
 }
 
 type Seen = { ideaId: string; command: CreateBoardTaskCommand }
@@ -75,7 +71,7 @@ describe('POST /ideas/:ideaId/board-tasks body', () => {
 
     expect(result).toEqual({ ideaId: 'new-task', parentIdeaId: PARENT })
     expect(seen[0]?.ideaId).toBe(PARENT)
-    expect(seen[0]?.command).toMatchObject({ title: VALID.title, priority: 'Medium' })
+    expect(seen[0]?.command).toMatchObject({ title: VALID.title })
   })
 
   it('drops ideaTypeId, businessImpactId, statusId and fieldValues if sent', async () => {

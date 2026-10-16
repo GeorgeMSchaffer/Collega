@@ -31,11 +31,12 @@ export type CreateIdeaCommand = {
   readonly fieldValues: readonly IdeaFieldValueWrite[] | null
 }
 
-/** `POST /ideas/{ideaId}/board-tasks`: the create shape minus the board, status, type, impact and
- * fields. The task takes the organization's default type and impact (Board References Ruling 2). */
-export type CreateBoardTaskCommand = Omit<
+/** `POST /ideas/{ideaId}/board-tasks`: a task takes only these four. The idea-only fields are not
+ * taken; the service stores the organization's default type and impact (Board References Ruling 2)
+ * and placeholders where the schema needs a value. */
+export type CreateBoardTaskCommand = Pick<
   CreateIdeaCommand,
-  'statusId' | 'ideaTypeId' | 'businessImpactId' | 'fieldValues'
+  'title' | 'description' | 'assigneeUserIds' | 'tagNames'
 >
 
 /** `POST /organizations/{organizationId}/ideas`: the create shape without `statusId`, which a pool
