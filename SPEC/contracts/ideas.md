@@ -225,6 +225,7 @@ Return full idea detail.
   - `proposedSolutions` string array (added 2026-09-27)
   - `impactRationale` string (added 2026-09-27)
   - `description` string or `null`
+  - `metrics` array, the item's projected and realized values as `GET /ideas/{ideaId}/metrics` returns them; `[]` for a card with a parent (added 2026-10-16, `contracts/metric-types.md`)
   - `priority`
   - `ideaTypeId`
   - `ideaTypeName`

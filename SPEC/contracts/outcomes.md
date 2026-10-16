@@ -49,8 +49,8 @@ Shared by every route below:
   - `ideaCount`, `doneIdeaCount` integers — items grouped under the Outcome, and of those the
     ones in a final lane (`board_swimlanes.is_final`), which are done
   - `taskCount`, `doneTaskCount` integers — the same over the grouped items' child cards
-  - projected and realized totals per metric type, flat on the item; the exact property shape is
-    settled with the metric-types contract, which is not yet written
+  - `metricTotals` — projected and realized totals per active metric type, shape and rules in
+    `contracts/metric-types.md` ("Outcome totals", 2026-10-16)
   - `sprintStart`, `sprintEnd` — `YYYY-MM-DD`: the earliest sprint start and the latest sprint end
     among the sprints of the grouped items' tasks; **both `null` when none has a sprint**
 
@@ -108,7 +108,7 @@ Create an Outcome.
     or after start; `ownerUserId` optional; `color` optional (absent or `null`: random palette
     colour, decision 5).
 - **Response:** `201` with the created Outcome item including its rollup (`ideaCount`,
-  `doneIdeaCount`, `taskCount`, `doneTaskCount` 0, the metric totals zero, `sprintStart` and
+  `doneIdeaCount`, `taskCount`, `doneTaskCount` 0, `metricTotals` `[]`, `sprintStart` and
   `sprintEnd` `null`) (decision 8).
 - **Errors:**
   - `400` `name` is blank or over 120 characters; `description` is

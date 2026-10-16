@@ -157,7 +157,7 @@ Create on a disabled board, cross-board item, completion carry-over with mixed f
 
 ## Task 13 (slice 233, backend): Outcome rollups and metric types
 
-The spec leaves the metric-type table unsettled ("reuse the user-defined fields machinery where it fits"). **Stop and ask the owner** before this task: decide the shape (reuse custom field definitions of numeric type with projected/realized values per item, versus a new `metric_types` table). Everything else in the rollup (`ideaCount`, `doneIdeaCount`, `taskCount`, `doneTaskCount`, sprint span, quarter placement) is derived read-side and can be built before that decision; value totals wait for it.
+**Decided 2026-10-16** (`SPEC/decisions.md`, "Metric types are an organization table with projected and realized values per item"): a new `metric_types` table and an `idea_metric_values` table, specified in `contracts/metric-types.md`. Build order: the schema (the tenth S0.2 amendment, which also carries slice 236's `board_swimlanes.auto_create_task`), then the metric-type routes, the item value routes, the idea detail's `metrics`, and the Outcome `metricTotals`. The count and sprint-span half of the rollup is already merged.
 
 ## Task 14 (slice 234, QA): Outcomes
 
@@ -168,5 +168,5 @@ Every rule and decided default in `contracts/outcomes.md`, role matrix (Org Admi
 ## Self-review against the spec
 
 - **Spec coverage.** Behavior 1–4 (Task 6, 8), 6 (Task 2), 7 (Task 12–13), 9 (all tasks reuse existing role helpers). Data model: lanes/final (2), keys (4), parent (6), dependencies (8), sprints (10), Outcomes (12–13). Effort entry (8). Plan 1 carried items: 1–3 → Task 4/8/9 and Rulings 3, 9; 4 → Task 4; 5, 8, 9, 11 → Task 0; 6 → Task 0 and 6; 7 → Task 2; 10 → Task 4; 12 → noted for the first task that runs the seed integration tests.
-- **Open for the owner.** Task 13's metric shape (the plan stops there). Order against Sprint 14's QA slices (181, 184) and the cutover is the owner's call.
+- **Open for the owner.** Task 13's metric shape was decided 2026-10-16. Order against Sprint 14's QA slices (181, 184) and the cutover is the owner's call.
 - **Not here.** UI (Plan 3), removals (Plan 4). The UI plan needs: the lane-save shape, `itemKey`, `taskCounts`, `blockedBy`, sprint reads, the Outcome routes — all fixed by Tasks 0–14.
