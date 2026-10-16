@@ -88,6 +88,7 @@ import type {
   PromoteIdeaCommand,
   TaskCounts,
   UpdateIdeaCommand,
+  UpdateTaskCommand,
 } from './models.js'
 import {
   IDEA_CSV_CORE_COLUMNS,
@@ -852,6 +853,94 @@ export class IdeaService {
     // specific mention row for this same save (feature rules 12 and 18).
     if (edited) {
       await this.notifyIdeaFollowers('IdeaEdited', idea, actorId, { exclude: newMentions })
+    }
+
+    return this.projectDetail(idea)
+  }
+
+  /**
+   * Whether `ideaId` is a task the caller can see, so the update route knows which body to read: a
+   * task takes only its four fields. `false` for anything missing or out of scope, which leaves the
+   * idea path to report it exactly as before.
+   */
+  async isTask(ideaId: string): Promise<boolean> {
+    const idea = await this.ideaRepository.getById(ideaId, false)
+    return (
+      idea !== null &&
+      idea.parentIdeaId !== null &&
+      (this.currentUser.role === Role.SiteAdmin ||
+        this.currentUser.organizationId === idea.organizationId)
+    )
+  }
+
+  /**
+   * `PUT /ideas/{ideaId}` on a task (SPEC/contracts/ideas.md "Updating a task", decided
+   * 2026-10-16): the author or an in-scope Org Admin changes the title, description, assignees and
+   * tags under the idea update's rules. Everything else on the row is left as it is, and no
+   * mention notification is sent.
+   */
+  async updateTask(ideaId: string, command: UpdateTaskCommand): Promise<IdeaDetail> {
+    ensureNotDirectSiteAdmin(this.currentUser)
+    this.requireIdeaEditRole()
+
+    let idea = await this.ideaRepository.getById(ideaId, false)
+    if (!idea) {
+      throw new NotFoundError('Idea not found.')
+    }
+    this.ensureOrganizationScope(idea.organizationId)
+    if (idea.parentIdeaId === null) {
+      // Only if it stopped being a task since the route asked.
+      throw new ConflictError('This item is no longer a task.')
+    }
+    await this.ensureIdeaBoardNotArchived(idea)
+
+    const now = this.clock.now()
+    const actorId = this.requireAuthenticatedUserId()
+    if (!this.canAdministerIdeaContent(idea, actorId)) {
+      throw new ForbiddenError('Only the author or an Org Admin can edit this task.')
+    }
+
+    const before = idea
+    const existingAssignees = [...idea.assigneeUserIds]
+    const assigneeIds = await this.resolveAssignees(
+      idea.organizationId,
+      command.assigneeUserIds,
+      existingAssignees,
+    )
+    const tagIds = await this.resolveTags(idea.organizationId, command.tagNames, now, actorId)
+
+    idea = runDomain(
+      updateIdeaContent,
+      idea,
+      {
+        title: command.title ?? '',
+        description: command.description,
+        // Not taken on a task: the stored placeholders stay.
+        problem: idea.problem,
+        proposedSolutions: idea.proposedSolutions,
+        impactRationale: idea.impactRationale,
+        priority: idea.priority,
+        businessImpactId: idea.businessImpactId,
+        dueDate: idea.dueDate,
+      },
+      now,
+      actorId,
+    )
+    idea = runDomain(replaceIdeaAssignees, idea, assigneeIds, now, actorId)
+    idea = runDomain(replaceIdeaTags, idea, tagIds, now, actorId)
+    const edited = ideaEdited(before, idea)
+
+    await this.ideaRepository.update(idea)
+    await this.addFollowers(
+      idea.id,
+      assigneeIds.filter((id) => !existingAssignees.includes(id)),
+      now,
+    )
+    await this.unitOfWork.saveChanges()
+
+    await this.auditIdea('IdeaUpdated', idea, actorId, `Idea '${idea.title}' updated.`, now, null)
+    if (edited) {
+      await this.notifyIdeaFollowers('IdeaEdited', idea, actorId)
     }
 
     return this.projectDetail(idea)

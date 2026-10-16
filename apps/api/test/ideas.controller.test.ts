@@ -37,6 +37,7 @@ function controller(): { controller: IdeasController; calls: Call[] } {
   const ideas = {
     create: forbidden('create'),
     update: forbidden('update'),
+    isTask: async () => false,
     listByBoard: recorded('listByBoard'),
     listByOrganization: recorded('listByOrganization'),
   } as unknown as IdeaService
@@ -47,6 +48,7 @@ function controller(): { controller: IdeasController; calls: Call[] } {
 function acceptingController(): { controller: IdeasController; calls: Call[] } {
   const calls: Call[] = []
   const ideas = {
+    isTask: async () => false,
     update: async (...args: unknown[]) => {
       calls.push({ method: 'update', args })
       return {}

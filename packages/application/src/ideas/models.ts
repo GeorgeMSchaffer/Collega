@@ -40,6 +40,9 @@ export type CreateBoardTaskCommand = Pick<
   'title' | 'description' | 'assigneeUserIds' | 'tagNames'
 >
 
+/** `PUT /ideas/{ideaId}` on a task: the same four fields; the idea-only ones are not taken. */
+export type UpdateTaskCommand = CreateBoardTaskCommand
+
 /** The card a task is auto-created for on entering an `autoCreateTask` lane. */
 export type AutoCreateTaskParent = {
   readonly id: string
