@@ -82,7 +82,7 @@ describe('signing in', () => {
       signInAgainst([
         `${SESSION_COOKIE_NAME}=${TOKEN}; Path=/; HttpOnly; SameSite=Lax; Max-Age=28800`,
       ]),
-    ).rejects.toThrow('NEXT_REDIRECT /boards')
+    ).rejects.toThrow('NEXT_REDIRECT /')
     expect(session.issueSession).toHaveBeenCalledWith(TOKEN, 28800)
   })
 
@@ -101,7 +101,7 @@ describe('signing in', () => {
       signInAgainst([
         `${SESSION_COOKIE_NAME}=${TOKEN}; Expires=Wed, 09 Jun 2027 10:18:14 GMT; Path=/; HttpOnly`,
       ]),
-    ).rejects.toThrow('NEXT_REDIRECT /boards')
+    ).rejects.toThrow('NEXT_REDIRECT /')
     expect(session.issueSession).toHaveBeenCalledWith(TOKEN, 28800)
   })
 
@@ -112,7 +112,7 @@ describe('signing in', () => {
         `${SESSION_COOKIE_NAME}=${TOKEN}; Path=/; HttpOnly`,
         'locale=en-GB; Path=/',
       ]),
-    ).rejects.toThrow('NEXT_REDIRECT /boards')
+    ).rejects.toThrow('NEXT_REDIRECT /')
     expect(session.issueSession).toHaveBeenCalledWith(TOKEN, 28800)
   })
 
