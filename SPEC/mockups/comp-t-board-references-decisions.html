@@ -524,7 +524,8 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
                 <div class="banner"><span class="ic">i</span><span><b>This board is archived.</b> The idea is read only, except its Value. Realized values often arrive after the work is done.</span></div>
                 <div class="field"><span class="lbl2">Title</span><span class="in ro">Retire paper timesheets</span></div>
                 <div class="field"><span class="lbl2">Description</span><span class="in ro ta">Move all depot timesheets to the scanner app and stop printing the weekly packs.</span></div>
-                <div class="sect"><div class="sechd"><h3>Value</h3><span class="chip pri">Open for edits</span></div>
+                <div class="sect"><div class="sechd"><h3>Value</h3></div>
+                  <div class="note" style="margin-bottom:6px">This board is archived. Values can still be updated.</div>
                   <div class="vt">
                     <div class="vt-row hd"><span>Metric</span><span style="text-align:right">Projected</span><span class="rz">Realized &mdash; enter now</span></div>
                     <div class="vt-row"><div class="nm">Hours saved<small>unit: h</small></div>
@@ -561,10 +562,6 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
           <li>Entry: the field takes digits, one ".", and a leading "-"; typed commas are stripped as you type, so "1,200" and "1200" both end as 1200.</li>
           <li>When the idea is in a final lane (frame B, Completed) the Realized column header is tinted and reads "Realized &mdash; enter now". Frame A is in a lane that is not final, so its header is plain. Nothing is blocked either way.</li>
           <li>Source: <code>contracts/metric-types.md</code> (<code>PUT /ideas/{ideaId}/metrics</code>), decision 4 of "Board References follow-ups" (2026-10-16).</li>
-        </ul></div>
-      <div class="oq"><b>Open questions</b>
-        <ul>
-          <li>On an archived board, should the unlocked Value be called out (drawn: a chip) or just be quietly editable?</li>
         </ul></div>
     </div>
   </section>
@@ -905,7 +902,7 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
             <div><dt>SPRINTS</dt><dd>No sprint dates</dd></div>
             <div><dt>IDEAS</dt><dd>2 &middot; 0 done</dd></div>
           </dl>
-          <div class="empty"><b>No values yet</b><span>Projected and realized values entered on this Outcome's ideas add up here, one card per metric type.</span><span class="note">Add them in each idea's Value section. Metric types are managed in Settings.</span></div>
+          <div class="empty"><b>No values yet</b><span>Projected and realized values entered on this Outcome's ideas add up here, one card per metric type.</span><span class="lbl">Org Admin</span><a class="btn sm" href="#s1" onclick="go(1);return false">Set up metric types</a><span class="lbl">Everyone else</span><span class="note">No values yet &mdash; add them on each idea.</span></div>
         </div></div>
 
       <div class="notes"><h3>Notes</h3>
@@ -914,10 +911,6 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
           <li>The meter is clipped at 100% with an "over projected" marker when realized passes projected; a negative total shows an empty meter and the number in the danger colour; the numbers are always exact.</li>
           <li><b>Per-idea breakdown (needs a contract addition).</b> The cards list each idea's key, title, projected and realized under the type's totals. <code>metricTotals</code> returns totals only today, so the per-idea values need a contract addition in a later backend slice; this comp draws the decided design, and the contract shape is not set here.</li>
           <li>Source: <code>contracts/outcomes.md</code> and <code>contracts/metric-types.md</code> "Outcome totals"; State is not returned by the API.</li>
-        </ul></div>
-      <div class="oq"><b>Open questions</b>
-        <ul>
-          <li>The empty state could link to Settings for an Org Admin; not drawn because the empty case is about ideas lacking values, not types.</li>
         </ul></div>
     </div>
   </section>

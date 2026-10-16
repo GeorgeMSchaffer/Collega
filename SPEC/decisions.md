@@ -34,7 +34,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-10-16 | A reference lane locks its card until its tasks are final | active | full below |
 | 2026-10-15 | Cutover follow-up: migration check, SITE_ADMIN_PASSWORD, App Admin in the README, rollback wording | active | full below |
 | 2026-10-15 | The 17 open Outcome contract questions are decided | active | full below |
-| 2026-10-15 | Board References replace the Delivery phase | active | full below |
+| 2026-10-15 | Board References replace the Delivery phase | active | [2026-10-04 to 2026-10-15](decisions/archive-2026-10-04-to-2026-10-15.md) |
 | 2026-10-15 | The four open Backlog Add New Issue readings are decided | active | [2026-10-04 to 2026-10-15](decisions/archive-2026-10-04-to-2026-10-15.md) |
 | 2026-10-15 | Issues can be added directly from the Backlog | amended | [2026-10-04 to 2026-10-15](decisions/archive-2026-10-04-to-2026-10-15.md) |
 | 2026-10-13 | Boards can pull in existing items, and ideas can have no board | active | [2026-10-04 to 2026-10-15](decisions/archive-2026-10-04-to-2026-10-15.md) |
@@ -144,7 +144,9 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 6. **Metric values.** The unit always follows the number ("12,500.00 $", "120 h"). Display uses the browser locale's thousands separator; input takes digits, one ".", a leading "-", and strips typed commas. The unit-change warning "Existing values are not converted." shows inline while a type's unit is edited. "Show archived" on the metric types list is off by default and not remembered. When an idea is in a final lane, the Realized column header is tinted and reads "Realized — enter now"; nothing is blocked. A direct App Admin (Site Admin without View As) sees "Values are visible through View As." in place of the Value section.
 7. **Outcome page.** The meter is clipped at 100% with an "over projected" marker when realized exceeds projected; a negative total shows an empty meter and the number in the danger colour; numbers are always exact. A type with only projected values gets a card with an empty meter, "Realized: not yet". The page shows per-idea values: a breakdown under each type card (idea key, title, projected, realized).
 8. **Archiving a metric type.** If any items hold values for the type, archiving asks first: "Archive '{name}'? {n} items keep their values; it stops counting in Outcome totals. You can restore it." A type nothing uses archives without asking.
-9. **Pull picker.** No standing note about tasks. "N tasks are hidden — they stay on their parent's board." appears only when the search would have matched tasks.
+9. **Archived board.** An idea on an archived board shows one line above its Value section: "This board is archived. Values can still be updated."
+10. **Empty Outcome.** An Outcome with no metric values shows, to an Org Admin, a "Set up metric types" link to Settings → Metric types; to everyone else, "No values yet — add them on each idea."
+11. **Pull picker.** No standing note about tasks. "N tasks are hidden — they stay on their parent's board." appears only when the search would have matched tasks.
 
 **Why.** (1) A card that slips into a hand-off lane without its task defeats the lane's promise, and a whole-save refusal is the only way to avoid that without half-applying a board edit. (2) The texts match the pull sentence. (3) A control the server will refuse is better disabled with its reason than offered and refused; keeping the override off the drag path stops it happening by accident, and a required reason at the button means nothing is audited without one. (4) Status is the field people most expect to change in a drawer. (5) A switch that is on with no reference is an invalid state; saying so inline beats a server error, and leaving existing cards alone keeps the setting predictable. (6) One rule for unit placement and number entry removes the symbol-before-or-after question. (7) Owners reading an Outcome want to see which ideas make up a total. (8) A permanent note is noise for people who never meet a task in the picker.
 
@@ -153,7 +155,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 **Consequences.**
 - `contracts/boards.md` (`ideaMoves` rules) and `contracts/ideas.md` (`parentHasOpenTasks`) are amended; the UI section of `20-feature-board-references.md` points here; `comp-t-board-references-decisions.html` is updated to match.
 - **Contract additions needed, for later backend slices (shapes not set here):** per-idea projected and realized values for each metric type on the Outcome read (`metricTotals` returns totals only today); a hidden-task count on the pull picker read for the current search; and an activity/audit read for an idea (no route reads audit events today), which the activity entry needs.
-- UI work follows the comp once the owner approves it. Still open in the comp: how an unlocked Value is called out on an archived board, the empty Outcome state's Settings link, and switch placement on the Statuses row.
+- UI work follows the comp once the owner approves it. Still open in the comp: switch placement on the Statuses row.
 
 ---
 
@@ -250,17 +252,3 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 - `SPEC/20-feature-issues-and-delivery.md` and `SPEC/30-Contracts.md` gain pointers only.
 
 ---
-
-## 2026-10-15 — Board References replace the Delivery phase
-
-> Supersedes in part: `20-feature-issues-and-delivery.md` Slice 1 (the Discovery/Delivery phase, the promotion gate as a separate step, the fixed delivery status set, checklist Tasks, org-wide Sprints) and the Backlog-of-Issues model behind "Issues can be added directly from the Backlog". Outcomes (Slice 2) stands and is extended. Full design: `SPEC/20-feature-board-references.md`.
-
-**Decided by the user.** An idea has one lifecycle on one board. A board's lane may be a **Board Reference**: it references another board, and entering it lets the idea spawn **tasks** on that board. A task is an `ideas` row on the child board with `parent_idea_id`, so it has the child board's statuses, assignees, tags and (optionally) sprint. Tasks run in parallel unless one names another as a blocker. When every task is in a final lane the parent is offered the move to its next lane; a person confirms, nothing moves automatically. Sprints become a per-board option and hold tasks from many ideas. A board marks done lanes with `board_swimlanes.is_final`. Items are keyed `PREFIX-n` per board. Value is typed metrics, projected then realized, summed per Outcome.
-
-**Why.** The old split made execution a second, narrower tool: tasks had no status flow, could not be sequenced, and could not be time-boxed with the team's other work. One item type reuses every board mechanism instead of rebuilding them for a second entity.
-
-**Consequences.**
-- The S0.2 schema freeze is amended a ninth time (additive columns and one table in Plan 1; the drops come with Plan 4).
-- Delivery code stays in place and working until the replacements exist; Plan 4 retires it.
-- The 17 Outcomes questions in `contracts/outcomes.md` are answered in `20-feature-board-references.md` and copied into the contract by the Outcomes backend slice.
-- Entry to a reference lane requires Effort; no per-lane rules.
