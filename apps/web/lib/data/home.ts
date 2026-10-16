@@ -69,7 +69,8 @@ function ideaCount(reader: string, organizationId: string, params: URLSearchPara
   return ideaPage(reader, organizationId, params, 1).then((page) => page.totalCount)
 }
 
-function toPriority(value: string): Priority {
+function toPriority(value: string | null): Priority | null {
+  if (value === null) return null
   return value === 'Critical' || value === 'High' || value === 'Medium' ? value : 'Low'
 }
 

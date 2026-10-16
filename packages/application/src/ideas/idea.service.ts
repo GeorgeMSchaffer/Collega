@@ -528,7 +528,7 @@ export class IdeaService {
 
     await this.auditIdea('IdeaCreated', idea, authorId, `Idea '${idea.title}' created.`, now, {
       title: idea.title,
-      priority,
+      priority: parentIdeaId === null ? priority : null,
       statusId: idea.statusId,
     })
     await this.emitFieldValueAudit(idea, new Map(), authorId, now)
@@ -1367,11 +1367,11 @@ export class IdeaService {
       const cells: string[] = [
         idea.title,
         idea.description ?? '',
-        idea.problem,
+        idea.parentIdeaId === null ? idea.problem : '',
         // One quoted cell, one solution per line (SPEC/30-Contracts.md export).
-        idea.proposedSolutions.join('\n'),
-        idea.impactRationale,
-        idea.priority,
+        (idea.parentIdeaId === null ? idea.proposedSolutions : []).join('\n'),
+        idea.parentIdeaId === null ? idea.impactRationale : '',
+        idea.parentIdeaId === null ? idea.priority : '',
         this.ideaTypeName(ideaTypeLookup, idea.ideaTypeId),
         this.businessImpactName(businessImpactLookup, idea.businessImpactId),
         this.statusName(statusInfo, idea.statusId),

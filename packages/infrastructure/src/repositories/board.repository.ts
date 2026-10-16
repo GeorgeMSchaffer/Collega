@@ -365,7 +365,7 @@ export class PrismaBoardRepository
         status_id: string
         status_name: string | null
         phase: IdeaPhase
-        priority: Priority
+        priority: Priority | null
         tag_names: string[]
         upvote_count: number
       }[]
@@ -373,7 +373,7 @@ export class PrismaBoardRepository
       SELECT i.id AS idea_id, i.title, i.author_user_id,
         (author.first_name || ' ' || author.last_name) AS author_name,
         i.board_id, board.name AS board_name, i.status_id, status.name AS status_name,
-        i.phase, i.priority,
+        i.phase, CASE WHEN i.parent_idea_id IS NULL THEN i.priority END AS priority,
         COALESCE((
           SELECT ARRAY_AGG(tag.name ORDER BY LOWER(tag.name), tag.name)
           FROM idea_tags AS link INNER JOIN tags AS tag ON tag.id = link.tag_id

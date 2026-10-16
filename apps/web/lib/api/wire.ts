@@ -341,11 +341,11 @@ export type WireIdeaDetail = {
   ideaId: string
   boardId: string | null
   title: string
-  problem: string
+  problem: string | null
   proposedSolutions: readonly string[]
-  impactRationale: string
+  impactRationale: string | null
   description: string | null
-  priority: string
+  priority: string | null
   ideaTypeId: string
   ideaTypeName: string
   businessImpactId: string
@@ -409,7 +409,7 @@ export type WireIdeaListItem = {
   ideaId: string
   boardId: string | null
   title: string
-  priority: string
+  priority: string | null
   ideaTypeName: string
   businessImpactName: string
   assignees: readonly WireIdeaAssignee[]

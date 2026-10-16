@@ -374,7 +374,7 @@ export function IdeaWorkspace({
     {
       key: 'priority',
       header: 'Priority',
-      cell: (idea) => <PriorityMarker priority={idea.priority} />,
+      cell: (idea) => (idea.priority ? <PriorityMarker priority={idea.priority} /> : null),
     },
     { key: 'assignedTo', header: 'Assignees', cell: (idea) => <People people={idea.assignees} /> },
     { key: 'tags', header: 'Tags', cell: (idea) => <TagList tags={idea.tags} max={2} /> },
@@ -623,7 +623,7 @@ export function IdeaWorkspace({
                         name={idea.statusName}
                         color={statusById.get(idea.statusId)?.color}
                       />
-                      <PriorityMarker priority={idea.priority} />
+                      {idea.priority ? <PriorityMarker priority={idea.priority} /> : null}
                       {idea.effort ? <EffortBar effort={idea.effort} /> : null}
                     </div>
                     <TagList tags={idea.tags} />

@@ -220,9 +220,9 @@ export function IdeaRow({
               {idea.hasUpvoted ? ', including yours' : ''}
             </span>
           </span>
-        ) : (
+        ) : idea.priority ? (
           <PriorityMarker priority={idea.priority} />
-        )}
+        ) : null}
         {detail === 'age' ? (
           <span
             className="min-w-[34px] text-right font-mono text-xs text-muted-foreground"

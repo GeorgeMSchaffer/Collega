@@ -181,7 +181,7 @@ export type PullCandidate = {
   readonly statusName: string
   readonly phase: IdeaPhase
   readonly tags: readonly string[]
-  readonly priority: Priority
+  readonly priority: Priority | null
   readonly upvoteCount: number
   readonly isMine: boolean
 }

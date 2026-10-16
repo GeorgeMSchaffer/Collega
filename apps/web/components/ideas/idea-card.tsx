@@ -101,7 +101,7 @@ export function IdeaCard({
         </button>
       </div>
       <div className="flex items-center justify-between gap-1.5">
-        <PriorityMarker priority={idea.priority} />
+        {idea.priority ? <PriorityMarker priority={idea.priority} /> : <span />}
         <People people={idea.assignees} quiet />
       </div>
       {idea.effort ? <EffortBar effort={idea.effort} /> : null}
