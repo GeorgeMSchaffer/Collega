@@ -70,6 +70,15 @@ the idea, and ideas roll up to Outcomes with projected and realized value.
 
 Three screens, drawn in `comp-s-board-reference.html`: (1) Statuses page with the board-reference selector and an explanatory panel, (2) the parent drawer with tasks, sprint chips and a blocked lock, (3) the child board with the sprint header and parent chips. The earlier idea-detail and Outcome-rollup comps (`hifi-idea-and-outcome`) remain the reference for the value table and the Outcome page.
 
+**Decided 2026-10-16** (`decisions.md` "Board References UI: lock, task drawer, lane auto-create, metric display, Outcome totals"; drawn in `comp-t-board-references-decisions.html`):
+
+- **Lock:** a locked card cannot be dragged; other lanes refuse the drop, with a "Waiting on N tasks" tooltip. "Remove from board" and the card's row in another board's pull picker are disabled up front with the same text. An Org Admin gets "Move anyway" from the card menu, a separate override item next to the disabled one, or the picker row, never by drag. The override dialog's confirm stays disabled until a reason is typed; the activity entry is meant to read "Moved past N open tasks — <reason>" with who and when (needs an activity read; see the decision).
+- **Task drawer:** status changes from the drawer (the idea status select, honouring the board's `allowUserStatusUpdate`) as well as by drag; a non-author User sees it read-only.
+- **Lane setting:** removing the lane's board reference turns auto-create off, with the inline note "Auto-create turned off — it needs a referenced board." Turning it on leaves cards already in the lane alone ("Cards already in this lane are not changed.").
+- **Metric values:** the unit follows the number ("12,500.00 $", "120 h"); thousands separators follow the browser locale; input takes digits, one ".", a leading "-", and strips typed commas. Editing a type's unit warns "Existing values are not converted." "Show archived" is off by default and not remembered. In a final lane the Realized header is tinted and reads "Realized — enter now" (nothing is blocked). A direct App Admin sees "Values are visible through View As."
+- **Outcome page:** the meter clips at 100% with an "over projected" marker; a negative total shows an empty meter and the number in the danger colour; numbers are always exact; a type with only projected values shows "Realized: not yet". A per-idea breakdown (key, title, projected, realized) sits under each type card. The current `metricTotals` returns totals only, so this needs a contract addition (backend slice).
+- **Pull picker:** no standing note about tasks; "N tasks are hidden — they stay on their parent's board." appears only when the search would have matched tasks. The picker read needs a hidden-task count (backend slice).
+
 ## Out of scope
 
 Automatic parent moves, story points or velocity, per-task dates (dates live on sprints), nested references more than two levels deep in the UI (the model allows chaining; the UI does not promise it), reporting beyond Outcome rollups, email delivery.

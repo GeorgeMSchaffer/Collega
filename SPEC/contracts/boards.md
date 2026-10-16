@@ -114,11 +114,12 @@ Update board name or selected statuses.
     - `toStatusId` not among `swimlanes`: `Ideas can only move to a lane that stays on the board.`
     - `fromStatusId` not a lane this save removes: `A move must come from a lane this save removes.`
     - the same `fromStatusId` twice: `A removed lane can move its ideas to one lane only.`
+    - a planned card no longer in its `fromStatusId` at commit, when `toStatusId` is an `autoCreateTask` lane (decided 2026-10-16): `'{title}' is no longer in that lane.` Only the first such card is named.
 - **Rules:**
   - The ideas a removal concerns are the lane's **live `Discovery` ideas** — the population `ideaCount` and `laneCounts` count. Soft-deleted ideas and promoted Issues keep their status: an Issue's ideation status is frozen at promotion for provenance (`20-feature-issues-and-delivery.md`), and a soft-deleted idea's is part of its retained record.
   - One target per removed lane, not one for the whole save, so a save that drops two lanes can send their ideas to different places; a client that wants one destination sends the same `toStatusId` for each.
   - An entry for a removed lane that holds no ideas is accepted and does nothing, so a client whose counts were stale by one removal is not refused for it.
-  - The lane change and every move commit in one transaction; a refused save moves nothing. A move only takes an idea still in its `fromStatusId` at commit, so an idea someone moved out of the lane meanwhile keeps their choice.
+  - The lane change and every move commit in one transaction; a refused save moves nothing. A move only takes an idea still in its `fromStatusId` at commit, so an idea someone moved out of the lane meanwhile keeps their choice. **Exception (decided 2026-10-16):** when the move's `toStatusId` is an `autoCreateTask` lane, the save is refused as a whole with `400` keyed `ideaMoves` and `'{title}' is no longer in that lane.` if any planned card is no longer in its `fromStatusId` at commit, so a card cannot reach a hand-off lane without its task; nothing is changed. Moves into ordinary lanes keep the silent skip.
   - Each moved idea gets an `IdeaStatusChanged` audit event in the shape a move on the board writes (`entityType` `Idea`, message `Idea '{title}' moved to a new status.`, metadata `{ fromStatusId, toStatusId }`), attributed to the administrator saving the board. The `BoardUpdated` event's metadata gains `ideaMoves: [{ fromStatusId, toStatusId, ideaCount }]` when anything moved.
   - A move sends no notification (decided by the user 2026-09-29): it is a board reconfiguration, not a decision about any one idea. `20-feature-notifications.md` trigger 4 carries the exception.
 
