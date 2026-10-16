@@ -15,6 +15,7 @@ import { IdeasModule } from './ideas/ideas.module.js'
 import { IssueTasksModule } from './issue-tasks/issue-tasks.module.js'
 import { NotificationsModule } from './notifications/notifications.module.js'
 import { OrganizationsModule } from './organizations/organizations.module.js'
+import { OutcomesModule } from './outcomes/outcomes.module.js'
 import { SprintsModule } from './sprints/sprints.module.js'
 import { StatusesModule } from './statuses/statuses.module.js'
 import { TagsModule } from './tags/tags.module.js'
@@ -37,6 +38,7 @@ export const FEATURE_MODULES = [
   IssueTasksModule,
   NotificationsModule,
   OrganizationsModule,
+  OutcomesModule,
   SprintsModule,
   StatusesModule,
   TagsModule,

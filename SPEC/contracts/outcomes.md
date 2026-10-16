@@ -129,9 +129,9 @@ One Outcome with its grouped Issues.
 
 - **Roles:** every member of the organization. A direct Site Admin is refused (`403`).
 - **Request:** —
-- **Response:** `200`: the Outcome item with its flat rollup (decision 1) and `issues`, its grouped
-  Issues, each `ideaId`, `title`, `deliveryStatusId`, `effort`, `sprintId`, `sprintStart`,
-  `sprintEnd` (the sprint fields `null` when the Issue has no sprint). No Issue key is returned
+- **Response:** `200`: the Outcome item with its flat rollup (decision 1) and `ideas`, its grouped
+  top-level items, each `ideaId`, `title`, `statusId`, `effort`, `assigneeUserIds`, `sprintId`,
+  `sprintStart`, `sprintEnd` (the sprint fields `null` when the item has no sprint). No item key is returned
   (keys remain a gap).
 - **Errors:** `401`; `403` a Site Admin acting directly; `404` the Outcome does not exist, is soft-deleted, or belongs to another
   organization, or the organization is outside caller scope.
@@ -200,7 +200,7 @@ Set or clear an Issue's single Outcome.
 - **Response:** `200` with `{ "ideaId": <guid>, "outcomeId": <guid|null> }` (decision 8).
 - **Errors:** `401`; `403` as for create; `404` the idea does not exist or is outside caller scope;
   `400` keyed `outcomeId`: the Outcome does not exist, is soft-deleted, or belongs to another
-  organization — `"Outcome not found."`; `422` the item has a parent (decision 12). A `404` idea
+  organization — `"Outcome not found."`; `422` `taskCannotBeGrouped`: the item has a parent (decision 12). A `404` idea
   takes precedence over a `400` `outcomeId`.
 - **Rules:**
   - **Eligibility (decision 12, `SPEC/20-feature-board-references.md`):** any item with no
@@ -224,8 +224,8 @@ The roadmap read.
   (the grid draws every row), in one request (`SPEC/20-feature-issues-and-delivery.md`,
   `GetRoadmapAsync`; `contracts/delivery.md`, "Gap, for a later sprint").
   - `outcomes` — every non-deleted Outcome in `sortOrder`: the item fields and the flat rollup
-    (decision 1), plus `issues`, an array of
-    `{ ideaId, title, deliveryStatusId, effort, assigneeUserIds, sprintId, sprintStart, sprintEnd }`.
+    (decision 1), plus `ideas`, an array of
+    `{ ideaId, title, statusId, effort, assigneeUserIds, sprintId, sprintStart, sprintEnd }`.
   - `ungrouped` — the items under no Outcome, with the same fields. Cards that have a parent are
     excluded: they roll up through their parent.
   - **No Issue key is returned**; keys remain a gap.
@@ -244,10 +244,10 @@ so existing references stay traceable; the rule itself lives in the route sectio
    item in a final lane is done), `taskCount`/`doneTaskCount` over child cards, projected and
    realized totals per metric type, `sprintStart`/`sprintEnd` derived from the tasks' sprints
    (`null` when none). Quarter placement and the drawer's State are the client's, from its local
-   date. Detail also returns the grouped Issues (`ideaId`, `title`, `deliveryStatusId`, `effort`,
+   date. Detail also returns the grouped items as `ideas` (`ideaId`, `title`, `statusId`, `effort`, `assigneeUserIds`,
    `sprintId`, sprint start and end).
 2. **Roadmap read.** Its own route beside the list: `{ outcomes, ungrouped }`, each Outcome with
-   its flat rollup and `issues` (`ideaId`, `title`, `deliveryStatusId`, `effort`,
+   its flat rollup and `ideas` (`ideaId`, `title`, `statusId`, `effort`,
    `assigneeUserIds`, `sprintId`, `sprintStart`, `sprintEnd`). No Issue key. The list returns
    Outcomes with rollups only.
 3. **Errors.** The shared validation templates and the camelCase keys `name`, `description`,

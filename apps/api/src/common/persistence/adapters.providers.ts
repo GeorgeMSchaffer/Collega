@@ -32,6 +32,7 @@ import {
   PrismaIssueTaskRepository,
   PrismaNotificationEventRepository,
   PrismaOrganizationRepository,
+  PrismaOutcomeRepository,
   PrismaSprintRepository,
   PrismaStatusRepository,
   PrismaTagRepository,
@@ -159,6 +160,12 @@ const CONCRETE_ADAPTERS: Provider[] = [
     provide: PrismaIssueTaskRepository,
     useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
       new PrismaIssueTaskRepository(prisma, uow),
+    inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
+  },
+  {
+    provide: PrismaOutcomeRepository,
+    useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
+      new PrismaOutcomeRepository(prisma, uow),
     inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
   },
   {
@@ -334,6 +341,11 @@ const PORT_ALIASES: Provider[] = [
   { provide: PORT_TOKENS.SprintIssuesPort, useExisting: PrismaIdeaRepository },
   { provide: PORT_TOKENS.SprintUsersPort, useExisting: PrismaUserRepository },
   { provide: PORT_TOKENS.SprintBoardsPort, useExisting: PrismaBoardRepository },
+
+  { provide: PORT_TOKENS.OutcomeRepository, useExisting: PrismaOutcomeRepository },
+  { provide: PORT_TOKENS.OutcomeReadsPort, useExisting: PrismaOutcomeRepository },
+  { provide: PORT_TOKENS.OutcomeIdeasPort, useExisting: PrismaIdeaRepository },
+  { provide: PORT_TOKENS.OutcomeUsersPort, useExisting: PrismaUserRepository },
 
   { provide: PORT_TOKENS.IssueTaskRepository, useExisting: PrismaIssueTaskRepository },
   { provide: PORT_TOKENS.IssueTaskIdeaPort, useExisting: PrismaIdeaRepository },

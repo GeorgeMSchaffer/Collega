@@ -97,6 +97,8 @@ export type Idea = Auditable & {
   readonly deliveryStatus: DeliveryStatus | null
   /** Null means the delivery backlog. Only meaningful in Delivery. */
   readonly sprintId: string | null
+  /** The single Outcome this top-level item is grouped under; null when ungrouped. */
+  readonly outcomeId: string | null
   /** Promotion snapshot: who committed to this work, when, and how much support it had then. */
   readonly promotedAtUtc: Date | null
   readonly promotedByUserId: string | null
@@ -306,6 +308,7 @@ export function createIdea(props: CreateIdeaProps): Idea {
     effort: null,
     deliveryStatus: null,
     sprintId: null,
+    outcomeId: null,
     promotedAtUtc: null,
     promotedByUserId: null,
     upvoteCountAtPromotion: null,
@@ -574,6 +577,16 @@ export function setIdeaBoardSprint(
   actorUserId: string | null,
 ): Idea {
   return markUpdated({ ...idea, sprintId }, nowUtc, actorUserId)
+}
+
+/** Groups the item under an Outcome, or ungroups it with null. Eligibility is the application's. */
+export function setIdeaOutcome(
+  idea: Idea,
+  outcomeId: string | null,
+  nowUtc: Date,
+  actorUserId: string | null,
+): Idea {
+  return markUpdated({ ...idea, outcomeId }, nowUtc, actorUserId)
 }
 
 /**

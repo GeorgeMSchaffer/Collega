@@ -97,6 +97,12 @@ export const PORT_TOKENS = {
   SprintUsersPort: 'SprintUsersPort',
   SprintBoardsPort: 'SprintBoardsPort',
 
+  // Outcomes (packages/application/src/outcomes/ports.ts) ---------------------------------------
+  OutcomeRepository: 'OutcomeRepository',
+  OutcomeReadsPort: 'OutcomeReadsPort',
+  OutcomeIdeasPort: 'OutcomeIdeasPort',
+  OutcomeUsersPort: 'OutcomeUsersPort',
+
   // Issue tasks (packages/application/src/issue-tasks/ports.ts) ----------------------------------
   IssueTaskRepository: 'IssueTaskRepository',
   IssueTaskIdeaPort: 'IssueTaskIdeaPort',
