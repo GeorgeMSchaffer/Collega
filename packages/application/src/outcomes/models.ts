@@ -1,5 +1,7 @@
 // Commands and results for Outcomes (SPEC/contracts/outcomes.md).
 
+import type { MetricTotal } from '../metric-types/models.js'
+
 export type CreateOutcomeCommand = {
   readonly name: string
   readonly description: string | null
@@ -24,6 +26,8 @@ export type OutcomeRollup = {
   /** Earliest sprint start and latest sprint end among the grouped items' tasks; both `null` if none. */
   readonly sprintStart: string | null
   readonly sprintEnd: string | null
+  /** Per active metric type with a value on a grouped top-level item (`contracts/metric-types.md`). */
+  readonly metricTotals: readonly MetricTotal[]
 }
 
 /** One grouped top-level item, as the Outcome detail and the roadmap draw it. */

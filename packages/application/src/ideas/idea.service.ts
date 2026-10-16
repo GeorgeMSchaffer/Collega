@@ -54,6 +54,7 @@ import {
   UnprocessableError,
   ValidationError,
 } from '../common/index.js'
+import type { IdeaMetricValuesPort } from '../metric-types/ports.js'
 import { randomTagColor } from '../tags/random-color.js'
 import type {
   AddIssueCommand,
@@ -156,6 +157,8 @@ export class IdeaService {
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
     private readonly random: RandomSource,
+    /** Optional so a host that has no metric values reads `metrics` as `[]`. */
+    private readonly metricValues?: Pick<IdeaMetricValuesPort, 'listByIdea'>,
   ) {}
 
   async listByBoard(boardId: string, query: IdeaListQuery): Promise<IdeaPage<IdeaListItem>> {
@@ -1894,9 +1897,14 @@ export class IdeaService {
 
     const keyPrefixes = await this.keyPrefixesFor([idea])
     const blockedBy = (await this.blockedByOf([idea])).get(idea.id) ?? []
+    const metrics =
+      idea.parentIdeaId === null && this.metricValues
+        ? await this.metricValues.listByIdea(idea.id)
+        : []
 
     return {
       ideaId: idea.id,
+      metrics,
       boardId: idea.boardId,
       itemKey: this.keyOf(idea, keyPrefixes),
       parentIdeaId: idea.parentIdeaId,

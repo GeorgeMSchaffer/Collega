@@ -30,6 +30,7 @@ import {
   PrismaIdeaUpvoteRepository,
   PrismaImpersonationSessionRepository,
   PrismaIssueTaskRepository,
+  PrismaMetricTypeRepository,
   PrismaNotificationEventRepository,
   PrismaOrganizationRepository,
   PrismaOutcomeRepository,
@@ -160,6 +161,12 @@ const CONCRETE_ADAPTERS: Provider[] = [
     provide: PrismaIssueTaskRepository,
     useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
       new PrismaIssueTaskRepository(prisma, uow),
+    inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
+  },
+  {
+    provide: PrismaMetricTypeRepository,
+    useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
+      new PrismaMetricTypeRepository(prisma, uow),
     inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
   },
   {
@@ -341,6 +348,10 @@ const PORT_ALIASES: Provider[] = [
   { provide: PORT_TOKENS.SprintIssuesPort, useExisting: PrismaIdeaRepository },
   { provide: PORT_TOKENS.SprintUsersPort, useExisting: PrismaUserRepository },
   { provide: PORT_TOKENS.SprintBoardsPort, useExisting: PrismaBoardRepository },
+
+  { provide: PORT_TOKENS.MetricTypeRepository, useExisting: PrismaMetricTypeRepository },
+  { provide: PORT_TOKENS.IdeaMetricValuesPort, useExisting: PrismaMetricTypeRepository },
+  { provide: PORT_TOKENS.MetricIdeasPort, useExisting: PrismaIdeaRepository },
 
   { provide: PORT_TOKENS.OutcomeRepository, useExisting: PrismaOutcomeRepository },
   { provide: PORT_TOKENS.OutcomeReadsPort, useExisting: PrismaOutcomeRepository },

@@ -54,6 +54,7 @@ const EMPTY_ROLLUP: OutcomeRollup = {
   doneTaskCount: 0,
   sprintStart: null,
   sprintEnd: null,
+  metricTotals: [],
 }
 
 export class OutcomeService {

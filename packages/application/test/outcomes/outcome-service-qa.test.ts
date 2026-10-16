@@ -100,6 +100,7 @@ const rollup = (overrides: Partial<OutcomeRollup> = {}): OutcomeRollup => ({
   doneTaskCount: 0,
   sprintStart: null,
   sprintEnd: null,
+  metricTotals: [],
   ...overrides,
 })
 

@@ -1,6 +1,7 @@
 import type { DeliveryStatus, EffortLevel, IdeaPhase } from '@collega/domain/enums'
 import type { IdeaFieldValueInput } from '@collega/domain/ideas'
 import type { Page, PageRequest, SortDirection } from '../common/index.js'
+import type { IdeaMetric } from '../metric-types/models.js'
 
 // Commands / queries -------------------------------------------------------------------------
 
@@ -344,6 +345,8 @@ export type IdeaListItem = {
 
 export type IdeaDetail = {
   readonly ideaId: string
+  /** The item's metric values; `[]` for a card with a parent (`contracts/metric-types.md`). */
+  readonly metrics: readonly IdeaMetric[]
   readonly boardId: string | null
   readonly itemKey: string | null
   /** Set on a task: the idea it was created from. */

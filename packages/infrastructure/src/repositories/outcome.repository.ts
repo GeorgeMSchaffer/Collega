@@ -173,6 +173,35 @@ export class PrismaOutcomeRepository implements OutcomeRepository, OutcomeReadsP
       GROUP BY p.outcome_id
     `)
 
+    // Active types only, over non-deleted top-level items; sums go out as text so a numeric(17,2)
+    // total never passes through a float until it is the JSON number.
+    const metricRows = await this.prisma.$queryRaw<
+      {
+        outcome_id: string
+        metric_type_id: string
+        name: string
+        unit: string | null
+        projected_total: string | null
+        realized_total: string | null
+      }[]
+    >(Prisma.sql`
+      SELECT i.outcome_id AS outcome_id,
+             t.metric_type_id AS metric_type_id,
+             t.name AS name,
+             t.unit AS unit,
+             SUM(v.projected)::text AS projected_total,
+             SUM(v.realized)::text AS realized_total
+      FROM idea_metric_values v
+      JOIN ideas i ON i.id = v.idea_id
+      JOIN metric_types t ON t.metric_type_id = v.metric_type_id
+      WHERE i.outcome_id IN (${uuidList(outcomeIds)})
+        AND i.is_deleted = FALSE
+        AND i.parent_idea_id IS NULL
+        AND t.is_archived = FALSE
+      GROUP BY i.outcome_id, t.metric_type_id, t.name, t.unit, t.created_at_utc
+      ORDER BY t.created_at_utc ASC, t.metric_type_id ASC
+    `)
+
     const rollups = new Map<string, OutcomeRollup>()
     for (const id of outcomeIds) {
       rollups.set(id, {
@@ -182,7 +211,26 @@ export class PrismaOutcomeRepository implements OutcomeRepository, OutcomeReadsP
         doneTaskCount: 0,
         sprintStart: null,
         sprintEnd: null,
+        metricTotals: [],
       })
+    }
+    for (const row of metricRows) {
+      const current = rollups.get(row.outcome_id)
+      if (current) {
+        rollups.set(row.outcome_id, {
+          ...current,
+          metricTotals: [
+            ...current.metricTotals,
+            {
+              metricTypeId: row.metric_type_id,
+              name: row.name,
+              unit: row.unit,
+              projected: row.projected_total === null ? null : Number(row.projected_total),
+              realized: row.realized_total === null ? null : Number(row.realized_total),
+            },
+          ],
+        })
+      }
     }
     for (const row of ideaRows) {
       const current = rollups.get(row.outcome_id)

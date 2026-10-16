@@ -8,6 +8,7 @@ import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { PrismaClient } from '../src/generated/prisma/index.js'
 import { PrismaUnitOfWork } from '../src/persistence/unit-of-work.js'
+import { PrismaMetricTypeRepository } from '../src/repositories/metric-type.repository.js'
 import { PrismaOutcomeRepository } from '../src/repositories/outcome.repository.js'
 
 const DATABASE_URL = process.env.DATABASE_URL
@@ -194,6 +195,7 @@ describe.skipIf(!DATABASE_URL)('Outcomes against a live database', () => {
       where: { organization_id: organizationId, parent_idea_id: { not: null } },
     })
     await prisma.ideas.deleteMany({ where: { organization_id: organizationId } })
+    await prisma.metric_types.deleteMany({ where: { organization_id: organizationId } })
     await prisma.outcomes.deleteMany({ where: { organization_id: organizationId } })
     await prisma.sprints.deleteMany({ where: { organization_id: organizationId } })
     await prisma.board_swimlanes.deleteMany({
@@ -210,6 +212,78 @@ describe.skipIf(!DATABASE_URL)('Outcomes against a live database', () => {
 
   const repository = () => new PrismaOutcomeRepository(prisma, new PrismaUnitOfWork(prisma))
 
+  it('totals metric values per active type over top-level items, as exact decimals', async () => {
+    const [savings, archived] = [randomUUID(), randomUUID()]
+    await prisma.metric_types.createMany({
+      data: [
+        {
+          metric_type_id: savings,
+          organization_id: organizationId,
+          name: 'Savings',
+          unit: '$',
+          is_archived: false,
+          created_at_utc: AT,
+          updated_at_utc: AT,
+        },
+        {
+          metric_type_id: archived,
+          organization_id: organizationId,
+          name: 'Old',
+          unit: null,
+          is_archived: true,
+          created_at_utc: AT,
+          updated_at_utc: AT,
+        },
+      ],
+    })
+    const metrics = new PrismaMetricTypeRepository(prisma, new PrismaUnitOfWork(prisma))
+    const unitOfWork = new PrismaUnitOfWork(prisma)
+    const writer = new PrismaMetricTypeRepository(prisma, unitOfWork)
+    await writer.apply(
+      groupedId,
+      [
+        { metricTypeId: savings, projected: 0.1, realized: null },
+        { metricTypeId: archived, projected: 5, realized: 5 },
+      ],
+      [],
+    )
+    await unitOfWork.saveChanges()
+    const second = new PrismaUnitOfWork(prisma)
+    await new PrismaMetricTypeRepository(prisma, second).apply(
+      standaloneId,
+      [{ metricTypeId: savings, projected: 0.2, realized: -3.25 }],
+      [],
+    )
+    await second.saveChanges()
+    // A value left on a card that has a parent is kept but never counted.
+    const third = new PrismaUnitOfWork(prisma)
+    await new PrismaMetricTypeRepository(prisma, third).apply(
+      openTaskId,
+      [{ metricTypeId: savings, projected: 100, realized: 100 }],
+      [],
+    )
+    await third.saveChanges()
+
+    expect(await metrics.listByIdea(groupedId)).toEqual([
+      expect.objectContaining({ metricTypeId: savings, projected: 0.1, realized: null }),
+      expect.objectContaining({ metricTypeId: archived, isArchived: true }),
+    ])
+    const rollups = await repository().rollupsByOutcomeIds([outcomeId, emptyOutcomeId])
+    expect(rollups.get(outcomeId)?.metricTotals).toEqual([
+      { metricTypeId: savings, name: 'Savings', unit: '$', projected: 0.3, realized: -3.25 },
+    ])
+    expect(rollups.get(emptyOutcomeId)?.metricTotals).toEqual([])
+
+    const clear = new PrismaUnitOfWork(prisma)
+    await new PrismaMetricTypeRepository(prisma, clear).apply(standaloneId, [], [savings])
+    await clear.saveChanges()
+    expect(await metrics.listByIdea(standaloneId)).toEqual([])
+    // Leave the fixture as the other rollup tests expect it.
+    await prisma.idea_metric_values.deleteMany({
+      where: { ideas: { organization_id: organizationId } },
+    })
+  })
+
   it('rolls up items and tasks by the final lane of each own board, with the sprint span', async () => {
     const rollups = await repository().rollupsByOutcomeIds([outcomeId, emptyOutcomeId])
 
@@ -220,6 +294,7 @@ describe.skipIf(!DATABASE_URL)('Outcomes against a live database', () => {
       doneTaskCount: 1,
       sprintStart: '2026-10-01',
       sprintEnd: '2026-10-14',
+      metricTotals: [],
     })
     expect(rollups.get(emptyOutcomeId)).toEqual({
       ideaCount: 0,
@@ -228,6 +303,7 @@ describe.skipIf(!DATABASE_URL)('Outcomes against a live database', () => {
       doneTaskCount: 0,
       sprintStart: null,
       sprintEnd: null,
+      metricTotals: [],
     })
   })
 
