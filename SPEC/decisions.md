@@ -130,7 +130,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 ## 2026-10-16 — Metric types are an organization table with projected and realized values per item
 
-> Amends: "The 17 open Outcome contract questions are decided" (2026-10-15), whose Q1 left the metric totals' shape to this contract. Everything else in that entry stands.
+> Amends: "The 17 open Outcome contract questions are decided" (2026-10-15), whose Q1 left the metric totals' shape to this contract, and "Board References replace the Delivery phase" (2026-10-15), whose board-task create body is narrowed below. Everything else in those entries stands.
 
 **Decided by the user.** A metric type is a row in a new `metric_types` table, owned by the organization and managed by an Org Admin: a name (duplicates allowed) and a free-text unit. Only items with no parent carry values: one projected and one realized number per type, written as a whole set with `PUT /ideas/{ideaId}/metrics` by whoever may edit the item. Realized values are not gated on a final lane. Removing a type archives it and keeps its values. An Outcome returns `metricTotals`, one entry per active type with a value under it. The routes and rules are in `contracts/metric-types.md`.
 
