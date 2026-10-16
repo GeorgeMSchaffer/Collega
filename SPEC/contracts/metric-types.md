@@ -53,8 +53,8 @@ Create a metric type.
 - **Roles:** in-scope Org Admin. A direct Site Admin is refused.
 - **Request:** body `{ "name": <string>, "unit": <string|null> }`; `unit` may be absent.
 - **Response:** `201` with the created item, `isArchived` `false`.
-- **Errors:** `401`; `403`; `404` the organization; `400` keyed `name` (blank or over 80
-  characters) or `unit` (over 20 characters).
+- **Errors:** `401`; `403`; `404` the organization; `400` keyed `name` (`"Name is required."`,
+  `"Name must be 80 characters or fewer."`) or `unit` (`"Unit must be 20 characters or fewer."`).
 - **Rules:** names are trimmed; a blank `unit` is stored `null`. Audit: `MetricTypeCreated`.
 
 ### `PUT /api/v1/organizations/{orgId}/metric-types/{id}`
@@ -91,7 +91,7 @@ Replace an item's values.
 - **Response:** `200` with the item's values, as the read returns them.
 - **Errors:** `401`; `403`; `404` the idea; `400` keyed `metrics`: a type that does not exist, is
   archived, or belongs to another organization (`"Metric type not found."`), a repeated
-  `metricTypeId`, or a number outside the rules above; `422` `taskCannotCarryMetrics`: the item has
+  `metricTypeId`, or a number outside the rules above (`"Projected must be between -999999999999999.99 and 999999999999999.99."`, likewise `Realized`, or `"Projected must have at most 2 decimal places."`); `422` `taskCannotCarryMetrics`: the item has
   a parent. A `404` idea takes precedence over a `400`.
 - **Rules:**
   - **Full replacement over active types.** Every active type not in the body is cleared. Values on
@@ -101,6 +101,8 @@ Replace an item's values.
     counts a parent and its tasks twice.
   - **Realized has no gate.** It may be set in any lane; the UI emphasises it once the item is in a
     final lane.
+  - A type is named by `400`, not `404`, because it is a body field, as for `outcomeId` in
+    `contracts/outcomes.md`.
   - Audit: `IdeaMetricsChanged` (before and after). No notification. No change is a no-op with no
     audit event.
 
@@ -109,6 +111,7 @@ Every route in `contracts/outcomes.md` that returns an Outcome adds, beside the 
 
 - `metricTotals` — an array `[{ metricTypeId, name, unit, projected, realized }]` over the
   **active** types that have at least one value on an item grouped under the Outcome, in the
-  types' order. Each sum skips `null`s; a sum with no non-null number is `null`. An Outcome with
+  types' order, over **non-deleted items with no parent** (values left on an item that later has
+  a parent are kept but not counted). Each sum skips `null`s; a sum with no non-null number is `null`. An Outcome with
   no values returns `[]` (so a newly created Outcome returns `[]`).
 - Derived on read, never stored, like the rest of the rollup.

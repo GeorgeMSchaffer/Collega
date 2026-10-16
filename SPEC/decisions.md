@@ -138,11 +138,12 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 **Rejected.** Reusing the user-defined fields machinery (a field holds one value per item, not a projected and realized pair, and is shown on the idea form, not summed); per-board types; a fixed global list; a kind enum (percent does not sum); values on tasks; refusing realized values outside a final lane; unique names.
 
-**Defaults the user may overrule.** Values are decimals with two places, and negatives are allowed. Any member reads the types. A Site Admin works only through View As, reads included. The idea detail read returns `metrics`.
+**Defaults the user may overrule.** Values are decimals with two places, and negatives are allowed. Any member reads the types. A Site Admin works only through View As, reads included. The idea detail read returns `metrics`. The contract's shapes are the assistant's too: name max 80 and unit max 20 characters, `unit` nullable; archive and restore through `PUT` with `isArchived`; a separate `GET /ideas/{ideaId}/metrics` that includes values on archived types, flagged; `?includeArchived`, unpaged, ordered by creation; an unknown type in the body is `400`; an item with a parent is refused with `422` `taskCannotCarryMetrics`; totals skip soft-deleted items and items with a parent; the audit event names; no notification; a unit change does not convert values.
 
 **Consequences.**
 - The S0.2 schema freeze is amended a tenth time: `metric_types` (`metric_type_id`, `organization_id`, `name`, `unit`, `is_archived`, timestamps) and `idea_metric_values` (`idea_id`, `metric_type_id`, `projected`, `realized`, unique on the pair). The same amendment carries slice 236's `board_swimlanes.auto_create_task`.
 - Slice 233 builds on that schema.
+- **Board-task create body (decided by the user the same day):** `POST /ideas/{ideaId}/board-tasks` takes `title` (required), `description`, `assigneeUserIds` and `tagNames`; the idea-only fields are `null` on a task (`contracts/ideas.md`). This replaces "the idea create body, minus `boardId`".
 
 ---
 
@@ -157,7 +158,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 **Rejected.** A travelling card that leaves its board for the child board (two mechanisms, loses the parent's key, Outcome and history); three or more board levels (lock and rollup cost); a lock with no override.
 
 **Consequences.**
-- One additive column: `board_swimlanes.auto_create_task boolean default false` (a further S0.2 amendment, with the next schema slice).
+- One additive column: `board_swimlanes.auto_create_task boolean default false` (carried by the tenth S0.2 amendment, "Metric types are an organization table...", 2026-10-16).
 - New rule and error `parentHasOpenTasks` on moves out of a reference lane; new audit event `IdeaMovedPastOpenTasks`.
 - **Every exit is locked (decided 2026-10-16).** The lock also covers leaving the board by detach (`DELETE /api/v1/ideas/{ideaId}/board`) and by being pulled onto another board (`pullItemIds`). Same error, same Org Admin override with a reason, same audit event. Otherwise detach or pull would sidestep it.
 - The backend slices already merged (220-232, 234) need a follow-up slice for the lock, the override and auto-create; the UI shows the lock and the lane setting.

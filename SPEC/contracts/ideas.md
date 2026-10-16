@@ -354,7 +354,7 @@ Soft-delete an idea while preserving its row and audit history.
   - `blockedBy` array of `{ ideaId, itemKey, isFinal }`: the tasks that must be final before this one can leave its board's first lane.
   - `taskCounts` object `{ total, done }` on an item whose lane references a board: `done` counts children in a final lane.
 - **Routes (added):**
-  - `POST /api/v1/ideas/{ideaId}/board-tasks` creates a task on the referenced board. Body: the idea create body, minus `boardId`. Success `201` with the task.
+  - `POST /api/v1/ideas/{ideaId}/board-tasks` creates a task on the referenced board. Body (decided 2026-10-16): `title` required (as for an idea); optional `description`, `assigneeUserIds`, `tagNames`, with the idea create rules (`tagNames` against the child board's organization). `problem`, `proposedSolutions`, `impactRationale`, `priority`, `ideaTypeId` and `businessImpactId` are not taken and are `null` (or `[]`) on a task; a sprint is set through the sprint routes. Success `201` with the task.
     - **Roles:** anyone who may edit the parent idea; Read Only `403`; a direct Site Admin `403`.
     - **Errors:** `401`; `403`; `404` the parent is missing or out of scope; `422` `parentNotInReferenceLane`, `parentIsTask`, `referencedBoardArchived`, `noDefaultIdeaType`, `noDefaultBusinessImpact`.
     - Late additions require moving the parent back into the reference lane first.
