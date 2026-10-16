@@ -688,7 +688,7 @@ export class IdeaService {
       idea,
       board,
       forceReason,
-      `'${idea.title}' is waiting on {n} open tasks, so it cannot be removed from its board.`,
+      `'${idea.title}' is waiting on {n} open tasks, so it cannot be removed from the board.`,
     )
 
     idea = detached
@@ -1192,7 +1192,7 @@ export class IdeaService {
       idea,
       board,
       forceReason,
-      `'${idea.title}' is waiting on {n} open tasks, so it cannot leave its lane.`,
+      `'${idea.title}' is waiting on {n} open tasks, so it cannot be moved.`,
     )
 
     const now = this.clock.now()
