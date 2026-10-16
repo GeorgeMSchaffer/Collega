@@ -187,7 +187,7 @@ const create = (s: BoardService, pullItemIds: string[], swimlanes = LANES) =>
 const update = (s: BoardService, pullItemIds: string[], swimlanes = LANES) =>
   s.update(TARGET, { name: 'Target', allowUserStatusUpdate: false, swimlanes, pullItemIds })
 
-async function pullMessages(promise: Promise<unknown>): Promise<string[]> {
+async function pullMessages(promise: Promise<unknown>): Promise<readonly string[]> {
   try {
     await promise
   } catch (error) {

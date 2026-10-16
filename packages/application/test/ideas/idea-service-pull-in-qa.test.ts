@@ -194,7 +194,9 @@ describe('createInPool (rules 3 and 4)', () => {
 
   it('ignores a client-supplied statusId', async () => {
     const h = harness({ currentUser: member(ORG_A, AUTHOR), firstActiveStatusId: STATUS_1 })
-    const result = await h.service.createInPool(ORG_A, { ...CREATE, statusId: STATUS_2 })
+    // The wire type has no statusId; a client that sends one anyway must be ignored.
+    const withStatus = { ...CREATE, statusId: STATUS_2 }
+    const result = await h.service.createInPool(ORG_A, withStatus)
     expect(result.statusId).toBe(STATUS_1)
   })
 
