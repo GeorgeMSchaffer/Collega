@@ -6,7 +6,7 @@ import { type Idea, promoteIdeaToIssue } from '@collega/domain/ideas'
 import { describe, expect, it } from 'vitest'
 import { ForbiddenError, UnprocessableError, ValidationError } from '../../src/common/index.js'
 import { member, NOW, ORG_A, ORG_B, orgAdmin } from '../support/fixtures.js'
-import { BOARD_A, BOARD_B, CREATE, harness, idea } from './idea-service-harness.js'
+import { BOARD_A, BOARD_B, board, CREATE, harness, idea } from './idea-service-harness.js'
 
 function boardSprint(boardId: string) {
   return {
@@ -284,5 +284,45 @@ describe('IdeaService.listDelivery on a board sprint', () => {
     await service.listDelivery(ORG_A, { sprintId: null, deliveryStatus: null })
 
     expect(deliveryFilters.map((f) => f.anyPhase ?? false)).toEqual([true, false, false])
+  })
+})
+
+describe('IdeaService.detachFromBoard leaving the board', () => {
+  it('clears board-sprint membership, dependencies in both directions and the parent', async () => {
+    const h = harness({
+      currentUser: orgAdmin(ORG_A),
+      boards: [board()],
+      sprints: [boardSprint(BOARD_A)],
+      ideas: [
+        idea({ id: 'idea-1', sprintId: 'sprint-board', parentIdeaId: 'idea-parent' }),
+        idea({ id: 'idea-2' }),
+        idea({ id: 'idea-parent' }),
+      ],
+      dependencies: [
+        { blockedId: 'idea-1', blockerId: 'idea-2' },
+        { blockedId: 'idea-2', blockerId: 'idea-1' },
+        { blockedId: 'idea-2', blockerId: 'idea-parent' },
+      ],
+    })
+
+    await h.service.detachFromBoard('idea-1')
+
+    expect(h.saved[0]?.boardId).toBeNull()
+    expect(h.saved[0]?.sprintId).toBeNull()
+    expect(h.saved[0]?.parentIdeaId).toBeNull()
+    expect(h.edges).toEqual([{ blockedId: 'idea-2', blockerId: 'idea-parent' }])
+  })
+
+  it('leaves a legacy sprint membership alone', async () => {
+    const h = harness({
+      currentUser: orgAdmin(ORG_A),
+      boards: [board()],
+      sprints: [{ ...boardSprint(BOARD_A), boardId: null }],
+      ideas: [idea({ sprintId: 'sprint-board' })],
+    })
+
+    await h.service.detachFromBoard('idea-1')
+
+    expect(h.saved[0]?.sprintId).toBe('sprint-board')
   })
 })

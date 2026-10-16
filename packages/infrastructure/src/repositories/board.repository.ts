@@ -256,12 +256,28 @@ export class PrismaBoardRepository
             // The old board's number means nothing here (and could collide with one issued here);
             // the allocation below issues this board's own.
             item_number: null,
+            // A task off the referenced board is no longer that parent's task.
+            parent_idea_id: null,
             updated_at_utc: nowUtc,
             updated_by_user_id: actorUserId,
             ...(item.returnsToDiscovery
               ? { phase: IdeaPhase.Discovery, delivery_status: null, sprint_id: null }
               : {}),
           },
+        }),
+      )
+      // Sprints and dependencies are same-board only: leaving the board ends both. A legacy
+      // (board-less) sprint is untouched.
+      this.unitOfWork.enqueue(
+        this.prisma.$executeRaw(Prisma.sql`
+          UPDATE ideas SET sprint_id = NULL
+          WHERE id = ${item.ideaId}::uuid AND board_id = ${boardId}::uuid
+            AND sprint_id IN (SELECT sprints.id FROM sprints WHERE sprints.board_id IS NOT NULL)
+        `),
+      )
+      this.unitOfWork.enqueue(
+        this.prisma.idea_dependencies.deleteMany({
+          where: { OR: [{ blocked_idea_id: item.ideaId }, { blocker_idea_id: item.ideaId }] },
         }),
       )
       // Inside the batch, unlike `allocateItemNumber`: the target may be staged in this same save,

@@ -151,6 +151,14 @@ describe.skipIf(!DATABASE_URL)('Item numbers, against a live database', () => {
   })
 
   afterAll(async () => {
+    await prisma.idea_dependencies.deleteMany({
+      where: { blocked: { organization_id: organizationId } },
+    })
+    await prisma.ideas.updateMany({
+      where: { organization_id: organizationId },
+      data: { parent_idea_id: null, sprint_id: null },
+    })
+    await prisma.sprints.deleteMany({ where: { organization_id: organizationId } })
     await prisma.ideas.deleteMany({ where: { organization_id: organizationId } })
     await prisma.boards.deleteMany({ where: { organization_id: organizationId } })
     await prisma.idea_types.deleteMany({ where: { organization_id: organizationId } })
@@ -205,5 +213,63 @@ describe.skipIf(!DATABASE_URL)('Item numbers, against a live database', () => {
     await pull(target, source, [ideaId])
 
     expect(await numberOf(ideaId)).toBeNull()
+  })
+
+  it('clears board-sprint membership, dependencies and the parent when an item is pulled off its board', async () => {
+    const source = await newBoard(null)
+    const target = await newBoard(null)
+    const sprintId = randomUUID()
+    await prisma.sprints.create({
+      data: {
+        id: sprintId,
+        organization_id: organizationId,
+        board_id: source,
+        name: 'Probe sprint',
+        start_date: new Date('2026-10-01T00:00:00.000Z'),
+        end_date: new Date('2026-10-14T00:00:00.000Z'),
+        state: 'Planned',
+        is_deleted: false,
+        ...stamps,
+      },
+    })
+    const parent = await newIdea(source, null)
+    const pulled = await newIdea(source, null)
+    const other = await newIdea(source, null)
+    await prisma.ideas.update({
+      where: { id: pulled },
+      data: { sprint_id: sprintId, parent_idea_id: parent },
+    })
+    await prisma.idea_dependencies.createMany({
+      data: [
+        { blocked_idea_id: pulled, blocker_idea_id: other, created_at_utc: STAMP },
+        { blocked_idea_id: other, blocker_idea_id: pulled, created_at_utc: STAMP },
+      ],
+    })
+
+    await repository.reassignIdeas(
+      target,
+      [
+        {
+          ideaId: pulled,
+          title: 'Probe',
+          from: { boardId: source, statusId, phase: 'Discovery' as never, sprintId },
+          toStatusId: statusId,
+          returnsToDiscovery: false,
+        },
+      ],
+      PULLED,
+      adminId,
+    )
+    await unitOfWork.saveChanges()
+
+    const row = await prisma.ideas.findUniqueOrThrow({
+      where: { id: pulled },
+      select: { board_id: true, sprint_id: true, parent_idea_id: true },
+    })
+    expect(row).toEqual({ board_id: target, sprint_id: null, parent_idea_id: null })
+    const edges = await prisma.idea_dependencies.count({
+      where: { OR: [{ blocked_idea_id: pulled }, { blocker_idea_id: pulled }] },
+    })
+    expect(edges).toBe(0)
   })
 })

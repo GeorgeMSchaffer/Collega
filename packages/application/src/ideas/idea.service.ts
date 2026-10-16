@@ -586,7 +586,12 @@ export class IdeaService {
     }
 
     idea = detached
+    // Board sprints and dependencies are same-board only; a legacy sprint is untouched.
+    if (idea.sprintId !== null && (await this.sprints.getById(idea.sprintId))?.boardId) {
+      idea = { ...idea, sprintId: null }
+    }
     await this.ideaRepository.update(idea)
+    await this.dependencies.deleteAllFor(idea.id)
     await this.unitOfWork.saveChanges()
 
     await this.auditIdea(

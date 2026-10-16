@@ -400,7 +400,12 @@ export function detachIdeaFromBoard(idea: Idea, nowUtc: Date, actorUserId: strin
   if (idea.boardId === null) {
     return idea
   }
-  return markUpdated({ ...idea, boardId: null, itemNumber: null }, nowUtc, actorUserId)
+  // A task off its parent's board is no longer that parent's task.
+  return markUpdated(
+    { ...idea, boardId: null, itemNumber: null, parentIdeaId: null },
+    nowUtc,
+    actorUserId,
+  )
 }
 
 /**
