@@ -14,7 +14,7 @@ Before making any status, planning, or scope claim about this project — in thi
 
 ## Current Status
 
-Verified 2026-10-12 against `c992712` (tip of `dev`). Open work only: every merged slice (119–175)
+Verified 2026-10-16 against `37a578a6` (tip of `dev`). Open work only: every merged slice (119–175)
 has moved verbatim to `SPEC/tracker-history/` (`2026-10-12-rows-part-3.md` and `-part-4.md`); earlier
 rows are in the 2026-09-28 files, and the 2026-09-12 "Agreed order of work" is in
 `2026-10-12-narratives-part-2.md`. No slice is in flight.
@@ -38,8 +38,8 @@ conversion) and Sprint 13 (MVP release) are each open for one item, the cutover.
 | **Board References foundation — slice 198** (Schema) | Built and independently reviewed and merged into `dev` 2026-10-15. Schema and migration written. | `SPEC/sprints/sprint-15-board-references-foundation.md` |
 | **Board References foundation — slice 199** (Migration test) | Built and independently reviewed and merged into `dev` 2026-10-15. Migration test (QA) written. | `SPEC/sprints/sprint-15-board-references-foundation.md` |
 | **Board References foundation — slice 200** (Seed) | Built and independently reviewed and merged into `dev` 2026-10-15. Seed key prefix and its test (QA) written. | `SPEC/sprints/sprint-15-board-references-foundation.md` |
-| **Board References backend — Plan 2** (slices 220-234) | Built on local branch `feature/235-cross-slice-fixes` (stacked 220-232, 234, cross-slice fixes), reviewed, not yet merged. Slice 233 (metric totals) paused: owner chose a new `metric_types` table 2026-10-15; needs a metric-types contract and a schema amendment first. | `SPEC/sprints/sprint-16-board-references-backend.md` |
-| **Board References — reference-lane lock** (slice 236, spec) | Spec written on `feature/236-reference-lane-lock`, awaiting owner review before merge. Hard lock on a card with open tasks, Org Admin override with a reason, optional auto-create-one-task lane setting. Backend and UI follow-up slices still to be planned. | `SPEC/decisions.md` 2026-10-16; `SPEC/20-feature-board-references.md` |
+| **Board References backend — Plan 2** (slices 220-234) | Slices 220-232 and 234 plus cross-slice fixes merged into `dev` 2026-10-15 (`2104029d`), reviewer approved. Slice 233 (metric totals) paused: owner chose a new `metric_types` table 2026-10-15; needs a metric-types contract and a schema amendment first. | `SPEC/sprints/sprint-16-board-references-backend.md` |
+| **Board References — reference-lane lock** (slice 236, spec) | Spec merged into `dev` 2026-10-16 (`37a578a6`). Open: whether the lock applies on a parent's pull or detach. Hard lock on a card with open tasks, Org Admin override with a reason, optional auto-create-one-task lane setting. Backend and UI follow-up slices still to be planned. | `SPEC/decisions.md` 2026-10-16; `SPEC/20-feature-board-references.md` |
 | **Idea assistant v2** | Next; unblocked. | `SPEC/20-feature-ai-idea-assist-v2.md`. Gated by Sprint 12, whose v1 baseline is committed (`tools/prompt-eval/baselines/v1-default.json`); thresholds kept (`SPEC/decisions.md` 2026-09-30). |
 | **QA owed — web** | No tests found for slices 142 (card drag between lanes), 143 (View As banner), 144 (create custom field), 145 (status drag-reorder), 146 (← → moves a card), 147 (assignee picker), 148 (*Create tag* option) and 153–154 (inbox page, sidebar badge, follow toggle, `boardName`). Found by grepping `apps/web/test` for each slice's action and component on 2026-10-12. Slices 155–156 have updated Home tests; their coverage of the new links and counts is unchecked. | Slice rows in `SPEC/tracker-history/2026-10-12-rows-part-3.md` and `-part-4.md`. |
 | **QA owed — infrastructure** | A DB-free test of the View As candidates' `orderBy` (slice 141). The concrete order is asserted only by `view-as-candidates.integration.test.ts`, which skips without `DATABASE_URL`, so `pnpm check` does not run it. | Slice 141 row. |
