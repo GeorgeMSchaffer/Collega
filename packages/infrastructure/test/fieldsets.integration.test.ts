@@ -518,9 +518,7 @@ describe.skipIf(!DATABASE_URL)('Fieldsets against a live database', () => {
   describe('demo reset', () => {
     it('deletes fieldsets, members and attachments under a demo organization without a foreign-key error', async () => {
       const demoOrg = seedId('organization', demoSlug)
-      // A seeded database already holds this organization with boards beneath it; clear it the
-      // way production does rather than with a bare organization delete.
-      await resetDemoSeed(prisma)
+      await prisma.organizations.deleteMany({ where: { id: demoOrg } })
       await newOrganization(demoOrg)
       const field = await newField(demoOrg, `demo-${run}`)
       const fieldset = newFieldset(demoOrg, 'Demo set', [field])
