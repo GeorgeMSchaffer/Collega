@@ -216,7 +216,9 @@ describe.skipIf(!DATABASE_URL)('Removing a lane that holds ideas, against a live
       new PrismaUnitOfWork(prisma),
     ).listLaneIdeas(boardId, [REVIEW])
 
-    expect(ideas).toEqual([{ ideaId: live, title: `Probe idea ${live}`, statusId: REVIEW }])
+    expect(ideas).toEqual([
+      { ideaId: live, title: `Probe idea ${live}`, statusId: REVIEW, effort: null },
+    ])
   })
 
   it('moves the live Discovery ideas and leaves soft-deleted ideas and Issues where they were', async () => {
