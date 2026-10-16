@@ -176,10 +176,13 @@ describe('updateTask: who may edit', () => {
     expectNothingChanged(h)
   })
 
-  it('refuses a direct Site Admin with 403', async () => {
+  it('refuses a direct Site Admin with 403 and the View As hint, not the author-or-admin text', async () => {
     const h = setup(siteAdmin())
 
-    expect(await failure(h.service.updateTask(TASK_ID, EDIT))).toBeInstanceOf(ForbiddenError)
+    const error = await failure(h.service.updateTask(TASK_ID, EDIT))
+
+    expect(error).toBeInstanceOf(ForbiddenError)
+    expect(error).toMatchObject({ message: expect.stringContaining('Use View As') })
     expectNothingChanged(h)
   })
 
