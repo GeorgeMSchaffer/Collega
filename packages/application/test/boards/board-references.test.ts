@@ -7,6 +7,7 @@ import { createIdea, type Idea } from '@collega/domain/ideas'
 import { createStatus, type Status } from '@collega/domain/statuses'
 import { describe, expect, it } from 'vitest'
 import { BoardService } from '../../src/boards/board-service.js'
+import type { AutoCreateTaskPort } from '../../src/boards/index.js'
 import type { SwimlaneInput } from '../../src/boards/models.js'
 import type { BoardRepository, BoardStatusIdeaCount } from '../../src/boards/ports.js'
 import { ConflictError, UnprocessableError, ValidationError } from '../../src/common/index.js'
@@ -136,6 +137,7 @@ function harness(
         return ideas.find((i) => i.id === id) ?? null
       },
     } as unknown as IdeaRepository,
+    {} as AutoCreateTaskPort,
   )
   return { service, saved, added, moved }
 }

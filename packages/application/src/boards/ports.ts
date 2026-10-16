@@ -4,6 +4,7 @@
 import type { Board } from '@collega/domain/boards'
 import type { EffortLevel, IdeaPhase } from '@collega/domain/enums'
 import type { Page } from '../common/index.js'
+import type { AutoCreateTaskParent } from '../ideas/models.js'
 import type { PullCandidate } from './models.js'
 
 export interface BoardRepository {
@@ -158,4 +159,16 @@ export type UserName = {
  */
 export interface OrganizationExistenceLookup {
   existsById(organizationId: string): Promise<boolean>
+}
+
+/**
+ * The auto-create on entering an `autoCreateTask` lane by a pull or an `ideaMoves` entry. Satisfied
+ * by `IdeaService`, which owns the one task-creation path: it stages the task in this save's unit
+ * of work and hands back what to run once the save has committed (its audit entries).
+ */
+export interface AutoCreateTaskPort {
+  stageAutoCreatedTask(
+    parent: AutoCreateTaskParent,
+    referencedBoardId: string,
+  ): Promise<() => Promise<void>>
 }

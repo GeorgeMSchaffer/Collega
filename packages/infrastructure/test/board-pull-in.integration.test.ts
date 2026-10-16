@@ -8,6 +8,7 @@
 // own organizations and removes them afterwards, so point it at a scratch database.
 
 import { randomUUID } from 'node:crypto'
+import type { AutoCreateTaskPort } from '@collega/application/boards'
 import { BoardService } from '@collega/application/boards'
 import type { CurrentUserContext } from '@collega/application/common'
 import type { IdeaRepository, OrganizationIdeaListFilter } from '@collega/application/ideas'
@@ -82,6 +83,7 @@ describe.skipIf(!DATABASE_URL)('Board pull-in, against a live database', () => {
       currentUser,
       { now: () => SAVED },
       afterRead ? reading : ideas,
+      {} as AutoCreateTaskPort,
     )
     return { boards, ideas, boardService }
   }

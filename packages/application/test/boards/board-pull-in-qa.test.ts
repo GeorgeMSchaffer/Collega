@@ -8,6 +8,7 @@ import { createIdea, type Idea, promoteIdeaToIssue } from '@collega/domain/ideas
 import { createStatus } from '@collega/domain/statuses'
 import { describe, expect, it } from 'vitest'
 import { BoardService } from '../../src/boards/board-service.js'
+import type { AutoCreateTaskPort } from '../../src/boards/index.js'
 import type { SwimlaneInput } from '../../src/boards/models.js'
 import type { BoardRepository, IdeaReassignment } from '../../src/boards/ports.js'
 import type { CurrentUserContext } from '../../src/common/index.js'
@@ -174,6 +175,7 @@ function setup(
         return ideas.find((i) => i.id === ideaId) ?? null
       },
     } as unknown as IdeaRepository,
+    {} as AutoCreateTaskPort,
   )
   return { order, service, added, saved, reassigned, moves, pickerFilters, uow, audit }
 }

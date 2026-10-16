@@ -7,6 +7,7 @@
 // Audit events go to an in-memory writer so the run leaves no rows behind.
 
 import { randomUUID } from 'node:crypto'
+import type { AutoCreateTaskPort } from '@collega/application/boards'
 import { BoardService } from '@collega/application/boards'
 import {
   type AuditEventWriter,
@@ -61,6 +62,7 @@ describe.skipIf(!DATABASE_URL)('Board archive against a live database', () => {
       currentUser,
       { now: () => ARCHIVED },
       new PrismaIdeaRepository(prisma, unitOfWork),
+      {} as AutoCreateTaskPort,
     )
   }
 

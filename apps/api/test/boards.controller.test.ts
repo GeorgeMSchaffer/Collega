@@ -8,6 +8,7 @@
 // `ideaMoves` on PUT (added 2026-09-29) is read here and judged by the Application layer, so its
 // tests pin what the controller hands the service, and one refusal rendered as a response.
 
+import type { AutoCreateTaskPort } from '@collega/application/boards'
 import {
   type BoardRepository,
   BoardService,
@@ -122,6 +123,7 @@ function controller(otherBoards: readonly Board[] = []): {
         CURRENT_USER,
         clock,
         {} as IdeaRepository,
+        {} as AutoCreateTaskPort,
       ),
     ),
     persisted,

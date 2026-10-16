@@ -40,6 +40,14 @@ export type CreateBoardTaskCommand = Pick<
   'title' | 'description' | 'assigneeUserIds' | 'tagNames'
 >
 
+/** The card a task is auto-created for on entering an `autoCreateTask` lane. */
+export type AutoCreateTaskParent = {
+  readonly id: string
+  readonly organizationId: string
+  readonly title: string
+  readonly parentIdeaId: string | null
+}
+
 /** `POST /organizations/{organizationId}/ideas`: the create shape without `statusId`, which a pool
  * idea does not choose. */
 export type CreatePoolIdeaCommand = Omit<CreateIdeaCommand, 'statusId'>
