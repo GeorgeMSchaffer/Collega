@@ -20,7 +20,7 @@ CREATE TABLE "metric_types" (
   "updated_at_utc" TIMESTAMPTZ(6) NOT NULL,
   CONSTRAINT "PK_metric_types" PRIMARY KEY ("metric_type_id"),
   CONSTRAINT "FK_metric_types_organizations_organization_id"
-    FOREIGN KEY ("organization_id") REFERENCES "organizations" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION
+    FOREIGN KEY ("organization_id") REFERENCES "organizations" ("id") ON DELETE RESTRICT ON UPDATE NO ACTION
 );
 
 CREATE INDEX "ix_metric_types_organization_id" ON "metric_types" ("organization_id");

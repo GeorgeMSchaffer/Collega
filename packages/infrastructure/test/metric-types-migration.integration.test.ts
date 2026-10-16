@@ -101,7 +101,7 @@ describe.skipIf(!DATABASE_URL)('Metric types migration', () => {
     await expect(
       probe.$executeRaw`INSERT INTO idea_metric_values (idea_id, metric_type_id)
         VALUES (${IDEA}::uuid, ${TYPE_COST}::uuid)`,
-    ).rejects.toThrow(/PK_idea_metric_values/)
+    ).rejects.toThrow(/23505.*Key \(idea_id, metric_type_id\)=/s)
   })
 
   it('refuses a value above 10^15 in magnitude', async () => {
