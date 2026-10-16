@@ -425,7 +425,7 @@ export type Idea = {
    */
   statusName: string
   title: string
-  priority: Priority
+  priority: Priority | null
   ideaType: string
   businessImpact: string
   /** The first tag's name. Null when an idea carries none. */
@@ -546,9 +546,9 @@ export type Comment = {
  * page. See `getIdea` for why the drawer reads it from here.
  */
 export type IdeaDetail = Idea & {
-  problem: string
+  problem: string | null
   proposedSolutions: string[]
-  impactRationale: string
+  impactRationale: string | null
   /** An optional summary since 2026-09-27. */
   description: string | null
   ideaTypeId: string
@@ -785,7 +785,7 @@ export type HomeIdea = {
   boardName: string | null
   ideaType: string
   status: Status
-  priority: Priority
+  priority: Priority | null
   createdAtUtc: string
   upvotes: number
   hasUpvoted: boolean

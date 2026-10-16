@@ -361,6 +361,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
     return this.listPage({
       conditions,
       sortSql: this.boardSortSql(filter.sortBy),
+      nullsLast: (filter.sortBy ?? '').trim().toLowerCase() === 'priority',
       direction,
       page: filter.page,
       sortBy: filter.sortBy,
@@ -378,7 +379,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       case 'updatedat':
         return Prisma.sql`i.updated_at_utc`
       case 'priority':
-        return Prisma.sql`i.priority`
+        return Prisma.sql`CASE WHEN i.parent_idea_id IS NULL THEN i.priority END`
       case 'duedate':
         return Prisma.sql`i.due_date`
       case 'upvotecount':
@@ -444,7 +445,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       conditions,
       sortSql: this.organizationSortSql(filter.sortBy),
       // An idea with no board has no board name; it sorts after the named ones either way.
-      nullsLast: (filter.sortBy ?? '').trim().toLowerCase() === 'board',
+      nullsLast: ['board', 'priority'].includes((filter.sortBy ?? '').trim().toLowerCase()),
       direction,
       page: filter.page,
       sortBy: filter.sortBy,
@@ -469,7 +470,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       case 'board':
         return Prisma.sql`b.name`
       case 'priority':
-        return Prisma.sql`i.priority`
+        return Prisma.sql`CASE WHEN i.parent_idea_id IS NULL THEN i.priority END`
       case 'upvotecount':
         return UPVOTE_COUNT_SQL
       case 'tags':
@@ -491,7 +492,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
     }
     if (filter.priorities.length > 0) {
       conditions.push(
-        Prisma.sql`i.priority IN (${Prisma.join(filter.priorities.map((p) => Prisma.sql`${p}::"Priority"`))})`,
+        Prisma.sql`(i.parent_idea_id IS NULL AND i.priority IN (${Prisma.join(filter.priorities.map((p) => Prisma.sql`${p}::"Priority"`))}))`,
       )
     }
     if (filter.tags.length > 0) {
@@ -521,7 +522,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
     const clauses: Prisma.Sql[] = [
       Prisma.sql`i.title ILIKE ${term}`,
       Prisma.sql`i.problem ILIKE ${term}`,
-      Prisma.sql`i.priority::text ILIKE ${term}`,
+      Prisma.sql`(i.parent_idea_id IS NULL AND i.priority::text ILIKE ${term})`,
       Prisma.sql`(au.first_name ILIKE ${term} OR au.last_name ILIKE ${term} OR (au.first_name || ' ' || au.last_name) ILIKE ${term})`,
       Prisma.sql`EXISTS (SELECT 1 FROM idea_assignees ia3 JOIN users u3 ON u3.id = ia3.user_id WHERE ia3.idea_id = i.id AND (u3.first_name ILIKE ${term} OR u3.last_name ILIKE ${term} OR (u3.first_name || ' ' || u3.last_name) ILIKE ${term}))`,
       Prisma.sql`s.name ILIKE ${term}`,

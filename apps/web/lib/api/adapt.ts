@@ -87,7 +87,8 @@ function toRole(value: string): Role {
   return role
 }
 
-function toPriority(value: string): Priority {
+function toPriority(value: string | null): Priority | null {
+  if (value === null) return null
   const priority = PRIORITIES.find((candidate) => candidate === value)
   if (!priority) throw new Error(`The API returned an unknown priority: ${value}`)
   return priority

@@ -31,11 +31,12 @@ export type CreateIdeaCommand = {
   readonly fieldValues: readonly IdeaFieldValueWrite[] | null
 }
 
-/** `POST /ideas/{ideaId}/board-tasks`: the create shape minus the board, status, type, impact and
- * fields. The task takes the organization's default type and impact (Board References Ruling 2). */
-export type CreateBoardTaskCommand = Omit<
+/** `POST /ideas/{ideaId}/board-tasks`: a task takes only these four. The idea-only fields are not
+ * taken; the service stores the organization's default type and impact (Board References Ruling 2)
+ * and placeholders where the schema needs a value. */
+export type CreateBoardTaskCommand = Pick<
   CreateIdeaCommand,
-  'statusId' | 'ideaTypeId' | 'businessImpactId' | 'fieldValues'
+  'title' | 'description' | 'assigneeUserIds' | 'tagNames'
 >
 
 /** `POST /organizations/{organizationId}/ideas`: the create shape without `statusId`, which a pool
@@ -317,7 +318,7 @@ export type IdeaListItem = {
   /** The items that must be final before this one can leave its board's first lane. */
   readonly blockedBy: readonly BlockedByDto[]
   readonly title: string
-  readonly priority: string
+  readonly priority: string | null
   /** The type and impact fields are `null` on an item of a board with idea features off, and on a task. */
   readonly ideaTypeId: string | null
   readonly ideaTypeName: string | null
@@ -352,11 +353,11 @@ export type IdeaDetail = {
   /** The items that must be final before this one can leave its board's first lane. */
   readonly blockedBy: readonly BlockedByDto[]
   readonly title: string
-  readonly problem: string
+  readonly problem: string | null
   readonly proposedSolutions: readonly string[]
-  readonly impactRationale: string
+  readonly impactRationale: string | null
   readonly description: string | null
-  readonly priority: string
+  readonly priority: string | null
   /** The type and impact fields are `null` on an item of a board with idea features off, and on a task. */
   readonly ideaTypeId: string | null
   readonly ideaTypeName: string | null
@@ -402,7 +403,7 @@ export type CreateIdeaResult = {
   readonly parentIdeaId: string | null
   readonly statusId: string
   readonly title: string
-  readonly priority: string
+  readonly priority: string | null
   /** `null` on a board task: the stored default is not exposed. */
   readonly ideaTypeId: string | null
   readonly businessImpactId: string | null

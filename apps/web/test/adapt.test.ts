@@ -133,6 +133,10 @@ describe('toIdea', () => {
     }
   })
 
+  it("adapts a task's null priority without throwing", () => {
+    expect(toIdea({ ...WIRE_IDEA, priority: null }).priority).toBeNull()
+  })
+
   it('takes the first tag and reads no tags as none', () => {
     // `tagNames: []` is the common case in real data and was impossible in the fixture, which is
     // why `tag` is nullable. `[] ?? null` would be `[]`; the index is what makes it null.

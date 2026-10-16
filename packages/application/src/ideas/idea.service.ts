@@ -413,6 +413,14 @@ export class IdeaService {
       statusId,
       {
         ...command,
+        // Not taken on a task, but the columns are NOT NULL: the title stands in, and reads do not
+        // show it.
+        problem: command.title,
+        proposedSolutions: [command.title],
+        impactRationale: command.title,
+        priority: 'Medium',
+        dueDate: null,
+        mentionEmails: null,
         ideaTypeId: defaultType.id,
         businessImpactId: defaultImpact.id,
         fieldValues: null,
@@ -520,7 +528,7 @@ export class IdeaService {
 
     await this.auditIdea('IdeaCreated', idea, authorId, `Idea '${idea.title}' created.`, now, {
       title: idea.title,
-      priority,
+      priority: parentIdeaId === null ? priority : null,
       statusId: idea.statusId,
     })
     await this.emitFieldValueAudit(idea, new Map(), authorId, now)
@@ -554,7 +562,7 @@ export class IdeaService {
       parentIdeaId: idea.parentIdeaId,
       statusId: idea.statusId,
       title: idea.title,
-      priority,
+      priority: parentIdeaId === null ? priority : null,
       ideaTypeId: parentIdeaId === null ? idea.ideaTypeId : null,
       businessImpactId: parentIdeaId === null ? idea.businessImpactId : null,
       dueDate: idea.dueDate,
@@ -1359,11 +1367,11 @@ export class IdeaService {
       const cells: string[] = [
         idea.title,
         idea.description ?? '',
-        idea.problem,
+        idea.parentIdeaId === null ? idea.problem : '',
         // One quoted cell, one solution per line (SPEC/30-Contracts.md export).
-        idea.proposedSolutions.join('\n'),
-        idea.impactRationale,
-        idea.priority,
+        (idea.parentIdeaId === null ? idea.proposedSolutions : []).join('\n'),
+        idea.parentIdeaId === null ? idea.impactRationale : '',
+        idea.parentIdeaId === null ? idea.priority : '',
         this.ideaTypeName(ideaTypeLookup, idea.ideaTypeId),
         this.businessImpactName(businessImpactLookup, idea.businessImpactId),
         this.statusName(statusInfo, idea.statusId),
@@ -1669,7 +1677,7 @@ export class IdeaService {
         taskCounts: references.taskCountsOf(idea),
         blockedBy: blockedBy.get(idea.id) ?? [],
         title: idea.title,
-        priority: idea.priority,
+        priority: idea.parentIdeaId === null ? idea.priority : null,
         ideaTypeId: hidden ? null : idea.ideaTypeId,
         ideaTypeName: hidden ? null : this.ideaTypeName(ideaTypeLookup, idea.ideaTypeId),
         ideaTypeColorHex: hidden ? null : this.ideaTypeColorHex(ideaTypeLookup, idea.ideaTypeId),
@@ -1895,11 +1903,11 @@ export class IdeaService {
       taskCounts: references.taskCountsOf(idea),
       blockedBy,
       title: idea.title,
-      problem: idea.problem,
-      proposedSolutions: idea.proposedSolutions,
-      impactRationale: idea.impactRationale,
+      problem: idea.parentIdeaId === null ? idea.problem : null,
+      proposedSolutions: idea.parentIdeaId === null ? idea.proposedSolutions : [],
+      impactRationale: idea.parentIdeaId === null ? idea.impactRationale : null,
       description: idea.description,
-      priority: idea.priority,
+      priority: idea.parentIdeaId === null ? idea.priority : null,
       ideaTypeId: hidden ? null : idea.ideaTypeId,
       ideaTypeName: hidden ? null : this.ideaTypeName(ideaTypeLookup, idea.ideaTypeId),
       ideaTypeColorHex: hidden ? null : (ideaTypeForFields?.colorHex ?? null),

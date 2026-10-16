@@ -100,9 +100,11 @@ export function IdeaView({
           <Fact label="Status">
             <StatusMarker name={idea.statusName} color={statusColor} />
           </Fact>
-          <Fact label="Priority">
-            <PriorityMarker priority={idea.priority} />
-          </Fact>
+          {idea.priority ? (
+            <Fact label="Priority">
+              <PriorityMarker priority={idea.priority} />
+            </Fact>
+          ) : null}
           <Fact label="Business impact">{idea.businessImpact}</Fact>
           <Fact label="Idea type">{idea.ideaType}</Fact>
           <Fact label="Assignees">
@@ -118,21 +120,27 @@ export function IdeaView({
         </dl>
       ) : null}
 
-      <Section title="Problem">
-        <p className="m-0 whitespace-pre-line text-sm">{idea.problem}</p>
-      </Section>
-      <Section title="Proposed solutions">
-        <ol className="m-0 flex list-decimal flex-col gap-1 pl-5 text-sm">
-          {idea.proposedSolutions.map((solution, index) => (
-            // Solutions are ordered prose and may repeat, so position is their identity.
-            // biome-ignore lint/suspicious/noArrayIndexKey: see above
-            <li key={index}>{solution}</li>
-          ))}
-        </ol>
-      </Section>
-      <Section title="Impact rationale">
-        <p className="m-0 whitespace-pre-line text-sm">{idea.impactRationale}</p>
-      </Section>
+      {idea.problem ? (
+        <Section title="Problem">
+          <p className="m-0 whitespace-pre-line text-sm">{idea.problem}</p>
+        </Section>
+      ) : null}
+      {idea.proposedSolutions.length > 0 ? (
+        <Section title="Proposed solutions">
+          <ol className="m-0 flex list-decimal flex-col gap-1 pl-5 text-sm">
+            {idea.proposedSolutions.map((solution, index) => (
+              // Solutions are ordered prose and may repeat, so position is their identity.
+              // biome-ignore lint/suspicious/noArrayIndexKey: see above
+              <li key={index}>{solution}</li>
+            ))}
+          </ol>
+        </Section>
+      ) : null}
+      {idea.impactRationale ? (
+        <Section title="Impact rationale">
+          <p className="m-0 whitespace-pre-line text-sm">{idea.impactRationale}</p>
+        </Section>
+      ) : null}
       {idea.description ? (
         <Section title="Summary">
           <p className="m-0 whitespace-pre-line text-sm">{idea.description}</p>

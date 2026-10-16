@@ -67,6 +67,7 @@ describe('IdeaService.createBoardTask', () => {
     expect(task.itemKey).toBe('DL-1')
     expect(task.parentIdeaId).toBe('idea-1')
     expect(task.ideaTypeId).toBeNull()
+    expect(task.priority).toBeNull()
     expect(h.audit.events.map((e) => e.eventType)).toContain('BoardTaskCreated')
   })
 
@@ -133,6 +134,10 @@ describe('IdeaService.createBoardTask', () => {
 
     expect(detail.ideaTypeId).toBeNull()
     expect(detail.businessImpactId).toBeNull()
+    expect(detail.problem).toBeNull()
+    expect(detail.impactRationale).toBeNull()
+    expect(detail.proposedSolutions).toEqual([])
+    expect(detail.priority).toBeNull()
     expect(detail.fieldValues).toEqual([])
     expect(detail.upvoteCount).toBe(0)
     expect(detail.parentIdeaId).toBe('idea-1')

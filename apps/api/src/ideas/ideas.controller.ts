@@ -289,18 +289,25 @@ export class IdeasController {
     })
   }
 
-  /** A task on the board the parent's lane references. The body is the idea create body minus the
-   * board; `ideaTypeId`, `businessImpactId`, `statusId` and `fieldValues` are ignored if sent. */
+  /** A task on the board the parent's lane references. The body is `title`, `description`,
+   * `assigneeUserIds` and `tagNames`; anything else sent is ignored, as on the other routes here. */
   @Post('ideas/:ideaId/board-tasks')
   @HttpCode(201)
   async createBoardTask(
     @Param('ideaId', UuidParamPipe) ideaId: string,
     @Body() body: CreateIdeaBody,
   ): Promise<CreateIdeaResult> {
-    validateFields(ideaBodyRules(body))
+    validateFields({
+      title: { value: body.title, required: true, maxLength: TITLE_MAX_LENGTH },
+      description: { value: body.description, maxLength: DESCRIPTION_MAX_LENGTH },
+    })
 
-    const { ideaTypeId, businessImpactId, fieldValues: _fields, ...fields } = newIdeaFields(body)
-    return this.ideas.createBoardTask(ideaId, fields)
+    return this.ideas.createBoardTask(ideaId, {
+      title: body.title ?? '',
+      description: optional(body.description),
+      assigneeUserIds: guidList(body.assigneeUserIds),
+      tagNames: stringList('tagNames', body.tagNames),
+    })
   }
 
   /** An idea with no board. The body is the board create's minus `statusId`, which is ignored if
