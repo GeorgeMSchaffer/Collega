@@ -36,6 +36,7 @@ the idea, and ideas roll up to Outcomes with projected and realized value.
 | Sequencing | **Blocked-by links.** No links means parallel. A blocked task cannot leave its board's first status until blockers are final. |
 | Sprints | Per child board (`boards.sprints_enabled`), **cross-idea**: one sprint holds tasks from many parents. Unfinished tasks return to the backlog on completion. |
 | Standalone cards | Allowed. A child-board card with no parent is simply not part of any idea's rollup. |
+| Board settings | **No board-admin role.** The new settings (reference and final lanes, key prefix, idea features, auto-create-one-task) are an Org Admin's, like every board setting; any User may still create a board (`SPEC/decisions.md` 2026-10-04, reconfirmed 2026-10-16). |
 | Value | **Typed metrics, projected vs realized.** Projected is set while scoping; realized is typically entered after the idea's final status (not enforced; decided 2026-10-16). Outcomes sum each metric type. |
 
 ## Data model (all columns nullable unless noted)
