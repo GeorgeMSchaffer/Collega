@@ -103,6 +103,11 @@ export const PORT_TOKENS = {
   OutcomeIdeasPort: 'OutcomeIdeasPort',
   OutcomeUsersPort: 'OutcomeUsersPort',
 
+  // Metric types (packages/application/src/metric-types/ports.ts) -------------------------------
+  MetricTypeRepository: 'MetricTypeRepository',
+  IdeaMetricValuesPort: 'IdeaMetricValuesPort',
+  MetricIdeasPort: 'MetricIdeasPort',
+
   // Issue tasks (packages/application/src/issue-tasks/ports.ts) ----------------------------------
   IssueTaskRepository: 'IssueTaskRepository',
   IssueTaskIdeaPort: 'IssueTaskIdeaPort',

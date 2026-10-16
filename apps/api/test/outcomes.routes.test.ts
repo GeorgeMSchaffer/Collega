@@ -347,6 +347,7 @@ function wired(currentUser: CurrentUserContext, ideas: Idea[] = [item()]) {
               doneTaskCount: 0,
               sprintStart: null,
               sprintEnd: null,
+              metricTotals: [],
             },
           ]),
         ),

@@ -21,6 +21,7 @@ import type {
   UsersPort,
 } from '@collega/application/ideas'
 import { IdeaService } from '@collega/application/ideas'
+import type { IdeaMetricValuesPort } from '@collega/application/metric-types'
 import { NotificationService } from '@collega/application/notifications'
 import type { IdeaLookupPort, IdeaUpvoteRepository } from '@collega/application/upvotes'
 import { UpvoteService } from '@collega/application/upvotes'
@@ -87,6 +88,7 @@ import { IdeasController } from './ideas.controller.js'
         currentUser: CurrentUserContext,
         clock: Clock,
         random: RandomSource,
+        metricValues: IdeaMetricValuesPort,
       ) =>
         new IdeaService(
           ideaRepository,
@@ -107,6 +109,7 @@ import { IdeasController } from './ideas.controller.js'
           currentUser,
           clock,
           random,
+          metricValues,
         ),
       inject: [
         PORT_TOKENS.IdeaRepository,
@@ -127,6 +130,7 @@ import { IdeasController } from './ideas.controller.js'
         PORT_TOKENS.CurrentUserContext,
         PORT_TOKENS.Clock,
         PORT_TOKENS.RandomSource,
+        PORT_TOKENS.IdeaMetricValuesPort,
       ],
     },
     {

@@ -327,6 +327,7 @@ describe.skipIf(!DATABASE_URL)('Outcomes QA against a live database', () => {
         doneTaskCount: 2,
         sprintStart: '2026-10-01',
         sprintEnd: '2026-10-28',
+        metricTotals: [],
       })
     })
 
@@ -340,6 +341,7 @@ describe.skipIf(!DATABASE_URL)('Outcomes QA against a live database', () => {
         doneTaskCount: 1,
         sprintStart: null,
         sprintEnd: null,
+        metricTotals: [],
       })
       expect(rollups.get(ids.outcomeY)).toEqual({
         ideaCount: 0,
@@ -348,6 +350,7 @@ describe.skipIf(!DATABASE_URL)('Outcomes QA against a live database', () => {
         doneTaskCount: 0,
         sprintStart: null,
         sprintEnd: null,
+        metricTotals: [],
       })
     })
 
