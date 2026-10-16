@@ -30,6 +30,8 @@ the idea, and ideas roll up to Outcomes with projected and realized value.
 | Mechanism | A **Board Reference status**: a status that references another board. |
 | Reference behavior | Entering the status lets the idea **spawn tasks** on the referenced board. Each task walks that board's statuses itself. |
 | Build approach | **One item type.** A task is an `ideas` row on the child board with a parent link (no second entity). |
+| Lock | **A card in a reference lane cannot leave it while any task is open** (`SPEC/decisions.md` 2026-10-16). An Org Admin may force the move with a reason. |
+| Hand-off | A lane may **auto-create one task on entry**; the parent waits on it. Without it, people add tasks by hand. |
 | Returning | When every task is in a final status, the parent offers a move to the next status. **A person confirms;** nothing moves automatically. |
 | Sequencing | **Blocked-by links.** No links means parallel. A blocked task cannot leave its board's first status until blockers are final. |
 | Sprints | Per child board (`boards.sprints_enabled`), **cross-idea**: one sprint holds tasks from many parents. Unfinished tasks return to the backlog on completion. |
@@ -38,6 +40,7 @@ the idea, and ideas roll up to Outcomes with projected and realized value.
 
 ## Data model (all columns nullable unless noted)
 
+- `board_swimlanes.auto_create_task boolean default false`: meaningful only with `references_board_id`.
 - `board_swimlanes.references_board_id` → `boards`. Statuses are organization-wide and shared by boards; a board's use of a status is its swimlane, so the reference lives there (the same status can be an ordinary lane on one board and a reference on another). A board may not reference itself; reference chains may not form a cycle.
 - "Final status" is not in the schema today (`statuses` has no category or final flag). How a board marks its final lane is an open decision (see Open questions, 5).
 - `ideas.parent_idea_id` → `ideas` (self). A parent must sit in a status that references the child's board when the child is created.
@@ -53,7 +56,7 @@ the idea, and ideas roll up to Outcomes with projected and realized value.
 1. **Entering a reference status:** a normal move. The idea's drawer shows a Tasks section with "+ Add task". A new task is a card in the referenced board's first status. Entering with zero tasks is allowed.
 2. **Task flow:** tasks use the child board's statuses, assignees, comments, tags and sprint. Blocked tasks show a lock.
 3. **Completion prompt:** when all tasks are final, the idea shows "All N tasks are complete. Move to <next status>?" with Move and Not yet.
-4. **Leaving early:** allowed with a warning ("3 tasks are still open"). The tasks remain on the child board.
+4. **Lock:** while any task is not in a final lane the card cannot leave the lane; it shows "Waiting on N tasks" and a move is refused (`parentHasOpenTasks`). An Org Admin can force the move with a required reason (audited); the tasks remain on the child board. With no tasks there is nothing to wait on. A lane set to auto-create creates one task on entry (parent's title, child board's first lane).
 5. **Late additions:** adding a task to an idea already past the reference status prompts "Move back to <status>?".
 6. **Guards:** a reference lane cannot be removed or re-pointed while ideas sit in it; a board cannot be archived while a lane references it.
 7. **Rollups:** `N of M tasks` on the idea card and drawer; per-Outcome idea, task and value totals (projected and realized, by metric type).

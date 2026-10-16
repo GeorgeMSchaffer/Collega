@@ -209,7 +209,7 @@ Place each addition below under a new heading at the end of the file, using the 
 - **Rules:**
   - Moving an idea into a reference lane requires `effort` to be set; otherwise `422` (`effortRequiredForReferenceLane`).
   - A task cannot itself be a parent (no sub-tasks at launch) and cannot be grouped under an Outcome; both `422`.
-  - Moving an idea out of a reference lane with open tasks is allowed and does not touch the tasks.
+  - **Amended 2026-10-16:** moving out with open tasks is now refused (`parentHasOpenTasks`) unless an Org Admin forces it; see `contracts/ideas.md` and `SPEC/decisions.md` 2026-10-16.
   - A task cannot leave its board's first lane while any blocker is not in a final lane; `422` (`taskBlocked`).
 ```
 
