@@ -106,6 +106,7 @@ const rollup = (overrides: Partial<OutcomeRollup> = {}): OutcomeRollup => ({
 
 const card = (ideaId: string): OutcomeIdea => ({
   ideaId,
+  itemKey: null,
   title: ideaId,
   statusId: 's',
   effort: null,

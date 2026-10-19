@@ -33,6 +33,8 @@ export type OutcomeRollup = {
 /** One grouped top-level item, as the Outcome detail and the roadmap draw it. */
 export type OutcomeIdea = {
   readonly ideaId: string
+  /** `<board keyPrefix>-<itemNumber>`; `null` without a prefix or number (as on the ideas reads). */
+  readonly itemKey: string | null
   readonly title: string
   readonly statusId: string
   readonly effort: string | null

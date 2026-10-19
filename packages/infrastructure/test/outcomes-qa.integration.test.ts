@@ -423,6 +423,7 @@ describe.skipIf(!DATABASE_URL)('Outcomes QA against a live database', () => {
           'assigneeUserIds',
           'effort',
           'ideaId',
+          'itemKey',
           'metrics',
           'sprintEnd',
           'sprintId',

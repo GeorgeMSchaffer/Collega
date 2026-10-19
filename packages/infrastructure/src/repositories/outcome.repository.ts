@@ -71,6 +71,7 @@ function uuidList(ids: readonly string[]): Prisma.Sql {
 type IdeaQueryRow = {
   outcome_id: string | null
   idea_id: string
+  item_key: string | null
   title: string
   status_id: string
   effort: string | null
@@ -83,6 +84,7 @@ type IdeaQueryRow = {
 function toIdea(row: IdeaQueryRow): OutcomeIdea {
   return {
     ideaId: row.idea_id,
+    itemKey: row.item_key,
     title: row.title,
     statusId: row.status_id,
     effort: row.effort,
@@ -269,6 +271,8 @@ export class PrismaOutcomeRepository implements OutcomeRepository, OutcomeReadsP
     const rows = await this.prisma.$queryRaw<IdeaQueryRow[]>(Prisma.sql`
       SELECT i.outcome_id AS outcome_id,
              i.id AS idea_id,
+             CASE WHEN b.key_prefix IS NOT NULL AND i.item_number IS NOT NULL
+                  THEN b.key_prefix || '-' || i.item_number END AS item_key,
              i.title AS title,
              i.status_id AS status_id,
              i.effort AS effort,
@@ -279,6 +283,7 @@ export class PrismaOutcomeRepository implements OutcomeRepository, OutcomeReadsP
              TO_CHAR(s.start_date, 'YYYY-MM-DD') AS sprint_start,
              TO_CHAR(s.end_date, 'YYYY-MM-DD') AS sprint_end
       FROM ideas i
+      LEFT JOIN boards b ON b.id = i.board_id
       LEFT JOIN sprints s ON s.id = i.sprint_id AND s.is_deleted = FALSE
       WHERE i.outcome_id IN (${uuidList(outcomeIds)})
         AND i.is_deleted = FALSE
@@ -338,6 +343,8 @@ export class PrismaOutcomeRepository implements OutcomeRepository, OutcomeReadsP
     const rows = await this.prisma.$queryRaw<IdeaQueryRow[]>(Prisma.sql`
       SELECT i.outcome_id AS outcome_id,
              i.id AS idea_id,
+             CASE WHEN b.key_prefix IS NOT NULL AND i.item_number IS NOT NULL
+                  THEN b.key_prefix || '-' || i.item_number END AS item_key,
              i.title AS title,
              i.status_id AS status_id,
              i.effort AS effort,
@@ -348,6 +355,7 @@ export class PrismaOutcomeRepository implements OutcomeRepository, OutcomeReadsP
              TO_CHAR(s.start_date, 'YYYY-MM-DD') AS sprint_start,
              TO_CHAR(s.end_date, 'YYYY-MM-DD') AS sprint_end
       FROM ideas i
+      LEFT JOIN boards b ON b.id = i.board_id
       LEFT JOIN sprints s ON s.id = i.sprint_id AND s.is_deleted = FALSE
       WHERE i.organization_id = ${organizationId}::uuid
         AND i.outcome_id IS NULL
