@@ -23,6 +23,7 @@ Sprint item shape (returned by list, create, update, and embedded in the detail 
 - `ownerUserId` GUID string or `null`
 - `ownerDisplayName` string or `null`
 - `state` string: `Planned`, `Active`, or `Completed`
+- `ideaCount` integer — added 2026-10-19, see "Work board sprint header" below
 - `issueCount` integer, `doneCount` integer — **derived per read, never stored.** A stored counter is a second source of truth that drifts the first time an Issue moves without going through the sprint.
 
 ### `GET /api/v1/organizations/{organizationId}/sprints`
@@ -127,7 +128,7 @@ Soft-delete a sprint.
 
 ## Sprints per board (planned 2026-10-15)
 
-*Specified in `SPEC/20-feature-board-references.md`. Not built until Plan 2. Until Plan 4, org-wide sprints (`boardId` null) behave exactly as described earlier in this file.*
+*Specified in `SPEC/20-feature-board-references.md`. Built in Plan 2 (slices 220-234). Until Plan 4, org-wide sprints (`boardId` null) behave exactly as described earlier in this file.*
 
 - **Item field (added):** `boardId` GUID or `null`. `null` is a sprint from before this change; Plan 4 removes them.
 - **Routes (added):** `GET/POST /api/v1/boards/{boardId}/sprints` list and create a sprint on a board whose `sprintsEnabled` is true; existing `.../organizations/{orgId}/sprints/{id}` routes keep working for reads, start, complete and delete.
@@ -135,3 +136,12 @@ Soft-delete a sprint.
   - Creating a sprint on a board with `sprintsEnabled` false is refused with `422` (`sprintsNotEnabled`).
   - A sprint holds items from its own board only; an item from another board is refused with `422` (`sprintItemOnOtherBoard`).
   - Completing a sprint that has a `boardId` returns every item not in a final lane to the backlog (sprint cleared). A sprint with `boardId` null keeps the delivery-status rule above until Plan 4 retires it.
+
+### Work board sprint header (added 2026-10-19, decided by the orchestrator under the owner's spec-and-build approval 2026-10-19; owner to review)
+
+The Board References work board draws a sprint header (name, dates, state, tasks, ideas, days left) and a Sprint | Backlog toggle (`SPEC/mockups/comp-u-board-references-core.html`, screen 3). Nothing new is needed beyond:
+
+- **Item field (added):** `ideaCount` integer — the number of **distinct parent ideas** among the sprint's live items that are tasks (`parentIdeaId` set), derived per read like the other counts. `0` for a sprint with no boardId.
+- **Header mapping:** TASKS is `issueCount` and `doneCount` (every live card in the sprint; on a board sprint done means a final lane), IDEAS is `ideaCount`, the window and `state` come from the item, and days left is derived in the viewer's calendar. The header reads `GET /api/v1/boards/{boardId}/sprints?state=Active`.
+- **Cards in a sprint** are read with `GET /api/v1/boards/{boardId}/ideas?sprintId={sprintId}` (see `contracts/ideas.md`); the **backlog** is `sprintId=none` on the same route. No new route.
+- **Putting a task in a sprint** is `PUT /api/v1/ideas/{ideaId}/sprint` (`contracts/delivery.md`), which accepts any item of the sprint's board.

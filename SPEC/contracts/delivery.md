@@ -124,6 +124,7 @@ Pull an Issue into a sprint, or return it to the delivery backlog.
   - `403` caller is not an in-scope admin, or is a Site Admin acting directly
   - `404` idea does not exist, is deleted, or is outside caller scope
 - **Rules:**
+  - **A board sprint (added 2026-10-19, decided by the orchestrator under the owner's spec-and-build approval 2026-10-19; owner to review):** when the target sprint has a `boardId`, the item must be on that board, in any phase, or the request is `422` `sprintItemOnOtherBoard` (`"A sprint holds items from its own board only."`); the Discovery-phase `400` above does not apply. Returning an item to the backlog (`null`) from a board sprint likewise has no phase guard. A task is an item like any other, so this is how a task is put in a sprint, changed, or taken out.
   - assigning the sprint the Issue is already in is a no-op: no audit event
   - otherwise writes an `IssueSprintAssignmentChanged` audit event. No notification — sprint membership is a planning decision, not something to page the room about.
 
