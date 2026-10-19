@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-19 | "Move anyway" offers a lane picker | active | full below |
 | 2026-10-19 | Board References UI: comp U answers | active | full below |
 | 2026-10-16 | Board References UI: lock, task drawer, lane auto-create, metric display, Outcome totals | active | full below |
 | 2026-10-16 | Board References follow-ups: auto-create on every entry, tasks not pullable, task editing, metrics on archived boards, Site Admin detail metrics | amended | full below |
@@ -128,6 +129,18 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-19 — "Move anyway" offers a lane picker
+
+> Amends: "Board References UI: lock, task drawer, lane auto-create, metric display, Outcome totals" (2026-10-16), item 3, which gave an Org Admin "Move anyway" without naming a target lane.
+
+**Decided by the user.** The Org Admin override on a locked card (the board card and the arrow-key path) opens a dialog with a **lane picker**, defaulting to the next lane (the previous lane at the end of the board), and the required reason. An admin may force a card to any lane of the board, not only the neighbouring one. The picker lists the board's lanes in order, excluding the card's current lane. The reason stays required and is audited as `IdeaMovedPastOpenTasks` with the open-task count, as before; no server change is needed, since the move route already takes any `statusId` with `forceReason`.
+
+Why: slice 293 shipped the override with a fixed target because the comp named none, which meant a card in the first lane could never be forced straight to a later lane. The server rules still apply to the chosen lane (for example `effortRequiredForReferenceLane` for a reference lane, and `taskBlocked`, which has no override).
+
+**Build:** a small follow-up to Board References UI slice 3, in `apps/web/components/ideas/move-anyway-dialog.tsx`.
 
 ---
 
