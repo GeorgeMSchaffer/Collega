@@ -201,6 +201,7 @@ Persist swimlane reorder immediately after drag-and-drop.
   - `isFinal` boolean, default `false`. A board may have several final lanes.
   - `referencesBoardId` GUID or `null`: the board whose tasks this lane hands work to.
   - `autoCreateTask` boolean, default `false`: the first entry into the lane (a status move, a pull with `pullItemIds`, a bulk lane move with `ideaMoves`; decided 2026-10-16, limited to the first entry 2026-10-19) creates one task on the referenced board, in the same transaction; a failure rolls the write back. An entry by an idea that already has a task on the referenced board (any lane) creates none. Setting it on a lane with no `referencesBoardId` is `422` `autoCreateTaskRequiresReference`.
+- **Read fields (added 2026-10-19, slice 292):** the board detail (`GET /api/v1/boards/{boardId}`, and the `PUT` result) and each list item carry `nextItemNumber`, an integer: the number the next item key takes, so `1` means no key has been issued and keys `1` to `nextItemNumber - 1` exist. A client shows "Keys CI-1 to CI-N have been issued" (N = `nextItemNumber - 1`) beside a locked `keyPrefix`.
 - **Rules:**
   - A lane may not reference its own board.
   - **A Final lane cannot reference a board (decided 2026-10-19):** saving a lane with `isFinal` true and `referencesBoardId` set is `422` `finalLaneCannotReference`; so is turning an existing reference lane Final without clearing its reference. The Statuses page disables the reference selector on a Final lane.

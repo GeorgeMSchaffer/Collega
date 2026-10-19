@@ -152,6 +152,7 @@ export class BoardService {
         keyPrefix: board.keyPrefix,
         sprintsEnabled: board.sprintsEnabled,
         ideaFeaturesEnabled: board.ideaFeaturesEnabled,
+        nextItemNumber: board.nextItemNumber,
       }
     })
   }
@@ -1225,6 +1226,7 @@ function toDetail(board: Board, statusLookup: ReadonlyMap<string, Status>): Boar
     keyPrefix: board.keyPrefix,
     sprintsEnabled: board.sprintsEnabled,
     ideaFeaturesEnabled: board.ideaFeaturesEnabled,
+    nextItemNumber: board.nextItemNumber,
   }
 }
 
