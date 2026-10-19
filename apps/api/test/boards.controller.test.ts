@@ -97,7 +97,13 @@ function controller(otherBoards: readonly Board[] = []): {
     moveIdeas: async () => {},
     verifyIdeasMoved: async () => {},
     reassignIdeas: async () => {},
-    listPullCandidates: async () => ({ items: [], page: 1, pageSize: 20, totalCount: 0 }),
+    listPullCandidates: async () => ({
+      items: [],
+      page: 1,
+      pageSize: 20,
+      totalCount: 0,
+      hiddenTaskCount: 0,
+    }),
   }
   const statusRepository: StatusRepository = {
     add: async () => {},

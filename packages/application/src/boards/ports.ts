@@ -3,9 +3,8 @@
 
 import type { Board } from '@collega/domain/boards'
 import type { EffortLevel, IdeaPhase } from '@collega/domain/enums'
-import type { Page } from '../common/index.js'
 import type { AutoCreateTaskParent } from '../ideas/models.js'
-import type { PullCandidate } from './models.js'
+import type { PullCandidatePage } from './models.js'
 
 export interface BoardRepository {
   add(board: Board): Promise<void>
@@ -105,7 +104,7 @@ export interface BoardRepository {
    * One page of the items the pull picker offers, oldest first and tie-broken on title then id so
    * paging is stable. The caller has already decided what the user may see and passes it in.
    */
-  listPullCandidates(filter: PullCandidateFilter): Promise<Page<PullCandidate>>
+  listPullCandidates(filter: PullCandidateFilter): Promise<PullCandidatePage>
 }
 
 export type IdeaReassignment = {

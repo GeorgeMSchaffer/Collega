@@ -39,6 +39,7 @@ import type {
   AuditEventWriter,
   Clock,
   CurrentUserContext,
+  Page,
   RandomSource,
   UnitOfWork,
 } from '../common/index.js'
@@ -50,6 +51,7 @@ import {
   MAX_PAGE_SIZE,
   NotFoundError,
   normalizePageRequest,
+  toPage,
   UnauthorizedError,
   UnprocessableError,
   ValidationError,
@@ -69,6 +71,7 @@ import type {
   CreatePoolIdeaCommand,
   DeliveryCard,
   DeliveryListQuery,
+  IdeaActivityEntry,
   IdeaAssigneeDto,
   IdeaCommentDto,
   IdeaCsvExport,
@@ -103,6 +106,7 @@ import type {
   BusinessImpactSummary,
   CommentsPort,
   DependencyEdge,
+  IdeaActivityPort,
   IdeaClassificationPort,
   IdeaDependenciesPort,
   IdeaFieldValuesPort,
@@ -168,6 +172,8 @@ export class IdeaService {
     private readonly random: RandomSource,
     /** Optional so a host that has no metric values reads `metrics` as `[]`. */
     private readonly metricValues?: Pick<IdeaMetricValuesPort, 'listByIdea'>,
+    /** Optional like `metricValues`; the activity read needs it. */
+    private readonly activity?: IdeaActivityPort,
   ) {}
 
   async listByBoard(boardId: string, query: IdeaListQuery): Promise<IdeaPage<IdeaListItem>> {
@@ -387,6 +393,10 @@ export class IdeaService {
     parent: AutoCreateTaskParent,
     referencedBoardId: string,
   ): Promise<() => Promise<void>> {
+    // A card moving back into the lane keeps the task it already has on that board.
+    if (await this.ideaRepository.hasTaskOnBoard(parent.id, referencedBoardId)) {
+      return async () => {}
+    }
     const finish = await this.stageBoardTask(parent, referencedBoardId, autoTaskCommand(parent))
     return async () => {
       await finish()
@@ -723,6 +733,23 @@ export class IdeaService {
     return this.projectDetail(idea)
   }
 
+  /** The idea's audit trail, newest first; readable by whoever may read the idea. */
+  async listActivity(
+    ideaId: string,
+    query: { readonly page: number | null; readonly pageSize: number | null },
+  ): Promise<Page<IdeaActivityEntry>> {
+    this.requireAuthenticatedRole()
+
+    const idea = await this.ideaRepository.getById(ideaId, false)
+    if (!idea) {
+      throw new NotFoundError('Idea not found.')
+    }
+    this.ensureOrganizationScope(idea.organizationId)
+
+    const page = normalizePageRequest(toPageRequestInput(query.page, query.pageSize))
+    return this.activity?.listForIdea(ideaId, page) ?? toPage([], 0, page)
+  }
+
   async update(ideaId: string, command: UpdateIdeaCommand): Promise<IdeaDetail> {
     // Rule 25: org content is mutated through View As, not directly as a Site Admin.
     ensureNotDirectSiteAdmin(this.currentUser)
@@ -819,9 +846,19 @@ export class IdeaService {
     )
     // Three-state, unlike every other field on this command: an ABSENT `effort` key leaves the
     // estimate alone, so a client that predates the field cannot clear it on an unrelated edit.
-    // `setIdeaEffort` itself refuses a Delivery-phase item - see `UpdateIdeaCommand.effort`.
     if (command.effort !== undefined) {
-      idea = runDomain(setIdeaEffort, idea, parseOptionalEffort(command.effort), now, actorId)
+      const effort = parseOptionalEffort(command.effort)
+      if (effort === null && idea.boardId !== null) {
+        const board = await this.boards.getBoardContext(idea.boardId)
+        const { statusId } = idea
+        if (board?.swimlanes.some((l) => l.statusId === statusId && l.referencesBoardId)) {
+          throw new UnprocessableError(
+            'effortRequiredInReferenceLane',
+            'An idea in a lane that references a board needs an Effort.',
+          )
+        }
+      }
+      idea = runDomain(setIdeaEffort, idea, effort, now, actorId)
     }
     idea = runDomain(replaceIdeaAssignees, idea, assigneeIds, now, actorId)
     idea = runDomain(replaceIdeaTags, idea, tagIds, now, actorId)
@@ -1203,9 +1240,14 @@ export class IdeaService {
     await this.ideaRepository.update(idea)
     // The hand-off: one task on the referenced board, staged beside the move so one commit takes
     // both, and a refused or failed task leaves the move uncommitted.
-    const finishTask = targetLane?.autoCreateTask
-      ? await this.stageBoardTask(idea, targetLane.referencesBoardId, autoTaskCommand(idea))
-      : null
+    const finishTask =
+      targetLane?.autoCreateTask &&
+      !(
+        targetLane.referencesBoardId &&
+        (await this.ideaRepository.hasTaskOnBoard(idea.id, targetLane.referencesBoardId))
+      )
+        ? await this.stageBoardTask(idea, targetLane.referencesBoardId, autoTaskCommand(idea))
+        : null
     await this.unitOfWork.saveChanges()
     await finishTask?.()
 

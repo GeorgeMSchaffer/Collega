@@ -4,11 +4,10 @@ import {
   BoardService,
   type CreateBoardResult,
   type IdeaMoveInput,
-  type PullCandidate,
+  type PullCandidatePage,
   type SwimlaneInput,
   type UpdateBoardResult,
 } from '@collega/application/boards'
-import type { Page } from '@collega/application/common'
 import { BOARD_NAME_MAX_LENGTH } from '@collega/domain/boards'
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '../auth/auth.guard.js'
@@ -190,7 +189,7 @@ export class BoardsController {
   async pullCandidates(
     @Param('organizationId', UuidParamPipe) organizationId: string,
     @Query() query: Record<string, unknown>,
-  ): Promise<Page<PullCandidate>> {
+  ): Promise<PullCandidatePage> {
     return this.boards.listPullCandidates(organizationId, {
       source: optional(query.source),
       excludeBoardId: optionalGuid(query.excludeBoardId),

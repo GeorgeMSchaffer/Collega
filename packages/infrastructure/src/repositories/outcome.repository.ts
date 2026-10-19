@@ -7,6 +7,7 @@
 
 import type {
   OutcomeIdea,
+  OutcomeIdeaMetric,
   OutcomeReadsPort,
   OutcomeRepository,
   OutcomeRollup,
@@ -89,6 +90,7 @@ function toIdea(row: IdeaQueryRow): OutcomeIdea {
     sprintId: row.sprint_id,
     sprintStart: row.sprint_start,
     sprintEnd: row.sprint_end,
+    metrics: [],
   }
 }
 
@@ -282,15 +284,54 @@ export class PrismaOutcomeRepository implements OutcomeRepository, OutcomeReadsP
         AND i.is_deleted = FALSE
       ORDER BY i.created_at_utc ASC, i.title ASC
     `)
+    const metrics = await this.metricsByIdeaIds(rows.map((row) => row.idea_id))
     for (const row of rows) {
       if (row.outcome_id === null) {
         continue
       }
       const list = grouped.get(row.outcome_id) ?? []
-      list.push(toIdea(row))
+      list.push({ ...toIdea(row), metrics: metrics.get(row.idea_id) ?? [] })
       grouped.set(row.outcome_id, list)
     }
     return grouped
+  }
+
+  /** Stored values over active types, in the types' order; numbers go out as text until here. */
+  private async metricsByIdeaIds(
+    ideaIds: readonly string[],
+  ): Promise<ReadonlyMap<string, readonly OutcomeIdeaMetric[]>> {
+    const byIdea = new Map<string, OutcomeIdeaMetric[]>()
+    if (ideaIds.length === 0) {
+      return byIdea
+    }
+    const rows = await this.prisma.$queryRaw<
+      {
+        idea_id: string
+        metric_type_id: string
+        projected: string | null
+        realized: string | null
+      }[]
+    >(Prisma.sql`
+      SELECT v.idea_id AS idea_id,
+             v.metric_type_id AS metric_type_id,
+             v.projected::text AS projected,
+             v.realized::text AS realized
+      FROM idea_metric_values v
+      JOIN metric_types t ON t.metric_type_id = v.metric_type_id
+      WHERE v.idea_id IN (${uuidList(ideaIds)})
+        AND t.is_archived = FALSE
+      ORDER BY t.created_at_utc ASC, t.metric_type_id ASC
+    `)
+    for (const row of rows) {
+      const list = byIdea.get(row.idea_id) ?? []
+      list.push({
+        metricTypeId: row.metric_type_id,
+        projected: row.projected === null ? null : Number(row.projected),
+        realized: row.realized === null ? null : Number(row.realized),
+      })
+      byIdea.set(row.idea_id, list)
+    }
+    return byIdea
   }
 
   async listUngroupedIdeas(organizationId: string): Promise<readonly OutcomeIdea[]> {
@@ -314,6 +355,7 @@ export class PrismaOutcomeRepository implements OutcomeRepository, OutcomeReadsP
         AND i.is_deleted = FALSE
       ORDER BY i.created_at_utc ASC, i.title ASC
     `)
-    return rows.map(toIdea)
+    const metrics = await this.metricsByIdeaIds(rows.map((row) => row.idea_id))
+    return rows.map((row) => ({ ...toIdea(row), metrics: metrics.get(row.idea_id) ?? [] }))
   }
 }

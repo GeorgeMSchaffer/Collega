@@ -159,6 +159,7 @@ The pull picker's read (added 2026-10-13, slice 180). One tab per `source`; each
   - `authorUserId` optional GUID — for a User it is ignored: their own ideas only
   - `page`, `pageSize` — the standard paging (default 20, 1–100)
 - **Response:** `200`: `{ items, page, pageSize, totalCount }`, oldest first, then title, then id. Each item: `ideaId`, `title`, `authorUserId`, `authorName`, `boardId` and `boardName` (`null` in the pool), `statusId`, `statusName`, `phase`, `tags` (names, alphabetical), `priority`, `upvoteCount`, `isMine`.
+- **Response addition (proposed, owner to confirm, 2026-10-19):** `hiddenTaskCount` integer beside `items`: how many live tasks (items with a parent) match the same `source`, `excludeBoardId`, `search`, `tag` and `authorUserId` filters and are therefore withheld. The UI shows "N tasks are hidden" only when `search` is set and the count is above 0.
 - **Errors:** `400` (`source`), `401`, `403`, `404`.
 - **Rules:** items with a parent are never offered (decided 2026-10-16). A read only. The list can be stale by the time the form is saved; `pullItemIds` is checked again then.
 
@@ -199,7 +200,8 @@ Persist swimlane reorder immediately after drag-and-drop.
 - **Lane item fields (added) on every lane in a board read and write.** The lane-save routes that carry `isFinal` and `referencesBoardId` are `PUT /api/v1/boards/{boardId}`, `POST /api/v1/organizations/{organizationId}/boards` and `POST /api/v1/boards/{boardId}/swimlanes/reorder`:
   - `isFinal` boolean, default `false`. A board may have several final lanes.
   - `referencesBoardId` GUID or `null`: the board whose tasks this lane hands work to.
-  - `autoCreateTask` boolean, default `false`: every entry into the lane (a status move, a pull with `pullItemIds`, a bulk lane move with `ideaMoves`; decided 2026-10-16) creates one task on the referenced board, in the same transaction; a failure rolls the write back. Setting it on a lane with no `referencesBoardId` is `422` `autoCreateTaskRequiresReference`.
+  - `autoCreateTask` boolean, default `false`: every entry into the lane (a status move, a pull with `pullItemIds`, a bulk lane move with `ideaMoves`; decided 2026-10-16) creates one task on the referenced board, in the same transaction; a failure rolls the write back. Setting it on a lane with no `referencesBoardId` is `422` `autoCreateTaskRequiresReference`. **Skipped when the card already has a live task on the referenced board** (decided 2026-10-19): a card moving back into the lane keeps the task it has; its first entry still creates one.
+  - `isFinal: true` together with a `referencesBoardId` is `422` `finalLaneCannotReference` ("A final lane cannot reference a board."), on every lane-save route (decided 2026-10-19).
 - **Rules:**
   - A lane may not reference its own board.
   - A board that is the target of a reference may not itself contain a reference lane, and a board with a reference lane may not be a target (one level at launch).

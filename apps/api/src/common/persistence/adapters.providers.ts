@@ -351,6 +351,7 @@ const PORT_ALIASES: Provider[] = [
 
   { provide: PORT_TOKENS.MetricTypeRepository, useExisting: PrismaMetricTypeRepository },
   { provide: PORT_TOKENS.IdeaMetricValuesPort, useExisting: PrismaMetricTypeRepository },
+  { provide: PORT_TOKENS.IdeaActivityPort, useExisting: PrismaAuditEventWriter },
   { provide: PORT_TOKENS.MetricIdeasPort, useExisting: PrismaIdeaRepository },
 
   { provide: PORT_TOKENS.OutcomeRepository, useExisting: PrismaOutcomeRepository },

@@ -289,10 +289,10 @@ Update idea content.
   - unauthorized description changes return `403 Forbidden`.
   - unauthorized assignment changes return `403 Forbidden`.
   - duplicate assignee IDs, more than five assignee IDs, inactive newly selected users, cross-organization users, or more than 10 distinct tags return `400 Bad Request`.
-  - `effort`: an unrecognised value is a field-keyed `400`; supplying it for a `Delivery`-phase item returns `400` keyed on `effort`.
+  - `effort`: an unrecognised value is a field-keyed `400`. It may be set at any time (the Discovery-phase-only restriction is removed, 2026-10-19). An explicit `null` while the idea sits in a reference lane is `422` (`effortRequiredInReferenceLane`, "An idea in a lane that references a board needs an Effort."); changing it to another value is allowed.
 - **Rules:**
   - **`effort` is three-state, and that is deliberate** — it is the only field on this payload that is. The key being **absent** means "not provided": the stored estimate is left untouched. An explicit **`null`** clears it. A **value** sets it. Why: a plain two-state optional (absent reading as `null`, the way `dueDate` does) would make every client that predates this field silently clear the estimate on an unrelated edit, and on a promoted Issue that estimate is half of what the promotion gate recorded.
-  - `effort` may only be set while the idea is in the **`Discovery`** phase: effort is chosen at the promotion gate, alongside `promotedByUserId` and `upvoteCountAtPromotion`, and re-estimating a live Issue is not modelled in this slice. Omitting the key on an Issue is always valid.
+  - ~~`effort` may only be set while the idea is in the `Discovery` phase~~ — stale since Board References; effort is settable at any time (2026-10-19).
   - description updates are accepted only from the idea author, an in-scope Org Admin, or Site Admin.
   - assignee updates replace the complete collection atomically and are accepted only from the idea author, an in-scope Org Admin, or Site Admin.
   - UI behavior contract:
@@ -327,6 +327,15 @@ Remove an idea from its board, leaving it in the organization's pool (added 2026
   - **Idempotent.** An idea already in the pool answers `204` with nothing written: no `updated_at_utc` stamp, no audit event. An Issue is refused (`409`) whether or not it has a board.
   - The idea keeps its status, tags, assignees, comments, upvotes and followers; `updatedAtUtc` is stamped. No notification is sent.
   - Writes one `IdeaBoardChanged` audit event (`entityType` `Idea`, message `Idea '{title}' removed from its board.`, metadata `{ fromBoardId, toBoardId }` with `toBoardId` `null`), attributed to the real user with the View As target as the intended actor, as every content write is.
+
+### `GET /api/v1/ideas/{ideaId}/activity`
+*Proposed, owner to confirm (2026-10-19). Needed by the lock override's activity entry ("Moved past N open tasks — reason"); no route read audit events before.*
+
+- **Roles:** whoever may read `GET /api/v1/ideas/{ideaId}` (same scope and `404`s).
+- **Request:** query `page`, `pageSize` (standard paging, default 20, 1–100).
+- **Response:** `200`: `{ items, page, pageSize, totalCount }`, newest first (then id). Each item: `eventType` (e.g. `IdeaStatusChanged`, `IdeaBoardChanged`, `IdeaMovedPastOpenTasks`), `message`, `occurredAtUtc`, `actorUserId` and `onBehalfOfUserId` (GUID or `null`), `metadata` (the stored metadata object, or `null`; for `IdeaMovedPastOpenTasks` `{ reason, openTaskCount }`).
+- **Rules:** the audit events whose entity is this idea; a read only. A client resolves names from the users list.
+- **Errors:** `401`, `404`.
 
 ### `DELETE /api/v1/ideas/{ideaId}`
 Soft-delete an idea while preserving its row and audit history.
@@ -363,6 +372,7 @@ Soft-delete an idea while preserving its row and audit history.
   - `PUT /api/v1/ideas/{ideaId}/blocked-by` replaces the blocker set. Body `{ "ideaIds": [...] }`. Details in `contracts/idea-dependencies.md`.
 - **Rules:**
   - Moving an idea into a reference lane requires `effort` to be set; otherwise `422` (`effortRequiredForReferenceLane`).
+  - Entering an `autoCreateTask` lane creates its one task only if the idea has no live task yet on the referenced board; a card moving back into the lane keeps the task it has (decided 2026-10-19). The same holds for a pull and an `ideaMoves` entry.
   - A task cannot itself be a parent (no sub-tasks at launch) and cannot be grouped under an Outcome; both `422`.
   - Moving an idea out of a reference lane while any of its tasks is not in a final lane is refused with `422` (`parentHasOpenTasks`). An Org Admin may send `forceReason` (non-empty text) on the move to override; any other role sending it gets `403`. The override is audited as `IdeaMovedPastOpenTasks` (reason, open task count) and does not touch the tasks. The refusal message (decided 2026-10-16) is `'{title}' is waiting on {n} open tasks, so it cannot be moved.` The stored metadata is `{ reason, openTaskCount }`. How the UI shows it as an activity entry is intent, not contract: see `decisions.md` "Board References UI" (2026-10-16); no route reads audit events yet.
   - A card entering a lane with `autoCreateTask` by any path (this route, a pull with `pullItemIds`, or a bulk lane move with `ideaMoves` on a board edit; decided 2026-10-16) gets one task on the referenced board in the same transaction (the card's title, the board's first lane); a failure rolls the whole write back.
