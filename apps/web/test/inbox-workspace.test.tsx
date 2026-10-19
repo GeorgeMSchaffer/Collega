@@ -79,7 +79,9 @@ const rowFor = (title: string) =>
   screen.getByText(title, { selector: 'span' }).closest('button') as HTMLButtonElement
 const markAllButton = () => screen.getByRole('button', { name: 'Mark all read' })
 
-function deferred(fn: typeof markOne) {
+function deferred(fn: {
+  mockImplementationOnce: (impl: () => Promise<{ error: string | null }>) => unknown
+}) {
   let settle: (result: { error: string | null }) => void = () => {}
   fn.mockImplementationOnce(
     () =>

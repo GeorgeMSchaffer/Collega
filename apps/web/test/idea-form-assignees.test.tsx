@@ -36,7 +36,10 @@ function idea(assignees: MemberOption[] = []): IdeaDetail {
     tag: null,
     tags: [],
     assigneeInitials: null,
-    assignees,
+    assignees: assignees.map((member) => ({
+      ...member,
+      initials: member.name.slice(0, 2).toUpperCase(),
+    })),
     upvotes: 0,
     hasUpvoted: false,
     effort: null,
