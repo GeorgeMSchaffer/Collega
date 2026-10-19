@@ -282,17 +282,17 @@ Update idea content.
   - `assigneeUserIds` optional array of zero to five distinct GUID strings; every newly selected user must be active and belong to the idea's organization
   - `tagNames` optional array of no more than 10 distinct normalized tag names
   - `mentionEmails` optional string array
-  - `effort` optional string: `Low`, `Medium`, or `High` — the optional Discovery-phase effort estimate (added 2026-09-11, Issues and Delivery Slice 1)
+  - `effort` optional string: `Low`, `Medium`, or `High` — the optional effort estimate (added 2026-09-11, Issues and Delivery Slice 1; settable at any time, corrected 2026-10-19)
 - **Response:** the detail shape of `GET /api/v1/ideas/{ideaId}` (stated there).
 - **Updating a task (an item with a parent; decided 2026-10-16):** the same route, task fields only. The author or an in-scope Org Admin may change `title`, `description`, `assigneeUserIds` and `tagNames`, under the rules above; `title` is required. `problem`, `proposedSolutions`, `impactRationale`, `priority`, `ideaTypeId`, `businessImpactId`, `dueDate`, `effort` and `mentionEmails` are not taken: they are ignored if sent, as on `POST …/board-tasks`, and are not required. The idea-only fields that are read stay `null` (or `[]`); `mentionEmails` has no read field and no mention notification is sent. Sprint and blockers keep their own routes. Read Only `403`; a direct Site Admin as for any idea update.
 - **Errors:**
   - unauthorized description changes return `403 Forbidden`.
   - unauthorized assignment changes return `403 Forbidden`.
   - duplicate assignee IDs, more than five assignee IDs, inactive newly selected users, cross-organization users, or more than 10 distinct tags return `400 Bad Request`.
-  - `effort`: an unrecognised value is a field-keyed `400`; supplying it for a `Delivery`-phase item returns `400` keyed on `effort`.
+  - `effort`: an unrecognised value is a field-keyed `400`. An explicit `null` while the idea sits in a reference lane is `422` `effortRequiredInReferenceLane` (decided 2026-10-19).
 - **Rules:**
   - **`effort` is three-state, and that is deliberate** — it is the only field on this payload that is. The key being **absent** means "not provided": the stored estimate is left untouched. An explicit **`null`** clears it. A **value** sets it. Why: a plain two-state optional (absent reading as `null`, the way `dueDate` does) would make every client that predates this field silently clear the estimate on an unrelated edit, and on a promoted Issue that estimate is half of what the promotion gate recorded.
-  - `effort` may only be set while the idea is in the **`Discovery`** phase: effort is chosen at the promotion gate, alongside `promotedByUserId` and `upvoteCountAtPromotion`, and re-estimating a live Issue is not modelled in this slice. Omitting the key on an Issue is always valid.
+  - **`effort` may be set at any time (corrected 2026-10-19).** The earlier Discovery-phase-only rule dates from the removed Discovery/Delivery phases and no longer applies. In a reference lane it may be changed but not cleared: `null` is `422` `effortRequiredInReferenceLane`. Omitting the key is always valid.
   - description updates are accepted only from the idea author, an in-scope Org Admin, or Site Admin.
   - assignee updates replace the complete collection atomically and are accepted only from the idea author, an in-scope Org Admin, or Site Admin.
   - UI behavior contract:
@@ -362,9 +362,9 @@ Soft-delete an idea while preserving its row and audit history.
     - Named `board-tasks` so it does not collide with the checklist routes in `contracts/issue-tasks.md`, which stay until Plan 4 retires them; Plan 4 may then rename it to `/tasks`.
   - `PUT /api/v1/ideas/{ideaId}/blocked-by` replaces the blocker set. Body `{ "ideaIds": [...] }`. Details in `contracts/idea-dependencies.md`.
 - **Rules:**
-  - Moving an idea into a reference lane requires `effort` to be set; otherwise `422` (`effortRequiredForReferenceLane`).
+  - Moving an idea into a reference lane requires `effort` to be set; otherwise `422` (`effortRequiredForReferenceLane`). It stays set while the idea is in the lane: an update with `effort` `null` there is `422` (`effortRequiredInReferenceLane`; decided 2026-10-19). The client refuses the move up front (no drop target, tooltip "Add Effort first"); these server rules are the backstop for every path (pull, `ideaMoves`, other clients).
   - A task cannot itself be a parent (no sub-tasks at launch) and cannot be grouped under an Outcome; both `422`.
   - Moving an idea out of a reference lane while any of its tasks is not in a final lane is refused with `422` (`parentHasOpenTasks`). An Org Admin may send `forceReason` (non-empty text) on the move to override; any other role sending it gets `403`. The override is audited as `IdeaMovedPastOpenTasks` (reason, open task count) and does not touch the tasks. The refusal message (decided 2026-10-16) is `'{title}' is waiting on {n} open tasks, so it cannot be moved.` The stored metadata is `{ reason, openTaskCount }`. How the UI shows it as an activity entry is intent, not contract: see `decisions.md` "Board References UI" (2026-10-16); no route reads audit events yet.
-  - A card entering a lane with `autoCreateTask` by any path (this route, a pull with `pullItemIds`, or a bulk lane move with `ideaMoves` on a board edit; decided 2026-10-16) gets one task on the referenced board in the same transaction (the card's title, the board's first lane); a failure rolls the whole write back.
+  - A card entering a lane with `autoCreateTask` by any path (this route, a pull with `pullItemIds`, or a bulk lane move with `ideaMoves` on a board edit; decided 2026-10-16) gets one task on the referenced board in the same transaction (the card's title, the board's first lane); a failure rolls the whole write back. **First entry only (amended 2026-10-19):** a card that already has at least one task on the referenced board (any lane) gets none, so moving it back into the lane does not add a second automatic task.
   - An item with a parent is never pulled onto another board (`contracts/boards.md`, "Pulling items").
-  - A task cannot leave its board's first lane while any blocker is not in a final lane; `422` (`taskBlocked`).
+  - A task cannot leave its board's first lane while any blocker is not in a final lane; `422` (`taskBlocked`). The client refuses it up front (no drop target, a tooltip naming the blocker; decided 2026-10-19), and shows the blocked badge only while the task sits in its first lane: a blocker added after the task left it is allowed and shows no badge.
