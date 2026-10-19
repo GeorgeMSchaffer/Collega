@@ -328,6 +328,15 @@ Remove an idea from its board, leaving it in the organization's pool (added 2026
   - The idea keeps its status, tags, assignees, comments, upvotes and followers; `updatedAtUtc` is stamped. No notification is sent.
   - Writes one `IdeaBoardChanged` audit event (`entityType` `Idea`, message `Idea '{title}' removed from its board.`, metadata `{ fromBoardId, toBoardId }` with `toBoardId` `null`), attributed to the real user with the View As target as the intended actor, as every content write is.
 
+### `GET /api/v1/ideas/{ideaId}/activity`
+*Proposed, owner to confirm (2026-10-19). Needed by the lock override's activity entry ("Moved past N open tasks — reason"); no route read audit events before.*
+
+- **Roles:** whoever may read `GET /api/v1/ideas/{ideaId}` (same scope and `404`s).
+- **Request:** query `page`, `pageSize` (standard paging, default 20, 1–100).
+- **Response:** `200`: `{ items, page, pageSize, totalCount }`, newest first (then id). Each item: `eventType` (e.g. `IdeaStatusChanged`, `IdeaBoardChanged`, `IdeaMovedPastOpenTasks`), `message`, `occurredAtUtc`, `actorUserId` and `onBehalfOfUserId` (GUID or `null`), `metadata` (the stored metadata object, or `null`; for `IdeaMovedPastOpenTasks` `{ reason, openTaskCount }`).
+- **Rules:** the audit events whose entity is this idea; a read only. A client resolves names from the users list.
+- **Errors:** `401`, `404`.
+
 ### `DELETE /api/v1/ideas/{ideaId}`
 Soft-delete an idea while preserving its row and audit history.
 

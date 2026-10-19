@@ -442,15 +442,8 @@ export function pullIdeaOntoBoard(
 }
 
 /**
- * Sets or clears the optional Discovery-phase effort estimate.
- *
- * Discovery only, deliberately. In Delivery, `effort` is no longer a working estimate - it is half
- * of what the promotion gate recorded, sitting beside `promotedByUserId` and
- * `upvoteCountAtPromotion`, and a later edit through the ordinary update path would quietly rewrite
- * the answer to "how big did we think this was when we committed to it". Re-estimating a live Issue
- * is not modelled in this slice; the gate is where an effort is chosen.
- *
- * A `null` clears it, matching `dueDate` - the only other optional scalar on the edit path.
+ * Sets or clears the optional effort estimate, in any phase. A `null` clears it, matching
+ * `dueDate` - the only other optional scalar on the edit path.
  */
 export function setIdeaEffort(
   idea: Idea,
@@ -458,12 +451,6 @@ export function setIdeaEffort(
   nowUtc: Date,
   actorUserId: string | null,
 ): Idea {
-  if (idea.phase !== IdeaPhase.Discovery) {
-    throw new IdeaDomainError(
-      'effort',
-      'Effort is recorded at the promotion gate and cannot be changed on an issue.',
-    )
-  }
   return markUpdated({ ...idea, effort }, nowUtc, actorUserId)
 }
 

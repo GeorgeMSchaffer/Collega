@@ -54,6 +54,8 @@ Shared by every route below:
   - `sprintStart`, `sprintEnd` — `YYYY-MM-DD`: the earliest sprint start and the latest sprint end
     among the sprints of the grouped items' tasks; **both `null` when none has a sprint**
 
+  - **Per-idea values (proposed, owner to confirm, 2026-10-19):** each item of an Outcome's `ideas` (detail and roadmap) gains `metrics`: `[{ metricTypeId, projected, realized }]`, the item's stored values over **active** metric types, in the types' order; `[]` when it has none. Names and units come from `metricTotals` or the metric types list; the idea's `title` is already there. The ungrouped list carries the same field.
+
   Quarter placement and the drawer's derived *State* (*Planned*, *In its window*, *Past its
   window*) are **not returned**: the client computes them from its own local date.
 - **Colour (decision 5).** Any `#RRGGBB`, as for tags (`contracts/tags.md`, "Tag colour and

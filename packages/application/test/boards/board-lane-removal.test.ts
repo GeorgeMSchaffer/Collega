@@ -134,7 +134,7 @@ function harness(
     async verifyIdeasMoved() {},
     async reassignIdeas() {},
     async listPullCandidates() {
-      return { items: [], page: 1, pageSize: 20, totalCount: 0 }
+      return { items: [], page: 1, pageSize: 20, totalCount: 0, hiddenTaskCount: 0 }
     },
   }
 

@@ -31,7 +31,6 @@ import {
   ForbiddenError,
   NotFoundError,
   normalizePageRequest,
-  type Page,
   UnauthorizedError,
   type UnitOfWork,
   UnprocessableError,
@@ -54,7 +53,7 @@ import type {
   CreateBoardCommand,
   CreateBoardResult,
   IdeaMoveInput,
-  PullCandidate,
+  PullCandidatePage,
   PullCandidateSource,
   PullCandidatesQuery,
   PulledItem,
@@ -367,7 +366,7 @@ export class BoardService {
   async listPullCandidates(
     organizationId: string,
     query: PullCandidatesQuery,
-  ): Promise<Page<PullCandidate>> {
+  ): Promise<PullCandidatePage> {
     const role = this.ensureCreateScope(organizationId)
     await this.ensureOrganizationExists(organizationId)
     const userId = this.requireAuthenticatedUserId()
@@ -1172,6 +1171,12 @@ function validateAndOrderSwimlanes(
     referencesBoardId: lane.referencesBoardId?.trim() || null,
     autoCreateTask: lane.autoCreateTask === true,
   }))
+  if (lanes.some((lane) => lane.isFinal && lane.referencesBoardId !== null)) {
+    throw new UnprocessableError(
+      'finalLaneCannotReference',
+      'A final lane cannot reference a board.',
+    )
+  }
   if (lanes.some((lane) => lane.autoCreateTask && lane.referencesBoardId === null)) {
     throw new UnprocessableError(
       'autoCreateTaskRequiresReference',

@@ -109,6 +109,7 @@ const card = (ideaId: string): OutcomeIdea => ({
   title: ideaId,
   statusId: 's',
   effort: null,
+  metrics: [],
   assigneeUserIds: [],
   sprintId: null,
   sprintStart: null,

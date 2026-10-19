@@ -8,6 +8,7 @@ import type {
 import type {
   BoardsPort,
   CommentsPort,
+  IdeaActivityPort,
   IdeaClassificationPort,
   IdeaDependenciesPort,
   IdeaFieldValuesPort,
@@ -89,6 +90,7 @@ import { IdeasController } from './ideas.controller.js'
         clock: Clock,
         random: RandomSource,
         metricValues: IdeaMetricValuesPort,
+        activity: IdeaActivityPort,
       ) =>
         new IdeaService(
           ideaRepository,
@@ -110,6 +112,7 @@ import { IdeasController } from './ideas.controller.js'
           clock,
           random,
           metricValues,
+          activity,
         ),
       inject: [
         PORT_TOKENS.IdeaRepository,
@@ -131,6 +134,7 @@ import { IdeasController } from './ideas.controller.js'
         PORT_TOKENS.Clock,
         PORT_TOKENS.RandomSource,
         PORT_TOKENS.IdeaMetricValuesPort,
+        PORT_TOKENS.IdeaActivityPort,
       ],
     },
     {

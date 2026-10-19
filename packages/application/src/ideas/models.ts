@@ -81,15 +81,14 @@ export type UpdateIdeaCommand = {
    * explicit (possibly empty) list reconciles them (see `Idea.replaceFieldValues`). */
   readonly fieldValues: readonly IdeaFieldValueWrite[] | null
   /**
-   * The optional Discovery-phase effort estimate (`Low`/`Medium`/`High`).
+   * The optional effort estimate (`Low`/`Medium`/`High`), settable at any time.
    *
    * THREE-STATE, unlike `dueDate`: the key being ABSENT means "not provided, leave it alone", an
    * explicit `null` clears it, and a value sets it. A two-state optional would make every client
-   * that predates this field silently clear the estimate on an unrelated edit - and on an Issue
-   * that estimate is half of what the promotion gate recorded.
+   * that predates this field silently clear the estimate on an unrelated edit.
    *
-   * Setting it on a `Delivery`-phase item is rejected (`400`, field `effort`): effort is chosen at
-   * the gate, and re-estimating a live Issue is not modelled in this slice.
+   * Clearing it while the idea sits in a reference lane is refused (`422`,
+   * `effortRequiredInReferenceLane`).
    */
   readonly effort?: string | null
 }
@@ -542,3 +541,14 @@ export function isReservedColumn(fieldName: string | null | undefined): boolean 
 }
 
 export type { IdeaFieldValueInput }
+
+/** One audit event on an idea, as the activity read answers it. */
+export type IdeaActivityEntry = {
+  readonly eventType: string
+  readonly message: string
+  readonly occurredAtUtc: Date
+  readonly actorUserId: string | null
+  readonly onBehalfOfUserId: string | null
+  /** The stored metadata object, or `null` when none or not an object. */
+  readonly metadata: Readonly<Record<string, unknown>> | null
+}

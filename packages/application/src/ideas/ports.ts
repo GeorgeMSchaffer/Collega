@@ -8,8 +8,9 @@ import type {
 } from '@collega/domain/enums'
 import type { IdeaFollower } from '@collega/domain/followers'
 import type { Idea, IdeaFieldValueInput } from '@collega/domain/ideas'
-import type { PageRequest, SortDirection } from '../common/index.js'
+import type { Page, PageRequest, SortDirection } from '../common/index.js'
 import type {
+  IdeaActivityEntry,
   IdeaFieldValueFilter,
   IdeaFieldValueWrite,
   IdeaFormFieldDto,
@@ -132,6 +133,9 @@ export interface IdeaRepository {
   countChildrenByParentIds(
     parentIds: readonly string[],
   ): Promise<ReadonlyMap<string, { readonly total: number; readonly done: number }>>
+
+  /** True when the idea has at least one live child sitting on `boardId`. */
+  hasTaskOnBoard(parentId: string, boardId: string): Promise<boolean>
 }
 
 export type DeliveryFilter = {
@@ -553,4 +557,9 @@ export interface IdeaFieldValuesPort {
     fieldName: string
     rawCell: string
   }): Promise<ImportCellTranslation>
+}
+
+/** The audit events whose entity is an idea, newest first. */
+export interface IdeaActivityPort {
+  listForIdea(ideaId: string, page: PageRequest): Promise<Page<IdeaActivityEntry>>
 }

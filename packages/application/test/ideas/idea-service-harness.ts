@@ -199,6 +199,8 @@ export function harness(options: {
   firstActiveStatusId?: string | null
   /** What `countChildrenByParentIds` answers per parent id. */
   childCounts?: Readonly<Record<string, { total: number; done: number }>>
+  /** Parent ids that already have a task on the referenced board. */
+  parentsWithTasks?: readonly string[]
   /** Overrides for the classification port, e.g. an organization with no active type. */
   classification?: Partial<IdeaClassificationPort>
   /** Existing blocked-by links. */
@@ -272,6 +274,9 @@ export function harness(options: {
     },
     async listBySprint() {
       return []
+    },
+    async hasTaskOnBoard(parentId) {
+      return options.parentsWithTasks?.includes(parentId) ?? false
     },
     async countChildrenByParentIds(parentIds) {
       return new Map(

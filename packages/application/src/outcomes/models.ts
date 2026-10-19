@@ -40,6 +40,14 @@ export type OutcomeIdea = {
   readonly sprintId: string | null
   readonly sprintStart: string | null
   readonly sprintEnd: string | null
+  /** The item's stored values over active metric types, in the types' order. */
+  readonly metrics: readonly OutcomeIdeaMetric[]
+}
+
+export type OutcomeIdeaMetric = {
+  readonly metricTypeId: string
+  readonly projected: number | null
+  readonly realized: number | null
 }
 
 export type OutcomeItem = OutcomeRollup & {

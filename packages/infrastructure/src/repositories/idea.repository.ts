@@ -296,6 +296,14 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
     return new Map(rows.map((row) => [row.parent_id, { total: row.total, done: row.done }]))
   }
 
+  async hasTaskOnBoard(parentId: string, boardId: string): Promise<boolean> {
+    const found = await this.prisma.ideas.findFirst({
+      where: { parent_idea_id: parentId, board_id: boardId, is_deleted: false },
+      select: { id: true },
+    })
+    return found !== null
+  }
+
   async listBySprint(sprintId: string): Promise<readonly Idea[]> {
     const rows = await this.prisma.ideas.findMany({
       where: { sprint_id: sprintId, is_deleted: false },

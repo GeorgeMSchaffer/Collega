@@ -1,6 +1,7 @@
 // Command and result shapes for board configuration (SPEC/30-Contracts.md "Board Contracts").
 
 import type { IdeaPhase, Priority } from '@collega/domain/enums'
+import type { Page } from '../common/index.js'
 
 /** A requested swimlane: which status, and its position. Order is normalized densely 0..n-1. */
 export type SwimlaneInput = {
@@ -175,6 +176,9 @@ export type PullCandidatesQuery = {
   readonly page: number | null
   readonly pageSize: number | null
 }
+
+/** A page of the picker, with how many tasks the same filters matched and withheld. */
+export type PullCandidatePage = Page<PullCandidate> & { readonly hiddenTaskCount: number }
 
 /** One card in the pull picker. */
 export type PullCandidate = {

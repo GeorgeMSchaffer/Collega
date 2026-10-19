@@ -440,7 +440,7 @@ describe.skipIf(!DATABASE_URL)('Board References follow-ups, against a live data
       expect(await eventsOf(created.boardId, 'BoardCreated')).toHaveLength(1)
     })
 
-    it('gives a card that already holds a task exactly one more on entry, never two', async () => {
+    it('gives a card that already holds a task on the referenced board no new task on entry', async () => {
       const { child } = await boardPair()
       const source = await newBoard([{ statusId: S_NEW }, { statusId: S_AUTO }])
       const card = await newIdea({ boardId: source, statusId: S_AUTO, title: 'Has a task' })
@@ -454,10 +454,7 @@ describe.skipIf(!DATABASE_URL)('Board References follow-ups, against a live data
       })
 
       const tasks = await tasksOf(card)
-      expect(tasks).toHaveLength(2)
-      const added = tasks.find((t) => t.id !== existing)
-      expect(added).toMatchObject({ title: 'Has a task', status_id: S_OPEN, item_number: 1 })
-      expect(await eventsOf(added?.id ?? '', 'BoardTaskCreated')).toHaveLength(1)
+      expect(tasks.map((t) => t.id)).toEqual([existing])
       expect(await eventsOf(existing, 'BoardTaskCreated')).toHaveLength(0)
     })
 

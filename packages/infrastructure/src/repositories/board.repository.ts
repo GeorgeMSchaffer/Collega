@@ -16,11 +16,10 @@ import type {
   BoardTagIdeaCount,
   IdeaReassignment,
   LaneIdea,
-  PullCandidate,
   PullCandidateFilter,
+  PullCandidatePage,
   UserName,
 } from '@collega/application/boards'
-import type { Page } from '@collega/application/common'
 import type { BoardsPort, SwimlaneInfo } from '@collega/application/ideas'
 import type { SprintBoardsPort } from '@collega/application/sprints'
 import type { Board, BoardSwimlane } from '@collega/domain/boards'
@@ -358,12 +357,10 @@ export class PrismaBoardRepository
    * relates to `ideas`. The population mirrors the eligibility in rule 10, one tab per source;
    * oldest first, then title, then id.
    */
-  async listPullCandidates(filter: PullCandidateFilter): Promise<Page<PullCandidate>> {
+  async listPullCandidates(filter: PullCandidateFilter): Promise<PullCandidatePage> {
     const conditions: Prisma.Sql[] = [
       Prisma.sql`i.organization_id = ${filter.organizationId}::uuid`,
       Prisma.sql`i.is_deleted = FALSE`,
-      // A task is never eligible: it stays on its parent's reference board.
-      Prisma.sql`i.parent_idea_id IS NULL`,
     ]
     switch (filter.source) {
       case 'unassigned':
@@ -391,7 +388,13 @@ export class PrismaBoardRepository
         Prisma.sql`EXISTS (SELECT 1 FROM idea_tags AS filter_link INNER JOIN tags AS filter_tag ON filter_tag.id = filter_link.tag_id WHERE filter_link.idea_id = i.id AND filter_tag.normalized_name IN (${Prisma.join(filter.tags)}))`,
       )
     }
-    const where = Prisma.join(conditions, ' AND ')
+    // A task is never eligible: it stays on its parent's reference board. The same filters count
+    // the tasks withheld, for the picker's "N tasks are hidden".
+    const where = Prisma.join([...conditions, Prisma.sql`i.parent_idea_id IS NULL`], ' AND ')
+    const hiddenWhere = Prisma.join(
+      [...conditions, Prisma.sql`i.parent_idea_id IS NOT NULL`],
+      ' AND ',
+    )
     const { page, pageSize } = filter.page
 
     const rows = await this.prisma.$queryRaw<
@@ -431,6 +434,9 @@ export class PrismaBoardRepository
     const countRows = await this.prisma.$queryRaw<{ total: number }[]>(Prisma.sql`
       SELECT COUNT(*)::int AS total FROM ideas AS i WHERE ${where}
     `)
+    const hiddenRows = await this.prisma.$queryRaw<{ total: number }[]>(Prisma.sql`
+      SELECT COUNT(*)::int AS total FROM ideas AS i WHERE ${hiddenWhere}
+    `)
 
     return {
       items: rows.map((row) => ({
@@ -451,6 +457,7 @@ export class PrismaBoardRepository
       page,
       pageSize,
       totalCount: countRows[0]?.total ?? 0,
+      hiddenTaskCount: hiddenRows[0]?.total ?? 0,
     }
   }
 

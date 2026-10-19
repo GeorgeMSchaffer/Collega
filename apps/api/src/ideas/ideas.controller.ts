@@ -1,7 +1,8 @@
-import { ValidationError } from '@collega/application/common'
+import { type Page, ValidationError } from '@collega/application/common'
 import {
   type CreateBoardTaskCommand,
   type CreateIdeaResult,
+  type IdeaActivityEntry,
   type IdeaDetail,
   type IdeaFieldValueWrite,
   type IdeaImportResult,
@@ -359,6 +360,17 @@ export class IdeasController {
   @Get('ideas/:ideaId')
   async getById(@Param('ideaId', UuidParamPipe) ideaId: string): Promise<IdeaDetail> {
     return this.ideas.getById(ideaId)
+  }
+
+  @Get('ideas/:ideaId/activity')
+  async activity(
+    @Param('ideaId', UuidParamPipe) ideaId: string,
+    @Query() query: Record<string, unknown>,
+  ): Promise<Page<IdeaActivityEntry>> {
+    return this.ideas.listActivity(ideaId, {
+      page: optionalInt(query.page),
+      pageSize: optionalInt(query.pageSize),
+    })
   }
 
   @Put('ideas/:ideaId')

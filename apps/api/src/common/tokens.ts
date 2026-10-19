@@ -106,6 +106,7 @@ export const PORT_TOKENS = {
   // Metric types (packages/application/src/metric-types/ports.ts) -------------------------------
   MetricTypeRepository: 'MetricTypeRepository',
   IdeaMetricValuesPort: 'IdeaMetricValuesPort',
+  IdeaActivityPort: 'IdeaActivityPort',
   MetricIdeasPort: 'MetricIdeasPort',
 
   // Issue tasks (packages/application/src/issue-tasks/ports.ts) ----------------------------------
