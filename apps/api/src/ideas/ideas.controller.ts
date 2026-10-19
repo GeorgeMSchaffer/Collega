@@ -81,7 +81,7 @@ type CreateIdeaBody = {
 type AddIssueBody = CreateIdeaBody & { effort?: unknown; sprintId?: unknown }
 
 /** `PUT /ideas/{ideaId}` - `UpdateIdeaRequest`: the create shape minus `statusId`. */
-type UpdateIdeaBody = Omit<CreateIdeaBody, 'statusId'>
+type UpdateIdeaBody = Omit<CreateIdeaBody, 'statusId'> & { effort?: unknown }
 
 type ChangeIdeaStatusBody = { statusId?: unknown; forceReason?: unknown }
 
@@ -182,6 +182,16 @@ function newIdeaFields(body: CreateIdeaBody) {
     mentionEmails: stringList('mentionEmails', body.mentionEmails),
     fieldValues: fieldValues(body.fieldValues),
   }
+}
+
+/** `effort` on the update is three-state: an absent key is left out so the stored estimate is
+ * untouched, an explicit `null` clears it, and anything else goes to the service to be parsed
+ * (a non-string becomes text that no level matches, so it is a field-keyed 400). */
+function effortField(body: UpdateIdeaBody): { effort?: string | null } {
+  if (!('effort' in body) || body.effort === undefined) {
+    return {}
+  }
+  return { effort: body.effort === null ? null : String(body.effort) }
 }
 
 /** `sprintId` on the board list: a GUID, or the literal `none` for the backlog. */
@@ -412,6 +422,7 @@ export class IdeasController {
       tagNames: stringList('tagNames', body.tagNames),
       mentionEmails: stringList('mentionEmails', body.mentionEmails),
       fieldValues: fieldValues(body.fieldValues),
+      ...effortField(body),
     })
   }
 

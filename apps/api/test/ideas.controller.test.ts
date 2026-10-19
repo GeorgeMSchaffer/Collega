@@ -183,6 +183,28 @@ describe('proposedSolutions at the HTTP boundary', () => {
   })
 })
 
+describe('effort on PUT', () => {
+  it('leaves effort out of the command when the key is absent', async () => {
+    const { controller: ideas, calls } = acceptingController()
+
+    await ideas.update(IDEA, VALID)
+
+    expect('effort' in firstCommand<object>(calls)).toBe(false)
+  })
+
+  it('passes an explicit null (clear) and a value (set) through', async () => {
+    const { controller: ideas, calls } = acceptingController()
+
+    await ideas.update(IDEA, { ...VALID, effort: null })
+    await ideas.update(IDEA, { ...VALID, effort: 'High' })
+
+    expect(calls.map((call) => (call.args[1] as { effort: unknown }).effort)).toEqual([
+      null,
+      'High',
+    ])
+  })
+})
+
 describe('fieldValues on PUT', () => {
   it('passes null to the service when fieldValues is null, which leaves custom values untouched', async () => {
     const { controller: ideas, calls } = acceptingController()
