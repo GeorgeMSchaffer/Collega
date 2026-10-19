@@ -31,6 +31,7 @@ import { redirect } from 'next/navigation'
 import { ApiError, apiDelete, apiPath, apiPost, apiPostReturning, apiPut } from '../api/client'
 import type { WireCreatedIdea } from '../api/wire'
 import { actingOrganizationId } from './current-user'
+import { type RuleContext, ruleMessage } from './rule-messages'
 
 /** What a card's controls render back: the API's refusal, or nothing. */
 export type ActionState = { error: string | null }
@@ -75,16 +76,18 @@ export type SaveIdeaResult =
  *
  * 400, 403, 404, 409 and 422 are all *answers* — the field was empty, the role may not, the id belongs
  * to another organization, the board is archived, a Board References rule refused the move
- * (`parentHasOpenTasks`, `taskBlocked`; `detail` is the rule key until the API sends a message) —
+ * (`parentHasOpenTasks`, `taskBlocked`; `detail` is the rule key, which `ruleMessage` turns into a sentence) —
  * and each one belongs beside the control that was pressed. A 500 is not an answer, and rethrowing lands it on the error boundary.
  *
  * 401 means the session ended between rendering and pressing the button: the same ordinary end of a
  * session `requireCurrentUser` redirects for, so it redirects to the same place.
  */
-function refusal(error: unknown): string {
+function refusal(error: unknown, context: RuleContext = {}): string {
   if (error instanceof ApiError) {
     if (error.status === 401) redirect('/login?expired=1')
-    if ([400, 403, 404, 409, 422].includes(error.status)) return error.detail
+    if ([400, 403, 404, 409, 422].includes(error.status)) {
+      return ruleMessage(error.detail, context)
+    }
   }
   throw error
 }
@@ -170,20 +173,43 @@ export async function deleteIdea(ideaId: string, boardId: string): Promise<Actio
   return { error: null }
 }
 
+/**
+ * Move a card to another lane. The optional `forceReason` is an Org Admin's override of the
+ * reference-lane lock (`parentHasOpenTasks`); `title`, `openTasks` and `blockers` are what the card
+ * already shows, so a refusal can name it. None of them is authority: the API decides.
+ */
 export async function moveIdea(_previous: ActionState, form: FormData): Promise<ActionState> {
   const boardId = String(form.get('boardId') ?? '')
   const ideaId = String(form.get('ideaId') ?? '')
+  const forceReason = String(form.get('forceReason') ?? '').trim()
 
   try {
     await apiPost(apiPath`/ideas/${ideaId}/status`, {
       statusId: String(form.get('statusId') ?? ''),
+      ...(forceReason ? { forceReason } : {}),
     })
   } catch (error) {
-    return { error: refusal(error) }
+    return { error: refusal(error, cardContext(form)) }
   }
 
   revalidateIdeaScreens(boardId)
   return { error: null }
+}
+
+/** What the card's controls know about it, for a refusal's sentence. */
+function cardContext(form: FormData): RuleContext {
+  const count = (name: string) => {
+    const value = form.get(name)
+    return value === null || value === '' ? undefined : Number(value)
+  }
+  const title = form.get('title')
+  const openTasks = count('openTasks')
+  const blockers = count('blockers')
+  return {
+    ...(typeof title === 'string' && title !== '' ? { title } : {}),
+    ...(openTasks !== undefined ? { openTasks } : {}),
+    ...(blockers !== undefined ? { blockers } : {}),
+  }
 }
 
 /**
@@ -252,11 +278,16 @@ export async function setFollowing(
  * Take an idea off its board, leaving it in the pool with its status, comments, votes and
  * followers. Idempotent on the API's side, so a second press from a stale page changes nothing.
  */
-export async function detachIdea(ideaId: string, boardId: string): Promise<ActionState> {
+export async function detachIdea(
+  ideaId: string,
+  boardId: string,
+  context: (RuleContext & { forceReason?: string }) | null = null,
+): Promise<ActionState> {
+  const forceReason = context?.forceReason?.trim()
   try {
-    await apiDelete(apiPath`/ideas/${ideaId}/board`)
+    await apiDelete(apiPath`/ideas/${ideaId}/board`, forceReason ? { forceReason } : {})
   } catch (error) {
-    return { error: refusal(error) }
+    return { error: refusal(error, { ...context, action: 'remove' }) }
   }
 
   revalidateIdeaScreens(boardId)

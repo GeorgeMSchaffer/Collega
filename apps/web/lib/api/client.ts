@@ -247,9 +247,10 @@ export async function apiPut(path: ApiPath, body: unknown = {}): Promise<void> {
  *
  * It goes through `send`, so it carries the same empty JSON body as the rest. The route takes none
  * and ignores it; one request shape across every mutation is worth more than saving two bytes.
+ * `DELETE /ideas/{id}/board` is the exception that reads its body: an Org Admin's `forceReason`.
  */
-export async function apiDelete(path: ApiPath): Promise<void> {
-  return send('DELETE', path, {})
+export async function apiDelete(path: ApiPath, body: unknown = {}): Promise<void> {
+  return send('DELETE', path, body)
 }
 
 /** Whether a thrown value is the API answering `status`. */

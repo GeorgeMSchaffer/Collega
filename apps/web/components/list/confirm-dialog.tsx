@@ -49,6 +49,7 @@ export function ConfirmDialog({
   confirmLabel,
   destructive = true,
   pending = false,
+  confirmDisabled = false,
   onConfirm,
   onCancel,
   children,
@@ -63,6 +64,8 @@ export function ConfirmDialog({
   /** `false` for a reversible action such as Archive, which takes the primary style instead. */
   destructive?: boolean
   pending?: boolean
+  /** The confirm button is refused until what `children` asks for is filled in (a required reason). */
+  confirmDisabled?: boolean
   onConfirm: () => void
   onCancel: () => void
   children?: ReactNode
@@ -105,7 +108,8 @@ export function ConfirmDialog({
       event.preventDefault()
       onCancel()
     } else if (event.key === 'Tab') {
-      const controls = dialog.current?.querySelectorAll<HTMLElement>('button, select, input') ?? []
+      const controls =
+        dialog.current?.querySelectorAll<HTMLElement>('button, select, input, textarea') ?? []
       const first = controls[0]
       const last = controls[controls.length - 1]
       if (event.shiftKey && document.activeElement === first) {
@@ -149,8 +153,8 @@ export function ConfirmDialog({
           ref={confirm}
           type="button"
           className={buttonVariants({ variant: destructive ? 'destructive' : 'default' })}
-          onClick={pending ? undefined : onConfirm}
-          aria-disabled={pending || undefined}
+          onClick={pending || confirmDisabled ? undefined : onConfirm}
+          aria-disabled={pending || confirmDisabled || undefined}
         >
           {confirmLabel}
         </button>
