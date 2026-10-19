@@ -177,6 +177,8 @@ export type Harness = {
   orgFilters: OrganizationIdeaListFilter[]
   /** Every `listDelivery` filter the service sent the repository. */
   deliveryFilters: Parameters<IdeaRepository['listDelivery']>[0][]
+  /** The id list of every `SprintLookupPort.listByIds` call, in order. */
+  sprintLookups: (readonly string[])[]
   /** Tags `getOrCreate` created, in order, with the colour the service picked for each. */
   createdTags: TagSummary[]
   /** The blocked-by links; edit it to model existing dependencies. */
@@ -228,6 +230,7 @@ export function harness(options: {
   const boardFilters: IdeaListFilter[] = []
   const deliveryFilters: Parameters<IdeaRepository['listDelivery']>[0][] = []
   const orgFilters: OrganizationIdeaListFilter[] = []
+  const sprintLookups: (readonly string[])[] = []
   const tagsById = new Map((options.tags ?? []).map((t) => [t.id, t]))
   const createdTags: TagSummary[] = []
 
@@ -498,6 +501,7 @@ export function harness(options: {
       return sprintsById.get(sprintId) ?? null
     },
     async listByIds(ids) {
+      sprintLookups.push(ids)
       return ids.flatMap((id) => {
         const found = sprintsById.get(id)
         return found ? [found] : []
@@ -624,6 +628,7 @@ export function harness(options: {
     boardFilters,
     orgFilters,
     deliveryFilters,
+    sprintLookups,
     createdTags,
     edges,
   }

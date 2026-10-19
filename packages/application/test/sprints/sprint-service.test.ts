@@ -28,6 +28,7 @@ import type { CreateSprintCommand } from '../../src/sprints/models.js'
 import type {
   SprintBoard,
   SprintBoardsPort,
+  SprintIssueCounts,
   SprintIssuesPort,
   SprintRepository,
   SprintUserSummary,
@@ -115,6 +116,7 @@ function harness(options: {
   issues?: readonly Idea[]
   users?: readonly SprintUserSummary[]
   boards?: readonly SprintBoard[]
+  counts?: Readonly<Record<string, SprintIssueCounts>>
 }) {
   const byId = new Map((options.sprints ?? [sprint()]).map((s) => [s.id, s]))
   const usersById = new Map((options.users ?? []).map((u) => [u.id, u]))
@@ -152,7 +154,15 @@ function harness(options: {
       return (options.issues ?? []).filter((i) => i.sprintId === sprintId)
     },
     async countsBySprintIds(ids) {
-      return new Map(ids.map((id) => [id, { issueCount: 2, doneCount: 1, ideaCount: 0 }]))
+      // With `counts` given, a sprint missing from it is absent from the map, as an empty one is.
+      return new Map(
+        ids.flatMap((id) => {
+          const counts = options.counts
+            ? options.counts[id]
+            : { issueCount: 2, doneCount: 1, ideaCount: 0 }
+          return counts ? [[id, counts] as const] : []
+        }),
+      )
     },
     async update(idea) {
       issueUpdates.push(idea)
@@ -898,5 +908,84 @@ describe('SprintService completing and deleting by sprint kind', () => {
 
     expect(issueUpdates.map((i) => i.sprintId)).toEqual([null])
     expect(saved[0]?.isDeleted).toBe(true)
+  })
+})
+
+// QA for the work board sprint header (SPEC/contracts/sprints.md "Work board sprint header"):
+// `ideaCount` is carried per sprint from the same batched counts as `issueCount`.
+describe('SprintService.ideaCount', () => {
+  it('reports the distinct-idea count per sprint on the organization list', async () => {
+    const { service } = harness({
+      currentUser: orgAdmin(ORG_A),
+      sprints: [sprint({ id: SPRINT_A }), sprint({ id: SPRINT_B })],
+      counts: {
+        [SPRINT_A]: { issueCount: 5, doneCount: 1, ideaCount: 3 },
+        [SPRINT_B]: { issueCount: 1, doneCount: 0, ideaCount: 0 },
+      },
+    })
+
+    const items = await service.list(ORG_A, null)
+
+    expect(items.map((i) => [i.sprintId, i.ideaCount]).sort()).toEqual([
+      [SPRINT_A, 3],
+      [SPRINT_B, 0],
+    ])
+  })
+
+  it('is 0 for a sprint the counts read has no row for (an empty sprint)', async () => {
+    const { service } = harness({ currentUser: orgAdmin(ORG_A), counts: {} })
+
+    expect(await service.get(ORG_A, SPRINT_A)).toMatchObject({
+      issueCount: 0,
+      doneCount: 0,
+      ideaCount: 0,
+    })
+  })
+
+  it('is on the single-sprint read, for a Read Only member too', async () => {
+    const { service } = harness({
+      currentUser: readOnly(ORG_A),
+      counts: { [SPRINT_A]: { issueCount: 4, doneCount: 2, ideaCount: 2 } },
+    })
+
+    expect(await service.get(ORG_A, SPRINT_A)).toMatchObject({
+      issueCount: 4,
+      doneCount: 2,
+      ideaCount: 2,
+    })
+  })
+
+  it('is on the board sprint list the header reads', async () => {
+    const BOARD = 'board-a'
+    const created = createSprint({
+      id: 'sprint-board',
+      organizationId: ORG_A,
+      name: 'Board sprint',
+      goal: null,
+      startDate: '2026-09-01',
+      endDate: '2026-09-14',
+      ownerUserId: null,
+      boardId: BOARD,
+      nowUtc: NOW,
+      actorUserId: 'seed',
+    })
+    const { service } = harness({
+      currentUser: member(ORG_A),
+      sprints: [created],
+      boards: [
+        {
+          id: BOARD,
+          organizationId: ORG_A,
+          sprintsEnabled: true,
+          isArchived: false,
+          finalStatusIds: [],
+        },
+      ],
+      counts: { 'sprint-board': { issueCount: 3, doneCount: 0, ideaCount: 2 } },
+    })
+
+    const [item] = await service.listForBoard(BOARD, null)
+
+    expect(item).toMatchObject({ sprintId: 'sprint-board', issueCount: 3, ideaCount: 2 })
   })
 })
