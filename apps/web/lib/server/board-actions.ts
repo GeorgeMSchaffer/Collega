@@ -25,6 +25,7 @@ import { redirect } from 'next/navigation'
 import { ApiError, apiPath, apiPost, apiPostReturning, apiPut } from '../api/client'
 import type { LaneFlags } from '../types'
 import { actingOrganizationId } from './current-user'
+import { KEY_PREFIX_RULE, ruleMessage } from './rule-messages'
 
 /**
  * What the board form renders back.
@@ -33,7 +34,17 @@ import { actingOrganizationId } from './current-user'
  * in `SwimlanePicker`'s own state, so React's reset after an action resolves costs nothing that
  * the next render does not restore.
  */
-export type BoardFormState = { error: string | null; pullErrors?: string[] }
+export type BoardFormState = { error: string | null; pullErrors?: string[] } & FieldRefusals
+
+/**
+ * Refusals the form shows beside the control they name rather than in the banner: the key prefix
+ * (`locked` when keys have been issued, so the field turns read-only with its reason) and, where
+ * the submitted lanes make it plain which lane broke a rule, that lane.
+ */
+export type FieldRefusals = {
+  keyPrefix?: { message: string; locked: boolean }
+  laneErrors?: Record<string, string>
+}
 
 /**
  * The drawer's form. `savedId` is the board written, its cue to move on: nothing redirects it.
@@ -43,7 +54,7 @@ export type BoardDrawerState = {
   error: string | null
   savedId: string | null
   pullErrors?: string[]
-}
+} & FieldRefusals
 
 function refusal(error: unknown): string {
   if (error instanceof ApiError) {
@@ -52,26 +63,85 @@ function refusal(error: unknown): string {
     // References rule (`referencesBoardInvalid`, `laneInUse`, ...) whose `detail` is the rule key
     // until the API sends a message; it shows as it arrives, and a later `message` member lands in
     // `ApiError.detail` rather than here.
-    if ([400, 403, 404, 409, 422].includes(error.status)) return error.detail
+    if ([400, 403, 404, 409, 422].includes(error.status)) return ruleMessage(error.detail)
   }
   throw error
 }
 
 /**
- * A refused save: the banner message, and apart from it the per-item messages of a refused pull.
- * The step shows those beside the items they name, so the banner keeps only what is left over.
+ * A refused save: the banner message, the per-item messages of a refused pull (which the step shows
+ * beside the items they name), and the refusals that belong on a field. The banner keeps only what
+ * is left over.
  */
-function refusedSave(error: unknown): { error: string | null; pullErrors: string[] } {
-  if (error instanceof ApiError && error.status === 400) {
-    const pullErrors = [...(error.errorLists.pullItemIds ?? [])]
-    if (pullErrors.length > 0) {
-      const rest = Object.entries(error.errors)
+function refusedSave(
+  error: unknown,
+  form: FormData,
+): { error: string | null; pullErrors: string[] } & FieldRefusals {
+  if (error instanceof ApiError) {
+    const { keyPrefix, ...rest } = error.errors
+    if (error.status === 400 && (keyPrefix || error.errorLists.pullItemIds)) {
+      const pullErrors = [...(error.errorLists.pullItemIds ?? [])]
+      const other = Object.entries(rest)
         .filter(([field]) => field !== 'pullItemIds')
         .map(([, message]) => message)
-      return { error: rest.length > 0 ? rest.join(' ') : null, pullErrors }
+      return {
+        error: other.length > 0 ? other.join(' ') : null,
+        pullErrors,
+        ...(keyPrefix ? { keyPrefix: { message: KEY_PREFIX_RULE, locked: false } } : {}),
+      }
+    }
+    if (error.status === 422 && error.detail === 'keyPrefixLocked') {
+      return {
+        error: null,
+        pullErrors: [],
+        keyPrefix: { message: ruleMessage(error.detail), locked: true },
+      }
+    }
+    if (error.status === 409 && error.detail === 'keyPrefixTaken') {
+      const prefix = String(form.get('keyPrefix') ?? '')
+        .trim()
+        .toUpperCase()
+      return {
+        error: null,
+        pullErrors: [],
+        keyPrefix: { message: `${prefix} is already used by another board.`, locked: false },
+      }
+    }
+    if (error.status === 422) {
+      const laneErrors = laneRefusals(error.detail, form)
+      if (laneErrors) return { error: null, pullErrors: [], laneErrors }
     }
   }
   return { error: refusal(error), pullErrors: [] }
+}
+
+/**
+ * Pins the lane rules a submitted form makes plain to the lane that broke them. The API names the
+ * rule and not the lane, so a rule that cannot be attributed from the form (a lane in use, a
+ * reference chain) stays in the banner.
+ */
+function laneRefusals(rule: string, form: FormData): Record<string, string> | null {
+  const boardId = String(form.get('boardId') ?? '')
+  const flags = JSON.parse(String(form.get('laneFlags') ?? '{}')) as Record<
+    string,
+    Partial<LaneFlags> | undefined
+  >
+  const broken = form
+    .getAll('swimlaneIds')
+    .map(String)
+    .filter((statusId) => {
+      const lane = flags[statusId]
+      if (rule === 'finalLaneCannotReference') return lane?.isFinal && lane.referencesBoardId
+      if (rule === 'autoCreateTaskRequiresReference') {
+        return lane?.autoCreateTask && !lane.referencesBoardId
+      }
+      if (rule === 'laneReferencesOwnBoard')
+        return boardId !== '' && lane?.referencesBoardId === boardId
+      return false
+    })
+  return broken.length > 0
+    ? Object.fromEntries(broken.map((statusId) => [statusId, ruleMessage(rule)]))
+    : null
 }
 
 /**
@@ -99,6 +169,8 @@ function boardBody(form: FormData): {
   name: string
   description: string
   allowUserStatusUpdate: boolean
+  keyPrefix?: string | null
+  ideaFeaturesEnabled?: boolean
   swimlanes: ({ statusId: string; order: number } & LaneFlags)[]
   pullItemIds?: string[]
 } {
@@ -114,6 +186,12 @@ function boardBody(form: FormData): {
     // field has to arrive as an empty string for the API to clear it.
     description: String(form.get('description') ?? ''),
     allowUserStatusUpdate: form.get('userStatusMoves') !== null,
+    // Present only on a form that has the fields; a caller without them (the quick-add row) leaves
+    // both to the API's defaults, and on `PUT` an absent value means "leave it".
+    ...(form.has('keyPrefix') ? { keyPrefix: String(form.get('keyPrefix')).trim() || null } : {}),
+    ...(form.has('ideaFeaturesEnabled')
+      ? { ideaFeaturesEnabled: form.get('ideaFeaturesEnabled') === 'true' }
+      : {}),
     swimlanes: form.getAll('swimlaneIds').map((statusId, order) => ({
       statusId: String(statusId),
       order,
@@ -140,7 +218,7 @@ function ideaMoves(form: FormData): { fromStatusId: string; toStatusId: string }
 /** Creates the board, answering its id, or the refusal to show. */
 async function create(
   form: FormData,
-): Promise<{ boardId: string } | { error: string | null; pullErrors: string[] }> {
+): Promise<{ boardId: string } | ({ error: string | null; pullErrors: string[] } & FieldRefusals)> {
   const organizationId = await actingOrganizationId()
   if (organizationId === null) {
     return {
@@ -161,7 +239,7 @@ async function create(
     )
     boardId = created.boardId
   } catch (error) {
-    return refusedSave(error)
+    return refusedSave(error, form)
   }
 
   // The sidebar's board count and the workspace list both change, and both are rendered above this
@@ -173,13 +251,13 @@ async function create(
 /** Saves the board, answering the refusal to show or `null` once it is written. */
 async function save(
   form: FormData,
-): Promise<{ error: string | null; pullErrors: string[] } | null> {
+): Promise<({ error: string | null; pullErrors: string[] } & FieldRefusals) | null> {
   const boardId = String(form.get('boardId') ?? '')
 
   try {
     await apiPut(apiPath`/boards/${boardId}`, { ...boardBody(form), ideaMoves: ideaMoves(form) })
   } catch (error) {
-    return refusedSave(error)
+    return refusedSave(error, form)
   }
 
   // The lanes changed, so the board itself is stale as well as the lists. Escaped for the reason
@@ -259,9 +337,7 @@ export async function createBoardInPlace(
   form: FormData,
 ): Promise<BoardDrawerState> {
   const result = await create(form)
-  return 'error' in result
-    ? { error: result.error, savedId: null, pullErrors: result.pullErrors }
-    : { error: null, savedId: result.boardId }
+  return 'error' in result ? { ...result, savedId: null } : { error: null, savedId: result.boardId }
 }
 
 export async function saveBoardInPlace(

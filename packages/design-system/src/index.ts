@@ -19,8 +19,10 @@ export {
 export { Dot, Marker, Tag } from './components/marker.js'
 export { Meter } from './components/meter.js'
 export { Avatar, Kbd, Meta, Separator } from './components/primitives.js'
+export { RefPill } from './components/ref-pill.js'
 export { Skeleton, SkeletonRegion, SkeletonRows } from './components/skeleton.js'
 export { EmptyState, ErrorState } from './components/states.js'
+export { Switch, type SwitchProps } from './components/switch.js'
 export { TagChip } from './components/tag-chip.js'
 export { cn } from './lib/cn.js'
 export {

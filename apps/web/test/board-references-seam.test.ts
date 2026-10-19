@@ -101,7 +101,7 @@ describe('a 422 refusal', () => {
   it('comes back from a board save as the message to show, not a throw', async () => {
     put.mockRejectedValue(new ApiError(422, '/boards/b-1', 'referencesBoardInvalid'))
     expect(await saveBoardInPlace(IDLE, boardForm(null))).toEqual({
-      error: 'referencesBoardInvalid',
+      error: 'A lane can reference only an active board of this organization.',
       savedId: null,
       pullErrors: [],
     })

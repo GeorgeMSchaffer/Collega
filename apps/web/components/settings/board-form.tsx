@@ -10,17 +10,19 @@ import {
   CardTitle,
   Field,
   Input,
+  Switch,
   Textarea,
 } from '@collega/design-system'
 import Link from 'next/link'
 import { type FormEvent, useActionState, useState, useTransition } from 'react'
 import { IdeaMovesGuard } from '@/components/settings/idea-moves-guard'
+import { KeyPrefixField } from '@/components/settings/key-prefix-field'
 import { type PullSetup, PullStep } from '@/components/settings/pull-step'
-import { SwimlanePicker } from '@/components/settings/swimlane-picker'
+import { NO_FLAGS, SwimlanePicker } from '@/components/settings/swimlane-picker'
 import { PULL_ITEM_CAP } from '@/lib/limits'
-import type { BoardFormState } from '@/lib/server/board-actions'
+import type { BoardFormState, FieldRefusals } from '@/lib/server/board-actions'
 import { createBoard, saveBoard } from '@/lib/server/board-actions'
-import type { LaneFlags, PullCandidate, Status } from '@/lib/types'
+import type { LaneFlags, PullCandidate, ReferenceContext, Status } from '@/lib/types'
 
 const IDLE: BoardFormState = { error: null }
 
@@ -49,6 +51,9 @@ export function BoardForm({
   swimlaneIds,
   laneFlags,
   laneIdeaCounts,
+  keyPrefix = null,
+  ideaFeaturesEnabled = true,
+  references,
   statuses,
   submitLabel,
   explainerHeading,
@@ -64,6 +69,10 @@ export function BoardForm({
   laneFlags?: Readonly<Record<string, LaneFlags>> | undefined
   /** Live ideas per lane of the board being edited, keyed by status id. */
   laneIdeaCounts?: Readonly<Record<string, number>> | undefined
+  keyPrefix?: string | null | undefined
+  ideaFeaturesEnabled?: boolean | undefined
+  /** The boards a lane may reference; absent leaves the References controls out. */
+  references?: ReferenceContext | undefined
   /** Drilled to `SwimlanePicker`, which is a client component and cannot read them itself. */
   statuses: Status[]
   submitLabel: string
@@ -95,6 +104,10 @@ export function BoardForm({
               swimlaneIds={swimlaneIds}
               laneFlags={laneFlags}
               laneIdeaCounts={laneIdeaCounts}
+              keyPrefix={keyPrefix}
+              ideaFeaturesEnabled={ideaFeaturesEnabled}
+              references={references}
+              refusals={state}
               statuses={statuses}
               pull={
                 pullSetup
@@ -193,6 +206,10 @@ export function BoardFields({
   swimlaneIds,
   laneFlags,
   laneIdeaCounts = {},
+  keyPrefix = null,
+  ideaFeaturesEnabled = true,
+  references,
+  refusals,
   statuses,
   sectionHeading: SectionHeading = 'h2',
   pull,
@@ -206,6 +223,13 @@ export function BoardFields({
   laneFlags?: Readonly<Record<string, LaneFlags>> | undefined
   /** Live ideas per lane of the board being edited; absent on create, where nothing is removed. */
   laneIdeaCounts?: Readonly<Record<string, number>> | undefined
+  /** The prefix as stored (`null` for none) and the idea-features switch as stored. */
+  keyPrefix?: string | null | undefined
+  ideaFeaturesEnabled?: boolean | undefined
+  /** The boards a lane may reference; absent leaves the References controls out. */
+  references?: ReferenceContext | undefined
+  /** The last save's field refusals: the key prefix and, where it is plain, the lane. */
+  refusals?: FieldRefusals | undefined
   statuses: Status[]
   sectionHeading?: 'h2' | 'h3'
   /** The *Add existing items* step; absent leaves it out. The caller owns the selection. */
@@ -221,6 +245,8 @@ export function BoardFields({
     | undefined
 }) {
   const [ids, setIds] = useState(swimlaneIds)
+  const [flags, setFlags] = useState<Record<string, LaneFlags>>({ ...laneFlags })
+  const [ideaFeatures, setIdeaFeatures] = useState(ideaFeaturesEnabled)
   // The board's lanes this save would drop that still hold ideas: each needs a lane to move them to.
   const removed = swimlaneIds.flatMap((id) => {
     const ideaCount = laneIdeaCounts[id] ?? 0
@@ -233,9 +259,8 @@ export function BoardFields({
   return (
     <>
       {boardId === null ? null : <input type="hidden" name="boardId" value={boardId} />}
-      {laneFlags ? (
-        <input type="hidden" name="laneFlags" value={JSON.stringify(laneFlags)} />
-      ) : null}
+      <input type="hidden" name="laneFlags" value={JSON.stringify(flags)} />
+      <input type="hidden" name="ideaFeaturesEnabled" value={String(ideaFeatures)} />
 
       {pull?.setup.archived ? (
         <Alert variant="note" role="status" className="mb-4">
@@ -267,6 +292,23 @@ export function BoardFields({
         />
       </Field>
 
+      <KeyPrefixField saved={keyPrefix} refusal={refusals?.keyPrefix} />
+
+      <div className="mb-4">
+        <Switch
+          checked={ideaFeatures}
+          onCheckedChange={setIdeaFeatures}
+          aria-describedby="idea-features-hint"
+        >
+          Idea features
+        </Switch>
+        <p id="idea-features-hint" className="m-0 mt-1 max-w-prose text-xs text-muted-foreground">
+          {references && references.referencedBy.length > 0 && !ideaFeatures
+            ? 'Off, because this board is the target of a reference. Cards here show title, description, assignees, tags, sprint and blockers. An Org Admin can turn it on.'
+            : 'Upvotes, idea types and their fields, and AI assist. On for ordinary boards.'}
+        </p>
+      </div>
+
       <div className="mb-4">
         <span className="flex items-start gap-2">
           <input
@@ -293,7 +335,23 @@ export function BoardFields({
           order of the board&rsquo;s columns.
         </p>
       </div>
-      <SwimlanePicker ids={ids} onChange={setIds} statuses={statuses} />
+      <SwimlanePicker
+        ids={ids}
+        onChange={setIds}
+        statuses={statuses}
+        flags={flags}
+        onFlags={(statusId, patch) =>
+          setFlags((current) => ({
+            ...current,
+            [statusId]: { ...(current[statusId] ?? NO_FLAGS), ...patch },
+          }))
+        }
+        references={references}
+        boardId={boardId}
+        boardName={defaultName}
+        laneIdeaCounts={laneIdeaCounts}
+        laneErrors={refusals?.laneErrors}
+      />
       <IdeaMovesGuard removed={removed} remaining={remaining} />
 
       {pull ? (
