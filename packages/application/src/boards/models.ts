@@ -89,6 +89,10 @@ export type BoardListItem = {
   readonly ideaFeaturesEnabled: boolean
   /** The number the next item key takes; `1` means no key has been issued on the board. */
   readonly nextItemNumber: number
+  /** The board has at least one lane with `referencesBoardId` set. */
+  readonly hasReferenceLane: boolean
+  /** Non-archived boards with a lane referencing this board; empty when none. */
+  readonly referencedByBoardIds: readonly string[]
 }
 
 export type BoardListQuery = {
