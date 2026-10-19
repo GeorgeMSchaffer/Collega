@@ -515,3 +515,60 @@ describe('Home’s Unread notifications panel', () => {
     expect(screen.queryByRole('region', { name: /Unread notifications/ })).toBeNull()
   })
 })
+
+// Slice 156: every Home number opens a list showing the set it counts. The readers prove which
+// hrefs are built (`home-reads.test.ts`); these prove the page draws each one as a link to it.
+describe('Home’s links and counts', { timeout: 30_000 }, () => {
+  const hrefOf = (name: string, inside: HTMLElement) =>
+    within(inside).getByRole('link', { name }).getAttribute('href')
+
+  it('links the greeting’s ideas to the live boards’ list, its boards to /boards and its issues to every Issue', async () => {
+    readers.getOrganizationHome.mockResolvedValue(
+      orgHome({ ideasHref: '/ideas?phase=Ideas&board=b1&board=b2' }),
+    )
+    await renderHome('User')
+    const greeting = screen.getByRole('heading', { level: 1 }).parentElement as HTMLElement
+    expect(hrefOf('41 ideas', greeting)).toBe('/ideas?phase=Ideas&board=b1&board=b2')
+    expect(hrefOf('2 boards', greeting)).toBe('/boards')
+    expect(hrefOf('1 delivery issue', greeting)).toBe('/ideas?phase=Issues')
+  })
+
+  it('draws no link for zero delivery issues', async () => {
+    readers.getOrganizationHome.mockResolvedValue(
+      orgHome({ counts: { ideas: 3, boards: 1, issues: 0 } }),
+    )
+    await renderHome('User')
+    expect(screen.queryByRole('link', { name: '0 delivery issues' })).toBeNull()
+    expect(document.body.textContent).toContain('0 delivery issues')
+  })
+
+  it('links You created to the ideas the reader created', async () => {
+    await renderHome('OrgAdmin')
+    expect(hrefOf('5', screen.getByRole('list', { name: 'Your numbers' }))).toBe(
+      '/ideas?scope=created',
+    )
+  })
+
+  it('links Needs your attention and Assigned to me “View all” to the lists they count', async () => {
+    await renderHome('OrgAdmin')
+    expect(hrefOf('View all 12', panel('Needs your attention'))).toBe(
+      '/ideas?phase=Ideas&priority=Critical&priority=High',
+    )
+    expect(hrefOf('View all 7', panel('Assigned to me 7'))).toBe(
+      '/ideas?scope=assigned&sort=priority&dir=desc',
+    )
+  })
+
+  it('links the sprint’s backlog figure to the Backlog', async () => {
+    await renderHome('User')
+    expect(hrefOf('6 in the backlog', panel('Current sprint'))).toBe('/delivery/backlog')
+  })
+
+  it('says what the Not tracked yet tile is waiting for', async () => {
+    await renderHome('OrgAdmin')
+    const tiles = screen.getByRole('list', { name: 'Your numbers' }).children
+    expect((tiles[3] as HTMLElement).textContent).toContain(
+      'which status means in review or complete, and when an idea moved',
+    )
+  })
+})
