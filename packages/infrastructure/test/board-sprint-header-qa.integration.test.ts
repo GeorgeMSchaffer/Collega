@@ -516,12 +516,7 @@ describe.skipIf(!DATABASE_URL)('Board sprint header and chip against a live data
       expect(legacy).toMatchObject({ issueCount: 1, ideaCount: 0 })
     })
 
-    // KNOWN DEFECT (reported, production code untouched): `countsBySprintIds` counts
-    // `parent_idea_id` without looking at `s.board_id`, so a legacy sprint holding a row with a
-    // parent reads 1, where the contract says `0` for a sprint with no boardId. Unreachable through
-    // the API (a task is never Delivery-phase and a legacy sprint takes Delivery items only), hence
-    // `it.fails`: it goes red the day the count is fixed, and should then become a plain `it`.
-    it.fails('is 0 for a sprint with no boardId even when a row with a parent was written into it', async () => {
+    it('is 0 for a sprint with no boardId even when a row with a parent was written into it', async () => {
       await newIdea('Lt', boardA, { sprint: sprintLegacy, parent: idOf('P1'), delivery: true })
 
       const legacy = await services().sprintService.get(orgId, sprintLegacy)
