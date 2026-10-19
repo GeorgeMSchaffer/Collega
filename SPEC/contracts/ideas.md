@@ -18,7 +18,7 @@ List ideas on a board with pagination.
   - `tag` optional
   - `priority` optional `Low`, `Medium`, `High`, or `Critical`
   - `dueBefore` optional date string (`YYYY-MM-DD`)
-  - `sprintId` optional (added 2026-10-19, decided by the orchestrator under the owner's spec-and-build approval 2026-10-19; owner to review): a sprint GUID returns only the items in that sprint; the literal **`none`** (case-insensitive) returns only items in no sprint — the board backlog for the Sprint | Backlog toggle. Absent applies no sprint filter. Any other value matches nothing and returns an empty page, like `statusId`.
+  - `sprintId` optional (added 2026-10-19, decided by the orchestrator under the owner's spec-and-build approval 2026-10-19; owner to review): a sprint GUID returns only the items in that sprint; the literal **`none`** (case-insensitive) returns only items in no sprint — the board backlog for the Sprint | Backlog toggle. Absent applies no sprint filter. Any other value matches nothing and returns an empty page, like `statusId`. The board list shows Discovery-phase items only, so with this filter a legacy Delivery-phase item in a board sprint is counted in the sprint's `issueCount` but appears only in the sprint detail read (`GET /organizations/{organizationId}/sprints/{sprintId}`); tasks are always Discovery-phase, so the work board is unaffected.
   - `sortBy` optional `createdAt`, `updatedAt`, `upvoteCount`, `priority`, or `dueDate`; **added 2026-09-27**: `title`, `status` (lane order), `assignedTo`, `tags`
   - `statusId`, `priority` and `tag` are repeatable from 2026-09-27 (any-of within a parameter)
   - `sortDirection` optional `asc` or `desc`

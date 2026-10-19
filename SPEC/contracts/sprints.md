@@ -143,5 +143,6 @@ The Board References work board draws a sprint header (name, dates, state, tasks
 
 - **Item field (added):** `ideaCount` integer — the number of **distinct parent ideas** among the sprint's live items that are tasks (`parentIdeaId` set), derived per read like the other counts. `0` for a sprint with no boardId.
 - **Header mapping:** TASKS is `issueCount` and `doneCount` (every live card in the sprint; on a board sprint done means a final lane), IDEAS is `ideaCount`, the window and `state` come from the item, and days left is derived in the viewer's calendar. The header reads `GET /api/v1/boards/{boardId}/sprints?state=Active`.
-- **Cards in a sprint** are read with `GET /api/v1/boards/{boardId}/ideas?sprintId={sprintId}` (see `contracts/ideas.md`); the **backlog** is `sprintId=none` on the same route. No new route.
+- **No Active sprint:** the header shows no header content and cards show no sprint chip beyond their own `sprint` field. If several sprints are Active, the header reads the first one returned (current behaviour, not a rule).
+- **Cards in a sprint** are read with `GET /api/v1/boards/{boardId}/ideas?sprintId={sprintId}` (see `contracts/ideas.md`; that list is Discovery-phase only, so a legacy Delivery-phase item in a board sprint is counted in `issueCount` but appears only in the sprint detail read, and tasks are unaffected); the **backlog** is `sprintId=none` on the same route. No new route.
 - **Putting a task in a sprint** is `PUT /api/v1/ideas/{ideaId}/sprint` (`contracts/delivery.md`), which accepts any item of the sprint's board.

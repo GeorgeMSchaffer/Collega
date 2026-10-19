@@ -184,7 +184,6 @@ function newIdeaFields(body: CreateIdeaBody) {
   }
 }
 
-/** The organization list's repeatable `boardId`: GUIDs, and the literal `none` for no board. */
 /** `sprintId` on the board list: a GUID, or the literal `none` for the backlog. */
 function sprintFilter(value: unknown): { sprintId: string | null; noSprint: boolean } {
   const text = optional(value)
@@ -196,6 +195,7 @@ function sprintFilter(value: unknown): { sprintId: string | null; noSprint: bool
     : { sprintId: guidOrEmpty(text), noSprint: false }
 }
 
+/** The organization list's repeatable `boardId`: GUIDs, and the literal `none` for no board. */
 function boardFilter(value: unknown): { boardIds: readonly string[]; includeNoBoard: boolean } {
   const values = queryList(value)
   const isNone = (entry: string) => entry.toLowerCase() === 'none'
