@@ -18,6 +18,7 @@ import type {
   BusinessImpactSummary,
   CommentsPort,
   DependencyEdge,
+  IdeaActivityPort,
   IdeaClassificationPort,
   IdeaDependenciesPort,
   IdeaFieldValuesPort,
@@ -164,6 +165,8 @@ export type Harness = {
   service: IdeaService
   saved: Idea[]
   added: Idea[]
+  /** Every `hasTaskOnBoard` question the service asked, in order. */
+  taskLookups: { parentId: string; boardId: string }[]
   audit: ReturnType<typeof recordingAudit>
   /** The unit of work the service commits through; `saves` counts its commits. */
   unitOfWork: CountingUnitOfWork
@@ -201,6 +204,10 @@ export function harness(options: {
   childCounts?: Readonly<Record<string, { total: number; done: number }>>
   /** Parent ids that already have a task on the referenced board. */
   parentsWithTasks?: readonly string[]
+  /** Boards each parent id has a task on; when given for a parent it replaces `parentsWithTasks`. */
+  tasksOnBoards?: Readonly<Record<string, readonly string[]>>
+  /** The audit-trail reader behind `listActivity`; omitted, as in a host that has none. */
+  activity?: IdeaActivityPort
   /** Overrides for the classification port, e.g. an organization with no active type. */
   classification?: Partial<IdeaClassificationPort>
   /** Existing blocked-by links. */
@@ -216,6 +223,7 @@ export function harness(options: {
 
   const saved: Idea[] = []
   const added: Idea[] = []
+  const taskLookups: { parentId: string; boardId: string }[] = []
   const notifications: NotificationInput[] = []
   const boardFilters: IdeaListFilter[] = []
   const deliveryFilters: Parameters<IdeaRepository['listDelivery']>[0][] = []
@@ -275,7 +283,12 @@ export function harness(options: {
     async listBySprint() {
       return []
     },
-    async hasTaskOnBoard(parentId) {
+    async hasTaskOnBoard(parentId, boardId) {
+      taskLookups.push({ parentId, boardId })
+      const boardsOfParent = options.tasksOnBoards?.[parentId]
+      if (boardsOfParent) {
+        return boardsOfParent.includes(boardId)
+      }
       return options.parentsWithTasks?.includes(parentId) ?? false
     },
     async countChildrenByParentIds(parentIds) {
@@ -599,8 +612,10 @@ export function harness(options: {
       fixedClock(),
       options.random ?? { nextInt: () => 0 },
       options.metricValues,
+      options.activity,
     ),
     saved,
+    taskLookups,
     added,
     audit,
     unitOfWork,
