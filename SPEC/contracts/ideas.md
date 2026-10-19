@@ -329,7 +329,7 @@ Remove an idea from its board, leaving it in the organization's pool (added 2026
   - Writes one `IdeaBoardChanged` audit event (`entityType` `Idea`, message `Idea '{title}' removed from its board.`, metadata `{ fromBoardId, toBoardId }` with `toBoardId` `null`), attributed to the real user with the View As target as the intended actor, as every content write is.
 
 ### `GET /api/v1/ideas/{ideaId}/activity`
-*Proposed, owner to confirm (2026-10-19). Needed by the lock override's activity entry ("Moved past N open tasks — reason"); no route read audit events before.*
+*Confirmed by the owner 2026-10-19. Needed by the lock override's activity entry ("Moved past N open tasks — reason"); no route read audit events before.*
 
 - **Roles:** whoever may read `GET /api/v1/ideas/{ideaId}` (same scope and `404`s).
 - **Request:** query `page`, `pageSize` (standard paging, default 20, 1–100).

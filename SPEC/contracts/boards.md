@@ -159,7 +159,7 @@ The pull picker's read (added 2026-10-13, slice 180). One tab per `source`; each
   - `authorUserId` optional GUID — for a User it is ignored: their own ideas only
   - `page`, `pageSize` — the standard paging (default 20, 1–100)
 - **Response:** `200`: `{ items, page, pageSize, totalCount }`, oldest first, then title, then id. Each item: `ideaId`, `title`, `authorUserId`, `authorName`, `boardId` and `boardName` (`null` in the pool), `statusId`, `statusName`, `phase`, `tags` (names, alphabetical), `priority`, `upvoteCount`, `isMine`.
-- **Response addition (proposed, owner to confirm, 2026-10-19):** `hiddenTaskCount` integer beside `items`: how many live tasks (items with a parent) match the same `source`, `excludeBoardId`, `search`, `tag` and `authorUserId` filters and are therefore withheld. The UI shows "N tasks are hidden" only when `search` is set and the count is above 0.
+- **Response addition (confirmed by the owner, 2026-10-19):** `hiddenTaskCount` integer beside `items`: how many live tasks (items with a parent) match the same `source`, `excludeBoardId`, `search`, `tag` and `authorUserId` filters and are therefore withheld. The UI shows "N tasks are hidden" only when `search` is set and the count is above 0.
 - **Errors:** `400` (`source`), `401`, `403`, `404`.
 - **Rules:** items with a parent are never offered (decided 2026-10-16). A read only. The list can be stale by the time the form is saved; `pullItemIds` is checked again then.
 
