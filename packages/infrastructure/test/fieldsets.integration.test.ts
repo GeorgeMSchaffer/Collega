@@ -25,7 +25,7 @@ import {
   softDeleteIdeaType,
 } from '@collega/domain/idea-fields'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { resetDemoSeed } from '../src/demo-seed/index.js'
+import { resetDemoSeed, runDemoSeed } from '../src/demo-seed/index.js'
 import { DEMO_ORGANIZATIONS, seedId } from '../src/demo-seed/modules/scenario.js'
 import { PrismaClient } from '../src/generated/prisma/index.js'
 import { PrismaUnitOfWork } from '../src/persistence/unit-of-work.js'
@@ -518,20 +518,31 @@ describe.skipIf(!DATABASE_URL)('Fieldsets against a live database', () => {
   describe('demo reset', () => {
     it('deletes fieldsets, members and attachments under a demo organization without a foreign-key error', async () => {
       const demoOrg = seedId('organization', demoSlug)
-      await prisma.organizations.deleteMany({ where: { id: demoOrg } })
-      await newOrganization(demoOrg)
-      const field = await newField(demoOrg, `demo-${run}`)
-      const fieldset = newFieldset(demoOrg, 'Demo set', [field])
-      await persistFieldset(fieldset)
-      const type = attach(newType(demoOrg), [fieldset.id])
-      await persistType(type)
+      // A seeded database holds the demo organizations with boards, users and ideas under them, so
+      // clear them the way the reset does rather than deleting a bare row, and put the seed back
+      // afterwards: the reset removes every demo organization, and other suites read them.
+      const wasSeeded = (await prisma.organizations.count({ where: { id: demoOrg } })) > 0
+      await resetDemoSeed(prisma)
+      try {
+        await newOrganization(demoOrg)
+        const field = await newField(demoOrg, `demo-${run}`)
+        const fieldset = newFieldset(demoOrg, 'Demo set', [field])
+        await persistFieldset(fieldset)
+        const type = attach(newType(demoOrg), [fieldset.id])
+        await persistType(type)
 
-      await expect(resetDemoSeed(prisma)).resolves.toBeGreaterThan(0)
+        await expect(resetDemoSeed(prisma)).resolves.toBeGreaterThan(0)
 
-      expect(await prisma.fieldsets.count({ where: { organization_id: demoOrg } })).toBe(0)
-      expect(await prisma.fieldset_fields.count({ where: { fieldset_id: fieldset.id } })).toBe(0)
-      expect(await prisma.idea_type_fieldsets.count({ where: { idea_type_id: type.id } })).toBe(0)
-      expect(await prisma.organizations.count({ where: { id: demoOrg } })).toBe(0)
+        expect(await prisma.fieldsets.count({ where: { organization_id: demoOrg } })).toBe(0)
+        expect(await prisma.fieldset_fields.count({ where: { fieldset_id: fieldset.id } })).toBe(0)
+        expect(await prisma.idea_type_fieldsets.count({ where: { idea_type_id: type.id } })).toBe(0)
+        expect(await prisma.organizations.count({ where: { id: demoOrg } })).toBe(0)
+      } finally {
+        // The reset owns this organization now; the suite's own cleanup must not chase it.
+        await resetDemoSeed(prisma)
+        organizationIds.splice(organizationIds.indexOf(demoOrg), 1)
+        if (wasSeeded) await runDemoSeed(prisma)
+      }
     })
   })
 })
