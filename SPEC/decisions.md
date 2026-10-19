@@ -28,12 +28,13 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-19 | Board References UI: comp U answers | active | full below |
 | 2026-10-16 | Board References UI: lock, task drawer, lane auto-create, metric display, Outcome totals | active | full below |
-| 2026-10-16 | Board References follow-ups: auto-create on every entry, tasks not pullable, task editing, metrics on archived boards, Site Admin detail metrics | active | full below |
+| 2026-10-16 | Board References follow-ups: auto-create on every entry, tasks not pullable, task editing, metrics on archived boards, Site Admin detail metrics | amended | full below |
 | 2026-10-16 | Metric types are an organization table with projected and realized values per item | active | full below |
 | 2026-10-16 | A reference lane locks its card until its tasks are final | active | full below |
-| 2026-10-15 | Cutover follow-up: migration check, SITE_ADMIN_PASSWORD, App Admin in the README, rollback wording | active | full below |
-| 2026-10-15 | The 17 open Outcome contract questions are decided | active | full below |
+| 2026-10-15 | Cutover follow-up: migration check, SITE_ADMIN_PASSWORD, App Admin in the README, rollback wording | active | [2026-10-04 to 2026-10-15](decisions/archive-2026-10-04-to-2026-10-15.md) |
+| 2026-10-15 | The 17 open Outcome contract questions are decided | active | [2026-10-04 to 2026-10-15](decisions/archive-2026-10-04-to-2026-10-15.md) |
 | 2026-10-15 | Board References replace the Delivery phase | active | [2026-10-04 to 2026-10-15](decisions/archive-2026-10-04-to-2026-10-15.md) |
 | 2026-10-15 | The four open Backlog Add New Issue readings are decided | active | [2026-10-04 to 2026-10-15](decisions/archive-2026-10-04-to-2026-10-15.md) |
 | 2026-10-15 | Issues can be added directly from the Backlog | amended | [2026-10-04 to 2026-10-15](decisions/archive-2026-10-04-to-2026-10-15.md) |
@@ -130,6 +131,31 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 ---
 
+## 2026-10-19 — Board References UI: comp U answers
+
+> Amends: "Board References follow-ups: auto-create on every entry, tasks not pullable, task editing, metrics on archived boards, Site Admin detail metrics" (2026-10-16), and through it "A reference lane locks its card until its tasks are final" (2026-10-16), whose rule that every entry creates one task is limited to the first entry (answer 5); and the 2026-10-15 Board References entry's Effort rule, which gated entry only (answers 2 and 6). Everything else in those entries stands.
+
+**Decided by the owner**, on the open questions in `SPEC/mockups/comp-u-board-references-core.html`.
+
+1. **A Final lane cannot reference a board.** Saving a lane with `isFinal` true and `referencesBoardId` set is `422` `finalLaneCannotReference`. The Statuses page disables the reference selector (and so the auto-create switch) on a Final lane.
+2. **No Effort, no drop target.** On the idea board, a card with no Effort is refused up front on a reference lane: it cannot be dropped there, and the lane shows the tooltip "Add Effort first". No toast follows, so the toast's "Add effort" retry question does not arise. The server rule `422` `effortRequiredForReferenceLane` stays as the backstop (pull, `ideaMoves`, other clients).
+3. **The work board's sprint header and chips are in this UI round.** Not deferred. Whether the backend has what they need is checked below.
+4. **The blocked badge shows only while the task sits in its first lane.** A blocker added after the task left the first lane is allowed (`contracts/idea-dependencies.md`) and shows no badge.
+5. **Moving a card back into an auto-create lane does not create a second automatic task.** Auto-create is skipped when the idea already has at least one task on the referenced board (any lane, final or not); the first entry, with no task yet, creates one. This holds on every path: status move, pull (`pullItemIds`) and `ideaMoves`. Adding a task by hand stays possible (the "Move back to <status>?" prompt, then "+ Add task").
+6. **Effort in a reference lane can be changed, not cleared.** An idea update with `effort` `null` while the idea sits in a reference lane is `422` `effortRequiredInReferenceLane`. Also corrected: effort may be set at any time. The Discovery-only wording in `contracts/ideas.md` dates from the removed phases.
+7. **A blocked card cannot be dragged out of its first lane.** Up front, like the lock and the no-Effort rule: no drop target on other lanes, and a tooltip that names the blocker. The server rule `422` `taskBlocked` stays as the backstop.
+
+**Why.** (1) A card in a Final reference lane would sit done and locked at once; the combination has no use. (2, 7) One refusal style for every rule the client can see coming: no drop target and a reason, never a drop that bounces. (4) A badge on a card that can no longer be blocked from moving is noise. (5) The lane's promise is a first task, not a task per visit; moving back for a late task would otherwise add a duplicate the person did not ask for. (6) A card with no Effort in a reference lane breaks the rule that put it there.
+
+**Rejected.** A Final reference lane; a toast after the drop for a missing Effort; retrying the move by itself after Effort is saved; deferring the sprint header; a badge past the first lane; auto-create on every re-entry; clearing Effort in a reference lane.
+
+**Consequences.**
+- `contracts/boards.md` gains the Final-lane rule and `finalLaneCannotReference`, and the first-entry rule for auto-create; `contracts/ideas.md` gains `effortRequiredInReferenceLane`, the first-entry rule, the corrected effort text and the client-side refusals; `20-feature-board-references.md` follows; `comp-u-board-references-core.html` shows the answers as decided.
+- **Backend follow-up, not yet scheduled:** `finalLaneCannotReference` on the lane save; `effortRequiredInReferenceLane` on the idea update; skipping auto-create when the idea already has a task on the referenced board, on the status move, the pull and `ideaMoves`. Each needs the existing tests for the old behaviour (every entry creates one) revisited.
+- **Sprint header and chips: gaps recorded, no contract invented.** `contracts/sprints.md` "Sprints per board" specifies `GET/POST /api/v1/boards/{boardId}/sprints`, `sprintsNotEnabled` and `sprintItemOnOtherBoard`, but is marked planned and "Not built until Plan 2". The header also needs (a) a read that gives each work-board card its sprint (`sprintId`, name) for the chips, which the board idea item does not carry; (b) a way to put a task in a sprint, since the only assignment route, `PUT /ideas/{ideaId}/sprint` in `contracts/delivery.md`, belongs to the Delivery phase being retired; (c) the header's task and idea counts for a board sprint, since `issueCount`/`doneCount` count Issues; (d) the Sprint | Backlog toggle's backlog read. Tracker open item: confirm what Plan 2 built, then specify (a) to (d) before the UI slice.
+
+---
+
 ## 2026-10-16 — Board References UI: lock, task drawer, lane auto-create, metric display, Outcome totals
 
 > Amends: "A reference lane locks its card until its tasks are final" (2026-10-16), whose bulk-move behaviour into a hand-off lane, refusal texts and UI are settled here; "Removing a lane moves its ideas" (2026-09-29), whose silent skip of a card that left the lane (`contracts/boards.md`) no longer holds when the target is an `autoCreateTask` lane; and "Metric types are an organization table..." (2026-10-16), whose display and Outcome totals are fixed here. Everything else in those entries stands.
@@ -160,6 +186,8 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 ---
 
 ## 2026-10-16 — Board References follow-ups: auto-create on every entry, tasks not pullable, task editing, metrics on archived boards, Site Admin detail metrics
+
+> **Amended 2026-10-19** by "Board References UI: comp U answers": answer 1 (auto-create fires on every entry) now skips an idea that already has a task on the referenced board.
 
 > Amends: "A reference lane locks its card until its tasks are final" (2026-10-16), whose auto-create-on-entry hand-off is widened from the status move to every way a card enters a lane; "Board References replace the Delivery phase" (2026-10-15), which left editing a task and pulling one unspecified; and "Metric types are an organization table with projected and realized values per item" (2026-10-16), whose idea-detail default for a Site Admin and whose silence on archived boards are settled here. Everything else in those entries stands.
 
@@ -217,38 +245,5 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 - New rule and error `parentHasOpenTasks` on moves out of a reference lane; new audit event `IdeaMovedPastOpenTasks`.
 - **Every exit is locked (decided 2026-10-16).** The lock also covers leaving the board by detach (`DELETE /api/v1/ideas/{ideaId}/board`) and by being pulled onto another board (`pullItemIds`). Same error, same Org Admin override with a reason, same audit event. Otherwise detach or pull would sidestep it.
 - The backend slices already merged (220-232, 234) need a follow-up slice for the lock, the override and auto-create; the UI shows the lock and the lane setting.
-
----
-
-## 2026-10-15 — Cutover follow-up: migration check, SITE_ADMIN_PASSWORD, App Admin in the README, rollback wording
-
-**Decided by the user**, from the slice 213 follow-up.
-
-1. **The additive-migrations check is wider.** `SPEC/50-cutover-runbook.md` §1 check 5 and `SPEC/50-vercel-deployment.md` §10 now cover loosened constraints (dropping `NOT NULL`, e.g. `20261013000000_allow_ideas_without_board`) and dropped indexes (e.g. in `20261001000000_add_idea_followers_and_inbox`) that the running code relies on, not only dropped or renamed columns and tables. This release goes onto a fresh production database, so the check passes trivially; the rule stands for later releases.
-2. **`SITE_ADMIN_PASSWORD` stays as documented for this release; no code change.** A tracker follow-up records stopping the API's runtime requirement for it (`apps/api/src/common/config/fragments/site-admin.ts` reads it via `required()`; only the build-time bootstrap uses it), so it can be removed after first login.
-3. **"App Admin" in operator docs only.** `README.md` (demo-credentials table, the `db:bootstrap-admin` row, the staging-database note, the configured-admin footnote) and the tracker's owner-side row say App Admin where they describe the UI role. Env var names (`SITE_ADMIN_*`), the `SiteAdmin` role value, log strings, API error text, `SPEC/20-*` feature specs and contracts are unchanged (consistent with 2026-10-04).
-4. **Rollback wording follows the runbook.** Code rolls back (the previous deployment keeps serving; repointing `DATABASE_URL` at the old database is the database swap's rollback); the database does not roll back with a code rollback. `SPEC/50-vercel-deployment.md` §10 no longer says "the rollback unit is the database".
-
----
-
-## 2026-10-15 — The 17 open Outcome contract questions are decided
-
-> Supersedes in part: the "defaults proposed and accepted without individual review" paragraph of "Further decisions" in `SPEC/20-feature-board-references.md`, where it differs (listed below). The lines of that section that the owner decided individually are confirmed, not changed.
-
-**Decided by the user**, on the 17 questions `SPEC/contracts/outcomes.md` ended with. The answers were aligned with `SPEC/20-feature-board-references.md` where it had decided individually (Q1, Q4, Q10, Q12). The contract carries each rule in its route section and lists the 17 under "Decided 2026-10-15", numbered as before.
-
-**Confirmed from board-references (decided there individually):** Q1 the Board References rollup (`ideaCount`/`doneIdeaCount` with an item in a final lane done, `taskCount`/`doneTaskCount` over child cards, projected and realized totals per metric type, `sprintStart`/`sprintEnd` from the tasks' sprints, `null` when none; quarter placement and State computed by the client); Q4 names may duplicate, no uniqueness constraint; Q9 grouping saved per item with `PUT /ideas/{id}/outcomes`, the Outcome write carries no item list and accepts `color`; Q10 a Site Admin is refused on every Outcome route, reads included, and reads only through View As (2026-10-04); Q12 scope: any item with no parent, in any status, on any board, standalone child-board cards included, a card with a parent is a `422`; Q17 appended at the end of the order; Q2 the roadmap read is one `GET .../roadmap` beside the list and detail reads, as the default had it (only the shape is new: no Issue key, `{ outcomes, ungrouped }`); Q3, Q5, Q14 and Q15 confirm the old defaults (Q3 plus the key naming).
-
-**Superseding board-references' unreviewed defaults:** Q6 the list is paged (`page`, `pageSize`, default 20, clamped 1-100), the roadmap read is not; Q7 reorder body `{ "orderedIds": [...] }`, partial allowed, `sortOrder` renumbered `0..n-1`, bad ids a `400` (not `outcomeIds` matching exactly); Q8 reorder is `204` (create `201`, update `200`, delete `204`, grouping `200` + `{ ideaId, outcomeId }`); Q11 fuller audit payloads (Created/Deleted carry the fields, Updated carries old and new per changed field and is written only on change, grouping carries item and from/to ids and names), a no-op writes nothing, no notifications; Q13 `ownerUserId` only, no `ownerDisplayName`; Q16 a repeat `DELETE` of a deleted Outcome of the organization is `204` (never existed or other organization: `404`); grouping into an unknown, soft-deleted or other-organization Outcome is a `400` on `outcomeId`, not `404`.
-
-**Also decided:** Q3 shared validation templates and camelCase keys, shared `403`/`404` text; Q5 colour as tags (upper-case, random on create when absent or `null`, unchanged when absent on update, `null` on update a `400`); Q14 dates `YYYY-MM-DD`; Q15 soft-deleted Outcomes excluded from every read and from grouping, no restore.
-
-**Why.** The Outcomes backend was blocked on these answers (`SPEC/implementation-agent-tracker.md`); recording them lets the backend slice build against a closed contract.
-
-**Consequences.**
-- **No schema change from this slice:** names may duplicate, so there is no index and no freeze amendment (Board References was the ninth; this adds none).
-- Q1's metric-type totals are flat on the Outcome, but their property shape waits for the metric-types contract.
-- The Outcome write carries no item list; the web client sends one grouping `PUT` per changed item.
-- `SPEC/20-feature-issues-and-delivery.md` and `SPEC/30-Contracts.md` gain pointers only.
 
 ---

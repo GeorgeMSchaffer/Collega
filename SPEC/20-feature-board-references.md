@@ -6,7 +6,7 @@
 > `SPEC/20-feature-issues-and-delivery.md` (Slice 1). Outcomes (Slice 2) is kept and extended.
 > **Reference rendering:** `SPEC/mockups/comp-s-board-reference.html` (Graphite, three screens).
 > **Review comp (2026-10-16, awaiting review):** `SPEC/mockups/comp-t-board-references-decisions.html` draws the metric types, Value section, task drawer, reference-lane lock, lane setting, pull picker and Outcome totals. Not a reference until approved.
-> **Review comp (2026-10-16, awaiting review):** `SPEC/mockups/comp-u-board-references-core.html` draws the core pieces comp T depends on: lanes editor, idea board, work board, parent drawer Tasks, Effort field and blockers. Strings marked COPY PROPOSED and its open questions are not decided.
+> **Review comp (2026-10-16, awaiting review):** `SPEC/mockups/comp-u-board-references-core.html` draws the core pieces comp T depends on: lanes editor, idea board, work board, parent drawer Tasks, Effort field and blockers. Strings marked COPY PROPOSED are not decided; the owner answered its open questions on 2026-10-19 (`decisions.md` "Board References UI: comp U answers"), and the questions not covered there stay open on the comp.
 
 ## Problem
 
@@ -59,7 +59,7 @@ the idea, and ideas roll up to Outcomes with projected and realized value.
 1. **Entering a reference status:** a normal move. The idea's drawer shows a Tasks section with "+ Add task". A new task is a card in the referenced board's first status. Entering with zero tasks is allowed.
 2. **Task flow:** tasks use the child board's statuses, assignees, comments, tags and sprint. Blocked tasks show a lock.
 3. **Completion prompt:** when all tasks are final, the idea shows "All N tasks are complete. Move to <next status>?" with Move and Not yet.
-4. **Lock:** while any task is not in a final lane the card cannot leave the lane, nor its board by detach or by being pulled onto another board; it shows "Waiting on N tasks" and a move is refused (`parentHasOpenTasks`). An Org Admin can force the move with a required reason (audited); the tasks remain on the child board. With no tasks there is nothing to wait on. A lane set to auto-create creates one task on every entry, by status move, pull or bulk lane move (parent's title, child board's first lane; decided 2026-10-16).
+4. **Lock:** while any task is not in a final lane the card cannot leave the lane, nor its board by detach or by being pulled onto another board; it shows "Waiting on N tasks" and a move is refused (`parentHasOpenTasks`). An Org Admin can force the move with a required reason (audited); the tasks remain on the child board. With no tasks there is nothing to wait on. A lane set to auto-create creates one task on the first entry, by status move, pull or bulk lane move (parent's title, child board's first lane; decided 2026-10-16); an idea that already has a task on the referenced board gets none on a later entry (amended 2026-10-19).
 5. **Late additions:** adding a task to an idea already past the reference status prompts "Move back to <status>?".
 6. **Guards:** a reference lane cannot be removed or re-pointed while ideas sit in it; a board cannot be archived while a lane references it.
 7. **Rollups:** `N of M tasks` on the idea card and drawer; per-Outcome idea, task and value totals (projected and realized, by metric type).
@@ -79,6 +79,14 @@ Three screens, drawn in `comp-s-board-reference.html`: (1) Statuses page with th
 - **Metric values:** the unit follows the number ("12,500.00 $", "120 h"); thousands separators follow the browser locale; input takes digits, one ".", a leading "-", and strips typed commas. Editing a type's unit warns "Existing values are not converted." "Show archived" is off by default and not remembered. In a final lane the Realized header is tinted and reads "Realized — enter now" (nothing is blocked). A direct App Admin sees "Values are visible through View As."
 - **Outcome page:** the meter clips at 100% with an "over projected" marker; a negative total shows an empty meter and the number in the danger colour; numbers are always exact; a type with only projected values shows "Realized: not yet". A per-idea breakdown (key, title, projected, realized) sits under each type card. The current `metricTotals` returns totals only, so this needs a contract addition (backend slice).
 - **Pull picker:** no standing note about tasks; "N tasks are hidden — they stay on their parent's board." appears only when the search would have matched tasks. The picker read needs a hidden-task count (backend slice).
+
+**Decided 2026-10-19** (`decisions.md` "Board References UI: comp U answers"; drawn in `comp-u-board-references-core.html`):
+
+- **Final lane:** a Final lane cannot reference a board (`422` `finalLaneCannotReference`); the Statuses page disables the reference selector on a Final lane.
+- **No Effort:** a card with no Effort cannot be dropped on a reference lane; the lane's tooltip reads "Add Effort first". No toast, so no "Add effort" retry. The server rule `effortRequiredForReferenceLane` is the backstop. Effort on a card in a reference lane can be changed, not cleared (`422` `effortRequiredInReferenceLane`).
+- **Blocked:** a blocked card cannot be dragged out of its first lane (no drop target; the tooltip names the blocker). The blocked badge shows only while the task sits in its first lane; a blocker added later shows none.
+- **Move back:** moving an idea back into an auto-create lane creates no second task while it already has one on the referenced board.
+- **Sprints:** the work board's sprint header and chips are in this UI round. `contracts/sprints.md` "Sprints per board" is planned, not built, and the chips, the header counts and putting a task in a sprint need reads and routes no contract has yet; the gaps are recorded in the decision for the tracker.
 
 ## Out of scope
 
@@ -104,7 +112,7 @@ Decided by the owner:
 - **Rollup (Q1):** `ideaCount`/`doneIdeaCount` (an item in a final lane is done), `taskCount`/`doneTaskCount` over child cards, projected and realized totals per metric type, the sprint span derived from the tasks' sprints, quarter placement. The State (*Planned*, *In its window*, *Past its window*) is computed by the client.
 - **Idea-only fields:** a board setting (`boards.idea_features_enabled`) controls upvotes, idea types and type fields, and AI assist. It defaults to on for ordinary boards and off for a board that is the target of a reference; an Org Admin may change it. Tasks then show title, description, assignee, tags, sprint and blockers.
 - **Nesting:** one level at launch. A board that is the target of a reference may not contain a reference lane (the guard is on both sides). The model does not forbid chains, so this can open later without a schema change.
-- **Entry condition:** Effort is required to enter any reference lane (replaces the old promotion-gate rule). No configurable per-lane rules.
+- **Entry condition:** Effort is required to enter any reference lane (replaces the old promotion-gate rule), and cannot be cleared while the idea sits there (2026-10-19). No configurable per-lane rules.
 - **Names (Q4):** duplicates allowed; no uniqueness constraint.
 - **App Admin (Q10):** reads only through View As, as decided 2026-10-04. No direct read route.
 - **Placement (Q17):** a new Outcome takes the end of the order.

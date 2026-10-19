@@ -597,7 +597,7 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
               </div>
               <div class="sw-line">
                 <button class="sw ctl" role="switch" aria-checked="true" aria-describedby="sp2-h"><i></i><span>Sprints</span></button>
-                <span class="helper" id="sp2-h">On. The sprint header and sprint chips are deferred, see screen 3. <span class="prop">COPY PROPOSED</span></span>
+                <span class="helper" id="sp2-h">On. The sprint header and sprint chips show on the work board, see screen 3. <span class="prop">COPY PROPOSED</span></span>
               </div>
             </div>
           </div></div>
@@ -634,12 +634,12 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
 
       <div class="oq"><b>Open questions</b>
         <ul>
-          <li>May a Final lane also reference a board? Nothing forbids it; a card entering a Final reference lane would sit done and locked at once.</li>
+          <li><b>Decided 2026-10-19:</b> a Final lane cannot reference a board (<code>422 finalLaneCannotReference</code>); the reference selector is disabled on a Final lane.</li>
           <li>The first time a lane names a board as a target, that board's Idea features flips to off (<code>contracts/boards.md</code>). Should the Org Admin be told at save (a line under the selector or in the save toast), or is it silent?</li>
           <li>Archived boards: hidden from the selector (drawn) or listed and disabled with a reason?</li>
           <li>Changing a lane's Kind to Final or back changes which tasks count as done, and can unlock a parent. Allowed with cards present, with or without a confirmation?</li>
           <li>Turning Idea features off on a board that already has upvotes, types and field values: allowed? What happens to the stored data and to existing cards?</li>
-          <li>The Sprints switch is drawn because it is a board field, but its sprint UI is deferred this round (screen 3). Show the switch now, or hide it until sprints are in?</li>
+          <li><b>Decided 2026-10-19:</b> the sprint header and chips are in this round (screen 3), so the Sprints switch is shown.</li>
         </ul></div>
     </div>
   </section>
@@ -738,8 +738,7 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
 
       <div class="oq"><b>Open questions</b>
         <ul>
-          <li>Refusal timing. Drawn: the drop is accepted, then refused with a toast and the card returns. The lock pattern refuses up front (no drop target, a tooltip). Should a card with no Effort do the same, with "Add Effort first" as the tooltip, or is the toast enough?</li>
-          <li>After Effort is saved from the toast's "Add effort", does the move retry by itself, or does the person drag again (drawn)?</li>
+          <li><b>Decided 2026-10-19:</b> a card with no Effort is refused up front on a reference lane: no drop target, tooltip "Add Effort first". No toast, so the toast frame drawn below is superseded and its "Add effort" retry question is moot. The server rule stays as the backstop.</li>
           <li>Should a card with no Effort show a muted hint (for example "No effort") in the lane before a reference lane, or stay silent as drawn?</li>
           <li>The rule is stated for a move. Does it also bind a pull (<code>pullItemIds</code>) and a bulk lane move (<code>ideaMoves</code>) into a reference lane, and where is the refusal shown in those flows?</li>
           <li>Is the "Task created" toast wanted at all, or is the highlighted card and "0 of 1 task" enough?</li>
@@ -755,7 +754,7 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
       <div class="pghead"><div><h1 id="h1-3">Implementation</h1><p>Tasks from every idea that reaches Implementation on Continuous Improvement, plus standalone work.</p></div></div>
 
       <div class="deferred" aria-label="Deferred, not in this round">
-        <span class="defer-tag">DEFERRED &mdash; NOT IN THIS ROUND &middot; sprint header (drawn for the owner to judge)</span>
+        <span class="defer-tag">IN THIS ROUND (decided 2026-10-19) &middot; sprint header &middot; backend reads still to be specified</span>
         <div class="ghostin" aria-hidden="true">
           <dl class="sprhd" style="margin:0">
             <div><dt>SPRINT 14</dt><dd>Oct 12 &ndash; Oct 25 <span class="badge ok" style="margin-left:6px">ACTIVE</span></dd></div>
@@ -764,7 +763,7 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
             <div><dt>ENDS IN</dt><dd>10 days</dd></div>
           </dl>
         </div>
-        <div class="note" style="margin-top:8px">Comp S's header, unchanged: sprint name and dates, task and idea counts, time left. It would appear above the lanes when the board's Sprints switch is on, with a Sprint | Backlog toggle and sprint chips on cards. Nothing below depends on it, and the board is complete without it.</div>
+        <div class="note" style="margin-top:8px">Comp S's header, unchanged: sprint name and dates, task and idea counts, time left. It would appear above the lanes when the board's Sprints switch is on, with a Sprint | Backlog toggle and sprint chips on cards. Included in this round by the owner's 2026-10-19 answer; the reads it needs are open items in <code>decisions.md</code>.</div>
       </div>
 
       <div class="lanes l4" aria-label="Implementation board">
@@ -843,8 +842,8 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
 
       <div class="oq"><b>Open questions</b>
         <ul>
-          <li><b>For the owner:</b> include the sprint header and chips in this round, or defer them with the sprint routes? Everything else on this page stands without them.</li>
-          <li>A blocker added to a task that is already past its first lane is allowed (<code>contracts/idea-dependencies.md</code>) and affects only later moves. Does the card still show the blocked badge there, or only while it sits in the first lane?</li>
+          <li><b>Decided 2026-10-19:</b> the sprint header and chips are included in this round, not deferred. The ghost below is to be drawn live; the backend gaps (card sprint read, header counts, putting a task in a sprint) are recorded in <code>decisions.md</code> for the tracker.</li>
+          <li><b>Decided 2026-10-19:</b> the blocked badge shows only while the task sits in its first lane; a blocker added later is allowed and shows no badge.</li>
           <li>The blocked badge on a card with several blockers: first open blocker plus a count (drawn), or just "blocked by 2"?</li>
           <li>Should the board offer a filter for "only tasks" or "only standalone"? Nothing in the specs asks for one.</li>
         </ul></div>
@@ -944,7 +943,7 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
 
       <div class="oq"><b>Open questions</b>
         <ul>
-          <li>Moving the idea back into the reference lane for a late task is an entry. If the lane's auto-create switch is on, <code>contracts/boards.md</code> says every entry creates one task, so moving back would add a second automatic task. Intended, or should a move back skip auto-create?</li>
+          <li><b>Decided 2026-10-19:</b> moving the idea back into an auto-create lane creates no second automatic task; auto-create is skipped when the idea already has a task on the referenced board.</li>
           <li>Opening a task from this list: a second drawer stacked on this one, or a switch to the Implementation board? Comp T only drew the task drawer on its own.</li>
           <li>Can a task be removed from its parent here, or deleted? The specs only say an idea with live tasks cannot be deleted.</li>
           <li>Read Only: hide + Add task (drawn in the notes) or show it disabled with a reason?</li>
@@ -1036,7 +1035,7 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
 
       <div class="oq"><b>Open questions</b>
         <ul>
-          <li>Effort on a card already in a reference lane: can it be changed or cleared? The rule gates entry only. Clearing it would leave a card in the lane with no Effort.</li>
+          <li><b>Decided 2026-10-19:</b> Effort on a card in a reference lane can be changed, not cleared (<code>422 effortRequiredInReferenceLane</code>).</li>
           <li>Should the "needed before Implementation" helper show only on boards with a reference lane (drawn), or always?</li>
           <li>Confirm the placement under Title for board ideas, or after the idea fields.</li>
           <li>Is choosing Effort in the form the only route, or should the card menu also offer "Set effort" for a quicker fix from the board?</li>
@@ -1123,10 +1122,10 @@ code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;bord
 
       <div class="oq"><b>Open questions</b>
         <ul>
-          <li>Up-front block (drawn: no drag, tooltip) or a toast after the drop? The lock decision chose up-front for the reference lane; the blocked lane has no decision of its own.</li>
+          <li><b>Decided 2026-10-19:</b> up-front block, as drawn: a blocked card cannot be dragged out of its first lane, no drop target, and the tooltip names the blocker.</li>
           <li>Removing a blocker: immediate with no confirmation (drawn), or an undo toast?</li>
           <li>The picker lists any card on the board, including standalone cards and tasks of other ideas, because the contract only requires "same board". Limit it to tasks, or to tasks of the same parent?</li>
-          <li>A task past its first lane that gains a blocker: no lock shows on its card (drawn in the notes). Is a quiet "blocked by" hint wanted there anyway?</li>
+          <li><b>Decided 2026-10-19:</b> a task past its first lane that gains a blocker shows no badge and no hint, as drawn.</li>
           <li>Blockers on a card on the idea board (CI): the same control, or only on work boards? The contract allows both.</li>
         </ul></div>
     </div>
