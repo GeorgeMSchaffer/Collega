@@ -33,6 +33,7 @@ const outcome: Outcome = createOutcome({
 const withMetrics: OutcomeIdea = {
   ideaId: 'i1',
   title: 'Saves money',
+  itemKey: null,
   statusId: 's',
   effort: null,
   assigneeUserIds: [],
