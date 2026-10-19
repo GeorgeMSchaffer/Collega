@@ -1,10 +1,11 @@
 'use client'
 
-import { cn } from '@collega/design-system'
+import { cn, RefPill } from '@collega/design-system'
 import { type DragEvent, useLayoutEffect, useRef } from 'react'
 import { Icon } from '@/components/list/icons'
-import type { Idea, Status } from '@/lib/types'
-import { IdeaCard } from './idea-card'
+import type { WorkLane } from '@/lib/board-work'
+import type { Idea } from '@/lib/types'
+import { type CardWork, IdeaCard, PLAIN_CARD } from './idea-card'
 
 const ARROW =
   'inline-flex size-6 items-center justify-center rounded-md border border-current/25 hover:bg-background/60 aria-disabled:cursor-not-allowed aria-disabled:opacity-40'
@@ -38,11 +39,16 @@ export type LaneReorder = {
  * while any card is being dragged, which makes the lane a card drop target instead of a lane one;
  * `onDragOver` answers whether *this* lane accepts the drop (not the card's own), and `over` is that
  * lane lit up. Null when the role may not move cards.
+ *
+ * `refusal` is why *this* lane will not take the card being dragged (the lock, a blocker, a missing
+ * Effort), or null. A refusing lane offers no drop target, so it says why instead while the drag is
+ * under way (`decisions.md` 2026-10-16 and 2026-10-19).
  */
 export type CardDrag = {
   active: boolean
   draggingId: string | null
   over: boolean
+  refusal: string | null
   onDragStart: (ideaId: string) => void
   onDragEnd: () => void
   onDragOver: () => boolean
@@ -70,8 +76,10 @@ export function Lane({
   reorder = null,
   cardDrag = null,
   onKeyMove,
+  referenceLabel = null,
+  cardWork,
 }: {
-  status: Status
+  status: WorkLane
   ideas: Idea[]
   boardId: string
   previousStatusId: string | null
@@ -83,6 +91,10 @@ export function Lane({
   reorder?: LaneReorder | null
   cardDrag?: CardDrag | null
   onKeyMove?: ((ideaId: string, statusId: string) => void) | undefined
+  /** The "↳ IMPL" pill's text when this lane references a board; null on an ordinary lane. */
+  referenceLabel?: string | null
+  /** What Board References adds to each card here; absent, a card is plain. */
+  cardWork?: ((idea: Idea) => CardWork) | undefined
 }) {
   const leftRef = useRef<HTMLButtonElement>(null)
   const rightRef = useRef<HTMLButtonElement>(null)
@@ -188,7 +200,14 @@ export function Lane({
           color: `color-mix(in srgb, ${status.color} 55%, var(--foreground))`,
         }}
       >
-        <span className="flex-1">{status.name}</span>
+        <span>{status.name}</span>
+        {status.referencesBoardId ? (
+          <RefPill title="This lane hands work to another board">
+            <span className="sr-only">References </span>
+            {referenceLabel ?? 'board'}
+          </RefPill>
+        ) : null}
+        <span className="flex-1" />
         <span className="font-mono text-xs font-medium opacity-80">
           {ideas.length}
           <span className="sr-only"> ideas</span>
@@ -200,6 +219,14 @@ export function Lane({
           </span>
         ) : null}
       </div>
+      {cardDrag?.active && cardDrag.refusal ? (
+        <div
+          role="tooltip"
+          className="w-fit max-w-full rounded-md border bg-foreground px-2.5 py-1 text-xs font-semibold text-background"
+        >
+          {cardDrag.refusal}
+        </div>
+      ) : null}
       {ideas.length === 0 ? (
         <div className="rounded-[10px] border border-dashed border-input p-3.5 text-center text-xs text-muted-foreground">
           Nothing here yet
@@ -214,6 +241,7 @@ export function Lane({
             nextStatusId={nextStatusId}
             canMove={canMove}
             upvoteDenial={upvoteDenial}
+            work={cardWork?.(idea) ?? PLAIN_CARD}
             selected={idea.id === selectedId}
             onOpen={(trigger) => onOpen(idea.id, trigger)}
             dragging={cardDrag?.draggingId === idea.id}

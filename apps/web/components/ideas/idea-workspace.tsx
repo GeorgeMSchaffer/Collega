@@ -26,6 +26,17 @@ import {
   ViewSwitch,
 } from '@/components/list'
 import { Icon } from '@/components/list/icons'
+import {
+  blockedBadge,
+  blockedTooltip,
+  isBlockedHere,
+  moveRefusal,
+  openTaskCount,
+  progressPercent,
+  rollupText,
+  type WorkLane,
+  waitingText,
+} from '@/lib/board-work'
 import { TITLE_MAX_LENGTH } from '@/lib/limits'
 import {
   detachOffer,
@@ -39,18 +50,26 @@ import { reorderLanes } from '@/lib/server/board-actions'
 import { deleteIdea, detachIdea, moveIdea } from '@/lib/server/idea-actions'
 import { useCurrentUser } from '@/lib/session-client'
 import type { BoardRef, Idea, IdeaDetail, IdeaFormOptions, Status, TagRef } from '@/lib/types'
+import type { CardWork } from './idea-card'
 import { People, PriorityMarker, StatusMarker, TagList } from './idea-chips'
 import { type DrawerMode, IdeaDrawer } from './idea-drawer'
 import { BOARD_LIST, IDEAS_LIST, PHASES, PRIORITIES, SCOPES } from './idea-list-config'
 import { BoardChip } from './idea-view'
 import { type CardDrag, Lane, type LaneReorder } from './lane'
+import { MoveAnywayDialog } from './move-anyway-dialog'
 import { RemoveFromBoardButton } from './remove-from-board'
 import { useDrawerUrl } from './use-drawer-url'
 
 type BoardContext = {
   id: string
   name: string
-  lanes: Status[]
+  /** With the Board References flags when the page read them; a lane without them is ordinary. */
+  lanes: WorkLane[]
+  /**
+   * The board each reference lane hands work to, by id: its name, and the key prefix its pill
+   * shows ("IMPL"). A board with no prefix shows its name.
+   */
+  referenceBoards?: Readonly<Record<string, { name: string; label: string }>>
   isArchived: boolean
   /** The role and the board's `allowUserStatusUpdate`, decided by the page. */
   canMove: boolean
@@ -62,6 +81,32 @@ type Removing = { id: string; title: string; boardId: string | null }
 
 /** An idea whose Remove from board is awaiting its confirm. */
 type Detaching = { id: string; title: string; boardId: string; boardName: string }
+
+/**
+ * An Org Admin's override of the reference-lane lock, awaiting its reason: a move to `toLane`, or
+ * Remove from board. `openTasks` and `referencedBoard` are what the card showed when it was asked.
+ */
+type Forcing = {
+  idea: { id: string; title: string; itemKey: string | null; boardId: string | null }
+  openTasks: number
+  /** The board the tasks live on, when the lane that holds the card says which. */
+  referencedBoard: string | null
+} & ({ kind: 'move'; toLane: WorkLane } | { kind: 'remove'; boardId: string; boardName: string })
+
+/**
+ * The override dialog's body, from the decided copy (`decisions.md` 2026-10-16, point 3). The comp
+ * lists the open tasks under it; no read returns them yet, so the count stands in for "these".
+ */
+function forcingBody(forcing: Forcing | null): string {
+  if (!forcing) return ''
+  const { idea, openTasks, referencedBoard } = forcing
+  const tasks = `${openTasks} open ${openTasks === 1 ? 'task' : 'tasks'}`
+  const named = `‘${idea.title}’${idea.itemKey ? ` (${idea.itemKey})` : ''} is waiting on ${tasks}.`
+  const left = referencedBoard ? `the ${referencedBoard} board` : 'their own board'
+  return forcing.kind === 'move'
+    ? `${named} Moving it to ${forcing.toLane.name} leaves them open on ${left}.`
+    : `${named} Removing it from ${forcing.boardName} leaves them open on ${left}.`
+}
 
 /**
  * An idea list on the comp R pattern — the Ideas page (`board` null: List or Cards) or a board's own
@@ -117,6 +162,8 @@ export function IdeaWorkspace({
   const [detaching, setDetaching] = useState<Detaching | null>(null)
   const [detachError, setDetachError] = useState<string | null>(null)
   const [detachPending, startDetach] = useTransition()
+  const [forcing, setForcing] = useState<Forcing | null>(null)
+  const [forcePending, startForce] = useTransition()
 
   // The lane order as last saved, or as the reorder in flight has it. A refusal ends the transition
   // with `board.lanes` unchanged, so the columns fall back on their own; a save revalidates the
@@ -155,11 +202,30 @@ export function IdeaWorkspace({
   const [overCardLane, setOverCardLane] = useState<string | null>(null)
 
   // The same `moveIdea` the card's arrows submit, so one rule decides what a move may do.
-  const moveCard = (ideaId: string, boardId: string, to: Status, announce?: string) => {
+  const moveCard = (
+    ideaId: string,
+    boardId: string,
+    to: WorkLane,
+    announce?: string,
+    forceReason?: string,
+  ) => {
     const form = new FormData()
     form.set('boardId', boardId)
     form.set('ideaId', ideaId)
     form.set('statusId', to.id)
+    // What the card shows, so a refusal that still arrives from the API can name it.
+    const idea = laneRows.find((row) => row.id === ideaId)
+    if (idea) {
+      form.set('title', idea.title)
+      const open = openTaskCount(
+        idea,
+        lanes.find((lane) => lane.id === idea.statusId),
+      )
+      if (open > 0) form.set('openTasks', String(open))
+      const blockers = idea.blockedBy.filter((blocker) => !blocker.isFinal).length
+      if (blockers > 0) form.set('blockers', String(blockers))
+    }
+    if (forceReason) form.set('forceReason', forceReason)
     setMoveError(null)
     startCardMove(async () => {
       setCardLane({ ideaId, statusId: to.id, statusName: to.name })
@@ -174,6 +240,13 @@ export function IdeaWorkspace({
     const idea = laneRows.find((row) => row.id === ideaId)
     // The card sits in its optimistic lane, so a press before the save settles moves it on from there.
     if (!board || !to || !idea) return
+    // The same refusals the drop and the arrows give, said aloud: nothing is sent.
+    const refusal = moveRefusal(idea, lanes, to.id)
+    if (refusal) {
+      setMoveError(null)
+      setCardNews(`${idea.title} can’t move to ${to.name}. ${refusal}`)
+      return
+    }
     refocusCard.current = ideaId
     setCardNews('')
     moveCard(ideaId, board.id, to, idea.title)
@@ -208,6 +281,68 @@ export function IdeaWorkspace({
       if (!result.error) {
         setReorderNews(`${moved.name} moved to position ${to + 1} of ${next.length}`)
       }
+    })
+  }
+
+  // What Board References adds to a card in `lanes[index]`: the lock, the rollup, a blocker, and
+  // which neighbouring lane refuses it. An Org Admin's way past the lock goes to the next lane, or
+  // the previous one at the board's end.
+  const workFor = (idea: Idea, index: number): CardWork => {
+    const lane = lanes[index]
+    const open = openTaskCount(idea, lane)
+    const blockedHere = isBlockedHere(idea, lanes)
+    const previous = lanes[index - 1]
+    const next = lanes[index + 1]
+    const target = next ?? previous
+    const referenced = lane?.referencesBoardId
+      ? (board?.referenceBoards?.[lane.referencesBoardId]?.name ?? null)
+      : null
+    return {
+      lockText: open > 0 ? waitingText(open) : null,
+      rollup: lane?.referencesBoardId ? rollupText(idea.taskCounts) : null,
+      progress: progressPercent(idea.taskCounts),
+      blockedText: blockedHere ? blockedBadge(idea) : null,
+      blockedTip: blockedHere ? blockedTooltip(idea) : null,
+      previousRefusal: previous ? moveRefusal(idea, lanes, previous.id) : null,
+      nextRefusal: next ? moveRefusal(idea, lanes, next.id) : null,
+      openTasks: open,
+      blockers: idea.blockedBy.filter((blocker) => !blocker.isFinal).length,
+      onMoveAnyway:
+        open > 0 && user.role === 'OrgAdmin' && board?.canMove && target
+          ? () =>
+              setForcing({
+                kind: 'move',
+                idea: {
+                  id: idea.id,
+                  title: idea.title,
+                  itemKey: idea.itemKey,
+                  boardId: idea.boardId,
+                },
+                openTasks: open,
+                referencedBoard: referenced,
+                toLane: target,
+              })
+          : null,
+    }
+  }
+
+  const confirmForce = (reason: string) => {
+    if (!forcing) return
+    const current = forcing
+    if (current.kind === 'move') {
+      // The card moves through the same optimistic path as any other; its transition is the pending.
+      setForcing(null)
+      if (board) moveCard(current.idea.id, board.id, current.toLane, undefined, reason)
+      return
+    }
+    startForce(async () => {
+      const result = await detachIdea(current.idea.id, current.boardId, {
+        forceReason: reason,
+        title: current.idea.title,
+        openTasks: current.openTasks,
+      })
+      setDetachError(result.error)
+      setForcing(null)
     })
   }
 
@@ -272,12 +407,24 @@ export function IdeaWorkspace({
   const offerDetach = (idea: Idea, isIssue: boolean) =>
     detachOffer(user.role, user.userId, idea, { isIssue, boardArchived: archived(idea.boardId) })
   const detachButton = (
-    idea: { id: string; title: string; boardId: string | null },
-    offer: { reason: string | null },
+    idea: Pick<Idea, 'id' | 'title' | 'boardId' | 'itemKey' | 'taskCounts'>,
+    offer: { reason: string | null; override?: boolean },
   ) => (
     <RemoveFromBoardButton
       title={idea.title}
       offer={offer}
+      onOverride={() => {
+        if (!idea.boardId || !idea.taskCounts) return
+        setDetachError(null)
+        setForcing({
+          kind: 'remove',
+          idea: { id: idea.id, title: idea.title, itemKey: idea.itemKey, boardId: idea.boardId },
+          openTasks: Math.max(0, idea.taskCounts.total - idea.taskCounts.done),
+          referencedBoard: null,
+          boardId: idea.boardId,
+          boardName: boardName(idea.boardId),
+        })
+      }}
       onRemove={() => {
         if (idea.boardId) {
           setDetachError(null)
@@ -524,12 +671,24 @@ export function IdeaWorkspace({
                 selectedId={selectedId}
                 onOpen={view}
                 onKeyMove={board.canMove ? keyMoveCard : undefined}
+                referenceLabel={
+                  status.referencesBoardId
+                    ? (board.referenceBoards?.[status.referencesBoardId]?.label ?? null)
+                    : null
+                }
+                cardWork={(idea) => workFor(idea, index)}
                 cardDrag={
                   board.canMove
                     ? ({
                         active: draggingCard !== null,
                         draggingId: draggingCard?.id ?? null,
                         over: draggingCard !== null && overCardLane === status.id,
+                        refusal: (() => {
+                          const dragged = draggingCard
+                            ? laneRows.find((row) => row.id === draggingCard.id)
+                            : undefined
+                          return dragged ? moveRefusal(dragged, lanes, status.id) : null
+                        })(),
                         onDragStart: (ideaId) => {
                           const idea = laneRows.find((row) => row.id === ideaId)
                           if (idea) setDraggingCard({ id: ideaId, statusId: idea.statusId })
@@ -538,11 +697,14 @@ export function IdeaWorkspace({
                           setDraggingCard(null)
                           setOverCardLane(null)
                         },
-                        // A drop on the card's own lane does nothing, so it is not offered.
+                        // A drop on the card's own lane does nothing, so it is not offered; nor is
+                        // one a rule would refuse (the lane says why while the drag is under way).
                         onDragOver: () => {
                           if (draggingCard === null || draggingCard.statusId === status.id) {
                             return false
                           }
+                          const dragged = laneRows.find((row) => row.id === draggingCard.id)
+                          if (dragged && moveRefusal(dragged, lanes, status.id)) return false
                           setOverCardLane(status.id)
                           return true
                         },
@@ -552,7 +714,14 @@ export function IdeaWorkspace({
                           const dragged = draggingCard
                           setDraggingCard(null)
                           setOverCardLane(null)
-                          if (dragged && dragged.statusId !== status.id) {
+                          const idea = dragged
+                            ? laneRows.find((row) => row.id === dragged.id)
+                            : null
+                          if (
+                            dragged &&
+                            dragged.statusId !== status.id &&
+                            !(idea && moveRefusal(idea, lanes, status.id))
+                          ) {
                             moveCard(dragged.id, board.id, status)
                           }
                         },
@@ -734,6 +903,20 @@ export function IdeaWorkspace({
           quickAdded.current = false
           openDrawer({ view: ideaId })
         }}
+      />
+
+      <MoveAnywayDialog
+        open={forcing !== null}
+        title={
+          forcing?.kind === 'remove'
+            ? 'Remove from board anyway?'
+            : `Move past ${forcing?.openTasks ?? 0} open ${forcing?.openTasks === 1 ? 'task' : 'tasks'}?`
+        }
+        body={forcingBody(forcing)}
+        confirmLabel={forcing?.kind === 'remove' ? 'Remove anyway' : 'Move anyway'}
+        pending={forcePending}
+        onConfirm={confirmForce}
+        onCancel={() => setForcing(null)}
       />
 
       <ConfirmDialog

@@ -113,7 +113,9 @@ describe('a 422 refusal', () => {
     data.set('ideaId', 'i-1')
     data.set('boardId', 'b-1')
     data.set('statusId', 's-2')
-    expect(await moveIdea({ error: null }, data)).toEqual({ error: 'parentHasOpenTasks' })
+    expect(await moveIdea({ error: null }, data)).toEqual({
+      error: 'This card is waiting on open tasks, so it cannot be moved.',
+    })
   })
 
   it('still lets a 500 through', async () => {

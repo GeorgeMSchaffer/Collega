@@ -13,10 +13,13 @@ export function RemoveFromBoardButton({
   title,
   offer,
   onRemove,
+  onOverride,
 }: {
   title: string
-  offer: { reason: string | null }
+  offer: { reason: string | null; override?: boolean }
   onRemove: (trigger: HTMLButtonElement) => void
+  /** An Org Admin's "Remove anyway…" past the reference-lane lock, shown beside the disabled button. */
+  onOverride?: () => void
 }) {
   const reasonId = useId()
 
@@ -40,6 +43,16 @@ export function RemoveFromBoardButton({
         <span id={reasonId} className="text-xs text-muted-foreground">
           {offer.reason}
         </span>
+      ) : null}
+      {offer.override && onOverride ? (
+        <Button
+          variant="outline"
+          size="sm"
+          aria-label={`Remove anyway: ${title}`}
+          onClick={onOverride}
+        >
+          Remove anyway…
+        </Button>
       ) : null}
     </span>
   )

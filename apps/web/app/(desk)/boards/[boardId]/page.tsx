@@ -60,12 +60,24 @@ export default async function BoardPage({
   const state = readListState(query, BOARD_LIST)
   const listQuery = toIdeaListQuery(state)
 
-  const [first, tags, boards, drawer] = await Promise.all([
+  // A reference lane's pill names the board it hands work to by that board's key prefix.
+  const referencedIds = [
+    ...new Set(board.lanes.map((lane) => lane.referencesBoardId).filter((id) => id !== null)),
+  ]
+
+  const [first, tags, boards, drawer, referenced] = await Promise.all([
     getBoardIdeaList(board.id, listQuery),
     getTagRefs(),
     getBoardRefs(),
     loadIdeaDrawer(query, authorDenial === null),
+    Promise.all(referencedIds.map((id) => getBoard(id))),
   ])
+  const referenceBoards = Object.fromEntries(
+    referencedIds.flatMap((id, index) => {
+      const target = referenced[index]
+      return target ? [[id, { name: target.name, label: target.keyPrefix ?? target.name }]] : []
+    }),
+  )
 
   const lastPage = Math.max(1, Math.ceil(first.totalCount / listQuery.pageSize))
   const ideas =
@@ -139,6 +151,7 @@ export default async function BoardPage({
             id: board.id,
             name: board.name,
             lanes: board.lanes,
+            referenceBoards,
             isArchived: board.isArchived,
             canMove: moveDenial === null,
             canReorder: user.role === 'OrgAdmin',

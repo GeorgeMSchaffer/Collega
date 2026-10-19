@@ -11,6 +11,7 @@
  * disappearing.
  */
 
+import { waitingText } from './board-work'
 import type { Role } from './types'
 
 export type { Role } from './types'
@@ -149,14 +150,23 @@ export function mayWorkOnIssue(
 export function detachOffer(
   role: Role,
   userId: string,
-  idea: { boardId: string | null; authorUserId: string | null },
+  idea: {
+    boardId: string | null
+    authorUserId: string | null
+    /** Only on an idea in a lane that references a board; its open tasks hold it there. */
+    taskCounts?: { total: number; done: number } | null
+  },
   context: { isIssue: boolean; boardArchived: boolean },
-): { reason: string | null } | null {
+): { reason: string | null; override?: boolean } | null {
   if (idea.boardId === null) return null
   const admin = role === 'OrgAdmin'
   const author = role === 'User' && idea.authorUserId !== null && idea.authorUserId === userId
   if (!admin && !author) return null
   if (context.isIssue) return { reason: 'Issues return to Discovery first.' }
+  // The reference-lane lock (`parentHasOpenTasks`): disabled with the lock's text, and an Org
+  // Admin is offered the override beside it (comp T screen 4, frame C).
+  const open = idea.taskCounts ? Math.max(0, idea.taskCounts.total - idea.taskCounts.done) : 0
+  if (open > 0) return { reason: waitingText(open), ...(admin ? { override: true } : {}) }
   if (context.boardArchived && !admin) {
     return { reason: 'Only an Org Admin can remove ideas from an archived board.' }
   }
