@@ -300,7 +300,7 @@ every name for local development; nothing in this table belongs in a committed f
 | `DATABASE_URL` | Production, Preview | **yes** | The build fails at `db:migrate`; if it somehow got past, every request 500s. Production and Preview hold **different** values — production and staging. |
 | `ACCESS_TOKEN_SIGNING_KEY` | Production, Preview | **yes** | The API **refuses to boot** (see below), and refuses again if it is shorter than 32 characters. Generate with `openssl rand -base64 48`, which gives 64; a different value per environment. |
 | `SITE_ADMIN_EMAIL` | Production, Preview | **yes** | The API refuses to boot, and nothing creates the first administrator (§8). |
-| `SITE_ADMIN_PASSWORD` | Production, Preview | **yes** | Same, and **not removable** — `siteAdminFragment` reads it through `required()`, so deleting it after the first login takes the API down on the next cold start. Nothing reads the value: the bootstrap script reads `process.env` directly, so the fragment's only effect is to refuse boot. See the note under §8. |
+| `SITE_ADMIN_PASSWORD` | Production, Preview | **yes** | Same. Only the build-time `db:bootstrap-admin` reads it; the API no longer requires it at runtime, so it can be removed after the first login (`SPEC/decisions.md` 2026-10-15). |
 | `ACCESS_TOKEN_LIFETIME_MINUTES` | optional | no | Defaults to 480 (8h). |
 | `ANTHROPIC_API_KEY` | optional | no | Without it AI idea assist runs dark — the turn endpoint answers `503`, availability reports `false`, and the client degrades to the plain form (`SPEC/20-feature-ai-idea-assist.md` rule 31). Setting it turns the assistant on: D6 is built. |
 | `POSTGRES_*` | — | **no** | Do not set them. They are the local container's parts; `DATABASE_URL` wins anyway, and having both invites the two drifting. |
@@ -442,7 +442,7 @@ pnpm --filter @collega/infrastructure db:bootstrap-admin
     variables and your local `.env`, both untracked.
   - **It shares the demo seed's id derivation**, so a development database that has seen both the
     demo seed and this bootstrap holds one row rather than colliding on the unique email index.
-- **Leave `SITE_ADMIN_PASSWORD` in place** after the first login and password change: the API refuses to boot without it (the note at the top of this section, and §12 step 10). *Corrected 2026-09-29 (`SPEC/decisions.md` 2026-09-29, "Spec contradictions resolved"): this said it could be deleted, which would take the deployment down on the next cold start.*
+- **`SITE_ADMIN_PASSWORD` can be removed** after the first login and password change: the API no longer requires it at runtime (only the build-time bootstrap reads it).
 
 ### When the address is owned by an account that cannot administer anything
 
@@ -782,10 +782,8 @@ database; step 10 is verification; steps 11–12 populate the deployment and get
       here, under Settings → Organizations → Add New Organization, or by step 11's script. *Corrected 2026-09-29
       (slice 135): this said there was no admin write path in the UI; Settings → Organizations →
       Add New Organization, Settings → Users → Add New User and Settings → View as now exist.*
-    - **Leave `SITE_ADMIN_PASSWORD` in place.** An earlier draft of this checklist said it could be
-      deleted once the password had been changed. It cannot: the API refuses to boot without it, so
-      deleting it works until the next cold start and then takes the deployment down. That the
-      credential outlives its usefulness is a real wart — §8 records the choice it needs.
+    - **`SITE_ADMIN_PASSWORD` can be removed** once the password has been changed: the API no longer
+      requires it at runtime; only the build-time bootstrap reads it.
 11. **Populate the deployment** — once, from a shell with the production `DATABASE_URL` exported,
     **not** from the build command and **not** as project environment variables (§8a says why):
 

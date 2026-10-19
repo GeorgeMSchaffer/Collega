@@ -1927,6 +1927,7 @@ export class IdeaService {
         tagNames: this.projectTagNames(idea, tagLookup),
         tags: this.projectTags(idea, tagLookup),
         effort: idea.effort,
+        phase: idea.phase,
         statusId: idea.statusId,
         statusName: this.statusName(statusInfo, idea.statusId),
         upvoteCount: hidden ? 0 : (upvoteCounts.get(idea.id) ?? 0),

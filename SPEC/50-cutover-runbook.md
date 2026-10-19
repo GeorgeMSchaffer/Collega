@@ -56,7 +56,7 @@ environment badges.
 | `DATABASE_URL` | required | required | A direct `postgres://` / `postgresql://` URL, **not** `prisma+postgres://`. Unprefixed — a store connected with `--prefix` writes `<PREFIX>_POSTGRES_URL`, which nothing reads. **Production and Preview hold different databases**; each entry is ticked for exactly one environment. |
 | `ACCESS_TOKEN_SIGNING_KEY` | required | required | At least 32 characters (the API refuses to boot otherwise); different per environment. |
 | `SITE_ADMIN_EMAIL` | required | required | The real address in Production; a throwaway in Preview, so staging never receives the production credential. |
-| `SITE_ADMIN_PASSWORD` | required | required | Present. It stays after first login — deleting it takes the API down on the next cold start (§8 of the deployment spec). |
+| `SITE_ADMIN_PASSWORD` | required | required | Present for the first build. The API no longer requires it at runtime, so it can be removed after first login. |
 | `ANTHROPIC_API_KEY` | optional | optional | Either present, or absent **by decision** — absent means AI idea assist runs dark (`503` on turns, availability `false`). |
 | `ACCESS_TOKEN_LIFETIME_MINUTES` | optional | optional | Unset means 480. |
 | `COLLEGA_ALLOW_DEMO_SEED` | **must be unset** | either | Set, it switches on the App Admin's demo-data seed and reset (`apps/api/src/demo-seed/`) in production. |

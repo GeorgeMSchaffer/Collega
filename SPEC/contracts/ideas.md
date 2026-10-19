@@ -66,7 +66,7 @@ Cross-board, organization-scoped idea list for the global `/ideas` page (`SPEC/2
   - `sortDirection` optional `asc` or `desc` (the page requests `desc` for newest-first). All sorts apply a stable `ideaId` tiebreaker so ordering is deterministic across pages.
   - `fieldFilters[<fieldDefinitionId>]=<value>` optional, repeatable — filter by User-Defined Field value (T059). Semantics per field type: `Text`/`Url` contains; `Number` range `<min>:<max>` (either side omittable); `Date` range `<from>:<to>` (ISO-8601, either side omittable); `Boolean` `true`/`false`; `Dropdown` exact option id; `MultiSelect` any-of (matches when the stored option ids include the value). Unknown/invalid `fieldDefinitionId` keys and unparseable values are silently ignored.
   - `phase` optional (added 2026-09-11, Issues and Delivery Slice 1) — `All` (**default**), `Ideas` (`Discovery`-phase only), or `Issues` (`Delivery`-phase only). Unrecognised values are treated as `All`.
-- **Response:** `200`: same paged item shape as `GET /api/v1/boards/{boardId}/ideas`.
+- **Response:** `200`: same paged item shape as `GET /api/v1/boards/{boardId}/ideas`, plus `phase` (added 2026-10-19, Sprint 14 follow-up): `Discovery` or `Delivery`, so the page can tell Issues from ideas without a second request. The board list carries the same field, always `Discovery`.
 - **Errors:** —
 - **Rules:**
   - The `phase` default spans **both** phases, unlike the board list: this is the list somebody uses to find an item they cannot see on a board, and hiding promoted ones would lose them. Omitting it therefore leaves the response exactly as it was before the parameter existed.

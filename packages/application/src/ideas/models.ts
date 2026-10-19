@@ -347,6 +347,7 @@ export type IdeaListItem = {
   /** The same tags as `tagNames`, in the same order. */
   readonly tags: readonly IdeaTagDto[]
   readonly effort: EffortLevel | null
+  readonly phase: IdeaPhase
   readonly statusId: string
   readonly statusName: string
   readonly upvoteCount: number
