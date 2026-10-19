@@ -55,6 +55,7 @@ Shared by every route below:
     among the sprints of the grouped items' tasks; **both `null` when none has a sprint**
 
   - **Per-idea values (confirmed by the owner, 2026-10-19):** each item of an Outcome's `ideas` (detail and roadmap) gains `metrics`: `[{ metricTypeId, projected, realized }]`, the item's stored values over **active** metric types, in the types' order; `[]` when it has none. Names and units come from `metricTotals` or the metric types list; the idea's `title` is already there. The ungrouped list carries the same field.
+  - **Per-idea `itemKey` (owner decision, 2026-10-19):** each item of `ideas` (detail and roadmap) and of the ungrouped list also carries `itemKey`, string or `null`, derived as on the idea reads (`contracts/ideas.md`, "Tasks and item keys"): `<board keyPrefix>-<itemNumber>`, `null` when the board has no prefix or the item has no number.
 
   Quarter placement and the drawer's derived *State* (*Planned*, *In its window*, *Past its
   window*) are **not returned**: the client computes them from its own local date.
