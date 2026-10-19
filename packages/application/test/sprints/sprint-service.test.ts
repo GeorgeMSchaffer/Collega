@@ -152,7 +152,7 @@ function harness(options: {
       return (options.issues ?? []).filter((i) => i.sprintId === sprintId)
     },
     async countsBySprintIds(ids) {
-      return new Map(ids.map((id) => [id, { issueCount: 2, doneCount: 1 }]))
+      return new Map(ids.map((id) => [id, { issueCount: 2, doneCount: 1, ideaCount: 0 }]))
     },
     async update(idea) {
       issueUpdates.push(idea)

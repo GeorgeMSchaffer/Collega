@@ -185,8 +185,8 @@ describe.skipIf(!DATABASE_URL)('Board sprints against a live database', () => {
 
     const counts = await ideas.countsBySprintIds([boardSprintId, legacySprintId])
 
-    expect(counts.get(boardSprintId)).toEqual({ issueCount: 3, doneCount: 2 })
-    expect(counts.get(legacySprintId)).toEqual({ issueCount: 2, doneCount: 1 })
+    expect(counts.get(boardSprintId)).toMatchObject({ issueCount: 3, doneCount: 2 })
+    expect(counts.get(legacySprintId)).toMatchObject({ issueCount: 2, doneCount: 1 })
   })
 
   it('lists a board sprint by board and reports the board for sprint management', async () => {

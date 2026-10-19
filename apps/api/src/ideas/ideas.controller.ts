@@ -185,6 +185,17 @@ function newIdeaFields(body: CreateIdeaBody) {
 }
 
 /** The organization list's repeatable `boardId`: GUIDs, and the literal `none` for no board. */
+/** `sprintId` on the board list: a GUID, or the literal `none` for the backlog. */
+function sprintFilter(value: unknown): { sprintId: string | null; noSprint: boolean } {
+  const text = optional(value)
+  if (text === null) {
+    return { sprintId: null, noSprint: false }
+  }
+  return text.toLowerCase() === 'none'
+    ? { sprintId: null, noSprint: true }
+    : { sprintId: guidOrEmpty(text), noSprint: false }
+}
+
 function boardFilter(value: unknown): { boardIds: readonly string[]; includeNoBoard: boolean } {
   const values = queryList(value)
   const isNone = (entry: string) => entry.toLowerCase() === 'none'
@@ -268,6 +279,7 @@ export class IdeasController {
       tags: queryList(query.tag),
       priorities: queryList(query.priority),
       dueBefore: optional(query.dueBefore),
+      ...sprintFilter(query.sprintId),
       sortBy: optional(query.sortBy),
       sortDirection: optional(query.sortDirection),
     })

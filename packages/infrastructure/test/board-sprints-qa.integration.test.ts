@@ -358,7 +358,7 @@ describe.skipIf(!DATABASE_URL)('Board sprints QA against a live database', () =>
 
       const counts = await ideas.countsBySprintIds([sprint])
 
-      expect(counts.get(sprint)).toEqual({ issueCount: 6, doneCount: 2 })
+      expect(counts.get(sprint)).toMatchObject({ issueCount: 6, doneCount: 2 })
     })
 
     it('reports a board with no final lane as nothing done', async () => {
@@ -367,7 +367,7 @@ describe.skipIf(!DATABASE_URL)('Board sprints QA against a live database', () =>
       await newIdea(noFinalBoardId, OPEN, sprint)
       await newIdea(noFinalBoardId, MID, sprint)
 
-      expect((await ideas.countsBySprintIds([sprint])).get(sprint)).toEqual({
+      expect((await ideas.countsBySprintIds([sprint])).get(sprint)).toMatchObject({
         issueCount: 2,
         doneCount: 0,
       })
@@ -390,7 +390,7 @@ describe.skipIf(!DATABASE_URL)('Board sprints QA against a live database', () =>
       await newIdea(null, DONE, sprint, { phase: 'Delivery', delivery: 'Pending' })
       await newIdea(null, OPEN, sprint, { phase: 'Delivery', delivery: 'Complete' })
 
-      expect((await ideas.countsBySprintIds([sprint])).get(sprint)).toEqual({
+      expect((await ideas.countsBySprintIds([sprint])).get(sprint)).toMatchObject({
         issueCount: 4,
         doneCount: 2,
       })
@@ -406,8 +406,8 @@ describe.skipIf(!DATABASE_URL)('Board sprints QA against a live database', () =>
 
       const counts = await ideas.countsBySprintIds([board, legacy])
 
-      expect(counts.get(board)).toEqual({ issueCount: 1, doneCount: 1 })
-      expect(counts.get(legacy)).toEqual({ issueCount: 2, doneCount: 1 })
+      expect(counts.get(board)).toMatchObject({ issueCount: 1, doneCount: 1 })
+      expect(counts.get(legacy)).toMatchObject({ issueCount: 2, doneCount: 1 })
     })
   })
 
@@ -442,8 +442,8 @@ describe.skipIf(!DATABASE_URL)('Board sprints QA against a live database', () =>
       )
       // complete() and the counts agree: what stayed is exactly what was counted done.
       const after = (await ideas.countsBySprintIds([sprint])).get(sprint)
-      expect(before).toEqual({ issueCount: 5, doneCount: 2 })
-      expect(after).toEqual({ issueCount: 2, doneCount: 2 })
+      expect(before).toMatchObject({ issueCount: 5, doneCount: 2 })
+      expect(after).toMatchObject({ issueCount: 2, doneCount: 2 })
       expect(JSON.parse(events[0]?.metadataJson ?? '{}')).toMatchObject({
         carriedOverIssueCount: 3,
       })

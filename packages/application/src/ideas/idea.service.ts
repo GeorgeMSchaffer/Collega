@@ -206,6 +206,8 @@ export class IdeaService {
       tags: normalizeTagFilters(query.tags),
       priorities: parsePriorityFilters(query.priorities),
       dueBefore: parseOptionalDate(query.dueBefore),
+      sprintId: query.sprintId ?? null,
+      noSprint: query.noSprint ?? false,
       // The ideation board is Discovery, always: a promoted item leaves it (no data loss - the row
       // and its ideation status are retained, and it reappears here if it is returned to
       // Discovery). Nothing is promoted until somebody promotes something, so for an organization
@@ -1941,8 +1943,12 @@ export class IdeaService {
     const keyPrefixes = await this.keyPrefixesFor(ideas)
     const references = await this.referenceContextFor(ideas)
     const blockedBy = await this.blockedByOf(ideas)
+    const sprintIds = [...new Set(ideas.flatMap((i) => (i.sprintId ? [i.sprintId] : [])))]
+    const sprints = sprintIds.length > 0 ? await this.sprints.listByIds(sprintIds) : []
+    const sprintsById = new Map(sprints.map((s) => [s.id, s]))
 
     return ideas.map((idea) => {
+      const sprint = idea.sprintId ? sprintsById.get(idea.sprintId) : undefined
       const hidden = references.hidesIdeaFeatures(idea)
       return {
         ideaId: idea.id,
@@ -1970,6 +1976,14 @@ export class IdeaService {
         tags: this.projectTags(idea, tagLookup),
         effort: idea.effort,
         phase: idea.phase,
+        sprint: sprint
+          ? {
+              sprintId: sprint.id,
+              name: sprint.name,
+              startDate: sprint.startDate,
+              endDate: sprint.endDate,
+            }
+          : null,
         statusId: idea.statusId,
         statusName: this.statusName(statusInfo, idea.statusId),
         upvoteCount: hidden ? 0 : (upvoteCounts.get(idea.id) ?? 0),
@@ -2002,10 +2016,6 @@ export class IdeaService {
 
     const taskSummaries = await this.taskRollup.summaryByIdeaIds(ideas.map((i) => i.id))
 
-    const sprintIds = [...new Set(ideas.flatMap((i) => (i.sprintId ? [i.sprintId] : [])))]
-    const sprints = sprintIds.length > 0 ? await this.sprints.listByIds(sprintIds) : []
-    const sprintsById = new Map(sprints.map((s) => [s.id, s]))
-
     const promoterIds = [
       ...new Set(ideas.flatMap((i) => (i.promotedByUserId ? [i.promotedByUserId] : []))),
     ]
@@ -2016,20 +2026,11 @@ export class IdeaService {
       if (!card) {
         return []
       }
-      const sprint = idea.sprintId ? sprintsById.get(idea.sprintId) : undefined
       return [
         {
           ...card,
           phase: idea.phase,
           deliveryStatus: idea.deliveryStatus,
-          sprint: sprint
-            ? {
-                sprintId: sprint.id,
-                name: sprint.name,
-                startDate: sprint.startDate,
-                endDate: sprint.endDate,
-              }
-            : null,
           taskSummary: taskSummaries.get(idea.id) ?? { done: 0, total: 0 },
           provenance: this.projectProvenance(idea, promoters),
         },

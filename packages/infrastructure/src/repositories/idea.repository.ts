@@ -324,7 +324,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
     // Legacy sprints count Complete as done; a board sprint counts an item done when it sits in a
     // final lane of its own board.
     const rows = await this.prisma.$queryRaw<
-      { sprint_id: string; issue_count: number; done_count: number }[]
+      { sprint_id: string; issue_count: number; done_count: number; idea_count: number }[]
     >(Prisma.sql`
       SELECT i.sprint_id AS sprint_id,
              COUNT(*)::int AS issue_count,
@@ -332,7 +332,8 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
                WHERE CASE WHEN s.board_id IS NULL
                           THEN i.delivery_status = 'Complete'::"DeliveryStatus"
                           ELSE COALESCE(l.is_final, FALSE) END
-             )::int AS done_count
+             )::int AS done_count,
+             COUNT(DISTINCT i.parent_idea_id)::int AS idea_count
       FROM ideas i
       JOIN sprints s ON s.id = i.sprint_id
       LEFT JOIN board_swimlanes l ON l.board_id = i.board_id AND l.status_id = i.status_id
@@ -343,7 +344,11 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
 
     const counts = new Map<string, SprintIssueCounts>()
     for (const row of rows) {
-      counts.set(row.sprint_id, { issueCount: row.issue_count, doneCount: row.done_count })
+      counts.set(row.sprint_id, {
+        issueCount: row.issue_count,
+        doneCount: row.done_count,
+        ideaCount: row.idea_count,
+      })
     }
     return counts
   }
@@ -361,6 +366,11 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
     }
     if (filter.dueBefore) {
       conditions.push(Prisma.sql`i.due_date < ${filter.dueBefore}::date`)
+    }
+    if (filter.sprintId) {
+      conditions.push(Prisma.sql`i.sprint_id = ${filter.sprintId}::uuid`)
+    } else if (filter.noSprint) {
+      conditions.push(Prisma.sql`i.sprint_id IS NULL`)
     }
     if (filter.search) {
       conditions.push(this.searchCondition(filter, false))

@@ -41,4 +41,6 @@ export type SprintItem = {
   readonly state: SprintState
   readonly issueCount: number
   readonly doneCount: number
+  /** Distinct parent ideas among the sprint's tasks. */
+  readonly ideaCount: number
 }

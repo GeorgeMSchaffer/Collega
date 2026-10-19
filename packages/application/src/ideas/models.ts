@@ -158,7 +158,6 @@ export type IssueProvenance = {
 export type DeliveryCard = IdeaListItem & {
   readonly phase: IdeaPhase
   readonly deliveryStatus: DeliveryStatus | null
-  readonly sprint: IssueSprintSummary | null
   readonly taskSummary: IssueTaskSummary
   readonly provenance: IssueProvenance
 }
@@ -176,6 +175,10 @@ export type IdeaListQuery = {
   readonly tags: readonly string[]
   readonly priorities: readonly string[]
   readonly dueBefore: string | null
+  /** Only items in this sprint. */
+  readonly sprintId?: string | null | undefined
+  /** Only items in no sprint: the board backlog (`sprintId=none`). */
+  readonly noSprint?: boolean | undefined
   readonly sortBy: string | null
   readonly sortDirection: string | null
 }
@@ -347,6 +350,8 @@ export type IdeaListItem = {
   readonly tags: readonly IdeaTagDto[]
   readonly effort: EffortLevel | null
   readonly phase: IdeaPhase
+  /** The sprint the item is in, for the card's sprint chip. */
+  readonly sprint: IssueSprintSummary | null
   readonly statusId: string
   readonly statusName: string
   readonly upvoteCount: number
