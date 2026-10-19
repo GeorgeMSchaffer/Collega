@@ -84,6 +84,13 @@ describe('InboxLink', () => {
     expect(badge()?.textContent).toBe('99')
   })
 
+  it('shows 100 as 99+', async () => {
+    count(100)
+    renderLink({ count: 100, at: 1 })
+    await flush()
+    expect(badge()?.textContent).toBe('99+')
+  })
+
   it('links to /inbox and marks the current page there', async () => {
     nav.pathname = '/inbox'
     renderLink({ count: 0, at: 1 })
