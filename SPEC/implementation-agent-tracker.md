@@ -17,7 +17,7 @@ Before making any status, planning, or scope claim about this project — in thi
 Verified 2026-10-19 against `2d02f573` (tip of `dev`). Open work only: every merged slice (119–175)
 has moved verbatim to `SPEC/tracker-history/` (`2026-10-12-rows-part-3.md` and `-part-4.md`); earlier
 rows are in the 2026-09-28 files, and the 2026-09-12 "Agreed order of work" is in
-`2026-10-12-narratives-part-2.md`. Board References backend round 2 (239-245) is complete; Slices 246-249, 260, 277, 278 and 280-287 are merged; no slice is in flight; the backend is ready; Board References UI slice 1 (288) is merged and the rest of the UI round follows.
+`2026-10-12-narratives-part-2.md`. Board References backend round 2 (239-245) is complete; Slices 246-249, 260, 277, 278 and 280-294 are merged; no slice is in flight; the backend is ready; Board References UI slices 1 and 2 (288, 293) are merged and slice 3 is next.
 
 **Sprints 1–7.5, 10, 11 and 12 are complete; Sprint 8 was cancelled (2026-09-04).** Sprint 9 (the
 conversion) and Sprint 13 (MVP release) are each open for one item, the cutover. Index:
