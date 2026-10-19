@@ -333,7 +333,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
                           THEN i.delivery_status = 'Complete'::"DeliveryStatus"
                           ELSE COALESCE(l.is_final, FALSE) END
              )::int AS done_count,
-             COUNT(DISTINCT i.parent_idea_id)::int AS idea_count
+             COUNT(DISTINCT CASE WHEN s.board_id IS NOT NULL THEN i.parent_idea_id END)::int AS idea_count
       FROM ideas i
       JOIN sprints s ON s.id = i.sprint_id
       LEFT JOIN board_swimlanes l ON l.board_id = i.board_id AND l.status_id = i.status_id

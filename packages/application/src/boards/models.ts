@@ -87,6 +87,12 @@ export type BoardListItem = {
   readonly keyPrefix: string | null
   readonly sprintsEnabled: boolean
   readonly ideaFeaturesEnabled: boolean
+  /** The number the next item key takes; `1` means no key has been issued on the board. */
+  readonly nextItemNumber: number
+  /** The board has at least one lane with `referencesBoardId` set. */
+  readonly hasReferenceLane: boolean
+  /** Non-archived boards with a lane referencing this board; empty when none. */
+  readonly referencedByBoardIds: readonly string[]
 }
 
 export type BoardListQuery = {
@@ -140,6 +146,8 @@ export type BoardDetail = {
   readonly keyPrefix: string | null
   readonly sprintsEnabled: boolean
   readonly ideaFeaturesEnabled: boolean
+  /** As on the list item: `1` means no key has been issued. */
+  readonly nextItemNumber: number
 }
 
 /** A `PUT /boards/{boardId}` result: the detail, plus what was pulled when the save pulled. */

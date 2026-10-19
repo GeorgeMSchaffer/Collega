@@ -90,9 +90,18 @@ export class BoardService {
     this.ensureReadScope(organizationId)
     await this.ensureOrganizationExists(organizationId)
 
-    const boards = (await this.boards.listByOrganization(organizationId)).filter(
-      (board) => query.includeArchived || !board.isArchived,
-    )
+    const organizationBoards = await this.boards.listByOrganization(organizationId)
+    const boards = organizationBoards.filter((board) => query.includeArchived || !board.isArchived)
+    // Lanes arrive with the boards, so the reference links cost no further read.
+    const referencedBy = new Map<string, string[]>()
+    for (const board of organizationBoards) {
+      if (board.isArchived) continue
+      for (const targetId of new Set(
+        board.swimlanes.flatMap((lane) => lane.referencesBoardId ?? []),
+      )) {
+        referencedBy.set(targetId, [...(referencedBy.get(targetId) ?? []), board.id])
+      }
+    }
     // One query for every board's idea count. The client used to ask each board's idea endpoint
     // for a single row and read `totalCount` off the envelope, which is one round trip per board
     // from one render - fine at four boards, two hundred concurrent requests at two hundred.
@@ -152,6 +161,9 @@ export class BoardService {
         keyPrefix: board.keyPrefix,
         sprintsEnabled: board.sprintsEnabled,
         ideaFeaturesEnabled: board.ideaFeaturesEnabled,
+        nextItemNumber: board.nextItemNumber,
+        hasReferenceLane: board.swimlanes.some((lane) => lane.referencesBoardId !== null),
+        referencedByBoardIds: referencedBy.get(board.id) ?? [],
       }
     })
   }
@@ -1225,6 +1237,7 @@ function toDetail(board: Board, statusLookup: ReadonlyMap<string, Status>): Boar
     keyPrefix: board.keyPrefix,
     sprintsEnabled: board.sprintsEnabled,
     ideaFeaturesEnabled: board.ideaFeaturesEnabled,
+    nextItemNumber: board.nextItemNumber,
   }
 }
 
