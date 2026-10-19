@@ -18,6 +18,7 @@ List ideas on a board with pagination.
   - `tag` optional
   - `priority` optional `Low`, `Medium`, `High`, or `Critical`
   - `dueBefore` optional date string (`YYYY-MM-DD`)
+  - `sprintId` optional (added 2026-10-19, decided by the orchestrator under the owner's spec-and-build approval 2026-10-19; owner to review): a sprint GUID returns only the items in that sprint; the literal **`none`** (case-insensitive) returns only items in no sprint — the board backlog for the Sprint | Backlog toggle. Absent applies no sprint filter. Any other value matches nothing and returns an empty page, like `statusId`. The board list shows Discovery-phase items only, so with this filter a legacy Delivery-phase item in a board sprint is counted in the sprint's `issueCount` but appears only in the sprint detail read (`GET /organizations/{organizationId}/sprints/{sprintId}`); tasks are always Discovery-phase, so the work board is unaffected.
   - `sortBy` optional `createdAt`, `updatedAt`, `upvoteCount`, `priority`, or `dueDate`; **added 2026-09-27**: `title`, `status` (lane order), `assignedTo`, `tags`
   - `statusId`, `priority` and `tag` are repeatable from 2026-09-27 (any-of within a parameter)
   - `sortDirection` optional `asc` or `desc`
@@ -43,6 +44,7 @@ List ideas on a board with pagination.
   - `createdAtUtc`
   - Added 2026-09-28 (comp R, `SPEC/decisions.md` 2026-09-28):
     - `tags` array — the same tags as `tagNames`, in the same order, each `{ tagId, name, color }`, so a card can colour its chips without a second request. `tagNames` stays, unchanged, for every client written before it.
+    - `sprint` object or `null` (added 2026-10-19, decided by the orchestrator under the owner's spec-and-build approval 2026-10-19; owner to review): `sprintId`, `name`, `startDate`, `endDate` — the sprint the item is in, for the sprint chip on a card. The shape the delivery card already carried, now on every item of this shape, so the delivery card's own `sprint` is unchanged.
     - `effort` string or `null`: `Low`, `Medium`, `High` — the idea's effort, for the effort bar on idea cards and rows, which shows whenever it is set (answered 2026-09-28). The delivery card already carried `effort`; it is the same field.
 - **Errors:** —
 - **Rules:**

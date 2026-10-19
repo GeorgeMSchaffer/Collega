@@ -55,6 +55,8 @@ export interface SprintBoardsPort {
 export type SprintIssueCounts = {
   readonly issueCount: number
   readonly doneCount: number
+  /** Distinct parent ideas of the sprint's tasks. */
+  readonly ideaCount: number
 }
 
 /** Just enough of a user to validate a sprint owner: same organization, and active. */

@@ -35,6 +35,9 @@ export type IdeaListFilter = {
   readonly tags: readonly string[]
   readonly priorities: readonly Priority[]
   readonly dueBefore: string | null
+  readonly sprintId?: string | null | undefined
+  /** Only items in no sprint. */
+  readonly noSprint?: boolean | undefined
   /**
    * `Discovery` for every ideation-board read (spec "Board & idea-list phase filtering"): a
    * promoted item leaves the board without losing its row or its ideation status. `null` means

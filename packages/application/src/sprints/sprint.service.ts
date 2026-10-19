@@ -43,7 +43,7 @@ import type {
   SprintUsersPort,
 } from './ports.js'
 
-const NO_ISSUES: SprintIssueCounts = { issueCount: 0, doneCount: 0 }
+const NO_ISSUES: SprintIssueCounts = { issueCount: 0, doneCount: 0, ideaCount: 0 }
 
 export class SprintService {
   constructor(
@@ -438,6 +438,7 @@ function toItem(
     state: sprint.state,
     issueCount: counts.issueCount,
     doneCount: counts.doneCount,
+    ideaCount: counts.ideaCount,
   }
 }
 
