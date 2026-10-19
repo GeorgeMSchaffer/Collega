@@ -26,7 +26,7 @@ Users can securely access the application using organization-scoped accounts.
 5. Passwords must be at least 6 characters long and include uppercase, lowercase, numeric, and special characters.
 6. Five failed login attempts within 15 minutes must trigger a 15-minute account lockout.
 7. The seeded Site Admin account is a global platform account and does not belong to an organization.
-8. A seed Site Admin account must be created on first run from an environment-provided initial credential, `SITE_ADMIN_EMAIL` and `SITE_ADMIN_PASSWORD`. Startup must fail fast if either is missing.
+8. A seed Site Admin account must be created on first run from an environment-provided initial credential, `SITE_ADMIN_EMAIL` and `SITE_ADMIN_PASSWORD`. At runtime only `SITE_ADMIN_EMAIL` is required, and startup must fail fast if it is missing; the password is needed only by the build-time bootstrap and may be removed after first login.
    - One boot-time validation pass enforces it, and also requires the database URL.
    - Any missing or blank required setting makes the host write a human-readable banner naming every missing key to stderr and exit with a non-zero code (no stack trace), rather than failing later inside the ORM or the seeder.
    - Stated in ASP.NET configuration-key terms until slice F6; the requirement is unchanged, only the mechanism's name.
@@ -84,7 +84,7 @@ Users can securely access the application using organization-scoped accounts.
 - [ ] Password changes are rejected if they do not satisfy the password complexity policy
 - [ ] Seed Site Admin is created at first run
 - [ ] Seed Site Admin must change the environment-provided initial credential on first login
-- [ ] Startup fails fast with a clear error if `SITE_ADMIN_EMAIL` or `SITE_ADMIN_PASSWORD` is missing
+- [ ] Startup fails fast with a clear error if `SITE_ADMIN_EMAIL` is missing (`SITE_ADMIN_PASSWORD` is read only by the build-time bootstrap and may be removed after first login)
 - [ ] Development startup seed creates one Org Admin, two User accounts and one Read Only account per demo organization using `Abc123!`
 - [ ] Development startup seeded demo users can log in with `Abc123!` without a forced password change
 - [ ] Admin-issued temporary password reset is implemented in P1
