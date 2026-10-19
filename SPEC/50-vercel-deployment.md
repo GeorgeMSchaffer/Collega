@@ -442,7 +442,7 @@ pnpm --filter @collega/infrastructure db:bootstrap-admin
     variables and your local `.env`, both untracked.
   - **It shares the demo seed's id derivation**, so a development database that has seen both the
     demo seed and this bootstrap holds one row rather than colliding on the unique email index.
-- **`SITE_ADMIN_PASSWORD` can be removed** after the first login and password change: the API no longer requires it at runtime (only the build-time bootstrap reads it). *Corrected 2026-09-29 (`SPEC/decisions.md` 2026-09-29, "Spec contradictions resolved"): this said it could be deleted, which would take the deployment down on the next cold start.*
+- **`SITE_ADMIN_PASSWORD` can be removed** after the first login and password change: the API no longer requires it at runtime (only the build-time bootstrap reads it).
 
 ### When the address is owned by an account that cannot administer anything
 
