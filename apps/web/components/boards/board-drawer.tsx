@@ -7,9 +7,14 @@ import { Drawer } from '@/components/list'
 import { Icon } from '@/components/list/icons'
 import { BoardFields, pullLabel, useKeptSubmit } from '@/components/settings/board-form'
 import type { PullSetup } from '@/components/settings/pull-step'
+import { SwimlanePicker } from '@/components/settings/swimlane-picker'
 import { PULL_ITEM_CAP } from '@/lib/limits'
-import { createBoardInPlace, saveBoardInPlace } from '@/lib/server/board-actions'
-import type { BoardOverview, LaneFlags, PullCandidate, Status } from '@/lib/types'
+import {
+  createBoardInPlace,
+  type FieldRefusals,
+  saveBoardInPlace,
+} from '@/lib/server/board-actions'
+import type { BoardOverview, LaneFlags, PullCandidate, ReferenceContext, Status } from '@/lib/types'
 import { LaneLegend, LaneStrip, statusLabel, TopTags } from './board-parts'
 
 export type DrawerMode = 'view' | 'edit' | 'create'
@@ -26,15 +31,32 @@ export type BoardFormData = {
   laneFlags?: Readonly<Record<string, LaneFlags>> | undefined
   /** Live ideas per lane of the board being edited, for the confirm step a lane removal needs. */
   laneIdeaCounts?: Readonly<Record<string, number>> | undefined
+  keyPrefix?: string | null
+  ideaFeaturesEnabled?: boolean
+  /** The boards a lane may reference, and which boards reference this one. */
+  references?: ReferenceContext | undefined
   statuses: Status[]
   /** What the *Add existing items* step needs; absent leaves the step out. */
   pull?: PullSetup
 }
 
+/** A board's lanes as the view shows them, read-only: each lane's status and its Board References flags. */
+export type BoardView = {
+  boardId: string
+  lanes: Status[]
+  flags: Readonly<Record<string, LaneFlags>>
+  /** The organization's other boards, to name what a lane references. */
+  references: ReferenceContext
+}
+
 const FORM_ID = 'board-drawer-form'
 
 /** The last save's refusal, and which form it belongs to, so it never shows on another board's. */
-type Outcome = { error: string | null; pullErrors: string[]; formKey: string | null }
+type Outcome = {
+  error: string | null
+  pullErrors: string[]
+  formKey: string | null
+} & FieldRefusals
 const IDLE: Outcome = { error: null, pullErrors: [], formKey: null }
 
 /**
@@ -47,6 +69,7 @@ const IDLE: Outcome = { error: null, pullErrors: [], formKey: null }
 export function BoardDrawer({
   open,
   form,
+  view,
   isAdmin,
   returnFocusTo,
   onClose,
@@ -56,6 +79,8 @@ export function BoardDrawer({
 }: {
   open: { mode: DrawerMode; board: BoardOverview | null } | null
   form: BoardFormData | null
+  /** The viewed board's lanes with their flags; null until the page has them. */
+  view?: BoardView | null
   isAdmin: boolean
   returnFocusTo: HTMLElement | null
   onClose: () => void
@@ -73,7 +98,8 @@ export function BoardDrawer({
       const save = boardId === null ? createBoardInPlace : saveBoardInPlace
       const result = await save({ error: null, savedId: null }, data)
       if (result.savedId) onView(result.savedId)
-      return { error: result.error, pullErrors: result.pullErrors ?? [], formKey }
+      const { savedId: _saved, pullErrors, ...rest } = result
+      return { ...rest, pullErrors: pullErrors ?? [], formKey }
     },
     IDLE,
   )
@@ -99,7 +125,9 @@ export function BoardDrawer({
   let body: ReactNode = null
   let footer: ReactNode = null
   if (open !== null && mode === 'view' && board) {
-    body = <BoardFacts board={board} />
+    body = (
+      <BoardFacts board={board} view={view?.boardId === board.id ? view : null} isAdmin={isAdmin} />
+    )
     footer = (
       <>
         <Link href={`/boards/${board.id}`} className={buttonVariants()}>
@@ -141,6 +169,10 @@ export function BoardDrawer({
           swimlaneIds={form.swimlaneIds}
           laneFlags={form.laneFlags}
           laneIdeaCounts={form.laneIdeaCounts}
+          keyPrefix={form.keyPrefix}
+          ideaFeaturesEnabled={form.ideaFeaturesEnabled}
+          references={form.references}
+          refusals={outcome.formKey === formKey ? outcome : undefined}
           statuses={form.statuses}
           sectionHeading="h3"
           pull={
@@ -206,13 +238,23 @@ export function BoardDrawer({
   )
 }
 
-function BoardFacts({ board }: { board: BoardOverview }) {
+function BoardFacts({
+  board,
+  view,
+  isAdmin,
+}: {
+  board: BoardOverview
+  view: BoardView | null
+  isAdmin: boolean
+}) {
   const facts: [string, ReactNode][] = [
     ['Ideas', board.ideaCount],
     ['Lanes', board.laneCount],
     ['Created', board.createdOn],
     ['By', board.createdBy ?? '—'],
     ['User status moves', board.userStatusMoves ? 'Allowed' : 'Admins only'],
+    ['Key prefix', board.keyPrefix ?? '—'],
+    ['Idea features', board.ideaFeaturesEnabled ? 'On' : 'Off'],
     ['Status', board.archivedOn ? `Archived ${board.archivedOn}` : statusLabel(board)],
   ]
 
@@ -244,6 +286,28 @@ function BoardFacts({ board }: { board: BoardOverview }) {
         <LaneStrip board={board} />
         <LaneLegend board={board} />
       </div>
+      {view ? (
+        <div className="flex flex-col gap-2">
+          <h3 className="m-0 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Lanes
+          </h3>
+          {isAdmin ? null : (
+            <Alert variant="note" role="status">
+              <span>
+                You can see this board&rsquo;s settings but only an Org Admin can change them.
+              </span>
+            </Alert>
+          )}
+          <SwimlanePicker
+            readOnly
+            ids={view.lanes.map((lane) => lane.id)}
+            onChange={() => {}}
+            statuses={view.lanes}
+            flags={view.flags}
+            references={view.references}
+          />
+        </div>
+      ) : null}
       <TopTags board={board} limit={3} />
     </>
   )

@@ -3,7 +3,7 @@ import { loadPullSetup } from '@/components/boards/load-pull-setup'
 import { BoardRefusal } from '@/components/settings/admin-only'
 import { BoardForm } from '@/components/settings/board-form'
 import { SettingsPage } from '@/components/settings/settings-page'
-import { getBoard, getBoardOverviews, getStatuses } from '@/lib/data'
+import { getBoard, getBoardOverviews, getReferenceContext, getStatuses } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
@@ -20,10 +20,11 @@ export default async function EditBoardPage({ params }: { params: Promise<{ boar
   // what may be added.
   // The board list carries each lane's idea count, which the save's confirm step needs when a
   // lane that still holds ideas is removed.
-  const [board, statuses, overviews] = await Promise.all([
+  const [board, statuses, overviews, references] = await Promise.all([
     getBoard(boardId),
     getStatuses(),
     getBoardOverviews({ includeArchived: true }),
+    getReferenceContext(boardId),
   ])
   if (!board) notFound()
   const overview = overviews.find((candidate) => candidate.id === board.id)
@@ -53,6 +54,9 @@ export default async function EditBoardPage({ params }: { params: Promise<{ boar
         laneIdeaCounts={Object.fromEntries(
           (overview?.lanes ?? []).map((lane) => [lane.id, lane.ideaCount]),
         )}
+        keyPrefix={board.keyPrefix}
+        ideaFeaturesEnabled={board.ideaFeaturesEnabled}
+        references={references}
         // A board may hold a lane whose status has since been archived, and the catalog excludes
         // those. Merging them in is what keeps such a lane visible and removable rather than
         // silently dropped from the picker — and silently dropped from the board on the next save.

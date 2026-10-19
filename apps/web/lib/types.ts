@@ -367,6 +367,27 @@ export type BoardRef = {
   isArchived: boolean
 }
 
+/**
+ * A board a lane could name as its reference, as the board form's selector offers it. Only active
+ * boards other than the one being edited; `hasReferenceLane` is what makes one a disallowed target
+ * (one level of references at launch, `contracts/boards.md`).
+ */
+export type ReferenceChoice = {
+  id: string
+  name: string
+  keyPrefix: string | null
+  /** The name of the board's first lane, where an auto-created task lands. */
+  firstLaneName: string | null
+  hasReferenceLane: boolean
+}
+
+/** What the lane editor needs beyond the board itself to offer a reference. */
+export type ReferenceContext = {
+  choices: ReferenceChoice[]
+  /** The boards with a lane that references this one; while there are any, none of this board's lanes may reference a board. */
+  referencedBy: { id: string; name: string }[]
+}
+
 /** Where the board form's *Add existing items* step reads from (`contracts/boards.md`, pull-candidates). */
 export type PullSource = 'unassigned' | 'boards' | 'backlog'
 

@@ -31,6 +31,7 @@ import type {
   BoardWithLanes,
   PullCandidatePage,
   PullCandidateQuery,
+  ReferenceContext,
   Status,
 } from '../types'
 import { failIfRequested, resolve } from './latency'
@@ -134,6 +135,56 @@ export async function getBoard(id: string): Promise<BoardWithLanes | null> {
     // and so does this. `null` rather than a throw, so the caller reaches `notFound()`.
     if (isApiStatus(error, 404)) return null
     throw error
+  }
+}
+
+/**
+ * The boards a lane of `boardId` could reference, and whether `boardId` is itself a reference
+ * target (`null` for a board not yet created).
+ *
+ * The list read carries no lane references, so each other active board is opened for its lanes: one
+ * request per board, in parallel, from a screen an Org Admin opens to edit lanes. Boards are few
+ * enough (the list does not page) that this is cheaper than a contract addition for a flag the
+ * selector reads once.
+ */
+export async function getReferenceContext(boardId: string | null): Promise<ReferenceContext> {
+  failIfRequested('getReferenceContext')
+
+  const scope = organizationScope()
+  if (scope === null) return { choices: [], referencedBy: [] }
+
+  const listed = await apiGet<readonly WireBoardListItem[]>(
+    'getReferenceContext',
+    apiPath`/organizations/${scope}/boards`,
+  )
+  const details = await Promise.all(
+    listed
+      .filter((board) => board.boardId !== boardId)
+      .map(async (board) => ({
+        board,
+        detail: await apiGet<WireBoardDetail>(
+          'getReferenceContext',
+          apiPath`/boards/${board.boardId}`,
+        ),
+      })),
+  )
+
+  return {
+    choices: details.map(({ board, detail }) => ({
+      id: board.boardId,
+      name: board.name,
+      keyPrefix: board.keyPrefix,
+      firstLaneName: [...board.laneCounts].sort((a, b) => a.order - b.order)[0]?.statusName ?? null,
+      hasReferenceLane: detail.swimlanes.some((lane) => lane.referencesBoardId !== null),
+    })),
+    referencedBy:
+      boardId === null
+        ? []
+        : details
+            .filter(({ detail }) =>
+              detail.swimlanes.some((lane) => lane.referencesBoardId === boardId),
+            )
+            .map(({ board }) => ({ id: board.boardId, name: board.name })),
   }
 }
 

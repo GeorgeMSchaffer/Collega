@@ -29,7 +29,7 @@ import { SWIMLANE_FLOOR } from '@/lib/limits'
 import { quickAddBoard, setBoardArchived } from '@/lib/server/board-actions'
 import type { BoardOverview } from '@/lib/types'
 import { BoardCard } from './board-card'
-import { BoardDrawer, type BoardFormData, type DrawerMode } from './board-drawer'
+import { BoardDrawer, type BoardFormData, type BoardView, type DrawerMode } from './board-drawer'
 import { BoardStatus, LaneFigures, LaneStrip, statusLabel, TopTags } from './board-parts'
 
 const CONFIG: ListConfig = {
@@ -123,6 +123,7 @@ export function BoardsScreen({
   adminDenial,
   createDenial,
   form,
+  view = null,
   quickAddLaneIds = [],
 }: {
   /** Every board, archived ones included: the Status filter is applied here. */
@@ -133,6 +134,8 @@ export function BoardsScreen({
   createDenial: string | null
   /** The open form's seed values, loaded by the page; null when no form is open. */
   form: BoardFormData | null
+  /** The viewed board's lanes with flags, loaded by the page; null when none is open. */
+  view?: BoardView | null
   /** The statuses a quick-added board gets as lanes; fewer than the floor hides the row. */
   quickAddLaneIds?: string[]
 }) {
@@ -326,6 +329,7 @@ export function BoardsScreen({
       <BoardDrawer
         open={open}
         form={form}
+        view={view}
         isAdmin={isAdmin}
         returnFocusTo={trigger.current}
         onClose={() => navigate(null, null)}
