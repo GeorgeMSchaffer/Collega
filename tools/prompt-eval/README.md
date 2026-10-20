@@ -90,7 +90,7 @@ request, `prepareTurnInputV2` normalises it, the adapter's `continueTurnV2` is c
 `header.assistant: "v2"` and carries, on each turn, the raw and the finalized `changes`.
 
 ```bash
-pnpm -C tools/prompt-eval eval --assistant v2 --label v2-default      # 95 calls at the default 5 repeats
+pnpm -C tools/prompt-eval eval --assistant v2 --label v2-default      # 100 calls at the default 5 repeats
 pnpm -C tools/prompt-eval eval compare baselines/v1-default.json runs/<v2 run>.json
 ```
 
