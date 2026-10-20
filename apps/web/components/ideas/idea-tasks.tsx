@@ -2,7 +2,7 @@
 
 import { Button, cn, Dot, Field, Input, Textarea } from '@collega/design-system'
 import Link from 'next/link'
-import { type FormEvent, useId, useState, useTransition } from 'react'
+import { type FormEvent, useEffect, useId, useRef, useState, useTransition } from 'react'
 import { ConfirmDialog } from '@/components/list'
 import { Icon } from '@/components/list/icons'
 import { blockedBadge, blockedTooltip, isBlockedHere } from '@/lib/board-work'
@@ -91,11 +91,33 @@ export function TasksSection({ parent, tasks }: { parent: Parent; tasks: IdeaTas
 
   const done = tasks.tasks.filter((task) => task.isFinal).length
   const formAnchor = useId()
+  const addWrap = useRef<HTMLSpanElement>(null)
+  const heading = useRef<HTMLHeadingElement>(null)
+  const refocusAdd = useRef(false)
+
+  // Closing the form puts focus back on the button that opened it; a delete, whose row (and button)
+  // goes, lands on the heading. Both stay inside the drawer.
+  const refocusHeading = useRef(false)
+  useEffect(() => {
+    // A removed row's dialog has restored focus to the row's button by now; take it to the heading.
+    if (!removing && refocusHeading.current) {
+      refocusHeading.current = false
+      heading.current?.focus()
+    }
+  }, [removing])
+  useEffect(() => {
+    if (!adding && refocusAdd.current) {
+      refocusAdd.current = false
+      addWrap.current?.querySelector('button')?.focus()
+    }
+  }, [adding])
 
   return (
     <section aria-labelledby={`${formAnchor}-h`}>
       <div className="mb-1 flex flex-wrap items-center gap-2">
         <h3
+          ref={heading}
+          tabIndex={-1}
           id={`${formAnchor}-h`}
           className="m-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
         >
@@ -106,14 +128,16 @@ export function TasksSection({ parent, tasks }: { parent: Parent; tasks: IdeaTas
         </span>
         <span className="flex-1" />
         {tasks.adding && !adding ? (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => (tasks.inLane ? setAdding(true) : setMoveBack(true))}
-          >
-            <Icon name="plus" />
-            Add task
-          </Button>
+          <span ref={addWrap} className="contents">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => (tasks.inLane ? setAdding(true) : setMoveBack(true))}
+            >
+              <Icon name="plus" />
+              Add task
+            </Button>
+          </span>
         ) : null}
       </div>
 
@@ -137,7 +161,10 @@ export function TasksSection({ parent, tasks }: { parent: Parent; tasks: IdeaTas
             parent={parent}
             tasks={tasks}
             adding={tasks.adding}
-            onDone={() => setAdding(false)}
+            onDone={() => {
+              refocusAdd.current = true
+              setAdding(false)
+            }}
           />
         ) : null}
       </div>
@@ -158,7 +185,10 @@ export function TasksSection({ parent, tasks }: { parent: Parent; tasks: IdeaTas
           parent={parent}
           task={removing}
           taskBoardId={tasks.referenced.id}
-          onClose={() => setRemoving(null)}
+          onClose={(removed) => {
+            refocusHeading.current = removed
+            setRemoving(null)
+          }}
         />
       ) : null}
     </section>
@@ -262,6 +292,17 @@ function AddTaskForm({
   const [pending, start] = useTransition()
 
   const firstLane = tasks.referenced.lanes[0]
+  const formEl = useRef<HTMLFormElement>(null)
+
+  // Not `autoFocus`: after Move back the dialog's focus restore runs in the same commit and would
+  // take focus from a field focused on mount.
+  useEffect(() => {
+    const timer = setTimeout(
+      () => formEl.current?.querySelector<HTMLInputElement>(`[id$="-title"]`)?.focus(),
+      0,
+    )
+    return () => clearTimeout(timer)
+  }, [])
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -288,6 +329,7 @@ function AddTaskForm({
 
   return (
     <form
+      ref={formEl}
       onSubmit={submit}
       noValidate
       aria-label="Add task"
@@ -298,7 +340,6 @@ function AddTaskForm({
           id={`${id}-title`}
           value={title}
           maxLength={150}
-          autoFocus
           required
           aria-invalid={titleError ? true : undefined}
           onChange={(event) => setTitle(event.target.value)}
@@ -407,7 +448,7 @@ function RemoveTaskDialog({
   parent: Parent
   task: BoardTask
   taskBoardId: string
-  onClose: () => void
+  onClose: (removed: boolean) => void
 }) {
   const [error, setError] = useState<string | null>(null)
   const [pending, start] = useTransition()
@@ -420,7 +461,7 @@ function RemoveTaskDialog({
       description="It is deleted with its blocker links."
       confirmLabel="Delete task"
       pending={pending}
-      onCancel={onClose}
+      onCancel={() => onClose(false)}
       onConfirm={() =>
         start(async () => {
           setError(null)
@@ -431,7 +472,7 @@ function RemoveTaskDialog({
             taskBoardId,
           )
           if (result.error) setError(result.error)
-          else onClose()
+          else onClose(true)
         })
       }
     >
