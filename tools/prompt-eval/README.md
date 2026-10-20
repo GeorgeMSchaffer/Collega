@@ -96,7 +96,7 @@ pnpm -C tools/prompt-eval eval compare baselines/v1-default.json runs/<v2 run>.j
 
 `compare` against the v1 baseline judges the cases both share (the `refuse-*` and `scope-*` ones)
 and warns that the runs are not like with like, since the schema and prompt differ by design.
-No v2 baseline is committed yet: the first v2 run is owed (it needs a valid evaluation key).
+`baselines/v2-default.json` (with `v2-default.md`) is the committed v2 baseline, recorded 2026-10-20 after slice 313's prompt tuning.
 
 ## The baseline
 
