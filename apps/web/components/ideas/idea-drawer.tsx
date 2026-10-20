@@ -7,7 +7,7 @@ import { Icon } from '@/components/list/icons'
 import type { BoardRef, IdeaBlockers, IdeaDetail, IdeaFormOptions, IdeaTasks } from '@/lib/types'
 import { AssistChat } from './assist-chat'
 import { BlockersSection } from './idea-blockers'
-import { IdeaForm } from './idea-form'
+import { IdeaForm, type IdeaFormAssist } from './idea-form'
 import { TasksCompletePrompt, TasksSection } from './idea-tasks'
 import { type BoardLine, IdeaView } from './idea-view'
 
@@ -88,6 +88,8 @@ export function IdeaDrawer({
   // a turn failed and the conversation is over.
   const [assist, setAssist] = useState<'chat' | 'form' | 'failed'>('chat')
   const formPane = useRef<HTMLDivElement>(null)
+  // The create form's handle, for the assistant's chat to read from and write into.
+  const formAssist = useRef<IdeaFormAssist | null>(null)
 
   const open =
     (mode === 'create' && formOptions !== null) ||
@@ -115,6 +117,15 @@ export function IdeaDrawer({
   const toForm = (to: 'form' | 'failed') => {
     setAssist(to)
     formPane.current?.querySelector<HTMLElement>('[data-error-key="title"]')?.focus()
+  }
+
+  // Review and create: validate, and when nothing is missing hand focus to Create idea. It never submits.
+  const review = () => {
+    if (formAssist.current?.review()) {
+      formPane.current?.ownerDocument
+        .querySelector<HTMLElement>(`button[type="submit"][form="${CSS.escape(formId)}"]`)
+        ?.focus()
+    }
   }
 
   const footer = !open ? null : form ? (
@@ -165,6 +176,7 @@ export function IdeaDrawer({
         boards={mode === 'create' ? createBoards : null}
         boardId={mode === 'create' ? createBoardId : null}
         initial={mode === 'create' ? initial : undefined}
+        assistRef={assisted ? formAssist : undefined}
         contentLocked={mode === 'edit' && contentLocked}
         referenceLane={referenceLane}
         effortNeeded={mode === 'edit' ? effortNeeded : undefined}
@@ -195,8 +207,10 @@ export function IdeaDrawer({
           >
             <AssistChat
               boardId={createBoardId}
+              form={formAssist}
               active={chatShown}
               onManual={() => toForm('form')}
+              onReview={review}
               onFailed={() => toForm('failed')}
               className="h-[min(60vh,30rem)] shrink-0 border-b min-[900px]:h-auto min-[900px]:border-r min-[900px]:border-b-0"
             />

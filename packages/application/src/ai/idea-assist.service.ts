@@ -250,16 +250,20 @@ export class IdeaAssistService {
    * Authorization, transcript validation and the board lookup, in the order that decides which
    * error a bad request gets. Shared by both turn versions.
    */
-  private async prepareTurn(boardId: string, rawTranscript: readonly IdeaAssistTurn[]) {
+  private async prepareTurn(boardId: string | null, rawTranscript: readonly IdeaAssistTurn[]) {
     const organizationId = this.requireDraftingMember()
     const transcript = this.validateTranscript(rawTranscript)
 
-    const board = await this.boards.getById(boardId)
+    // A null board is the organization-level turn: the idea is being drafted for the pool, so
+    // there is no board to look up (v2 contract, "No-board turn").
+    if (boardId !== null) {
+      const board = await this.boards.getById(boardId)
 
-    // 404, not 403, for a board outside the caller's organization: a wrong-org request must not
-    // confirm the board exists. Same shape as every other org-scoped read in the codebase.
-    if (!board || board.organizationId !== organizationId) {
-      throw new NotFoundError('Board not found.')
+      // 404, not 403, for a board outside the caller's organization: a wrong-org request must not
+      // confirm the board exists. Same shape as every other org-scoped read in the codebase.
+      if (!board || board.organizationId !== organizationId) {
+        throw new NotFoundError('Board not found.')
+      }
     }
 
     return { organizationId, transcript, userTurnCount: transcript.filter(isUserTurn).length }
@@ -274,7 +278,7 @@ export class IdeaAssistService {
     TResult,
   >(turn: {
     readonly organizationId: string
-    readonly boardId: string
+    readonly boardId: string | null
     readonly userTurnCount: number
     readonly estimatedTokens: number
     readonly call: (context: IdeaAssistContext) => Promise<TResponse>
@@ -437,7 +441,7 @@ export class IdeaAssistService {
    */
   private async isThirdConsecutiveRefusal(
     organizationId: string,
-    boardId: string,
+    boardId: string | null,
   ): Promise<boolean> {
     const outcomes = await this.usage.getRecentOutcomes(
       organizationId,
@@ -553,7 +557,7 @@ export class IdeaAssistService {
    */
   private async audit(
     organizationId: string,
-    boardId: string,
+    boardId: string | null,
     turnCount: number,
     outOfScope: boolean,
     failed: boolean,
@@ -562,8 +566,9 @@ export class IdeaAssistService {
 
     await this.auditEvents.write({
       eventType: 'IdeaAssistTurn',
-      entityType: 'Board',
-      entityId: boardId,
+      // The organization-level turn has no board to name, so the audit entry names the organization.
+      entityType: boardId === null ? 'Organization' : 'Board',
+      entityId: boardId ?? organizationId,
       organizationId,
       attribution,
       message: 'An AI idea-assist turn was requested.',

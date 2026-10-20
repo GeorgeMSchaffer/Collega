@@ -42,6 +42,18 @@ export function Label({ className, required, children, ...props }: LabelProps) {
 }
 
 /**
+ * Comp R's `✦ Suggested` beside a label: a value the assistant wrote and the person has not touched.
+ * Pair it with `data-suggested` on the field's wrapper, which tints the control (`globals.css`).
+ */
+export function SuggestedMark() {
+  return (
+    <span className="ml-1.5 font-mono text-[10.5px] font-normal text-suggest">
+      ✦ <span data-suggested-text="">Suggested</span>
+    </span>
+  )
+}
+
+/**
  * Short related fields side by side (comp R's `.row3` and `.row2`): three to a row for short
  * selects, two for pairs, and one column below 900px. In a row of three the labels never wrap.
  * Long text, lists, people and tags keep a full row each, outside this.
@@ -60,7 +72,8 @@ export function FieldRow({
       className={cn(
         'grid grid-cols-1 gap-x-3',
         cols === 3
-          ? 'min-[900px]:grid-cols-3 [&_label]:whitespace-nowrap'
+          ? // Three to a row leaves no room for the word, so only the star shows.
+            'min-[900px]:grid-cols-3 [&_label]:whitespace-nowrap min-[900px]:[&_[data-suggested-text]]:sr-only'
           : 'min-[900px]:grid-cols-2',
         className,
       )}
@@ -91,11 +104,17 @@ export function Field({
   hint,
   error,
   required,
+  suggested,
+  flash,
   className,
   children,
 }: {
   htmlFor: string
   label: string
+  /** The assistant filled this and the person has not edited it. */
+  suggested?: boolean | undefined
+  /** Animates the control once, as the assistant fills it (skipped under reduced motion). */
+  flash?: boolean | undefined
   /** Marks the label; the control still needs its own `required`. */
   required?: boolean | undefined
   // `| undefined` explicitly, because `exactOptionalPropertyTypes` is on and these are the two
@@ -117,9 +136,15 @@ export function Field({
     : children
 
   return (
-    <div className={cn('mb-4', className)} data-invalid={error ? '' : undefined}>
+    <div
+      className={cn('mb-4', className)}
+      data-invalid={error ? '' : undefined}
+      data-suggested={suggested ? '' : undefined}
+      data-flash={suggested && flash ? '' : undefined}
+    >
       <Label htmlFor={htmlFor} required={required}>
         {label}
+        {suggested ? <SuggestedMark /> : null}
       </Label>
       {control}
       {error ? (

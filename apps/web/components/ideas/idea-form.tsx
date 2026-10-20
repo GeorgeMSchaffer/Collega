@@ -1,17 +1,29 @@
 'use client'
 
-import { Alert, Field, FieldRow, Input, Select, TagChip, Textarea } from '@collega/design-system'
+import {
+  Alert,
+  Field,
+  FieldRow,
+  Input,
+  Select,
+  SuggestedMark,
+  TagChip,
+  Textarea,
+} from '@collega/design-system'
 import {
   type FormEvent,
   type KeyboardEvent,
+  type RefObject,
   useEffect,
   useId,
+  useImperativeHandle,
   useRef,
   useState,
   useTransition,
 } from 'react'
 import { IssueDeliveryFields } from '@/components/delivery/issue-delivery-fields'
 import { Icon } from '@/components/list/icons'
+import type { AssistDraft } from '@/lib/assist-turn'
 import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from '@/lib/limits'
 import { addIssue } from '@/lib/server/delivery-actions'
 import { saveIdea } from '@/lib/server/idea-actions'
@@ -61,6 +73,42 @@ type Draft = {
   /** By field id; Dropdown is an option id, MultiSelect comma-separated option ids. */
   fields: Record<string, string>
 }
+
+/**
+ * What the idea assistant's chat reaches the form through (slice 309). The form stays the source of
+ * truth: the chat reads it, writes into it, and never holds a copy.
+ */
+export type IdeaFormAssist = {
+  /**
+   * The values to send the assistant, and the fields the person owns. A value is sent only when the
+   * person typed it or the assistant suggested it: the form's preselected Idea Type, Business
+   * Impact and Priority are defaults, and sending them would tell the assistant they were answered.
+   */
+  read(): { draft: AssistDraft; lockedFields: string[] }
+  /**
+   * Writes the assistant's `changes`, marking each field Suggested. A field the person owns is kept
+   * and reported, unless `release`: the person chose a suggestion, which hands the field back.
+   * `filled` and `kept` are field labels, for the reply's *Filled in: ...* line.
+   */
+  apply(changes: AssistDraft, options?: { release?: boolean }): { filled: string[]; kept: string[] }
+  /** Validates for feedback and focuses the first problem; true when nothing is missing. */
+  review(): boolean
+}
+
+/** The wire names the assistant knows a field by (`lockedFields`, `changes`). */
+const OWN_NAME: { [K in keyof Draft]?: string } = {
+  title: 'title',
+  problem: 'problem',
+  solutions: 'proposedSolutions',
+  impactRationale: 'impactRationale',
+  description: 'description',
+  priority: 'priority',
+  ideaTypeId: 'ideaTypeId',
+  businessImpactId: 'businessImpactId',
+  tags: 'tagNames',
+}
+
+const FLASH_MS = 950
 
 /**
  * A new idea preselects the first active Idea Type and Business Impact — the options arrive
@@ -119,6 +167,7 @@ export function IdeaForm({
   initial,
   referenceLane,
   effortNeeded,
+  assistRef,
   onSaved,
   onPendingChange,
 }: {
@@ -142,6 +191,8 @@ export function IdeaForm({
   referenceLane?: boolean | undefined
   /** Opens with this error on Effort and focus on it: a move was refused for a missing Effort. */
   effortNeeded?: string | undefined
+  /** Create with the idea assistant: filled with the handle the chat drives the form through. */
+  assistRef?: RefObject<IdeaFormAssist | null> | undefined
   /** `sprintId` is the one an added Issue was put in; empty for the Backlog. */
   onSaved: (ideaId: string, sprintId?: string) => void
   onPendingChange: (pending: boolean) => void
@@ -180,10 +231,154 @@ export function IdeaForm({
   const customFields = idea ? idea.formFields : (type?.fields ?? [])
   const openBoards = boards?.filter((board) => !board.isArchived) ?? null
 
-  const set = <K extends keyof Draft>(key: K, value: Draft[K]) =>
+  // Suggested vs owned (spec "Suggested vs owned"): the assistant's values are marked until the
+  // person edits one, which makes it theirs for the rest of the conversation. `owned` is a ref
+  // because only the handle reads it; `suggested` and `flash` drive the rendering.
+  const owned = useRef(new Set<string>(initial?.title ? ['title'] : []))
+  const [suggested, setSuggested] = useState<ReadonlySet<string>>(new Set())
+  const [flash, setFlash] = useState<ReadonlySet<string>>(new Set())
+  const draftRef = useRef(draft)
+  draftRef.current = draft
+  const suggestedRef = useRef(suggested)
+  suggestedRef.current = suggested
+  const flashTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  useEffect(() => () => clearTimeout(flashTimer.current), [])
+
+  const own = (name: string) => {
+    owned.current.add(name)
+    setSuggested((current) => {
+      if (!current.has(name)) return current
+      const next = new Set(current)
+      next.delete(name)
+      return next
+    })
+  }
+  const set = <K extends keyof Draft>(key: K, value: Draft[K]) => {
+    const name = OWN_NAME[key]
+    if (name) own(name)
     setDraft((current) => ({ ...current, [key]: value }))
-  const setField = (fieldId: string, value: string) =>
+  }
+  const setField = (fieldId: string, value: string) => {
+    own(`fieldValues.${fieldId}`)
     setDraft((current) => ({ ...current, fields: { ...current.fields, [fieldId]: value } }))
+  }
+  const mark = (name: string) => ({ suggested: suggested.has(name), flash: flash.has(name) })
+
+  useImperativeHandle(assistRef, () => ({
+    read() {
+      const d = draftRef.current
+      const sent = (name: string) => owned.current.has(name) || suggestedRef.current.has(name)
+      const out: AssistDraft = {}
+      if (sent('title') && d.title.trim()) out.title = d.title
+      if (sent('problem') && d.problem.trim()) out.problem = d.problem
+      const solutions = d.solutions.filter((s) => s.trim())
+      if (sent('proposedSolutions') && solutions.length > 0) out.proposedSolutions = solutions
+      if (sent('impactRationale') && d.impactRationale.trim()) {
+        out.impactRationale = d.impactRationale
+      }
+      if (sent('description') && d.description.trim()) out.description = d.description
+      if (sent('businessImpactId') && d.businessImpactId) out.businessImpactId = d.businessImpactId
+      if (sent('ideaTypeId') && d.ideaTypeId) out.ideaTypeId = d.ideaTypeId
+      if (sent('priority')) out.priority = d.priority
+      if (sent('tagNames') && d.tags.length > 0) out.tagNames = d.tags.map((tag) => tag.name)
+      const typeFields =
+        options.ideaTypes.find((t) => t.id === d.ideaTypeId)?.fields.map((f) => f.id) ?? []
+      const fieldValues = typeFields.flatMap((fieldDefinitionId) => {
+        const value = d.fields[fieldDefinitionId]
+        return sent(`fieldValues.${fieldDefinitionId}`) && value?.trim()
+          ? [{ fieldDefinitionId, value }]
+          : []
+      })
+      if (fieldValues.length > 0) out.fieldValues = fieldValues
+      return { draft: out, lockedFields: [...owned.current] }
+    },
+
+    apply(changes, applyOptions) {
+      const current = draftRef.current
+      const patch: Partial<Draft> = {}
+      const fieldsPatch: Record<string, string> = {}
+      const applied: { name: string; label: string; key?: keyof Draft; field?: string }[] = []
+      const take = <K extends keyof Draft>(
+        name: string,
+        label: string,
+        key: K,
+        value: Draft[K],
+      ) => {
+        if (JSON.stringify(current[key]) === JSON.stringify(value)) return
+        patch[key] = value
+        applied.push({ name, label, key })
+      }
+
+      if (changes.title) take('title', 'Title', 'title', changes.title)
+      if (changes.problem) take('problem', 'Problem', 'problem', changes.problem)
+      if (changes.proposedSolutions) {
+        // An emptied list is the form's empty state: one blank line.
+        const list = changes.proposedSolutions.slice(0, SOLUTIONS_MAX)
+        take('proposedSolutions', 'Proposed solutions', 'solutions', list.length > 0 ? list : [''])
+      }
+      if (changes.impactRationale) {
+        take('impactRationale', 'Impact rationale', 'impactRationale', changes.impactRationale)
+      }
+      if (changes.description) take('description', 'Summary', 'description', changes.description)
+      if (
+        changes.businessImpactId &&
+        options.businessImpacts.some((b) => b.id === changes.businessImpactId)
+      ) {
+        take('businessImpactId', 'Business impact', 'businessImpactId', changes.businessImpactId)
+      }
+      if (changes.ideaTypeId && options.ideaTypes.some((t) => t.id === changes.ideaTypeId)) {
+        take('ideaTypeId', 'Idea type', 'ideaTypeId', changes.ideaTypeId)
+      }
+      if (changes.priority && (PRIORITIES as readonly string[]).includes(changes.priority)) {
+        take('priority', 'Priority', 'priority', changes.priority)
+      }
+      if (changes.tagNames && changes.tagNames.length > 0) {
+        take(
+          'tagNames',
+          'Tags',
+          'tags',
+          changes.tagNames.slice(0, TAGS_MAX).map((name) => {
+            const known = options.tags.find((tag) => tag.name.toLowerCase() === name.toLowerCase())
+            return { name: known?.name ?? name, color: known?.color ?? null }
+          }),
+        )
+      }
+      const known = options.ideaTypes.flatMap((t) => t.fields)
+      for (const entry of changes.fieldValues ?? []) {
+        const field = known.find((f) => f.id === entry.fieldDefinitionId)
+        if (!field || current.fields[field.id] === entry.value) continue
+        fieldsPatch[field.id] = entry.value
+        applied.push({ name: `fieldValues.${field.id}`, label: field.name, field: field.id })
+      }
+
+      const filled: string[] = []
+      const kept: string[] = []
+      const written = new Set<string>()
+      for (const { name, label, key, field } of applied) {
+        if (applyOptions?.release) owned.current.delete(name)
+        if (owned.current.has(name)) {
+          // Owned during the turn: the field stays as the person left it.
+          kept.push(label)
+          if (key) delete patch[key]
+          if (field) delete fieldsPatch[field]
+        } else {
+          filled.push(label)
+          written.add(name)
+        }
+      }
+
+      if (written.size > 0) {
+        setDraft((now) => ({ ...now, ...patch, fields: { ...now.fields, ...fieldsPatch } }))
+        setSuggested((now) => new Set([...now, ...written]))
+        setFlash(new Set(written))
+        clearTimeout(flashTimer.current)
+        flashTimer.current = setTimeout(() => setFlash(new Set()), FLASH_MS)
+      }
+      return { filled, kept }
+    },
+
+    review: validate,
+  }))
 
   const missingCatalogs = [
     options.ideaTypes.length === 0 ? 'idea types' : null,
@@ -211,18 +406,23 @@ export function IdeaForm({
     return found
   }
 
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  /** Checks for feedback, shows what is missing and focuses the first of it; true when clean. */
+  function validate(): boolean {
     const found = check()
     setErrors(found)
     setError(null)
     const first = Object.keys(found)[0]
     if (first) {
-      event.currentTarget
-        .querySelector<HTMLElement>(`[data-error-key="${CSS.escape(first)}"]`)
+      formRef.current
+        ?.querySelector<HTMLElement>(`[data-error-key="${CSS.escape(first)}"]`)
         ?.focus()
-      return
     }
+    return first === undefined
+  }
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!validate()) return
 
     startTransition(async () => {
       const input = {
@@ -333,7 +533,7 @@ export function IdeaForm({
         </Field>
       ) : null}
 
-      <Field htmlFor={fid('title')} label="Title" error={errors.title}>
+      <Field htmlFor={fid('title')} label="Title" error={errors.title} {...mark('title')}>
         <Input
           id={fid('title')}
           data-error-key="title"
@@ -383,6 +583,7 @@ export function IdeaForm({
         label="Problem"
         hint={lockedHint ?? 'What is going wrong, for whom, and how often.'}
         error={errors.problem}
+        {...mark('problem')}
       >
         <Textarea
           id={fid('problem')}
@@ -399,6 +600,8 @@ export function IdeaForm({
       <SolutionsField
         idPrefix={fid('solution')}
         solutions={draft.solutions}
+        suggested={suggested.has('proposedSolutions')}
+        flash={flash.has('proposedSolutions')}
         locked={contentLocked}
         error={errors.proposedSolutions}
         onChange={(solutions) => set('solutions', solutions)}
@@ -409,6 +612,7 @@ export function IdeaForm({
         label="Impact rationale"
         hint={lockedHint ?? 'Why it matters, ideally with a number: hours, cost, incidents.'}
         error={errors.impactRationale}
+        {...mark('impactRationale')}
       >
         <Textarea
           id={fid('rationale')}
@@ -423,7 +627,12 @@ export function IdeaForm({
       </Field>
 
       <FieldRow cols={3}>
-        <Field htmlFor={fid('impact')} label="Business impact" error={errors.businessImpactId}>
+        <Field
+          htmlFor={fid('impact')}
+          label="Business impact"
+          error={errors.businessImpactId}
+          {...mark('businessImpactId')}
+        >
           <Select
             id={fid('impact')}
             data-error-key="businessImpactId"
@@ -444,6 +653,7 @@ export function IdeaForm({
           label="Idea type"
           hint={editing ? 'Can’t change after creation.' : undefined}
           error={errors.ideaTypeId}
+          {...mark('ideaTypeId')}
         >
           {/* Immutable after creation, so shown and not offered. Its value still goes with the
               save: the API requires it and refuses a different one. */}
@@ -466,7 +676,12 @@ export function IdeaForm({
             ) : null}
           </Select>
         </Field>
-        <Field htmlFor={fid('priority')} label="Priority" error={errors.priority}>
+        <Field
+          htmlFor={fid('priority')}
+          label="Priority"
+          error={errors.priority}
+          {...mark('priority')}
+        >
           <Select
             id={fid('priority')}
             data-error-key="priority"
@@ -499,6 +714,8 @@ export function IdeaForm({
       <TagsField
         id={fid('tags')}
         tags={draft.tags}
+        suggested={suggested.has('tagNames')}
+        flash={flash.has('tagNames')}
         catalog={options.tags}
         error={errors.tagNames}
         text={tagText}
@@ -520,6 +737,7 @@ export function IdeaForm({
         label="Summary (optional)"
         hint={lockedHint ?? 'One or two lines, shown in the detail view and in exports.'}
         error={errors.description}
+        {...mark('description')}
       >
         <Textarea
           id={fid('description')}
@@ -551,6 +769,7 @@ export function IdeaForm({
               field={field}
               value={draft.fields[field.id] ?? ''}
               error={errors[field.name]}
+              {...mark(`fieldValues.${field.id}`)}
               onChange={(value) => setField(field.id, value)}
             />
           ))
@@ -574,6 +793,8 @@ type TagOption = { kind: 'tag'; tag: TagRef } | { kind: 'create'; name: string }
 export function TagsField({
   id,
   tags,
+  suggested,
+  flash,
   catalog,
   error,
   text,
@@ -582,6 +803,8 @@ export function TagsField({
 }: {
   id: string
   tags: ChosenTag[]
+  suggested?: boolean | undefined
+  flash?: boolean | undefined
   catalog: TagRef[]
   error: string | undefined
   text: string
@@ -665,9 +888,12 @@ export function TagsField({
     <fieldset
       className="m-0 mb-4 flex flex-col gap-1.5 border-0 p-0"
       data-invalid={error ? '' : undefined}
+      data-suggested={suggested ? '' : undefined}
+      data-flash={suggested && flash ? '' : undefined}
     >
       <legend className="mb-[5px] text-[length:var(--label-size)] font-medium text-secondary-foreground">
         <label htmlFor={id}>Tags (optional)</label>
+        {suggested ? <SuggestedMark /> : null}
       </legend>
       {tags.length > 0 ? (
         <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
@@ -883,12 +1109,16 @@ export function AssigneesField({
 function SolutionsField({
   idPrefix,
   solutions,
+  suggested,
+  flash,
   locked,
   error,
   onChange,
 }: {
   idPrefix: string
   solutions: string[]
+  suggested: boolean
+  flash: boolean
   locked: boolean
   error: string | undefined
   onChange: (solutions: string[]) => void
@@ -898,9 +1128,12 @@ function SolutionsField({
     <fieldset
       className="m-0 mb-4 flex flex-col gap-1.5 border-0 p-0"
       data-invalid={error ? '' : undefined}
+      data-suggested={suggested ? '' : undefined}
+      data-flash={suggested && flash ? '' : undefined}
     >
       <legend className="mb-[5px] text-[length:var(--label-size)] font-medium text-secondary-foreground">
         Proposed solutions
+        {suggested ? <SuggestedMark /> : null}
       </legend>
       {solutions.map((solution, index) => (
         // Solutions are ordered and may repeat, so their position is their identity.
@@ -964,10 +1197,14 @@ function CustomField({
   field,
   value,
   error,
+  suggested,
+  flash,
   onChange,
 }: {
   id: string
   field: IdeaFormField
+  suggested?: boolean | undefined
+  flash?: boolean | undefined
   value: string
   error: string | undefined
   onChange: (value: string) => void
@@ -987,10 +1224,13 @@ function CustomField({
       <fieldset
         className="m-0 mb-4 border-0 p-0"
         data-invalid={error ? '' : undefined}
+        data-suggested={suggested ? '' : undefined}
+        data-flash={suggested && flash ? '' : undefined}
         aria-describedby={error ? `${id}-msg` : undefined}
       >
         <legend className="mb-[5px] text-[length:var(--label-size)] font-medium text-secondary-foreground">
           {label}
+          {suggested ? <SuggestedMark /> : null}
         </legend>
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           {options.map((option, index) => (
@@ -1022,7 +1262,7 @@ function CustomField({
   }
 
   return (
-    <Field htmlFor={id} label={label} error={error}>
+    <Field htmlFor={id} label={label} error={error} suggested={suggested} flash={flash}>
       {field.fieldType === 'Dropdown' || field.fieldType === 'Boolean' ? (
         <Select {...common} value={value} onChange={(event) => onChange(event.target.value)}>
           <option value="">Choose…</option>

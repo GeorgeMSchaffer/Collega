@@ -414,3 +414,20 @@
   button { font-family: inherit; }
   code { @apply rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]; }
 }
+
+/* A field the assistant filled and the person has not touched (comp R's .field.suggested). Unlayered,
+   so it wins over the base layer's input border and ground. */
+[data-suggested] :is(input:not([type=checkbox]), textarea, select) {
+  border-color: var(--suggest-line);
+  background-color: var(--suggest-tint);
+}
+[data-flash] :is(input:not([type=checkbox]), textarea, select) {
+  animation: suggest-fill 0.9s ease;
+}
+@keyframes suggest-fill {
+  0% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--suggest) 35%, transparent); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-flash] :is(input:not([type=checkbox]), textarea, select) { animation: none; }
+}

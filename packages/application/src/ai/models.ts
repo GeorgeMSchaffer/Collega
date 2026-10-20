@@ -452,7 +452,8 @@ export type IdeaAssistSuggestions = {
 }
 
 export type IdeaAssistTurnRequestV2 = {
-  readonly boardId: string
+  /** Null for the organization-level turn: the idea is being drafted for the pool. */
+  readonly boardId: string | null
   readonly transcript: readonly IdeaAssistTurn[]
   readonly draft: IdeaDraftV2 | null
   /** Draft keys, or `fieldValues.<fieldDefinitionId>`, the person owns. */

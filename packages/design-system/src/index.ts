@@ -6,7 +6,7 @@ export { Code, CodeChip } from './components/code.js'
 export { ColorPicker } from './components/color-picker.js'
 export { Denied } from './components/denied.js'
 export { type Effort, EffortBar } from './components/effort-bar.js'
-export { Field, FieldRow, Label, type LabelProps } from './components/field.js'
+export { Field, FieldRow, Label, type LabelProps, SuggestedMark } from './components/field.js'
 export { FileButton } from './components/file-button.js'
 export {
   Input,

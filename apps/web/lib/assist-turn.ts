@@ -1,9 +1,7 @@
 /**
  * The v2 idea-assistant turn, as `SPEC/contracts/ai-assist.md` "v2 turn contract" states it.
  *
- * Plain types and constants, importable from either side of the server boundary. The shell
- * (slice 308) sends and reads the conversation fields; `draft`, `lockedFields`, `changes` and
- * `suggestions` are declared here so the wiring slice (309) fills them without a signature change.
+ * Plain types and constants, importable from either side of the server boundary.
  */
 
 /** The transcript cap, in entries (user and assistant together): v1 rule 5. */
