@@ -397,6 +397,7 @@ model ideas {
   outcome_id                String?             @db.Uuid
   parent_idea_id            String?             @db.Uuid
   item_number               Int?
+  auto_created              Boolean             @default(false)
   parent_idea               ideas?              @relation("idea_parent", fields: [parent_idea_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "FK_ideas_ideas_parent_idea_id")
   child_ideas               ideas[]             @relation("idea_parent")
   blocked_by                idea_dependencies[] @relation("dependency_blocked")

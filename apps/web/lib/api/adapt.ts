@@ -553,6 +553,7 @@ export function toBoardTask(wire: WireBoardTask): BoardTask {
     isFinal: wire.isFinal,
     assignees: wire.assignees.map(toPersonRef),
     blockedBy: wire.blockedBy.map((blocker) => ({ ...blocker })),
+    autoCreated: wire.autoCreated,
   }
 }
 

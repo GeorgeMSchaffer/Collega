@@ -37,6 +37,7 @@ const task = (id: string, over: Partial<BoardTask> = {}): BoardTask => ({
   isFinal: false,
   assignees: [],
   blockedBy: [],
+  autoCreated: false,
   ...over,
 })
 const done = (id: string) => task(id, { statusId: 'l-done', statusName: 'Done', isFinal: true })

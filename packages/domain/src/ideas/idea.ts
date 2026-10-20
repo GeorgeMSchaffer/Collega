@@ -66,6 +66,8 @@ export type Idea = Auditable & {
   readonly itemNumber: number | null
   /** The idea this item is a task of; `null` for an ordinary idea. A task cannot itself be a parent. */
   readonly parentIdeaId: string | null
+  /** A task the system made on entry to an `autoCreateTask` lane; `false` for one added by hand. */
+  readonly autoCreated: boolean
   /**
    * The ideation status. Frozen at its last Discovery value on promotion and never cleared:
    * ideation `Complete` and delivery `Complete` are distinct terminal states, and an item in
@@ -116,6 +118,7 @@ export type CreateIdeaProps = {
   readonly itemNumber?: number | null
   /** Set when the idea is a board task of another idea. */
   readonly parentIdeaId?: string | null
+  readonly autoCreated?: boolean
   readonly statusId: string
   readonly title: string
   readonly description: string | null
@@ -290,6 +293,7 @@ export function createIdea(props: CreateIdeaProps): Idea {
     boardId,
     itemNumber: boardId === null ? null : (props.itemNumber ?? null),
     parentIdeaId: props.parentIdeaId ?? null,
+    autoCreated: props.autoCreated ?? false,
     statusId,
     title: normalizeTitle(props.title),
     description: normalizeDescription(props.description),
@@ -402,7 +406,7 @@ export function detachIdeaFromBoard(idea: Idea, nowUtc: Date, actorUserId: strin
   }
   // A task off its parent's board is no longer that parent's task.
   return markUpdated(
-    { ...idea, boardId: null, itemNumber: null, parentIdeaId: null },
+    { ...idea, boardId: null, itemNumber: null, parentIdeaId: null, autoCreated: false },
     nowUtc,
     actorUserId,
   )
