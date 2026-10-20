@@ -10,8 +10,9 @@ import type { BoardOverview, CurrentUser, Idea, IdeaFormOptions, Issue, Sprint }
 import { stubDialogMethods } from './support/dialog'
 
 /**
- * How the three list screens adopt the quick-add row: which fields each asks for, what it hands the
- * create drawer, who sees it, and (Boards) what it saves. The server actions and the router are the
+ * How the three list screens adopt the quick-add bar: what each asks for, what it hands the create
+ * drawer, who sees it, and (Boards) what it saves. With one row or fewer the bar gives way to an
+ * Add New button. The server actions and the router are the
  * boundary and are replaced.
  */
 const nav = vi.hoisted(() => ({ params: new URLSearchParams(), push: vi.fn() }))
@@ -67,7 +68,8 @@ const type = (el: HTMLElement, value: string) => fireEvent.change(el, { target: 
 const enter = (el: HTMLElement) => fireEvent.keyDown(el, { key: 'Enter' })
 /** The create drawer is an `aside`; its form exists only while the page has supplied the catalogs. */
 const drawerForm = () => document.querySelector('aside form') as HTMLElement
-const row = (name: string) => screen.queryByRole('row', { name })
+const bar = (testId: string) => screen.queryByTestId(testId)
+const field = (label: string) => screen.getByLabelText(label) as HTMLInputElement
 
 const OPTIONS: IdeaFormOptions = {
   ideaTypes: [{ id: 'type-ci', name: 'Continuous Improvement', fields: [] }],
@@ -126,80 +128,66 @@ function backlog(
   )
 }
 
-describe('Backlog quick-add row', () => {
-  it('asks for Title, Effort and Sprint, with Sprint listing Backlog first then the open sprints', () => {
-    render(backlog())
-    const quick = row('Quick add issue') as HTMLElement
-    expect(within(quick).getByLabelText('Title')).toBeTruthy()
-    const effort = within(quick).getByLabelText('Effort') as HTMLSelectElement
-    expect([...effort.options].map((o) => o.text)).toEqual([
-      'Choose effort',
-      'Low',
-      'Medium',
-      'High',
-    ])
-    const sprint = within(quick).getByLabelText('Sprint') as HTMLSelectElement
-    expect([...sprint.options].map((o) => o.text)).toEqual(['Backlog', 'Sprint 14', 'Sprint 15'])
-    expect(sprint.value).toBe('')
-  })
+const TWO_ISSUES = [issue('i1', 'Existing issue'), issue('i2', 'Another issue')]
 
-  it('is the first body row, above the issues', () => {
-    render(backlog())
-    const rows = within(screen.getAllByRole('rowgroup')[1] as HTMLElement).getAllByRole('row')
-    expect(rows[0]?.getAttribute('aria-label')).toBe('Quick add issue')
-    expect(rows[1]?.getAttribute('data-row-key')).toBe('i1')
+describe('Backlog quick-add bar', () => {
+  it('asks for a Title only; Effort and Sprint come from the drawer', () => {
+    render(backlog({ rows: TWO_ISSUES }))
+    expect(bar('backlog-quick-add-bar')).not.toBeNull()
+    expect(
+      within(bar('backlog-quick-add-bar') as HTMLElement).getAllByRole('textbox'),
+    ).toHaveLength(1)
   })
 
   it('is hidden when the role may not add', () => {
-    render(backlog({ canAdd: false }, 'ReadOnly'))
-    expect(row('Quick add issue')).toBeNull()
+    render(backlog({ rows: TWO_ISSUES, canAdd: false }, 'ReadOnly'))
+    expect(bar('backlog-quick-add-bar')).toBeNull()
+    expect(screen.queryByRole('button', { name: /Add New Issue/ })).toBeNull()
     expect(screen.getByText('Existing issue')).toBeTruthy()
+  })
+
+  it('collapses behind an Add New Issue button with one issue', () => {
+    render(backlog())
+    expect(bar('backlog-quick-add-bar')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /Add New Issue/ }))
+    expect(nav.push).toHaveBeenCalledExactlyOnceWith('/list?new=1', { scroll: false })
   })
 
   it('is replaced by the empty state when the backlog has no issues', () => {
     render(backlog({ rows: [] }))
     expect(screen.getByText('Nothing waiting')).toBeTruthy()
-    expect(row('Quick add issue')).toBeNull()
+    expect(bar('backlog-quick-add-bar')).toBeNull()
   })
 
-  it('never creates: Enter opens the create drawer via ?new=1 and clears the row', () => {
-    render(backlog())
-    const quick = row('Quick add issue') as HTMLElement
-    type(within(quick).getByLabelText('Title'), '  Replace belt  ')
-    type(within(quick).getByLabelText('Effort'), 'High')
-    type(within(quick).getByLabelText('Sprint'), 'sp-2')
-    enter(within(quick).getByLabelText('Title'))
+  it('never creates: Enter opens the create drawer via ?new=1 and clears the bar', () => {
+    render(backlog({ rows: TWO_ISSUES }))
+    const title = field('Quick add issue')
+    type(title, '  Replace belt  ')
+    enter(title)
     expect(nav.push).toHaveBeenCalledExactlyOnceWith('/list?new=1', { scroll: false })
-    expect((within(quick).getByLabelText('Title') as HTMLInputElement).value).toBe('')
+    expect(title.value).toBe('')
   })
 
-  it('refuses without opening the drawer when Effort is not chosen', () => {
-    render(backlog())
-    const quick = row('Quick add issue') as HTMLElement
-    type(within(quick).getByLabelText('Title'), 'Replace belt')
-    enter(within(quick).getByLabelText('Title'))
+  it('refuses an empty Title without opening the drawer', () => {
+    render(backlog({ rows: TWO_ISSUES }))
+    enter(field('Quick add issue'))
     expect(nav.push).not.toHaveBeenCalled()
-    expect(within(quick).getByText('Choose effort.')).toBeTruthy()
+    expect(screen.getByText('Enter title.')).toBeTruthy()
   })
 
-  it('hands Title, Effort and Sprint to the create form as its starting values', () => {
-    const view = render(backlog())
-    const quick = row('Quick add issue') as HTMLElement
-    type(within(quick).getByLabelText('Title'), 'Replace belt')
-    type(within(quick).getByLabelText('Effort'), 'High')
-    type(within(quick).getByLabelText('Sprint'), 'sp-2')
-    enter(within(quick).getByLabelText('Title'))
+  it('hands the Title to the create form as its starting value', () => {
+    const view = render(backlog({ rows: TWO_ISSUES }))
+    type(field('Quick add issue'), 'Replace belt')
+    enter(field('Quick add issue'))
 
     // The page re-reads on ?new=1 and passes the catalogs, which opens the drawer.
-    view.rerender(backlog({ options: OPTIONS }))
+    view.rerender(backlog({ rows: TWO_ISSUES, options: OPTIONS }))
     const dialog = drawerForm()
     expect((within(dialog).getByLabelText('Title') as HTMLInputElement).value).toBe('Replace belt')
-    const checked = dialog.querySelector<HTMLInputElement>('input[type="radio"]:checked')
-    expect(checked?.value).toBe('High')
-    expect((within(dialog).getByLabelText(/^Sprint/) as HTMLSelectElement).value).toBe('sp-2')
+    expect(dialog.querySelector('input[type="radio"]:checked')).toBeNull()
   })
 
-  it('starts the form empty when it is opened without the row (header button)', () => {
+  it('starts the form empty when it is opened without the bar (header button)', () => {
     render(backlog({ options: OPTIONS }))
     const dialog = drawerForm()
     expect((within(dialog).getByLabelText('Title') as HTMLInputElement).value).toBe('')
@@ -263,10 +251,12 @@ const boardContext = (isArchived: boolean) => ({
   canReorder: false,
 })
 
-describe('Ideas quick-add row', () => {
+const TWO_IDEAS = [idea('x1', 'Live idea'), idea('x2', 'Second idea')]
+
+describe('Ideas quick-add bar', () => {
   it('asks for a Title only', () => {
-    render(ideas('User'))
-    const quick = row('Quick add idea') as HTMLElement
+    render(ideas('User', { rows: TWO_IDEAS, total: 2 }))
+    const quick = bar('ideas-quick-add-bar') as HTMLElement
     expect(within(quick).getAllByRole('textbox')).toHaveLength(1)
     expect(within(quick).queryAllByRole('combobox')).toHaveLength(0)
   })
@@ -278,64 +268,74 @@ describe('Ideas quick-add row', () => {
     ['SiteAdmin', false],
   ] as const)('shows it for %s: %s', (role, shown) => {
     expect(writeDenial(role) === null).toBe(shown)
-    render(ideas(role))
-    expect(row('Quick add idea') !== null).toBe(shown)
+    render(ideas(role, { rows: TWO_IDEAS, total: 2 }))
+    expect(bar('ideas-quick-add-bar') !== null).toBe(shown)
   })
 
-  it('shows it above an empty list, beside the empty message', () => {
-    render(ideas('User', { rows: [], total: 0 }))
-    expect(row('Quick add idea')).not.toBeNull()
+  it('collapses behind an Add New Idea button with one idea or none', () => {
+    render(ideas('User'))
+    expect(bar('ideas-quick-add-bar')).toBeNull()
+    expect(screen.getByRole('button', { name: /Add New Idea/ })).toBeTruthy()
+  })
+
+  it('offers no Add New Idea button to a role that may not add', () => {
+    render(ideas('ReadOnly'))
+    expect(screen.queryByRole('button', { name: /Add New Idea/ })).toBeNull()
   })
 
   it('is hidden on an archived board’s List view', () => {
     nav.params = new URLSearchParams('view=list')
-    render(ideas('OrgAdmin', { board: boardContext(true) }))
-    expect(row('Quick add idea')).toBeNull()
+    render(ideas('OrgAdmin', { rows: TWO_IDEAS, total: 2, board: boardContext(true) }))
+    expect(bar('ideas-quick-add-bar')).toBeNull()
   })
 
   it('is shown on a live board’s List view and absent from its Lanes view', () => {
     nav.params = new URLSearchParams('view=list')
-    const view = render(ideas('OrgAdmin', { board: boardContext(false) }))
-    expect(row('Quick add idea')).not.toBeNull()
+    const view = render(
+      ideas('OrgAdmin', { rows: TWO_IDEAS, total: 2, board: boardContext(false) }),
+    )
+    expect(bar('ideas-quick-add-bar')).not.toBeNull()
     view.unmount()
     nav.params = new URLSearchParams()
-    render(ideas('OrgAdmin', { board: boardContext(false) }))
-    expect(row('Quick add idea')).toBeNull()
+    render(ideas('OrgAdmin', { rows: TWO_IDEAS, total: 2, board: boardContext(false) }))
+    expect(bar('ideas-quick-add-bar')).toBeNull()
   })
 
   it('refuses an empty Title without opening the drawer', () => {
-    render(ideas('User'))
-    const quick = row('Quick add idea') as HTMLElement
-    enter(within(quick).getByLabelText('Title'))
+    render(ideas('User', { rows: TWO_IDEAS, total: 2 }))
+    enter(field('Quick add idea'))
     expect(nav.push).not.toHaveBeenCalled()
-    expect(within(quick).getByText('Enter title.')).toBeTruthy()
+    expect(screen.getByText('Enter title.')).toBeTruthy()
   })
 
-  it('opens the create drawer with the Title and clears the row', () => {
-    const view = render(ideas('User'))
-    const quick = row('Quick add idea') as HTMLElement
-    const field = within(quick).getByLabelText('Title') as HTMLInputElement
-    type(field, ' Fewer changeovers ')
-    enter(field)
+  it('opens the create drawer with the Title and clears the bar', () => {
+    const props = { rows: TWO_IDEAS, total: 2 }
+    const view = render(ideas('User', props))
+    const title = field('Quick add idea')
+    type(title, ' Fewer changeovers ')
+    enter(title)
     expect(nav.push).toHaveBeenCalledExactlyOnceWith('/list?new=1', { scroll: false })
-    expect(field.value).toBe('')
+    expect(title.value).toBe('')
 
-    view.rerender(ideas('User', { drawer: { mode: 'create', idea: null, formOptions: OPTIONS } }))
+    view.rerender(
+      ideas('User', { ...props, drawer: { mode: 'create', idea: null, formOptions: OPTIONS } }),
+    )
     const dialog = drawerForm()
     expect((within(dialog).getByLabelText('Title') as HTMLInputElement).value).toBe(
       'Fewer changeovers',
     )
   })
 
-  it('does not carry the Title into a drawer opened later without the row', () => {
-    const view = render(ideas('User'))
-    const quick = row('Quick add idea') as HTMLElement
-    type(within(quick).getByLabelText('Title'), 'Spent title')
-    enter(within(quick).getByLabelText('Title'))
-    view.rerender(ideas('User', { drawer: { mode: 'create', idea: null, formOptions: OPTIONS } }))
+  it('does not carry the Title into a drawer opened later without the bar', () => {
+    const props = { rows: TWO_IDEAS, total: 2 }
+    const open = { drawer: { mode: 'create' as const, idea: null, formOptions: OPTIONS } }
+    const view = render(ideas('User', props))
+    type(field('Quick add idea'), 'Spent title')
+    enter(field('Quick add idea'))
+    view.rerender(ideas('User', { ...props, ...open }))
     // The form has read it; closing and reopening from the header button starts empty.
-    view.rerender(ideas('User'))
-    view.rerender(ideas('User', { drawer: { mode: 'create', idea: null, formOptions: OPTIONS } }))
+    view.rerender(ideas('User', props))
+    view.rerender(ideas('User', { ...props, ...open }))
     const dialog = drawerForm()
     expect((within(dialog).getByLabelText('Title') as HTMLInputElement).value).toBe('')
   })
@@ -379,12 +379,14 @@ function boards(role: Role, props: Partial<React.ComponentProps<typeof BoardsScr
   )
 }
 
-describe('Boards quick-add row', () => {
+const TWO_BOARDS = [overview('Assembly'), overview('Paint')]
+
+describe('Boards quick-add bar', () => {
   it('asks for a board name only', () => {
-    render(boards('OrgAdmin'))
-    const quick = row('Quick add board') as HTMLElement
+    render(boards('OrgAdmin', { boards: TWO_BOARDS }))
+    const quick = bar('boards-quick-add-bar') as HTMLElement
     expect(within(quick).getAllByRole('textbox')).toHaveLength(1)
-    expect(within(quick).getByLabelText('Board name')).toBeTruthy()
+    expect(field('Quick add board')).toBeTruthy()
   })
 
   it.each([
@@ -393,49 +395,52 @@ describe('Boards quick-add row', () => {
     ['ReadOnly', false],
     ['SiteAdmin', false],
   ] as const)('shows it for %s: %s', (role, shown) => {
-    render(boards(role))
-    expect(row('Quick add board') !== null).toBe(shown)
+    render(boards(role, { boards: TWO_BOARDS }))
+    expect(bar('boards-quick-add-bar') !== null).toBe(shown)
+  })
+
+  it('is absent with one board or none (the header button remains)', () => {
+    render(boards('OrgAdmin'))
+    expect(bar('boards-quick-add-bar')).toBeNull()
   })
 
   it('is hidden when the catalog has fewer than two statuses to use as lanes', () => {
-    render(boards('OrgAdmin', { quickAddLaneIds: ['st-1'] }))
-    expect(row('Quick add board')).toBeNull()
+    render(boards('OrgAdmin', { boards: TWO_BOARDS, quickAddLaneIds: ['st-1'] }))
+    expect(bar('boards-quick-add-bar')).toBeNull()
   })
 
   it('is hidden when the page supplied no lanes', () => {
-    render(boards('OrgAdmin', { quickAddLaneIds: [] }))
-    expect(row('Quick add board')).toBeNull()
+    render(boards('OrgAdmin', { boards: TWO_BOARDS, quickAddLaneIds: [] }))
+    expect(bar('boards-quick-add-bar')).toBeNull()
   })
 
-  it('shows the first-run empty state, with no table, when there are no boards and no row', () => {
+  it('shows the first-run empty state, with no table, when there are no boards and no way to add', () => {
     render(boards('ReadOnly', { boards: [] }))
     expect(screen.getByText('No boards yet')).toBeTruthy()
     expect(screen.queryByRole('table')).toBeNull()
   })
 
-  it('shows the row above the empty message when there are no boards but the row is allowed', () => {
+  it('shows the empty message when there are no boards but adding is allowed', () => {
     render(boards('OrgAdmin', { boards: [] }))
-    expect(row('Quick add board')).not.toBeNull()
     expect(screen.queryByText('No boards yet')).toBeNull()
     expect(screen.getByText(/A new organization starts with one default board/)).toBeTruthy()
   })
 
   it('creates directly: the trimmed name goes to quickAddBoard with the page’s lane ids', async () => {
     quickAddBoard.mockResolvedValue({ ok: true, boardId: 'b-new' })
-    render(boards('OrgAdmin'))
-    const field = within(row('Quick add board') as HTMLElement).getByLabelText('Board name')
-    type(field, '  Paint shop  ')
-    await act(async () => enter(field))
+    render(boards('OrgAdmin', { boards: TWO_BOARDS }))
+    const name = field('Quick add board')
+    type(name, '  Paint shop  ')
+    await act(async () => enter(name))
     expect(quickAddBoard).toHaveBeenCalledExactlyOnceWith('Paint shop', ['st-1', 'st-2'])
     expect(nav.push).not.toHaveBeenCalled()
-    expect((field as HTMLInputElement).value).toBe('')
+    expect(name.value).toBe('')
     expect(screen.getByRole('status').textContent).toBe('Board added')
   })
 
   it('refuses an empty name without calling the action', async () => {
-    render(boards('OrgAdmin'))
-    const field = within(row('Quick add board') as HTMLElement).getByLabelText('Board name')
-    await act(async () => enter(field))
+    render(boards('OrgAdmin', { boards: TWO_BOARDS }))
+    await act(async () => enter(field('Quick add board')))
     expect(quickAddBoard).not.toHaveBeenCalled()
     expect(screen.getByText('Enter board name.')).toBeTruthy()
   })
@@ -446,25 +451,22 @@ describe('Boards quick-add row', () => {
       error: null,
       errors: { name: 'A board with this name already exists.' },
     })
-    render(boards('OrgAdmin'))
-    const field = within(row('Quick add board') as HTMLElement).getByLabelText(
-      'Board name',
-    ) as HTMLInputElement
-    type(field, 'Assembly')
-    await act(async () => enter(field))
+    render(boards('OrgAdmin', { boards: TWO_BOARDS }))
+    const name = field('Quick add board')
+    type(name, 'Assembly')
+    await act(async () => enter(name))
     expect(screen.getByText('A board with this name already exists.')).toBeTruthy()
-    expect(field.getAttribute('aria-invalid')).toBe('true')
-    expect(field.value).toBe('Assembly')
-    expect(screen.getByRole('status').textContent).toBe('')
+    expect(name.getAttribute('aria-invalid')).toBe('true')
+    expect(name.value).toBe('Assembly')
   })
 
-  it('shows a refusal with no field as an alert on the row', async () => {
+  it('shows a refusal with no field as an alert on the bar', async () => {
     quickAddBoard.mockResolvedValue({ ok: false, error: 'Archived.', errors: {} })
-    render(boards('OrgAdmin'))
-    const field = within(row('Quick add board') as HTMLElement).getByLabelText('Board name')
-    type(field, 'Assembly')
-    await act(async () => enter(field))
-    expect(within(row('Quick add board') as HTMLElement).getByRole('alert').textContent).toBe(
+    render(boards('OrgAdmin', { boards: TWO_BOARDS }))
+    const name = field('Quick add board')
+    type(name, 'Assembly')
+    await act(async () => enter(name))
+    expect(within(bar('boards-quick-add-bar') as HTMLElement).getByRole('alert').textContent).toBe(
       'Archived.',
     )
   })

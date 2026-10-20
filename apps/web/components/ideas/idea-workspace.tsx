@@ -18,7 +18,7 @@ import {
   ListToolbar,
   MultiSelectFilter,
   Pager,
-  QuickAddRow,
+  QuickAddBar,
   type QuickAddValues,
   RowActions,
   useAddedHighlight,
@@ -54,7 +54,6 @@ import type { CardWork } from './idea-card'
 import { People, PriorityMarker, StatusMarker, TagList } from './idea-chips'
 import { type DrawerMode, IdeaDrawer } from './idea-drawer'
 import { BOARD_LIST, IDEAS_LIST, PHASES, PRIORITIES, SCOPES } from './idea-list-config'
-import { BoardChip } from './idea-view'
 import { type CardDrag, Lane, type LaneReorder } from './lane'
 import { MoveAnywayDialog } from './move-anyway-dialog'
 import { RemoveFromBoardButton } from './remove-from-board'
@@ -484,33 +483,24 @@ export function IdeaWorkspace({
       header: 'Title',
       cell: (idea) => (
         <>
-          <button
-            type="button"
-            onClick={(event) => view(idea.id, event.currentTarget)}
-            className="text-left font-semibold hover:text-accent-foreground hover:underline"
-          >
-            {idea.title}
-          </button>
+          <div className="flex flex-col">
+            <button
+              type="button"
+              onClick={(event) => view(idea.id, event.currentTarget)}
+              className="text-left font-semibold hover:text-accent-foreground hover:underline truncate"
+            >
+              {idea.title}
+            </button>
+            <span className="text-xs text-muted-foreground font-normal">
+              {idea.boardId === null
+                ? 'No board'
+                : (boardsById.get(idea.boardId)?.name ?? board?.name ?? '')}
+            </span>
+          </div>
           {idea.effort ? <EffortBar effort={idea.effort} className="mt-1 flex w-fit" /> : null}
         </>
       ),
     },
-    ...(board
-      ? []
-      : [
-          {
-            key: 'board',
-            header: 'Board',
-            cell: (idea: Idea) => (
-              <>
-                {idea.boardId === null ? <BoardChip name={null} /> : boardName(idea.boardId)}
-                {archived(idea.boardId) ? (
-                  <span className="block text-xs text-muted-foreground">Archived</span>
-                ) : null}
-              </>
-            ),
-          },
-        ]),
     {
       key: 'status',
       header: 'Status',
@@ -523,8 +513,17 @@ export function IdeaWorkspace({
       header: 'Priority',
       cell: (idea) => (idea.priority ? <PriorityMarker priority={idea.priority} /> : null),
     },
-    { key: 'assignedTo', header: 'Assignees', cell: (idea) => <People people={idea.assignees} /> },
-    { key: 'tags', header: 'Tags', cell: (idea) => <TagList tags={idea.tags} max={2} /> },
+    {
+      key: 'assignedTo',
+      header: 'Owner',
+      cell: (idea) => <People people={idea.assignees} />,
+    },
+    {
+      key: 'tags',
+      header: 'Tags',
+      cell: (idea) => <TagList tags={idea.tags} max={2} />,
+      className: 'hidden min-[1100px]:table-cell',
+    },
     { key: 'upvoteCount', header: 'Votes', numeric: true, cell: (idea) => idea.upvotes },
   ]
 
@@ -808,38 +807,46 @@ export function IdeaWorkspace({
               )}
             </div>
           ) : (
-            <DataTable
-              caption={board ? `Ideas on ${board.name}` : 'Ideas'}
-              columns={columns}
-              rows={rows}
-              rowKey={(idea) => idea.id}
-              sort={state.sort}
-              onSortChange={(sort) => update({ sort })}
-              actions={actions}
-              empty={empty}
-              selectedKey={selectedId}
-              quickAdd={(layout) => (
-                <QuickAddRow
-                  layout={layout}
-                  canAdd={canAdd}
-                  label="Quick add idea"
-                  handoff="drawer"
-                  onHandoff={handoff}
-                  rowIds={rowIds}
-                  testId="ideas-quick-add"
+            <>
+              {rows.length > 1 ? (
+                <QuickAddBar
                   fields={[
                     {
                       name: 'title',
                       label: 'Title',
-                      column: 'title',
                       required: true,
-                      placeholder: 'Add an idea, then press Enter',
+                      placeholder: 'Add an idea — press Enter for more fields',
                       maxLength: TITLE_MAX_LENGTH,
                     },
                   ]}
+                  canAdd={canAdd}
+                  label="Quick add idea"
+                  handoff="drawer"
+                  onHandoff={handoff}
+                  testId="ideas-quick-add-bar"
                 />
-              )}
-            />
+              ) : canAdd ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mb-2"
+                  onClick={() => openDrawer({ create: true })}
+                >
+                  ＋ Add New Idea
+                </Button>
+              ) : null}
+              <DataTable
+                caption={board ? `Ideas on ${board.name}` : 'Ideas'}
+                columns={columns}
+                rows={rows}
+                rowKey={(idea) => idea.id}
+                sort={state.sort}
+                onSortChange={(sort) => update({ sort })}
+                actions={actions}
+                empty={empty}
+                selectedKey={selectedId}
+              />
+            </>
           )}
           <Pager
             page={state.page}

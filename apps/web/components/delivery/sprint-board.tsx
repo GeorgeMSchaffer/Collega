@@ -284,7 +284,31 @@ export function SprintBoard({
             </StripCell>
           </dl>
 
-          <div className="grid grid-cols-[repeat(5,minmax(200px,1fr))] gap-2.5 overflow-x-auto pb-3 min-[900px]:grid-cols-5 min-[900px]:overflow-visible">
+          {/* Mobile lane switcher */}
+          <div className="mt-5 flex gap-1 overflow-x-auto pb-2 max-[768px]:flex">
+            {DELIVERY_STATUSES.map((status) => (
+              <button
+                key={status.id}
+                type="button"
+                onClick={() => setOver(status.id)}
+                className={cn(
+                  'whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                  over === status.id
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-muted-foreground/20',
+                )}
+              >
+                {status.name}
+              </button>
+            ))}
+          </div>
+
+          <div
+            className={cn(
+              'grid gap-2.5 overflow-x-auto pb-3 min-[900px]:grid-cols-5 min-[900px]:overflow-visible',
+              'max-[768px]:grid-cols-1',
+            )}
+          >
             {DELIVERY_STATUSES.map((status) => {
               const inLane = shown.filter((issue) => issue.deliveryStatusId === status.id)
               return (
@@ -304,6 +328,8 @@ export function SprintBoard({
                   className={cn(
                     'flex min-h-[min(56vh,520px)] min-w-0 flex-col gap-2 rounded-[14px] border border-border/70 bg-muted/55 px-1.5 pt-1.5 pb-3',
                     over === status.id && 'border-primary',
+                    'max-[768px]:hidden',
+                    over === status.id && 'max-[768px]:flex',
                   )}
                 >
                   {/* The status colour is data, so it tints the header against the theme's card
@@ -343,7 +369,7 @@ export function SprintBoard({
                           }}
                           aria-current={selectedId === issue.id ? 'true' : undefined}
                           className={cn(
-                            'flex flex-col gap-2 rounded-[10px] border bg-card p-2.5 text-foreground hover:border-primary',
+                            'flex min-w-0 flex-col gap-2 rounded-[10px] border bg-card p-2.5 text-foreground hover:border-primary',
                             movable && 'cursor-grab active:cursor-grabbing',
                             issue.deliveryStatusId === COMPLETE && 'bg-muted/60',
                             selectedId === issue.id &&
@@ -369,7 +395,7 @@ export function SprintBoard({
                             type="button"
                             data-issue={issue.id}
                             onClick={(event) => open(issue.id, event.currentTarget)}
-                            className="text-left text-xs leading-snug font-semibold hover:text-accent-foreground hover:underline"
+                            className="text-left text-xs leading-snug font-semibold hover:text-accent-foreground hover:underline min-w-0 break-words"
                           >
                             {issue.title}
                           </button>

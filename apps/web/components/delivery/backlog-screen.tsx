@@ -1,6 +1,6 @@
 'use client'
 
-import { Avatar, Dot, EffortBar } from '@collega/design-system'
+import { Avatar, Button, Dot, EffortBar } from '@collega/design-system'
 import type { Route } from 'next'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
@@ -11,7 +11,7 @@ import {
   type Column,
   DataTable,
   type ListConfig,
-  QuickAddRow,
+  QuickAddBar,
   type QuickAddValues,
   sortRows,
   useListState,
@@ -26,10 +26,6 @@ const CONFIG: ListConfig = {
 }
 
 const EFFORT_RANK: Record<Effort, number> = { Low: 1, Medium: 2, High: 3 }
-const EFFORT_OPTIONS = (['Low', 'Medium', 'High'] as const).map((value) => ({
-  value,
-  label: value,
-}))
 
 /**
  * The Backlog list on the shared `DataTable` with the quick-add row above it
@@ -164,6 +160,33 @@ export function BacklogScreen({
         empty
       ) : (
         <div className="flex flex-col gap-2">
+          {rows.length > 1 ? (
+            <QuickAddBar
+              canAdd={canAdd}
+              label="Quick add issue"
+              handoff="drawer"
+              onHandoff={handoff}
+              testId="backlog-quick-add-bar"
+              fields={[
+                {
+                  name: 'title',
+                  label: 'Title',
+                  required: true,
+                  placeholder: 'Add an issue — press Enter for more fields',
+                  maxLength: TITLE_MAX_LENGTH,
+                },
+              ]}
+            />
+          ) : canAdd ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-fit"
+              onClick={() => openDrawer({ create: true })}
+            >
+              ＋ Add New Issue
+            </Button>
+          ) : null}
           <DataTable
             caption="Backlog issues"
             columns={columns}
@@ -177,45 +200,6 @@ export function BacklogScreen({
                 <RowEditButton ideaId={issue.id} title={issue.title} />
               ) : null
             }
-            quickAdd={(layout) => (
-              <QuickAddRow
-                layout={layout}
-                canAdd={canAdd}
-                label="Quick add issue"
-                handoff="drawer"
-                onHandoff={handoff}
-                rowIds={rowIds}
-                testId="backlog-quick-add"
-                fields={[
-                  {
-                    name: 'title',
-                    label: 'Title',
-                    column: 'title',
-                    required: true,
-                    placeholder: 'Add an issue, then press Enter',
-                    maxLength: TITLE_MAX_LENGTH,
-                  },
-                  {
-                    name: 'effort',
-                    label: 'Effort',
-                    column: 'effort',
-                    required: true,
-                    options: EFFORT_OPTIONS,
-                    placeholder: 'Choose effort',
-                  },
-                  {
-                    name: 'sprint',
-                    label: 'Sprint',
-                    column: 'status',
-                    options: [
-                      { value: '', label: 'Backlog' },
-                      ...sprints.map((sprint) => ({ value: sprint.id, label: sprint.name })),
-                    ],
-                    defaultValue: '',
-                  },
-                ]}
-              />
-            )}
           />
           <p className="px-1 text-xs text-muted-foreground">
             {rows.length} issues in the backlog. Vote counts are the snapshot taken at promotion.
