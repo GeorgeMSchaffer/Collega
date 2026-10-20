@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-20 | Idea assistant v2: starter prompts and the no-board create | active | full below |
 | 2026-10-20 | Prompt-eval v2 targets confirmed: 0.85 / 0.85 / 0.75, report-only | active | full below |
 | 2026-10-20 | Board tasks record whether the system auto-created them (`ideas.auto_created`) | active | full below |
 | 2026-10-19 | Board References UI slice 3: three comp U answers | active | full below |
@@ -132,6 +133,15 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-20 — Idea assistant v2: starter prompts and the no-board create
+
+**Decided by the owner** (slice 308 review follow-ups).
+
+- **Starter prompts:** the chat's starters are drawn in the long run from the organization's recent idea titles and descriptions. The fixed examples stay alongside them for now; the org-derived ones are a later slice, not 308.
+- **Ideas created without a board:** the assistant starts the idea in the pool/backlog by default. Once it can detect an idea type, the type picks the board (and defaults the form's type, per the 306 decision); if no type is detected the idea stays in the pool/backlog. Slice 309 or 307 wires the turn route for the board-less case; the contract needs an org-level variant or a deferred board id, to be settled in that slice.
 
 ---
 
