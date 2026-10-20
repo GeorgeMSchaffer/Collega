@@ -172,7 +172,7 @@ extraction, and polishing belongs to the refinement spec.
 
 Built already: the v1 assistant backend (`packages/application/src/ai`, `apps/api/src/ai-assist`),
 the Settings AI page, the structured fields (Problem, Proposed solutions, Impact rationale), the
-prompt-eval runner with its v1 baseline and seven v2 corpus cases. Not built: any chat UI.
+prompt-eval runner with its v1 baseline and ten v2 corpus cases. Not built: any chat UI.
 
 | Slice | Role | Scope | Depends on |
 |---|---|---|---|
