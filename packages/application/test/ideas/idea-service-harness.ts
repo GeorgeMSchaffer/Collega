@@ -274,6 +274,17 @@ export function harness(options: {
         sortDirection: 'asc',
       }
     },
+    async listByIds(ideaIds) {
+      return ideaIds.flatMap((id) => {
+        const idea = ideasById.get(id)
+        return idea && !idea.isDeleted ? [idea] : []
+      })
+    },
+    async listChildren(parentId) {
+      return [...ideasById.values()]
+        .filter((i) => i.parentIdeaId === parentId && !i.isDeleted)
+        .sort((a, b) => a.createdAtUtc.getTime() - b.createdAtUtc.getTime())
+    },
     async getFieldValuesByIdeaIds() {
       return []
     },

@@ -63,6 +63,7 @@ import type {
   AssignIssueToSprintCommand,
   AutoCreateTaskParent,
   BlockedByDto,
+  BoardTaskListItem,
   ChangeDeliveryStatusCommand,
   ChangeIdeaStatusCommand,
   CreateBoardTaskCommand,
@@ -385,6 +386,89 @@ export class IdeaService {
   }
 
   /**
+   * The tasks of a parent idea in creation order, for the parent's detail view. Visible to anyone
+   * who can read the parent, Read Only included.
+   */
+  async listBoardTasks(parentIdeaId: string): Promise<readonly BoardTaskListItem[]> {
+    this.requireAuthenticatedRole()
+
+    const parent = await this.ideaRepository.getById(parentIdeaId, false)
+    if (!parent) {
+      throw new NotFoundError('Idea not found.')
+    }
+    this.ensureOrganizationScope(parent.organizationId)
+
+    const tasks = await this.ideaRepository.listChildren(parent.id)
+    if (tasks.length === 0) {
+      return []
+    }
+
+    const userLookup = await this.loadUserLookup(tasks.flatMap((t) => t.assigneeUserIds))
+    const statusInfo = await this.boards.getStatusInfo(parent.organizationId)
+    const keyPrefixes = await this.keyPrefixesFor(tasks)
+    const blockedBy = await this.blockedByOf(tasks)
+    const contexts = new Map<string, BoardContext | null>()
+    for (const boardId of new Set(tasks.flatMap((t) => (t.boardId === null ? [] : [t.boardId])))) {
+      contexts.set(boardId, await this.boards.getBoardContext(boardId))
+    }
+
+    return tasks.map((task) => ({
+      ideaId: task.id,
+      itemKey: this.keyOf(task, keyPrefixes),
+      title: task.title,
+      statusId: task.statusId,
+      statusName: this.statusName(statusInfo, task.statusId),
+      isFinal:
+        task.boardId !== null &&
+        contexts
+          .get(task.boardId)
+          ?.swimlanes.some((lane) => lane.statusId === task.statusId && lane.isFinal) === true,
+      assignees: this.projectAssignees(task, userLookup),
+      blockedBy: blockedBy.get(task.id) ?? [],
+    }))
+  }
+
+  /**
+   * Removes a task from its parent by deleting the task card (soft delete, as `delete` does), with
+   * its blocker links in both directions. The parent's counts and reference-lane lock read the live
+   * children, so they follow without a write to the parent.
+   */
+  async deleteBoardTask(parentIdeaId: string, taskId: string): Promise<void> {
+    ensureNotDirectSiteAdmin(this.currentUser)
+    this.requireIdeaEditRole()
+
+    const parent = await this.ideaRepository.getById(parentIdeaId, false)
+    if (!parent) {
+      throw new NotFoundError('Idea not found.')
+    }
+    this.ensureOrganizationScope(parent.organizationId)
+    await this.ensureIdeaBoardNotArchived(parent)
+
+    const task = await this.ideaRepository.getById(taskId, false)
+    if (!task || task.parentIdeaId !== parent.id) {
+      throw new NotFoundError('Task not found.')
+    }
+
+    const now = this.clock.now()
+    const actorId = this.requireAuthenticatedUserId()
+    const deleted = softDeleteIdea(task, now, actorId)
+    await this.ideaRepository.update(deleted)
+    await this.dependencies.deleteAllFor(deleted.id)
+    await this.unitOfWork.saveChanges()
+
+    await this.writeAudit({
+      eventType: 'BoardTaskDeleted',
+      entityType: 'Idea',
+      entityId: deleted.id,
+      organizationId: parent.organizationId,
+      intendedActorUserId: actorId,
+      message: `Task '${deleted.title}' deleted from idea '${parent.title}'.`,
+      nowUtc: now,
+      metadata: { parentIdeaId: parent.id, boardId: deleted.boardId },
+    })
+  }
+
+  /**
    * Stages the one task a card gets on entering an `autoCreateTask` lane by a pull or a bulk lane
    * move (SPEC/contracts/boards.md "Pulling items"), for `BoardService`: the card's title, the
    * referenced board's first lane. Nothing is committed - the caller's own `saveChanges` commits
@@ -537,6 +621,8 @@ export class IdeaService {
     const authorId = this.requireAuthenticatedUserId()
     const priority = parsePriority(command.priority)
     const dueDate = parseDueDate(command.dueDate)
+    // A task takes no effort; a promotion carries its own.
+    const effort = parentIdeaId === null && !promotion ? parseOptionalEffort(command.effort) : null
 
     await this.getActiveIdeaType(organizationId, command.ideaTypeId)
     await this.ensureActiveBusinessImpact(organizationId, command.businessImpactId)
@@ -585,6 +671,9 @@ export class IdeaService {
       nowUtc: now,
     })
 
+    if (effort !== null) {
+      idea = { ...idea, effort }
+    }
     if (parentIdeaId === null) {
       const reconcileScope = await this.fieldValues.getReconcileScope(
         organizationId,
@@ -1946,6 +2035,7 @@ export class IdeaService {
     const sprintIds = [...new Set(ideas.flatMap((i) => (i.sprintId ? [i.sprintId] : [])))]
     const sprints = sprintIds.length > 0 ? await this.sprints.listByIds(sprintIds) : []
     const sprintsById = new Map(sprints.map((s) => [s.id, s]))
+    const parentKeys = await this.parentItemKeysFor(ideas)
 
     return ideas.map((idea) => {
       const sprint = idea.sprintId ? sprintsById.get(idea.sprintId) : undefined
@@ -1955,6 +2045,7 @@ export class IdeaService {
         boardId: idea.boardId,
         itemKey: this.keyOf(idea, keyPrefixes),
         parentIdeaId: idea.parentIdeaId,
+        parentItemKey: parentKeys.get(idea.id) ?? null,
         taskCounts: references.taskCountsOf(idea),
         blockedBy: blockedBy.get(idea.id) ?? [],
         title: idea.title,
@@ -2184,6 +2275,7 @@ export class IdeaService {
       boardId: idea.boardId,
       itemKey: this.keyOf(idea, keyPrefixes),
       parentIdeaId: idea.parentIdeaId,
+      parentItemKey: (await this.parentItemKeysFor([idea])).get(idea.id) ?? null,
       taskCounts: references.taskCountsOf(idea),
       blockedBy,
       title: idea.title,
@@ -2204,6 +2296,7 @@ export class IdeaService {
         ? null
         : this.businessImpactColor(businessImpactLookup, idea.businessImpactId),
       dueDate: idea.dueDate,
+      effort: idea.parentIdeaId === null ? idea.effort : null,
       assignees: this.projectAssignees(idea, userLookup),
       statusId: idea.statusId,
       statusName: this.statusName(statusInfo, idea.statusId),
@@ -2221,6 +2314,26 @@ export class IdeaService {
       author: this.projectAuthor(idea, userLookup),
       createdAtUtc: idea.createdAtUtc,
     }
+  }
+
+  /** For each given task, its parent's `itemKey`; a task whose parent has no key is absent. */
+  private async parentItemKeysFor(
+    ideas: readonly Idea[],
+  ): Promise<ReadonlyMap<string, string | null>> {
+    const parentIds = [
+      ...new Set(ideas.flatMap((i) => (i.parentIdeaId === null ? [] : [i.parentIdeaId]))),
+    ]
+    if (parentIds.length === 0) {
+      return new Map()
+    }
+    const parents = await this.ideaRepository.listByIds(parentIds)
+    const prefixes = await this.keyPrefixesFor(parents)
+    const keyByParent = new Map(parents.map((p) => [p.id, this.keyOf(p, prefixes)]))
+    return new Map(
+      ideas.flatMap((i) =>
+        i.parentIdeaId === null ? [] : [[i.id, keyByParent.get(i.parentIdeaId) ?? null] as const],
+      ),
+    )
   }
 
   /** One batched read of the key prefixes of the boards the given ideas sit on. */

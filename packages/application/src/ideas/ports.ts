@@ -105,6 +105,12 @@ export interface IdeaRepository {
    * tag ids and field values. */
   update(idea: Idea): Promise<void>
 
+  /** The live ideas among `ideaIds`, in no particular order. */
+  listByIds(ideaIds: readonly string[]): Promise<readonly Idea[]>
+
+  /** Live children of a parent, oldest first (`createdAtUtc`, then `title`, then id). */
+  listChildren(parentId: string): Promise<readonly Idea[]>
+
   /** Paged, filtered idea list for one board, excluding soft-deleted ideas. */
   listByBoard(filter: IdeaListFilter): Promise<IdeaPage<Idea>>
 

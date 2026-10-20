@@ -30,6 +30,8 @@ export type CreateIdeaCommand = {
   readonly mentionEmails: readonly string[] | null
   /** Omit (or pass null) to leave the org's default field schema entirely unfilled. */
   readonly fieldValues: readonly IdeaFieldValueWrite[] | null
+  /** Optional Discovery-phase estimate (`Low`/`Medium`/`High`); absent or blank stores none. */
+  readonly effort?: string | null
 }
 
 /** `POST /ideas/{ideaId}/board-tasks`: a task takes only these four. The idea-only fields are not
@@ -329,6 +331,8 @@ export type IdeaListItem = {
   readonly itemKey: string | null
   /** Set on a task: the idea it was created from. */
   readonly parentIdeaId: string | null
+  /** The parent's `itemKey`; `null` with no parent or when the parent has no key. */
+  readonly parentItemKey: string | null
   /** Only on an item whose lane references a board; `done` counts children in a final lane of their own board. */
   readonly taskCounts: TaskCounts | null
   /** The items that must be final before this one can leave its board's first lane. */
@@ -361,6 +365,19 @@ export type IdeaListItem = {
   readonly createdAtUtc: Date
 }
 
+/** One task of a parent idea (`GET /ideas/{ideaId}/board-tasks`). */
+export type BoardTaskListItem = {
+  readonly ideaId: string
+  readonly itemKey: string | null
+  readonly title: string
+  readonly statusId: string
+  readonly statusName: string
+  /** The task sits in a final lane of its own board. */
+  readonly isFinal: boolean
+  readonly assignees: readonly IdeaAssigneeDto[]
+  readonly blockedBy: readonly BlockedByDto[]
+}
+
 export type IdeaDetail = {
   readonly ideaId: string
   /** The item's metric values; `[]` for a card with a parent (`contracts/metric-types.md`). */
@@ -369,6 +386,8 @@ export type IdeaDetail = {
   readonly itemKey: string | null
   /** Set on a task: the idea it was created from. */
   readonly parentIdeaId: string | null
+  /** The parent's `itemKey`; `null` with no parent or when the parent has no key. */
+  readonly parentItemKey: string | null
   /** Only on an item whose lane references a board; `done` counts children in a final lane of their own board. */
   readonly taskCounts: TaskCounts | null
   /** The items that must be final before this one can leave its board's first lane. */
@@ -388,6 +407,8 @@ export type IdeaDetail = {
   readonly businessImpactName: string | null
   readonly businessImpactColor: string | null
   readonly dueDate: string | null
+  /** `null` on a task. */
+  readonly effort: EffortLevel | null
   readonly assignees: readonly IdeaAssigneeDto[]
   readonly statusId: string
   readonly statusName: string

@@ -131,6 +131,26 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
     return row ? fromRow(row) : null
   }
 
+  async listByIds(ideaIds: readonly string[]): Promise<readonly Idea[]> {
+    if (ideaIds.length === 0) {
+      return []
+    }
+    const rows = await this.prisma.ideas.findMany({
+      where: { id: { in: [...ideaIds] }, is_deleted: false },
+      include: IDEA_INCLUDE,
+    })
+    return rows.map(fromRow)
+  }
+
+  async listChildren(parentId: string): Promise<readonly Idea[]> {
+    const rows = await this.prisma.ideas.findMany({
+      where: { parent_idea_id: parentId, is_deleted: false },
+      include: IDEA_INCLUDE,
+      orderBy: [{ created_at_utc: 'asc' }, { title: 'asc' }, { id: 'asc' }],
+    })
+    return rows.map(fromRow)
+  }
+
   async add(idea: Idea): Promise<void> {
     this.unitOfWork.enqueue(this.prisma.ideas.create({ data: this.scalarWriteData(idea) }))
     this.enqueueChildren(idea)
