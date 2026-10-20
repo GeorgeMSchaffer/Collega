@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-20 | Idea assistant v2: the idea type never auto-routes to a board | active | full below |
 | 2026-10-20 | Idea assistant v2: starter prompts and the no-board create | active | full below |
 | 2026-10-20 | Prompt-eval v2 targets confirmed: 0.85 / 0.85 / 0.75, report-only | active | full below |
 | 2026-10-20 | Board tasks record whether the system auto-created them (`ideas.auto_created`) | active | full below |
@@ -133,6 +134,12 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-20 — Idea assistant v2: the idea type never auto-routes to a board
+
+**Decided by the owner.** Supersedes the "type picks the board" clause of the entry below. A detected Idea Type only **defaults the form's type** (Suggested, per 306/309); it never chooses a board. The person picks the board; a board-less create stays in the pool/backlog. No schema change, no per-type or per-board routing setting. Reopen only if admins ask for type-based routing.
 
 ---
 

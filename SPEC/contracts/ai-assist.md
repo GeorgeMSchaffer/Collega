@@ -98,7 +98,7 @@ The v2 turn for an idea drafted with no board, so it will start in the pool (the
   - the same pipeline: cap, scope gate, `429`, usage metering, daily budget
   - the usage record carries no board, and the three-consecutive-refusals close counts the caller's board-less turns in the last hour
   - the audit event names the organization (`entityType` `Organization`, `entityId` the organization id) where the board route's names the board; it still never records the prompt or transcript
-- **Not decided here:** "the type picks the board" (the same decision). Nothing in the schema relates an Idea Type to a board, so the turn never proposes a board; the idea stays in the pool unless the person chooses one in the form. See the tracker.
+- **Decided (2026-10-20, `SPEC/decisions.md`):** the idea type never picks the board. The turn never proposes a board; a detected type only defaults the form's type, and a board-less create stays in the pool/backlog.
 
 ### `GET /api/v1/ai-assist/availability`
 Tell the client whether to open the drafting chat or go straight to the create form (`20-feature-ai-idea-assist.md` rule 32a).
