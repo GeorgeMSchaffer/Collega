@@ -48,8 +48,8 @@ const as = (role: Role, children: ReactNode) => (
 )
 
 const BOARDS: BoardRef[] = [
-  { id: 'open', name: 'Assembly', isArchived: false },
-  { id: 'shut', name: 'Old plant', isArchived: true },
+  { id: 'open', name: 'Assembly', isArchived: false, hasReferenceLane: false },
+  { id: 'shut', name: 'Old plant', isArchived: true, hasReferenceLane: false },
 ]
 
 function idea(id: string, boardId: string | null, authorUserId: string | null = ME): Idea {

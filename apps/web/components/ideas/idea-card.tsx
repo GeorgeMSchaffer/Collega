@@ -179,7 +179,7 @@ export function IdeaCard({
       ) : null}
       {idea.effort ? <EffortBar effort={idea.effort} /> : null}
       {idea.itemKey || work.rollup ? (
-        <span className="font-mono text-[11px] font-medium text-muted-foreground">
+        <span className="font-mono text-xs font-medium text-muted-foreground">
           {[idea.itemKey, work.rollup].filter(Boolean).join(' · ')}
         </span>
       ) : null}

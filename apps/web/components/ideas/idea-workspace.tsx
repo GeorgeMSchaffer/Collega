@@ -31,6 +31,7 @@ import {
   blockedTooltip,
   isBlockedHere,
   moveRefusal,
+  NO_EFFORT_TEXT,
   openTaskCount,
   progressPercent,
   rollupText,
@@ -103,7 +104,7 @@ function forcingBody(forcing: Forcing | null): string {
   const named = `‘${idea.title}’${idea.itemKey ? ` (${idea.itemKey})` : ''} is waiting on ${tasks}.`
   const left = referencedBoard ? `the ${referencedBoard} board` : 'their own board'
   return forcing.kind === 'move'
-    ? `${named} Moving it to ${forcing.toLane.name} leaves them open on ${left}.`
+    ? `${named} Moving it leaves them open on ${left}.`
     : `${named} Removing it from ${forcing.boardName} leaves them open on ${left}.`
 }
 
@@ -162,6 +163,12 @@ export function IdeaWorkspace({
   const [detachError, setDetachError] = useState<string | null>(null)
   const [detachPending, startDetach] = useTransition()
   const [forcing, setForcing] = useState<Forcing | null>(null)
+  // A move refused for a missing Effort: the card, and the lane it was headed for.
+  const [effortFix, setEffortFix] = useState<{
+    ideaId: string
+    title: string
+    laneName: string
+  } | null>(null)
   const [forcePending, startForce] = useTransition()
 
   // The lane order as last saved, or as the reorder in flight has it. A refusal ends the transition
@@ -244,6 +251,9 @@ export function IdeaWorkspace({
     if (refusal) {
       setMoveError(null)
       setCardNews(`${idea.title} can’t move to ${to.name}. ${refusal}`)
+      if (refusal === NO_EFFORT_TEXT) {
+        setEffortFix({ ideaId: idea.id, title: idea.title, laneName: to.name })
+      }
       return
     }
     refocusCard.current = ideaId
@@ -325,13 +335,14 @@ export function IdeaWorkspace({
     }
   }
 
-  const confirmForce = (reason: string) => {
+  const confirmForce = (reason: string, laneId: string | null) => {
     if (!forcing) return
     const current = forcing
     if (current.kind === 'move') {
       // The card moves through the same optimistic path as any other; its transition is the pending.
       setForcing(null)
-      if (board) moveCard(current.idea.id, board.id, current.toLane, undefined, reason)
+      const to = lanes.find((lane) => lane.id === laneId) ?? current.toLane
+      if (board) moveCard(current.idea.id, board.id, to, undefined, reason)
       return
     }
     startForce(async () => {
@@ -526,7 +537,11 @@ export function IdeaWorkspace({
     { key: 'upvoteCount', header: 'Votes', numeric: true, cell: (idea) => idea.upvotes },
   ]
 
+  // The idea read does not carry Effort (`contracts/ideas.md`), the list rows do: take it from the
+  // row, which is on this page whenever the drawer was opened from it.
   const drawerIdea = drawer.idea
+    ? { ...drawer.idea, effort: rows.find((row) => row.id === drawer.idea?.id)?.effort ?? null }
+    : null
   const drawerBoardId = drawerIdea?.boardId ?? board?.id ?? null
   // An `&edit=1` link to an idea this reader may not edit opens it to read instead.
   const drawerMode =
@@ -643,6 +658,22 @@ export function IdeaWorkspace({
           {moveError ? (
             <Alert variant="destructive" role="alert">
               <span>{moveError}</span>
+            </Alert>
+          ) : null}
+          {effortFix ? (
+            <Alert variant="destructive" role="alert">
+              <span>
+                Can’t move {effortFix.title}. Add Effort to ‘{effortFix.title}’ before moving it to{' '}
+                {effortFix.laneName}.
+              </span>
+              <span className="flex gap-2">
+                <Button size="sm" onClick={() => openDrawer({ edit: effortFix.ideaId })}>
+                  Add effort
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setEffortFix(null)}>
+                  Dismiss
+                </Button>
+              </span>
             </Alert>
           ) : null}
           {total > rows.length ? (
@@ -872,6 +903,16 @@ export function IdeaWorkspace({
         }
         statusColor={drawerIdea ? statusById.get(drawerIdea.statusId)?.color : undefined}
         formOptions={drawer.formOptions}
+        referenceLane={
+          drawerIdea?.boardId
+            ? (boardsById.get(drawerIdea.boardId)?.hasReferenceLane ?? false)
+            : false
+        }
+        effortNeeded={
+          effortFix && drawerIdea?.id === effortFix.ideaId
+            ? `Add Effort to move this idea to ${effortFix.laneName}.`
+            : undefined
+        }
         createBoards={boards}
         createBoardId={board?.id ?? null}
         initial={prefill ?? undefined}
@@ -898,6 +939,7 @@ export function IdeaWorkspace({
           // Only an idea added through the quick-add row is scrolled to and highlighted.
           if (quickAdded.current) highlight(ideaId)
           quickAdded.current = false
+          setEffortFix(null)
           openDrawer({ view: ideaId })
         }}
       />
@@ -911,6 +953,14 @@ export function IdeaWorkspace({
         }
         body={forcingBody(forcing)}
         confirmLabel={forcing?.kind === 'remove' ? 'Remove anyway' : 'Move anyway'}
+        lanes={
+          forcing?.kind === 'move'
+            ? lanes.filter(
+                (lane) => lane.id !== laneRows.find((r) => r.id === forcing.idea.id)?.statusId,
+              )
+            : undefined
+        }
+        defaultLaneId={forcing?.kind === 'move' ? forcing.toLane.id : undefined}
         pending={forcePending}
         onConfirm={confirmForce}
         onCancel={() => setForcing(null)}

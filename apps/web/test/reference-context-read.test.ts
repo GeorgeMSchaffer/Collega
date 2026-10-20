@@ -15,23 +15,26 @@ vi.mock('@/lib/api/client', async (original) => ({
 
 const get = vi.mocked(apiGet)
 
-type Lane = { referencesBoardId: string | null }
-const listed = (id: string, name: string, keyPrefix: string | null = null) => ({
+type Row = ReturnType<typeof listed>
+const listed = (
+  id: string,
+  name: string,
+  keyPrefix: string | null = null,
+  extra: { hasReferenceLane?: boolean; referencedByBoardIds?: string[] } = {},
+) => ({
   boardId: id,
   name,
   keyPrefix,
+  hasReferenceLane: extra.hasReferenceLane ?? false,
+  referencedByBoardIds: extra.referencedByBoardIds ?? [],
   laneCounts: [
     { order: 1, statusName: 'Second', ideaCount: 0 },
     { order: 0, statusName: 'First', ideaCount: 0 },
   ],
 })
 
-function serve(details: Record<string, Lane[]>, list: ReturnType<typeof listed>[]) {
-  get.mockImplementation((async (_reader: string, path: string) => {
-    if (path.includes('/organizations/')) return list
-    const id = decodeURIComponent(path.split('/boards/')[1] ?? '')
-    return { swimlanes: details[id] ?? [] }
-  }) as unknown as typeof apiGet)
+function serve(list: Row[]) {
+  get.mockImplementation((async () => list) as unknown as typeof apiGet)
 }
 
 beforeEach(() => {
@@ -41,7 +44,7 @@ beforeEach(() => {
 
 describe('getReferenceContext', () => {
   it('asks for the active boards only: the list read does not include archived ones', async () => {
-    serve({}, [listed('b-1', 'One')])
+    serve([listed('b-1', 'One')])
     await getReferenceContext('b-0')
     const listPath = get.mock.calls
       .map((call) => String(call[1]))
@@ -51,23 +54,23 @@ describe('getReferenceContext', () => {
   })
 
   it('leaves the board being edited out of the choices', async () => {
-    serve({}, [listed('b-1', 'One'), listed('b-2', 'Two')])
+    serve([listed('b-1', 'One'), listed('b-2', 'Two')])
     const context = await getReferenceContext('b-1')
     expect(context.choices.map((choice) => choice.id)).toEqual(['b-2'])
   })
 
   it('offers every board when creating, and nothing references a board not yet made', async () => {
-    serve({ 'b-1': [{ referencesBoardId: 'b-2' }] }, [listed('b-1', 'One'), listed('b-2', 'Two')])
+    serve([
+      listed('b-1', 'One', null, { hasReferenceLane: true }),
+      listed('b-2', 'Two', null, { referencedByBoardIds: ['b-1'] }),
+    ])
     const context = await getReferenceContext(null)
     expect(context.choices).toHaveLength(2)
     expect(context.referencedBy).toEqual([])
   })
 
   it('marks a board with a reference lane, names its prefix and its first lane by order', async () => {
-    serve({ 'b-1': [{ referencesBoardId: null }], 'b-2': [{ referencesBoardId: 'b-9' }] }, [
-      listed('b-1', 'One', 'ONE'),
-      listed('b-2', 'Two'),
-    ])
+    serve([listed('b-1', 'One', 'ONE'), listed('b-2', 'Two', null, { hasReferenceLane: true })])
     const { choices } = await getReferenceContext('b-0')
     expect(choices).toEqual([
       { id: 'b-1', name: 'One', keyPrefix: 'ONE', firstLaneName: 'First', hasReferenceLane: false },
@@ -76,13 +79,11 @@ describe('getReferenceContext', () => {
   })
 
   it('lists the boards whose lanes reference this one', async () => {
-    serve(
-      {
-        'b-1': [{ referencesBoardId: 'b-0' }, { referencesBoardId: null }],
-        'b-2': [{ referencesBoardId: 'b-other' }],
-      },
-      [listed('b-1', 'One'), listed('b-2', 'Two')],
-    )
+    serve([
+      listed('b-0', 'Zero', null, { referencedByBoardIds: ['b-1'] }),
+      listed('b-1', 'One', null, { hasReferenceLane: true }),
+      listed('b-2', 'Two', null, { hasReferenceLane: true }),
+    ])
     const { referencedBy } = await getReferenceContext('b-0')
     expect(referencedBy).toEqual([{ id: 'b-1', name: 'One' }])
   })

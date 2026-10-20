@@ -55,8 +55,8 @@ const as = (role: Role, children: ReactNode) => (
 )
 
 const BOARD_REFS: BoardRef[] = [
-  { id: 'open', name: 'Assembly', isArchived: false },
-  { id: 'shut', name: 'Old plant', isArchived: true },
+  { id: 'open', name: 'Assembly', isArchived: false, hasReferenceLane: false },
+  { id: 'shut', name: 'Old plant', isArchived: true, hasReferenceLane: false },
 ]
 
 function ideaOn(boardId: string, title: string): Idea {

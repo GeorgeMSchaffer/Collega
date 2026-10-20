@@ -92,7 +92,9 @@ function workspace(role: Role, b: ReturnType<typeof board>) {
       <IdeaWorkspace
         rows={[idea('a', 'new'), idea('b', 'review')]}
         total={2}
-        boards={[{ id: 'board-1', name: 'Assembly', isArchived: b.isArchived }]}
+        boards={[
+          { id: 'board-1', name: 'Assembly', isArchived: b.isArchived, hasReferenceLane: false },
+        ]}
         statuses={b.lanes}
         tags={[]}
         board={b}

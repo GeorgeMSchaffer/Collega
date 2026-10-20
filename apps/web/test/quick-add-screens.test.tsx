@@ -227,8 +227,8 @@ function ideas(role: Role, props: Partial<React.ComponentProps<typeof IdeaWorksp
       rows={[idea('x1', 'Live idea')]}
       total={1}
       boards={[
-        { id: 'open', name: 'Assembly', isArchived: false },
-        { id: 'shut', name: 'Old plant', isArchived: true },
+        { id: 'open', name: 'Assembly', isArchived: false, hasReferenceLane: false },
+        { id: 'shut', name: 'Old plant', isArchived: true, hasReferenceLane: false },
       ]}
       statuses={[{ id: 's1', name: 'New', color: '#999' }]}
       tags={[]}

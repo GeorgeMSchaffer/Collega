@@ -75,7 +75,7 @@ function workspace(rows: Idea[]) {
       <IdeaWorkspace
         rows={rows}
         total={rows.length}
-        boards={[{ id: 'b1', name: 'Assembly', isArchived: false }]}
+        boards={[{ id: 'b1', name: 'Assembly', isArchived: false, hasReferenceLane: false }]}
         statuses={[{ id: 's1', name: 'New', color: '#999' }]}
         tags={CATALOG}
         board={null}

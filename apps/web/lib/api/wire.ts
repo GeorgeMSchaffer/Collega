@@ -175,6 +175,11 @@ export type WireBoardListItem = {
   keyPrefix: string | null
   sprintsEnabled: boolean
   ideaFeaturesEnabled: boolean
+  /** The number the next item key takes; `1` means no key has been issued (slice 292). */
+  nextItemNumber: number
+  hasReferenceLane: boolean
+  /** The non-archived boards with a lane that references this one. */
+  referencedByBoardIds: readonly string[]
 }
 
 export type WireBoardLaneCount = {
@@ -197,6 +202,7 @@ export type WireBoardDetail = {
   keyPrefix: string | null
   sprintsEnabled: boolean
   ideaFeaturesEnabled: boolean
+  nextItemNumber: number
 }
 
 export type WireSwimlane = {

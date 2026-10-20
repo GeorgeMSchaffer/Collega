@@ -28,6 +28,8 @@ export function IdeaDrawer({
   createBoards,
   createBoardId,
   initial,
+  referenceLane,
+  effortNeeded,
   canEdit,
   canDelete,
   contentLocked,
@@ -52,6 +54,10 @@ export function IdeaDrawer({
   createBoardId: string | null
   /** The quick-add row's Title, for the create form to start with. */
   initial?: { title?: string } | undefined
+  /** The idea's board has a reference lane, so the form says Effort gates a move. */
+  referenceLane?: boolean | undefined
+  /** A refused move asks for this Effort: the form opens on it with the message. */
+  effortNeeded?: string | undefined
   canEdit: boolean
   canDelete: boolean
   contentLocked: boolean
@@ -134,6 +140,8 @@ export function IdeaDrawer({
           boardId={mode === 'create' ? createBoardId : null}
           initial={mode === 'create' ? initial : undefined}
           contentLocked={mode === 'edit' && contentLocked}
+          referenceLane={referenceLane}
+          effortNeeded={mode === 'edit' ? effortNeeded : undefined}
           onSaved={onSaved}
           onPendingChange={setSaving}
         />

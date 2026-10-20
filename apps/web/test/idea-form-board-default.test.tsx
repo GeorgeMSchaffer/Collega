@@ -18,9 +18,9 @@ const OPTIONS: IdeaFormOptions = {
   tags: [],
 }
 const BOARDS = [
-  { id: 'b-1', name: 'Assembly', isArchived: false },
-  { id: 'b-2', name: 'Packing', isArchived: false },
-  { id: 'b-old', name: 'Old plant', isArchived: true },
+  { id: 'b-1', name: 'Assembly', isArchived: false, hasReferenceLane: false },
+  { id: 'b-2', name: 'Packing', isArchived: false, hasReferenceLane: false },
+  { id: 'b-old', name: 'Old plant', isArchived: true, hasReferenceLane: false },
 ]
 
 function form(props: Partial<React.ComponentProps<typeof IdeaForm>> = {}) {

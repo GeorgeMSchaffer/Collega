@@ -6,6 +6,7 @@ import {
   type KeyboardEvent,
   useEffect,
   useId,
+  useRef,
   useState,
   useTransition,
 } from 'react'
@@ -24,6 +25,7 @@ import type {
   Sprint,
   TagRef,
 } from '@/lib/types'
+import { EffortField } from './effort-field'
 import { PRIORITIES } from './idea-list-config'
 
 /**
@@ -115,6 +117,8 @@ export function IdeaForm({
   contentLocked,
   addingIssue,
   initial,
+  referenceLane,
+  effortNeeded,
   onSaved,
   onPendingChange,
 }: {
@@ -134,6 +138,10 @@ export function IdeaForm({
   addingIssue?: { sprints: readonly Pick<Sprint, 'id' | 'name' | 'state'>[] }
   /** Values to start with when adding an Issue, from the Backlog's quick-add row. */
   initial?: { title?: string; effort?: Effort | ''; sprintId?: string } | undefined
+  /** The board has a lane that hands work to another board, so Effort is asked for before a move. */
+  referenceLane?: boolean | undefined
+  /** Opens with this error on Effort and focus on it: a move was refused for a missing Effort. */
+  effortNeeded?: string | undefined
   /** `sprintId` is the one an added Issue was put in; empty for the Backlog. */
   onSaved: (ideaId: string, sprintId?: string) => void
   onPendingChange: (pending: boolean) => void
@@ -143,17 +151,29 @@ export function IdeaForm({
     ...initialDraft(idea, boardId, options),
     ...(initial?.title ? { title: initial.title } : {}),
   }))
-  const [errors, setErrors] = useState<Readonly<Record<string, string>>>({})
+  const [errors, setErrors] = useState<Readonly<Record<string, string>>>(
+    effortNeeded ? { effort: effortNeeded } : {},
+  )
   // Lifted out of the tag field so a save can see text that was typed and never chosen.
   const [tagText, setTagText] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
-  const [effort, setEffort] = useState<Effort | ''>(initial?.effort ?? '')
+  const [effort, setEffort] = useState<Effort | ''>(
+    (addingIssue ? initial?.effort : idea?.effort) ?? '',
+  )
   const [sprintId, setSprintId] = useState(initial?.sprintId ?? '')
 
   useEffect(() => onPendingChange(pending), [pending, onPendingChange])
+  const formRef = useRef<HTMLFormElement>(null)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: focus once, when the form opens on an Effort error
+  useEffect(() => {
+    if (effortNeeded)
+      formRef.current?.querySelector<HTMLElement>('[data-error-key="effort"]')?.focus()
+  }, [])
 
   const editing = idea !== null
+  // A task takes task fields only (contracts/ideas.md): it never carries an Effort.
+  const showEffort = !addingIssue && idea?.parentIdeaId == null
   const type = options.ideaTypes.find((t) => t.id === draft.ideaTypeId)
   // The type is fixed once created, so an edit shows the idea's own fields, which the detail
   // resolves even when the type has since been archived and left the catalog.
@@ -218,6 +238,8 @@ export function IdeaForm({
         tagNames: draft.tags.map((tag) => tag.name),
         assigneeUserIds: draft.assignees.map((person) => person.id),
         mentionEmails: idea?.mentionEmails ?? [],
+        // Three-state on the wire: absent leaves it alone, `null` clears, a value sets.
+        ...(showEffort && effort !== (idea?.effort ?? '') ? { effort: effort || null } : {}),
         fieldValues: customFields.map((field) => ({
           fieldDefinitionId: field.id,
           value: draft.fields[field.id] ?? '',
@@ -250,7 +272,8 @@ export function IdeaForm({
     'dueDate',
     'tagNames',
     'assigneeUserIds',
-    ...(addingIssue ? ['effort', 'sprintId'] : []),
+    ...(addingIssue ? ['sprintId'] : []),
+    ...(addingIssue || showEffort ? ['effort'] : []),
     ...customFields.map((field) => field.name),
   ])
   const unplaced = Object.entries(errors).filter(([key]) => !placed.has(key))
@@ -259,7 +282,7 @@ export function IdeaForm({
   const lockedHint = contentLocked ? 'Only the author or an Org Admin can change this.' : undefined
 
   return (
-    <form id={formId} noValidate onSubmit={submit} className="flex flex-col">
+    <form ref={formRef} id={formId} noValidate onSubmit={submit} className="flex flex-col">
       {error || unplaced.length > 0 ? (
         <Alert variant="destructive" className="mb-4" role="alert">
           {error ? <span>{error}</span> : null}
@@ -320,6 +343,29 @@ export function IdeaForm({
           aria-invalid={errors.title ? true : undefined}
         />
       </Field>
+
+      {showEffort ? (
+        <EffortField
+          value={effort}
+          error={errors.effort}
+          hint={
+            referenceLane ||
+            (!editing &&
+              draft.boardId &&
+              boards?.find((b) => b.id === draft.boardId)?.hasReferenceLane)
+              ? 'Low, Medium or High. Needed before this idea can move into a reference lane.'
+              : 'Optional.'
+          }
+          onChange={(next) => {
+            setEffort(next)
+            setErrors(({ effort: _cleared, ...rest }) => rest)
+          }}
+          onClear={() => {
+            setEffort('')
+            setErrors(({ effort: _cleared, ...rest }) => rest)
+          }}
+        />
+      ) : null}
 
       {addingIssue ? (
         <IssueDeliveryFields

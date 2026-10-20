@@ -78,7 +78,9 @@ function renderBoard({ canMove = true, role = 'OrgAdmin' as Role } = {}) {
       <IdeaWorkspace
         rows={[idea('a', 'new'), idea('b', 'review'), idea('c', 'done')]}
         total={3}
-        boards={[{ id: 'board-1', name: 'Assembly', isArchived: !canMove }]}
+        boards={[
+          { id: 'board-1', name: 'Assembly', isArchived: !canMove, hasReferenceLane: false },
+        ]}
         statuses={LANES}
         tags={[]}
         board={{

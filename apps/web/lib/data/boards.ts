@@ -124,6 +124,7 @@ export async function getBoard(id: string): Promise<BoardWithLanes | null> {
       description: board.description,
       isArchived: board.isArchived,
       keyPrefix: board.keyPrefix,
+      nextItemNumber: board.nextItemNumber,
       sprintsEnabled: board.sprintsEnabled,
       ideaFeaturesEnabled: board.ideaFeaturesEnabled,
       // Deleted statuses still hold ideas that have to go somewhere, so their lane stays on the
@@ -140,12 +141,8 @@ export async function getBoard(id: string): Promise<BoardWithLanes | null> {
 
 /**
  * The boards a lane of `boardId` could reference, and whether `boardId` is itself a reference
- * target (`null` for a board not yet created).
- *
- * The list read carries no lane references, so each other active board is opened for its lanes: one
- * request per board, in parallel, from a screen an Org Admin opens to edit lanes. Boards are few
- * enough (the list does not page) that this is cheaper than a contract addition for a flag the
- * selector reads once.
+ * target (`null` for a board not yet created). The list read carries both facts
+ * (`hasReferenceLane`, `referencedByBoardIds`), so this is one request.
  */
 export async function getReferenceContext(boardId: string | null): Promise<ReferenceContext> {
   failIfRequested('getReferenceContext')
@@ -157,34 +154,25 @@ export async function getReferenceContext(boardId: string | null): Promise<Refer
     'getReferenceContext',
     apiPath`/organizations/${scope}/boards`,
   )
-  const details = await Promise.all(
-    listed
-      .filter((board) => board.boardId !== boardId)
-      .map(async (board) => ({
-        board,
-        detail: await apiGet<WireBoardDetail>(
-          'getReferenceContext',
-          apiPath`/boards/${board.boardId}`,
-        ),
-      })),
-  )
+  const referencedByIds =
+    boardId === null
+      ? []
+      : (listed.find((board) => board.boardId === boardId)?.referencedByBoardIds ?? [])
 
   return {
-    choices: details.map(({ board, detail }) => ({
-      id: board.boardId,
-      name: board.name,
-      keyPrefix: board.keyPrefix,
-      firstLaneName: [...board.laneCounts].sort((a, b) => a.order - b.order)[0]?.statusName ?? null,
-      hasReferenceLane: detail.swimlanes.some((lane) => lane.referencesBoardId !== null),
-    })),
-    referencedBy:
-      boardId === null
-        ? []
-        : details
-            .filter(({ detail }) =>
-              detail.swimlanes.some((lane) => lane.referencesBoardId === boardId),
-            )
-            .map(({ board }) => ({ id: board.boardId, name: board.name })),
+    choices: listed
+      .filter((board) => board.boardId !== boardId)
+      .map((board) => ({
+        id: board.boardId,
+        name: board.name,
+        keyPrefix: board.keyPrefix,
+        firstLaneName:
+          [...board.laneCounts].sort((a, b) => a.order - b.order)[0]?.statusName ?? null,
+        hasReferenceLane: board.hasReferenceLane,
+      })),
+    referencedBy: listed
+      .filter((board) => referencedByIds.includes(board.boardId))
+      .map((board) => ({ id: board.boardId, name: board.name })),
   }
 }
 
@@ -315,6 +303,7 @@ export async function getBoardRefs(): Promise<BoardRef[]> {
     id: board.boardId,
     name: board.name,
     isArchived: board.isArchived,
+    hasReferenceLane: board.hasReferenceLane,
   }))
 }
 
