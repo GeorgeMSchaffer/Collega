@@ -1,4 +1,4 @@
-import { Avatar } from '@collega/design-system'
+import { Avatar, EffortBar } from '@collega/design-system'
 import type { ReactNode } from 'react'
 import type { IdeaDetail } from '@/lib/types'
 import { CommentBox, FollowButton, UpvoteButton } from './engagement'
@@ -103,6 +103,11 @@ export function IdeaView({
           {idea.priority ? (
             <Fact label="Priority">
               <PriorityMarker priority={idea.priority} />
+            </Fact>
+          ) : null}
+          {idea.effort ? (
+            <Fact label="Effort">
+              <EffortBar effort={idea.effort} className="text-sm text-foreground" />
             </Fact>
           ) : null}
           <Fact label="Business impact">{idea.businessImpact}</Fact>

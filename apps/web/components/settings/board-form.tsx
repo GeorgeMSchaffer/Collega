@@ -52,6 +52,7 @@ export function BoardForm({
   laneFlags,
   laneIdeaCounts,
   keyPrefix = null,
+  nextItemNumber = 1,
   ideaFeaturesEnabled = true,
   references,
   statuses,
@@ -70,6 +71,7 @@ export function BoardForm({
   /** Live ideas per lane of the board being edited, keyed by status id. */
   laneIdeaCounts?: Readonly<Record<string, number>> | undefined
   keyPrefix?: string | null | undefined
+  nextItemNumber?: number | undefined
   ideaFeaturesEnabled?: boolean | undefined
   /** The boards a lane may reference; absent leaves the References controls out. */
   references?: ReferenceContext | undefined
@@ -105,6 +107,7 @@ export function BoardForm({
               laneFlags={laneFlags}
               laneIdeaCounts={laneIdeaCounts}
               keyPrefix={keyPrefix}
+              nextItemNumber={nextItemNumber}
               ideaFeaturesEnabled={ideaFeaturesEnabled}
               references={references}
               refusals={state}
@@ -207,6 +210,7 @@ export function BoardFields({
   laneFlags,
   laneIdeaCounts = {},
   keyPrefix = null,
+  nextItemNumber = 1,
   ideaFeaturesEnabled = true,
   references,
   refusals,
@@ -225,6 +229,7 @@ export function BoardFields({
   laneIdeaCounts?: Readonly<Record<string, number>> | undefined
   /** The prefix as stored (`null` for none) and the idea-features switch as stored. */
   keyPrefix?: string | null | undefined
+  nextItemNumber?: number | undefined
   ideaFeaturesEnabled?: boolean | undefined
   /** The boards a lane may reference; absent leaves the References controls out. */
   references?: ReferenceContext | undefined
@@ -292,7 +297,11 @@ export function BoardFields({
         />
       </Field>
 
-      <KeyPrefixField saved={keyPrefix} refusal={refusals?.keyPrefix} />
+      <KeyPrefixField
+        saved={keyPrefix}
+        nextItemNumber={nextItemNumber}
+        refusal={refusals?.keyPrefix}
+      />
 
       <div className="mb-4">
         <Switch

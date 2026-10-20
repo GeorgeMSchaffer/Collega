@@ -352,6 +352,8 @@ export type BoardWithLanes = {
   /** An archived board opens read-only (`20-feature-boards-and-statuses.md` rule 13). */
   isArchived: boolean
   keyPrefix: string | null
+  /** The number the next item key takes; above `1`, keys have been issued and the prefix is locked. */
+  nextItemNumber: number
   sprintsEnabled: boolean
   ideaFeaturesEnabled: boolean
 }
@@ -365,6 +367,8 @@ export type BoardRef = {
   id: string
   name: string
   isArchived: boolean
+  /** Has a lane that references another board, so an idea's Effort gates a move into it. */
+  hasReferenceLane: boolean
 }
 
 /**

@@ -1,6 +1,6 @@
 'use client'
 
-import { Label, Textarea } from '@collega/design-system'
+import { Label, Select, Textarea } from '@collega/design-system'
 import { useEffect, useId, useState } from 'react'
 import { ConfirmDialog } from '@/components/list'
 
@@ -15,6 +15,8 @@ export function MoveAnywayDialog({
   title,
   body,
   confirmLabel,
+  lanes,
+  defaultLaneId,
   pending,
   onConfirm,
   onCancel,
@@ -25,16 +27,25 @@ export function MoveAnywayDialog({
   body: string
   /** "Move anyway" or "Remove anyway". */
   confirmLabel: string
+  /** The lanes a move may go to, in board order, the card's own left out; absent for a removal. */
+  lanes?: readonly { id: string; name: string }[] | undefined
+  /** The lane the picker starts on: the next one, or the previous at the board's end. */
+  defaultLaneId?: string | undefined
   pending: boolean
-  onConfirm: (reason: string) => void
+  onConfirm: (reason: string, laneId: string | null) => void
   onCancel: () => void
 }) {
   const [reason, setReason] = useState('')
+  const [laneId, setLaneId] = useState(defaultLaneId ?? '')
   const reasonId = useId()
+  const laneSelectId = useId()
 
   useEffect(() => {
-    if (open) setReason('')
-  }, [open])
+    if (open) {
+      setReason('')
+      setLaneId(defaultLaneId ?? '')
+    }
+  }, [open, defaultLaneId])
 
   return (
     <ConfirmDialog
@@ -44,9 +55,25 @@ export function MoveAnywayDialog({
       confirmLabel={confirmLabel}
       pending={pending}
       confirmDisabled={reason.trim() === ''}
-      onConfirm={() => onConfirm(reason.trim())}
+      onConfirm={() => onConfirm(reason.trim(), lanes ? laneId : null)}
       onCancel={onCancel}
     >
+      {lanes ? (
+        <div className="mt-3 flex flex-col gap-1.5">
+          <Label htmlFor={laneSelectId}>Move to</Label>
+          <Select
+            id={laneSelectId}
+            value={laneId}
+            onChange={(event) => setLaneId(event.target.value)}
+          >
+            {lanes.map((lane) => (
+              <option key={lane.id} value={lane.id}>
+                {lane.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+      ) : null}
       <div className="mt-3 flex flex-col gap-1.5">
         <Label htmlFor={reasonId}>Reason (required)</Label>
         <Textarea

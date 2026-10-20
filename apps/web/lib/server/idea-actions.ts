@@ -59,6 +59,8 @@ export type IdeaInput = {
    */
   assigneeUserIds: string[]
   mentionEmails: string[]
+  /** Three-state: absent leaves the stored Effort alone, `null` clears it, a value sets it. */
+  effort?: 'Low' | 'Medium' | 'High' | null
   /** Every field the type shows; an omitted one is cleared. `null` leaves them all untouched. */
   fieldValues: { fieldDefinitionId: string; value: string }[] | null
 }
@@ -122,6 +124,7 @@ export async function saveIdea(input: IdeaInput): Promise<SaveIdeaResult> {
     assigneeUserIds: input.assigneeUserIds,
     mentionEmails: input.mentionEmails,
     fieldValues: input.fieldValues,
+    ...(input.effort !== undefined ? { effort: input.effort } : {}),
   }
 
   let ideaId: string
