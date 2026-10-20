@@ -126,6 +126,7 @@ export function SprintBoard({
   const [pending, startTransition] = useTransition()
   const [dragging, setDragging] = useState<string | null>(null)
   const [over, setOver] = useState<string | null>(null)
+  const [mobileLane, setMobileLane] = useState<string>(DELIVERY_STATUSES[0]?.id ?? '')
 
   // A drop moves the card at once; the page re-reads on success, and a refusal puts it back.
   const [shown, moveCard] = useOptimistic(
@@ -285,15 +286,15 @@ export function SprintBoard({
           </dl>
 
           {/* Mobile lane switcher */}
-          <div className="mt-5 flex gap-1 overflow-x-auto pb-2 max-[768px]:flex">
+          <div className="mt-5 hidden gap-1 overflow-x-auto pb-2 max-[768px]:flex">
             {DELIVERY_STATUSES.map((status) => (
               <button
                 key={status.id}
                 type="button"
-                onClick={() => setOver(status.id)}
+                onClick={() => setMobileLane(status.id)}
                 className={cn(
                   'whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium transition-colors',
-                  over === status.id
+                  mobileLane === status.id
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-muted-foreground hover:bg-muted-foreground/20',
                 )}
@@ -329,7 +330,7 @@ export function SprintBoard({
                     'flex min-h-[min(56vh,520px)] min-w-0 flex-col gap-2 rounded-[14px] border border-border/70 bg-muted/55 px-1.5 pt-1.5 pb-3',
                     over === status.id && 'border-primary',
                     'max-[768px]:hidden',
-                    over === status.id && 'max-[768px]:flex',
+                    mobileLane === status.id && 'max-[768px]:flex',
                   )}
                 >
                   {/* The status colour is data, so it tints the header against the theme's card

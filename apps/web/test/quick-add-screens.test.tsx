@@ -11,8 +11,8 @@ import { stubDialogMethods } from './support/dialog'
 
 /**
  * How the three list screens adopt the quick-add bar: what each asks for, what it hands the create
- * drawer, who sees it, and (Boards) what it saves. With one row or fewer the bar gives way to an
- * Add New button. The server actions and the router are the
+ * drawer, who sees it, and (Boards) what it saves. With one row or fewer the bar is absent and the page's own
+ * Add New button remains. The server actions and the router are the
  * boundary and are replaced.
  */
 const nav = vi.hoisted(() => ({ params: new URLSearchParams(), push: vi.fn() }))
@@ -142,15 +142,12 @@ describe('Backlog quick-add bar', () => {
   it('is hidden when the role may not add', () => {
     render(backlog({ rows: TWO_ISSUES, canAdd: false }, 'ReadOnly'))
     expect(bar('backlog-quick-add-bar')).toBeNull()
-    expect(screen.queryByRole('button', { name: /Add New Issue/ })).toBeNull()
     expect(screen.getByText('Existing issue')).toBeTruthy()
   })
 
-  it('collapses behind an Add New Issue button with one issue', () => {
+  it('is absent with one issue (the header button remains)', () => {
     render(backlog())
     expect(bar('backlog-quick-add-bar')).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: /Add New Issue/ }))
-    expect(nav.push).toHaveBeenCalledExactlyOnceWith('/list?new=1', { scroll: false })
   })
 
   it('is replaced by the empty state when the backlog has no issues', () => {
@@ -272,15 +269,9 @@ describe('Ideas quick-add bar', () => {
     expect(bar('ideas-quick-add-bar') !== null).toBe(shown)
   })
 
-  it('collapses behind an Add New Idea button with one idea or none', () => {
+  it('is absent with one idea or none (the header button remains)', () => {
     render(ideas('User'))
     expect(bar('ideas-quick-add-bar')).toBeNull()
-    expect(screen.getByRole('button', { name: /Add New Idea/ })).toBeTruthy()
-  })
-
-  it('offers no Add New Idea button to a role that may not add', () => {
-    render(ideas('ReadOnly'))
-    expect(screen.queryByRole('button', { name: /Add New Idea/ })).toBeNull()
   })
 
   it('is hidden on an archived board’s List view', () => {

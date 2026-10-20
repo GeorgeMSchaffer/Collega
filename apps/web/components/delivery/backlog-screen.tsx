@@ -1,6 +1,6 @@
 'use client'
 
-import { Avatar, Button, Dot, EffortBar } from '@collega/design-system'
+import { Avatar, Dot, EffortBar } from '@collega/design-system'
 import type { Route } from 'next'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
@@ -177,15 +177,6 @@ export function BacklogScreen({
                 },
               ]}
             />
-          ) : canAdd ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-fit"
-              onClick={() => openDrawer({ create: true })}
-            >
-              ＋ Add New Issue
-            </Button>
           ) : null}
           <DataTable
             caption="Backlog issues"

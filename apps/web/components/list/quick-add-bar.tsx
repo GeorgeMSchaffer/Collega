@@ -173,9 +173,11 @@ export function QuickAddBar({
           {formError ?? Object.values(errors)[0]}
         </span>
       ) : null}
-      <Button size="sm" variant="outline" onClick={moreFields} className="h-7 text-xs">
-        {moreLabel}
-      </Button>
+      {mode.onHandoff ? (
+        <Button size="sm" variant="outline" onClick={moreFields} className="h-7 text-xs">
+          {moreLabel}
+        </Button>
+      ) : null}
       <span aria-live="polite" className="sr-only">
         {announcement}
       </span>

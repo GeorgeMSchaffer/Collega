@@ -825,15 +825,6 @@ export function IdeaWorkspace({
                   onHandoff={handoff}
                   testId="ideas-quick-add-bar"
                 />
-              ) : canAdd ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mb-2"
-                  onClick={() => openDrawer({ create: true })}
-                >
-                  ＋ Add New Idea
-                </Button>
               ) : null}
               <DataTable
                 caption={board ? `Ideas on ${board.name}` : 'Ideas'}
