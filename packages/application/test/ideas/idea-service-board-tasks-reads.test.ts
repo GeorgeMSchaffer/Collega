@@ -1,6 +1,7 @@
 // Slice 298: the reads and the removal the Board References task UI needs - a parent's task list,
 // `parentItemKey` on item reads, `effort` on create, and deleting a task from its parent.
 
+import { EffortLevel } from '@collega/domain/enums'
 import { describe, expect, it } from 'vitest'
 import { ForbiddenError, NotFoundError, ValidationError } from '../../src/common/index.js'
 import { member, orgAdmin, readOnly, siteAdmin } from '../support/fixtures.js'
@@ -128,6 +129,22 @@ describe('parentItemKey', () => {
     })
 
     expect((await h.service.getById('task-1')).parentItemKey).toBeNull()
+  })
+})
+
+describe('effort on the detail', () => {
+  it('returns the stored effort on an idea and null on a task', async () => {
+    const h = harness({
+      currentUser: orgAdmin(),
+      boards: [PARENT_BOARD, CHILD_BOARD],
+      ideas: [
+        idea({ statusId: STATUS_2, effort: EffortLevel.High }),
+        task('task-1', { effort: EffortLevel.Low }),
+      ],
+    })
+
+    expect((await h.service.getById('idea-1')).effort).toBe('High')
+    expect((await h.service.getById('task-1')).effort).toBeNull()
   })
 })
 

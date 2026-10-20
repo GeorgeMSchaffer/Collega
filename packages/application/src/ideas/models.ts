@@ -407,6 +407,8 @@ export type IdeaDetail = {
   readonly businessImpactName: string | null
   readonly businessImpactColor: string | null
   readonly dueDate: string | null
+  /** `null` on a task. */
+  readonly effort: EffortLevel | null
   readonly assignees: readonly IdeaAssigneeDto[]
   readonly statusId: string
   readonly statusName: string

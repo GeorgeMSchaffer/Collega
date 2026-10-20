@@ -2296,6 +2296,7 @@ export class IdeaService {
         ? null
         : this.businessImpactColor(businessImpactLookup, idea.businessImpactId),
       dueDate: idea.dueDate,
+      effort: idea.parentIdeaId === null ? idea.effort : null,
       assignees: this.projectAssignees(idea, userLookup),
       statusId: idea.statusId,
       statusName: this.statusName(statusInfo, idea.statusId),

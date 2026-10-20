@@ -64,7 +64,7 @@ describe('board-tasks read and delete routing', () => {
 })
 
 describe('effort on the idea creates and update', () => {
-  it('hands effort to the board create and the pool create, null when absent', async () => {
+  it('hands effort to the board create and the pool create, absent when not sent', async () => {
     const seen: Record<string, unknown[]> = {}
     const controller = controllerOver(seen)
 
@@ -72,7 +72,7 @@ describe('effort on the idea creates and update', () => {
     expect(commandOf(seen, 'create').effort).toBe('High')
 
     await controller.createInPool(GUID, BODY)
-    expect(commandOf(seen, 'pool').effort).toBeNull()
+    expect(commandOf(seen, 'pool').effort).toBeUndefined()
   })
 
   it('passes a non-string effort on as text so the service refuses it', async () => {

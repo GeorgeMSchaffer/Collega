@@ -238,7 +238,7 @@ Return full idea detail.
   - `businessImpactName`
   - `businessImpactColor`
   - `dueDate`
-  - `effort` string or `null`: `Low`, `Medium`, `High`; the same field, values and nullability as on the list item (added 2026-10-20, slice 298)
+  - `effort` string or `null`: `Low`, `Medium`, `High`; the same field and values as on the list item; `null` on a task (added 2026-10-20, slice 298)
   - `parentItemKey` string or `null`: beside `parentIdeaId`, the parent's `itemKey` (added 2026-10-20, slice 298; see "Tasks and item keys")
   - `assignees` array using the board-list assignee item shape
   - `statusId`
