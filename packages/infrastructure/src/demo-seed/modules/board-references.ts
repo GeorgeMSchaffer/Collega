@@ -3,6 +3,7 @@ import { TAG_COLOR_PALETTE } from '@collega/domain/tags'
 import type { PrismaClient } from '../../generated/prisma/client.js'
 import type { SeedModule } from '../types.js'
 import {
+  autoCreatedTaskKeys,
   type DemoReferenceScenario,
   type DemoTask,
   REFERENCE_SCENARIOS,
@@ -30,7 +31,8 @@ import {
  * rules the services enforce are checked on the scenario data by `validateReferenceScenario`, and
  * the shape of a task row follows `IdeaService.stageBoardTask` (the organization's first idea type
  * and business impact, the title standing in for the NOT NULL text columns, the author and
- * assignees following). `auto_created` is deliberately left to its default.
+ * assignees following). The reference lane is set to Auto-create tasks and the first task of each parent is
+ * flagged `auto_created`, as entering that lane would have made it; the rest are hand-added.
  */
 
 const WORK_LANES: readonly WorkLane[] = ['todo', 'doing', 'review', 'done']
@@ -141,7 +143,7 @@ async function seedOrganization(
   })
   await prisma.board_swimlanes.updateMany({
     where: { board_id: oppsBoardId, status_id: statusId(REFERENCE_STATUS) },
-    data: { references_board_id: workBoardId },
+    data: { references_board_id: workBoardId, auto_create_task: true },
   })
 
   const ideaId = (board: DemoBoardScenario, index: number): string => {
@@ -228,6 +230,8 @@ async function seedOrganization(
     ...reference.cards.map((task) => ({ task, parentId: null })),
   ]
 
+  const autoCreated = autoCreatedTaskKeys(reference)
+
   // Insert-if-missing in batches: a row that exists is left as it is, as the upserts elsewhere do.
   const ideaRows = []
   const assigneeRows = []
@@ -245,6 +249,7 @@ async function seedOrganization(
       organization_id: organizationId,
       board_id: workBoardId,
       parent_idea_id: parentId,
+      auto_created: autoCreated.has(task.key),
       item_number: index + 1,
       status_id: statusId(LANE_STATUS[task.lane]),
       sprint_id: task.sprint === undefined ? null : sprintId(task.sprint),

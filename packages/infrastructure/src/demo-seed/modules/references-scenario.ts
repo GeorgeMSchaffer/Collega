@@ -30,6 +30,17 @@ export type DemoTask = {
   readonly tag?: string
 }
 
+/**
+ * The tasks the system would have made on entry to the reference lane (its Auto-create tasks
+ * setting): one per parent, the first listed. The rest were added by hand. Cards have no parent
+ * and are never auto-created.
+ */
+export function autoCreatedTaskKeys(scenario: DemoReferenceScenario): ReadonlySet<string> {
+  return new Set(
+    scenario.parents.flatMap((parent) => (parent.tasks[0] ? [parent.tasks[0].key] : [])),
+  )
+}
+
 export type DemoParent = {
   /** Index into the second board's ideas. */
   readonly idea: number
@@ -106,11 +117,14 @@ const PINECONE: DemoReferenceScenario = {
     description: 'Engineering tasks that deliver approved improvements, planned in sprints.',
   },
   sprints: [
-    { name: 'Sprint 41', goal: 'Cut alert noise before the next on-call rotation.' },
-    { name: 'Sprint 42', goal: 'Contract-test groundwork and the first migration checks.' },
-    { name: 'Sprint 43', goal: 'Get the Node upgrade and the partner fixtures into review.' },
-    { name: 'Sprint 44', goal: 'Run the contract tests nightly and take the upgrade to staging.' },
-    { name: 'Sprint 45', goal: null },
+    { name: 'Eng sprint 41', goal: 'Cut alert noise before the next on-call rotation.' },
+    { name: 'Eng sprint 42', goal: 'Contract-test groundwork and the first migration checks.' },
+    { name: 'Eng sprint 43', goal: 'Get the Node upgrade and the partner fixtures into review.' },
+    {
+      name: 'Eng sprint 44',
+      goal: 'Run the contract tests nightly and take the upgrade to staging.',
+    },
+    { name: 'Eng sprint 45', goal: null },
   ],
   parents: [
     { idea: 2, effort: 'Low', inLane: true, tasks: [] },
