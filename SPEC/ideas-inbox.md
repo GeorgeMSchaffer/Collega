@@ -8,14 +8,14 @@
 
 ## Move one idea to another board
 
-> Raised 2026-10-13, out of scope for Sprint 14 (`SPEC/20-feature-board-pull-in.md` "Out of scope").
+> **Triage 2026-10-20: valid, to be specced.** Raised 2026-10-13, out of scope for Sprint 14 (`SPEC/20-feature-board-pull-in.md` "Out of scope").
 > Sprint 14 pulls items onto a board from the board's own form, in bulk. A single-idea *Move to
 > another board* action on the idea drawer would reuse the re-board primitive slice 180 builds.
 > Unrefined: who may move someone else's idea, and whether a move notifies followers, are open.
 
 ## Chat assistant: ingestion, and refining ideas that already exist (needs a spec)
 
-> Raised 2026-09-13. **Still unrefined, but no longer unowned:** the AI integration is rescoped and
+> **Triage 2026-10-20: valid, deferred until after assistant v2 ships; specify ingestion and refinement separately.** Raised 2026-09-13. **Still unrefined, but no longer unowned:** the AI integration is rescoped and
 > respecified after the current batch (`SPEC/decisions.md` 2026-09-13), and this is one of the things
 > that rescope has to answer. Captured because the gap is visible in shipped code rather than
 > hypothetical: `SPEC/20-feature-ai-idea-assist.md` is live behind eleven endpoints, and it is scoped
