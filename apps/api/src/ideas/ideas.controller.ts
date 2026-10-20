@@ -1,5 +1,6 @@
 import { type Page, ValidationError } from '@collega/application/common'
 import {
+  type BoardTaskListItem,
   type CreateBoardTaskCommand,
   type CreateIdeaResult,
   type IdeaActivityEntry,
@@ -75,10 +76,11 @@ type CreateIdeaBody = {
   tagNames?: unknown
   mentionEmails?: unknown
   fieldValues?: unknown
+  effort?: unknown
 }
 
 /** `POST /organizations/{organizationId}/issues`: the create shape plus the promotion's fields. */
-type AddIssueBody = CreateIdeaBody & { effort?: unknown; sprintId?: unknown }
+type AddIssueBody = CreateIdeaBody & { sprintId?: unknown }
 
 /** `PUT /ideas/{ideaId}` - `UpdateIdeaRequest`: the create shape minus `statusId`. */
 type UpdateIdeaBody = Omit<CreateIdeaBody, 'statusId'> & { effort?: unknown }
@@ -181,6 +183,7 @@ function newIdeaFields(body: CreateIdeaBody) {
     tagNames: stringList('tagNames', body.tagNames),
     mentionEmails: stringList('mentionEmails', body.mentionEmails),
     fieldValues: fieldValues(body.fieldValues),
+    ...effortField(body),
   }
 }
 
@@ -345,6 +348,24 @@ export class IdeasController {
     validateFields(taskBodyRules(body))
 
     return this.ideas.createBoardTask(ideaId, taskFields(body))
+  }
+
+  /** The parent's tasks in creation order. */
+  @Get('ideas/:ideaId/board-tasks')
+  async listBoardTasks(
+    @Param('ideaId', UuidParamPipe) ideaId: string,
+  ): Promise<readonly BoardTaskListItem[]> {
+    return this.ideas.listBoardTasks(ideaId)
+  }
+
+  /** Deletes the task card; the parent's counts and lock follow. */
+  @Delete('ideas/:ideaId/board-tasks/:taskId')
+  @HttpCode(204)
+  async deleteBoardTask(
+    @Param('ideaId', UuidParamPipe) ideaId: string,
+    @Param('taskId', UuidParamPipe) taskId: string,
+  ): Promise<void> {
+    await this.ideas.deleteBoardTask(ideaId, taskId)
   }
 
   /** An idea with no board. The body is the board create's minus `statusId`, which is ignored if
