@@ -58,45 +58,6 @@ does today, and several of its rules constrain what either of these may do.
 
 ---
 
-## Roadmaps → Sprints → Issues (still being explored)
-
-> **Kept here deliberately, not an oversight** (user decision, 2026-08-27). The promote-and-delete rule below would normally send this to its spec and delete it here — but the user is still exploring the shape and expects to revisit it **after the MVP, or immediately before it**. Until then this stays as the original unrefined brainstorm.
->
-> **A canonical spec already exists for the first slice: `SPEC/20-feature-issues-and-delivery.md`** (interview-resolved 2026-08-10, post-MVP, not scheduled). Where the two disagree, the spec is the considered version and this text is the raw prompt that produced it. The differences are the interesting part:
->
-> - This text makes **Roadmaps** core scope. The spec **explicitly defers** Roadmaps/Epics, the Impact×Effort prioritization view, crowd-backlog auto-surfacing, and AI-assisted promotion to later slices.
-> - This text reads as *"Issues are an extension of an Idea"* — a second object. The spec resolves that to **same object, two phases**: an item carries a `Phase` of `Discovery` or `Delivery`, and promotion flips it. Same row, so provenance survives. The spec calls overloading a terminal status like `Complete` to also mean "committed to delivery" the source of the concept's awkwardness — which is the awkwardness the brainstorm below names but does not resolve.
-> - The spec adds an explicit **"Promote to Issue" decision gate** rather than promotion-by-status.
->
-> Read the spec before re-opening this; it already answers several of the questions below.
-
-Help me come up with a new feature.  The overall idea is that the board is used to manage the process of brainstorming and fleshing out ideas, think of it as a Trello, Jira, Workspace hybrid.  I want to enable the user to manage the process of implementing the idea using AGILE Best practices.  Admins should be able to create Roadmaps. These roadmaps, will consit of Sprints, which consits of Tasks, which are Ideas translated to tasks.  However the idea seems a bit uncooked and potential akward.  Help me to refine the idea for this feature by making recommendations, referencing best practices, and ideas that could differantiate product from Trello and Jira.
-
-    * Main Funtionality
-        * Create Roadmap(s)
-            * Should have the following fields
-                * Title
-                * Goal Description Field
-                * Start Date
-                * End Date
-                * The ability to assign Roadmap Owner(s)
-
-        * Sprints should be assignable to a Road Map, the fields on the Sprint:
-            * Title
-            * Start Date
-            * End Date
-            * Sprint Goal
-            * Sprint Owner
-            * Tags
-        * Sprints will consits of one to many Issues.  Issues are an extension of an Idea, however it should have additional fields for:
-            * Start Date
-            * End Date
-            * Effort (Low, Medium, High)
-            * Sprint Tags
-            * Status: Pending, Scoping, Development, Review and Complete
-
----
-
 ## Org bootstrap templates
 
 *Parked 2026-08-13 after a brainstorm on "should the Site Admin be able to edit the default statuses?" — explored, recommendation was **don't build now**. Captured so the reasoning isn't re-derived.*
