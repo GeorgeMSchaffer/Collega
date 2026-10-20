@@ -20,7 +20,17 @@ const one = (params: Params, key: string) => {
  */
 async function loadTasks(idea: IdeaDetail): Promise<IdeaTasks | null> {
   if (!idea.boardId || idea.parentIdeaId) return null
-  const board = await getBoard(idea.boardId)
+  // The section is an extra: a failed read (or an idea deleted between reads) leaves it out and the
+  // drawer intact, rather than failing the page.
+  try {
+    return await readTasks(idea, idea.boardId)
+  } catch {
+    return null
+  }
+}
+
+async function readTasks(idea: IdeaDetail, boardId: string): Promise<IdeaTasks | null> {
+  const [board, tasks] = await Promise.all([getBoard(boardId), getBoardTasks(idea.id)])
   if (!board) return null
 
   const at = board.lanes.findIndex((lane) => lane.id === idea.statusId)
@@ -31,8 +41,7 @@ async function loadTasks(idea: IdeaDetail): Promise<IdeaTasks | null> {
 
   const user = currentUser()
   const mayWrite = writeDenial(user.role) === null && !board.isArchived
-  const [tasks, referenced, options] = await Promise.all([
-    getBoardTasks(idea.id),
+  const [referenced, options] = await Promise.all([
     getBoard(lane.referencesBoardId),
     mayWrite ? getIdeaFormOptions() : null,
   ])
