@@ -1,7 +1,7 @@
 # prompt-eval
 
 The corpus the AI idea-assist prompt was evaluated against
-(`SPEC/20-feature-ai-idea-assist.md`): nine v1 cases, seven v2 cases and four organization
+(`SPEC/20-feature-ai-idea-assist.md`): nine v1 cases, ten v2 cases and four organization
 fixtures.
 
 A runner measures a prompt across the whole corpus: pass rates over repeats, the scope-gate
@@ -68,6 +68,23 @@ only the cases both runs share and lists the ones it left out. Call `node src/cl
   than 0.5 apart. It is reported, not gated.
 
 These were confirmed against the first baseline on 2026-09-30 (`SPEC/decisions.md`).
+
+## v2 scoring
+
+A run that drove the v2 turn adds a **v2 results** section to its summary: refusal recall and
+precision, overall mapping accuracy, and pooled accuracy for structured fields, interview order,
+brainstorm suggestions, custom fields and "I kept your edit" replies, beside the locked-field
+proposal and survival figures. Proposed targets (precision 0.90, mapping 0.90, each group 0.80) are
+reported as met or not met, never gating; they are unconfirmed until the first v2 run
+(`src/v2-targets.ts`, runner spec rule 33). A survived locked field, the `refuse-*` recall floor
+(which includes `refuse-v2-lock-override`) and a regression against a baseline still fail the run.
+
+**The runner cannot yet execute v2 cases**: `eval` runs the v1 and `both` cases and lists the rest
+as "validated, not run", because the v2 turn does not exist until slice 307. Scoring is tested on
+hand-built run files. The real v2 run is therefore an owner/QA step after 307: run the v2 turn over
+the whole corpus (`--assistant v2` is to be added with the v2 port), then
+`pnpm -C tools/prompt-eval eval compare baselines/v1-default.json runs/<v2 run>.json`, then
+commit it as `baselines/v2-default.json` with its summary. No v2 baseline is committed.
 
 ## The baseline
 
