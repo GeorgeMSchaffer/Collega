@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-20 | Prompt-eval v2 targets confirmed: 0.85 / 0.85 / 0.75, report-only | active | full below |
 | 2026-10-20 | Board tasks record whether the system auto-created them (`ideas.auto_created`) | active | full below |
 | 2026-10-19 | Board References UI slice 3: three comp U answers | active | full below |
 | 2026-10-19 | "Move anyway" offers a lane picker | active | full below |
@@ -131,6 +132,16 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-20 — Prompt-eval v2 targets confirmed: 0.85 / 0.85 / 0.75, report-only
+
+**Decided by the owner.** The v2 targets proposed in slice 305 are confirmed at a looser level than proposed (0.90 / 0.90 / 0.80): v2 refusal precision **0.85**, v2 overall mapping accuracy **0.85**, each v2 group (structured fields, interview order, brainstorm suggestions, custom fields, "I kept your edit") **0.75**, on the point estimate.
+
+- Still report-only: met or not met in the summary, never an exit code. What gates a v2 run is unchanged: the `refuse-*` recall floor (rule 31), a surviving locked field (rule 16), and a regression against a baseline (rule 32).
+- Why looser: no v2 run exists yet, groups are small (a few trials each), and the v1 baseline's 0.95 was measured on a much larger corpus. Tighten once a v2 baseline shows real rates.
+- Lives in `tools/prompt-eval/src/v2-targets.ts` and runner spec rule 33.
 
 ---
 

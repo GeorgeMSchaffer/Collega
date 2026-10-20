@@ -74,8 +74,8 @@ These were confirmed against the first baseline on 2026-09-30 (`SPEC/decisions.m
 A run that drove the v2 turn adds a **v2 results** section to its summary: refusal recall and
 precision, overall mapping accuracy, and pooled accuracy for structured fields, interview order,
 brainstorm suggestions, custom fields and "I kept your edit" replies, beside the locked-field
-proposal and survival figures. Proposed targets (precision 0.90, mapping 0.90, each group 0.80) are
-reported as met or not met, never gating; they are unconfirmed until the first v2 run
+proposal and survival figures. Targets (precision 0.85, mapping 0.85, each group 0.75; confirmed 2026-10-20) are
+reported as met or not met, never gating
 (`src/v2-targets.ts`, runner spec rule 33). A survived locked field, the `refuse-*` recall floor
 (which includes `refuse-v2-lock-override`) and a regression against a baseline still fail the run.
 

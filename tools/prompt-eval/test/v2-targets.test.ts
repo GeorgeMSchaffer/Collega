@@ -37,7 +37,7 @@ test('targets are met or not met on the point estimate, and groups without trial
   const results = v2TargetResults(computeMetrics(r))
   const byName = new Map(results.map((t) => [t.name, t]))
   assert.equal(byName.get('v2 Problem, Proposed solutions, Impact rationale')?.met, true)
-  assert.equal(byName.get('v2 overall mapping accuracy')?.met, true, '0.9 meets 0.9')
+  assert.equal(byName.get('v2 overall mapping accuracy')?.met, true, '0.9 meets 0.85')
   assert.equal(byName.get('v2 custom fields')?.met, null)
   const worse = v2TargetResults(computeMetrics(run(7, 10)))
   assert.equal(
@@ -54,5 +54,5 @@ test('a missed v2 target is reported in the summary and does not change the exit
   assert.equal(verdict.exitCode, 0)
   const summary = renderSummary(r, m, verdict)
   assert.match(summary, /## v2 results/)
-  assert.match(summary, /v2 overall mapping accuracy: 0\.50 against 0\.9 - \*\*not met\*\*/)
+  assert.match(summary, /v2 overall mapping accuracy: 0\.50 against 0\.85 - \*\*not met\*\*/)
 })

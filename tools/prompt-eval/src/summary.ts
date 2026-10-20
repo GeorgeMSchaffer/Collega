@@ -174,7 +174,7 @@ function renderV2(out: string[], metrics: RunMetrics): void {
   }
   out.push('')
   out.push(
-    `Targets (proposed, not yet confirmed; reported, never gating - rule 33): precision ${V2_TARGETS.scopePrecision}, overall mapping ${V2_TARGETS.overallMapping}, each group ${V2_TARGETS.groupAccuracy}.`,
+    `Targets (confirmed 2026-10-20; reported, never gating - rule 33): precision ${V2_TARGETS.scopePrecision}, overall mapping ${V2_TARGETS.overallMapping}, each group ${V2_TARGETS.groupAccuracy}.`,
   )
   out.push('')
   for (const t of v2TargetResults(metrics)) {
