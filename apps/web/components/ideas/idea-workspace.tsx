@@ -492,9 +492,8 @@ export function IdeaWorkspace({
               {idea.title}
             </button>
             <span className="text-xs text-muted-foreground font-normal">
-              {idea.boardId === null
-                ? 'No board'
-                : (boardsById.get(idea.boardId)?.name ?? board?.name ?? '')}
+              {boardName(idea.boardId)}
+              {archived(idea.boardId) ? ' · Archived' : ''}
             </span>
           </div>
           {idea.effort ? <EffortBar effort={idea.effort} className="mt-1 flex w-fit" /> : null}
@@ -515,7 +514,7 @@ export function IdeaWorkspace({
     },
     {
       key: 'assignedTo',
-      header: 'Owner',
+      header: 'Assignees',
       cell: (idea) => <People people={idea.assignees} />,
     },
     {

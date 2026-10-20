@@ -1,7 +1,7 @@
 'use client'
 
 import { Button, cn, Input } from '@collega/design-system'
-import { type KeyboardEvent, useState } from 'react'
+import { type KeyboardEvent, useId, useState } from 'react'
 import { useToast } from '@/components/delivery/toast'
 
 export type QuickAddValues = Readonly<Record<string, string>>
@@ -54,6 +54,7 @@ export function QuickAddBar({
 } & Mode) {
   const initial = (): Record<string, string> =>
     Object.fromEntries(fields.map((f) => [f.name, f.defaultValue ?? '']))
+  const errorId = useId()
   const [values, setValues] = useState(initial)
   const [errors, setErrors] = useState<Readonly<Record<string, string>>>({})
   const [formError, setFormError] = useState<string | null>(null)
@@ -157,10 +158,14 @@ export function QuickAddBar({
       )}
       data-testid={testId}
     >
-      <span className="text-primary text-lg">＋</span>
+      <span aria-hidden="true" className="text-primary text-lg">
+        ＋
+      </span>
       <Input
         aria-label={label}
         aria-invalid={invalid || undefined}
+        aria-describedby={invalid ? errorId : undefined}
+        maxLength={titleField?.maxLength}
         className="flex-1 border-0 bg-transparent focus-visible:ring-0 shadow-none"
         placeholder={titleField?.placeholder}
         value={values[titleField?.name ?? ''] ?? ''}
@@ -169,7 +174,7 @@ export function QuickAddBar({
         disabled={saving}
       />
       {invalid ? (
-        <span role="alert" className="text-xs text-destructive">
+        <span id={errorId} role="alert" className="text-xs text-destructive">
           {formError ?? Object.values(errors)[0]}
         </span>
       ) : null}

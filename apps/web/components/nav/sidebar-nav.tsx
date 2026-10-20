@@ -48,7 +48,7 @@ export function SidebarNav({
           type="button"
           aria-expanded={open}
           aria-controls="primary-nav"
-          aria-label={open ? 'Close menu' : 'Open menu'}
+          aria-label="Menu"
           onClick={() => setOpen((current) => !current)}
           className="ml-auto hidden size-8 items-center justify-center rounded-md text-lg hover:bg-sidebar-accent max-md:inline-flex"
         >
