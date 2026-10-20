@@ -1,5 +1,5 @@
 import { estimatedCostOf } from '@collega/domain/ai'
-import type { Priority } from '@collega/domain/enums'
+import type { FieldType, Priority } from '@collega/domain/enums'
 
 // Prompt management (Site-Admin settings surface) -------------------------------------------
 
@@ -400,4 +400,80 @@ export function reportTotalTokens(report: AiUsageReport): number {
 
 export function reportTotalEstimatedCost(report: AiUsageReport): number {
   return report.organizations.reduce((sum, o) => sum + o.estimatedCost, 0)
+}
+
+// Idea assistant v2 (SPEC/contracts/ai-assist.md "v2 turn contract") ------------------------------
+// Not wired into the live turn endpoint until slice 307; the v1 types above stay in force until then.
+
+/** One custom-field value. `value` is the `IdeaFieldValue` string serialization, per field type. */
+export type IdeaAssistFieldValue = {
+  readonly fieldDefinitionId: string
+  readonly value: string
+}
+
+/**
+ * The full v2 draft the client sends. Every key is optional: an absent key and `null` both mean
+ * "nothing there yet".
+ */
+export type IdeaDraftV2 = {
+  readonly title?: string | null
+  readonly problem?: string | null
+  readonly proposedSolutions?: readonly string[] | null
+  readonly impactRationale?: string | null
+  readonly businessImpactId?: string | null
+  readonly ideaTypeId?: string | null
+  readonly priority?: Priority | null
+  readonly tagNames?: readonly string[] | null
+  readonly fieldValues?: readonly IdeaAssistFieldValue[] | null
+  readonly description?: string | null
+}
+
+/** Only the fields a turn set: the draft's shape, without `null`s. */
+export type IdeaDraftChanges = {
+  readonly title?: string
+  readonly problem?: string
+  readonly proposedSolutions?: readonly string[]
+  readonly impactRationale?: string
+  readonly businessImpactId?: string
+  readonly ideaTypeId?: string
+  readonly priority?: Priority
+  readonly tagNames?: readonly string[]
+  readonly fieldValues?: readonly IdeaAssistFieldValue[]
+  readonly description?: string
+}
+
+/** Offers the client applies only when the person chooses them. */
+export type IdeaAssistSuggestions = {
+  readonly solutions?: readonly string[]
+  readonly problemRewrite?: string
+  readonly rationales?: readonly string[]
+}
+
+export type IdeaAssistTurnRequestV2 = {
+  readonly boardId: string
+  readonly transcript: readonly IdeaAssistTurn[]
+  readonly draft: IdeaDraftV2 | null
+  /** Draft keys, or `fieldValues.<fieldDefinitionId>`, the person owns. */
+  readonly lockedFields: readonly string[]
+  /** The previous turn's `nextStep`. */
+  readonly step: string | null
+}
+
+export type IdeaAssistTurnResultV2 = {
+  readonly inScope: boolean
+  readonly conversationClosed: boolean
+  readonly nextQuestion: string
+  readonly changes: IdeaDraftChanges
+  readonly suggestions?: IdeaAssistSuggestions
+  readonly nextStep: string
+  readonly turnsRemaining: number
+}
+
+/** A custom field visible for an Idea Type, with the options a Dropdown or MultiSelect offers. */
+export type IdeaAssistFieldDefinition = {
+  readonly id: string
+  readonly name: string
+  readonly fieldType: FieldType
+  readonly isRequired: boolean
+  readonly options: readonly { readonly id: string; readonly label: string }[]
 }
