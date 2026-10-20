@@ -56,9 +56,9 @@ function byId(corpus: Corpus, id: string): EvalCase {
 
 // --- The corpus as committed -------------------------------------------------------------------
 
-test('the committed corpus loads: sixteen cases over four fixtures, in file-name order', async () => {
+test('the committed corpus loads: nineteen cases over four fixtures, in file-name order', async () => {
   const corpus = await realCorpus()
-  assert.equal(corpus.cases.length, 16)
+  assert.equal(corpus.cases.length, 19)
   assert.deepEqual([...corpus.fixtures.keys()].sort(), [
     'acme',
     'acme-scoped',
@@ -220,6 +220,24 @@ test('a v2 expectation is refused on a v1 case and on a "both" case', async () =
     'cases/refuse-injection-limerick.json',
     (c) => ({ ...c, expect: { ...(c.expect as Json), nextStep: 'problem' } }),
     /expect.nextStep needs "assistant": "v2"/,
+  )
+})
+
+test('keptEdit must name draft fields the case locks, and only on a v2 case', async () => {
+  await assertRefused(
+    LOCKED_CASE,
+    (c) => ({ ...c, expect: { ...(c.expect as Json), keptEdit: ['title'] } }),
+    /keptEdit names "title", which is not in lockedFields/,
+  )
+  await assertRefused(
+    LOCKED_CASE,
+    (c) => ({ ...c, expect: { ...(c.expect as Json), keptEdit: ['ideaType'] } }),
+    /expect.keptEdit must be a non-empty array of v2 draft field names/,
+  )
+  await assertRefused(
+    V1_CASE,
+    (c) => ({ ...c, expect: { ...(c.expect as Json), keptEdit: ['problem'] } }),
+    /expect.keptEdit needs "assistant": "v2"/,
   )
 })
 

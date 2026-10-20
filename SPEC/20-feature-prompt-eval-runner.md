@@ -256,6 +256,18 @@ excluded from every metric denominator below.
     share, plus the v2-only figures reported, attached to the slice that enables v2. The v2
     thresholds are decided with the v2 enablement, from the first v2 run.
 
+    *Slice 305, 2026-10-20.* The scorer reports the v2-only figures in a **v2 results** section
+    over the trials that drove the v2 turn: refusal recall and precision, overall mapping
+    accuracy, and pooled accuracy for five groups (structured fields; interview order via
+    `nextStep`; brainstorm `suggestions.*`; custom fields; "I kept your edit" replies via the
+    `keptEdit` expectation, which needs the reply to say it and name the field and may only name
+    fields the case locks), beside the locked-field proposal and survival figures of rule 16.
+    **Proposed v2 targets, not yet confirmed**: refusal precision 0.90, overall mapping 0.90, each
+    group 0.80, on the point estimate. They are reported as met or not met and never move an exit
+    code; what gates a v2 run is unchanged (rules 16, 31, 32), and a v2 baseline would gate the
+    `v2 …` figures by rule 32. The runner cannot yet *drive* the v2 turn (it needs the v2 port,
+    slice 307), so v2 cases are validated and scored from saved runs but not executed.
+
 ### Comparing prompt changes
 
 34. `compare <baseline.json> <candidate.json>` prints, per metric and per case, both values and the

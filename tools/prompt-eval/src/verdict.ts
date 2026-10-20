@@ -1,4 +1,10 @@
-import { PAIR_MARGIN, type Proportion, type RunMetrics } from './metrics.ts'
+import {
+  PAIR_MARGIN,
+  type Proportion,
+  type RunMetrics,
+  V2_GROUPS,
+  type V2Group,
+} from './metrics.ts'
 import type { RunData } from './run-file.ts'
 
 /**
@@ -96,6 +102,7 @@ export function judge(run: RunData, metrics: RunMetrics, baseline: Baseline | nu
 
 /** The metrics rule 32 gates, as label and value, in report order. */
 export function gatedMetrics(metrics: RunMetrics): [string, Proportion][] {
+  const v2 = metrics.v2
   return [
     ['refusal recall', metrics.scopeGate.all.recall],
     ['refusal precision', metrics.scopeGate.all.precision],
@@ -104,6 +111,18 @@ export function gatedMetrics(metrics: RunMetrics): [string, Proportion][] {
       m.accuracy,
     ]),
     ['overall mapping accuracy', metrics.overallMapping],
+    // Compared only against a baseline that drove the v2 turn too; a v1 baseline has none.
+    ...(v2 === null
+      ? []
+      : [
+          ['v2 refusal recall', v2.scopeGate.recall] satisfies [string, Proportion],
+          ['v2 refusal precision', v2.scopeGate.precision] satisfies [string, Proportion],
+          ['v2 overall mapping accuracy', v2.mapping] satisfies [string, Proportion],
+          ...(Object.keys(V2_GROUPS) as V2Group[]).map((g): [string, Proportion] => [
+            `v2 ${V2_GROUPS[g]}`,
+            v2.groups[g],
+          ]),
+        ]),
   ]
 }
 

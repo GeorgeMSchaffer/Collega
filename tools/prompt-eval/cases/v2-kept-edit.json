@@ -1,0 +1,17 @@
+{
+  "id": "v2-kept-edit",
+  "fixture": "acme-v2",
+  "assistant": "v2",
+  "note": "An owned field the message would change (v2 Suggested vs owned): the person wrote Problem and now asks for it to be reworded. The reply must say 'I kept your edit to Problem'. A reply that stays silent means the person is left wondering why nothing changed; a change to Problem is also a locked-field proposal, which the locked-field figures count.",
+  "draft": {
+    "title": "Tape dispenser length",
+    "problem": "The tape dispenser on the packing line is set too short, so boxes are re-taped by hand."
+  },
+  "lockedFields": ["problem"],
+  "turns": ["Can you reword my problem so it sounds more urgent and mentions lost hours?"],
+  "expect": {
+    "inScope": true,
+    "problemSet": true,
+    "keptEdit": ["problem"]
+  }
+}

@@ -112,6 +112,72 @@ export interface LockedFieldMetrics {
   readonly survived: readonly string[]
 }
 
+/** The v2 result groups: which declared expectations pool into each figure. */
+export const V2_GROUPS = {
+  structuredFields: 'Problem, Proposed solutions, Impact rationale',
+  interviewOrder: 'next question follows the interview order',
+  brainstorm: 'brainstorm suggestions',
+  customFields: 'custom fields',
+  ownedEdits: '"I kept your edit" replies',
+} as const
+export type V2Group = keyof typeof V2_GROUPS
+
+/** Rule 33: the v2-only figures, over the trials that drove the v2 turn. */
+export interface V2Metrics {
+  readonly trials: number
+  /** Refusal is the positive class, as for the whole run, but over v2 trials alone. */
+  readonly scopeGate: ScopeGateMetrics
+  /** Overall mapping accuracy (rule 15) over v2 trials alone. */
+  readonly mapping: Proportion
+  /** Pooled field outcomes per group; n is 0 where no v2 case in the run declares one. */
+  readonly groups: Readonly<Record<V2Group, Proportion>>
+}
+
+function groupOf(key: string): V2Group | null {
+  if (key === 'problemSet' || key === 'impactRationaleSet' || key === 'proposedSolutions') {
+    return 'structuredFields'
+  }
+  if (key === 'nextStep') return 'interviewOrder'
+  if (key.startsWith('suggestions.')) return 'brainstorm'
+  if (key.startsWith('fieldValues.')) return 'customFields'
+  if (key === 'keptEdit') return 'ownedEdits'
+  return null
+}
+
+function v2Metrics(scored: readonly ScoredTrial[]): V2Metrics | null {
+  const v2 = scored.filter((t) => t.v2 !== null)
+  if (v2.length === 0) return null
+  const pooled = new Map<V2Group, [number, number]>()
+  let mappingCorrect = 0
+  let mappingTotal = 0
+  for (const t of v2) {
+    for (const [key, expected] of declaredFields(t.evalCase.expect)) {
+      const correct = fieldOutcome(t, key, expected) === 'correct'
+      const group = groupOf(key)
+      if (group !== null) {
+        const [k, n] = pooled.get(group) ?? [0, 0]
+        pooled.set(group, [k + (correct ? 1 : 0), n + 1])
+      }
+      if (t.evalCase.expect.inScope === true && isMapping(key)) {
+        mappingTotal++
+        if (correct) mappingCorrect++
+      }
+    }
+  }
+  const groups = Object.fromEntries(
+    (Object.keys(V2_GROUPS) as V2Group[]).map((g) => {
+      const [k, n] = pooled.get(g) ?? [0, 0]
+      return [g, wilson(k, n)]
+    }),
+  ) as Record<V2Group, Proportion>
+  return {
+    trials: v2.length,
+    scopeGate: scopeGate(v2),
+    mapping: wilson(mappingCorrect, mappingTotal),
+    groups,
+  }
+}
+
 export interface ErroredTrial {
   readonly caseId: string
   readonly repeat: number
@@ -145,6 +211,8 @@ export interface RunMetrics {
   readonly overallMapping: Proportion
   /** Rule 16. Null when no case in the run declares `lockedFields`. */
   readonly lockedFields: LockedFieldMetrics | null
+  /** Null when no scored trial drove the v2 turn. */
+  readonly v2: V2Metrics | null
   readonly cases: readonly CaseMetrics[]
   readonly erroredTrials: readonly ErroredTrial[]
   readonly usage: UsageMetrics
@@ -166,6 +234,7 @@ const FIELD_KEYS: readonly string[] = [
   'proposedSolutions',
   'tags',
   'nextStep',
+  'keptEdit',
 ]
 const PRESENCE_KEYS: Readonly<Record<string, keyof V2Draft>> = {
   titleSet: 'title',
@@ -207,6 +276,8 @@ interface ScoredTrial {
   readonly draft: V2Draft
   /** The final turn's v2 record, when the run drove the v2 turn. */
   readonly v2: V2TurnRecord | null
+  /** The final turn's reply, `nextQuestion`. */
+  readonly reply: string | null
 }
 
 function scoredTrials(run: RunData): ScoredTrial[] {
@@ -226,6 +297,7 @@ function scoredTrials(run: RunData): ScoredTrial[] {
       draft:
         v2 !== null ? (v2.draft ?? v2.draftSent) : fromV1Draft(last.sanitizedDraft as IdeaDraft),
       v2,
+      reply: last.nextQuestion,
     })
   }
   return scored
@@ -268,6 +340,17 @@ function optionName(fixture: RunFixture, field: string, draft: V2Draft): string 
   }
 }
 
+/** How the reply names a field to the person: "I kept your edit to Problem". */
+function fieldLabel(name: string): string {
+  if (name.startsWith('fieldValues.')) return name.slice('fieldValues.'.length)
+  const words = name
+    .replace(/Ids?$/, '')
+    .replace(/([A-Z])/g, ' $1')
+    .trim()
+    .toLowerCase()
+  return words.charAt(0).toUpperCase() + words.slice(1)
+}
+
 function isPresent(value: string | null): boolean {
   return value !== null && value.trim().length > 0
 }
@@ -301,6 +384,13 @@ function fieldOutcome(t: ScoredTrial, key: string, expected: unknown): FieldOutc
     const actual = t.v2?.nextStep ?? null
     if (actual === null) return 'empty'
     return actual === wireFieldName(expected as string, t.fixture) ? 'correct' : 'wrong'
+  }
+  if (key === 'keptEdit') {
+    const reply = (t.reply ?? '').toLowerCase()
+    if (!reply.includes('kept your edit')) return 'empty'
+    return (expected as string[]).every((name) => reply.includes(fieldLabel(name).toLowerCase()))
+      ? 'correct'
+      : 'wrong'
   }
   if (key.startsWith('fieldValues.')) {
     const field = t.fixture.fields?.find((f) => `fieldValues.${f.name}` === key)
@@ -526,6 +616,7 @@ export function computeMetrics(run: RunData): RunMetrics {
     fields,
     overallMapping: wilson(mappingCorrect, mappingTotal),
     lockedFields: lockedFieldMetrics(run, scored),
+    v2: v2Metrics(scored),
     cases,
     erroredTrials: run.trials
       .filter((t) => t.status === 'errored')

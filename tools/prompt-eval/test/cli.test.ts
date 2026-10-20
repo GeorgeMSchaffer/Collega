@@ -402,7 +402,7 @@ test('--dry-run needs no key, makes no call, writes nothing and counts the plan'
   assert.equal(o.fake.requests.length, 0)
   assert.deepEqual(await filesIn(o.runsDir), [])
   assert.match(o.stdout, /Planned {4}50 calls across 9 cases/)
-  assert.match(o.stdout, /Validated, not run \(7 v2 cases/)
+  assert.match(o.stdout, /Validated, not run \(10 v2 cases/)
   assert.match(o.stdout, /hostile-catalog/, 'every fixture is rendered')
 })
 
