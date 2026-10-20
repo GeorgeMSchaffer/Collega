@@ -23,6 +23,9 @@ const RULE_MESSAGES: Readonly<Record<string, string>> = {
   noDefaultIdeaType: 'The organization has no default Idea Type, so a task can’t be created yet.',
   noDefaultBusinessImpact:
     'The organization has no default Business Impact, so a task can’t be created yet.',
+  blockerIsSelf: 'A card can’t be blocked by itself.',
+  blockerOnOtherBoard: 'A blocker has to be a card on the same board.',
+  dependencyCycle: 'That would make a loop: the card is already waiting on this one.',
   effortRequiredInReferenceLane:
     'Effort can be changed but not cleared while the idea is in a lane that references a board.',
 }

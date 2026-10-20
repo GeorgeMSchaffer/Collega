@@ -12,6 +12,7 @@ import { markAllNotificationsRead, markNotificationRead } from '@/lib/server/inb
 import { useCurrentUser } from '@/lib/session-client'
 import type {
   BoardRef,
+  IdeaBlockers,
   IdeaDetail,
   IdeaFormOptions,
   IdeaTasks,
@@ -52,6 +53,7 @@ export function InboxWorkspace({
     idea: IdeaDetail | null
     formOptions: IdeaFormOptions | null
     tasks?: IdeaTasks | null
+    blockers?: IdeaBlockers | null
   }
 }) {
   const user = useCurrentUser()
@@ -179,6 +181,7 @@ export function InboxWorkspace({
         statusColor={idea ? statusById.get(idea.statusId)?.color : undefined}
         formOptions={drawer.formOptions}
         tasks={drawer.tasks}
+        blockers={drawer.blockers}
         createBoards={null}
         createBoardId={null}
         canEdit={canEdit}

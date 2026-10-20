@@ -464,11 +464,15 @@ export function toIdeaDetail(wire: WireIdeaDetail): IdeaDetail {
 
 /** The item key, parent, task rollup and blockers an idea list item and an idea detail share. */
 function toItemLinks(
-  wire: Pick<WireIdeaListItem, 'itemKey' | 'parentIdeaId' | 'taskCounts' | 'blockedBy'>,
-): Pick<Idea, 'itemKey' | 'parentIdeaId' | 'taskCounts' | 'blockedBy'> {
+  wire: Pick<
+    WireIdeaListItem,
+    'itemKey' | 'parentIdeaId' | 'parentItemKey' | 'taskCounts' | 'blockedBy'
+  >,
+): Pick<Idea, 'itemKey' | 'parentIdeaId' | 'parentItemKey' | 'taskCounts' | 'blockedBy'> {
   return {
     itemKey: wire.itemKey,
     parentIdeaId: wire.parentIdeaId,
+    ...(wire.parentItemKey !== undefined && { parentItemKey: wire.parentItemKey }),
     taskCounts: wire.taskCounts ? { ...wire.taskCounts } : null,
     blockedBy: wire.blockedBy.map((blocker: WireBlockedBy) => ({ ...blocker })),
   }

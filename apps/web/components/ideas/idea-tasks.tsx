@@ -8,7 +8,7 @@ import { Icon } from '@/components/list/icons'
 import { blockedBadge, blockedTooltip, isBlockedHere } from '@/lib/board-work'
 import { addBoardTask, moveIdea, removeBoardTask } from '@/lib/server/idea-actions'
 import type { BoardTask, IdeaDetail, IdeaTasks } from '@/lib/types'
-import { WARN_BADGE } from './idea-card'
+import { WARN_BADGE } from './idea-badges'
 import { People } from './idea-chips'
 import { AssigneesField, type ChosenTag, TagsField } from './idea-form'
 

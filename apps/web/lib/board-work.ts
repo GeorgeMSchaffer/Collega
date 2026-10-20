@@ -82,6 +82,31 @@ export function blockedTooltip(idea: Pick<Idea, 'blockedBy'>): string {
 }
 
 /**
+ * Whether `blockerId` already waits, directly or through others, on `ideaId`: adding it as a blocker
+ * would close a loop. The same guard as the server's `dependencyCycle`, so the picker can disable the
+ * row with its reason; `cards` is the board's page, and a loop through a card beyond it is left to
+ * the server's refusal.
+ */
+export function waitsOn(
+  cards: readonly Pick<Idea, 'id' | 'blockedBy'>[],
+  blockerId: string,
+  ideaId: string,
+): boolean {
+  const byId = new Map(cards.map((card) => [card.id, card]))
+  const seen = new Set<string>()
+  const stack = [blockerId]
+  for (let id = stack.pop(); id !== undefined; id = stack.pop()) {
+    if (seen.has(id)) continue
+    seen.add(id)
+    for (const blocker of byId.get(id)?.blockedBy ?? []) {
+      if (blocker.ideaId === ideaId) return true
+      stack.push(blocker.ideaId)
+    }
+  }
+  return false
+}
+
+/**
  * Why a card may not be dropped on `toStatusId`, or `null` when it may. The first reason that
  * applies wins: the lock, then a blocker, then a missing Effort. `null` too for a lane this board
  * does not have, or the card's own.

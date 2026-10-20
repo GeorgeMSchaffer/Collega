@@ -491,6 +491,8 @@ export type Idea = {
   itemKey: string | null
   /** Set on a task: the idea it was created from. */
   parentIdeaId: string | null
+  /** The parent's key, for the chip on a task; null when there is no parent or it has no key. */
+  parentItemKey?: string | null | undefined
   /** Only on an item in a lane that references a board; `done` counts tasks in a final lane. */
   taskCounts: { total: number; done: number } | null
   /** Items that must be final before this one leaves its board's first lane. */
@@ -654,6 +656,24 @@ export type IdeaTasks = {
   canMove: boolean
   /** Null when the reader may not add or remove tasks (hidden, not disabled). */
   adding: { members: MemberOption[]; tags: TagRef[] } | null
+}
+
+/** A card the Blockers picker offers: on the item's own board, never the item itself. */
+export type BlockerCandidate = {
+  id: string
+  itemKey: string | null
+  title: string
+  statusName: string
+  parentItemKey: string | null
+  /** It already waits on this item, so adding it would make a loop. */
+  cycle: boolean
+}
+
+/** The drawer's Blockers section: the board's cards, to name chips and to pick from. */
+export type IdeaBlockers = {
+  candidates: BlockerCandidate[]
+  /** The board's cards by id, to give a blocker chip the title and lane `blockedBy` lacks. */
+  cards: Record<string, { title: string; statusName: string }>
 }
 
 /** `NotificationEventType`, as the inbox sends it. */
