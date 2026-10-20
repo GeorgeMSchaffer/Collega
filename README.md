@@ -190,7 +190,7 @@ did not create.
 
 | | | |
 |---|---|---|
-| `db:seed` | The demo data — two organizations, one account per role each, boards, ideas, comments, sprints and issues | **Refuses to run when `NODE_ENV=production`.** |
+| `db:seed` | The demo data — two organizations, one account per role each, boards, ideas, comments, sprints, issues, and (in the three vertical organizations) Board References, Outcomes and board sprints | **Refuses to run when `NODE_ENV=production`.** |
 | `db:bootstrap-admin` | One App Admin, so a fresh deployment is reachable at all | Safe in production; it is what the API's deploy build runs |
 | `db:bootstrap-organization` | One empty organization with an admin | Safe in production |
 
