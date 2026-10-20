@@ -1,5 +1,6 @@
 import { waitsOn } from '@/lib/board-work'
 import {
+  getAssistAvailability,
   getBoard,
   getBoardIdeaList,
   getBoardTasks,
@@ -126,6 +127,8 @@ export async function loadIdeaDrawer(
   idea: IdeaDetail | null
   formOptions: IdeaFormOptions | null
   missing: boolean
+  /** A create drawer opens with the assistant (rule 32a); false for every other mode. */
+  assistAvailable: boolean
   isIssue: boolean
   tasks: IdeaTasks | null
   blockers: IdeaBlockers | null
@@ -134,10 +137,11 @@ export async function loadIdeaDrawer(
   const creating = one(params, DRAWER_PARAMS.create) !== undefined && canAuthor
   const editing = ideaId !== undefined && one(params, DRAWER_PARAMS.edit) !== undefined && canAuthor
 
-  const [idea, formOptions, issue] = await Promise.all([
+  const [idea, formOptions, issue, assistAvailable] = await Promise.all([
     ideaId && !creating ? getIdea(ideaId) : null,
     creating || editing ? getIdeaFormOptions() : null,
     ideaId && !creating && !editing ? getIssue(ideaId) : null,
+    creating ? getAssistAvailability() : false,
   ])
 
   const mode: DrawerMode | null = creating ? 'create' : idea ? (editing ? 'edit' : 'view') : null
@@ -147,6 +151,7 @@ export async function loadIdeaDrawer(
     idea,
     formOptions,
     missing: ideaId !== undefined && !creating && idea === null,
+    assistAvailable,
     isIssue: issue !== null,
     tasks: mode === 'view' && idea && issue === null ? await loadTasks(idea) : null,
     blockers: mode === 'view' && idea && issue === null ? await loadBlockers(idea) : null,

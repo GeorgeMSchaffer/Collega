@@ -1,10 +1,11 @@
 'use client'
 
-import { Button } from '@collega/design-system'
-import { useId, useState } from 'react'
+import { Alert, Button, cn } from '@collega/design-system'
+import { type ReactNode, useEffect, useId, useRef, useState } from 'react'
 import { Drawer } from '@/components/list'
 import { Icon } from '@/components/list/icons'
 import type { BoardRef, IdeaBlockers, IdeaDetail, IdeaFormOptions, IdeaTasks } from '@/lib/types'
+import { AssistChat } from './assist-chat'
 import { BlockersSection } from './idea-blockers'
 import { IdeaForm } from './idea-form'
 import { TasksCompletePrompt, TasksSection } from './idea-tasks'
@@ -29,6 +30,7 @@ export function IdeaDrawer({
   formOptions,
   createBoards,
   createBoardId,
+  assistAvailable = false,
   initial,
   referenceLane,
   effortNeeded,
@@ -56,6 +58,8 @@ export function IdeaDrawer({
   /** Boards a new idea may go on, beside "No board". */
   createBoards: BoardRef[] | null
   createBoardId: string | null
+  /** Create opens with the assistant beside the form (rule 32a); false opens the form with a notice. */
+  assistAvailable?: boolean
   /** The quick-add row's Title, for the create form to start with. */
   initial?: { title?: string } | undefined
   /** The idea's board has a reference lane, so the form says Effort gates a move. */
@@ -80,6 +84,10 @@ export function IdeaDrawer({
 }) {
   const formId = useId()
   const [saving, setSaving] = useState(false)
+  // 'chat': assistant and form side by side. 'form': the person chose the form, chat kept. 'failed':
+  // a turn failed and the conversation is over.
+  const [assist, setAssist] = useState<'chat' | 'form' | 'failed'>('chat')
+  const formPane = useRef<HTMLDivElement>(null)
 
   const open =
     (mode === 'create' && formOptions !== null) ||
@@ -96,6 +104,18 @@ export function IdeaDrawer({
           : null
 
   const form = mode === 'create' || mode === 'edit'
+  const assisted = open && mode === 'create' && assistAvailable
+  const chatShown = assisted && assist === 'chat'
+
+  // The drawer stays mounted when closed, so each opening starts a new conversation.
+  useEffect(() => {
+    if (!open) setAssist('chat')
+  }, [open])
+
+  const toForm = (to: 'form' | 'failed') => {
+    setAssist(to)
+    formPane.current?.querySelector<HTMLElement>('[data-error-key="title"]')?.focus()
+  }
 
   const footer = !open ? null : form ? (
     <>
@@ -105,6 +125,11 @@ export function IdeaDrawer({
       <Button variant="outline" onClick={mode === 'create' ? onClose : onView}>
         Cancel
       </Button>
+      {assisted && assist === 'form' ? (
+        <Button variant="ghost" onClick={() => setAssist('chat')}>
+          Use the assistant
+        </Button>
+      ) : null}
     </>
   ) : canEdit || canDelete ? (
     <>
@@ -128,6 +153,26 @@ export function IdeaDrawer({
     </>
   ) : null
 
+  // One element, so the form keeps its values when the chat is hidden or brought back.
+  const createForm =
+    open && form && formOptions ? (
+      // Keyed so switching ideas, or from create to edit, starts from that idea's values.
+      <IdeaForm
+        key={`${mode}-${idea?.id ?? 'new'}`}
+        formId={formId}
+        idea={mode === 'edit' ? idea : null}
+        options={formOptions}
+        boards={mode === 'create' ? createBoards : null}
+        boardId={mode === 'create' ? createBoardId : null}
+        initial={mode === 'create' ? initial : undefined}
+        contentLocked={mode === 'edit' && contentLocked}
+        referenceLane={referenceLane}
+        effortNeeded={mode === 'edit' ? effortNeeded : undefined}
+        onSaved={onSaved}
+        onPendingChange={setSaving}
+      />
+    ) : null
+
   return (
     <Drawer
       open={open}
@@ -135,24 +180,49 @@ export function IdeaDrawer({
       eyebrow={eyebrow}
       title={mode === 'create' ? 'Add New Idea' : (idea?.title ?? '')}
       footer={footer}
+      wide={chatShown}
+      bleed={assisted}
       returnFocusTo={returnFocusTo}
     >
       {!open ? null : form && formOptions ? (
-        // Keyed so switching ideas, or from create to edit, starts from that idea's values.
-        <IdeaForm
-          key={`${mode}-${idea?.id ?? 'new'}`}
-          formId={formId}
-          idea={mode === 'edit' ? idea : null}
-          options={formOptions}
-          boards={mode === 'create' ? createBoards : null}
-          boardId={mode === 'create' ? createBoardId : null}
-          initial={mode === 'create' ? initial : undefined}
-          contentLocked={mode === 'edit' && contentLocked}
-          referenceLane={referenceLane}
-          effortNeeded={mode === 'edit' ? effortNeeded : undefined}
-          onSaved={onSaved}
-          onPendingChange={setSaving}
-        />
+        assisted ? (
+          <div
+            className={cn(
+              'flex min-h-0 flex-1 flex-col overflow-auto',
+              'min-[900px]:grid min-[900px]:overflow-hidden',
+              chatShown ? 'min-[900px]:grid-cols-[42%_58%]' : 'min-[900px]:grid-cols-1',
+            )}
+          >
+            <AssistChat
+              boardId={createBoardId}
+              active={chatShown}
+              onManual={() => toForm('form')}
+              onFailed={() => toForm('failed')}
+              className="h-[min(60vh,30rem)] shrink-0 border-b min-[900px]:h-auto min-[900px]:border-r min-[900px]:border-b-0"
+            />
+            <div
+              ref={formPane}
+              className="flex flex-col gap-3.5 px-[18px] py-4 min-[900px]:min-h-0 min-[900px]:overflow-auto"
+            >
+              {assist === 'failed' ? (
+                <Notice>
+                  AI assist is unavailable right now. Everything captured so far is filled in;
+                  finish the idea here.
+                </Notice>
+              ) : null}
+              {createForm}
+            </div>
+          </div>
+        ) : (
+          <>
+            {mode === 'create' ? (
+              <Notice>
+                AI assist is unavailable, so fill in the idea here. Everything works the same.
+              </Notice>
+            ) : null}
+            {createForm}
+          </>
+        )
       ) : idea ? (
         <IdeaView
           idea={idea}
@@ -182,5 +252,15 @@ export function IdeaDrawer({
         />
       ) : null}
     </Drawer>
+  )
+}
+
+/** Informational, never an error, and it takes no focus (rule 32c). */
+function Notice({ children }: { children: ReactNode }) {
+  return (
+    <Alert variant="note" role="status" className="flex items-start gap-2">
+      <Icon name="info" />
+      <span>{children}</span>
+    </Alert>
   )
 }

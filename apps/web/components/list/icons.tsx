@@ -64,6 +64,7 @@ const PATHS = {
       <path d="M8 11V8a4 4 0 0 1 8 0v3" />
     </>
   ),
+  send: <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" />,
   grip: <path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01" strokeWidth="3" />,
 } as const
 
