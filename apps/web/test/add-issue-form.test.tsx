@@ -67,10 +67,10 @@ beforeEach(() => {
 })
 
 describe('IdeaForm without addingIssue', () => {
-  it('shows no Effort or Sprint and saves through saveIdea', async () => {
+  it('shows an optional Effort but no Delivery group or Sprint, and saves through saveIdea', async () => {
     const { form } = renderForm()
     expect(screen.queryByText('Delivery')).toBeNull()
-    expect(screen.queryByRole('radio')).toBeNull()
+    expect(screen.getAllByRole('radio')).toHaveLength(3)
 
     fillRequired()
     fireEvent.submit(form)
@@ -79,7 +79,7 @@ describe('IdeaForm without addingIssue', () => {
     expect(addIssue).not.toHaveBeenCalled()
   })
 
-  it('ignores an initial it was given about effort and sprint, since it never shows them', async () => {
+  it('ignores an initial it was given about effort and sprint, and sends no effort until one is chosen', async () => {
     const { form } = renderForm({ initial: { effort: 'High', sprintId: 'sprint-1' } })
     fillRequired()
     fireEvent.submit(form)

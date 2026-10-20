@@ -77,9 +77,9 @@ describe('IdeaForm initial', () => {
     expect(sprint().value).toBe('')
   })
 
-  it('shows no Effort or Sprint fields on a plain idea form even when initial carries them', () => {
+  it('shows no Sprint and an unchosen Effort on a plain idea form even when initial carries them', () => {
     form({ initial: { title: 'T', effort: 'High', sprintId: 'sp-1' } })
     expect(screen.queryByLabelText(/^Sprint/)).toBeNull()
-    expect(document.querySelector('input[type="radio"]')).toBeNull()
+    expect(checkedEffort()).toBeNull()
   })
 })
