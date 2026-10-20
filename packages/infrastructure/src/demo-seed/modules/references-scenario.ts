@@ -12,13 +12,22 @@
  * pin by slug (4 boards, 44 ideas), so they stay as they were.
  */
 
+import { DEMO_ORGANIZATIONS } from './scenario.js'
+
 export type WorkLane = 'todo' | 'doing' | 'review' | 'done'
 export type DemoEffort = 'Low' | 'Medium' | 'High'
 
 export type DemoTask = {
   /** Unique within the organization; what `blockedBy` and `card:` refer to. */
   readonly key: string
-  readonly title: string
+  /** Absent on an auto-created task, which takes its parent's title as the service does. */
+  readonly title?: string
+  /**
+   * A task the system made on the parent's entry to the reference lane: no title of its own, no
+   * assignees, tag or description (what `autoTaskCommand` sends), listed first for its parent.
+   * It may have moved on from the board's first lane since. Hand-written tasks omit this.
+   */
+  readonly auto?: true
   readonly lane: WorkLane
   /** Indexes into CONTRIBUTOR_LOCAL_PARTS. */
   readonly assignees?: readonly number[]
@@ -28,17 +37,6 @@ export type DemoTask = {
   readonly blockedBy?: readonly string[]
   /** A tag name the organization already has. */
   readonly tag?: string
-}
-
-/**
- * The tasks the system would have made on entry to the reference lane (its Auto-create tasks
- * setting): one per parent, the first listed. The rest were added by hand. Cards have no parent
- * and are never auto-created.
- */
-export function autoCreatedTaskKeys(scenario: DemoReferenceScenario): ReadonlySet<string> {
-  return new Set(
-    scenario.parents.flatMap((parent) => (parent.tasks[0] ? [parent.tasks[0].key] : [])),
-  )
 }
 
 export type DemoParent = {
@@ -127,17 +125,21 @@ const PINECONE: DemoReferenceScenario = {
     { name: 'Eng sprint 45', goal: null },
   ],
   parents: [
-    { idea: 2, effort: 'Low', inLane: true, tasks: [] },
+    {
+      idea: 2,
+      effort: 'Low',
+      inLane: true,
+      tasks: [{ key: '2a', auto: true, lane: 'todo' }],
+    },
     {
       idea: 4,
       effort: 'Medium',
       inLane: true,
       tasks: [
         {
+          auto: true,
           key: '4a',
-          title: 'Export 90 days of alert history',
           lane: 'done',
-          assignees: [1],
           sprint: 1,
         },
         {
@@ -163,10 +165,9 @@ const PINECONE: DemoReferenceScenario = {
       inLane: true,
       tasks: [
         {
+          auto: true,
           key: '5a',
-          title: 'Pick the three partners to cover first',
           lane: 'done',
-          assignees: [0],
           sprint: 2,
         },
         {
@@ -211,12 +212,10 @@ const PINECONE: DemoReferenceScenario = {
       inLane: true,
       tasks: [
         {
+          auto: true,
           key: '6a',
-          title: 'Audit native dependencies for LTS support',
           lane: 'doing',
-          assignees: [2],
           sprint: 3,
-          tag: 'tech-debt',
         },
         {
           key: '6b',
@@ -243,10 +242,9 @@ const PINECONE: DemoReferenceScenario = {
       inLane: false,
       tasks: [
         {
+          auto: true,
           key: '7a',
-          title: 'Lint migrations for locking statements',
           lane: 'done',
-          assignees: [1],
           sprint: 1,
         },
         {
@@ -277,12 +275,10 @@ const PINECONE: DemoReferenceScenario = {
       inLane: false,
       tasks: [
         {
+          auto: true,
           key: '8a',
-          title: 'Provision per-branch databases from a snapshot',
           lane: 'done',
-          assignees: [2],
           sprint: 1,
-          tag: 'ci-speed',
         },
         {
           key: '8b',
@@ -328,6 +324,8 @@ const PINECONE: DemoReferenceScenario = {
     'ideas:5': 'Medium',
     'ideas:6': 'High',
     'ideas:7': 'Low',
+    'opps:9': 'Medium',
+    'opps:10': 'Low',
   },
   metricTypes: [
     { key: 'hours', name: 'Engineer hours saved', unit: 'h' },
@@ -442,19 +440,22 @@ const BRIGHTLINE: DemoReferenceScenario = {
     { name: 'Cycle 22', goal: null },
   ],
   parents: [
-    { idea: 2, effort: 'Low', inLane: true, tasks: [] },
+    {
+      idea: 2,
+      effort: 'Low',
+      inLane: true,
+      tasks: [{ key: '2a', auto: true, lane: 'todo' }],
+    },
     {
       idea: 4,
       effort: 'Medium',
       inLane: true,
       tasks: [
         {
+          auto: true,
           key: '4a',
-          title: 'Map the metrics each client already reports',
           lane: 'done',
-          assignees: [1],
           sprint: 1,
-          tag: 'reporting',
         },
         {
           key: '4b',
@@ -480,10 +481,9 @@ const BRIGHTLINE: DemoReferenceScenario = {
       inLane: true,
       tasks: [
         {
+          auto: true,
           key: '5a',
-          title: 'Collect rates from the 15 regular freelancers',
           lane: 'done',
-          assignees: [0],
           sprint: 2,
         },
         {
@@ -526,10 +526,9 @@ const BRIGHTLINE: DemoReferenceScenario = {
       inLane: true,
       tasks: [
         {
+          auto: true,
           key: '6a',
-          title: 'Interview three account leads about change requests',
           lane: 'doing',
-          assignees: [2],
           sprint: 3,
         },
         {
@@ -557,10 +556,9 @@ const BRIGHTLINE: DemoReferenceScenario = {
       inLane: false,
       tasks: [
         {
+          auto: true,
           key: '7a',
-          title: 'Audit the folder structure on five accounts',
           lane: 'done',
-          assignees: [2],
           sprint: 1,
         },
         {
@@ -591,10 +589,9 @@ const BRIGHTLINE: DemoReferenceScenario = {
       inLane: false,
       tasks: [
         {
+          auto: true,
           key: '8a',
-          title: "Collect last year's best review decks",
           lane: 'done',
-          assignees: [1],
           sprint: 1,
         },
         {
@@ -639,6 +636,8 @@ const BRIGHTLINE: DemoReferenceScenario = {
     'ideas:5': 'Medium',
     'ideas:6': 'High',
     'ideas:7': 'Low',
+    'opps:9': 'High',
+    'opps:10': 'Medium',
   },
   metricTypes: [
     { key: 'hours', name: 'Hours recovered per month', unit: 'h' },
@@ -749,19 +748,22 @@ const MERIDIAN: DemoReferenceScenario = {
     { name: 'Iteration 11', goal: null },
   ],
   parents: [
-    { idea: 2, effort: 'Low', inLane: true, tasks: [] },
+    {
+      idea: 2,
+      effort: 'Low',
+      inLane: true,
+      tasks: [{ key: '2a', auto: true, lane: 'todo' }],
+    },
     {
       idea: 4,
       effort: 'Medium',
       inLane: true,
       tasks: [
         {
+          auto: true,
           key: '4a',
-          title: 'Pick the 40 process owners for the first cohort',
           lane: 'done',
-          assignees: [0],
           sprint: 1,
-          tag: 'training',
         },
         {
           key: '4b',
@@ -787,12 +789,10 @@ const MERIDIAN: DemoReferenceScenario = {
       inLane: true,
       tasks: [
         {
+          auto: true,
           key: '5a',
-          title: 'Pull 12 months of print and courier invoices',
           lane: 'done',
-          assignees: [1],
           sprint: 2,
-          tag: 'cost-takeout',
         },
         {
           key: '5b',
@@ -833,10 +833,9 @@ const MERIDIAN: DemoReferenceScenario = {
       inLane: true,
       tasks: [
         {
+          auto: true,
           key: '6a',
-          title: 'Agree the benefit definitions with Finance',
           lane: 'doing',
-          assignees: [0],
           sprint: 3,
         },
         {
@@ -863,12 +862,10 @@ const MERIDIAN: DemoReferenceScenario = {
       inLane: false,
       tasks: [
         {
+          auto: true,
           key: '7a',
-          title: 'Nominate champions in all six divisions',
           lane: 'done',
-          assignees: [0],
           sprint: 1,
-          tag: 'adoption',
         },
         {
           key: '7b',
@@ -899,12 +896,10 @@ const MERIDIAN: DemoReferenceScenario = {
       inLane: false,
       tasks: [
         {
+          auto: true,
           key: '8a',
-          title: 'Match devices to the plans they use',
           lane: 'done',
-          assignees: [1],
           sprint: 1,
-          tag: 'cost-takeout',
         },
         {
           key: '8b',
@@ -949,6 +944,8 @@ const MERIDIAN: DemoReferenceScenario = {
     'ideas:5': 'Medium',
     'ideas:6': 'High',
     'ideas:7': 'Low',
+    'opps:9': 'Low',
+    'opps:10': 'High',
   },
   metricTypes: [
     { key: 'cost', name: 'Annual cost avoided', unit: '$' },
@@ -1047,23 +1044,59 @@ export const REFERENCE_SCENARIOS: readonly DemoReferenceScenario[] = [
   MERIDIAN,
 ]
 
-const LANE_ORDER: readonly WorkLane[] = ['todo', 'doing', 'review', 'done']
-
 /**
- * Throws on a scenario the application would not have produced. The rules are the ones the services
- * enforce: a blocked card leaves its first lane only once its blockers are final, a completed sprint
- * holds nothing unfinished, and only top-level items are grouped or valued.
+ * Throws on a scenario that breaks one of these rules: task keys are unique; a blocked task leaves
+ * its first lane only once its blockers are final; a completed sprint holds no unfinished task;
+ * a parent past the lane has no more than one open task; an auto-created task is the first of its
+ * parent's and has no title, assignee or tag, and every parent in the reference lane has one; item
+ * references, sprint numbers and tag names exist; only top-level items are grouped or valued.
+ * It does not check the rest of what the services enforce (dates, lane or board rules) - the seed
+ * writes rows directly.
  */
 export function validateReferenceScenario(scenario: DemoReferenceScenario): void {
-  const fail = (message: string): never => {
+  function fail(message: string): never {
     throw new Error(`Reference scenario '${scenario.slug}': ${message}`)
   }
   if (scenario.sprints.length !== SPRINT_WINDOWS.length) fail('needs exactly five sprints')
+
+  const organization = DEMO_ORGANIZATIONS.find((candidate) => candidate.slug === scenario.slug)
+  const ideasBoard = organization?.boards[0]
+  const oppsBoard = organization?.boards[1]
+  if (
+    organization === undefined ||
+    ideasBoard?.ideas === undefined ||
+    oppsBoard?.ideas === undefined
+  ) {
+    fail('is not a vertical organization with two boards of written ideas')
+  }
+  const ideaCounts: Readonly<Record<string, number>> = {
+    ideas: ideasBoard.ideas.length,
+    opps: oppsBoard.ideas.length,
+  }
+  const tagNames = new Set(
+    organization.boards.flatMap((board) => board.tagNames.map((name) => name.toLowerCase())),
+  )
+  // `ideas:N` / `opps:N` must name an idea the board has.
+  const isIdeaRef = (ref: string): boolean => {
+    const [kind, index] = ref.split(':') as [string, string]
+    const count = ideaCounts[kind]
+    return count !== undefined && Number.isInteger(Number(index)) && Number(index) < count
+  }
 
   const tasks = [...scenario.parents.flatMap((parent) => parent.tasks), ...scenario.cards]
   const byKey = new Map<string, DemoTask>()
   for (const task of tasks) {
     if (byKey.has(task.key)) fail(`task key '${task.key}' is used twice`)
+    if (task.auto === true) {
+      if (task.title !== undefined || task.assignees !== undefined || task.tag !== undefined)
+        fail(`auto-created task '${task.key}' carries a title, assignee or tag`)
+    } else if (task.title === undefined) {
+      fail(`task '${task.key}' has no title`)
+    }
+    if (task.sprint !== undefined && !(task.sprint >= 1 && task.sprint <= scenario.sprints.length))
+      fail(`task '${task.key}' is in sprint ${task.sprint}, which does not exist`)
+    if (task.tag !== undefined && !tagNames.has(task.tag.toLowerCase()))
+      fail(`task '${task.key}' uses tag '${task.tag}', which the organization lacks`)
     for (const blockerKey of task.blockedBy ?? []) {
       const blocker = byKey.get(blockerKey)
       if (blocker === undefined)
@@ -1078,28 +1111,38 @@ export function validateReferenceScenario(scenario: DemoReferenceScenario): void
     }
     byKey.set(task.key, task)
   }
-
-  for (const parent of scenario.parents) {
-    const open = parent.tasks.some((task) => task.lane !== 'done')
-    if (!parent.inLane && parent.tasks.length === 0)
-      fail(`parent ${parent.idea} is past the lane with no tasks`)
-    if (!parent.inLane && open && parent.tasks.filter((task) => task.lane !== 'done').length > 1) {
-      fail(`parent ${parent.idea} is past the lane with several open tasks`)
-    }
+  for (const card of scenario.cards) {
+    if (card.auto === true) fail(`card '${card.key}' has no parent, so it cannot be auto-created`)
   }
 
-  const topLevel = new Set<string>([
-    ...scenario.parents.map((parent) => `opps:${parent.idea}`),
-    ...scenario.cards.map((card) => `card:${card.key}`),
-    ...Array.from({ length: 11 }, (_, i) => `ideas:${i}`),
-    ...Array.from({ length: 11 }, (_, i) => `opps:${i}`),
-  ])
+  for (const parent of scenario.parents) {
+    if (!isIdeaRef(`opps:${parent.idea}`))
+      fail(`parent ${parent.idea} is not an Opportunities idea`)
+    const open = parent.tasks.filter((task) => task.lane !== 'done')
+    if (!parent.inLane && parent.tasks.length === 0)
+      fail(`parent ${parent.idea} is past the lane with no tasks`)
+    if (!parent.inLane && open.length > 1) {
+      fail(`parent ${parent.idea} is past the lane with several open tasks`)
+    }
+    if (parent.tasks.some((task, index) => task.auto === true && index > 0))
+      fail(`parent ${parent.idea} lists an auto-created task after a hand-written one`)
+    if (parent.inLane && parent.tasks[0]?.auto !== true)
+      fail(`parent ${parent.idea} sits in the auto-create lane without its auto-created task`)
+  }
+  for (const ref of Object.keys(scenario.otherEfforts)) {
+    if (!isIdeaRef(ref)) fail(`effort given to '${ref}', which is not an idea`)
+  }
+
+  const isTopLevel = (item: string): boolean =>
+    item.startsWith('card:')
+      ? scenario.cards.some((card) => card.key === item.slice(5))
+      : isIdeaRef(item)
   const grouped = new Set<string>()
   for (const outcome of scenario.outcomes) {
     if (outcome.endQuarter < outcome.startQuarter)
       fail(`outcome '${outcome.key}' ends before it starts`)
     for (const item of outcome.items) {
-      if (!topLevel.has(item) || (item.startsWith('card:') && !byKey.has(item.slice(5)))) {
+      if (!isTopLevel(item)) {
         fail(`outcome '${outcome.key}' names '${item}', which is not a top-level item`)
       }
       if (grouped.has(item)) fail(`'${item}' sits under two outcomes`)
@@ -1110,11 +1153,10 @@ export function validateReferenceScenario(scenario: DemoReferenceScenario): void
   const valued = new Set<string>()
   for (const value of scenario.metricValues) {
     const id = `${value.item}|${value.metric}`
-    if (!topLevel.has(value.item))
+    if (!isTopLevel(value.item))
       fail(`metric value on '${value.item}', which is not a top-level item`)
     if (!metricKeys.has(value.metric)) fail(`unknown metric '${value.metric}'`)
     if (valued.has(id)) fail(`'${id}' is valued twice`)
     valued.add(id)
   }
-  if (LANE_ORDER.length !== 4) fail('lane order changed')
 }

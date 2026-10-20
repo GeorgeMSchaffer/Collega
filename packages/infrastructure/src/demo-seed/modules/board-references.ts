@@ -3,7 +3,6 @@ import { TAG_COLOR_PALETTE } from '@collega/domain/tags'
 import type { PrismaClient } from '../../generated/prisma/client.js'
 import type { SeedModule } from '../types.js'
 import {
-  autoCreatedTaskKeys,
   type DemoReferenceScenario,
   type DemoTask,
   REFERENCE_SCENARIOS,
@@ -220,24 +219,23 @@ async function seedOrganization(
     return tag.id
   }
 
-  const tasks: { task: DemoTask; parentId: string | null }[] = [
+  const tasks: { task: DemoTask; parentId: string | null; title: string }[] = [
     ...reference.parents.flatMap((parent) =>
       parent.tasks.map((task) => ({
         task,
         parentId: ideaId(oppsBoard, parent.idea) as string | null,
+        title: task.title ?? (oppsBoard.ideas?.[parent.idea]?.title as string),
       })),
     ),
-    ...reference.cards.map((task) => ({ task, parentId: null })),
+    ...reference.cards.map((task) => ({ task, parentId: null, title: task.title as string })),
   ]
-
-  const autoCreated = autoCreatedTaskKeys(reference)
 
   // Insert-if-missing in batches: a row that exists is left as it is, as the upserts elsewhere do.
   const ideaRows = []
   const assigneeRows = []
   const followerRows = []
   const tagLinkRows = []
-  for (const [index, { task, parentId }] of tasks.entries()) {
+  for (const [index, { task, parentId, title }] of tasks.entries()) {
     const id = taskId(task.key)
     // Seconds apart and in list order, so the Tasks section and the lanes read in creation order.
     const createdAt = new Date(now.getTime() - (tasks.length - index) * 5_000)
@@ -249,15 +247,15 @@ async function seedOrganization(
       organization_id: organizationId,
       board_id: workBoardId,
       parent_idea_id: parentId,
-      auto_created: autoCreated.has(task.key),
+      auto_created: task.auto === true,
       item_number: index + 1,
       status_id: statusId(LANE_STATUS[task.lane]),
       sprint_id: task.sprint === undefined ? null : sprintId(task.sprint),
-      title: task.title,
+      title,
       description: null,
-      problem: task.title,
-      proposed_solutions: [task.title],
-      impact_rationale: task.title,
+      problem: title,
+      proposed_solutions: [title],
+      impact_rationale: title,
       priority: 'Medium' as const,
       idea_type_id: seedId('idea-type', slug, defaultType.name),
       business_impact_id: seedId('business-impact', slug, defaultImpact.name),
