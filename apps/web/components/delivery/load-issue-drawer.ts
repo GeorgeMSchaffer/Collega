@@ -6,6 +6,7 @@ import {
   getIssue,
   getIssueTasks,
   getMemberOptions,
+  getOutcomeOf,
 } from '@/lib/data'
 import type { IdeaDetail, IdeaFormOptions, Issue, IssueTask, MemberOption } from '@/lib/types'
 
@@ -19,6 +20,8 @@ export type IssueDrawerData = {
   /** The board the Issue sits on; null for one promoted from the pool. */
   boardName: string | null
   boardArchived: boolean
+  /** Found in the roadmap read: neither the card nor the idea payload carries an `outcomeId`. */
+  outcome?: { id: string; name: string; color: string } | null | undefined // undefined: not read
   /** The idea form's catalogs, read only when `&edit=1` asks for the form. */
   formOptions: IdeaFormOptions | null
 }
@@ -44,12 +47,14 @@ export async function loadIssueDrawer(
   if (ideaId === undefined) return { drawer: null, editing: false, missing: false }
   const editing = one(params, DRAWER_PARAMS.edit) !== undefined
 
-  const [issue, idea, tasks, members, boards, formOptions] = await Promise.all([
+  const [issue, idea, tasks, members, boards, outcome, formOptions] = await Promise.all([
     inHand.find((candidate) => candidate.id === ideaId) ?? getIssue(ideaId),
     getIdea(ideaId),
     getIssueTasks(ideaId),
     getMemberOptions(),
     getBoardRefs(),
+    // A failed roadmap read costs this one field, not the drawer: undefined renders a dash.
+    getOutcomeOf(ideaId).catch(() => undefined),
     editing ? getIdeaFormOptions() : null,
   ])
 
@@ -63,6 +68,7 @@ export async function loadIssueDrawer(
       members,
       boardName: boards.find((board) => board.id === issue.boardId)?.name ?? null,
       boardArchived: boards.find((board) => board.id === issue.boardId)?.isArchived ?? false,
+      outcome: outcome && { id: outcome.id, name: outcome.name, color: outcome.color },
       formOptions,
     },
     editing,

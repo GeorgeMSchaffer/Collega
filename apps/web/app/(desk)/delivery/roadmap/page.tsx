@@ -1,9 +1,10 @@
 import { EmptyState, Meta } from '@collega/design-system'
 import { GatedAction } from '@/components/common/gated-action'
 import { PageHeader } from '@/components/common/page-header'
+import { OutcomeCards } from '@/components/delivery/outcome-cards'
 import { RoadmapTimeline } from '@/components/delivery/roadmap-timeline'
 import { Topbar } from '@/components/nav/topbar'
-import { getBacklogIssues, getSprints } from '@/lib/data'
+import { getMemberOptions, getOutcomeRoadmap, getSprints, getStatuses } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
@@ -13,20 +14,25 @@ export const metadata = { title: 'Roadmap · Collega' }
 const NO_OUTCOMES_YET = 'Outcomes arrive in a later release'
 
 /**
- * The Roadmap as Sprint 11 builds it: the comp R screen, drawn from the data that exists
- * (`SPEC/20-feature-issues-and-delivery.md`, "Roadmap (comp R)" — "What Sprint 11 shows").
+ * The Roadmap (`SPEC/20-feature-issues-and-delivery.md`, "Roadmap (comp R)"): the Outcomes on a time
+ * axis beside the sprints, then a card per Outcome with the items grouped under it.
  *
- * The timeline carries the organization's sprints. Outcomes have no backend yet, so where their
- * rows and cards will go is the empty state, and the outcome readers in `lib/data/delivery.ts` stay
- * empty on purpose.
+ * Read-only. The items are what the roadmap read returns: top-level items on any board, not only
+ * Issues in their Delivery phase, so the count is of items.
  */
 export default async function RoadmapPage() {
   // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
   await requireCurrentUser()
 
-  // Sprint counts plus the backlog: two requests, where listing every sprint's issues is one each.
-  const [sprints, backlog] = await Promise.all([getSprints(), getBacklogIssues()])
-  const count = backlog.length + sprints.reduce((total, sprint) => total + sprint.issueCount, 0)
+  const [roadmap, sprints, statuses, members] = await Promise.all([
+    getOutcomeRoadmap(),
+    getSprints(),
+    getStatuses(),
+    getMemberOptions(),
+  ])
+  const { outcomes, ungrouped } = roadmap
+  const grouped = outcomes.reduce((total, outcome) => total + outcome.ideaCount, 0)
+  const items = grouped + ungrouped.length
 
   return (
     <>
@@ -35,7 +41,8 @@ export default async function RoadmapPage() {
           <span className="text-sm font-normal text-muted-foreground">
             Delivery / <b className="font-medium text-foreground">Roadmap</b>
             <Meta caps className="ml-2.5">
-              {count} {count === 1 ? 'issue' : 'issues'}
+              {outcomes.length} {outcomes.length === 1 ? 'outcome' : 'outcomes'} · {items}{' '}
+              {items === 1 ? 'item' : 'items'}
             </Meta>
           </span>
         }
@@ -47,22 +54,37 @@ export default async function RoadmapPage() {
           action={<GatedAction id="why-outcome" label="Add New Outcome" denial={NO_OUTCOMES_YET} />}
         />
 
-        <RoadmapTimeline sprints={sprints} />
+        <RoadmapTimeline sprints={sprints} outcomes={outcomes} />
 
-        <EmptyState
-          heading="No outcomes yet"
-          action={
-            <GatedAction
-              id="why-outcome-empty"
-              label="Add the first outcome"
-              denial={NO_OUTCOMES_YET}
+        {outcomes.length === 0 ? (
+          <EmptyState
+            heading="No outcomes yet"
+            action={
+              <GatedAction
+                id="why-outcome-empty"
+                label="Add the first outcome"
+                denial={NO_OUTCOMES_YET}
+              />
+            }
+          >
+            {currentUser().organizationName ?? 'This deployment'} has {items}{' '}
+            {items === 1 ? 'item' : 'items'} and nothing to group them by. Outcomes group items
+            under what the team is working toward.
+          </EmptyState>
+        ) : (
+          <>
+            <OutcomeCards
+              outcomes={outcomes}
+              statuses={new Map(statuses.map((status) => [status.id, status]))}
+              members={new Map(members.map((member) => [member.id, member]))}
             />
-          }
-        >
-          {currentUser().organizationName ?? 'This deployment'} has {count} delivery{' '}
-          {count === 1 ? 'issue' : 'issues'} and nothing to group them by. Outcomes, which group
-          issues under what the team is working toward, arrive in a later release.
-        </EmptyState>
+            <p className="m-0 text-sm text-muted-foreground">
+              {ungrouped.length} {ungrouped.length === 1 ? 'item is' : 'items are'} under no
+              outcome. Each item sits under at most one, so the counts above add up to the {items}{' '}
+              {items === 1 ? 'item' : 'items'} the roadmap lists.
+            </p>
+          </>
+        )}
       </main>
     </>
   )

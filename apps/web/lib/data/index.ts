@@ -37,15 +37,9 @@
  * Home is also where the API's gaps show most plainly: three of its tiles and its activity feed
  * have no route to read, and `lib/data/home.ts` says why they answer null instead of a guess.
  *
- * **Delivery was the last whole module on the fixture, and converting it did not make every
- * delivery screen real.** Sprints and issues are; outcomes have no table, no service and no route
- * to be pointed at, so `getOutcomes`, `getOutcome` and `getIssuesForOutcome` answer empty rather
- * than keeping three invented themes beside live issues. `lib/data/delivery.ts` argues it properly.
- * The roadmap therefore renders its empty state, which is the true thing to render.
- *
- * **Since then the API grew the Outcome and metric-type routes**, and `./outcomes` and `./metrics`
- * read them. Nothing calls them yet: the Roadmap stays on the empty readers above until a later
- * slice decides to switch it over.
+ * **Delivery, outcomes and metrics read the API too.** `./outcomes` reads the Outcome and roadmap
+ * routes; the delivery card and the idea payload carry no `outcomeId`, so an item's Outcome is found
+ * in the roadmap read (`getOutcomeOf`).
  *
  * **Identity does not live here** — see `lib/session.ts` for why it stays synchronous, and
  * `lib/server/current-user.ts` for the one place it is fetched.

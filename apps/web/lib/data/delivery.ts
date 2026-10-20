@@ -1,42 +1,26 @@
 /**
- * Sprints, issues, outcomes and the roadmap.
+ * Sprints and issues, and the one outcome reader the Backlog still takes.
  *
  * The five delivery statuses are fixed and are NOT the org-configurable ideation statuses in
  * `./boards.ts` — two different sets that both read as "status", which is the confusion this
  * separation exists to prevent. They are a domain enum with no endpoint behind them, so
  * `getDeliveryStatuses` reads `DELIVERY_STATUSES` in `lib/display.ts`; that file says why.
  *
- * **Sprints and issues are real. The Roadmap's outcomes are still empty.** (The API has Outcome
- * routes now and `./outcomes` reads them; the three readers below stay empty until the Roadmap
- * screen is switched over.) Slice 1 of Issues-and-Delivery
- * shipped the promotion gate, sprints, the delivery query and tasks. Outcomes are Slice 2, and
- * nothing of them exists: no `outcomes` table in the frozen schema, no entity, no service, no
- * route. `SPEC/30-Contracts.md` "Delivery Contracts" says it outright — "The Slice 2 Outcome and
- * Roadmap routes are deliberately absent; nothing here carries an `outcomeId`."
+ * Outcomes and the roadmap are read in `./outcomes`. `getOutcomes` below is the short form the
+ * Backlog's Outcome column wants, derived from the roadmap read.
  *
- * So the three outcome readers answer **empty**, rather than the fixture's three invented themes.
- * That is the whole decision, and it is not tidiness. The alternative was a roadmap that lists
- * "Cut reporting effort — 3 issues" over rows nobody created, beside issues that are real: the
- * reader cannot tell which half is which, and finds out by clicking one. The ideas/board seam
- * already caused exactly that failure — a real count rising over invented rows — and empty is the
- * answer that cannot. Every screen involved already renders it correctly: the roadmap's own empty
- * state says "N delivery issues and nothing to group them by", which is precisely true, and the
- * backlog and issue pages say "Ungrouped" and "Not grouped".
- *
- * Building Outcomes properly is a schema amendment plus an entity, a service, eight routes and a
- * roadmap query — the spec sizes Slice 2 at five to seven days. It is not this slice.
- *
- * **There is no issue key**, and `getIssueByKey` is gone with it. `CLG-114` was comp Q's eyebrow
- * and has no column behind it, exactly as the idea inspector's `IDEA-101` does not (`lib/types.ts`
- * says why that one was dropped rather than derived). An Issue is not a resource of its own — it is
- * the `ideas` row in its `Delivery` phase — so it is addressed by `{ideaId}` everywhere the API is
- * concerned, and now everywhere the screens are too.
+ * **There is no issue key on the delivery card**, and `getIssueByKey` is gone with it. An Issue is
+ * not a resource of its own — it is the `ideas` row in its `Delivery` phase — so it is addressed by
+ * `{ideaId}` everywhere the API is concerned, and now everywhere the screens are too. **Nor does
+ * the card carry an `outcomeId`**: `toIssue` leaves it `null`, and an Issue's Outcome is found by
+ * looking for it among the roadmap's grouped items (`getOutcomeOf` in `./outcomes`).
  */
 
 import { toIssue, toIssueTask, toMemberOption, toSprint } from '../api/adapt'
 import { apiGet, apiPath, isApiStatus, withQuery } from '../api/client'
 import type { WireDeliveryCard, WireIssueTask, WireMember, WireSprint } from '../api/wire'
 import { DELIVERY_STATUSES } from '../display'
+import { quarterOf } from '../outcome-display'
 import type {
   DeliveryStatus,
   Issue,
@@ -47,6 +31,7 @@ import type {
   SprintState,
 } from '../types'
 import { failIfRequested, resolve } from './latency'
+import { getOutcomeRoadmap } from './outcomes'
 import { organizationScope } from './scope'
 
 export type {
@@ -247,21 +232,16 @@ export async function getMemberOptions(): Promise<MemberOption[]> {
 }
 
 /**
- * The roadmap's outcomes — empty, and this file's header says why at length.
- *
- * Not `[]` as a placeholder to be filled in later by a fixture: `[]` is the true answer until the
- * Slice 2 schema amendment lands. No organization has an outcome, because there is nowhere to put
- * one.
+ * Every Outcome in roadmap order, as the name, colour and quarter a picker or column needs. A Site
+ * Admin has no organization to scope to, so the roadmap read answers empty and so does this.
  */
 export async function getOutcomes(): Promise<Outcome[]> {
   failIfRequested('getOutcomes')
-  return resolve([])
-}
-
-export async function getOutcome(_id: string | null): Promise<Outcome | null> {
-  return resolve(null)
-}
-
-export async function getIssuesForOutcome(_outcomeId: string): Promise<Issue[]> {
-  return resolve([])
+  const { outcomes } = await getOutcomeRoadmap()
+  return outcomes.map((outcome) => ({
+    id: outcome.id,
+    name: outcome.name,
+    color: outcome.color,
+    quarter: quarterOf(outcome.targetStartDate),
+  }))
 }

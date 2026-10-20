@@ -762,8 +762,8 @@ export type Sprint = {
  *
  * `outcomeId` is nullable and **single-valued** — with one outcome per issue every roadmap total is
  * a plain count, where a checkbox list would make each total a cover, and covers do not add up
- * (`SPEC/decisions.md` 2026-09-02). It is present on the type and always `null` in practice, which
- * `lib/data/delivery.ts` explains: Outcomes are Slice 2 and have no table, service or route yet.
+ * (`SPEC/decisions.md` 2026-09-02). It is present on the type and always `null` in practice: the
+ * delivery card does not carry it (`lib/data/delivery.ts`).
  */
 export type Issue = {
   id: string
@@ -804,8 +804,7 @@ export type MemberOption = { id: string; name: string }
  * A named, dated theme that Issues are grouped under — a lens over the delivery set, not a
  * container that owns it (`SPEC/20-feature-issues-and-delivery.md` Slice 2).
  *
- * The type exists because the roadmap and the outcome picker are built; nothing populates it. See
- * `lib/data/delivery.ts` for why those readers answer empty rather than inventing rows.
+ * `quarter` is the calendar quarter the target window starts in.
  */
 export type Outcome = { id: string; name: string; color: string; quarter: string }
 
@@ -980,6 +979,8 @@ export type MetricTotal = {
 /** A top-level item grouped under an Outcome, as the Outcome page and the roadmap draw it. */
 export type OutcomeIdea = {
   id: string
+  /** Null without a board prefix or an item number. */
+  itemKey: string | null
   title: string
   statusId: string
   effort: Effort | null
@@ -988,6 +989,8 @@ export type OutcomeIdea = {
   /** `YYYY-MM-DD`. */
   sprintStart: string | null
   sprintEnd: string | null
+  /** Over active metric types; names and units come from the Outcome's `metricTotals`. */
+  metrics: { metricTypeId: string; projected: number | null; realized: number | null }[]
 }
 
 /** An Outcome with its rollup. `OutcomeIdea` rows come with the detail and the roadmap only. */

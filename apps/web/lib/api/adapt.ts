@@ -666,8 +666,8 @@ function toDeliveryStatusId(value: string | null): string {
 /**
  * One delivery card into the shape the sprint board, the backlog and the issue page render.
  *
- * `outcomeId` is hard `null` and is not read off the payload, because there is nothing to read: see
- * `lib/data/delivery.ts` for why Outcomes have no source at all yet.
+ * `outcomeId` is hard `null` and is not read off the payload, because the card carries none: see
+ * `lib/data/delivery.ts`.
  *
  * `upvotesAtPromotion` falls back to the live count only if the snapshot is missing, which the
  * promotion gate does not allow — the fallback is there so the backlog's sort has a number rather
@@ -752,6 +752,7 @@ function toMetricTotal(wire: WireMetricTotal): MetricTotal {
 function toOutcomeIdea(wire: WireOutcomeIdea): OutcomeIdea {
   return {
     id: wire.ideaId,
+    itemKey: wire.itemKey,
     title: wire.title,
     statusId: wire.statusId,
     effort: EFFORTS.find((candidate) => candidate === wire.effort) ?? null,
@@ -759,6 +760,7 @@ function toOutcomeIdea(wire: WireOutcomeIdea): OutcomeIdea {
     sprintId: wire.sprintId,
     sprintStart: wire.sprintStart,
     sprintEnd: wire.sprintEnd,
+    metrics: wire.metrics.map((metric) => ({ ...metric })),
   }
 }
 
