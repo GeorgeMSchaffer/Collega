@@ -158,7 +158,7 @@ Create an idea that belongs to no board (the organization's pool; added 2026-10-
   - The author follows automatically, and the audit event is the same `IdeaCreated` (metadata `title`, `priority`, `statusId`).
   - CSV import and the idea assistant remain board-scoped and never create these ideas.
 
-### `POST /api/v1/boards/{boardId}/ideas/ai-draft`
+### `POST /api/v1/boards/{boardId}/ideas/ai-draft` — withdrawn (2026-09-27, idea assistant v2)
 > **Withdrawn 2026-09-27** (`20-feature-ai-idea-assist-v2.md` "Contract changes"): never built, and extraction is covered by the v2 turn endpoint. Kept for history.
 
 Turn a plain-English description into a pre-filled, unsaved idea draft for review.
@@ -200,7 +200,7 @@ Turn a plain-English description into a pre-filled, unsaved idea draft for revie
   - unambiguous resolutions are returned pre-filled; ambiguous or unresolved mentions and no-signal required fields are returned in `clarifications`
   - at most one clarification round is supported; the client resolves the returned questions locally and does not call this endpoint again for the same input
 
-### `POST /api/v1/boards/{boardId}/ideas/ai-polish`
+### `POST /api/v1/boards/{boardId}/ideas/ai-polish` — withdrawn (2026-09-27, idea assistant v2)
 > **Withdrawn 2026-09-27**: never built; polishing belongs to the future refinement spec. Kept for history.
 
 Rewrite a draft description on explicit user request. This is the opt-in "Polish with AI" action and is never invoked automatically.
