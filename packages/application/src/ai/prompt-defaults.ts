@@ -54,7 +54,7 @@ Anything the person types that fits a field goes into that field now, in their o
 - \`ideaTypeId\`: attempt it on the FIRST turn from the kind of change described, and set it when you have a basis. If you have none, leave it unset and ask at its place in the order.
 - \`businessImpactId\`: explicit level words, else inferred (safety is Critical; time, cost or downtime is High). Leave it unset rather than guess.
 - \`priority\`: set it ONLY on urgency cues such as "urgent" or "asap". Otherwise omit it.
-- \`tagNames\`: only tags from the organization's existing tags that clearly match. Never invent one.
+- \`tagNames\`: only tags from the organization's existing tags that clearly match. Never invent one. (The catalog's tag line is a vocabulary; for \`tagNames\` you may choose from it.)
 - \`fieldValues\`: values for the custom fields listed with the draft, by field id; only those fields, and option values must be real option ids. A custom field appears once an idea type is chosen, so you fill them on the turn after the type is set.
 
 ## Interview order

@@ -23,6 +23,7 @@ import type {
   AiTokenUsage,
   IdeaAssistContext,
   IdeaAssistTurn,
+  IdeaAssistTurnInputV2,
   IdeaAssistTurnRequest,
   IdeaAssistTurnRequestV2,
   IdeaAssistTurnResult,
@@ -201,6 +202,13 @@ export class IdeaAssistService {
     )
     const requestDraft = clampDraftV2(request.draft ?? {})
 
+    // Normalised against the catalog once per turn, whichever branch the turn takes.
+    let normalised: IdeaAssistTurnInputV2 | undefined
+    const inputFor = (context: IdeaAssistContext) => {
+      normalised ??= prepareTurnInputV2(context, requestDraft, request.lockedFields, request.step)
+      return normalised
+    }
+
     return this.runTurn<IdeaDraftModelResponseV2, IdeaAssistTurnResultV2>({
       organizationId,
       boardId: request.boardId,
@@ -209,11 +217,7 @@ export class IdeaAssistService {
       // The v2 prompt, always: the active template (a stored version or the built-in default)
       // is v1 text, and the v2 schema and reply shape mean nothing to it.
       call: (context) =>
-        this.model.continueTurnV2(
-          withV2Prompt(context),
-          transcript,
-          prepareTurnInputV2(context, requestDraft, request.lockedFields, request.step),
-        ),
+        this.model.continueTurnV2(withV2Prompt(context), transcript, inputFor(context)),
       refused: (context, closed) => ({
         inScope: false,
         conversationClosed: closed,
@@ -222,13 +226,11 @@ export class IdeaAssistService {
           : context.prompts.outOfScopeRedirect,
         changes: {},
         // Echoes the step the client sent, which may name a locked field: nothing was asked.
-        nextStep:
-          prepareTurnInputV2(context, requestDraft, request.lockedFields, request.step).step ??
-          'problem',
+        nextStep: inputFor(context).step ?? 'problem',
         turnsRemaining: this.remainingUserTurns(transcript.length - 1),
       }),
       accepted: (context, response) => {
-        const input = prepareTurnInputV2(context, requestDraft, request.lockedFields, request.step)
+        const input = inputFor(context)
         const { changes, suggestions, nextStep } = finalizeTurnV2(response, context, input)
         const turnsRemaining = this.remainingUserTurns(transcript.length + 1)
         return {

@@ -101,9 +101,7 @@ function buildOrganizationCatalog(context: IdeaAssistContext): string {
 
   if (context.tags.length > 0) {
     lines.push('')
-    lines.push(
-      `Existing tags (the only tags you may put in \`tagNames\`; never invent one): ${fenceAll(context.tags)}`,
-    )
+    lines.push(`Existing tags (vocabulary only — never propose tags): ${fenceAll(context.tags)}`)
   }
 
   if (context.memberNames.length > 0) {
@@ -202,6 +200,11 @@ export function buildDraftNoteV2(input: IdeaAssistTurnInputV2, context: IdeaAssi
       : `Draft so far — revise rather than restate:\n${lines.join('\n')}`,
   ]
 
+  if (context.tags.length > 0) {
+    sections.push(
+      `For \`tagNames\` only, the catalog's existing tags are the vocabulary you may choose from; never invent one: ${fenceAll(context.tags)}`,
+    )
+  }
   if (input.lockedFields.length > 0) {
     sections.push(
       `The person owns these fields; never set them or suggest for them: ${input.lockedFields.join(', ')}`,
