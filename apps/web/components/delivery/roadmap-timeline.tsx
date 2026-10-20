@@ -204,7 +204,7 @@ function OutcomeRow({
         />
         <Link
           href={`/delivery/outcomes/${outcome.id}`}
-          className="truncate no-underline hover:underline"
+          className="truncate text-foreground no-underline hover:underline"
           title={outcome.name}
         >
           {outcome.name}

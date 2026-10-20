@@ -1,6 +1,7 @@
 'use client'
 
 import { Button, Dot, EffortBar, Marker, Select } from '@collega/design-system'
+import Link from 'next/link'
 import { type ReactNode, useId, useOptimistic, useState, useTransition } from 'react'
 import { GatedAction } from '@/components/common/gated-action'
 import { People, TagList } from '@/components/ideas/idea-chips'
@@ -203,7 +204,17 @@ export function IssueDrawer({
               <BoardChip name={data.boardName} />
             </Fact>
             <Fact label="Outcome">
-              <span className="text-muted-foreground">Not grouped</span>
+              {data.outcome ? (
+                <Link
+                  href={`/delivery/outcomes/${data.outcome.id}`}
+                  className="inline-flex items-center gap-1.5 text-foreground no-underline hover:underline"
+                >
+                  <Dot color={data.outcome.color} />
+                  {data.outcome.name}
+                </Link>
+              ) : (
+                <span className="text-muted-foreground">Not grouped</span>
+              )}
             </Fact>
             <Fact label="Assignees">
               <People people={issue.assignees} />

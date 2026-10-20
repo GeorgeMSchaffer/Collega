@@ -226,8 +226,11 @@ export default async function OutcomePage({
                         <td className="px-4 py-2 font-mono text-xs text-muted-foreground">
                           {idea.itemKey ?? ''}
                         </td>
-                        <td className="px-4 py-2 font-semibold">
-                          <Link href={`/ideas/${idea.id}`} className="no-underline hover:underline">
+                        <td className="min-w-64 px-4 py-2 font-semibold">
+                          <Link
+                            href={`/ideas/${idea.id}`}
+                            className="text-foreground no-underline hover:underline"
+                          >
                             {idea.title}
                           </Link>
                           {idea.assigneeUserIds.length > 0 ? (

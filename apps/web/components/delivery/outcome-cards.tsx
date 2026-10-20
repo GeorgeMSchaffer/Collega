@@ -36,7 +36,7 @@ function OutcomeIdeaRow({
       </span>
       <Link
         href={`/ideas/${idea.id}`}
-        className="min-w-0 flex-1 basis-40 truncate font-medium no-underline hover:underline"
+        className="min-w-0 flex-1 basis-40 truncate font-medium text-foreground no-underline hover:underline"
       >
         {idea.title}
       </Link>
@@ -89,7 +89,7 @@ export function OutcomeCards({
                 <Dot color={outcome.color} />
                 <Link
                   href={`/delivery/outcomes/${outcome.id}`}
-                  className="min-w-0 truncate font-semibold no-underline hover:underline"
+                  className="min-w-0 truncate font-semibold text-foreground no-underline hover:underline"
                 >
                   {outcome.name}
                 </Link>
