@@ -3,7 +3,7 @@ import type { DragEvent } from 'react'
 import { Icon } from '@/components/list/icons'
 import type { Idea } from '@/lib/types'
 import { CardActions } from './card-actions'
-import { ParentChip } from './idea-blockers'
+import { ParentChip, WARN_BADGE } from './idea-badges'
 import { People, PriorityMarker, TagList } from './idea-chips'
 
 /** A card drag's payload type; a lane header's drag carries `text/plain`, so the two never mix. */
@@ -44,9 +44,6 @@ export const PLAIN_CARD: CardWork = {
   blockers: 0,
   onMoveAnyway: null,
 }
-
-export const WARN_BADGE =
-  'inline-flex w-fit items-center gap-1.5 rounded-sm bg-warning/12 px-2 text-xs font-semibold text-warning'
 
 /**
  * A card in a lane (comp R `.kcard`): the title, which opens the drawer, then priority and

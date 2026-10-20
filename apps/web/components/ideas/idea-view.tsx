@@ -3,7 +3,7 @@ import Link from 'next/link'
 import type { ReactNode } from 'react'
 import type { IdeaDetail } from '@/lib/types'
 import { CommentBox, FollowButton, UpvoteButton } from './engagement'
-import { ParentChip } from './idea-blockers'
+import { ParentChip } from './idea-badges'
 import { People, PriorityMarker, StatusMarker, TagList } from './idea-chips'
 
 /** The board line of the drawer's facts: where the idea sits, or that it sits nowhere yet. */

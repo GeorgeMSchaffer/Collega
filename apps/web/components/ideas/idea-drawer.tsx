@@ -169,12 +169,13 @@ export function IdeaDrawer({
             tasks ? <TasksSection key={`tasks-${idea.id}`} parent={idea} tasks={tasks} /> : null
           }
           blockers={
-            blockers ? (
+            // A failed board read still shows the chips the idea carries, keys only.
+            blockers || idea.blockedBy.length > 0 ? (
               <BlockersSection
                 key={`blockers-${idea.id}`}
                 item={idea}
-                blockers={blockers}
-                canEdit={canEdit}
+                blockers={blockers ?? { candidates: [], cards: {} }}
+                canEdit={canEdit && blockers !== null && blockers !== undefined}
               />
             ) : null
           }

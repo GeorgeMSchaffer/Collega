@@ -5,26 +5,11 @@ import { useEffect, useId, useRef, useState, useTransition } from 'react'
 import { Icon } from '@/components/list/icons'
 import { setBlockers } from '@/lib/server/idea-actions'
 import type { IdeaBlockers, IdeaDetail } from '@/lib/types'
-import { WARN_BADGE } from './idea-card'
+import { ParentChip, WARN_BADGE } from './idea-badges'
 
 type Item = Pick<IdeaDetail, 'id' | 'boardId' | 'blockedBy'>
 
 const CYCLE_REASON = 'It is already waiting on this item, so adding it would make a loop.'
-
-/** The parent's key as a chip: on a task's drawer and on a work-board card (comp U screens 3 and 6). */
-export function ParentChip({ itemKey, className }: { itemKey: string | null; className?: string }) {
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1 rounded border border-primary/30 bg-primary/10 px-1.5 font-mono text-[10.5px] leading-[17px] font-medium whitespace-nowrap text-primary',
-        className,
-      )}
-    >
-      <span aria-hidden="true">↳</span>
-      {itemKey ?? 'Parent'}
-    </span>
-  )
-}
 
 /**
  * The drawer's Blockers section (comp U screen 6): chips with × and a picker, saving at once
@@ -50,7 +35,9 @@ export function BlockersSection({
   const [pending, start] = useTransition()
   const heading = useRef<HTMLHeadingElement>(null)
   const addWrap = useRef<HTMLSpanElement>(null)
-  const refocus = useRef(false)
+  const listRef = useRef<HTMLDivElement>(null)
+  // Where focus goes once a save settles: a disabled button drops it to the body.
+  const refocus = useRef<{ remove: string } | 'removed' | 'added' | null>(null)
   const id = useId()
 
   const current = item.blockedBy
@@ -58,20 +45,23 @@ export function BlockersSection({
 
   // A removed chip takes its × with it, so focus goes to Add, or the heading when Add is not there.
   useEffect(() => {
-    if (refocus.current && !pending) {
-      refocus.current = false
-      ;(addWrap.current?.querySelector('button') ?? heading.current)?.focus()
-    }
-  }, [pending])
+    const target = refocus.current
+    if (!target || pending) return
+    refocus.current = null
+    if (target === 'added') document.getElementById(`${id}-q`)?.focus()
+    else if (target === 'removed')
+      (addWrap.current?.querySelector('button') ?? heading.current)?.focus()
+    else listRef.current?.querySelector<HTMLElement>(`[data-remove="${target.remove}"]`)?.focus()
+  }, [pending, id])
 
   if (!canEdit && current.length === 0) return null
 
-  function save(ids: string[], removed: boolean) {
+  function save(ids: string[], removing: string | null) {
     start(async () => {
       setError(null)
       const result = await setBlockers(item.id, item.boardId ?? '', ids)
       if (result.error) setError(result.error)
-      else if (removed) refocus.current = true
+      refocus.current = removing ? (result.error ? { remove: removing } : 'removed') : 'added'
     })
   }
 
@@ -100,7 +90,7 @@ export function BlockersSection({
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5">
+      <div ref={listRef} className="flex flex-wrap items-center gap-1.5">
         {current.map((blocker) => {
           const card = blockers.cards[blocker.ideaId]
           const label = [blocker.itemKey, card?.title, card?.statusName].filter(Boolean).join(' · ')
@@ -122,10 +112,11 @@ export function BlockersSection({
                   type="button"
                   disabled={pending}
                   aria-label={`Remove blocker ${blocker.itemKey ?? card?.title ?? ''}`.trim()}
+                  data-remove={blocker.ideaId}
                   onClick={() =>
                     save(
                       ids.filter((other) => other !== blocker.ideaId),
-                      true,
+                      blocker.ideaId,
                     )
                   }
                   className="inline-grid size-5 shrink-0 place-items-center rounded hover:bg-foreground/10 disabled:opacity-50"
@@ -222,13 +213,17 @@ export function BlockersSection({
                         variant="outline"
                         disabled={pending || card.cycle}
                         aria-label={`Add blocker ${card.itemKey ?? card.title}`}
-                        onClick={() => save([...ids, card.id], false)}
+                        aria-describedby={card.cycle ? `${id}-why-${card.id}` : undefined}
+                        onClick={() => save([...ids, card.id], null)}
                       >
                         Add
                       </Button>
                     )}
                     {card.cycle && !added ? (
-                      <span className="col-span-2 text-xs text-muted-foreground">
+                      <span
+                        id={`${id}-why-${card.id}`}
+                        className="col-span-2 text-xs text-muted-foreground"
+                      >
                         {CYCLE_REASON}
                       </span>
                     ) : null}
