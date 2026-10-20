@@ -4,8 +4,9 @@ import { Button } from '@collega/design-system'
 import { useId, useState } from 'react'
 import { Drawer } from '@/components/list'
 import { Icon } from '@/components/list/icons'
-import type { BoardRef, IdeaDetail, IdeaFormOptions } from '@/lib/types'
+import type { BoardRef, IdeaDetail, IdeaFormOptions, IdeaTasks } from '@/lib/types'
 import { IdeaForm } from './idea-form'
+import { TasksCompletePrompt, TasksSection } from './idea-tasks'
 import { type BoardLine, IdeaView } from './idea-view'
 
 export type DrawerMode = 'view' | 'edit' | 'create'
@@ -30,6 +31,7 @@ export function IdeaDrawer({
   initial,
   referenceLane,
   effortNeeded,
+  tasks,
   canEdit,
   canDelete,
   contentLocked,
@@ -58,6 +60,8 @@ export function IdeaDrawer({
   referenceLane?: boolean | undefined
   /** A refused move asks for this Effort: the form opens on it with the message. */
   effortNeeded?: string | undefined
+  /** The Tasks section's facts, for a parent in or past a reference lane. */
+  tasks?: IdeaTasks | null | undefined
   canEdit: boolean
   canDelete: boolean
   contentLocked: boolean
@@ -152,6 +156,14 @@ export function IdeaDrawer({
           engagementDenial={engagementDenial}
           followDenial={followDenial}
           boardLine={boardLine}
+          tasksPrompt={
+            tasks ? (
+              <TasksCompletePrompt key={`prompt-${idea.id}`} parent={idea} tasks={tasks} />
+            ) : null
+          }
+          tasks={
+            tasks ? <TasksSection key={`tasks-${idea.id}`} parent={idea} tasks={tasks} /> : null
+          }
         />
       ) : null}
     </Drawer>

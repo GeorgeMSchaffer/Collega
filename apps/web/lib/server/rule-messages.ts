@@ -20,6 +20,9 @@ const RULE_MESSAGES: Readonly<Record<string, string>> = {
     'A task can only be added while the idea is in the lane that references that board.',
   parentIsTask: 'A task can’t have tasks of its own.',
   referencedBoardArchived: 'That board is archived, so tasks can’t be added to it.',
+  noDefaultIdeaType: 'The organization has no default Idea Type, so a task can’t be created yet.',
+  noDefaultBusinessImpact:
+    'The organization has no default Business Impact, so a task can’t be created yet.',
   effortRequiredInReferenceLane:
     'Effort can be changed but not cleared while the idea is in a lane that references a board.',
 }

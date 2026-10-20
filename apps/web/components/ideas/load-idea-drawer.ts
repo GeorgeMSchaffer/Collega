@@ -1,5 +1,6 @@
-import { getIdea, getIdeaFormOptions, getIssue } from '@/lib/data'
-import type { IdeaDetail, IdeaFormOptions } from '@/lib/types'
+import { getBoard, getBoardTasks, getIdea, getIdeaFormOptions, getIssue } from '@/lib/data'
+import { currentUser, writeDenial } from '@/lib/session'
+import type { IdeaDetail, IdeaFormOptions, IdeaTasks } from '@/lib/types'
 import type { DrawerMode } from './idea-drawer'
 import { DRAWER_PARAMS } from './idea-list-config'
 
@@ -8,6 +9,54 @@ type Params = Record<string, string | string[] | undefined>
 const one = (params: Params, key: string) => {
   const value = params[key]
   return Array.isArray(value) ? value[0] : value
+}
+
+/**
+ * The Tasks section's facts for a parent: the lane at or before the idea's own that references a
+ * board, that board, the tasks, and what the reader may do. `null` for a task, an idea with no
+ * board, one that has not reached a reference lane, or a board that cannot be read.
+ *
+ * An idea past the lane keeps the section so a late task can be added (after moving it back).
+ */
+async function loadTasks(idea: IdeaDetail): Promise<IdeaTasks | null> {
+  if (!idea.boardId || idea.parentIdeaId) return null
+  // The section is an extra: a failed read (or an idea deleted between reads) leaves it out and the
+  // drawer intact, rather than failing the page.
+  try {
+    return await readTasks(idea, idea.boardId)
+  } catch {
+    return null
+  }
+}
+
+async function readTasks(idea: IdeaDetail, boardId: string): Promise<IdeaTasks | null> {
+  const [board, tasks] = await Promise.all([getBoard(boardId), getBoardTasks(idea.id)])
+  if (!board) return null
+
+  const at = board.lanes.findIndex((lane) => lane.id === idea.statusId)
+  let index = at
+  while (index >= 0 && !board.lanes[index]?.referencesBoardId) index--
+  const lane = board.lanes[index]
+  if (!lane?.referencesBoardId) return null
+
+  const user = currentUser()
+  const mayWrite = writeDenial(user.role) === null && !board.isArchived
+  const [referenced, options] = await Promise.all([
+    getBoard(lane.referencesBoardId),
+    mayWrite ? getIdeaFormOptions() : null,
+  ])
+  if (!referenced) return null
+
+  const next = board.lanes[index + 1]
+  return {
+    tasks,
+    referenced: { id: referenced.id, name: referenced.name, lanes: referenced.lanes },
+    referenceLane: { id: lane.id, name: lane.name },
+    inLane: index === at,
+    nextLane: next ? { id: next.id, name: next.name } : null,
+    canMove: mayWrite && (board.allowUserStatusUpdate || user.role === 'OrgAdmin'),
+    adding: options ? { members: options.members, tags: options.tags } : null,
+  }
 }
 
 /**
@@ -28,6 +77,7 @@ export async function loadIdeaDrawer(
   formOptions: IdeaFormOptions | null
   missing: boolean
   isIssue: boolean
+  tasks: IdeaTasks | null
 }> {
   const ideaId = one(params, DRAWER_PARAMS.idea)
   const creating = one(params, DRAWER_PARAMS.create) !== undefined && canAuthor
@@ -47,5 +97,6 @@ export async function loadIdeaDrawer(
     formOptions,
     missing: ideaId !== undefined && !creating && idea === null,
     isIssue: issue !== null,
+    tasks: mode === 'view' && idea && issue === null ? await loadTasks(idea) : null,
   }
 }

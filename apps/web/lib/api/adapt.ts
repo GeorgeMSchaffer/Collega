@@ -14,6 +14,7 @@ import { roleLabel } from '../roles'
 import type {
   BoardLane,
   BoardOverview,
+  BoardTask,
   Comment,
   CurrentUser,
   Effort,
@@ -56,6 +57,7 @@ import type {
 import type {
   WireBlockedBy,
   WireBoardListItem,
+  WireBoardTask,
   WireCurrentUser,
   WireDeliveryCard,
   WireEffectiveField,
@@ -534,6 +536,19 @@ export function toIdea(wire: WireIdeaListItem): Idea {
     hasUpvoted: wire.hasUpvoted,
     effort: EFFORTS.find((candidate) => candidate === wire.effort) ?? null,
     ...toItemLinks(wire),
+  }
+}
+
+export function toBoardTask(wire: WireBoardTask): BoardTask {
+  return {
+    id: wire.ideaId,
+    itemKey: wire.itemKey,
+    title: wire.title,
+    statusId: wire.statusId,
+    statusName: wire.statusName,
+    isFinal: wire.isFinal,
+    assignees: wire.assignees.map(toPersonRef),
+    blockedBy: wire.blockedBy.map((blocker) => ({ ...blocker })),
   }
 }
 

@@ -396,6 +396,19 @@ export type WireIdeaDetail = {
   metrics: readonly WireIdeaMetric[]
 }
 
+/** One row of `GET /ideas/{id}/board-tasks`, in creation order. */
+export type WireBoardTask = {
+  ideaId: string
+  itemKey: string | null
+  title: string
+  statusId: string
+  statusName: string
+  /** In a final lane of its own board. */
+  isFinal: boolean
+  assignees: readonly WireIdeaAssignee[]
+  blockedBy: readonly WireBlockedBy[]
+}
+
 /** Only on an item in a lane that references a board; `done` counts tasks in a final lane. */
 export type WireTaskCounts = { total: number; done: number }
 
