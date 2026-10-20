@@ -1,7 +1,12 @@
 import { FieldType, Priority } from '@collega/domain/enums'
 import { describe, expect, it } from 'vitest'
 import type { IdeaAssistContext, IdeaAssistFieldDefinition } from '../../src/ai/models.js'
-import { buildIdeaAssistTurnSchemaV2, customFieldKey } from '../../src/ai/turn-schema-v2.js'
+import {
+  buildIdeaAssistTurnSchemaV2,
+  customFieldKey,
+  isValidCustomFieldValue,
+  TURN_V2_BOUNDS,
+} from '../../src/ai/turn-schema-v2.js'
 
 const TYPE_A = '11111111-1111-4111-8111-111111111111'
 const TYPE_B = '22222222-2222-4222-8222-222222222222'
@@ -89,18 +94,42 @@ describe('buildIdeaAssistTurnSchemaV2', () => {
     expect(changes.ideaTypeId).toEqual({ type: 'string', enum: [TYPE_A, TYPE_B] })
     expect(changes.businessImpactId).toEqual({ type: 'string', enum: [IMPACT] })
     expect(changes.priority).toEqual({ type: 'string', enum: Object.values(Priority) })
-    expect(changes.tagNames).toMatchObject({
-      maxItems: 10,
-      items: { enum: ['billing', 'mobile'] },
-    })
+    expect(changes.tagNames).toMatchObject({ items: { enum: ['billing', 'mobile'] } })
   })
 
-  it('bounds proposed solutions to 1-5 items of 500 characters', () => {
-    expect(changesOf(build()).proposedSolutions).toMatchObject({
-      minItems: 1,
-      maxItems: 5,
-      items: { maxLength: 500 },
-    })
+  it('bounds proposed solution items to 500 characters and exports the count bounds', () => {
+    expect(changesOf(build()).proposedSolutions).toMatchObject({ items: { maxLength: 500 } })
+    expect(TURN_V2_BOUNDS.proposedSolutions).toEqual({ min: 1, max: 5 })
+    expect(TURN_V2_BOUNDS.tagNames.max).toBe(10)
+    expect(TURN_V2_BOUNDS.solutionSuggestions.max).toBe(3)
+    expect(TURN_V2_BOUNDS.rationaleSuggestions.max).toBe(3)
+  })
+
+  it('uses only the schema keywords proven against the provider', () => {
+    const allowed = new Set([
+      'type',
+      'enum',
+      'anyOf',
+      'maxLength',
+      'required',
+      'additionalProperties',
+      'properties',
+      'items',
+      'description',
+    ])
+    const seen = new Set<string>()
+    const walk = (node: unknown, inProperties = false): void => {
+      if (Array.isArray(node)) {
+        for (const n of node) walk(n)
+      } else if (node && typeof node === 'object') {
+        for (const [key, value] of Object.entries(node)) {
+          if (!inProperties) seen.add(key)
+          walk(value, key === 'properties')
+        }
+      }
+    }
+    walk(build([], [budget, region, channels]))
+    expect([...seen].filter((k) => !allowed.has(k))).toEqual([])
   })
 
   it('omits locked fields from changes, suggestions and nextStep', () => {
@@ -117,6 +146,8 @@ describe('buildIdeaAssistTurnSchemaV2', () => {
       'proposedSolutions',
       'businessImpactId',
       'ideaTypeId',
+      'tagNames',
+      'description',
       'done',
     ])
   })
@@ -127,13 +158,13 @@ describe('buildIdeaAssistTurnSchemaV2', () => {
     expect(schema.required).not.toContain('suggestions')
   })
 
-  it('bounds suggestions to three solutions and three rationales', () => {
+  it('offers each suggestion type with its field length', () => {
     const suggestions = build().properties.suggestions?.properties as Record<
       string,
       Record<string, unknown>
     >
-    expect(suggestions.solutions).toMatchObject({ maxItems: 3 })
-    expect(suggestions.rationales).toMatchObject({ maxItems: 3 })
+    expect(suggestions.solutions).toMatchObject({ items: { maxLength: 500 } })
+    expect(suggestions.rationales).toMatchObject({ items: { maxLength: 1000 } })
     expect(suggestions.problemRewrite).toMatchObject({ type: 'string', maxLength: 2000 })
   })
 
@@ -146,27 +177,31 @@ describe('buildIdeaAssistTurnSchemaV2', () => {
     expect(changes.ideaTypeId).toBeUndefined()
     expect(changes.businessImpactId).toBeUndefined()
     expect(changes.tagNames).toBeUndefined()
+    expect(empty.properties.nextStep?.enum).not.toContain('ideaTypeId')
+    expect(empty.properties.nextStep?.enum).not.toContain('businessImpactId')
   })
 
   it('offers no fieldValues when the type has no custom fields', () => {
     expect(changesOf(build()).fieldValues).toBeUndefined()
   })
 
-  it('types each custom field and pins it to its definition id', () => {
+  it('pins each custom field to its definition id and types its value', () => {
     const fieldValues = changesOf(build([], [budget, region, channels])).fieldValues as {
-      maxItems: number
       items: { anyOf: { properties: Record<string, Record<string, unknown>> }[] }
     }
-    expect(fieldValues.maxItems).toBe(3)
     const [num, dropdown, multi] = fieldValues.items.anyOf.map((entry) => entry.properties)
     expect(num?.fieldDefinitionId).toEqual({ type: 'string', enum: [BUDGET] })
-    expect(num?.value?.pattern).toBe('^-?[0-9]+(\\.[0-9]+)?$')
+    expect(num?.value?.type).toBe('string')
     expect(dropdown?.value).toEqual({ type: 'string', enum: [OPT_1, OPT_2] })
-    const pattern = new RegExp(multi?.value?.pattern as string)
-    expect(pattern.test(`${OPT_1},${OPT_2}`)).toBe(true)
-    expect(pattern.test(OPT_1)).toBe(true)
-    expect(pattern.test('not-an-option')).toBe(false)
-    expect(pattern.test(`${OPT_1},bogus`)).toBe(false)
+    expect(multi?.fieldDefinitionId).toEqual({ type: 'string', enum: [CHANNELS] })
+  })
+
+  it('omits an option-backed custom field that has no options', () => {
+    const bare = { ...region, options: [] }
+    expect(changesOf(build([], [bare])).fieldValues).toBeUndefined()
+    expect(build([], [{ ...bare, isRequired: true }]).properties.nextStep?.enum).not.toContain(
+      customFieldKey(REGION),
+    )
   })
 
   it('omits a locked custom field and drops fieldValues when none remain', () => {
@@ -186,6 +221,9 @@ describe('buildIdeaAssistTurnSchemaV2', () => {
       'ideaTypeId',
       customFieldKey(BUDGET),
       'title',
+      'priority',
+      'tagNames',
+      'description',
       'done',
     ])
     expect(build([customFieldKey(BUDGET)], [budget]).properties.nextStep?.enum).not.toContain(
@@ -202,5 +240,27 @@ describe('buildIdeaAssistTurnSchemaV2', () => {
       }),
     )
     expect(description).not.toContain('</x>')
+  })
+
+  it('exposes the optional fields as next steps unless locked', () => {
+    const steps = build(['tagNames']).properties.nextStep?.enum as string[]
+    expect(steps).toContain('priority')
+    expect(steps).toContain('description')
+    expect(steps).not.toContain('tagNames')
+  })
+})
+
+describe('isValidCustomFieldValue', () => {
+  it('checks the per-type serialization the schema leaves to the server', () => {
+    expect(isValidCustomFieldValue(budget, '50000.50')).toBe(true)
+    expect(isValidCustomFieldValue(budget, '5e3')).toBe(false)
+    const date = { ...budget, fieldType: FieldType.Date }
+    expect(isValidCustomFieldValue(date, '2026-10-20')).toBe(true)
+    expect(isValidCustomFieldValue(date, '2026-13-45')).toBe(false)
+    expect(isValidCustomFieldValue(region, OPT_1)).toBe(true)
+    expect(isValidCustomFieldValue(region, 'x')).toBe(false)
+    expect(isValidCustomFieldValue(channels, `${OPT_1},${OPT_2}`)).toBe(true)
+    expect(isValidCustomFieldValue(channels, `${OPT_1},${OPT_1}`)).toBe(false)
+    expect(isValidCustomFieldValue(channels, `${OPT_1},bogus`)).toBe(false)
   })
 })

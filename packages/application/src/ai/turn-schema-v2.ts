@@ -16,6 +16,19 @@ import { businessImpactIdsOf, ideaTypeIdsOf } from './models.js'
 export const MAX_SOLUTION_SUGGESTIONS = 3
 export const MAX_RATIONALE_SUGGESTIONS = 3
 
+/**
+ * Bounds the model-facing schema deliberately does NOT carry. The schema keeps to the keywords
+ * v1 has proven against the provider (type, enum, anyOf, maxLength, required,
+ * additionalProperties); everything else is enforced by the server's re-validation (slice 307)
+ * from these constants and `isValidCustomFieldValue`.
+ */
+export const TURN_V2_BOUNDS = {
+  proposedSolutions: { min: MIN_PROPOSED_SOLUTIONS, max: MAX_PROPOSED_SOLUTIONS },
+  tagNames: { max: MAX_TAGS },
+  solutionSuggestions: { max: MAX_SOLUTION_SUGGESTIONS },
+  rationaleSuggestions: { max: MAX_RATIONALE_SUGGESTIONS },
+} as const
+
 const TEXT_FIELD_MAX_LENGTH = 2000
 const URL_FIELD_MAX_LENGTH = 2048
 const CUSTOM_FIELD_KEY_PREFIX = 'fieldValues.'
@@ -35,14 +48,17 @@ export const DRAFT_FIELD_KEYS = [
 
 export type DraftFieldKey = (typeof DRAFT_FIELD_KEYS)[number]
 
-/** The fields the interview asks about, in order (v2 spec "Conversation" item 3). Title is last. */
-const ASKABLE_FIELD_KEYS = [
+/** The interview fields, in order (v2 spec "Conversation" item 3). Title comes after the custom fields. */
+const INTERVIEW_FIELD_KEYS = [
   'problem',
   'proposedSolutions',
   'impactRationale',
   'businessImpactId',
   'ideaTypeId',
 ] as const
+
+/** Optional fields that may also be asked about, after title. */
+const OPTIONAL_FIELD_KEYS = ['priority', 'tagNames', 'description'] as const
 
 export const NEXT_STEP_DONE = 'done'
 
@@ -75,7 +91,10 @@ export function buildIdeaAssistTurnSchemaV2(
 ): JsonSchema {
   const locked = new Set(input.lockedFields)
   const isOpen = (key: string): boolean => !locked.has(key)
-  const customFields = input.customFields.filter((f) => isOpen(customFieldKey(f.id)))
+  // A Dropdown or MultiSelect with no options cannot express a value, so it is not offered.
+  const customFields = input.customFields.filter(
+    (f) => isOpen(customFieldKey(f.id)) && (!isOptionBacked(f) || f.options.length > 0),
+  )
 
   const changes: Record<string, JsonSchema> = {}
   const add = (key: DraftFieldKey, schema: JsonSchema | null): void => {
@@ -84,15 +103,13 @@ export function buildIdeaAssistTurnSchemaV2(
     }
   }
 
-  add('title', { type: 'string', minLength: 1, maxLength: TITLE_MAX_LENGTH })
-  add('problem', { type: 'string', minLength: 1, maxLength: PROBLEM_MAX_LENGTH })
+  add('title', { type: 'string', maxLength: TITLE_MAX_LENGTH })
+  add('problem', { type: 'string', maxLength: PROBLEM_MAX_LENGTH })
   add('proposedSolutions', {
     type: 'array',
-    minItems: MIN_PROPOSED_SOLUTIONS,
-    maxItems: MAX_PROPOSED_SOLUTIONS,
-    items: { type: 'string', minLength: 1, maxLength: PROPOSED_SOLUTION_MAX_LENGTH },
+    items: { type: 'string', maxLength: PROPOSED_SOLUTION_MAX_LENGTH },
   })
-  add('impactRationale', { type: 'string', minLength: 1, maxLength: IMPACT_RATIONALE_MAX_LENGTH })
+  add('impactRationale', { type: 'string', maxLength: IMPACT_RATIONALE_MAX_LENGTH })
   add('businessImpactId', idEnum(businessImpactIdsOf(context)))
   add('ideaTypeId', idEnum(ideaTypeIdsOf(context)))
   add('priority', { type: 'string', enum: Object.values(Priority) })
@@ -102,17 +119,14 @@ export function buildIdeaAssistTurnSchemaV2(
       ? null
       : {
           type: 'array',
-          maxItems: MAX_TAGS,
-          uniqueItems: true,
           items: { type: 'string', enum: [...context.tags] },
         },
   )
-  add('description', { type: 'string', minLength: 1, maxLength: DESCRIPTION_MAX_LENGTH })
+  add('description', { type: 'string', maxLength: DESCRIPTION_MAX_LENGTH })
 
   if (customFields.length > 0) {
     changes.fieldValues = {
       type: 'array',
-      maxItems: customFields.length,
       items: { anyOf: customFields.map(customFieldEntry) },
     }
   }
@@ -132,7 +146,7 @@ export function buildIdeaAssistTurnSchemaV2(
     },
     nextStep: {
       type: 'string',
-      enum: nextStepValues(locked, customFields),
+      enum: nextStepValues(context, locked, customFields),
       description: `The field nextQuestion asks about, or ${NEXT_STEP_DONE} when nothing more is needed.`,
     },
     changes: {
@@ -166,18 +180,16 @@ function suggestionsSchema(isOpen: (key: string) => boolean): JsonSchema | null 
   if (isOpen('proposedSolutions')) {
     properties.solutions = {
       type: 'array',
-      maxItems: MAX_SOLUTION_SUGGESTIONS,
-      items: { type: 'string', minLength: 1, maxLength: PROPOSED_SOLUTION_MAX_LENGTH },
+      items: { type: 'string', maxLength: PROPOSED_SOLUTION_MAX_LENGTH },
     }
   }
   if (isOpen('problem')) {
-    properties.problemRewrite = { type: 'string', minLength: 1, maxLength: PROBLEM_MAX_LENGTH }
+    properties.problemRewrite = { type: 'string', maxLength: PROBLEM_MAX_LENGTH }
   }
   if (isOpen('impactRationale')) {
     properties.rationales = {
       type: 'array',
-      maxItems: MAX_RATIONALE_SUGGESTIONS,
-      items: { type: 'string', minLength: 1, maxLength: IMPACT_RATIONALE_MAX_LENGTH },
+      items: { type: 'string', maxLength: IMPACT_RATIONALE_MAX_LENGTH },
     }
   }
   if (Object.keys(properties).length === 0) {
@@ -191,21 +203,34 @@ function suggestionsSchema(isOpen: (key: string) => boolean): JsonSchema | null 
   }
 }
 
-/** Unlocked askable fields in interview order, then required custom fields, then title, then done. */
+/**
+ * Unlocked interview fields in order, then required custom fields, title, the optional fields and
+ * done. Ids the organization has none of are not offered: nothing could be chosen for them.
+ */
 function nextStepValues(
+  context: IdeaAssistContext,
   locked: ReadonlySet<string>,
   customFields: readonly IdeaAssistFieldDefinition[],
 ): string[] {
-  const steps: string[] = ASKABLE_FIELD_KEYS.filter((key) => !locked.has(key))
+  const unavailable = new Set<string>()
+  if (context.businessImpacts.length === 0) {
+    unavailable.add('businessImpactId')
+  }
+  if (context.ideaTypes.length === 0) {
+    unavailable.add('ideaTypeId')
+  }
+  const askable = (key: string): boolean => !locked.has(key) && !unavailable.has(key)
+
+  const steps: string[] = INTERVIEW_FIELD_KEYS.filter(askable)
   for (const field of customFields) {
     if (field.isRequired) {
       steps.push(customFieldKey(field.id))
     }
   }
-  if (!locked.has('title')) {
+  if (askable('title')) {
     steps.push('title')
   }
-  steps.push(NEXT_STEP_DONE)
+  steps.push(...OPTIONAL_FIELD_KEYS.filter(askable), NEXT_STEP_DONE)
   return steps
 }
 
@@ -229,25 +254,58 @@ function customFieldEntry(field: IdeaAssistFieldDefinition): JsonSchema {
   }
 }
 
+function isOptionBacked(field: IdeaAssistFieldDefinition): boolean {
+  return field.fieldType === FieldType.Dropdown || field.fieldType === FieldType.MultiSelect
+}
+
 function customFieldValue(field: IdeaAssistFieldDefinition): JsonSchema {
-  const optionIds = field.options.map((o) => o.id)
   switch (field.fieldType) {
     case FieldType.Text:
-      return { type: 'string', minLength: 1, maxLength: TEXT_FIELD_MAX_LENGTH }
+      return { type: 'string', maxLength: TEXT_FIELD_MAX_LENGTH }
     case FieldType.Url:
-      return { type: 'string', minLength: 1, maxLength: URL_FIELD_MAX_LENGTH }
+      return { type: 'string', maxLength: URL_FIELD_MAX_LENGTH }
     case FieldType.Number:
-      return { type: 'string', pattern: '^-?[0-9]+(\\.[0-9]+)?$' }
+      return { type: 'string', description: 'An invariant decimal number such as 50000 or 12.5.' }
     case FieldType.Date:
-      return { type: 'string', pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' }
+      return { type: 'string', description: 'An ISO date, yyyy-MM-dd.' }
     case FieldType.Boolean:
       return { type: 'string', enum: ['true', 'false'] }
     case FieldType.Dropdown:
-      return { type: 'string', enum: optionIds }
+      return { type: 'string', enum: field.options.map((o) => o.id) }
+    case FieldType.MultiSelect:
+      return {
+        type: 'string',
+        description: 'Comma-separated option ids, no spaces, no duplicates.',
+      }
+  }
+}
+
+const NUMBER_PATTERN = /^-?[0-9]+(\.[0-9]+)?$/
+const DATE_PATTERN = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/
+
+/**
+ * Whether `value` is a well-formed serialization for `field` (the `IdeaFieldValue` formats). The
+ * checks the schema leaves to the server: Number, Date and MultiSelect shape, plus the enum and
+ * length rules, so one function answers for every type.
+ */
+export function isValidCustomFieldValue(field: IdeaAssistFieldDefinition, value: string): boolean {
+  const optionIds = new Set(field.options.map((o) => o.id))
+  switch (field.fieldType) {
+    case FieldType.Text:
+      return value.length > 0 && value.length <= TEXT_FIELD_MAX_LENGTH
+    case FieldType.Url:
+      return value.length > 0 && value.length <= URL_FIELD_MAX_LENGTH
+    case FieldType.Number:
+      return NUMBER_PATTERN.test(value)
+    case FieldType.Date:
+      return DATE_PATTERN.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`))
+    case FieldType.Boolean:
+      return value === 'true' || value === 'false'
+    case FieldType.Dropdown:
+      return optionIds.has(value)
     case FieldType.MultiSelect: {
-      // Comma-separated option ids, the stored form. Ids are GUIDs, so nothing needs escaping.
-      const one = optionIds.join('|')
-      return { type: 'string', pattern: `^(${one})(,(${one}))*$` }
+      const ids = value.split(',')
+      return ids.every((id) => optionIds.has(id)) && new Set(ids).size === ids.length
     }
   }
 }
