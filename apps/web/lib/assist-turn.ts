@@ -49,3 +49,13 @@ export type AssistTurnResponse = {
   /** Further user turns that fit under the cap. */
   turnsRemaining: number
 }
+
+/**
+ * What the turn action answers with. A thrown `ApiError` loses its status crossing a Server Function
+ * in production, so the action returns the outcome instead: `429` (with its wait) is told apart
+ * from every other failure, which ends the conversation.
+ */
+export type AssistTurnResult =
+  | { ok: true; turn: AssistTurnResponse }
+  | { ok: false; rateLimited: false }
+  | { ok: false; rateLimited: true; retryAfter: number | undefined }

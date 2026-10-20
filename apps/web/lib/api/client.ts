@@ -103,6 +103,8 @@ export class ApiError extends Error {
   readonly errors: Readonly<Record<string, string>>
   /** Every message per field, for the few fields that report one problem per item. */
   readonly errorLists: Readonly<Record<string, readonly string[]>>
+  /** A `429`'s `Retry-After`, in seconds, when the API sent one. */
+  readonly retryAfter: number | undefined
 
   constructor(
     status: number,
@@ -110,6 +112,7 @@ export class ApiError extends Error {
     detail: string,
     errors: Readonly<Record<string, string>> = {},
     errorLists: Readonly<Record<string, readonly string[]>> = {},
+    retryAfter?: number,
   ) {
     super(`${path} answered ${status}: ${detail}`)
     this.name = 'ApiError'
@@ -118,10 +121,13 @@ export class ApiError extends Error {
     this.detail = detail
     this.errors = errors
     this.errorLists = errorLists
+    this.retryAfter = retryAfter
   }
 }
 
 async function failure(response: Response, path: string): Promise<ApiError> {
+  const wait = Number(response.headers.get('retry-after'))
+  const retryAfter = Number.isFinite(wait) && wait > 0 ? wait : undefined
   try {
     const body: unknown = await response.json()
     const problem = body as ProblemDetails
@@ -133,9 +139,10 @@ async function failure(response: Response, path: string): Promise<ApiError> {
       fieldMessages(problem.errors) ?? detail ?? title ?? response.statusText,
       fieldErrors(problem.errors),
       fieldErrorLists(problem.errors),
+      retryAfter,
     )
   } catch {
-    return new ApiError(response.status, path, response.statusText)
+    return new ApiError(response.status, path, response.statusText, {}, {}, retryAfter)
   }
 }
 

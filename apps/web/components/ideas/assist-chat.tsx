@@ -8,6 +8,7 @@ import {
   ASSIST_USER_TURNS,
   type AssistEntry,
   type AssistTurnResponse,
+  type AssistTurnResult,
 } from '@/lib/assist-turn'
 import { takeAssistTurn } from '@/lib/server/assist-actions'
 import { useCurrentUser } from '@/lib/session-client'
@@ -21,6 +22,10 @@ type Message = {
   sent: boolean
   /** An out-of-scope turn, struck through before it leaves (v1 rule 8). */
   dropped?: boolean
+  /** A system note (a refusal's redirect, a rate-limit notice): small and centred, never a bubble. */
+  note?: boolean
+  /** The rate-limit notice: a later turn or a repeat replaces it rather than stacking. */
+  limit?: boolean
   /** A chip that hands the person to the form. */
   toForm?: boolean
   /** The labels of the fields this reply filled, for its *Filled in: ...* line. */
@@ -45,6 +50,13 @@ const STARTERS = [
 
 const DROP_MS = 1400
 
+/** The `429` notice, from the spec: "Too many requests; try again in N seconds". */
+function rateLimitNotice(seconds: number | undefined): string {
+  return seconds
+    ? `Too many requests; try again in ${seconds} ${seconds === 1 ? 'second' : 'seconds'}.`
+    : 'Too many requests; try again in a moment.'
+}
+
 /**
  * The idea assistant's chat (comp R, left of the create form): a greeting with starter prompts, the
  * transcript, a composer, and a cancellable pending turn. It owns the conversation; the form is
@@ -52,12 +64,15 @@ const DROP_MS = 1400
  * (the person chose the form) only cancels a turn in flight, so the conversation is intact when it
  * comes back.
  *
- * A turn that throws is a failed turn (`onFailed`): the drawer hands off to the form. A turn judged
- * out of scope is struck through and dropped from the transcript, so it never counts toward the cap.
+ * A failed turn (anything but a `429`) ends the conversation: its text goes into the form
+ * (`form.place`, no model call) and `onFailed` hands the person to the form. A `429` keeps the chat:
+ * the message returns to the composer and a note gives the wait. A turn judged out of scope is
+ * struck through and dropped from the transcript, so it never counts toward the cap.
  */
 export function AssistChat({
   boardId,
   form,
+  solutions,
   active,
   onManual,
   onReview,
@@ -67,6 +82,8 @@ export function AssistChat({
   boardId: string | null
   /** The create form's handle: its values go with every turn and the answer's changes land in it. */
   form: RefObject<IdeaFormAssist | null>
+  /** The form's current proposed solutions: a solution chip shows pressed while its text is in it. */
+  solutions: readonly string[]
   /** False while the form alone is showing: the chat is hidden but still mounted. */
   active: boolean
   onManual: () => void
@@ -90,8 +107,6 @@ export function AssistChat({
   const [pending, setPending] = useState(false)
   const [remaining, setRemaining] = useState(ASSIST_USER_TURNS)
   const [closed, setClosed] = useState(false)
-  // Solution chips are a multi-select; the rest apply once. Keyed by message id and chip index.
-  const [pressed, setPressed] = useState<ReadonlySet<string>>(new Set())
   const step = useRef<string | undefined>(undefined)
   // The turn in flight: cancelling bumps it, so a late answer finds it stale and is ignored.
   const turn = useRef(0)
@@ -99,6 +114,13 @@ export function AssistChat({
   const log = useRef<HTMLDivElement>(null)
   const pane = useRef<HTMLElement>(null)
   const cancelRef = useRef<() => void>(() => {})
+  const dropTimers = useRef(new Set<ReturnType<typeof setTimeout>>())
+  useEffect(() => {
+    const timers = dropTimers.current
+    return () => {
+      for (const timer of timers) clearTimeout(timer)
+    }
+  }, [])
 
   const add = useCallback((message: Omit<Message, 'id'>) => {
     const id = nextId.current++
@@ -118,6 +140,29 @@ export function AssistChat({
     setText((current) => current || flying.text)
     setRemaining((left) => left + 1)
   }, [])
+
+  // A turn that never happened (`429`): same as cancelling it, with a note saying why.
+  const rateLimited = (
+    flying: { userId: number; text: string },
+    retryAfter: number | undefined,
+  ) => {
+    inFlight.current = null
+    setPending(false)
+    const id = nextId.current++
+    setMessages((current) => [
+      ...current.filter((message) => message.id !== flying.userId && !message.limit),
+      {
+        id,
+        role: 'assistant',
+        sent: false,
+        note: true,
+        limit: true,
+        text: rateLimitNotice(retryAfter),
+      },
+    ])
+    setText((current) => current || flying.text)
+    setRemaining((left) => left + 1)
+  }
   cancelRef.current = cancel
 
   useEffect(() => {
@@ -154,22 +199,32 @@ export function AssistChat({
 
     // Read at send time: what the person has typed or accepted since the last turn is theirs.
     const current = form.current?.read()
-    let answer: AssistTurnResponse
+    let result: AssistTurnResult
     try {
-      answer = await takeAssistTurn(boardId, {
+      result = await takeAssistTurn(boardId, {
         transcript,
         draft: current?.draft ?? {},
         lockedFields: current?.lockedFields ?? [],
         ...(step.current ? { step: step.current } : {}),
       })
     } catch {
-      if (turn.current !== mine) return
+      result = { ok: false, rateLimited: false }
+    }
+    if (turn.current !== mine) return
+    if (!result.ok) {
+      if (result.rateLimited) {
+        rateLimited({ userId, text: body }, result.retryAfter)
+        return
+      }
+      // The conversation is over: nothing typed is lost, so this turn's text goes into the form.
       inFlight.current = null
       setPending(false)
+      form.current?.place(body, step.current)
       onFailed()
       return
     }
-    if (turn.current !== mine) return
+    const answer: AssistTurnResponse = result.turn
+    setMessages((now) => (now.some((m) => m.limit) ? now.filter((m) => !m.limit) : now))
     inFlight.current = null
     setPending(false)
     step.current = answer.nextStep
@@ -177,7 +232,11 @@ export function AssistChat({
 
     if (!answer.inScope) {
       setMessages((current) => current.map((m) => (m.id === userId ? { ...m, dropped: true } : m)))
-      setTimeout(() => setMessages((current) => current.filter((m) => m.id !== userId)), DROP_MS)
+      const timer = setTimeout(() => {
+        dropTimers.current.delete(timer)
+        setMessages((current) => current.filter((m) => m.id !== userId))
+      }, DROP_MS)
+      dropTimers.current.add(timer)
     }
     if (answer.inScope) {
       const { filled, kept } = form.current?.apply(answer.changes) ?? { filled: [], kept: [] }
@@ -194,7 +253,8 @@ export function AssistChat({
         chips: chipsFor(answer, form.current?.read().lockedFields ?? []),
       })
     } else {
-      add({ role: 'assistant', text: answer.nextQuestion, sent: false })
+      // A system note, not an assistant bubble: a refusal must never read as conversation (rule 8a).
+      add({ role: 'assistant', text: answer.nextQuestion, sent: false, note: true })
     }
 
     if (answer.conversationClosed || answer.turnsRemaining <= 0) {
@@ -214,7 +274,7 @@ export function AssistChat({
   // Only the latest offer is live: an older one was made for a form that has since moved on.
   const liveChips = messages.findLast((m) => m.chips && m.chips.length > 0)?.id
 
-  function choose(messageId: number, index: number, chip: Chip) {
+  function choose(chip: Chip) {
     const handle = form.current
     if (chip.kind === 'say') {
       void send(chip.text)
@@ -229,9 +289,8 @@ export function AssistChat({
     // Choosing a suggestion is the person's say-so, so it hands the field back to the assistant's
     // marking (`release`) even if they had typed in it.
     if (chip.kind === 'solution') {
-      const key = `${messageId}:${index}`
-      const on = !pressed.has(key)
-      const list = handle.read().draft.proposedSolutions ?? []
+      const list = solutions.filter((item) => item.trim())
+      const on = !list.includes(chip.text)
       if (on && list.length >= MAX_SOLUTIONS) {
         add({
           role: 'assistant',
@@ -240,12 +299,6 @@ export function AssistChat({
         })
         return
       }
-      setPressed((now) => {
-        const next = new Set(now)
-        if (on) next.add(key)
-        else next.delete(key)
-        return next
-      })
       handle.apply(
         {
           proposedSolutions: on ? [...list, chip.text] : list.filter((item) => item !== chip.text),
@@ -298,58 +351,67 @@ export function AssistChat({
         aria-label="Conversation"
         className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-auto p-3.5"
       >
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={cn(
-              'max-w-[92%] rounded-2xl px-3 py-2 text-sm leading-snug [overflow-wrap:anywhere]',
-              message.role === 'assistant'
-                ? 'self-start rounded-tl-sm border bg-card'
-                : 'self-end rounded-tr-sm bg-primary text-primary-foreground',
-              message.dropped && 'line-through opacity-45 transition-opacity duration-500',
-            )}
-          >
-            {message.text}
-            {message.filled && message.filled.length > 0 ? (
-              <span className="mt-1.5 block text-xs font-semibold text-suggest">
-                Filled in: {message.filled.join(', ')}
-              </span>
-            ) : null}
-            {message.chips && message.chips.length > 0 ? (
-              <ul className="m-0 mt-2 flex list-none flex-col items-start gap-1.5 p-0">
-                {message.chips.map((chip, index) => (
-                  <li key={`${chip.kind}-${chip.text}`}>
-                    <ChipButton
-                      aria-pressed={
-                        chip.kind === 'solution' ? pressed.has(`${message.id}:${index}`) : undefined
-                      }
-                      disabled={pending || closed || liveChips !== message.id}
-                      onClick={() => choose(message.id, index, chip)}
-                    >
-                      {chip.text}
-                    </ChipButton>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            {message.id === 0 && !started ? (
-              <ul className="m-0 mt-2 flex list-none flex-col items-start gap-1.5 p-0">
-                {STARTERS.map((starter) => (
-                  <li key={starter}>
-                    <ChipButton onClick={() => send(starter)} disabled={pending}>
-                      {starter}
-                    </ChipButton>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            {message.toForm ? (
-              <div className="mt-2">
-                <ChipButton onClick={onManual}>Fill out the form</ChipButton>
-              </div>
-            ) : null}
-          </div>
-        ))}
+        {messages.map((message) =>
+          message.note ? (
+            <p
+              key={message.id}
+              className="m-0 self-center px-2 text-center text-xs text-muted-foreground"
+            >
+              {message.text}
+            </p>
+          ) : (
+            <div
+              key={message.id}
+              className={cn(
+                'max-w-[92%] rounded-2xl px-3 py-2 text-sm leading-snug [overflow-wrap:anywhere]',
+                message.role === 'assistant'
+                  ? 'self-start rounded-tl-sm border bg-card'
+                  : 'self-end rounded-tr-sm bg-primary text-primary-foreground',
+                message.dropped && 'line-through opacity-45 transition-opacity duration-500',
+              )}
+            >
+              {message.text}
+              {message.filled && message.filled.length > 0 ? (
+                <span className="mt-1.5 block text-xs font-semibold text-suggest">
+                  Filled in: {message.filled.join(', ')}
+                </span>
+              ) : null}
+              {message.chips && message.chips.length > 0 ? (
+                <ul className="m-0 mt-2 flex list-none flex-col items-start gap-1.5 p-0">
+                  {message.chips.map((chip, index) => (
+                    <li key={chipKey(message.chips ?? [], index)}>
+                      <ChipButton
+                        aria-pressed={
+                          chip.kind === 'solution' ? solutions.includes(chip.text) : undefined
+                        }
+                        disabled={pending || closed || liveChips !== message.id}
+                        onClick={() => choose(chip)}
+                      >
+                        {chip.text}
+                      </ChipButton>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              {message.id === 0 && !started ? (
+                <ul className="m-0 mt-2 flex list-none flex-col items-start gap-1.5 p-0">
+                  {STARTERS.map((starter) => (
+                    <li key={starter}>
+                      <ChipButton onClick={() => send(starter)} disabled={pending}>
+                        {starter}
+                      </ChipButton>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              {message.toForm ? (
+                <div className="mt-2">
+                  <ChipButton onClick={onManual}>Fill out the form</ChipButton>
+                </div>
+              ) : null}
+            </div>
+          ),
+        )}
         {pending ? (
           <div className="flex items-center gap-1.5 self-start rounded-2xl rounded-tl-sm border bg-card px-3 py-2 text-sm">
             <span role="status" aria-label="Thinking" className="flex gap-1">
@@ -465,4 +527,11 @@ function ChipButton({ children, ...props }: React.ButtonHTMLAttributes<HTMLButto
       {children}
     </button>
   )
+}
+
+/** A list key that survives duplicate suggestions: the nth repeat of a chip gets `-n`. */
+function chipKey(chips: readonly Chip[], index: number): string {
+  const chip = chips[index]
+  const repeats = chips.slice(0, index).filter((c) => c.kind === chip?.kind && c.text === chip.text)
+  return `${chip?.kind}-${chip?.text}-${repeats.length}`
 }
