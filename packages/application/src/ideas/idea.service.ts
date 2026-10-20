@@ -425,6 +425,7 @@ export class IdeaService {
           ?.swimlanes.some((lane) => lane.statusId === task.statusId && lane.isFinal) === true,
       assignees: this.projectAssignees(task, userLookup),
       blockedBy: blockedBy.get(task.id) ?? [],
+      autoCreated: task.autoCreated,
     }))
   }
 
@@ -483,7 +484,12 @@ export class IdeaService {
     if (await this.ideaRepository.hasTaskOnBoard(parent.id, referencedBoardId)) {
       return async () => {}
     }
-    const finish = await this.stageBoardTask(parent, referencedBoardId, autoTaskCommand(parent))
+    const finish = await this.stageBoardTask(
+      parent,
+      referencedBoardId,
+      autoTaskCommand(parent),
+      true,
+    )
     return async () => {
       await finish()
     }
@@ -513,6 +519,7 @@ export class IdeaService {
     parent: AutoCreateTaskParent,
     referencedBoardId: string | null,
     command: CreateBoardTaskCommand,
+    autoCreated = false,
   ): Promise<() => Promise<CreateIdeaResult>> {
     if (parent.parentIdeaId !== null) {
       throw new UnprocessableError('parentIsTask', 'A task cannot have tasks of its own.')
@@ -575,6 +582,7 @@ export class IdeaService {
       },
       undefined,
       parent.id,
+      autoCreated,
     )
 
     return async () => {
@@ -616,6 +624,7 @@ export class IdeaService {
     command: Omit<CreateIdeaCommand, 'statusId'>,
     promotion?: { readonly effort: EffortLevel; readonly sprintId: string | null },
     parentIdeaId: string | null = null,
+    autoCreated = false,
   ): Promise<() => Promise<CreateIdeaResult>> {
     const now = this.clock.now()
     const authorId = this.requireAuthenticatedUserId()
@@ -654,6 +663,7 @@ export class IdeaService {
       boardId,
       itemNumber,
       parentIdeaId,
+      autoCreated,
       statusId,
       title: command.title ?? '',
       description: command.description,
@@ -1337,7 +1347,7 @@ export class IdeaService {
         targetLane.referencesBoardId &&
         (await this.ideaRepository.hasTaskOnBoard(idea.id, targetLane.referencesBoardId))
       )
-        ? await this.stageBoardTask(idea, targetLane.referencesBoardId, autoTaskCommand(idea))
+        ? await this.stageBoardTask(idea, targetLane.referencesBoardId, autoTaskCommand(idea), true)
         : null
     await this.unitOfWork.saveChanges()
     await finishTask?.()

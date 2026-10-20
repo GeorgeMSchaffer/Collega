@@ -376,6 +376,8 @@ export type BoardTaskListItem = {
   readonly isFinal: boolean
   readonly assignees: readonly IdeaAssigneeDto[]
   readonly blockedBy: readonly BlockedByDto[]
+  /** The system made the task on entry to an `autoCreateTask` lane; `false` for one added by hand. */
+  readonly autoCreated: boolean
 }
 
 export type IdeaDetail = {

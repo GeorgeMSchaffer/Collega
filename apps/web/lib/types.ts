@@ -637,6 +637,8 @@ export type BoardTask = {
   isFinal: boolean
   assignees: PersonRef[]
   blockedBy: { ideaId: string; itemKey: string | null; isFinal: boolean }[]
+  /** The system made it on entry to an auto-create lane, not a person. */
+  autoCreated: boolean
 }
 
 /**

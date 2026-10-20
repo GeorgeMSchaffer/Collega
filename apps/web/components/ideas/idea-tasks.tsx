@@ -236,6 +236,11 @@ function TaskRow({
           {task.itemKey ? (
             <span className="font-mono text-xs text-muted-foreground">{task.itemKey}</span>
           ) : null}
+          {task.autoCreated ? (
+            <span className="rounded border border-border px-1.5 font-mono text-[10.5px] leading-[17px] font-medium text-muted-foreground">
+              auto-created
+            </span>
+          ) : null}
           {blocked ? (
             <span
               title={blockedTooltip(task)}

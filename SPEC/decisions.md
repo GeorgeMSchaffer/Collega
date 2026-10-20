@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-20 | Board tasks record whether the system auto-created them (`ideas.auto_created`) | active | full below |
 | 2026-10-19 | Board References UI slice 3: three comp U answers | active | full below |
 | 2026-10-19 | "Move anyway" offers a lane picker | active | full below |
 | 2026-10-19 | Board References UI: comp U answers | active | full below |
@@ -130,6 +131,20 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-20 — Board tasks record whether the system auto-created them (`ideas.auto_created`)
+
+> Resolves the "Not yet returned: `autoCreated`" note on `GET /ideas/{ideaId}/board-tasks` (`contracts/ideas.md`).
+
+**Decided by the owner.** The S0.2 schema freeze is amended an eleventh time with one additive column, `ideas.auto_created boolean not null default false`, and the board-task read returns it as `autoCreated`. This is a contract change the owner approved (slice 303).
+
+- `true` exactly where a card entering an `autoCreateTask` lane gets its task: the move route, a pull, and a bulk lane move (all three go through one staging path in `IdeaService`). `false` for `POST /ideas/{ideaId}/board-tasks`, for every ordinary idea, and for rows that existed before the migration; no backfill.
+- Returned only on the board-task list. Idea reads and the board and organization lists do not carry it.
+- Comp U's quiet "auto-created" tag (screen 4, frames A and D) shows on a task row when it is true.
+
+Why a column: nothing stored told the two apart (both audit as `BoardTaskCreated`), and deriving it from audit rows would make a read depend on the audit table.
 
 ---
 
