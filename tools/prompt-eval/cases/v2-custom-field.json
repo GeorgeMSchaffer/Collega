@@ -2,9 +2,10 @@
   "id": "v2-custom-field",
   "fixture": "acme-v2",
   "assistant": "v2",
-  "note": "Custom-field mapping (v2 Fields the assistant may fill): the message names the line and a monthly saving, which map onto the Continuous Improvement type's Line dropdown and its number field. A wrong Line is an option-mapping failure; an empty saving means stated numbers are not reaching typed fields.",
+  "note": "Custom-field mapping (v2 Fields the assistant may fill). Custom fields are only offered once the draft has an Idea Type (owner decision: type and fields fill on the next turn), so this is two turns: turn 1 states the idea and the Continuous Improvement type is set; turn 2 names the line and a monthly saving, which map onto that type's Line dropdown and its number field. A wrong Line is an option-mapping failure; an empty saving means stated numbers are not reaching typed fields. Slice 314: was one turn with an empty draft, which could never pass.",
   "turns": [
-    "On the packing line we lose about 20 hours a month re-taping boxes because the tape dispenser is set too short. Setting a longer default length would fix it."
+    "Our tape dispenser on the packing line is set to cut too short, so boxes get re-taped by hand. Setting a longer default length would fix it.",
+    "It is the packing line, and we lose about 20 hours a month re-taping boxes."
   ],
   "expect": {
     "inScope": true,
