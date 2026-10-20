@@ -152,6 +152,7 @@ export function IdeaWorkspace({
     formOptions: IdeaFormOptions | null
     /** The open idea is in Delivery, which the detail does not say. */
     isIssue?: boolean
+    assistAvailable?: boolean
     tasks?: IdeaTasks | null
     blockers?: IdeaBlockers | null
   }
@@ -914,6 +915,7 @@ export function IdeaWorkspace({
         }
         statusColor={drawerIdea ? statusById.get(drawerIdea.statusId)?.color : undefined}
         formOptions={drawer.formOptions}
+        assistAvailable={drawer.assistAvailable === true}
         tasks={drawer.tasks}
         blockers={drawer.blockers}
         referenceLane={
