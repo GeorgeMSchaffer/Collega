@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-19 | Board References UI slice 3: three comp U answers | active | full below |
 | 2026-10-19 | "Move anyway" offers a lane picker | active | full below |
 | 2026-10-19 | Board References UI: comp U answers | active | full below |
 | 2026-10-16 | Board References UI: lock, task drawer, lane auto-create, metric display, Outcome totals | active | full below |
@@ -129,6 +130,18 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-19 — Board References UI slice 3: three comp U answers
+
+> Answers three open questions on comp U screen 4 (Tasks section).
+
+**Decided by the user.** (1) Opening a task from the parent drawer's list **goes to the Implementation board** (the task's own board, with the task's drawer open); no second drawer is stacked on the parent's. (2) **Read Only does not see "+ Add task"**; the section shows the list alone. (3) **A task can be removed from its parent** from the Tasks section.
+
+Why: stacking drawers leaves two unsaved edit states and a back-stack nobody asked for; the board is where a task's lane, sprint and blockers are already shown. Hiding rather than disabling matches how Read Only is treated on the rest of the page. Removal is needed so a task added by mistake does not strand its parent behind the lock.
+
+**Open from (3), for the backend slice:** "removed" is not defined by the specs. Detach (task becomes a standalone card) or delete? Slice plan assumes delete of the task card, which also drops its blocker links in both directions; confirm before building.
 
 ---
 
