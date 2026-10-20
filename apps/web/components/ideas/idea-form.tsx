@@ -172,9 +172,8 @@ export function IdeaForm({
   }, [])
 
   const editing = idea !== null
-  // Only an edit takes Effort: the create routes have no `effort` (contracts/ideas.md), and a task
-  // takes task fields only, so it never carries one.
-  const showEffort = !addingIssue && editing && idea?.parentIdeaId == null
+  // A task takes task fields only, so it never carries Effort; an Issue add has its own field.
+  const showEffort = !addingIssue && idea?.parentIdeaId == null
   const type = options.ideaTypes.find((t) => t.id === draft.ideaTypeId)
   // The type is fixed once created, so an edit shows the idea's own fields, which the detail
   // resolves even when the type has since been archived and left the catalog.
