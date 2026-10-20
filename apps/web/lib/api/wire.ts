@@ -409,6 +409,7 @@ export type WireBoardTask = {
   isFinal: boolean
   assignees: readonly WireIdeaAssignee[]
   blockedBy: readonly WireBlockedBy[]
+  autoCreated: boolean
 }
 
 /** Only on an item in a lane that references a board; `done` counts tasks in a final lane. */
