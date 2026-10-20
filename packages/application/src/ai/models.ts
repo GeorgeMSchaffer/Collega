@@ -170,6 +170,8 @@ export type IdeaAssistContext = {
   readonly statuses: readonly string[]
   readonly tags: readonly string[]
   readonly memberNames: readonly string[]
+  /** v2: the custom fields visible for each active Idea Type, by Idea Type id. */
+  readonly fieldsByIdeaType?: Readonly<Record<string, readonly IdeaAssistFieldDefinition[]>>
   /** The prompt text in force - deployment-level, not organization-level, and the one member
    * here that is not org-scoped. It rides on the context because that is the only object
    * reaching the prompt builder, and because the model port has no scoped repository of its
@@ -476,4 +478,28 @@ export type IdeaAssistFieldDefinition = {
   readonly fieldType: FieldType
   readonly isRequired: boolean
   readonly options: readonly { readonly id: string; readonly label: string }[]
+}
+
+/** What the model port receives on a v2 turn: the request already normalised against the catalog. */
+export type IdeaAssistTurnInputV2 = {
+  readonly draft: IdeaDraftV2
+  /** Known lockable names only (draft keys and `fieldValues.<id>` of a real field). */
+  readonly lockedFields: readonly string[]
+  /** The previous turn's `nextStep`, when it is in the vocabulary. */
+  readonly step: string | null
+  /** The custom fields visible for the draft's Idea Type. */
+  readonly customFields: readonly IdeaAssistFieldDefinition[]
+}
+
+/**
+ * What the model returned on a v2 turn, before the service validates it. `changes` and
+ * `suggestions` are UNTRUSTED and deliberately loose: `finalizeTurnV2` is the one place that
+ * decides what survives.
+ */
+export type IdeaDraftModelResponseV2 = AiTokenUsage & {
+  readonly inScope: boolean
+  readonly nextQuestion: string
+  readonly nextStep: string
+  readonly changes: unknown
+  readonly suggestions: unknown
 }

@@ -121,6 +121,9 @@ function harness(options: {
 
   const model: IdeaDraftModel = {
     isConfigured: options.isConfigured ?? true,
+    continueTurnV2: async () => {
+      throw new Error('not exercised by this v1 double')
+    },
     async continueTurn(ctx, transcript, draft) {
       modelCalls.push({ context: ctx, transcript, draft })
       if (options.modelError) {
