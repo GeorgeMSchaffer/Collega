@@ -130,6 +130,7 @@ Create a new idea on a board.
   - `statusId` optional GUID string, defaults to the left-most swimlane when omitted
   - `tagNames` optional string array
   - `mentionEmails` optional string array
+  - `effort` optional string: `Low`, `Medium` or `High` (added 2026-10-20, slice 298; owner to review). Absent, `null` or blank stores no estimate; the stored value is never `null`-coerced from anything else. An unrecognised value is a field-keyed `400` (`effort`), as on `PUT /api/v1/ideas/{ideaId}`. An idea cannot be created directly into a reference lane, so the lane rule below is unchanged.
 - **Response:** `201`
   - `ideaId`
   - `boardId`
@@ -146,7 +147,7 @@ Create a new idea on a board.
 Create an idea that belongs to no board (the organization's pool; added 2026-10-13, `20-feature-board-pull-in.md` rules 3 and 4).
 
 - **Roles:** User and Org Admin of the organization (a Site Admin through View As, acting as the target). Read Only is `403`; a Site Admin acting as themselves is refused, as for every organization-content write.
-- **Request:** body — the same fields, limits and validation as `POST /api/v1/boards/{boardId}/ideas`, **except there is no `statusId`**: a `statusId` sent is ignored. Idea Type, Business Impact, assignees and field values are validated against `{organizationId}`.
+- **Request:** body — the same fields, limits and validation as `POST /api/v1/boards/{boardId}/ideas`, **except there is no `statusId`**: a `statusId` sent is ignored. `effort` is taken as on the board create (added 2026-10-20, slice 298; owner to review). Idea Type, Business Impact, assignees and field values are validated against `{organizationId}`.
 - **Response:** `201` — the shape of `POST /api/v1/boards/{boardId}/ideas`, with `boardId` always `null`. `statusId` is the organization's first non-deleted status in sort order.
 - **Errors:**
   - `400` the board create's field errors, keyed the same way; plus `statusId` ("The organization has no active status to place the idea in.") when the organization has no active status
@@ -237,6 +238,8 @@ Return full idea detail.
   - `businessImpactName`
   - `businessImpactColor`
   - `dueDate`
+  - `effort` string or `null`: `Low`, `Medium`, `High`; the same field, values and nullability as on the list item (added 2026-10-20, slice 298)
+  - `parentItemKey` string or `null`: beside `parentIdeaId`, the parent's `itemKey` (added 2026-10-20, slice 298; see "Tasks and item keys")
   - `assignees` array using the board-list assignee item shape
   - `statusId`
   - `statusName`
@@ -363,6 +366,7 @@ Soft-delete an idea while preserving its row and audit history.
 - **Item fields (added):**
   - `itemKey` string or `null`: `<board keyPrefix>-<itemNumber>`, e.g. `CI-19`; `null` for an item on a board with no prefix or no board. Assigned once, never reused.
   - `parentIdeaId` GUID or `null`: set on a task. A task's board must be the board referenced by a lane the parent currently sits in when the task is created.
+  - `parentItemKey` string or `null` (added 2026-10-20, slice 298; owner to review): beside `parentIdeaId` on the board list, the organization list and the idea detail, the parent's `itemKey`. `null` when there is no parent or the parent has no key.
   - `blockedBy` array of `{ ideaId, itemKey, isFinal }`: the tasks that must be final before this one can leave its board's first lane.
   - `taskCounts` object `{ total, done }` on an item whose lane references a board: `done` counts children in a final lane.
 - **Routes (added):**
@@ -371,6 +375,14 @@ Soft-delete an idea while preserving its row and audit history.
     - **Errors:** `401`; `403`; `404` the parent is missing or out of scope; `422` `parentNotInReferenceLane`, `parentIsTask`, `referencedBoardArchived`, `noDefaultIdeaType`, `noDefaultBusinessImpact`.
     - Late additions require moving the parent back into the reference lane first.
     - Named `board-tasks` so it does not collide with the checklist routes in `contracts/issue-tasks.md`, which stay until Plan 4 retires them; Plan 4 may then rename it to `/tasks`.
+  - `GET /api/v1/ideas/{ideaId}/board-tasks` lists the parent's tasks in creation order (added 2026-10-20, slice 298; owner to review). Response `200`: an array of `{ ideaId, itemKey, title, statusId, statusName, isFinal, assignees, blockedBy }`. `isFinal` is true when the task sits in a final lane of its own board; `assignees` uses the board-list assignee item shape; `blockedBy` is `{ ideaId, itemKey, isFinal }[]`. The open count is the rows with `isFinal` false. A parent with no tasks answers `[]`.
+    - **Roles:** anyone who can read the parent, as for the idea detail; Read Only allowed.
+    - **Errors:** `401`; `404` the parent is missing or out of scope.
+    - **Not yet returned:** `autoCreated`. Nothing stored distinguishes a task made by a lane's `autoCreateTask` from one made by hand (both are audited as `BoardTaskCreated`), and recording it needs a column, so it waits for a schema decision.
+  - `DELETE /api/v1/ideas/{ideaId}/board-tasks/{taskId}` removes a task from its parent by soft-deleting the task card, as `DELETE /api/v1/ideas/{ideaId}` does (added 2026-10-20, slice 298; decided by the owner, roles and errors owner to review). Its blocker links are dropped in both directions. The parent's `taskCounts` and reference-lane lock follow from the live children, so the parent unlocks when the removed task was its last open one. Success `204`.
+    - **Roles:** anyone who may edit the parent idea (as for creating a task); Read Only `403`; a direct Site Admin `403`. Unlike `DELETE /api/v1/ideas/{ideaId}`, this is not Org Admin only.
+    - **Errors:** `401`; `403`; `404` the parent or the task is missing or out of scope, or the task is not a child of that parent.
+    - Audited as `BoardTaskDeleted` on the task (parent id and board id in metadata), written after the commit.
   - `PUT /api/v1/ideas/{ideaId}/blocked-by` replaces the blocker set. Body `{ "ideaIds": [...] }`. Details in `contracts/idea-dependencies.md`.
 - **Rules:**
   - Moving an idea into a reference lane requires `effort` to be set; otherwise `422` (`effortRequiredForReferenceLane`). It stays set while the idea is in the lane: an update with `effort` `null` there is `422` (`effortRequiredInReferenceLane`; decided 2026-10-19). The client refuses the move up front (no drop target, tooltip "Add Effort first"); these server rules are the backstop for every path (pull, `ideaMoves`, other clients).
