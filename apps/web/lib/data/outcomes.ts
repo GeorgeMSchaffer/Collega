@@ -1,15 +1,14 @@
 /**
  * Outcomes and the roadmap, from the API's routes (`SPEC/contracts/outcomes.md`).
  *
- * Named apart from `getOutcomes` and `getOutcome` in `./delivery.ts`, which still answer empty for
- * the Roadmap screen until a later slice decides to switch it over. These readers return the API's
- * real shapes, rollups included, and nothing calls them yet.
+ * These readers return the API's real shapes, rollups included. `getOutcomes` in `./delivery.ts` is
+ * the short form for the Backlog's column.
  */
 
 import { toOutcomePage, toOutcomeRoadmap, toOutcomeWithIdeas } from '../api/adapt'
 import { apiGet, apiPath, isApiStatus, withQuery } from '../api/client'
 import type { WireOutcomeDetail, WireOutcomePage, WireRoadmap } from '../api/wire'
-import type { OutcomeRoadmap, OutcomeSummaryPage, OutcomeWithIdeas } from '../types'
+import type { OutcomeRoadmap, OutcomeSummary, OutcomeSummaryPage, OutcomeWithIdeas } from '../types'
 import { failIfRequested } from './latency'
 import { organizationScope } from './scope'
 
@@ -73,4 +72,14 @@ export async function getOutcomeDetail(outcomeId: string): Promise<OutcomeWithId
     if (isApiStatus(error, 404) || isApiStatus(error, 400)) return null
     throw error
   }
+}
+
+/**
+ * The Outcome an item is grouped under, or `null`. The delivery card and the idea payload carry no
+ * `outcomeId`, so this looks for the item among the roadmap's grouped items — one request.
+ */
+export async function getOutcomeOf(ideaId: string): Promise<OutcomeSummary | null> {
+  failIfRequested('getOutcomeOf')
+  const { outcomes } = await getOutcomeRoadmap()
+  return outcomes.find((outcome) => outcome.ideas.some((idea) => idea.id === ideaId)) ?? null
 }

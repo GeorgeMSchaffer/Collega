@@ -700,6 +700,8 @@ export type WireMetricTotal = {
 /** A grouped top-level item on the Outcome detail and the roadmap. */
 export type WireOutcomeIdea = {
   ideaId: string
+  /** `<board keyPrefix>-<itemNumber>`; null without a prefix or a number. */
+  itemKey: string | null
   title: string
   statusId: string
   effort: string | null
@@ -707,6 +709,7 @@ export type WireOutcomeIdea = {
   sprintId: string | null
   sprintStart: string | null
   sprintEnd: string | null
+  metrics: readonly { metricTypeId: string; projected: number | null; realized: number | null }[]
 }
 
 /** An Outcome and its rollup: `GET …/outcomes` items. */
