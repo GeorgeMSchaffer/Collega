@@ -10,8 +10,8 @@ import { currentUser } from '@/lib/session'
 
 export const metadata = { title: 'Roadmap · Collega' }
 
-/** Every role sees the same reason: no role can add one from this screen yet. */
-const NO_OUTCOMES_YET = 'Adding outcomes arrives in a later release'
+/** Every role sees the same reason: no role can add one yet. */
+const NO_OUTCOMES_YET = 'Outcomes arrive in a later release'
 
 /**
  * The Roadmap (`SPEC/20-feature-issues-and-delivery.md`, "Roadmap (comp R)"): the Outcomes on a time

@@ -213,7 +213,9 @@ export function IssueDrawer({
                   {data.outcome.name}
                 </Link>
               ) : (
-                <span className="text-muted-foreground">Not grouped</span>
+                <span className="text-muted-foreground">
+                  {data.outcome === null ? 'Not grouped' : '—'}
+                </span>
               )}
             </Fact>
             <Fact label="Assignees">

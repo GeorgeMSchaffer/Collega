@@ -21,7 +21,7 @@ export type IssueDrawerData = {
   boardName: string | null
   boardArchived: boolean
   /** Found in the roadmap read: neither the card nor the idea payload carries an `outcomeId`. */
-  outcome?: { id: string; name: string; color: string } | null
+  outcome?: { id: string; name: string; color: string } | null | undefined // undefined: not read
   /** The idea form's catalogs, read only when `&edit=1` asks for the form. */
   formOptions: IdeaFormOptions | null
 }
@@ -53,7 +53,8 @@ export async function loadIssueDrawer(
     getIssueTasks(ideaId),
     getMemberOptions(),
     getBoardRefs(),
-    getOutcomeOf(ideaId),
+    // A failed roadmap read costs this one field, not the drawer: undefined renders a dash.
+    getOutcomeOf(ideaId).catch(() => undefined),
     editing ? getIdeaFormOptions() : null,
   ])
 

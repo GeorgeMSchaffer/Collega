@@ -37,7 +37,8 @@ export default async function BacklogPage({
   const [rows, sprints, outcomes, statuses, formOptions] = await Promise.all([
     getBacklogIssues(),
     getSprints(),
-    getOutcomes(),
+    // The column is a nicety: a failed roadmap read leaves it empty rather than failing the page.
+    getOutcomes().catch(() => []),
     getDeliveryStatuses(),
     adding ? getIdeaFormOptions() : null,
   ])

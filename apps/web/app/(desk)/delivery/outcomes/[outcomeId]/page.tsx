@@ -32,8 +32,10 @@ function Stat({
       <dt>
         <Meta caps>{label}</Meta>
       </dt>
-      <dd className="m-0 mt-1 text-2xl font-semibold tabular-nums">{children}</dd>
-      {note ? <small className="text-xs text-muted-foreground">{note}</small> : null}
+      <dd className="m-0 mt-1">
+        <span className="block text-2xl font-semibold tabular-nums">{children}</span>
+        {note ? <small className="text-xs text-muted-foreground">{note}</small> : null}
+      </dd>
     </div>
   )
 }
