@@ -297,6 +297,23 @@ export class IdeaAssistController {
     @Param('boardId', UuidParamPipe) boardId: string,
     @Body() body: IdeaAssistTurnBody,
   ): Promise<IdeaAssistTurnResultV2> {
+    return this.turn(boardId, body)
+  }
+
+  /**
+   * The organization-level turn: the same behaviour with no board, for an idea drafted from the
+   * Ideas list that will start in the pool. Same roles, limits, metering and audit; the usage
+   * record carries no board, and the three-strikes close counts the caller's board-less turns.
+   */
+  @Post('idea-assist/turns')
+  @UseGuards(AuthGuard)
+  async continueOrganizationTurn(
+    @Body() body: IdeaAssistTurnBody,
+  ): Promise<IdeaAssistTurnResultV2> {
+    return this.turn(null, body)
+  }
+
+  private turn(boardId: string | null, body: IdeaAssistTurnBody) {
     return this.ideaAssist.continueTurnV2({
       boardId,
       transcript: readTranscript(body.transcript),

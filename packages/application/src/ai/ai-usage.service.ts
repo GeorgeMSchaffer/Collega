@@ -225,7 +225,7 @@ export class AiUsageService implements AiUsageGate {
    */
   getRecentOutcomes(
     organizationId: string,
-    boardId: string,
+    boardId: string | null,
     limit: number,
     fromUtc: Date,
   ): Promise<readonly AiCallOutcome[]> {

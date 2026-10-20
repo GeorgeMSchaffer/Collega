@@ -111,7 +111,7 @@ export interface AiUsageRepository {
   getRecentOutcomes(
     organizationId: string,
     actorUserId: string | null,
-    boardId: string,
+    boardId: string | null,
     limit: number,
     fromUtc: Date,
   ): Promise<readonly AiCallOutcome[]>
@@ -168,7 +168,7 @@ export interface AiUsageGate {
    * how a conversation has gone, for callers that must not trust the client's transcript. */
   getRecentOutcomes(
     organizationId: string,
-    boardId: string,
+    boardId: string | null,
     limit: number,
     fromUtc: Date,
   ): Promise<readonly AiCallOutcome[]>

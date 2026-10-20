@@ -86,6 +86,20 @@ Advance the idea-drafting conversation by one turn and return the updated draft.
   - the rules for the 20-entry cap, scope gate, three-strikes close, `429` and usage metering are unchanged
   - `POST /api/v1/boards/{boardId}/ideas/ai-draft` and `.../ai-polish` ([`ideas.md`](ideas.md)) are **withdrawn**: never built, and the turn endpoint covers extraction. No new endpoint replaces them
 
+#### No-board turn (slice 309)
+
+*Added 2026-10-20 (slice 309), settling the owner's 2026-10-20 "starter prompts and the no-board create" decision, which left "an org-level variant or a deferred board id" open. The org-level variant is the smaller change: no board id has to be carried, threaded or validated later, and the schema is untouched (`ai_usage_records.board_id` and `audit_events.entity_id` are already nullable).*
+
+### `POST /api/v1/idea-assist/turns`
+The v2 turn for an idea drafted with no board, so it will start in the pool (the Ideas list's *Add New Idea*).
+
+- **Roles, request, response, errors:** exactly those of `POST /api/v1/boards/{boardId}/idea-assist/turns` above, minus the `404` for a board. The caller's organization comes from the access token.
+- **Rules:**
+  - the same pipeline: cap, scope gate, `429`, usage metering, daily budget
+  - the usage record carries no board, and the three-consecutive-refusals close counts the caller's board-less turns in the last hour
+  - the audit event names the organization (`entityType` `Organization`, `entityId` the organization id) where the board route's names the board; it still never records the prompt or transcript
+- **Not decided here:** "the type picks the board" (the same decision). Nothing in the schema relates an Idea Type to a board, so the turn never proposes a board; the idea stays in the pool unless the person chooses one in the form. See the tracker.
+
 ### `GET /api/v1/ai-assist/availability`
 Tell the client whether to open the drafting chat or go straight to the create form (`20-feature-ai-idea-assist.md` rule 32a).
 
