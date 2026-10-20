@@ -265,8 +265,17 @@ excluded from every metric denominator below.
     **v2 targets, confirmed by the owner 2026-10-20** (`SPEC/decisions.md`): refusal precision 0.85,
     overall mapping 0.85, each group 0.75, on the point estimate. They are reported as met or not met and never move an exit
     code; what gates a v2 run is unchanged (rules 16, 31, 32), and a v2 baseline would gate the
-    `v2 …` figures by rule 32. The runner cannot yet *drive* the v2 turn (it needs the v2 port,
-    slice 307), so v2 cases are validated and scored from saved runs but not executed.
+    `v2 …` figures by rule 32.
+
+    *Slice 312.* `--assistant v2` drives the v2 turn: the `v2` and `both` cases run (the v1-only
+    ones are listed as not run), and each turn does what `IdeaAssistService.continueTurnV2` does
+    around the model. The case's `draft` goes on the wire (names to derived ids), `lockedFields` and
+    the previous `nextStep` go with it, `prepareTurnInputV2` normalises the request, the adapter's
+    `continueTurnV2` is called with `SYSTEM_PROMPT_TEMPLATE_V2` (the v2 prompt, never the live v1
+    default; `--prompt-file` still overrides it), and `finalizeTurnV2` reduces the response. The
+    run file records both the model's raw `changes` and what finalizing kept (`v2` on each turn,
+    `assistant: "v2"` in the header). The fixture schema stored in a v2 run file is the widest
+    one (nothing locked, every type's custom fields); each call builds its own.
 
 ### Comparing prompt changes
 

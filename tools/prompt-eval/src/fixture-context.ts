@@ -1,5 +1,9 @@
-import type { AiPromptSet, IdeaAssistContext } from '@collega/application/ai'
-import { buildSystemPrompt } from '@collega/application/ai'
+import type {
+  AiPromptSet,
+  IdeaAssistContext,
+  IdeaAssistFieldDefinition,
+} from '@collega/application/ai'
+import { buildIdeaAssistTurnSchemaV2, buildSystemPrompt } from '@collega/application/ai'
 import { buildIdeaDraftResponseSchema } from '@collega/infrastructure/integrations/ai'
 import type { EvalCase, EvalFixture, FixtureFieldType } from './corpus.ts'
 import { canonicalJson, nameDerivedId, sha256 } from './hashing.ts'
@@ -43,6 +47,13 @@ export interface PreparedFixture {
 
 const CATALOG_ONLY_TEMPLATE = '{{ORGANIZATION_CATALOG}}\n{{SCOPE_STATEMENT}}'
 
+/** Which turn a run drives: v1's, or v2's (runner spec rule 33). */
+export type RunAssistant = 'v1' | 'v2'
+
+// `FieldType` lives in @collega/domain, which this package does not depend on; the values are the
+// enum's own, so the cast only bridges the nominal string enum.
+const FIELD_TYPE_NAMES = { text: 'Text', number: 'Number', dropdown: 'Dropdown' } as const
+
 /** Rule 6: ids from `fixture/kind/name`, and the organization's from `fixture/organization/name`. */
 export function fixtureContext(fixture: EvalFixture, prompts: AiPromptSet): IdeaAssistContext {
   const idOf = (kind: string, name: string) => nameDerivedId(`${fixture.name}/${kind}/${name}`)
@@ -62,8 +73,37 @@ export function fixtureContext(fixture: EvalFixture, prompts: AiPromptSet): Idea
     statuses: fixture.statuses,
     tags: fixture.tags,
     memberNames: fixture.memberNames,
+    ...(fixture.fields === undefined ? {} : { fieldsByIdeaType: fieldsByIdeaType(fixture, idOf) }),
     prompts,
   }
+}
+
+/** v2: the typed fields each idea type shows, as the context builder hands them to the model. */
+function fieldsByIdeaType(
+  fixture: EvalFixture,
+  idOf: (kind: string, name: string) => string,
+): Record<string, IdeaAssistFieldDefinition[]> {
+  const catalog = catalogFields(fixture) ?? []
+  return Object.fromEntries(
+    fixture.ideaTypes.map((type) => [
+      idOf('ideaType', type.name),
+      (type.fieldNames ?? []).flatMap((name) => {
+        const field = catalog.find((f) => f.name === name)
+        if (field === undefined) return []
+        return [
+          {
+            id: field.id,
+            name: field.name,
+            fieldType: FIELD_TYPE_NAMES[
+              field.type
+            ] as unknown as IdeaAssistFieldDefinition['fieldType'],
+            isRequired: (type.requiredFieldNames ?? []).includes(name),
+            options: (field.options ?? []).map((o) => ({ id: o.id, label: o.name })),
+          },
+        ]
+      }),
+    ]),
+  )
 }
 
 /** Rule 6's derivation for typed fields: `fixture/field/name`, `fixture/fieldOption/field/name`. */
@@ -83,14 +123,26 @@ export function catalogFields(fixture: EvalFixture): CatalogField[] | undefined 
   }))
 }
 
-export function prepareFixture(fixture: EvalFixture, prompts: AiPromptSet): PreparedFixture {
+export function prepareFixture(
+  fixture: EvalFixture,
+  prompts: AiPromptSet,
+  assistant: RunAssistant = 'v1',
+): PreparedFixture {
   const context = fixtureContext(fixture, prompts)
   const fields = catalogFields(fixture)
   // Typed fields are not in the v1 prompt, so they join the hashes explicitly - and only when a
   // fixture has them, which leaves every v1 fixture's hashes as they were.
   const typed = fields === undefined ? {} : { fields }
   const systemPrompt = buildSystemPrompt(context)
-  const responseSchema = buildIdeaDraftResponseSchema(context)
+  // A v2 turn's schema depends on the draft's locked fields and idea type, so the fixture-level one
+  // recorded here is the widest: nothing locked, every type's fields. Each call builds its own.
+  const responseSchema =
+    assistant === 'v2'
+      ? buildIdeaAssistTurnSchemaV2(context, {
+          lockedFields: [],
+          customFields: Object.values(context.fieldsByIdeaType ?? {}).flat(),
+        })
+      : buildIdeaDraftResponseSchema(context)
   const catalogOnly = buildSystemPrompt({
     ...context,
     prompts: { ...prompts, systemPromptTemplate: CATALOG_ONLY_TEMPLATE },
