@@ -56,6 +56,24 @@ It refuses to run against anything but your own machine. The script migrates and
 address it read — see [Against Vercel Postgres](#against-vercel-postgres) for the deliberate way
 past that.
 
+### Starting the database container by itself
+
+`pnpm start` starts the container for you. To run only the database (Docker Desktop must be
+running; the service is `postgres`, the container `collega-postgres`, from
+[`docker-compose.yml`](docker-compose.yml)):
+
+```bash
+docker compose up -d postgres     # start, detached; the data lives in the postgres-data volume
+docker compose ps                 # "healthy" once pg_isready passes (a few seconds)
+docker compose logs -f postgres   # follow the logs
+docker compose stop postgres      # stop, keeping the data
+docker compose down -v            # remove it and its data (destroys all local data)
+```
+
+`POSTGRES_PASSWORD` must be set in `.env` (copy it from `.env.example` first); the container reads
+it, and `POSTGRES_USER` / `POSTGRES_HOST_PORT` (default 5432) too. The container publishes
+`localhost:${POSTGRES_HOST_PORT}`, so stop any other PostgreSQL on that port or change the port.
+
 `.env` is gitignored and copied from [`.env.example`](.env.example), whose defaults are placeholders
 for a throwaway local container. Two are worth knowing about:
 
