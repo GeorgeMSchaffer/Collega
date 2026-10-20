@@ -10,7 +10,14 @@ import { Icon } from '@/components/list/icons'
 import { engagementDenial, followDenial, mayEditIdeaContent, writeDenial } from '@/lib/roles'
 import { markAllNotificationsRead, markNotificationRead } from '@/lib/server/inbox-actions'
 import { useCurrentUser } from '@/lib/session-client'
-import type { BoardRef, IdeaDetail, IdeaFormOptions, InboxItem, Status } from '@/lib/types'
+import type {
+  BoardRef,
+  IdeaDetail,
+  IdeaFormOptions,
+  IdeaTasks,
+  InboxItem,
+  Status,
+} from '@/lib/types'
 import { INBOX_LIST } from './inbox-list-config'
 import { wording } from './inbox-wording'
 
@@ -40,7 +47,12 @@ export function InboxWorkspace({
   unread: number
   boards: BoardRef[]
   statuses: Status[]
-  drawer: { mode: DrawerMode | null; idea: IdeaDetail | null; formOptions: IdeaFormOptions | null }
+  drawer: {
+    mode: DrawerMode | null
+    idea: IdeaDetail | null
+    formOptions: IdeaFormOptions | null
+    tasks?: IdeaTasks | null
+  }
 }) {
   const user = useCurrentUser()
   const [state, update] = useListState(INBOX_LIST)
@@ -166,6 +178,7 @@ export function InboxWorkspace({
         boardLine={null}
         statusColor={idea ? statusById.get(idea.statusId)?.color : undefined}
         formOptions={drawer.formOptions}
+        tasks={drawer.tasks}
         createBoards={null}
         createBoardId={null}
         canEdit={canEdit}

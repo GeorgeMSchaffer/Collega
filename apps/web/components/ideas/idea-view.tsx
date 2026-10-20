@@ -67,6 +67,8 @@ export function IdeaView({
   followDenial,
   facts = true,
   boardLine,
+  tasksPrompt,
+  tasks,
 }: {
   idea: IdeaDetail
   statusColor: string | undefined
@@ -76,9 +78,14 @@ export function IdeaView({
   /** False in the Issue drawer, which shows its delivery facts in their place. */
   facts?: boolean
   boardLine?: BoardLine | null | undefined
+  /** The completion prompt, at the top of the drawer. */
+  tasksPrompt?: ReactNode
+  /** The Tasks section, under the facts. */
+  tasks?: ReactNode
 }) {
   return (
     <>
+      {tasksPrompt}
       {facts ? (
         <dl className="m-0 grid grid-cols-2 gap-3 rounded-md bg-muted/60 p-3">
           {boardLine ? (
@@ -124,6 +131,8 @@ export function IdeaView({
           {idea.dueDate ? <Fact label="Due">{idea.dueDate}</Fact> : null}
         </dl>
       ) : null}
+
+      {tasks}
 
       {idea.problem ? (
         <Section title="Problem">
