@@ -5,7 +5,11 @@ import assert from 'node:assert/strict'
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { after, test } from 'node:test'
-import { DEFAULT_AI_USAGE_LIMITS, defaultAiPromptSet } from '@collega/application/ai'
+import {
+  DEFAULT_AI_USAGE_LIMITS,
+  defaultAiPromptSet,
+  SYSTEM_PROMPT_TEMPLATE_V2,
+} from '@collega/application/ai'
 import { main } from '../src/cli.ts'
 import { loadCorpus } from '../src/corpus.ts'
 import { prepareFixture, schemaPriorities } from '../src/fixture-context.ts'
@@ -294,7 +298,10 @@ test('--case narrows the run and is recorded; a v2 or unknown case is refused', 
   for (const id of ['v2-locked-problem', 'no-such-case']) {
     const refused = await runMain(['--case', id])
     assert.equal(refused.code, 2)
-    assert.match(refused.stderr, new RegExp(`Unknown or non-v1 case: ${id}`))
+    assert.match(
+      refused.stderr,
+      new RegExp(`Unknown case, or one that does not run under v1: ${id}`),
+    )
     assert.equal(refused.fake.requests.length, 0)
   }
 })
@@ -405,8 +412,58 @@ test('--dry-run needs no key, makes no call, writes nothing and counts the plan'
   assert.equal(o.fake.requests.length, 0)
   assert.deepEqual(await filesIn(o.runsDir), [])
   assert.match(o.stdout, /Planned {4}50 calls across 9 cases/)
-  assert.match(o.stdout, /Validated, not run \(10 v2 cases/)
+  assert.match(o.stdout, /Validated, not run under v1 \(10 v2 cases/)
   assert.match(o.stdout, /hostile-catalog/, 'every fixture is rendered')
+})
+
+test('--assistant v2 plans the v2 and both cases under the v2 prompt, and lists the v1 ones as not run', async () => {
+  const o = await runMain(['--assistant', 'v2', '--dry-run'], { env: {} })
+  assert.equal(o.code, 0, o.stderr)
+  assert.match(o.stdout, /Prompt {5}default-v2/)
+  assert.match(o.stdout, /Planned {4}95 calls across 15 cases/)
+  assert.match(o.stdout, /not run under v2 \(4 v1 cases/)
+  const refused = await runMain(['--assistant', 'v3', '--dry-run'], { env: {} })
+  assert.equal(refused.code, 2)
+})
+
+test('--assistant v2 drives the v2 turn and records it: the v2 prompt, the v2 header, a v2 record per turn', async () => {
+  const runsDir = await scratchDir()
+  const seen: string[] = []
+  const deps = testDeps(null, {
+    runsDir,
+    env: KEY_ENV,
+    createModel: () => ({
+      isConfigured: true,
+      continueTurn: async () => {
+        throw new Error('v1 not exercised')
+      },
+      continueTurnV2: async (context) => {
+        seen.push(context.prompts.systemPromptTemplate)
+        return {
+          inScope: true,
+          nextQuestion: 'q',
+          nextStep: 'problem',
+          changes: { problem: 'P' },
+          suggestions: null,
+          inputTokens: 1,
+          outputTokens: 1,
+          cacheReadInputTokens: 0,
+          cacheCreationInputTokens: 0,
+        }
+      },
+    }),
+  })
+  await capture(() =>
+    main(['--assistant', 'v2', '--repeats', '1', '--case', 'v2-custom-field'], deps),
+  )
+  const run: RunFile = JSON.parse(
+    await readFile(path.join(runsDir, '20260928T101500Z-default-v2.json'), 'utf8'),
+  )
+  assert.equal(run.header.assistant, 'v2')
+  assert.equal(run.header.prompt.source, 'default-v2')
+  assert.deepEqual(seen, [SYSTEM_PROMPT_TEMPLATE_V2])
+  assert.equal(run.trials[0].turns[0].v2?.changes?.problem, 'P')
+  assert.ok(run.metrics.v2 !== null, 'the v2 results section is scored')
 })
 
 test('--dry-run reads --baseline as a live run would: unreadable is exit 2, readable is named', async () => {

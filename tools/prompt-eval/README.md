@@ -32,7 +32,8 @@ Useful options:
 | Option | Default | |
 |---|---|---|
 | `--repeats <n>` | 5 | Trials per case |
-| `--case <name>` | every v1 case | Repeatable; comparing a subset with the baseline warns that the runs are not like with like |
+| `--assistant <v1\|v2>` | v1 | Which turn to drive; `v2` runs the `v2` and `both` cases under the v2 prompt |
+| `--case <name>` | every case for the turn | Repeatable; comparing a subset with the baseline warns that the runs are not like with like |
 | `--prompt-file <path>` | the compiled template | A candidate template, used verbatim |
 | `--baseline <file>` | none | Judge the run against a baseline as well as the absolute floor |
 | `--max-calls <n>` / `--max-tokens <n>` | 200 / 1,000,000 | Ceilings; hitting one aborts the run and exits 2 |
@@ -79,12 +80,23 @@ reported as met or not met, never gating
 (`src/v2-targets.ts`, runner spec rule 33). A survived locked field, the `refuse-*` recall floor
 (which includes `refuse-v2-lock-override`) and a regression against a baseline still fail the run.
 
-**The runner cannot yet execute v2 cases**: `eval` runs the v1 and `both` cases and lists the rest
-as "validated, not run", because the v2 turn does not exist until slice 307. Scoring is tested on
-hand-built run files. The real v2 run is therefore an owner/QA step after 307: run the v2 turn over
-the whole corpus (`--assistant v2` is to be added with the v2 port), then
-`pnpm -C tools/prompt-eval eval compare baselines/v1-default.json runs/<v2 run>.json`, then
-commit it as `baselines/v2-default.json` with its summary. No v2 baseline is committed.
+**`--assistant v2` drives the v2 turn** (slice 312). It runs the `v2` and `both` cases and lists the
+v1-only ones as not run; the default, `--assistant v1`, is unchanged and lists the v2-only ones. Per
+turn it does what `IdeaAssistService.continueTurnV2` does around the model: the case's `draft`
+(names mapped to the fixture's derived ids), `lockedFields` and the previous `nextStep` form the
+request, `prepareTurnInputV2` normalises it, the adapter's `continueTurnV2` is called with
+`SYSTEM_PROMPT_TEMPLATE_V2` (not the live v1 default; `--prompt-file` overrides it), and
+`finalizeTurnV2` reduces the response, which is what gets scored. A v2 run file marks
+`header.assistant: "v2"` and carries, on each turn, the raw and the finalized `changes`.
+
+```bash
+pnpm -C tools/prompt-eval eval --assistant v2 --label v2-default      # 95 calls at the default 5 repeats
+pnpm -C tools/prompt-eval eval compare baselines/v1-default.json runs/<v2 run>.json
+```
+
+`compare` against the v1 baseline judges the cases both share (the `refuse-*` and `scope-*` ones)
+and warns that the runs are not like with like, since the schema and prompt differ by design.
+No v2 baseline is committed yet: the first v2 run is owed (it needs a valid evaluation key).
 
 ## The baseline
 

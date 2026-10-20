@@ -5,15 +5,20 @@ import { test } from 'node:test'
 import type {
   IdeaAssistContext,
   IdeaAssistTurn,
+  IdeaAssistTurnInputV2,
   IdeaDraft,
   IdeaDraftModel,
   IdeaDraftModelResponse,
 } from '@collega/application/ai'
-import { defaultAiPromptSet, IdeaDraftModelError } from '@collega/application/ai'
-import type { EvalCase } from '../src/corpus.ts'
-import { fixtureContext } from '../src/fixture-context.ts'
+import {
+  defaultAiPromptSet,
+  IdeaDraftModelError,
+  SYSTEM_PROMPT_TEMPLATE_V2,
+} from '@collega/application/ai'
+import { type EvalCase, type EvalFixture, loadCorpus } from '../src/corpus.ts'
+import { fixtureContext, prepareFixture, schemaPriorities } from '../src/fixture-context.ts'
 import { type LoopOptions, runTrials, type TrialSpec } from '../src/turn-loop.ts'
-import { EMPTY_DRAFT, TEST_KEY } from './helpers.ts'
+import { EMPTY_DRAFT, PACKAGE_ROOT, TEST_KEY } from './helpers.ts'
 
 const CONTEXT: IdeaAssistContext = fixtureContext(
   {
@@ -296,4 +301,99 @@ test('the latency of a turn is read from the injected stopwatch', async () => {
   const { model } = fakeModel(() => ({}))
   const result = await runTrials([spec(evalCase('a', ['1']))], options(model))
   assert.equal(result.trials[0].turns[0].latencyMs, 7)
+})
+
+// --- The v2 turn (rule 33) ------------------------------------------------------------------------
+
+const V2_USAGE = {
+  inputTokens: 1,
+  outputTokens: 1,
+  cacheReadInputTokens: 0,
+  cacheCreationInputTokens: 0,
+}
+
+async function v2Fixture(template: string) {
+  const corpus = await loadCorpus(PACKAGE_ROOT, schemaPriorities())
+  return prepareFixture(
+    corpus.fixtures.get('acme-v2') as EvalFixture,
+    { ...defaultAiPromptSet(), systemPromptTemplate: template },
+    'v2',
+  )
+}
+
+test('a v2 trial sends the wire draft, drops a locked field as the service does, and carries draft and step', async () => {
+  const fixture = await v2Fixture(SYSTEM_PROMPT_TEMPLATE_V2)
+  const v2Case: EvalCase = {
+    ...evalCase('v2-locked', ['one', 'two'], 'acme-v2'),
+    assistant: 'v2',
+    draft: { title: 'Checklist', problem: 'Mine' },
+    lockedFields: ['problem'],
+  }
+  const sent: IdeaAssistTurnInputV2[] = []
+  const model: IdeaDraftModel = {
+    isConfigured: true,
+    continueTurn: async () => {
+      throw new Error('v1 not exercised')
+    },
+    continueTurnV2: async (_context, _transcript, input) => {
+      sent.push(input)
+      return {
+        inScope: true,
+        nextQuestion: 'next?',
+        nextStep: sent.length === 1 ? 'proposedSolutions' : 'impactRationale',
+        changes:
+          sent.length === 1
+            ? { problem: 'Overwritten', proposedSolutions: ['A tablet app'] }
+            : { impactRationale: 'Saves time' },
+        suggestions: null,
+        ...V2_USAGE,
+      }
+    },
+  }
+  const result = await runTrials(
+    [{ evalCase: v2Case, repeat: 0, context: fixture.context, catalog: fixture.catalog }],
+    options(model, { assistant: 'v2' }),
+  )
+
+  assert.equal(sent[0].draft.problem, 'Mine')
+  assert.deepEqual(sent[0].lockedFields, ['problem'])
+  assert.equal(sent[0].step, null)
+  assert.equal(sent[1].step, 'proposedSolutions', 'the previous nextStep is sent back')
+  assert.deepEqual(sent[1].draft.proposedSolutions, ['A tablet app'], 'the draft is carried')
+
+  const [first, second] = result.trials[0].turns.map((t) => t.v2)
+  assert.equal(first?.rawChanges?.problem, 'Overwritten')
+  assert.equal(first?.changes?.problem, undefined, 'the locked field never survives')
+  assert.equal(second?.draft?.problem, 'Mine')
+  assert.equal(second?.draft?.impactRationale, 'Saves time')
+  assert.equal(second?.nextStep, 'impactRationale')
+})
+
+test('a refused v2 turn keeps the draft and step, and drops the user turn from the transcript', async () => {
+  const fixture = await v2Fixture(SYSTEM_PROMPT_TEMPLATE_V2)
+  const lengths: number[] = []
+  const model: IdeaDraftModel = {
+    isConfigured: true,
+    continueTurn: async () => {
+      throw new Error('v1 not exercised')
+    },
+    continueTurnV2: async (_context, transcript) => {
+      lengths.push(transcript.length)
+      return {
+        inScope: lengths.length > 1,
+        nextQuestion: 'q',
+        nextStep: 'problem',
+        changes: {},
+        suggestions: null,
+        ...V2_USAGE,
+      }
+    },
+  }
+  const v2Case: EvalCase = { ...evalCase('r', ['off topic', 'real'], 'acme-v2'), assistant: 'v2' }
+  const result = await runTrials(
+    [{ evalCase: v2Case, repeat: 0, context: fixture.context, catalog: fixture.catalog }],
+    options(model, { assistant: 'v2' }),
+  )
+  assert.deepEqual(lengths, [1, 1], 'the refused turn is not in the next request')
+  assert.equal(result.trials[0].turns[0].v2?.nextStep, 'problem')
 })

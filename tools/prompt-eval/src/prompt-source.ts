@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import type { AiPromptSet } from '@collega/application/ai'
-import { defaultAiPromptSet } from '@collega/application/ai'
+import { defaultAiPromptSet, SYSTEM_PROMPT_TEMPLATE_V2 } from '@collega/application/ai'
 import { sha256 } from './hashing.ts'
 
 // The two placeholders the server owns (v1 rule 35). Declared in @collega/domain/ai, which this
@@ -8,7 +8,7 @@ import { sha256 } from './hashing.ts'
 const REQUIRED_PLACEHOLDERS = ['{{ORGANIZATION_CATALOG}}', '{{SCOPE_STATEMENT}}'] as const
 
 export interface PromptSource {
-  /** `default`, or the path given to `--prompt-file`. */
+  /** `default`, `default-v2`, or the path given to `--prompt-file`. */
   readonly source: string
   readonly prompts: AiPromptSet
   readonly templateSha256: string
@@ -26,11 +26,19 @@ export class PromptFileError extends Error {
  * text, as `GET /api/v1/ai-assist/prompt` returns it in `body`. The redirect strings are the
  * defaults either way: the model never sees them, so they cannot change what is measured.
  */
-export async function loadPromptSource(promptFile: string | undefined): Promise<PromptSource> {
-  const defaults = defaultAiPromptSet()
+export async function loadPromptSource(
+  promptFile: string | undefined,
+  assistant: 'v1' | 'v2' = 'v1',
+): Promise<PromptSource> {
+  // The service always sends a v2 turn the v2 template, never the active (v1) one, so a v2 run's
+  // default is that constant.
+  const defaults =
+    assistant === 'v2'
+      ? { ...defaultAiPromptSet(), systemPromptTemplate: SYSTEM_PROMPT_TEMPLATE_V2 }
+      : defaultAiPromptSet()
   if (promptFile === undefined) {
     return {
-      source: 'default',
+      source: assistant === 'v2' ? 'default-v2' : 'default',
       prompts: defaults,
       templateSha256: sha256(defaults.systemPromptTemplate),
     }
