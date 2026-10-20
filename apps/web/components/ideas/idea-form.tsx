@@ -43,7 +43,7 @@ const TAG_MAX_LENGTH = 100
 const TAG_SUGGEST_FROM = 2
 
 /** A chosen tag. `color` is null for one that does not exist yet; the API picks it on save. */
-type ChosenTag = { name: string; color: string | null }
+export type ChosenTag = { name: string; color: string | null }
 
 type Draft = {
   boardId: string
@@ -572,7 +572,7 @@ type TagOption = { kind: 'tag'; tag: TagRef } | { kind: 'create'; name: string }
  * The API enforces the limits and uniqueness; this field only offers.
  * WAI-ARIA combobox with a listbox popup.
  */
-function TagsField({
+export function TagsField({
   id,
   tags,
   catalog,
@@ -786,7 +786,7 @@ function RemoveTag({ name, onClick }: { name: string; onClick: () => void }) {
  * anyone but the author or an Org Admin, whose save would be refused; the list is still sent back
  * unchanged.
  */
-function AssigneesField({
+export function AssigneesField({
   id,
   assignees,
   members,

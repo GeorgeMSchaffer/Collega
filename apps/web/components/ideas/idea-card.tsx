@@ -44,7 +44,7 @@ export const PLAIN_CARD: CardWork = {
   onMoveAnyway: null,
 }
 
-const WARN_BADGE =
+export const WARN_BADGE =
   'inline-flex w-fit items-center gap-1.5 rounded-sm bg-warning/12 px-2 text-xs font-semibold text-warning'
 
 /**

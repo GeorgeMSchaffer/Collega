@@ -196,6 +196,8 @@ export async function moveIdea(_previous: ActionState, form: FormData): Promise<
   }
 
   revalidateIdeaScreens(boardId)
+  // The drawer's completion prompt moves a parent from the inbox's drawer too.
+  revalidatePath('/inbox')
   return { error: null }
 }
 
@@ -296,5 +298,65 @@ export async function detachIdea(
   revalidateIdeaScreens(boardId)
   // The board's idea count in the sidebar, and Home's Needs a board tile.
   revalidatePath('/', 'layout')
+  return { error: null }
+}
+
+/** What the drawer's add-task form sends: the task fields and nothing else (`contracts/ideas.md`). */
+export type BoardTaskInput = {
+  title: string
+  description: string
+  assigneeUserIds: string[]
+  tagNames: string[]
+}
+
+/**
+ * Re-read what a parent's tasks touch: the parent's own screens, and the board the tasks live on,
+ * where an added task is a new card and a removed one is gone.
+ */
+function revalidateTaskScreens(boardId: string, taskBoardId: string): void {
+  revalidateIdeaScreens(boardId)
+  revalidateIdeaScreens(taskBoardId)
+  revalidatePath('/inbox')
+}
+
+/**
+ * Add a task to a parent in a reference lane, on the board that lane references. A refusal such as
+ * `parentNotInReferenceLane` comes back as a sentence for the form to show.
+ */
+export async function addBoardTask(
+  ideaId: string,
+  boardId: string,
+  taskBoardId: string,
+  input: BoardTaskInput,
+): Promise<ActionState> {
+  try {
+    await apiPost(apiPath`/ideas/${ideaId}/board-tasks`, {
+      title: input.title,
+      description: input.description,
+      assigneeUserIds: input.assigneeUserIds,
+      tagNames: input.tagNames,
+    })
+  } catch (error) {
+    return { error: refusal(error) }
+  }
+
+  revalidateTaskScreens(boardId, taskBoardId)
+  return { error: null }
+}
+
+/** Remove a task from its parent. The API soft-deletes the card, so the parent's lock follows. */
+export async function removeBoardTask(
+  ideaId: string,
+  taskId: string,
+  boardId: string,
+  taskBoardId: string,
+): Promise<ActionState> {
+  try {
+    await apiDelete(apiPath`/ideas/${ideaId}/board-tasks/${taskId}`)
+  } catch (error) {
+    return { error: refusal(error) }
+  }
+
+  revalidateTaskScreens(boardId, taskBoardId)
   return { error: null }
 }

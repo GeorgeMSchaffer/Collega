@@ -10,9 +10,10 @@
  * the ten rows that happened to arrive.
  */
 
-import { toIdea, toIdeaDetail, toIdeaFormField, toMemberOption } from '../api/adapt'
+import { toBoardTask, toIdea, toIdeaDetail, toIdeaFormField, toMemberOption } from '../api/adapt'
 import { apiGet, apiPath, isApiStatus, withQuery } from '../api/client'
 import type {
+  WireBoardTask,
   WireBusinessImpact,
   WireIdeaDetail,
   WireIdeaListItem,
@@ -21,7 +22,14 @@ import type {
   WirePage,
 } from '../api/wire'
 import { API_MAX_PAGE_SIZE } from '../limits'
-import type { Idea, IdeaDetail, IdeaFormOptions, IdeaListQuery, IdeaPage } from '../types'
+import type {
+  BoardTask,
+  Idea,
+  IdeaDetail,
+  IdeaFormOptions,
+  IdeaListQuery,
+  IdeaPage,
+} from '../types'
 import { failIfRequested } from './latency'
 import { organizationScope } from './scope'
 import { getTagRefs } from './tags'
@@ -169,6 +177,20 @@ export async function getIdea(id: string): Promise<IdeaDetail | null> {
     if (isApiStatus(error, 404) || isApiStatus(error, 400)) return null
     throw error
   }
+}
+
+/**
+ * A parent's tasks in creation order, which is the order the drawer lists them in. The API does not
+ * say which board a task is on: the lane that references it does.
+ */
+export async function getBoardTasks(ideaId: string): Promise<BoardTask[]> {
+  failIfRequested('getBoardTasks')
+
+  const tasks = await apiGet<readonly WireBoardTask[]>(
+    'getBoardTasks',
+    apiPath`/ideas/${ideaId}/board-tasks`,
+  )
+  return tasks.map(toBoardTask)
 }
 
 /**
