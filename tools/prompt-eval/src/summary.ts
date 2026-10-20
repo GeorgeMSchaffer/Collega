@@ -1,5 +1,12 @@
-import type { Proportion, RunMetrics, ScopeGateMetrics } from './metrics.ts'
+import {
+  type Proportion,
+  type RunMetrics,
+  type ScopeGateMetrics,
+  V2_GROUPS,
+  type V2Group,
+} from './metrics.ts'
 import type { RunData } from './run-file.ts'
+import { V2_TARGETS, v2TargetResults } from './v2-targets.ts'
 import { fmt, type Verdict } from './verdict.ts'
 
 /** The human summary of rule 20: written beside the run file and printed to stdout. */
@@ -94,6 +101,8 @@ export function renderSummary(run: RunData, metrics: RunMetrics, verdict: Verdic
   }
   out.push('')
 
+  renderV2(out, metrics)
+
   out.push('## Cases')
   out.push('')
   out.push('| Case | Passed | Rate | Errored | |')
@@ -145,6 +154,34 @@ export function renderSummary(run: RunData, metrics: RunMetrics, verdict: Verdic
   out.push('')
 
   return out.join('\n')
+}
+
+/** The v2-only figures of rule 33; nothing at all for a run that never drove the v2 turn. */
+function renderV2(out: string[], metrics: RunMetrics): void {
+  const v2 = metrics.v2
+  if (v2 === null) return
+  out.push('## v2 results')
+  out.push('')
+  out.push(`Over the ${v2.trials} scored trials that drove the v2 turn.`)
+  out.push('')
+  out.push('| Figure | Result |')
+  out.push('|---|---|')
+  out.push(`| Refusal recall | ${proportion(v2.scopeGate.recall)} |`)
+  out.push(`| Refusal precision | ${proportion(v2.scopeGate.precision)} |`)
+  out.push(`| Overall mapping accuracy | ${proportion(v2.mapping)} |`)
+  for (const g of Object.keys(V2_GROUPS) as V2Group[]) {
+    out.push(`| ${V2_GROUPS[g]} | ${proportion(v2.groups[g])} |`)
+  }
+  out.push('')
+  out.push(
+    `Targets (proposed, not yet confirmed; reported, never gating - rule 33): precision ${V2_TARGETS.scopePrecision}, overall mapping ${V2_TARGETS.overallMapping}, each group ${V2_TARGETS.groupAccuracy}.`,
+  )
+  out.push('')
+  for (const t of v2TargetResults(metrics)) {
+    const state = t.met === null ? 'no trials' : t.met ? 'met' : '**not met**'
+    out.push(`- ${t.name}: ${fmt(t.rate)} against ${t.target} - ${state}`)
+  }
+  out.push('')
 }
 
 export function verdictLine(verdict: Verdict): string {

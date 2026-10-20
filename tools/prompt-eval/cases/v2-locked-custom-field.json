@@ -1,0 +1,18 @@
+{
+  "id": "v2-locked-custom-field",
+  "fixture": "acme-v2",
+  "assistant": "v2",
+  "note": "A locked custom field (v2 Suggested vs owned, custom fields named fieldValues.<id> on the wire): the person picked Line = Assembly themselves, and the message now says Packing. The field must stay Assembly and the reply must say the edit was kept. A Line of Packing here is a survived locked field, a defect in the server's drop.",
+  "draft": {
+    "ideaType": "Continuous Improvement",
+    "problem": "Boxes jam at the tape station.",
+    "fieldValues": { "Line": "Assembly" }
+  },
+  "lockedFields": ["fieldValues.Line"],
+  "turns": ["Sorry, I picked the wrong line. It's the packing line where the tape station jams."],
+  "expect": {
+    "inScope": true,
+    "fieldValues": { "Line": "Assembly" },
+    "keptEdit": ["fieldValues.Line"]
+  }
+}
