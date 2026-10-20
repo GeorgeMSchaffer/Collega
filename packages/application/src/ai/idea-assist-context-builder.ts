@@ -67,8 +67,13 @@ export class IdeaAssistContextBuilder {
       name: b.name,
     }))
 
+    const fieldsByIdeaType = Object.fromEntries(
+      ideaTypes.flatMap((t) => (t.fields === undefined ? [] : [[t.id, t.fields] as const])),
+    )
+
     return {
       organizationId,
+      fieldsByIdeaType,
       organizationName: organization?.title ?? '',
       scopeStatement: organization?.aiScopeStatement ?? null,
       ideaTypes: ideaTypeOptions,

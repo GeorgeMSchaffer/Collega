@@ -20,12 +20,16 @@ import { AiAssistUnavailableError } from './errors.js'
 import type { IdeaAssistContextBuilder } from './idea-assist-context-builder.js'
 import type {
   AiAssistSettings,
+  AiTokenUsage,
   IdeaAssistContext,
   IdeaAssistTurn,
   IdeaAssistTurnRequest,
+  IdeaAssistTurnRequestV2,
   IdeaAssistTurnResult,
+  IdeaAssistTurnResultV2,
   IdeaDraft,
   IdeaDraftModelResponse,
+  IdeaDraftModelResponseV2,
 } from './models.js'
 import {
   businessImpactIdsOf,
@@ -41,6 +45,13 @@ import type {
   IdeaDraftModel,
 } from './ports.js'
 import { IdeaDraftModelError } from './ports.js'
+import {
+  clampDraftV2,
+  estimateTurnTokensV2,
+  finalizeTurnV2,
+  knownStepOrNull,
+  prepareTurnInputV2,
+} from './turn-v2.js'
 
 /**
  * Rule 5. A conversation this long has stopped being idea drafting. The cap counts transcript
@@ -131,10 +142,114 @@ export class IdeaAssistService {
   }
 
   async continueTurn(request: IdeaAssistTurnRequest): Promise<IdeaAssistTurnResult> {
-    const organizationId = this.requireDraftingMember()
-    const transcript = this.validateTranscript(request.transcript)
+    const { organizationId, transcript, userTurnCount } = await this.prepareTurn(
+      request.boardId,
+      request.transcript,
+    )
+    // The caller's own draft has been through nothing at this point, and `buildDraftNote` puts
+    // its title and description straight into the final user message - so left unclamped it walks
+    // around the per-entry cap it sits beside.
+    const currentDraft = clampDraftText(request.draft ?? EMPTY_IDEA_DRAFT)
 
-    const board = await this.boards.getById(request.boardId)
+    return this.runTurn<IdeaDraftModelResponse, IdeaAssistTurnResult>({
+      organizationId,
+      boardId: request.boardId,
+      userTurnCount,
+      estimatedTokens: estimateTurnTokens(transcript, currentDraft),
+      call: (context) => this.model.continueTurn(context, transcript, currentDraft),
+      refused: (context, closed) => ({
+        inScope: false,
+        conversationClosed: closed,
+        // From the active prompt version, falling back to the built-in default (rule 34).
+        nextQuestion: closed
+          ? context.prompts.conversationClosedRedirect
+          : context.prompts.outOfScopeRedirect,
+        draft: currentDraft,
+        // The client drops the offending user turn and renders the redirect as a system note
+        // rather than an assistant bubble (rule 8/8a), so the transcript shrinks by one and a
+        // refused turn costs no conversation budget.
+        turnsRemaining: this.remainingUserTurns(transcript.length - 1),
+      }),
+      accepted: (context, response) => {
+        // Every id the model returned is re-checked against what was actually retrieved. The
+        // schema already makes an out-of-org id structurally impossible; this is the belt to that
+        // braces, and it is what the contract promises (line 1274).
+        const draft = sanitizeDraft(response.draft, context, currentDraft)
+        // The client appends this reply, so the transcript it holds is one longer than the request.
+        const turnsRemaining = this.remainingUserTurns(transcript.length + 1)
+        return {
+          inScope: true,
+          conversationClosed: turnsRemaining === 0,
+          nextQuestion: response.nextQuestion,
+          draft,
+          turnsRemaining,
+        }
+      },
+    })
+  }
+
+  /**
+   * The v2 turn (SPEC/contracts/ai-assist.md "v2 turn contract"). The same gates, metering and
+   * refusal handling as v1 - they are one pipeline, `runTurn` - with the request normalised
+   * against the retrieved catalog before the call, and the model's output validated, stripped of
+   * locked fields and reduced to `changes` and `suggestions` after it (`finalizeTurnV2`).
+   */
+  async continueTurnV2(request: IdeaAssistTurnRequestV2): Promise<IdeaAssistTurnResultV2> {
+    const { organizationId, transcript, userTurnCount } = await this.prepareTurn(
+      request.boardId,
+      request.transcript,
+    )
+    const requestDraft = clampDraftV2(request.draft ?? {})
+    const requestStep = knownStepOrNull(request.step)
+
+    return this.runTurn<IdeaDraftModelResponseV2, IdeaAssistTurnResultV2>({
+      organizationId,
+      boardId: request.boardId,
+      userTurnCount,
+      estimatedTokens: estimateTurnTokensV2(transcript, requestDraft),
+      call: (context) =>
+        this.model.continueTurnV2(
+          context,
+          transcript,
+          prepareTurnInputV2(context, requestDraft, request.lockedFields, requestStep),
+        ),
+      refused: (context, closed) => ({
+        inScope: false,
+        conversationClosed: closed,
+        nextQuestion: closed
+          ? context.prompts.conversationClosedRedirect
+          : context.prompts.outOfScopeRedirect,
+        changes: {},
+        // Echoes the step the client sent, which may name a locked field: nothing was asked.
+        nextStep: requestStep ?? 'problem',
+        turnsRemaining: this.remainingUserTurns(transcript.length - 1),
+      }),
+      accepted: (context, response) => {
+        const input = prepareTurnInputV2(context, requestDraft, request.lockedFields, requestStep)
+        const { changes, suggestions, nextStep } = finalizeTurnV2(response, context, input)
+        const turnsRemaining = this.remainingUserTurns(transcript.length + 1)
+        return {
+          inScope: true,
+          conversationClosed: turnsRemaining === 0,
+          nextQuestion: response.nextQuestion,
+          changes,
+          ...(suggestions === undefined ? {} : { suggestions }),
+          nextStep,
+          turnsRemaining,
+        }
+      },
+    })
+  }
+
+  /**
+   * Authorization, transcript validation and the board lookup, in the order that decides which
+   * error a bad request gets. Shared by both turn versions.
+   */
+  private async prepareTurn(boardId: string, rawTranscript: readonly IdeaAssistTurn[]) {
+    const organizationId = this.requireDraftingMember()
+    const transcript = this.validateTranscript(rawTranscript)
+
+    const board = await this.boards.getById(boardId)
 
     // 404, not 403, for a board outside the caller's organization: a wrong-org request must not
     // confirm the board exists. Same shape as every other org-scoped read in the codebase.
@@ -142,11 +257,26 @@ export class IdeaAssistService {
       throw new NotFoundError('Board not found.')
     }
 
-    const userTurnCount = transcript.filter(isUserTurn).length
-    // The caller's own draft has been through nothing at this point, and `buildDraftNote` puts
-    // its title and description straight into the final user message - so left unclamped it walks
-    // around the per-entry cap it sits beside.
-    const currentDraft = clampDraftText(request.draft ?? EMPTY_IDEA_DRAFT)
+    return { organizationId, transcript, userTurnCount: transcript.filter(isUserTurn).length }
+  }
+
+  /**
+   * Reserve, gate, retrieve, call, settle and audit: everything about a turn that does not
+   * depend on the contract version.
+   */
+  private async runTurn<
+    TResponse extends AiTokenUsage & { readonly inScope: boolean },
+    TResult,
+  >(turn: {
+    readonly organizationId: string
+    readonly boardId: string
+    readonly userTurnCount: number
+    readonly estimatedTokens: number
+    readonly call: (context: IdeaAssistContext) => Promise<TResponse>
+    readonly refused: (context: IdeaAssistContext, closed: boolean) => TResult
+    readonly accepted: (context: IdeaAssistContext, response: TResponse) => TResult
+  }): Promise<TResult> {
+    const { organizationId, boardId, userTurnCount } = turn
 
     // BOOKED BEFORE THE GATES, not after them. Both gates count committed usage rows, so a turn
     // that is not yet one of them is invisible to every turn racing it: on a serverless runtime
@@ -155,8 +285,8 @@ export class IdeaAssistService {
     // count this turn.
     const reservation = await this.usage.reserveUsage({
       organizationId,
-      boardId: request.boardId,
-      estimatedTokens: estimateTurnTokens(transcript, currentDraft),
+      boardId,
+      estimatedTokens: turn.estimatedTokens,
     })
 
     let settled = false
@@ -176,9 +306,9 @@ export class IdeaAssistService {
 
       const context = await this.contextBuilder.build(organizationId)
 
-      let response: IdeaDraftModelResponse
+      let response: TResponse
       try {
-        response = await this.model.continueTurn(context, transcript, currentDraft)
+        response = await turn.call(context)
       } catch (error) {
         if (!(error instanceof IdeaDraftModelError)) {
           // Not the port's documented failure, so this is a defect rather than a degradation -
@@ -195,50 +325,24 @@ export class IdeaAssistService {
         // standing rather than pricing a call that may have been paid for in full at zero.
         settled = true
         await this.usage.settleUsage(reservation, AiCallOutcome.Failed, error.usage)
-        await this.audit(organizationId, request.boardId, userTurnCount, false, true)
+        await this.audit(organizationId, boardId, userTurnCount, false, true)
         throw new AiAssistUnavailableError()
       }
 
       const outcome = response.inScope ? AiCallOutcome.Succeeded : AiCallOutcome.Refused
       settled = true
       await this.usage.settleUsage(reservation, outcome, response)
-      await this.audit(organizationId, request.boardId, userTurnCount, !response.inScope, false)
+      await this.audit(organizationId, boardId, userTurnCount, !response.inScope, false)
 
       if (!response.inScope) {
         // The draft is returned unchanged and the client drops the offending turn rather than
         // appending it: accumulated off-topic context is what drifts a constrained assistant into
         // a general one (rule 8).
-        const closed = await this.isThirdConsecutiveRefusal(organizationId, request.boardId)
-
-        return {
-          inScope: false,
-          conversationClosed: closed,
-          // From the active prompt version, falling back to the built-in default (rule 34).
-          nextQuestion: closed
-            ? context.prompts.conversationClosedRedirect
-            : context.prompts.outOfScopeRedirect,
-          draft: currentDraft,
-          // The client drops the offending user turn and renders the redirect as a system note
-          // rather than an assistant bubble (rule 8/8a), so the transcript shrinks by one and a
-          // refused turn costs no conversation budget.
-          turnsRemaining: this.remainingUserTurns(transcript.length - 1),
-        }
+        const closed = await this.isThirdConsecutiveRefusal(organizationId, boardId)
+        return turn.refused(context, closed)
       }
 
-      // Every id the model returned is re-checked against what was actually retrieved. The schema
-      // already makes an out-of-org id structurally impossible; this is the belt to that braces,
-      // and it is what the contract promises (line 1274).
-      const draft = sanitizeDraft(response.draft, context, currentDraft)
-      // The client appends this reply, so the transcript it holds is one longer than the request.
-      const turnsRemaining = this.remainingUserTurns(transcript.length + 1)
-
-      return {
-        inScope: true,
-        conversationClosed: turnsRemaining === 0,
-        nextQuestion: response.nextQuestion,
-        draft,
-        turnsRemaining,
-      }
+      return turn.accepted(context, response)
     } finally {
       // Reached only when the provider was never called - a gate refused the turn, or something
       // threw before the call - so nothing was billed and the estimate must not be left standing.

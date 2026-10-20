@@ -1,4 +1,9 @@
-import type { IdeaAssistContext, IdeaAssistOption, IdeaDraft } from './models.js'
+import type {
+  IdeaAssistContext,
+  IdeaAssistOption,
+  IdeaAssistTurnInputV2,
+  IdeaDraft,
+} from './models.js'
 import { hasAnyDraftValue } from './models.js'
 
 /**
@@ -96,7 +101,9 @@ function buildOrganizationCatalog(context: IdeaAssistContext): string {
 
   if (context.tags.length > 0) {
     lines.push('')
-    lines.push(`Existing tags (vocabulary only — never propose tags): ${fenceAll(context.tags)}`)
+    lines.push(
+      `Existing tags (the only tags you may put in \`tagNames\`; never invent one): ${fenceAll(context.tags)}`,
+    )
   }
 
   if (context.memberNames.length > 0) {
@@ -155,6 +162,70 @@ export function buildDraftNote(draft: IdeaDraft, context: IdeaAssistContext): st
   appendIfPresent(lines, 'priority', draft.priority)
 
   return lines.join('\n')
+}
+
+/**
+ * The v2 counterpart of `buildDraftNote`: the whole current form, the fields the person owns, the
+ * step the previous reply asked about, and the custom fields offered for the draft's Idea Type.
+ * All of it is per-request, so it rides with the final user turn, after the cache breakpoint.
+ * Free text and field names are fenced like everything else the prompt carries from users.
+ */
+export function buildDraftNoteV2(input: IdeaAssistTurnInputV2, context: IdeaAssistContext): string {
+  const { draft } = input
+  const lines: string[] = []
+
+  const present = (label: string, value: string | null | undefined) =>
+    value && value.trim().length > 0 ? lines.push(`- ${label}: ${fence(value)}`) : undefined
+  present('title', draft.title)
+  present('problem', draft.problem)
+  if (draft.proposedSolutions && draft.proposedSolutions.length > 0) {
+    lines.push(`- proposedSolutions: ${draft.proposedSolutions.map((s) => fence(s)).join(' | ')}`)
+  }
+  present('impactRationale', draft.impactRationale)
+  present('businessImpact', nameOf(context.businessImpacts, draft.businessImpactId ?? null))
+  present('ideaType', nameOf(context.ideaTypes, draft.ideaTypeId ?? null))
+  present('priority', draft.priority)
+  if (draft.tagNames && draft.tagNames.length > 0) {
+    lines.push(`- tagNames: ${fenceAll(draft.tagNames)}`)
+  }
+  for (const value of draft.fieldValues ?? []) {
+    const field = input.customFields.find((f) => f.id === value.fieldDefinitionId)
+    if (field) {
+      lines.push(`- custom field "${fence(field.name)}" (${field.id}): ${fence(value.value)}`)
+    }
+  }
+  present('description', draft.description)
+
+  const sections: string[] = [
+    lines.length === 0
+      ? 'Nothing has been drafted yet.'
+      : `Draft so far — revise rather than restate:\n${lines.join('\n')}`,
+  ]
+
+  if (input.lockedFields.length > 0) {
+    sections.push(
+      `The person owns these fields; never set them or suggest for them: ${input.lockedFields.join(', ')}`,
+    )
+  }
+  if (input.step !== null) {
+    sections.push(`Your previous reply asked about: ${input.step}`)
+  }
+
+  if (input.customFields.length > 0) {
+    const fieldLines = input.customFields.map((field) => {
+      const kind = `${field.fieldType}${field.isRequired ? ', required' : ''}`
+      const options =
+        field.options.length > 0
+          ? `; options: ${field.options.map((o) => `${o.id} = ${fence(o.label)}`).join(', ')}`
+          : ''
+      return `- ${field.id} — ${fence(field.name)} (${kind}${options})`
+    })
+    sections.push(
+      `Custom fields for the chosen idea type (set via \`fieldValues\`, by id; ask about a required one as \`fieldValues.<id>\`):\n${fieldLines.join('\n')}`,
+    )
+  }
+
+  return sections.join('\n\n')
 }
 
 function appendIfPresent(lines: string[], label: string, value: string | null | undefined): void {

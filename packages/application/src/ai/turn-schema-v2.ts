@@ -92,9 +92,7 @@ export function buildIdeaAssistTurnSchemaV2(
   const locked = new Set(input.lockedFields)
   const isOpen = (key: string): boolean => !locked.has(key)
   // A Dropdown or MultiSelect with no options cannot express a value, so it is not offered.
-  const customFields = input.customFields.filter(
-    (f) => isOpen(customFieldKey(f.id)) && (!isOptionBacked(f) || f.options.length > 0),
-  )
+  const customFields = offeredCustomFields(input)
 
   const changes: Record<string, JsonSchema> = {}
   const add = (key: DraftFieldKey, schema: JsonSchema | null): void => {
@@ -172,6 +170,18 @@ export function buildIdeaAssistTurnSchemaV2(
 }
 
 /**
+ * The custom fields the model may fill this turn: unlocked, and (for Dropdown and MultiSelect)
+ * with at least one option, since a field with none cannot express a value. The server's
+ * validation uses the same set, so what the schema offers and what survives cannot drift.
+ */
+export function offeredCustomFields(input: IdeaAssistTurnSchemaInput): IdeaAssistFieldDefinition[] {
+  const locked = new Set(input.lockedFields)
+  return input.customFields.filter(
+    (f) => !locked.has(customFieldKey(f.id)) && (!isOptionBacked(f) || f.options.length > 0),
+  )
+}
+
+/**
  * Brainstorm offers. A suggestion for a locked field is dropped with the field: the client would
  * apply it over a value the person owns.
  */
@@ -207,7 +217,7 @@ function suggestionsSchema(isOpen: (key: string) => boolean): JsonSchema | null 
  * Unlocked interview fields in order, then required custom fields, title, the optional fields and
  * done. Ids the organization has none of are not offered: nothing could be chosen for them.
  */
-function nextStepValues(
+export function nextStepValues(
   context: IdeaAssistContext,
   locked: ReadonlySet<string>,
   customFields: readonly IdeaAssistFieldDefinition[],

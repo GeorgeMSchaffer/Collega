@@ -62,6 +62,9 @@ function fakeModel(answer: Answer): { model: IdeaDraftModel; calls: Call[] } {
   const calls: Call[] = []
   const model: IdeaDraftModel = {
     isConfigured: true,
+    continueTurnV2: async () => {
+      throw new Error('not exercised by this v1 double')
+    },
     continueTurn: async (_context, transcript, draft) => {
       calls.push({ transcript, draft })
       const reply = answer(transcript[transcript.length - 1].text, calls.length - 1)
@@ -247,6 +250,9 @@ test('trials come back in spec order whatever order they finish in', async () =>
   const pending: { text: string; release: () => void }[] = []
   const model: IdeaDraftModel = {
     isConfigured: true,
+    continueTurnV2: async () => {
+      throw new Error('not exercised by this v1 double')
+    },
     continueTurn: (_c, transcript) =>
       new Promise((resolve) => {
         const text = transcript[transcript.length - 1].text

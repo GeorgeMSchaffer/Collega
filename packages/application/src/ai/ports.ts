@@ -7,9 +7,12 @@ import type {
   AiUsageReservation,
   AiUsageSummary,
   IdeaAssistContext,
+  IdeaAssistFieldDefinition,
   IdeaAssistTurn,
+  IdeaAssistTurnInputV2,
   IdeaDraft,
   IdeaDraftModelResponse,
+  IdeaDraftModelResponseV2,
   ReserveAiUsageInput,
 } from './models.js'
 
@@ -223,6 +226,17 @@ export interface IdeaDraftModel {
     transcript: readonly IdeaAssistTurn[],
     currentDraft: IdeaDraft,
   ): Promise<IdeaDraftModelResponse>
+
+  /**
+   * The v2 turn. Same contract as `continueTurn`: the schema is built from `context` and `input`,
+   * the returned `changes` and `suggestions` are UNTRUSTED until `finalizeTurnV2` has run, and a
+   * failure is an `IdeaDraftModelError`.
+   */
+  continueTurnV2(
+    context: IdeaAssistContext,
+    transcript: readonly IdeaAssistTurn[],
+    input: IdeaAssistTurnInputV2,
+  ): Promise<IdeaDraftModelResponseV2>
 }
 
 // Cross-feature read ports for retrieval (rules 11-12) -------------------------------------------
@@ -252,6 +266,9 @@ export type AiIdeaTypeOption = {
   /** This type's resolved field set (`IdeaTypeFieldResolver`, B5-owned), included as context for
    * question-asking only - v1 never fills those values (rule 21). */
   readonly fieldNames: readonly string[]
+  /** v2: the same resolved set with ids, types, required-ness and options, so the assistant can
+   * fill the values. Optional so a v1-shaped implementation still satisfies the port. */
+  readonly fields?: readonly IdeaAssistFieldDefinition[]
 }
 
 export interface AiIdeaTypesPort {

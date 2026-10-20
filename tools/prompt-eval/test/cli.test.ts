@@ -158,6 +158,9 @@ test('a defect that echoes the key is stored redacted and aborts the run: exit 2
     env: KEY_ENV,
     createModel: () => ({
       isConfigured: true,
+      continueTurnV2: async () => {
+        throw new Error('not exercised')
+      },
       continueTurn: async () => {
         throw new TypeError(`bad state near ${TEST_KEY}`)
       },

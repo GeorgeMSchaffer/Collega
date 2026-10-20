@@ -3,12 +3,16 @@ import type {
   AiTokenUsage,
   IdeaAssistContext,
   IdeaAssistTurn,
+  IdeaAssistTurnInputV2,
   IdeaDraft,
   IdeaDraftModel,
   IdeaDraftModelResponse,
+  IdeaDraftModelResponseV2,
 } from '@collega/application/ai'
 import {
   buildDraftNote,
+  buildDraftNoteV2,
+  buildIdeaAssistTurnSchemaV2,
   buildSystemPrompt,
   IdeaDraftModelError,
   isUserTurn,
@@ -99,12 +103,40 @@ export class AnthropicIdeaDraftModel implements IdeaDraftModel {
     transcript: readonly IdeaAssistTurn[],
     currentDraft: IdeaDraft,
   ): Promise<IdeaDraftModelResponse> {
+    const response = await this.send(
+      context,
+      buildIdeaDraftResponseSchema(context),
+      buildMessages(transcript, buildDraftNote(currentDraft, context)),
+    )
+    return parseResponse(response)
+  }
+
+  async continueTurnV2(
+    context: IdeaAssistContext,
+    transcript: readonly IdeaAssistTurn[],
+    input: IdeaAssistTurnInputV2,
+  ): Promise<IdeaDraftModelResponseV2> {
+    const response = await this.send(
+      context,
+      buildIdeaAssistTurnSchemaV2(context, {
+        lockedFields: input.lockedFields,
+        customFields: input.customFields,
+      }),
+      buildMessages(transcript, buildDraftNoteV2(input, context)),
+    )
+    return parseResponseV2(response)
+  }
+
+  /** One structured-output call; the two turn versions differ only in schema and messages. */
+  private async send(
+    context: IdeaAssistContext,
+    schema: Record<string, unknown>,
+    messages: Anthropic.MessageParam[],
+  ): Promise<Anthropic.Message> {
     const client = this.client
     if (client === null) {
       throw new IdeaDraftModelError('AI assist is not configured.')
     }
-
-    const messages = buildMessages(transcript, currentDraft, context)
 
     let response: Anthropic.Message
     try {
@@ -124,7 +156,7 @@ export class AnthropicIdeaDraftModel implements IdeaDraftModel {
         thinking: { type: 'adaptive' },
         output_config: {
           effort: resolveEffort(this.config.effort),
-          format: { type: 'json_schema', schema: buildIdeaDraftResponseSchema(context) },
+          format: { type: 'json_schema', schema },
         },
         messages,
       })
@@ -147,14 +179,13 @@ export class AnthropicIdeaDraftModel implements IdeaDraftModel {
       })
     }
 
-    return parseResponse(response)
+    return response
   }
 }
 
 function buildMessages(
   transcript: readonly IdeaAssistTurn[],
-  currentDraft: IdeaDraft,
-  context: IdeaAssistContext,
+  draftNote: string,
 ): Anthropic.MessageParam[] {
   const messages: Anthropic.MessageParam[] = transcript.map((turn) => ({
     role: isUserTurn(turn) ? 'user' : 'assistant',
@@ -172,31 +203,14 @@ function buildMessages(
   // turn, and anything volatile in the prefix invalidates the cache for the whole organization.
   messages[lastIndex] = {
     role: last.role,
-    content: `${buildDraftNote(currentDraft, context)}\n\n${lastTurn.text}`,
+    content: `${draftNote}\n\n${lastTurn.text}`,
   }
 
   return messages
 }
 
 function parseResponse(response: Anthropic.Message): IdeaDraftModelResponse {
-  // Every failure below this line is a 200 the provider has already billed, so each carries its
-  // usage on the way out - see the note on `IdeaDraftModelError`.
-  const textBlock = response.content.find(
-    (block): block is Anthropic.TextBlock => block.type === 'text' && block.text.trim().length > 0,
-  )
-  if (textBlock === undefined) {
-    throw new IdeaDraftModelError('The model returned no content.', { usage: usageOf(response) })
-  }
-
-  let parsed: IdeaDraftSchemaResponse
-  try {
-    parsed = JSON.parse(textBlock.text) as IdeaDraftSchemaResponse
-  } catch (error) {
-    throw new IdeaDraftModelError('The model returned malformed JSON.', {
-      cause: error,
-      usage: usageOf(response),
-    })
-  }
+  const parsed = parseJsonBody<IdeaDraftSchemaResponse>(response)
 
   return {
     inScope: parsed.inScope,
@@ -209,6 +223,47 @@ function parseResponse(response: Anthropic.Message): IdeaDraftModelResponse {
       priority: parsePriority(parsed.priority),
     },
     ...usageOf(response),
+  }
+}
+
+type TurnSchemaResponseV2 = {
+  readonly inScope: boolean
+  readonly nextQuestion?: string | null
+  readonly nextStep?: string | null
+  readonly changes?: unknown
+  readonly suggestions?: unknown
+}
+
+function parseResponseV2(response: Anthropic.Message): IdeaDraftModelResponseV2 {
+  const parsed = parseJsonBody<TurnSchemaResponseV2>(response)
+
+  return {
+    inScope: parsed.inScope,
+    nextQuestion: parsed.nextQuestion ?? '',
+    nextStep: parsed.nextStep ?? '',
+    changes: parsed.changes ?? {},
+    suggestions: parsed.suggestions ?? null,
+    ...usageOf(response),
+  }
+}
+
+function parseJsonBody<T>(response: Anthropic.Message): T {
+  // Every failure below this line is a 200 the provider has already billed, so each carries its
+  // usage on the way out - see the note on `IdeaDraftModelError`.
+  const textBlock = response.content.find(
+    (block): block is Anthropic.TextBlock => block.type === 'text' && block.text.trim().length > 0,
+  )
+  if (textBlock === undefined) {
+    throw new IdeaDraftModelError('The model returned no content.', { usage: usageOf(response) })
+  }
+
+  try {
+    return JSON.parse(textBlock.text) as T
+  } catch (error) {
+    throw new IdeaDraftModelError('The model returned malformed JSON.', {
+      cause: error,
+      usage: usageOf(response),
+    })
   }
 }
 
