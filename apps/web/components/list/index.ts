@@ -22,6 +22,7 @@ export {
 export { ListToolbar } from './list-toolbar'
 export { type FilterOption, MultiSelectFilter } from './multi-select-filter'
 export { Pager } from './pager'
+export { QuickAddBar } from './quick-add-bar'
 export {
   type QuickAddField,
   type QuickAddLayout,

@@ -17,8 +17,7 @@ import {
   MultiSelectFilter,
   Pager,
   pageRows,
-  type QuickAddLayout,
-  QuickAddRow,
+  QuickAddBar,
   RowActions,
   type Sort,
   sortRows,
@@ -196,21 +195,18 @@ export function BoardsScreen({
   const canQuickAdd = createDenial === null && quickAddLaneIds.length >= SWIMLANE_FLOOR
   const rowIds = boards.map((board) => board.id).join(',')
 
-  const quickAdd = (layout: QuickAddLayout) => (
-    <QuickAddRow
-      layout={layout}
+  const quickAdd = (
+    <QuickAddBar
       canAdd={canQuickAdd}
       label="Quick add board"
       handoff="create"
-      rowIds={rowIds}
-      testId="boards-quick-add"
+      testId="boards-quick-add-bar"
       fields={[
         {
           name: 'name',
           label: 'Board name',
-          column: 'name',
           required: true,
-          placeholder: 'Add a board, then press Enter',
+          placeholder: 'Add a board — press Enter to create it',
         },
       ]}
       onSubmit={async (values) => {
@@ -288,22 +284,24 @@ export function BoardsScreen({
           ) : null}
 
           {state.view === 'list' || boards.length === 0 ? (
-            <DataTable
-              caption="Boards"
-              columns={COLUMNS}
-              rows={page.rows}
-              rowKey={(board) => board.id}
-              sort={state.sort}
-              onSortChange={(sort) => update({ sort })}
-              actions={actions}
-              selectedKey={open?.board?.id ?? null}
-              quickAdd={quickAdd}
-              empty={
-                boards.length === 0
-                  ? 'No boards yet. A new organization starts with one default board and five statuses.'
-                  : undefined
-              }
-            />
+            <>
+              {boards.length > 1 ? quickAdd : null}
+              <DataTable
+                caption="Boards"
+                columns={COLUMNS}
+                rows={page.rows}
+                rowKey={(board) => board.id}
+                sort={state.sort}
+                onSortChange={(sort) => update({ sort })}
+                actions={actions}
+                selectedKey={open?.board?.id ?? null}
+                empty={
+                  boards.length === 0
+                    ? 'No boards yet. A new organization starts with one default board and five statuses.'
+                    : undefined
+                }
+              />
+            </>
           ) : page.rows.length === 0 ? (
             <p className="m-0 rounded-lg border bg-card py-6 text-center text-sm text-muted-foreground">
               Nothing matches these filters.

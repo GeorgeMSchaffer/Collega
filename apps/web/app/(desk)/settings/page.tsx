@@ -197,8 +197,10 @@ export default async function SettingsPage() {
           {sections.map((section) => (
             <Card key={section.href}>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Link href={section.href}>{section.title}</Link>
+                <CardTitle className="flex items-center gap-2 text-foreground">
+                  <Link href={section.href} className="text-foreground hover:underline">
+                    {section.title}
+                  </Link>
                   {section.badge ? <Badge variant="outline">{section.badge}</Badge> : null}
                 </CardTitle>
               </CardHeader>
