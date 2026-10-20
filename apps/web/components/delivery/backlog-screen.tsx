@@ -5,6 +5,7 @@ import type { Route } from 'next'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { type ReactNode, useCallback, useState } from 'react'
+import { NoAssignee } from '@/components/ideas/idea-chips'
 import { DRAWER_PARAMS } from '@/components/ideas/idea-list-config'
 import { useDrawerUrl } from '@/components/ideas/use-drawer-url'
 import {
@@ -131,7 +132,7 @@ export function BacklogScreen({
         issue.assigneeInitials ? (
           <Avatar initials={issue.assigneeInitials} className="size-6 text-xs" />
         ) : (
-          <span className="text-xs text-muted-foreground">Unassigned</span>
+          <NoAssignee />
         ),
     },
     {

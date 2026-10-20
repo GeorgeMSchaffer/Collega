@@ -21,7 +21,7 @@ import {
 } from 'react'
 import { GatedAction } from '@/components/common/gated-action'
 import { PageHeader } from '@/components/common/page-header'
-import { People, TagList } from '@/components/ideas/idea-chips'
+import { NoAssignee, People, TagList } from '@/components/ideas/idea-chips'
 import { useDrawerUrl } from '@/components/ideas/use-drawer-url'
 import { ConfirmDialog, Drawer } from '@/components/list'
 import { DELIVERY_STATUSES } from '@/lib/display'
@@ -382,14 +382,7 @@ export function SprintBoard({
                             {issue.assignees.length > 0 ? (
                               <People people={issue.assignees} quiet />
                             ) : (
-                              <span
-                                role="img"
-                                aria-label="Unassigned"
-                                title="Unassigned"
-                                className="inline-grid size-6 place-items-center rounded-full border border-dashed border-input text-xs text-muted-foreground"
-                              >
-                                —
-                              </span>
+                              <NoAssignee />
                             )}
                           </div>
                           <button
