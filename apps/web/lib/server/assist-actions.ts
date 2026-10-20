@@ -5,19 +5,30 @@
  * caller (`SPEC/contracts/ai-assist.md` "v2 turn contract").
  *
  * With a board, the board's route; with none, the organization-level one, for an idea drafted from
- * the Ideas list that starts in the pool. A refusal or any other failure throws, and the chat
- * treats a throw as a failed turn (its hand-off to the form is slice 310).
+ * the Ideas list that starts in the pool.
+ *
+ * It returns the outcome rather than throwing: an `ApiError`'s status does not survive a Server
+ * Function in production, and the chat must tell a `429`, which keeps the conversation, from every
+ * other failure, which ends it and hands off to the form.
  */
 
-import { apiPath, apiPostReturning } from '../api/client'
-import type { AssistTurnRequest, AssistTurnResponse } from '../assist-turn'
+import { ApiError, apiPath, apiPostReturning } from '../api/client'
+import type { AssistTurnRequest, AssistTurnResponse, AssistTurnResult } from '../assist-turn'
 
 export async function takeAssistTurn(
   boardId: string | null,
   request: AssistTurnRequest,
-): Promise<AssistTurnResponse> {
-  return apiPostReturning<AssistTurnResponse>(
-    boardId ? apiPath`/boards/${boardId}/idea-assist/turns` : apiPath`/idea-assist/turns`,
-    request,
-  )
+): Promise<AssistTurnResult> {
+  try {
+    const turn = await apiPostReturning<AssistTurnResponse>(
+      boardId ? apiPath`/boards/${boardId}/idea-assist/turns` : apiPath`/idea-assist/turns`,
+      request,
+    )
+    return { ok: true, turn }
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 429) {
+      return { ok: false, rateLimited: true, retryAfter: error.retryAfter }
+    }
+    return { ok: false, rateLimited: false }
+  }
 }

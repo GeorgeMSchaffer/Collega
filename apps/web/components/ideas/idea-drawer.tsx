@@ -90,6 +90,8 @@ export function IdeaDrawer({
   const formPane = useRef<HTMLDivElement>(null)
   // The create form's handle, for the assistant's chat to read from and write into.
   const formAssist = useRef<IdeaFormAssist | null>(null)
+  // The form's solution list, so the chat's solution chips show what is actually in it.
+  const [solutions, setSolutions] = useState<string[]>([])
 
   const open =
     (mode === 'create' && formOptions !== null) ||
@@ -177,6 +179,7 @@ export function IdeaDrawer({
         boardId={mode === 'create' ? createBoardId : null}
         initial={mode === 'create' ? initial : undefined}
         assistRef={assisted ? formAssist : undefined}
+        onSolutionsChange={assisted ? setSolutions : undefined}
         contentLocked={mode === 'edit' && contentLocked}
         referenceLane={referenceLane}
         effortNeeded={mode === 'edit' ? effortNeeded : undefined}
@@ -208,6 +211,7 @@ export function IdeaDrawer({
             <AssistChat
               boardId={createBoardId}
               form={formAssist}
+              solutions={solutions}
               active={chatShown}
               onManual={() => toForm('form')}
               onReview={review}

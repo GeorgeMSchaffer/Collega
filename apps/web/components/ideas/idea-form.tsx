@@ -93,6 +93,13 @@ export type IdeaFormAssist = {
   apply(changes: AssistDraft, options?: { release?: boolean }): { filled: string[]; kept: string[] }
   /** Validates for feedback and focuses the first problem; true when nothing is missing. */
   review(): boolean
+  /**
+   * Places the text of a turn that failed, with no model call (spec "Failure and hand-off"): into
+   * the field the assistant had just asked about (`step`) when that is a text field, empty and not
+   * owned; else Problem when empty; else appended to Problem on a new line. An empty Title takes
+   * the text's first clause. The text is the person's own, so none of it is marked Suggested.
+   */
+  place(text: string, step: string | undefined): void
 }
 
 /** The wire names the assistant knows a field by (`lockedFields`, `changes`). */
@@ -168,6 +175,7 @@ export function IdeaForm({
   referenceLane,
   effortNeeded,
   assistRef,
+  onSolutionsChange,
   onSaved,
   onPendingChange,
 }: {
@@ -193,6 +201,8 @@ export function IdeaForm({
   effortNeeded?: string | undefined
   /** Create with the idea assistant: filled with the handle the chat drives the form through. */
   assistRef?: RefObject<IdeaFormAssist | null> | undefined
+  /** The assistant's chips mirror the list, so it hears when the list changes. */
+  onSolutionsChange?: ((solutions: string[]) => void) | undefined
   /** `sprintId` is the one an added Issue was put in; empty for the Backlog. */
   onSaved: (ideaId: string, sprintId?: string) => void
   onPendingChange: (pending: boolean) => void
@@ -215,6 +225,7 @@ export function IdeaForm({
   const [sprintId, setSprintId] = useState(initial?.sprintId ?? '')
 
   useEffect(() => onPendingChange(pending), [pending, onPendingChange])
+  useEffect(() => onSolutionsChange?.(draft.solutions), [draft.solutions, onSolutionsChange])
   const formRef = useRef<HTMLFormElement>(null)
   // biome-ignore lint/correctness/useExhaustiveDependencies: focus once, when the form opens on an Effort error
   useEffect(() => {
@@ -378,6 +389,53 @@ export function IdeaForm({
     },
 
     review: validate,
+
+    place(text, step) {
+      const body = text.trim()
+      if (!body) return
+      const d = draftRef.current
+      const empty = (value: string) => !value.trim()
+      const free = (name: string) => !owned.current.has(name)
+      const patch: Partial<Draft> = {}
+      const names: string[] = []
+      const put = <K extends keyof Draft>(name: string, key: K, value: Draft[K]) => {
+        patch[key] = value
+        names.push(name)
+      }
+
+      if (step === 'title' && empty(d.title) && free('title')) {
+        put('title', 'title', body.slice(0, TITLE_MAX_LENGTH))
+      } else if (step === 'problem' && empty(d.problem) && free('problem')) {
+        put('problem', 'problem', body.slice(0, PROBLEM_MAX))
+      } else if (
+        step === 'proposedSolutions' &&
+        d.solutions.every(empty) &&
+        free('proposedSolutions')
+      ) {
+        put('proposedSolutions', 'solutions', [body.slice(0, SOLUTION_MAX)])
+      } else if (
+        step === 'impactRationale' &&
+        empty(d.impactRationale) &&
+        free('impactRationale')
+      ) {
+        put('impactRationale', 'impactRationale', body.slice(0, RATIONALE_MAX))
+      } else {
+        put(
+          'problem',
+          'problem',
+          (empty(d.problem) ? body : `${d.problem}\n${body}`).slice(0, PROBLEM_MAX),
+        )
+      }
+
+      if (empty(patch.title ?? d.title)) {
+        const clause = body.match(/^[^.!?,;:\n]+/)?.[0].trim() || body
+        put('title', 'title', clause.slice(0, TITLE_MAX_LENGTH))
+      }
+
+      for (const name of names) owned.current.add(name)
+      setSuggested((now) => new Set([...now].filter((name) => !names.includes(name))))
+      setDraft((now) => ({ ...now, ...patch }))
+    },
   }))
 
   const missingCatalogs = [
