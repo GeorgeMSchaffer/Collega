@@ -46,6 +46,7 @@
  */
 
 export * from './admin'
+export * from './assist'
 export * from './boards'
 export * from './delivery'
 export * from './home'

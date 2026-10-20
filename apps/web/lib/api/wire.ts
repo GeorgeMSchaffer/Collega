@@ -621,6 +621,9 @@ export type WireViewAsCandidate = {
   selectable: boolean
 }
 
+/** `GET /ai-assist/availability`. A bare boolean by design. */
+export type WireAiAssistAvailability = { available: boolean }
+
 /** `GET /organizations/{id}/ai-assist/settings`. Never carries key material. */
 export type WireAiAssistSettings = {
   aiAssistAvailable: boolean

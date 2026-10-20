@@ -18,6 +18,7 @@ import type {
   IdeaDraftV2,
 } from './models.js'
 import { businessImpactIdsOf, ideaTypeIdsOf } from './models.js'
+import { SYSTEM_PROMPT_TEMPLATE_V2 } from './prompt-defaults.js'
 import {
   customFieldKey,
   DRAFT_FIELD_KEYS,
@@ -46,8 +47,15 @@ const PRIORITIES: readonly string[] = Object.values(Priority)
 /** Fields with a title-ish "is it filled" test in the fallback step order. */
 const OPTIONAL_STEPS: ReadonlySet<string> = new Set(['priority', 'tagNames', 'description'])
 
-/** A `nextStep`-vocabulary value, or null. An unknown value is ignored, not rejected. */
-export function knownStepOrNull(step: string | null | undefined): string | null {
+/**
+ * A `nextStep`-vocabulary value, or null. An unknown value is ignored, not rejected. A custom
+ * field step must name a field offered for the draft's type: nothing free-form from the client
+ * reaches the prompt or the out-of-scope echo.
+ */
+export function knownStepOrNull(
+  step: string | null | undefined,
+  customFields: readonly IdeaAssistFieldDefinition[],
+): string | null {
   if (typeof step !== 'string') {
     return null
   }
@@ -55,9 +63,15 @@ export function knownStepOrNull(step: string | null | undefined): string | null 
   if (value === NEXT_STEP_DONE || (DRAFT_FIELD_KEYS as readonly string[]).includes(value)) {
     return value
   }
-  return value.startsWith(CUSTOM_FIELD_KEY_PREFIX) && value.length > CUSTOM_FIELD_KEY_PREFIX.length
-    ? value
-    : null
+  return customFields.some((f) => customFieldKey(f.id) === value) ? value : null
+}
+
+/** The context with the v2 co-author prompt in place of the active (v1) template. */
+export function withV2Prompt(context: IdeaAssistContext): IdeaAssistContext {
+  return {
+    ...context,
+    prompts: { ...context.prompts, systemPromptTemplate: SYSTEM_PROMPT_TEMPLATE_V2 },
+  }
 }
 
 /** What a turn is held against the daily ceiling while in flight (see v1's `estimateTurnTokens`). */
@@ -88,10 +102,27 @@ export function clampDraftV2(draft: IdeaDraftV2): IdeaDraftV2 {
     businessImpactId: draft.businessImpactId ?? null,
     ideaTypeId: draft.ideaTypeId ?? null,
     priority: draft.priority != null && PRIORITIES.includes(draft.priority) ? draft.priority : null,
-    tagNames: draft.tagNames ?? null,
-    fieldValues: draft.fieldValues ?? null,
+    tagNames: cleanList(draft.tagNames, TAG_NAME_MAX_LENGTH, TURN_V2_BOUNDS.tagNames.max),
+    fieldValues: clampFieldValues(draft.fieldValues),
     description: cleanText(draft.description, DESCRIPTION_MAX_LENGTH) ?? null,
   }
+}
+
+/** Longest custom-field value (`Url`, the widest type) and most entries a draft may carry. */
+const FIELD_VALUE_MAX_LENGTH = 2048
+const MAX_FIELD_VALUE_ENTRIES = 100
+/** Tag names are short labels; a vocabulary match is exact, so a longer item cannot match. */
+const TAG_NAME_MAX_LENGTH = 100
+
+function clampFieldValues(
+  values: readonly IdeaAssistFieldValue[] | null | undefined,
+): IdeaAssistFieldValue[] | null {
+  if (!values) {
+    return null
+  }
+  return values
+    .filter((v) => v.value.length <= FIELD_VALUE_MAX_LENGTH)
+    .slice(0, MAX_FIELD_VALUE_ENTRIES)
 }
 
 /**
@@ -104,7 +135,7 @@ export function prepareTurnInputV2(
   context: IdeaAssistContext,
   draft: IdeaDraftV2,
   lockedFields: readonly string[],
-  step: string | null,
+  step: string | null | undefined,
 ): IdeaAssistTurnInputV2 {
   const ideaTypeId =
     draft.ideaTypeId != null && ideaTypeIdsOf(context).includes(draft.ideaTypeId)
@@ -133,7 +164,7 @@ export function prepareTurnInputV2(
       fieldValues: (draft.fieldValues ?? []).filter((v) => visibleIds.has(v.fieldDefinitionId)),
     },
     lockedFields: [...new Set(lockedFields.filter((name) => knownLockable.has(name)))],
-    step,
+    step: knownStepOrNull(step, customFields),
     customFields,
   }
 }

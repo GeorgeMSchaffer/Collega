@@ -49,8 +49,8 @@ import {
   clampDraftV2,
   estimateTurnTokensV2,
   finalizeTurnV2,
-  knownStepOrNull,
   prepareTurnInputV2,
+  withV2Prompt,
 } from './turn-v2.js'
 
 /**
@@ -200,18 +200,19 @@ export class IdeaAssistService {
       request.transcript,
     )
     const requestDraft = clampDraftV2(request.draft ?? {})
-    const requestStep = knownStepOrNull(request.step)
 
     return this.runTurn<IdeaDraftModelResponseV2, IdeaAssistTurnResultV2>({
       organizationId,
       boardId: request.boardId,
       userTurnCount,
       estimatedTokens: estimateTurnTokensV2(transcript, requestDraft),
+      // The v2 prompt, always: the active template (a stored version or the built-in default)
+      // is v1 text, and the v2 schema and reply shape mean nothing to it.
       call: (context) =>
         this.model.continueTurnV2(
-          context,
+          withV2Prompt(context),
           transcript,
-          prepareTurnInputV2(context, requestDraft, request.lockedFields, requestStep),
+          prepareTurnInputV2(context, requestDraft, request.lockedFields, request.step),
         ),
       refused: (context, closed) => ({
         inScope: false,
@@ -221,11 +222,13 @@ export class IdeaAssistService {
           : context.prompts.outOfScopeRedirect,
         changes: {},
         // Echoes the step the client sent, which may name a locked field: nothing was asked.
-        nextStep: requestStep ?? 'problem',
+        nextStep:
+          prepareTurnInputV2(context, requestDraft, request.lockedFields, request.step).step ??
+          'problem',
         turnsRemaining: this.remainingUserTurns(transcript.length - 1),
       }),
       accepted: (context, response) => {
-        const input = prepareTurnInputV2(context, requestDraft, request.lockedFields, requestStep)
+        const input = prepareTurnInputV2(context, requestDraft, request.lockedFields, request.step)
         const { changes, suggestions, nextStep } = finalizeTurnV2(response, context, input)
         const turnsRemaining = this.remainingUserTurns(transcript.length + 1)
         return {
