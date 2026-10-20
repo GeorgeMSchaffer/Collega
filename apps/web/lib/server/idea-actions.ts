@@ -344,6 +344,27 @@ export async function addBoardTask(
   return { error: null }
 }
 
+/**
+ * Replace an item's blocker set (`PUT /ideas/{id}/blocked-by`). The set is always complete, so the
+ * caller sends the whole list with its one change. Every layout is re-read because a parent's drawer
+ * on another board lists this item's blockers too.
+ */
+export async function setBlockers(
+  ideaId: string,
+  boardId: string,
+  ideaIds: string[],
+): Promise<ActionState> {
+  try {
+    await apiPut(apiPath`/ideas/${ideaId}/blocked-by`, { ideaIds })
+  } catch (error) {
+    return { error: refusal(error) }
+  }
+
+  revalidateIdeaScreens(boardId)
+  revalidatePath('/', 'layout')
+  return { error: null }
+}
+
 /** Remove a task from its parent. The API soft-deletes the card, so the parent's lock follows. */
 export async function removeBoardTask(
   ideaId: string,

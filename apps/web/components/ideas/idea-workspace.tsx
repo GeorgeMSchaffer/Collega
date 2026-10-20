@@ -53,6 +53,7 @@ import { useCurrentUser } from '@/lib/session-client'
 import type {
   BoardRef,
   Idea,
+  IdeaBlockers,
   IdeaDetail,
   IdeaFormOptions,
   IdeaTasks,
@@ -152,6 +153,7 @@ export function IdeaWorkspace({
     /** The open idea is in Delivery, which the detail does not say. */
     isIssue?: boolean
     tasks?: IdeaTasks | null
+    blockers?: IdeaBlockers | null
   }
   /** Which of `rows` are Issues, which the list items do not say. */
   issueIds?: readonly string[]
@@ -913,6 +915,7 @@ export function IdeaWorkspace({
         statusColor={drawerIdea ? statusById.get(drawerIdea.statusId)?.color : undefined}
         formOptions={drawer.formOptions}
         tasks={drawer.tasks}
+        blockers={drawer.blockers}
         referenceLane={
           drawerIdea?.boardId
             ? (boardsById.get(drawerIdea.boardId)?.hasReferenceLane ?? false)

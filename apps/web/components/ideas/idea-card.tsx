@@ -3,6 +3,7 @@ import type { DragEvent } from 'react'
 import { Icon } from '@/components/list/icons'
 import type { Idea } from '@/lib/types'
 import { CardActions } from './card-actions'
+import { ParentChip } from './idea-blockers'
 import { People, PriorityMarker, TagList } from './idea-chips'
 
 /** A card drag's payload type; a lane header's drag carries `text/plain`, so the two never mix. */
@@ -178,9 +179,12 @@ export function IdeaCard({
         </span>
       ) : null}
       {idea.effort ? <EffortBar effort={idea.effort} /> : null}
-      {idea.itemKey || work.rollup ? (
-        <span className="font-mono text-xs font-medium text-muted-foreground">
-          {[idea.itemKey, work.rollup].filter(Boolean).join(' · ')}
+      {idea.itemKey || work.rollup || idea.parentIdeaId ? (
+        <span className="flex flex-wrap items-center gap-1.5">
+          <span className="font-mono text-xs font-medium text-muted-foreground">
+            {[idea.itemKey, work.rollup].filter(Boolean).join(' · ')}
+          </span>
+          {idea.parentIdeaId ? <ParentChip itemKey={idea.parentItemKey ?? null} /> : null}
         </span>
       ) : null}
       {/* `flex-wrap`, so a refusal from either control drops onto its own line. */}

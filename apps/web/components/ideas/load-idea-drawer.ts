@@ -1,6 +1,14 @@
-import { getBoard, getBoardTasks, getIdea, getIdeaFormOptions, getIssue } from '@/lib/data'
+import { waitsOn } from '@/lib/board-work'
+import {
+  getBoard,
+  getBoardIdeaList,
+  getBoardTasks,
+  getIdea,
+  getIdeaFormOptions,
+  getIssue,
+} from '@/lib/data'
 import { currentUser, writeDenial } from '@/lib/session'
-import type { IdeaDetail, IdeaFormOptions, IdeaTasks } from '@/lib/types'
+import type { IdeaBlockers, IdeaDetail, IdeaFormOptions, IdeaTasks } from '@/lib/types'
 import type { DrawerMode } from './idea-drawer'
 import { DRAWER_PARAMS } from './idea-list-config'
 
@@ -60,6 +68,48 @@ async function readTasks(idea: IdeaDetail, boardId: string): Promise<IdeaTasks |
 }
 
 /**
+ * The Blockers section's facts: the cards on the item's own board, which name the chips (a blocker
+ * arrives as an id and a key) and fill the picker. Only a keyed item has the section — keys exist
+ * on the boards Board References works on. One page of 100, the API's maximum: a card beyond it is
+ * not offered, and a loop through one is left to the server's refusal.
+ *
+ * Like the Tasks section it is an extra, so a failed read leaves it out and the drawer intact.
+ */
+async function loadBlockers(idea: IdeaDetail): Promise<IdeaBlockers | null> {
+  if (!idea.boardId || (idea.itemKey === null && idea.blockedBy.length === 0)) return null
+  try {
+    const { ideas } = await getBoardIdeaList(idea.boardId, {
+      search: '',
+      boardIds: [],
+      statusIds: [],
+      priorities: [],
+      tags: [],
+      sortBy: null,
+      sortDirection: 'asc',
+      page: 1,
+      pageSize: 100,
+    })
+    return {
+      candidates: ideas
+        .filter((card) => card.id !== idea.id)
+        .map((card) => ({
+          id: card.id,
+          itemKey: card.itemKey,
+          title: card.title,
+          statusName: card.statusName,
+          parentItemKey: card.parentItemKey ?? null,
+          cycle: waitsOn(ideas, card.id, idea.id),
+        })),
+      cards: Object.fromEntries(
+        ideas.map((card) => [card.id, { title: card.title, statusName: card.statusName }]),
+      ),
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
  * What the drawer shows, read from the URL on the server: the idea, and the form's catalogs when a
  * form is open and the role may author (`canAuthor`). A form the role may not use opens as the view,
  * or not at all, rather than as a form whose save would be refused.
@@ -78,6 +128,7 @@ export async function loadIdeaDrawer(
   missing: boolean
   isIssue: boolean
   tasks: IdeaTasks | null
+  blockers: IdeaBlockers | null
 }> {
   const ideaId = one(params, DRAWER_PARAMS.idea)
   const creating = one(params, DRAWER_PARAMS.create) !== undefined && canAuthor
@@ -98,5 +149,6 @@ export async function loadIdeaDrawer(
     missing: ideaId !== undefined && !creating && idea === null,
     isIssue: issue !== null,
     tasks: mode === 'view' && idea && issue === null ? await loadTasks(idea) : null,
+    blockers: mode === 'view' && idea && issue === null ? await loadBlockers(idea) : null,
   }
 }

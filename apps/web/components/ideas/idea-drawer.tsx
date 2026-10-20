@@ -4,7 +4,8 @@ import { Button } from '@collega/design-system'
 import { useId, useState } from 'react'
 import { Drawer } from '@/components/list'
 import { Icon } from '@/components/list/icons'
-import type { BoardRef, IdeaDetail, IdeaFormOptions, IdeaTasks } from '@/lib/types'
+import type { BoardRef, IdeaBlockers, IdeaDetail, IdeaFormOptions, IdeaTasks } from '@/lib/types'
+import { BlockersSection } from './idea-blockers'
 import { IdeaForm } from './idea-form'
 import { TasksCompletePrompt, TasksSection } from './idea-tasks'
 import { type BoardLine, IdeaView } from './idea-view'
@@ -32,6 +33,7 @@ export function IdeaDrawer({
   referenceLane,
   effortNeeded,
   tasks,
+  blockers,
   canEdit,
   canDelete,
   contentLocked,
@@ -62,6 +64,8 @@ export function IdeaDrawer({
   effortNeeded?: string | undefined
   /** The Tasks section's facts, for a parent in or past a reference lane. */
   tasks?: IdeaTasks | null | undefined
+  /** The Blockers section's cards, for a keyed item on a board. */
+  blockers?: IdeaBlockers | null | undefined
   canEdit: boolean
   canDelete: boolean
   contentLocked: boolean
@@ -163,6 +167,16 @@ export function IdeaDrawer({
           }
           tasks={
             tasks ? <TasksSection key={`tasks-${idea.id}`} parent={idea} tasks={tasks} /> : null
+          }
+          blockers={
+            blockers ? (
+              <BlockersSection
+                key={`blockers-${idea.id}`}
+                item={idea}
+                blockers={blockers}
+                canEdit={canEdit}
+              />
+            ) : null
           }
         />
       ) : null}

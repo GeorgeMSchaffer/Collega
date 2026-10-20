@@ -390,6 +390,8 @@ export type WireIdeaDetail = {
   followerCount: number
   itemKey: string | null
   parentIdeaId: string | null
+  /** The parent's `itemKey`; absent from a response that predates slice 298. */
+  parentItemKey?: string | null
   taskCounts: WireTaskCounts | null
   blockedBy: readonly WireBlockedBy[]
   /** `[]` for a card with a parent (`contracts/metric-types.md`). */
@@ -467,6 +469,8 @@ export type WireIdeaListItem = {
   createdAtUtc: string
   itemKey: string | null
   parentIdeaId: string | null
+  /** The parent's `itemKey`; absent from a response that predates slice 298. */
+  parentItemKey?: string | null
   taskCounts: WireTaskCounts | null
   blockedBy: readonly WireBlockedBy[]
 }

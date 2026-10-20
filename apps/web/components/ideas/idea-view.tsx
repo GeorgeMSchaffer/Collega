@@ -1,7 +1,9 @@
 import { Avatar, EffortBar } from '@collega/design-system'
+import Link from 'next/link'
 import type { ReactNode } from 'react'
 import type { IdeaDetail } from '@/lib/types'
 import { CommentBox, FollowButton, UpvoteButton } from './engagement'
+import { ParentChip } from './idea-blockers'
 import { People, PriorityMarker, StatusMarker, TagList } from './idea-chips'
 
 /** The board line of the drawer's facts: where the idea sits, or that it sits nowhere yet. */
@@ -69,6 +71,7 @@ export function IdeaView({
   boardLine,
   tasksPrompt,
   tasks,
+  blockers,
 }: {
   idea: IdeaDetail
   statusColor: string | undefined
@@ -82,9 +85,21 @@ export function IdeaView({
   tasksPrompt?: ReactNode
   /** The Tasks section, under the facts. */
   tasks?: ReactNode
+  /** The Blockers section, under the Tasks. */
+  blockers?: ReactNode
 }) {
   return (
     <>
+      {idea.parentIdeaId ? (
+        // The parent's board is not on the wire, so this opens it in the Ideas list's drawer.
+        <Link
+          href={`/ideas?idea=${encodeURIComponent(idea.parentIdeaId)}`}
+          aria-label={`Parent idea ${idea.parentItemKey ?? ''}`.trim()}
+          className="w-fit hover:underline"
+        >
+          <ParentChip itemKey={idea.parentItemKey ?? null} className="px-2 py-0.5 text-xs" />
+        </Link>
+      ) : null}
       {tasksPrompt}
       {facts ? (
         <dl className="m-0 grid grid-cols-2 gap-3 rounded-md bg-muted/60 p-3">
@@ -133,6 +148,8 @@ export function IdeaView({
       ) : null}
 
       {tasks}
+
+      {blockers}
 
       {idea.problem ? (
         <Section title="Problem">
