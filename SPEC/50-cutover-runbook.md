@@ -59,7 +59,7 @@ environment badges.
 | `SITE_ADMIN_PASSWORD` | required | required | Present for the first build. The API no longer requires it at runtime, so it can be removed after first login. |
 | `ANTHROPIC_API_KEY` | optional | optional | Either present, or absent **by decision** — absent means AI idea assist runs dark (`503` on turns, availability `false`). |
 | `ACCESS_TOKEN_LIFETIME_MINUTES` | optional | optional | Unset means 480. |
-| `COLLEGA_ALLOW_DEMO_SEED` | **must be unset** | either | Set, it switches on the App Admin's demo-data seed and reset (`apps/api/src/demo-seed/`) in production. |
+| `COLLEGA_ALLOW_DEMO_SEED` | **set to `true` by decision** (`SPEC/decisions.md` 2026-10-21) | either | Set, it switches on the App Admin's demo-data seed and reset (`apps/api/src/demo-seed/`) in production. |
 | `POSTGRES_*` | **must be unset** | **must be unset** | Local-container parts only. |
 | `BOOTSTRAP_ORG_*` | **must be unset** | **must be unset** | Belong in the operator's shell for one run, never in the project (deployment spec §8a). |
 | `PROMPT_EVAL_ANTHROPIC_API_KEY` | **must be unset** | **must be unset** | A developer tool's key, never production's. |
