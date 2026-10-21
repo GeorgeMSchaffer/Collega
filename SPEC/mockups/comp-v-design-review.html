@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comp V: design review recommendations (Graphite)</title>
+<!-- Throwaway comp for owner review, 2026-10-19. Not a reference until approved. Palette values are the Graphite tokens read from the running app. -->
+<style>
+:root{--bg:#0f1113;--s1:#16191c;--s2:#1c2024;--line:#2a2f35;--tx:#e6e8ea;--mut:#9ba3ab;--dim:#6f7881;--amber:#f5a524;--amber-ink:#16120a;--green:#3fb97a;--blue:#4b7bec;--violet:#8b5cf6;--red:#e5637a;--teal:#2fb5a8}
+*{box-sizing:border-box}
+body{margin:0;background:#0b0c0e;color:var(--tx);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;padding:32px 24px 64px}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:40px 0 4px}h3{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:0 0 10px;font-weight:500}
+p.lead{color:var(--mut);max-width:70ch;margin:0 0 16px}
+.wrap{max-width:1180px;margin:0 auto}
+.pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px;margin-top:12px}
+.panel{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.tag{display:inline-block;font-size:11px;padding:1px 8px;border-radius:999px;border:1px solid var(--line);color:var(--mut)}
+.tag.after{border-color:#2d5b45;color:var(--green)}
+.tag.before{border-color:#5b3a2d;color:#e0905f}
+.note{color:var(--mut);font-size:12.5px;margin:10px 0 0}
+.btn{display:inline-block;border-radius:6px;padding:5px 12px;font-size:13px;border:1px solid var(--line);background:var(--s2);color:var(--tx)}
+.btn.pri{background:var(--amber);border-color:var(--amber);color:var(--amber-ink);font-weight:600}
+.btn.off{opacity:.45}
+a.l{color:var(--amber);font-weight:600}
+a.n{color:var(--tx);font-weight:600;text-decoration:none}
+a.n:hover{text-decoration:underline}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-weight:500;color:var(--mut);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.av{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--s2);border:1px solid var(--line);font-size:10px;color:var(--mut)}
+.chip{font-size:11px;padding:1px 8px;border-radius:999px;background:#1d3a38;color:#79d8cf;margin-right:4px}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.card .meta{display:flex;align-items:center;gap:8px;color:var(--mut);font-size:12px;margin-top:8px}
+.arrows{margin-left:auto;display:flex;gap:2px}
+.arrows i{font-style:normal;display:grid;place-items:center;width:22px;height:22px;border:1px solid var(--line);border-radius:5px;font-size:11px;color:var(--mut)}
+.lane{background:var(--s1);border:1px solid var(--line);border-radius:8px;padding:8px;min-width:0}
+.lanes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tile{background:var(--s1);border:1px solid var(--line);border-radius:8px;padding:12px}
+.tile b{font-size:26px;display:block;line-height:1.1}
+.tile.lead{border-color:#5b4311;background:#1d1810}
+.tile.dashed{border-style:dashed;background:transparent}
+.sw{width:30px;height:16px;border-radius:999px;background:var(--amber);display:inline-block;position:relative;vertical-align:middle}
+.sw:after{content:"";position:absolute;right:2px;top:2px;width:12px;height:12px;border-radius:50%;background:#16120a}
+select,.sel{background:var(--s2);border:1px solid var(--line);color:var(--tx);border-radius:6px;padding:5px 8px;font-size:13px;display:inline-block;min-width:150px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;font-size:12px}
+.seg span{padding:3px 10px;color:var(--mut)}.seg span.on{background:var(--amber);color:var(--amber-ink);font-weight:600}
+.pill{font-family:ui-monospace,Menlo,monospace;font-size:11px;padding:1px 7px;border-radius:999px;border:1px solid #5b4311;color:var(--amber);background:#1d1810}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field label{display:block;font-size:12px;color:var(--mut);margin-bottom:3px}
+.rank{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--amber);color:var(--amber-ink);font-weight:700;font-size:12px;margin-right:8px}
+.menu{background:var(--s2);border:1px solid var(--line);border-radius:8px;padding:4px;display:inline-block;font-size:13px;min-width:170px}
+.menu div{padding:5px 10px;border-radius:5px}.menu div.warn{color:var(--red)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Comp V: design review recommendations</h1>
+<p class="lead">Five changes drawn from a walk of Home, Inbox, Boards, a board, Ideas, Sprint board, Backlog, Roadmap and Settings as an Org Admin on the Graphite theme (1440 wide). Each pair shows what ships today and the proposal. Nothing here is built or decided.</p>
+
+<h2><span class="rank">1</span>Spend the amber on actions only</h2>
+<p class="lead">Amber is the primary button, every row link, every breadcrumb and the Home figures. Everything reads as clickable, so nothing leads. Proposal: amber for the one primary action per view; row titles in the text colour with an underline on hover; breadcrumbs in muted text. On Ideas, a row that wraps its title to three lines and carries a full "Remove from board" button on every row becomes a wider title and a row menu.</p>
+<div class="pair">
+ <div class="panel"><h3>Today <span class="tag before">before</span></h3>
+  <table><tr><th>Title</th><th>Board</th><th>Status</th><th></th></tr>
+  <tr><td style="width:34%"><a class="l">Field service enablement: Retire the legacy step</a></td><td>Opportunities</td><td><span class="dot" style="background:var(--green)"></span>Complete</td><td><span class="btn">Remove from board</span></td></tr>
+  <tr><td><a class="l">Field service enablement: Measure time saved</a></td><td>Opportunities</td><td><span class="dot" style="background:var(--green)"></span>Complete</td><td><span class="btn">Remove from board</span></td></tr></table>
+  <p class="note">Amber links plus an amber primary compete. The destructive-looking button repeats on every row.</p></div>
+ <div class="panel"><h3>Proposed <span class="tag after">after</span></h3>
+  <table><tr><th>Title</th><th>Board</th><th>Status</th><th></th></tr>
+  <tr><td style="width:46%"><a class="n">Field service enablement: Retire the legacy step</a></td><td style="color:var(--mut)">Opportunities</td><td><span class="dot" style="background:var(--green)"></span>Complete</td><td style="text-align:right;color:var(--mut)">&middot;&middot;&middot;</td></tr>
+  <tr><td><a class="n">Field service enablement: Measure time saved</a></td><td style="color:var(--mut)">Opportunities</td><td><span class="dot" style="background:var(--green)"></span>Complete</td><td style="text-align:right;color:var(--mut)">&middot;&middot;&middot;</td></tr></table>
+  <div style="margin-top:10px"><span class="menu"><div>Open</div><div>Edit</div><div class="warn">Remove from board</div></span></div>
+  <p class="note">Title column takes the room; the row menu holds Open, Edit and the removal, which asks for confirmation.</p></div>
+</div>
+
+<h2><span class="rank">2</span>A calmer card on the board</h2>
+<p class="lead">Each card shows priority, assignee initials, tags, an upvote count and two arrow buttons at once, in a column about 120 px wide. Proposal: key and priority on one line, assignee as an avatar, tags limited to one plus a count, and the arrows only on hover and focus (the keyboard path stays).</p>
+<div class="pair">
+ <div class="panel"><h3>Today <span class="tag before">before</span></h3><div class="lanes"><div class="lane">
+  <div class="card"><div style="font-size:13px;font-weight:600">Assembly cell reliability: Automate weekly reporting</div>
+   <div class="meta"><span class="dot" style="background:var(--blue)"></span>Medium<span style="margin-left:auto;font-family:monospace">MCOA</span></div>
+   <div class="meta"><span class="chip">quality</span>+1<span class="arrows"><i>&#9650; 2</i><i>&lsaquo;</i><i>&rsaquo;</i></span></div></div></div>
+  <div class="lane"><div class="card"><div style="font-size:13px;font-weight:600">Assembly cell reliability: Validate the customer feedback loop</div>
+   <div class="meta"><span class="dot" style="background:var(--amber)"></span>Critical<span style="margin-left:auto;font-family:monospace">NC</span></div>
+   <div class="meta"><span class="chip">cycle-time</span><span class="arrows"><i>&#9650; 1</i><i>&lsaquo;</i><i>&rsaquo;</i></span></div></div></div>
+  <div class="lane"><div class="card"><div style="font-size:13px;font-weight:600">Assembly cell reliability: Roll out the proven workflow</div>
+   <div class="meta"><span class="dot" style="background:var(--mut)"></span>Low<span style="margin-left:auto;font-family:monospace">MCOA</span></div>
+   <div class="meta"><span class="chip">automation</span>+1<span class="arrows"><i>&#9650; 2</i><i>&lsaquo;</i><i>&rsaquo;</i></span></div></div></div></div></div>
+ <div class="panel"><h3>Proposed <span class="tag after">after</span></h3><div class="lanes"><div class="lane">
+  <div class="card"><div class="meta" style="margin:0 0 4px"><span style="font-family:monospace">OPP-14</span><span class="dot" style="background:var(--blue);margin:0 0 0 auto"></span>Medium</div>
+   <div style="font-size:13px;font-weight:600">Automate weekly reporting</div>
+   <div class="meta"><span class="av">MC</span><span class="chip">quality</span>+1<span style="margin-left:auto">&#9650; 2</span></div></div></div>
+  <div class="lane"><div class="card"><div class="meta" style="margin:0 0 4px"><span style="font-family:monospace">OPP-9</span><span class="dot" style="background:var(--amber);margin:0 0 0 auto"></span>Critical</div>
+   <div style="font-size:13px;font-weight:600">Validate the customer feedback loop</div>
+   <div class="meta"><span class="av">NC</span><span class="chip">cycle-time</span><span style="margin-left:auto">&#9650; 1</span></div>
+   <div class="arrows" style="margin-top:6px;justify-content:flex-end"><i>&lsaquo;</i><i>&rsaquo;</i></div></div>
+   <div class="note" style="margin:0 0 0">Arrows appear on hover or focus.</div></div>
+  <div class="lane"><div class="card"><div class="meta" style="margin:0 0 4px"><span style="font-family:monospace">OPP-7</span><span class="dot" style="background:var(--mut);margin:0 0 0 auto"></span>Low</div>
+   <div style="font-size:13px;font-weight:600">Roll out the proven workflow</div>
+   <div class="meta"><span class="av">MC</span><span class="chip">automation</span>+1<span style="margin-left:auto">&#9650; 2</span></div></div></div></div>
+  <p class="note">The board name is repeated in every card title today ("Assembly cell reliability: ..."); the key and lane context already say it, so the card can show the short title. Aligns with Board References item keys.</p></div>
+</div>
+
+<h2><span class="rank">3</span>Make Home lead with what is assigned</h2>
+<p class="lead">Four tiles share equal weight, one of them a dashed "Not tracked yet" tile of three dashes, and a permanent onboarding banner sits above them. Proposal: "Assigned to me" leads and carries the first three items inline; the untracked metrics collapse into a single footnote until the data exists; the banner becomes a one-line dismissible strip.</p>
+<div class="pair">
+ <div class="panel"><h3>Today <span class="tag before">before</span></h3>
+  <div class="tile" style="border-left:3px solid var(--amber);margin-bottom:10px;font-size:13px;color:var(--mut)"><b style="font-size:14px;color:var(--tx);display:inline">New to Collega?</b> An idea moves New / Pending, In Review, In Progress, Client Review, Complete ... <span class="btn" style="float:right">Got it</span></div>
+  <div class="row2"><div class="tile">ASSIGNED TO ME<b>6</b><span style="color:var(--mut);font-size:12px">none critical</span></div><div class="tile">CRITICAL &amp; HIGH<b>8</b><span style="color:var(--mut);font-size:12px">still on a board</span></div>
+  <div class="tile">YOU CREATED<b>8</b><span style="color:var(--mut);font-size:12px">ideas and issues</span></div><div class="tile dashed">NOT TRACKED YET<div style="font-size:12px;color:var(--mut)">Open ideas &mdash;<br>Awaiting review &mdash;<br>Completed &middot; 30d &mdash;</div></div></div></div>
+ <div class="panel"><h3>Proposed <span class="tag after">after</span></h3>
+  <div style="font-size:12px;color:var(--mut);margin-bottom:10px">New to Collega? Ideas move left to right across a board. <u>Take the tour</u> &nbsp;&middot;&nbsp; <u>Dismiss</u></div>
+  <div class="tile lead" style="margin-bottom:10px"><div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--mut)">ASSIGNED TO ME</span><span class="tag">6 &middot; none critical</span></div>
+   <div style="margin-top:6px;font-size:13px"><div style="padding:4px 0;border-bottom:1px solid var(--line)">Standardize the intake checklist <span class="tag" style="float:right">High</span></div><div style="padding:4px 0;border-bottom:1px solid var(--line)">Automate weekly reporting <span class="tag" style="float:right">Medium</span></div><div style="padding:4px 0">Roll out the proven workflow <span class="tag" style="float:right">Low</span></div></div><div style="margin-top:6px"><u style="color:var(--mut)">View all 6</u></div></div>
+  <div class="row2"><div class="tile">CRITICAL &amp; HIGH<b>8</b></div><div class="tile">YOU CREATED<b>8</b></div></div>
+  <p class="note">Open ideas, awaiting review and completed-in-30-days return as tiles when status times and categories are tracked (SPEC/ideas-inbox.md).</p></div>
+</div>
+
+<h2><span class="rank">4</span>An honest Roadmap before Outcomes ship</h2>
+<p class="lead">The Roadmap shows an empty grey timeline band, then two amber-looking "Add Outcome" buttons that do nothing, each followed by "Outcomes arrive in a later release". Dimmed primary buttons with an apology beside them teach people to distrust the buttons. Proposal: no dead controls; explain what Outcomes will be and point to what works today.</p>
+<div class="pair">
+ <div class="panel"><h3>Today <span class="tag before">before</span></h3>
+  <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:18px">Roadmap</b><span><span class="btn pri off">Add New Outcome</span> <i style="font-size:12px;color:var(--mut)">Outcomes arrive in a later release</i></span></div>
+  <div style="height:46px;background:var(--s1);border:1px solid var(--line);border-radius:8px;margin:12px 0"></div>
+  <div class="tile"><b style="font-size:15px">No outcomes yet</b><div style="color:var(--mut);font-size:13px;margin:4px 0 8px">Acme Robotics has 5 delivery issues and nothing to group them by.</div><span class="btn pri off">Add the first outcome</span> <i style="font-size:12px;color:var(--mut)">Outcomes arrive in a later release</i></div></div>
+ <div class="panel"><h3>Proposed <span class="tag after">after</span></h3>
+  <b style="font-size:18px">Roadmap</b>
+  <div class="tile" style="margin-top:12px;padding:16px"><b style="font-size:15px">Group issues by the outcome they serve</b>
+   <div style="color:var(--mut);font-size:13px;margin:6px 0 10px;max-width:48ch">Outcomes will let you plan work against a goal and see its projected and realized value. Your 5 delivery issues are waiting in the backlog until then.</div>
+   <span class="btn">Open the backlog</span> <span class="btn">See the sprint board</span></div>
+  <p class="note">When Outcomes are built, the primary "Add outcome" appears here and the timeline shows only once there is something to place on it.</p></div>
+</div>
+
+<h2><span class="rank">5</span>Name what each lane hands work to (board form)</h2>
+<p class="lead">In the lane editor from slice 288 each lane shows a Normal / Final toggle and a bare select reading "None". Nothing says what the select does until you open it. Proposal: label it "Hands work to", show the reference pill once set, and reveal the auto-create switch beneath it only then, as comp U draws.</p>
+<div class="pair">
+ <div class="panel"><h3>Today <span class="tag before">before</span></h3>
+  <div class="card"><div style="display:flex;gap:8px;align-items:center"><span class="dot" style="background:var(--blue)"></span><b>In Progress</b><span class="btn" style="margin-left:auto">&uarr;</span><span class="btn">&darr;</span><span class="btn">Remove</span></div>
+   <div style="display:flex;gap:8px;align-items:center;margin-top:8px"><span class="seg"><span class="on">Normal</span><span>Final</span></span><span class="sel" style="flex:1">None</span></div></div></div>
+ <div class="panel"><h3>Proposed <span class="tag after">after</span></h3>
+  <div class="card"><div style="display:flex;gap:8px;align-items:center"><span class="dot" style="background:var(--blue)"></span><b>In Progress</b><span class="pill">&#8627; IMPL</span><span class="btn" style="margin-left:auto">&uarr;</span><span class="btn">&darr;</span><span class="btn">Remove</span></div>
+   <div class="row2" style="margin-top:8px"><div class="field"><label>Lane kind</label><span class="seg"><span class="on">Normal</span><span>Final</span></span></div>
+   <div class="field"><label>Hands work to</label><span class="sel" style="display:block">Implementation</span></div></div>
+   <div style="margin-top:8px;font-size:13px"><span class="sw"></span>&nbsp; Create one task when a card enters<div style="color:var(--mut);font-size:12px;margin:2px 0 0 38px">Cards already in this lane are not changed.</div></div></div></div>
+</div>
+
+<h2>Also worth fixing (no comp needed)</h2>
+<p class="lead" style="max-width:none">
+<b>Dev build break.</b> After slice 288 merged, port 3000 showed a build overlay on every page that imports the design system: the app was reading a stale <code>packages/design-system/dist</code> without the new <code>RefPill</code>. Rebuilding the package fixed it. <code>pnpm dev</code> should rebuild workspace packages first, or the dev server should resolve the package source.<br>
+<b>Quick-add rows.</b> The row's hint ("Enter adds, Esc clears") wraps to three lines under the field when the table is narrow; keep it on one line or move it into the placeholder.<br>
+<b>Settings.</b> Ten equal tiles; group them under Organization, Ideas model and Assistant so the structure matches how people look for them.<br>
+<b>Boards list.</b> The Created column stacks date, year and name over four lines; use "18 Oct, Olivia". Two boards show an empty progress bar for zero ideas; show "No ideas yet" instead.<br>
+<b>Checked and fine.</b> Body and helper text contrast ranges from 6.9 to 15.4 to 1 (target 4.5), and every interactive control measured at least 24 px on the Boards and board pages.</p>
+</div>
+</body>
+</html>
