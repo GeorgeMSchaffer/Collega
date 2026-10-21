@@ -12,7 +12,9 @@
 import { DELIVERY_STATUSES, relativeTime } from '../display'
 import { roleLabel } from '../roles'
 import type {
+  BoardLane,
   BoardOverview,
+  BoardTask,
   Comment,
   CurrentUser,
   Effort,
@@ -21,6 +23,7 @@ import type {
   Idea,
   IdeaDetail,
   IdeaFormField,
+  IdeaMetric,
   IdeaType,
   ImportOutcome,
   InboxItem,
@@ -29,12 +32,20 @@ import type {
   IssueTaskState,
   Member,
   MemberOption,
+  MetricTotal,
+  MetricType,
   NotificationEventType,
   Organization,
+  OutcomeIdea,
+  OutcomeRoadmap,
+  OutcomeSummary,
+  OutcomeSummaryPage,
+  OutcomeWithIdeas,
   Person,
   PersonRef,
   Priority,
   Profile,
+  PullCandidate,
   Role,
   Sprint,
   SprintState,
@@ -44,7 +55,9 @@ import type {
   ViewingAs,
 } from '../types'
 import type {
+  WireBlockedBy,
   WireBoardListItem,
+  WireBoardTask,
   WireCurrentUser,
   WireDeliveryCard,
   WireEffectiveField,
@@ -54,12 +67,21 @@ import type {
   WireIdeaComment,
   WireIdeaDetail,
   WireIdeaListItem,
+  WireIdeaMetric,
   WireIdeaTag,
   WireIdeaType,
   WireIssueTask,
   WireMember,
+  WireMetricTotal,
+  WireMetricType,
   WireNotification,
   WireOrganizationListItem,
+  WireOutcome,
+  WireOutcomeDetail,
+  WireOutcomeIdea,
+  WireOutcomePage,
+  WirePullCandidate,
+  WireRoadmap,
   WireSprint,
   WireStatus,
   WireSwimlane,
@@ -85,7 +107,8 @@ function toRole(value: string): Role {
   return role
 }
 
-function toPriority(value: string): Priority {
+function toPriority(value: string | null): Priority | null {
+  if (value === null) return null
   const priority = PRIORITIES.find((candidate) => candidate === value)
   if (!priority) throw new Error(`The API returned an unknown priority: ${value}`)
   return priority
@@ -152,8 +175,15 @@ export function toProfile(wire: WireCurrentUser): Profile {
 }
 
 /** A board's own lane, which carries the status's display fields inline. */
-export function swimlaneToStatus(wire: WireSwimlane): Status {
-  return { id: wire.statusId, name: wire.statusName, color: wire.statusColor }
+export function swimlaneToStatus(wire: WireSwimlane): BoardLane {
+  return {
+    id: wire.statusId,
+    name: wire.statusName,
+    color: wire.statusColor,
+    isFinal: wire.isFinal,
+    referencesBoardId: wire.referencesBoardId,
+    autoCreateTask: wire.autoCreateTask,
+  }
 }
 
 /**
@@ -332,6 +362,9 @@ export function toBoardOverview(wire: WireBoardListItem): BoardOverview {
     userStatusMoves: wire.allowUserStatusUpdate,
     isArchived: wire.isArchived,
     archivedOn: wire.archivedAtUtc ? DATE.format(new Date(wire.archivedAtUtc)) : null,
+    keyPrefix: wire.keyPrefix,
+    sprintsEnabled: wire.sprintsEnabled,
+    ideaFeaturesEnabled: wire.ideaFeaturesEnabled,
   }
 }
 
@@ -424,6 +457,42 @@ export function toIdeaDetail(wire: WireIdeaDetail): IdeaDetail {
     comments: wire.comments.map(toComment),
     isFollowing: wire.isFollowing,
     followerCount: wire.followerCount,
+    metrics: wire.metrics.map(toIdeaMetric),
+    ...toItemLinks(wire),
+  }
+}
+
+/** The item key, parent, task rollup and blockers an idea list item and an idea detail share. */
+function toItemLinks(
+  wire: Pick<
+    WireIdeaListItem,
+    'itemKey' | 'parentIdeaId' | 'parentItemKey' | 'taskCounts' | 'blockedBy'
+  >,
+): Pick<Idea, 'itemKey' | 'parentIdeaId' | 'parentItemKey' | 'taskCounts' | 'blockedBy'> {
+  return {
+    itemKey: wire.itemKey,
+    parentIdeaId: wire.parentIdeaId,
+    ...(wire.parentItemKey !== undefined && { parentItemKey: wire.parentItemKey }),
+    taskCounts: wire.taskCounts ? { ...wire.taskCounts } : null,
+    blockedBy: wire.blockedBy.map((blocker: WireBlockedBy) => ({ ...blocker })),
+  }
+}
+
+export function toPullCandidate(wire: WirePullCandidate): PullCandidate {
+  return {
+    id: wire.ideaId,
+    title: wire.title,
+    authorUserId: wire.authorUserId,
+    authorName: wire.authorName,
+    boardId: wire.boardId,
+    boardName: wire.boardName,
+    statusId: wire.statusId,
+    statusName: wire.statusName,
+    phase: wire.phase,
+    tags: [...wire.tags],
+    isMine: wire.isMine,
+    priority: toPriority(wire.priority),
+    upvotes: wire.upvoteCount,
   }
 }
 
@@ -456,6 +525,7 @@ export function toIdea(wire: WireIdeaListItem): Idea {
   return {
     id: wire.ideaId,
     boardId: wire.boardId,
+    authorUserId: wire.authorUserId,
     statusId: wire.statusId,
     statusName: wire.statusName,
     title: wire.title,
@@ -469,6 +539,21 @@ export function toIdea(wire: WireIdeaListItem): Idea {
     upvotes: wire.upvoteCount,
     hasUpvoted: wire.hasUpvoted,
     effort: EFFORTS.find((candidate) => candidate === wire.effort) ?? null,
+    ...toItemLinks(wire),
+  }
+}
+
+export function toBoardTask(wire: WireBoardTask): BoardTask {
+  return {
+    id: wire.ideaId,
+    itemKey: wire.itemKey,
+    title: wire.title,
+    statusId: wire.statusId,
+    statusName: wire.statusName,
+    isFinal: wire.isFinal,
+    assignees: wire.assignees.map(toPersonRef),
+    blockedBy: wire.blockedBy.map((blocker) => ({ ...blocker })),
+    autoCreated: wire.autoCreated,
   }
 }
 
@@ -582,8 +667,8 @@ function toDeliveryStatusId(value: string | null): string {
 /**
  * One delivery card into the shape the sprint board, the backlog and the issue page render.
  *
- * `outcomeId` is hard `null` and is not read off the payload, because there is nothing to read: see
- * `lib/data/delivery.ts` for why Outcomes have no source at all yet.
+ * `outcomeId` is hard `null` and is not read off the payload, because the card carries none: see
+ * `lib/data/delivery.ts`.
  *
  * `upvotesAtPromotion` falls back to the live count only if the snapshot is missing, which the
  * promotion gate does not allow — the fallback is there so the backlog's sort has a number rather
@@ -636,4 +721,86 @@ export function toIssueTask(wire: WireIssueTask): IssueTask {
 
 export function toMemberOption(wire: WireMember): MemberOption {
   return { id: wire.userId, name: `${wire.firstName} ${wire.lastName}`.trim() }
+}
+
+// Board References: metric types, Outcomes, the roadmap (slice 260). Appended.
+
+export function toMetricType(wire: WireMetricType): MetricType {
+  return { id: wire.metricTypeId, name: wire.name, unit: wire.unit, isArchived: wire.isArchived }
+}
+
+export function toIdeaMetric(wire: WireIdeaMetric): IdeaMetric {
+  return {
+    metricTypeId: wire.metricTypeId,
+    name: wire.name,
+    unit: wire.unit,
+    isArchived: wire.isArchived,
+    projected: wire.projected,
+    realized: wire.realized,
+  }
+}
+
+function toMetricTotal(wire: WireMetricTotal): MetricTotal {
+  return {
+    metricTypeId: wire.metricTypeId,
+    name: wire.name,
+    unit: wire.unit,
+    projected: wire.projected,
+    realized: wire.realized,
+  }
+}
+
+function toOutcomeIdea(wire: WireOutcomeIdea): OutcomeIdea {
+  return {
+    id: wire.ideaId,
+    itemKey: wire.itemKey,
+    title: wire.title,
+    statusId: wire.statusId,
+    effort: EFFORTS.find((candidate) => candidate === wire.effort) ?? null,
+    assigneeUserIds: [...wire.assigneeUserIds],
+    sprintId: wire.sprintId,
+    sprintStart: wire.sprintStart,
+    sprintEnd: wire.sprintEnd,
+    metrics: wire.metrics.map((metric) => ({ ...metric })),
+  }
+}
+
+export function toOutcomeSummary(wire: WireOutcome): OutcomeSummary {
+  return {
+    id: wire.outcomeId,
+    name: wire.name,
+    description: wire.description,
+    targetStartDate: wire.targetStartDate,
+    targetEndDate: wire.targetEndDate,
+    ownerUserId: wire.ownerUserId,
+    sortOrder: wire.sortOrder,
+    color: wire.color,
+    ideaCount: wire.ideaCount,
+    doneIdeaCount: wire.doneIdeaCount,
+    taskCount: wire.taskCount,
+    doneTaskCount: wire.doneTaskCount,
+    sprintStart: wire.sprintStart,
+    sprintEnd: wire.sprintEnd,
+    metricTotals: wire.metricTotals.map(toMetricTotal),
+  }
+}
+
+export function toOutcomeWithIdeas(wire: WireOutcomeDetail): OutcomeWithIdeas {
+  return { ...toOutcomeSummary(wire), ideas: wire.ideas.map(toOutcomeIdea) }
+}
+
+export function toOutcomePage(wire: WireOutcomePage): OutcomeSummaryPage {
+  return {
+    outcomes: wire.items.map(toOutcomeSummary),
+    page: wire.page,
+    pageSize: wire.pageSize,
+    totalCount: wire.totalCount,
+  }
+}
+
+export function toOutcomeRoadmap(wire: WireRoadmap): OutcomeRoadmap {
+  return {
+    outcomes: wire.outcomes.map(toOutcomeWithIdeas),
+    ungrouped: wire.ungrouped.map(toOutcomeIdea),
+  }
 }

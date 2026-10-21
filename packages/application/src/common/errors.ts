@@ -74,3 +74,19 @@ export class ValidationError extends ApplicationError {
     this.failures = failures
   }
 }
+
+/**
+ * The request is well-formed and the caller may make it, but a named business rule refuses it
+ * (for example `taskBlocked`, `laneInUse`). Maps to 422. The API renders `code` as the message
+ * key, so clients branch on it rather than on prose.
+ */
+export class UnprocessableError extends ApplicationError {
+  readonly kind = 'unprocessable' as const
+
+  readonly code: string
+
+  constructor(code: string, message: string = code) {
+    super(message)
+    this.code = code
+  }
+}

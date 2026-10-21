@@ -56,6 +56,24 @@ It refuses to run against anything but your own machine. The script migrates and
 address it read — see [Against Vercel Postgres](#against-vercel-postgres) for the deliberate way
 past that.
 
+### Starting the database container by itself
+
+`pnpm start` starts the container for you. To run only the database (Docker Desktop must be
+running; the service is `postgres`, the container `collega-postgres`, from
+[`docker-compose.yml`](docker-compose.yml)):
+
+```bash
+docker compose up -d postgres     # start, detached; the data lives in the postgres-data volume
+docker compose ps                 # "healthy" once pg_isready passes (a few seconds)
+docker compose logs -f postgres   # follow the logs
+docker compose stop postgres      # stop, keeping the data
+docker compose down -v            # remove it and its data (destroys all local data)
+```
+
+`POSTGRES_PASSWORD` must be set in `.env` (copy it from `.env.example` first); the container reads
+it, and `POSTGRES_USER` / `POSTGRES_HOST_PORT` (default 5432) too. The container publishes
+`localhost:${POSTGRES_HOST_PORT}`, so stop any other PostgreSQL on that port or change the port.
+
 `.env` is gitignored and copied from [`.env.example`](.env.example), whose defaults are placeholders
 for a throwaway local container. Two are worth knowing about:
 
@@ -190,8 +208,8 @@ did not create.
 
 | | | |
 |---|---|---|
-| `db:seed` | The demo data — two organizations, one account per role each, boards, ideas, comments, sprints and issues | **Refuses to run when `NODE_ENV=production`.** |
-| `db:bootstrap-admin` | One Site Admin, so a fresh deployment is reachable at all | Safe in production; it is what the API's deploy build runs |
+| `db:seed` | The demo data — two organizations, one account per role each, boards, ideas, comments, sprints, issues, and (in the three vertical organizations) Board References, Outcomes and board sprints | **Refuses to run when `NODE_ENV=production`.** |
+| `db:bootstrap-admin` | One App Admin, so a fresh deployment is reachable at all | Safe in production; it is what the API's deploy build runs |
 | `db:bootstrap-organization` | One empty organization with an admin | Safe in production |
 
 The demo seed rebuilds from committed code in about four seconds, which is why nothing in a local
@@ -275,7 +293,7 @@ updates the store's variable and leaves your copy pointing at the old one.
 Either way, take the **`postgres://`** value, not the `prisma+postgres://` one — that is the
 Accelerate protocol and needs an extension this workspace does not install.
 
-**The staging database gets Production's Site Admin.** The API's build command ends with
+**The staging database gets Production's App Admin.** The API's build command ends with
 `db:bootstrap-admin`, so the first preview build after provisioning migrates and bootstraps the new
 database on its own — which is what you want. But that script reads `SITE_ADMIN_EMAIL` and
 `SITE_ADMIN_PASSWORD`, and unless those are scoped per-environment it installs the production
@@ -394,8 +412,8 @@ so a database holding this data must never be one that matters.
 
 | Email | Password | Name | Role | Organization |
 |---|---|---|---|---|
-| `siteadmin@demo.collega.test` | `Abc123!` | Sam Sitewide | Site Admin | *(none — every organization)* |
-| `admin@collega.local` | `Abc123!` ¹ | Site Administrator | Site Admin | *(none — every organization)* |
+| `siteadmin@demo.collega.test` | `Abc123!` | Sam Sitewide | App Admin | *(none — every organization)* |
+| `admin@collega.local` | `Abc123!` ¹ | Site Administrator | App Admin | *(none — every organization)* |
 | `orgadmin@acme-robotics.demo.collega.test` | `Abc123!` | Olivia Administer | Org Admin | Acme Robotics |
 | `user@acme-robotics.demo.collega.test` | `Abc123!` | Noah Contributor | User | Acme Robotics |
 | `user2@acme-robotics.demo.collega.test` | `Abc123!` | Maya Collaborator | User | Acme Robotics |
@@ -417,7 +435,7 @@ so a database holding this data must never be one that matters.
 | `user2@meridian-holdings.demo.collega.test` | `Abc123!` | Grace Nakamura | User | Meridian Holdings |
 | `readonly@meridian-holdings.demo.collega.test` | `Abc123!` | Henry Osei | Read Only | Meridian Holdings |
 
-¹ The **configured Site Admin**, created from `SITE_ADMIN_EMAIL` / `SITE_ADMIN_PASSWORD` in `.env`
+¹ The **configured App Admin**, created from `SITE_ADMIN_EMAIL` / `SITE_ADMIN_PASSWORD` in `.env`
 (the values above are `.env.example`'s). Unlike the others it must change its password at first
 sign-in. A `.env` copied before 2026-10-04 still says `Ch4ngeMe!Now`, and an account already
 created keeps the password it was created with — the seed never overwrites one.
@@ -427,7 +445,7 @@ What each role can do:
 - **Org Admin** — creates, edits, moves and administers everything in its organization.
 - **User** — creates and edits ideas, moves them subject to the board's own setting.
 - **Read Only** — reads, comments and upvotes; authoring is refused, with the reason shown.
-- **Site Admin** — every organization; creates organizations and users directly, and changes
+- **App Admin** (the `SiteAdmin` role in code and specs) — every organization; creates organizations and users directly, and changes
   organization content (boards, ideas) only through View As.
 
 The full roster — every address, display name and organization — is [`demo.md`](demo.md).

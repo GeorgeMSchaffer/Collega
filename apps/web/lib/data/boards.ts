@@ -12,17 +12,28 @@
  * last fixture screen that could have joined the two.
  */
 
-import { swimlaneToStatus, toBoardOverview, toStatus } from '../api/adapt'
-import { apiGet, apiPath, isApiStatus } from '../api/client'
+import { swimlaneToStatus, toBoardOverview, toPullCandidate, toStatus } from '../api/adapt'
+import { apiGet, apiPath, isApiStatus, withQuery } from '../api/client'
 import type {
   WireBoardDetail,
   WireBoardListItem,
   WireDeliveryCard,
   WireIdeaListItem,
   WirePage,
+  WirePullCandidate,
   WireStatus,
 } from '../api/wire'
-import type { Board, BoardAdmin, BoardOverview, BoardRef, BoardWithLanes, Status } from '../types'
+import type {
+  Board,
+  BoardAdmin,
+  BoardOverview,
+  BoardRef,
+  BoardWithLanes,
+  PullCandidatePage,
+  PullCandidateQuery,
+  ReferenceContext,
+  Status,
+} from '../types'
 import { failIfRequested, resolve } from './latency'
 import { everyOrganization, organizationScope } from './scope'
 
@@ -30,6 +41,7 @@ export { SWIMLANE_FLOOR } from '../limits'
 export type {
   Board,
   BoardAdmin,
+  BoardLane,
   BoardOverview,
   BoardRef,
   BoardWithLanes,
@@ -111,6 +123,10 @@ export async function getBoard(id: string): Promise<BoardWithLanes | null> {
       allowUserStatusUpdate: board.allowUserStatusUpdate,
       description: board.description,
       isArchived: board.isArchived,
+      keyPrefix: board.keyPrefix,
+      nextItemNumber: board.nextItemNumber,
+      sprintsEnabled: board.sprintsEnabled,
+      ideaFeaturesEnabled: board.ideaFeaturesEnabled,
       // Deleted statuses still hold ideas that have to go somewhere, so their lane stays on the
       // board — hiding it would silently drop cards off a screen that claims to show all of them.
       lanes: [...board.swimlanes].sort((a, b) => a.order - b.order).map(swimlaneToStatus),
@@ -120,6 +136,43 @@ export async function getBoard(id: string): Promise<BoardWithLanes | null> {
     // and so does this. `null` rather than a throw, so the caller reaches `notFound()`.
     if (isApiStatus(error, 404)) return null
     throw error
+  }
+}
+
+/**
+ * The boards a lane of `boardId` could reference, and whether `boardId` is itself a reference
+ * target (`null` for a board not yet created). The list read carries both facts
+ * (`hasReferenceLane`, `referencedByBoardIds`), so this is one request.
+ */
+export async function getReferenceContext(boardId: string | null): Promise<ReferenceContext> {
+  failIfRequested('getReferenceContext')
+
+  const scope = organizationScope()
+  if (scope === null) return { choices: [], referencedBy: [] }
+
+  const listed = await apiGet<readonly WireBoardListItem[]>(
+    'getReferenceContext',
+    apiPath`/organizations/${scope}/boards`,
+  )
+  const referencedByIds =
+    boardId === null
+      ? []
+      : (listed.find((board) => board.boardId === boardId)?.referencedByBoardIds ?? [])
+
+  return {
+    choices: listed
+      .filter((board) => board.boardId !== boardId)
+      .map((board) => ({
+        id: board.boardId,
+        name: board.name,
+        keyPrefix: board.keyPrefix,
+        firstLaneName:
+          [...board.laneCounts].sort((a, b) => a.order - b.order)[0]?.statusName ?? null,
+        hasReferenceLane: board.hasReferenceLane,
+      })),
+    referencedBy: listed
+      .filter((board) => referencedByIds.includes(board.boardId))
+      .map((board) => ({ id: board.boardId, name: board.name })),
   }
 }
 
@@ -250,5 +303,40 @@ export async function getBoardRefs(): Promise<BoardRef[]> {
     id: board.boardId,
     name: board.name,
     isArchived: board.isArchived,
+    hasReferenceLane: board.hasReferenceLane,
   }))
+}
+
+/**
+ * One page of what the board form's *Add existing items* step can pull, for one tab.
+ *
+ * Takes the organization rather than reading it from the principal: the picker asks from a route
+ * handler, which runs outside the render scope `organizationScope` needs, so the handler resolves
+ * the organization the way the Server Functions do (`actingOrganizationId`). The API scopes the
+ * answer to what the caller may pull, so a User never sees another author's idea here.
+ */
+export async function getPullCandidates(
+  organizationId: string,
+  query: PullCandidateQuery,
+): Promise<PullCandidatePage> {
+  const params = new URLSearchParams({
+    source: query.source,
+    page: String(query.page),
+    pageSize: String(query.pageSize),
+  })
+  if (query.excludeBoardId) params.set('excludeBoardId', query.excludeBoardId)
+  if (query.search?.trim()) params.set('search', query.search.trim())
+  if (query.tag) params.set('tag', query.tag)
+  if (query.authorUserId) params.set('authorUserId', query.authorUserId)
+
+  const result = await apiGet<WirePage<WirePullCandidate>>(
+    'getPullCandidates',
+    withQuery(apiPath`/organizations/${organizationId}/boards/pull-candidates`, params),
+  )
+  return {
+    items: result.items.map(toPullCandidate),
+    page: result.page,
+    pageSize: result.pageSize,
+    totalCount: result.totalCount,
+  }
 }

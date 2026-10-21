@@ -17,16 +17,18 @@ import {
   MultiSelectFilter,
   Pager,
   pageRows,
+  QuickAddBar,
   RowActions,
   type Sort,
   sortRows,
   useListState,
   ViewSwitch,
 } from '@/components/list'
-import { setBoardArchived } from '@/lib/server/board-actions'
+import { SWIMLANE_FLOOR } from '@/lib/limits'
+import { quickAddBoard, setBoardArchived } from '@/lib/server/board-actions'
 import type { BoardOverview } from '@/lib/types'
 import { BoardCard } from './board-card'
-import { BoardDrawer, type BoardFormData, type DrawerMode } from './board-drawer'
+import { BoardDrawer, type BoardFormData, type BoardView, type DrawerMode } from './board-drawer'
 import { BoardStatus, LaneFigures, LaneStrip, statusLabel, TopTags } from './board-parts'
 
 const CONFIG: ListConfig = {
@@ -120,6 +122,8 @@ export function BoardsScreen({
   adminDenial,
   createDenial,
   form,
+  view = null,
+  quickAddLaneIds = [],
 }: {
   /** Every board, archived ones included: the Status filter is applied here. */
   boards: BoardOverview[]
@@ -129,6 +133,10 @@ export function BoardsScreen({
   createDenial: string | null
   /** The open form's seed values, loaded by the page; null when no form is open. */
   form: BoardFormData | null
+  /** The viewed board's lanes with flags, loaded by the page; null when none is open. */
+  view?: BoardView | null
+  /** The statuses a quick-added board gets as lanes; fewer than the floor hides the row. */
+  quickAddLaneIds?: string[]
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -184,6 +192,31 @@ export function BoardsScreen({
   const sorted = sortRows(filtered, state.sort ?? DEFAULT_SORT, sortValue)
   const page = pageRows(sorted, state.page, state.size)
 
+  const canQuickAdd = createDenial === null && quickAddLaneIds.length >= SWIMLANE_FLOOR
+  const rowIds = boards.map((board) => board.id).join(',')
+
+  const quickAdd = (
+    <QuickAddBar
+      canAdd={canQuickAdd}
+      label="Quick add board"
+      handoff="create"
+      testId="boards-quick-add-bar"
+      fields={[
+        {
+          name: 'name',
+          label: 'Board name',
+          required: true,
+          placeholder: 'Add a board — press Enter to create it',
+        },
+      ]}
+      onSubmit={async (values) => {
+        const result = await quickAddBoard(values.name ?? '', quickAddLaneIds)
+        if (!result.ok) return { ok: false, error: result.error, errors: result.errors }
+        return { ok: true, id: result.boardId, message: 'Board added' }
+      }}
+    />
+  )
+
   const actions = (board: BoardOverview) => (
     <RowActions
       itemLabel={board.name}
@@ -221,44 +254,54 @@ export function BoardsScreen({
         </Alert>
       ) : null}
 
-      {boards.length === 0 ? (
+      {boards.length === 0 && !canQuickAdd ? (
         <EmptyState heading="No boards yet">
           A new organization starts with one default board and five statuses. Org Admins and Users
           add more with Add New Board.
         </EmptyState>
       ) : (
         <>
-          <ListToolbar
-            query={state.q}
-            onQueryChange={(q) => update({ q })}
-            placeholder="Filter by board, lane, tag, person, status…"
-            end={
-              <ViewSwitch
-                views={CONFIG.views ?? []}
-                value={state.view}
-                onChange={(view) => update({ view, page: state.page })}
+          {boards.length > 0 ? (
+            <ListToolbar
+              query={state.q}
+              onQueryChange={(q) => update({ q })}
+              placeholder="Filter by board, lane, tag, person, status…"
+              end={
+                <ViewSwitch
+                  views={CONFIG.views ?? []}
+                  value={state.view}
+                  onChange={(view) => update({ view, page: state.page })}
+                />
+              }
+            >
+              <MultiSelectFilter
+                label="Status"
+                options={STATUS_OPTIONS}
+                selected={state.filters.status ?? []}
+                onChange={(status) => update({ filters: { ...state.filters, status } })}
               />
-            }
-          >
-            <MultiSelectFilter
-              label="Status"
-              options={STATUS_OPTIONS}
-              selected={state.filters.status ?? []}
-              onChange={(status) => update({ filters: { ...state.filters, status } })}
-            />
-          </ListToolbar>
+            </ListToolbar>
+          ) : null}
 
-          {state.view === 'list' ? (
-            <DataTable
-              caption="Boards"
-              columns={COLUMNS}
-              rows={page.rows}
-              rowKey={(board) => board.id}
-              sort={state.sort}
-              onSortChange={(sort) => update({ sort })}
-              actions={actions}
-              selectedKey={open?.board?.id ?? null}
-            />
+          {state.view === 'list' || boards.length === 0 ? (
+            <>
+              {boards.length > 1 ? quickAdd : null}
+              <DataTable
+                caption="Boards"
+                columns={COLUMNS}
+                rows={page.rows}
+                rowKey={(board) => board.id}
+                sort={state.sort}
+                onSortChange={(sort) => update({ sort })}
+                actions={actions}
+                selectedKey={open?.board?.id ?? null}
+                empty={
+                  boards.length === 0
+                    ? 'No boards yet. A new organization starts with one default board and five statuses.'
+                    : undefined
+                }
+              />
+            </>
           ) : page.rows.length === 0 ? (
             <p className="m-0 rounded-lg border bg-card py-6 text-center text-sm text-muted-foreground">
               Nothing matches these filters.
@@ -284,6 +327,7 @@ export function BoardsScreen({
       <BoardDrawer
         open={open}
         form={form}
+        view={view}
         isAdmin={isAdmin}
         returnFocusTo={trigger.current}
         onClose={() => navigate(null, null)}

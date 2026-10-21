@@ -30,11 +30,16 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { ApiError, apiDelete, apiPath, apiPost, apiPostReturning, apiPut } from '../api/client'
 import type { WireCreatedIdea } from '../api/wire'
+import { actingOrganizationId } from './current-user'
+import { type RuleContext, ruleMessage } from './rule-messages'
 
 /** What a card's controls render back: the API's refusal, or nothing. */
 export type ActionState = { error: string | null }
 
-/** Everything the idea form sends. `ideaId` absent is a create, on `boardId`. */
+/**
+ * Everything the idea form sends. `ideaId` absent is a create, on `boardId` — or in the pool, the
+ * organization's ideas with no board, when `boardId` is empty.
+ */
 export type IdeaInput = {
   ideaId: string | null
   boardId: string
@@ -54,6 +59,8 @@ export type IdeaInput = {
    */
   assigneeUserIds: string[]
   mentionEmails: string[]
+  /** Three-state: absent leaves the stored Effort alone, `null` clears it, a value sets it. */
+  effort?: 'Low' | 'Medium' | 'High' | null
   /** Every field the type shows; an omitted one is cleared. `null` leaves them all untouched. */
   fieldValues: { fieldDefinitionId: string; value: string }[] | null
 }
@@ -69,17 +76,20 @@ export type SaveIdeaResult =
 /**
  * The message to show for a refusal, or a rethrow for anything that is not one.
  *
- * 400, 403, 404 and 409 are all *answers* — the field was empty, the role may not, the id belongs to
- * another organization, the board is archived — and each one belongs beside the control that was
- * pressed. A 500 is not an answer, and rethrowing lands it on the error boundary.
+ * 400, 403, 404, 409 and 422 are all *answers* — the field was empty, the role may not, the id belongs
+ * to another organization, the board is archived, a Board References rule refused the move
+ * (`parentHasOpenTasks`, `taskBlocked`; `detail` is the rule key, which `ruleMessage` turns into a sentence) —
+ * and each one belongs beside the control that was pressed. A 500 is not an answer, and rethrowing lands it on the error boundary.
  *
  * 401 means the session ended between rendering and pressing the button: the same ordinary end of a
  * session `requireCurrentUser` redirects for, so it redirects to the same place.
  */
-function refusal(error: unknown): string {
+function refusal(error: unknown, context: RuleContext = {}): string {
   if (error instanceof ApiError) {
     if (error.status === 401) redirect('/login?expired=1')
-    if ([400, 403, 404, 409].includes(error.status)) return error.detail
+    if ([400, 403, 404, 409, 422].includes(error.status)) {
+      return ruleMessage(error.detail, context)
+    }
   }
   throw error
 }
@@ -89,7 +99,8 @@ function refusal(error: unknown): string {
  * reason `apiPath` gives: a cache path is a path, and an id that names no route revalidates nothing.
  */
 function revalidateIdeaScreens(boardId: string): void {
-  revalidatePath(`/boards/${encodeURIComponent(boardId)}`)
+  // An idea in the pool sends an empty id: it is on no board page.
+  if (boardId) revalidatePath(`/boards/${encodeURIComponent(boardId)}`)
   revalidatePath('/ideas')
   // Tag counts, and tags created inline while tagging.
   revalidatePath('/settings/tags')
@@ -113,6 +124,7 @@ export async function saveIdea(input: IdeaInput): Promise<SaveIdeaResult> {
     assigneeUserIds: input.assigneeUserIds,
     mentionEmails: input.mentionEmails,
     fieldValues: input.fieldValues,
+    ...(input.effort !== undefined ? { effort: input.effort } : {}),
   }
 
   let ideaId: string
@@ -122,9 +134,20 @@ export async function saveIdea(input: IdeaInput): Promise<SaveIdeaResult> {
       ideaId = input.ideaId
     } else {
       // The exception `apiPostReturning` exists for: the drawer opens the new idea next, and its id
-      // exists nowhere until this answers. No `statusId`: omitting it means the left-most lane.
+      // exists nowhere until this answers. No `statusId`: omitting it means the left-most lane, and
+      // for the pool the API picks the organization's first active status.
+      const organizationId = input.boardId ? null : await actingOrganizationId()
+      if (!input.boardId && organizationId === null) {
+        return {
+          ok: false,
+          error: 'An App Admin belongs to no organization. Use View As to act as a member of one.',
+          errors: {},
+        }
+      }
       const created = await apiPostReturning<WireCreatedIdea>(
-        apiPath`/boards/${input.boardId}/ideas`,
+        organizationId === null
+          ? apiPath`/boards/${input.boardId}/ideas`
+          : apiPath`/organizations/${organizationId}/ideas`,
         body,
       )
       ideaId = created.ideaId
@@ -153,20 +176,45 @@ export async function deleteIdea(ideaId: string, boardId: string): Promise<Actio
   return { error: null }
 }
 
+/**
+ * Move a card to another lane. The optional `forceReason` is an Org Admin's override of the
+ * reference-lane lock (`parentHasOpenTasks`); `title`, `openTasks` and `blockers` are what the card
+ * already shows, so a refusal can name it. None of them is authority: the API decides.
+ */
 export async function moveIdea(_previous: ActionState, form: FormData): Promise<ActionState> {
   const boardId = String(form.get('boardId') ?? '')
   const ideaId = String(form.get('ideaId') ?? '')
+  const forceReason = String(form.get('forceReason') ?? '').trim()
 
   try {
     await apiPost(apiPath`/ideas/${ideaId}/status`, {
       statusId: String(form.get('statusId') ?? ''),
+      ...(forceReason ? { forceReason } : {}),
     })
   } catch (error) {
-    return { error: refusal(error) }
+    return { error: refusal(error, cardContext(form)) }
   }
 
   revalidateIdeaScreens(boardId)
+  // The drawer's completion prompt moves a parent from the inbox's drawer too.
+  revalidatePath('/inbox')
   return { error: null }
+}
+
+/** What the card's controls know about it, for a refusal's sentence. */
+function cardContext(form: FormData): RuleContext {
+  const count = (name: string) => {
+    const value = form.get(name)
+    return value === null || value === '' ? undefined : Number(value)
+  }
+  const title = form.get('title')
+  const openTasks = count('openTasks')
+  const blockers = count('blockers')
+  return {
+    ...(typeof title === 'string' && title !== '' ? { title } : {}),
+    ...(openTasks !== undefined ? { openTasks } : {}),
+    ...(blockers !== undefined ? { blockers } : {}),
+  }
 }
 
 /**
@@ -228,5 +276,108 @@ export async function setFollowing(
 
   revalidateIdeaScreens(boardId)
   revalidatePath('/inbox')
+  return { error: null }
+}
+
+/**
+ * Take an idea off its board, leaving it in the pool with its status, comments, votes and
+ * followers. Idempotent on the API's side, so a second press from a stale page changes nothing.
+ */
+export async function detachIdea(
+  ideaId: string,
+  boardId: string,
+  context: (RuleContext & { forceReason?: string }) | null = null,
+): Promise<ActionState> {
+  const forceReason = context?.forceReason?.trim()
+  try {
+    await apiDelete(apiPath`/ideas/${ideaId}/board`, forceReason ? { forceReason } : {})
+  } catch (error) {
+    return { error: refusal(error, { ...context, action: 'remove' }) }
+  }
+
+  revalidateIdeaScreens(boardId)
+  // The board's idea count in the sidebar, and Home's Needs a board tile.
+  revalidatePath('/', 'layout')
+  return { error: null }
+}
+
+/** What the drawer's add-task form sends: the task fields and nothing else (`contracts/ideas.md`). */
+export type BoardTaskInput = {
+  title: string
+  description: string
+  assigneeUserIds: string[]
+  tagNames: string[]
+}
+
+/**
+ * Re-read what a parent's tasks touch: the parent's own screens, and the board the tasks live on,
+ * where an added task is a new card and a removed one is gone.
+ */
+function revalidateTaskScreens(boardId: string, taskBoardId: string): void {
+  revalidateIdeaScreens(boardId)
+  revalidateIdeaScreens(taskBoardId)
+  revalidatePath('/inbox')
+}
+
+/**
+ * Add a task to a parent in a reference lane, on the board that lane references. A refusal such as
+ * `parentNotInReferenceLane` comes back as a sentence for the form to show.
+ */
+export async function addBoardTask(
+  ideaId: string,
+  boardId: string,
+  taskBoardId: string,
+  input: BoardTaskInput,
+): Promise<ActionState> {
+  try {
+    await apiPost(apiPath`/ideas/${ideaId}/board-tasks`, {
+      title: input.title,
+      description: input.description,
+      assigneeUserIds: input.assigneeUserIds,
+      tagNames: input.tagNames,
+    })
+  } catch (error) {
+    return { error: refusal(error) }
+  }
+
+  revalidateTaskScreens(boardId, taskBoardId)
+  return { error: null }
+}
+
+/**
+ * Replace an item's blocker set (`PUT /ideas/{id}/blocked-by`). The set is always complete, so the
+ * caller sends the whole list with its one change. Every layout is re-read because a parent's drawer
+ * on another board lists this item's blockers too.
+ */
+export async function setBlockers(
+  ideaId: string,
+  boardId: string,
+  ideaIds: string[],
+): Promise<ActionState> {
+  try {
+    await apiPut(apiPath`/ideas/${ideaId}/blocked-by`, { ideaIds })
+  } catch (error) {
+    return { error: refusal(error) }
+  }
+
+  revalidateIdeaScreens(boardId)
+  revalidatePath('/', 'layout')
+  return { error: null }
+}
+
+/** Remove a task from its parent. The API soft-deletes the card, so the parent's lock follows. */
+export async function removeBoardTask(
+  ideaId: string,
+  taskId: string,
+  boardId: string,
+  taskBoardId: string,
+): Promise<ActionState> {
+  try {
+    await apiDelete(apiPath`/ideas/${ideaId}/board-tasks/${taskId}`)
+  } catch (error) {
+    return { error: refusal(error) }
+  }
+
+  revalidateTaskScreens(boardId, taskBoardId)
   return { error: null }
 }

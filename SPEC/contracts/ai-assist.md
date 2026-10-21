@@ -17,7 +17,7 @@ Contract-wide rules for this section:
 ### `POST /api/v1/boards/{boardId}/idea-assist/turns`
 Advance the idea-drafting conversation by one turn and return the updated draft.
 
-> **Changes in v2 (specified 2026-09-27, not built):** `draft` carries the structured fields, the request adds `lockedFields` and `step`, and the response returns `changes`, `suggestions` and `nextStep` instead of `draft`. `20-feature-ai-idea-assist-v2.md` "Contract changes" is authoritative for them; the shape below is v1, live today.
+> **v2 (specified 2026-09-27, contract written 2026-10-20, slice 306; not built):** the turn contract changes as set out in ["v2 turn contract"](#v2-turn-contract-slice-306-not-built) below. `20-feature-ai-idea-assist-v2.md` "Contract changes" is authoritative; the shape in this section is v1, live today, and is replaced when slice 307 ships.
 
 - **Roles:** any member of the board's organization who may create ideas (Read Only is refused).
 - **Request:**
@@ -50,6 +50,55 @@ Advance the idea-drafting conversation by one turn and return the updated draft.
   - a turn judged out of scope returns `inScope` `false`, `draft` unchanged, and `nextQuestion` carrying the server's fixed redirect string; the client discards the offending user turn rather than appending it
   - three consecutive out-of-scope turns additionally return `conversationClosed` as `true`
   - rate limited per user and per organization; each call writes an audit event recording the actor, organization, board, turn count, token usage, and out-of-scope outcome, and never the prompt or transcript content
+
+#### v2 turn contract (slice 306, not built)
+
+*Written 2026-10-20 (slice 306); the open readings were decided by the owner the same day.* Same route, roles, `404`/`401`/`403`/`429`/`503` meanings, transcript rules (20 entries, last entry `user`), audit event and rate limits as above. What changes:
+
+- **Request:**
+  - `draft` (already optional in v1) widens from five fields to the person's full current form values, so the model revises rather than restates. Every key is optional; an absent key and `null` both mean "nothing there yet". A draft is partial, so the create minimums (at least one proposed solution) do **not** apply to it. Limits are those of `POST /api/v1/boards/{boardId}/ideas` in [`ideas.md`](ideas.md):
+    - `title` string, max 150 characters
+    - `problem` string, max 2000 characters
+    - `proposedSolutions` array of strings, at most 5 items, each max 500 characters
+    - `impactRationale` string, max 1000 characters
+    - `businessImpactId` GUID string, `ideaTypeId` GUID string. Unknown or inactive ids are discarded, not rejected, as in v1
+    - `priority` string, one of `Low`, `Medium`, `High`, `Critical`. An unrecognised value is dropped, as in v1
+    - `tagNames` array of strings, at most 10 distinct (`ideas.md` idea update, and `20-feature-ideas-and-engagement.md` rule 8; the create route says only "optional string array"). Names not in the organization's tag vocabulary are discarded
+    - `fieldValues` array of `{ fieldDefinitionId, value }`. `value` is the string serialization of [`20-feature-user-defined-fields.md`](../20-feature-user-defined-fields.md) `IdeaFieldValue`: `Text`/`Url` raw string, `Number` invariant decimal string, `Date` `yyyy-MM-dd`, `Boolean` `"true"`/`"false"`, `Dropdown` one option id, `MultiSelect` comma-separated option ids. Entries for a definition that is not visible for the draft's `ideaTypeId` are discarded
+    - `description` string, max 4000 characters (the optional summary)
+  - `lockedFields` optional string array: the fields the person owns. Each entry is a draft key above (`title`, `problem`, `proposedSolutions`, `impactRationale`, `businessImpactId`, `ideaTypeId`, `priority`, `tagNames`, `description`) or `fieldValues.<fieldDefinitionId>` for a custom field. The server drops any model output for a locked field (enforced server-side, not only in the UI). An entry that names no known field is ignored, not rejected.
+  - `step` optional string: the `nextStep` of the previous assistant turn, in the same vocabulary (see `nextStep`). Absent on the first turn. A value outside the vocabulary is ignored, not rejected.
+- **Response** `200` replaces `draft` with:
+  - `changes` object, always present and `{}` when nothing was set: only the keys this turn set, each in the shape and under the limits of the request `draft`. `proposedSolutions` is the **full replacement list** (1 to 5 items), present only when the field is not locked; `fieldValues` carries only the entries set this turn. It never contains a locked field, an id outside the organization's active options, a tag outside its vocabulary, or a custom field not visible for the draft's Idea Type.
+  - **Idea Type is inferred early.** The assistant attempts `ideaTypeId` on the first turn, from the first description, and returns it in `changes` so the form defaults to it (the client marks it Suggested). The interview order is unchanged: the type is still asked about at its place in the order if it is not set or the person changed it.
+  - **Custom fields fill on the next turn.** They are offered for the Idea Type in the request `draft`; a type chosen in this turn exposes its custom fields on the following turn.
+  - **Priority** defaults to `Medium`, applied by the client. The assistant sets `priority` only on urgency cues ("urgent", "asap") and otherwise omits it.
+  - `suggestions` object, optional (absent when the turn offers none): `solutions` array of at most 3 strings, each max 500 characters; `problemRewrite` string, max 2000 characters; `rationales` array of at most 3 strings, each max 1000 characters. The lengths follow the field they would fill; the v2 spec states only the counts. **A suggestion key is omitted when its field is locked** (`solutions` for `proposedSolutions`, `problemRewrite` for `problem`, `rationales` for `impactRationale`). Suggestions are never applied by the server: the client applies one only when the person chooses it.
+  - `nextStep` string: the field the reply asks about, or `done`. One of `problem`, `proposedSolutions`, `impactRationale`, `businessImpactId`, `ideaTypeId`, `fieldValues.<fieldDefinitionId>`, `title`, `priority`, `tagNames`, `description`, `done`. Interview order is Problem, Proposed solutions, Impact rationale, Business impact, Idea type, required custom fields of that type, then Title if still empty; `priority`, `tagNames` and `description` are optional fields that may also be a `nextStep`. Never a locked field, **except** the out-of-scope echo below. `businessImpactId` and `ideaTypeId` are not offered when the organization has no active option for them, and a Dropdown or MultiSelect custom field with no options is not offered at all.
+  - `nextQuestion` string, `inScope` boolean, `conversationClosed` boolean, `turnsRemaining` integer: as v1. A turn judged out of scope returns `changes` `{}`, no `suggestions`, `nextQuestion` the fixed redirect, and `nextStep` equal to the request `step` (which may therefore name a locked field), or `problem` when the request has none.
+- **Errors** (additions; the `400` envelope is the shared one, keyed by request field name, message templates from `30-Contracts.md`):
+  - `400` `title` "Title must be 150 characters or fewer."; `problem` "Problem must be 2000 characters or fewer."; `impactRationale` "Impact Rationale must be 1000 characters or fewer."; `description` "Description must be 4000 characters or fewer."; `proposedSolutions` "Proposed Solutions must have 5 items or fewer." and "Each proposed solution must be 500 characters or fewer."; `tagNames` "Tag Names must have 10 items or fewer."; `lockedFields` or `step` when not a string array or string, "<Field> is invalid.". The keys follow the v1 draft keys (`title`, `description`) and the idea create wording.
+- **Rules:**
+  - the JSON Schema sent to the model is built per request from the retrieval result (v1 rules 15-18, `20-feature-ai-idea-assist.md`): `changes` offers only the unlocked fields; `ideaTypeId` and `businessImpactId` are closed enums of the organization's active option ids; `tagNames` items are an enum of the organization's tag names; `priority` is the closed `Priority` enum; the Idea Type's visible custom fields are offered as `fieldValues` entries pinned to their definition id, a Dropdown value constrained to that field's option ids and a Boolean to `"true"`/`"false"`. `additionalProperties` is `false` and `nextQuestion` (with the suggestion strings) is the only free text
+  - **the model-facing schema uses only the keywords v1 has proven against the provider:** `type`, `enum`, `anyOf`, `maxLength`, `required`, `additionalProperties`. Array bounds (`proposedSolutions` 1 to 5, `tagNames` at most 10 distinct, suggestion counts of 3), `minLength`, and the Number, Date and MultiSelect value formats are **not** in the schema. The builder exports them as constants and a pure validator, and the server's re-validation (slice 307) enforces them
+  - the server re-validates every value against the retrieved set after the call (v1 rule: reject a response containing an id outside it) and then removes locked fields
+  - a locked `ideaTypeId` fixes which custom fields are offered; a locked custom field is omitted from the schema
+  - the rules for the 20-entry cap, scope gate, three-strikes close, `429` and usage metering are unchanged
+  - `POST /api/v1/boards/{boardId}/ideas/ai-draft` and `.../ai-polish` ([`ideas.md`](ideas.md)) are **withdrawn**: never built, and the turn endpoint covers extraction. No new endpoint replaces them
+
+#### No-board turn (slice 309)
+
+*Added 2026-10-20 (slice 309), settling the owner's 2026-10-20 "starter prompts and the no-board create" decision, which left "an org-level variant or a deferred board id" open. The org-level variant is the smaller change: no board id has to be carried, threaded or validated later, and the schema is untouched (`ai_usage_records.board_id` and `audit_events.entity_id` are already nullable).*
+
+### `POST /api/v1/idea-assist/turns`
+The v2 turn for an idea drafted with no board, so it will start in the pool (the Ideas list's *Add New Idea*).
+
+- **Roles, request, response, errors:** exactly those of `POST /api/v1/boards/{boardId}/idea-assist/turns` above, minus the `404` for a board. The caller's organization comes from the access token.
+- **Rules:**
+  - the same pipeline: cap, scope gate, `429`, usage metering, daily budget
+  - the usage record carries no board, and the three-consecutive-refusals close counts the caller's board-less turns in the last hour
+  - the audit event names the organization (`entityType` `Organization`, `entityId` the organization id) where the board route's names the board; it still never records the prompt or transcript
+- **Decided (2026-10-20, `SPEC/decisions.md`):** the idea type never picks the board. The turn never proposes a board; a detected type only defaults the form's type, and a board-less create stays in the pool/backlog.
 
 ### `GET /api/v1/ai-assist/availability`
 Tell the client whether to open the drafting chat or go straight to the create form (`20-feature-ai-idea-assist.md` rule 32a).

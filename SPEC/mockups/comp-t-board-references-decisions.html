@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en" data-proto-theme="graphite">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega Board References, decisions of 2026-10-16 (comp T)</title>
+<!-- Comp T: throwaway review comp. Draws the 2026-10-16 decisions (metric types; reference-lane lock; Board References follow-ups; and the
+     owner's UI decisions of the same day, SPEC/decisions.md "Board References UI") on the comp-s screens. Theme tokens are comp R's five themes
+     (Graphite by default); the rules are comp-s's, with additions at the end. Not a reference until approved. All copy is decided
+     (SPEC/decisions.md "Board References UI"); no open questions remain. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&family=Figtree:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Lexend:wght@500;600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=Schibsted+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root,:root[data-proto-theme="portico"]{--suggest:#3B6E51;--suggest-tint:#E3EEE7;color-scheme:light;
+--bg:#F1F5F5;--ink:#16292E;--ink2:#2C4247;--muted:#56696D;--line:#DDE6E7;--line2:#C6D3D5;--card:#FFFFFF;--soft:#E8EFF0;--rowh:#F6FAFA;--thead:#F7FAFA;--facts:#F6FAFA;
+--pri:#1F6A80;--pri-h:#185769;--pri-t:#1B5F73;--pri-tint:#E1EEF1;--pri-ink:#FFFFFF;--vote:#F2B28A;--vote-ink:#16292E;
+--hot:#B64A34;--hot-t:#963B28;--hot-tint:#F6E1DB;--ok-t:#3B6E51;--ok-tint:#E3EEE7;--warn-t:#8E4A1F;--warn-tint:#FCEBDF;
+--side:#FFFFFF;--side-ink:#2C4247;--side-line:#DDE6E7;--side-hover:#EEF4F4;--side-on:#E1EEF1;--side-on-ink:#16292E;--bar:#16292E;--bar-ink:#E3EEF0;
+--tag:#E1EEF1;--tag-ink:#1B5566;--av1:#1F6A80;--av1i:#FFFFFF;--av2:#F2B28A;--av2i:#16292E;--av3:#7A5AA6;--av3i:#FFFFFF;--av4:#4F8A6A;--av4i:#FFFFFF;
+--shadow:22 41 46;--r:14px;--rs:10px;--display:"Outfit",ui-sans-serif,system-ui,sans-serif;--body:"Figtree",ui-sans-serif,system-ui,sans-serif;--mono:"DM Mono",ui-monospace,monospace;--h-weight:600}
+:root[data-proto-theme="sera"]{--suggest:#2E6E4C;--suggest-tint:#E1EFE7;--bg:#F3F4F7;--ink:#1C2236;--ink2:#343B52;--muted:#5C6378;--line:#E2E4EC;--line2:#CCD0DC;--soft:#ECEEF3;--rowh:#F7F8FB;--thead:#F7F8FB;--facts:#F5F6FA;
+--pri:#3450A8;--pri-h:#2A4290;--pri-t:#2E4799;--pri-tint:#E6EAF6;--vote:#E3B04B;--vote-ink:#1C2236;--hot:#B8553F;--hot-t:#94402D;--hot-tint:#F6E3DE;--ok-t:#2E6E4C;--ok-tint:#E1EFE7;--warn-t:#83590C;--warn-tint:#FAF0DA;
+--side:#1F2540;--side-ink:#CDD1E3;--side-line:#2D3454;--side-hover:#272E4D;--side-on:#2E3760;--side-on-ink:#FFFFFF;--bar:#0F1426;--bar-ink:#E6E9F5;--tag:#ECEEF3;--tag-ink:#343B52;
+--av1:#3450A8;--av1i:#FFFFFF;--av2:#E3B04B;--av2i:#1C2236;--av3:#B8553F;--av3i:#FFFFFF;--av4:#3E8A62;--av4i:#FFFFFF;--shadow:28 34 54;--r:16px;--display:"Bricolage Grotesque",ui-sans-serif,sans-serif;--body:"DM Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="lagoon"]{--suggest:#2F5F9E;--suggest-tint:#E3ECF8;--bg:#F3F4EF;--ink:#13302B;--ink2:#2A4640;--muted:#5A6B66;--line:#E1E5DF;--line2:#CBD3CB;--soft:#EAEFEA;--rowh:#F7F9F5;--thead:#F7F9F5;--facts:#F5F8F3;
+--pri:#0E6B5C;--pri-h:#0A5649;--pri-t:#0C6154;--pri-tint:#DCEFEA;--vote:#F08A6C;--vote-ink:#13302B;--hot:#C2412D;--hot-t:#9E3322;--hot-tint:#F9E1DA;--ok-t:#2F6B3F;--ok-tint:#E2F0E4;--warn-t:#7A5410;--warn-tint:#F8EDD3;
+--side:#FFFFFF;--side-ink:#2A4640;--side-line:#E1E5DF;--side-hover:#EFF3EE;--side-on:#DCEFEA;--side-on-ink:#13302B;--bar:#0F2A25;--bar-ink:#E2F0EC;--tag:#DCEFEA;--tag-ink:#0C5549;
+--av1:#0E6B5C;--av1i:#FFFFFF;--av2:#F08A6C;--av2i:#13302B;--av3:#3D6FB6;--av3i:#FFFFFF;--av4:#8C6A1F;--av4i:#FFFFFF;--shadow:19 48 43;--r:16px;--rs:12px;--display:"Lexend",ui-sans-serif,sans-serif;--body:"Nunito Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:600}
+:root[data-proto-theme="terrazzo"]{--suggest:#3F6B2E;--suggest-tint:#E6F2DF;--bg:#F5F6F8;--ink:#1E2733;--ink2:#36414F;--muted:#5E6978;--line:#E3E6EB;--line2:#CDD2DA;--soft:#EDF0F3;--rowh:#F8F9FB;--thead:#F8F9FB;--facts:#F6F7F9;
+--pri:#3D5A80;--pri-h:#324B6B;--pri-t:#35507A;--pri-tint:#E4EAF2;--vote:#F4C7C3;--vote-ink:#1E2733;--hot:#B84A4A;--hot-t:#963636;--hot-tint:#F7E2E2;--ok-t:#3F6B2E;--ok-tint:#E6F2DF;--warn-t:#7F5A12;--warn-tint:#F7EDD6;
+--side:#FFFFFF;--side-ink:#36414F;--side-line:#E3E6EB;--side-hover:#F1F3F6;--side-on:#E4EAF2;--side-on-ink:#1E2733;--bar:#1E2733;--bar-ink:#E8ECF2;--tag:#F4E4E1;--tag-ink:#7A3B34;
+--av1:#3D5A80;--av1i:#FFFFFF;--av2:#F4C7C3;--av2i:#1E2733;--av3:#4E7A40;--av3i:#FFFFFF;--av4:#7A5AA6;--av4i:#FFFFFF;--shadow:30 39 51;--r:8px;--rs:6px;--display:"Schibsted Grotesk",ui-sans-serif,sans-serif;--body:"Public Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="graphite"]{color-scheme:dark;--metric:#5CC8E0;--suggest:#5CC8E0;--suggest-tint:#0F1D21;--suggest-line:#2E6A78;
+--bg:#0F1113;--ink:#E6E8EA;--ink2:#C4CAD0;--muted:#9BA3AB;--line:#22272C;--line2:#2C3238;--card:#16191C;--soft:#1C2024;--rowh:#1A1E22;--thead:#121518;--facts:#1A1E22;--field:#0F1113;
+--pri:#F5A524;--pri-h:#FFC35C;--pri-t:#F5A524;--pri-tint:#2A2418;--pri-ink:#16120A;--vote:#2A2418;--vote-ink:#F3E3C3;--me:#2A2418;--me-ink:#F3E3C3;
+--hot:#E5484D;--hot-t:#FF8A8E;--hot-tint:#2E1719;--ok-t:#58C781;--ok-tint:#13241A;--warn-t:#F5B456;--warn-tint:#2A2418;
+--side:#121518;--side-ink:#AEB5BC;--side-line:#22272C;--side-hover:#1A1E22;--side-on:#1C2024;--side-on-ink:#E6E8EA;--bar:#0B0D0F;--bar-ink:#AEB5BC;--tag:#1C2024;--tag-ink:#C4CAD0;
+--av1:#2A2418;--av1i:#F5A524;--av2:#153038;--av2i:#5CC8E0;--av3:#262B30;--av3i:#C4CAD0;--av4:#1C2A20;--av4i:#58C781;--shadow:0 0 0;--r:8px;--rs:6px;
+--display:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;--h-weight:600}
+:root{--metric:var(--pri);--field:var(--card);--suggest-line:var(--suggest);--me:var(--pri);--me-ink:var(--pri-ink);--drawer:clamp(380px,28vw,520px);--drawer-wide:clamp(720px,62vw,1100px)}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--body);display:flex;flex-direction:column}
+button{font:inherit;color:inherit}
+.proto{display:flex;align-items:center;gap:12px;padding:8px 16px;background:var(--bar);color:var(--bar-ink);font-size:13px;flex:none}
+.proto button{background:transparent;border:1px solid #3a4148;border-radius:999px;padding:3px 12px;color:var(--bar-ink);cursor:pointer}
+.proto button[aria-pressed=true]{background:var(--bar-ink);color:var(--bar)}
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);flex:1}
+.side{background:var(--side);border-right:1px solid var(--side-line);padding:14px 10px;display:flex;flex-direction:column;gap:2px;color:var(--side-ink)}
+.brand{display:flex;gap:10px;align-items:center;padding:4px 6px 12px}
+.brand b{display:block;font:600 16px/1.1 var(--display);color:var(--ink)}.brand small{font-size:12px;opacity:.75}
+.mark{display:grid;place-items:center;width:30px;height:30px;border-radius:var(--rs);background:var(--pri);color:var(--pri-ink);font:600 12px var(--display)}
+.navlbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.7;padding:10px 8px 4px}
+.nav{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:var(--rs);color:var(--side-ink)}
+.nav[aria-current=page]{background:var(--side-on);color:var(--side-on-ink);font-weight:600}
+.nav span{flex:1}.nav small{font-weight:600;opacity:.8}
+.me{margin-top:auto;display:flex;gap:10px;align-items:center;padding:10px 6px 2px;border-top:1px solid var(--side-line)}
+.me b{display:block;font-size:13px;color:var(--ink)}.me small{font-size:12px;opacity:.75}
+.main{min-width:0;display:flex;flex-direction:column;position:relative}
+.topbar{display:flex;align-items:center;gap:8px;min-height:52px;padding:8px 24px;border-bottom:1px solid var(--line);background:var(--card)}
+.crumb{color:var(--muted)}.crumb b{color:var(--ink)}
+.work{padding:20px 24px 32px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.pghead{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.pghead h1{margin:0;font:var(--h-weight) 28px/1.15 var(--display);letter-spacing:-.02em}
+.pghead p{margin:4px 0 0;color:var(--muted);max-width:64ch}
+.btn{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13px;height:32px;padding:0 12px;border-radius:var(--rs);border:1px solid var(--line2);background:var(--card);cursor:pointer}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}
+.btn.sm{height:28px;padding:0 10px;font-size:12px}
+.btn.ghost{border-color:transparent;background:transparent}
+.seg{display:inline-flex;background:var(--soft);border-radius:var(--rs);padding:2px}
+.seg span{padding:4px 12px;font-size:13px;color:var(--muted);border-radius:5px}
+.seg span.on{background:var(--card);color:var(--ink);font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:1px 8px;border-radius:999px;background:color-mix(in srgb,var(--tc,var(--muted)) 16%,var(--card));color:color-mix(in srgb,var(--tc,var(--muted)) 62%,var(--ink));border:1px solid color-mix(in srgb,var(--tc,var(--muted)) 30%,transparent)}
+.avs{display:inline-flex}.av{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;font:700 10px var(--body);border:2px solid var(--card);margin-left:-6px}
+.avs .av:first-child{margin-left:0}
+.a1{background:var(--av1);color:var(--av1i)}.a2{background:var(--av2);color:var(--av2i)}.a3{background:var(--av3);color:var(--av3i)}.a4{background:var(--av4);color:var(--av4i)}
+.mono{font-family:var(--mono)}
+/* board */
+.lanes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.lane{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:520px;padding:6px 6px 12px;border-radius:14px;background:color-mix(in srgb,var(--soft) 55%,transparent);border:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
+.lanehd{display:flex;align-items:center;gap:8px;padding:6px 12px;font-weight:600;font-size:13px}
+.lanehd span{flex:1}.lanehd small{font:500 12px var(--mono);opacity:.8}
+.kcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:7px}
+.kcard h4{margin:0;font-size:13px;font-weight:600;line-height:1.35}
+.kcard.sel{outline:2px solid var(--pri);outline-offset:-1px}
+.krow{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.kmeta{font:500 11px var(--mono);color:var(--muted)}
+.prog{display:flex;gap:2px;height:5px;border-radius:3px;overflow:hidden;background:var(--soft)}
+.prog i{display:block;height:100%}
+/* drawer */
+.drawer{position:absolute;top:0;right:0;bottom:0;width:560px;background:var(--card);border-left:1px solid var(--line2);box-shadow:-18px 0 40px rgb(0 0 0/.45);display:flex;flex-direction:column;z-index:5}
+.dhead{display:flex;align-items:flex-start;gap:8px;padding:16px 18px 10px;border-bottom:1px solid var(--line)}
+.eb{font:500 11px var(--mono);color:var(--muted);letter-spacing:.03em}
+.dhead h2{margin:2px 0 0;font:var(--h-weight) 19px/1.25 var(--display)}
+.dbody{flex:1;overflow:auto;padding:16px 18px;display:flex;flex-direction:column;gap:16px}
+.dfoot{display:flex;gap:8px;align-items:center;padding:12px 18px;border-top:1px solid var(--line);background:var(--thead)}
+.sp{flex:1}
+.stepper{display:flex;gap:4px}
+.step{flex:1;text-align:center;font-size:11.5px;font-weight:600;padding:6px 2px;border-radius:var(--rs);background:var(--soft);color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+.step.done{color:var(--ink2);border-bottom-color:var(--ok)}
+.step.cur{background:var(--pri-tint);color:var(--pri-t);border-bottom-color:var(--pri)}
+.suggest{display:flex;gap:10px;align-items:center;background:var(--suggest-tint);border:1px solid var(--suggest-line);border-radius:var(--rs);padding:10px 12px;font-size:13px}
+.suggest b{color:var(--suggest)}
+.suggest .sp{flex:1}
+.sect h3,.lbl{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+.sechd{display:flex;align-items:center;gap:8px;margin-bottom:6px}.sechd h3{margin:0}
+.panel{border:1px solid var(--line);border-radius:var(--rs);background:var(--facts);overflow:hidden}
+table.v{border-collapse:collapse;width:100%}
+table.v th{font:600 11px var(--body);color:var(--muted);text-align:left;padding:7px 12px;background:var(--thead);border-bottom:1px solid var(--line)}
+table.v td{padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
+table.v tr:last-child td{border-bottom:0}
+.r{text-align:right !important;font-variant-numeric:tabular-nums}
+.metric{color:var(--metric);font-weight:600}
+.pend{color:var(--muted);font-size:12px;font-style:italic}
+.task{display:grid;grid-template-columns:20px minmax(0,1fr) 28px 110px;gap:10px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
+.task:last-child{border-bottom:0}
+.task:hover{background:var(--rowh)}
+.ck{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--line2);display:grid;place-items:center;font-size:11px;line-height:1}
+.ck.ok{background:var(--ok);border-color:var(--ok);color:#0F1113}
+.ck.ip{border-color:var(--pri);background:linear-gradient(90deg,var(--pri) 50%,transparent 50%)}
+.task .done-t{color:var(--muted);text-decoration:line-through}
+.st{font-size:12px;font-weight:600;display:inline-flex;gap:6px;align-items:center}
+.st.a{color:var(--muted)}.st.p{color:var(--pri-t)}.st.c{color:var(--ok-t)}
+.addrow{display:flex;gap:8px;padding:8px 12px;color:var(--muted);font-size:13px;border-top:1px solid var(--line)}
+/* outcome page */
+.spr{background:var(--card);border:1px solid var(--line);border-radius:var(--r);display:grid;grid-template-columns:repeat(4,1fr)}
+.spr>div{padding:14px 18px;display:flex;flex-direction:column;gap:4px}
+.spr>div+div{border-left:1px solid var(--line)}
+.spr dt{font:500 10.5px var(--mono);color:var(--muted);letter-spacing:.06em}
+.spr dd{margin:0;font:600 22px var(--display)}
+.spr small{font:500 11px var(--mono);color:var(--muted)}
+.oc{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.oc-h{display:flex;align-items:center;gap:12px;padding:12px 16px;flex-wrap:wrap}
+.oc-h h2{margin:0;font:var(--h-weight) 15px var(--display)}
+.ir{display:grid;grid-template-columns:70px minmax(0,1fr) 150px 130px 130px;align-items:center;gap:12px;min-height:38px;padding:4px 16px;font-size:13px;border-top:1px solid var(--line)}
+.ir.hd{font:600 11px var(--body);color:var(--muted);background:var(--thead);min-height:30px}
+.ir .id{font:500 11px var(--mono);color:var(--muted)}
+.bar{display:flex;align-items:center;gap:8px}
+.bar .t{flex:1;height:6px;border-radius:3px;background:var(--soft);overflow:hidden;position:relative}
+.bar .t i{position:absolute;left:0;top:0;bottom:0;background:var(--metric)}
+.bar small{font:500 11px var(--mono);color:var(--muted);min-width:34px;text-align:right}
+.hide{display:none}
+.cfgrow{display:grid;grid-template-columns:22px minmax(0,1fr) 150px 190px 80px;gap:12px;align-items:center;padding:10px 16px;border-top:1px solid var(--line);font-size:.85rem}
+.cfgrow .note,.cfgrow .sel{font-size:inherit}
+.cfgrow.hd{font:600 1rem var(--body);color:var(--muted);background:var(--thead);border-top:0;padding:8px 16px}
+.grip{color:var(--muted);font-size:14px;letter-spacing:-2px}
+.refpill{display:inline-flex;align-items:center;gap:6px;font:500 11px var(--mono);color:var(--suggest);background:var(--suggest-tint);border:1px solid var(--suggest-line);border-radius:4px;padding:0 7px;line-height:20px}
+.sel{background:var(--field);border:1px solid var(--line2);border-radius:var(--rs);padding:6px 10px;font-size:13px;display:flex;justify-content:space-between;color:var(--ink2)}
+.sprhd{background:var(--card);border:1px solid var(--line);border-radius:var(--r);display:grid;grid-template-columns:minmax(0,1fr) repeat(3,150px)}
+.sprhd>div{padding:12px 18px;display:flex;flex-direction:column;gap:4px}
+.sprhd>div+div{border-left:1px solid var(--line)}
+.sprhd dt{font:500 10.5px var(--mono);color:var(--muted);letter-spacing:.06em}
+.sprhd dd{margin:0;font:500 13px var(--mono)}
+.badge{font:500 10.5px var(--mono);border:1px solid currentColor;border-radius:4px;padding:0 6px;line-height:18px;letter-spacing:.04em}
+.badge.ok{color:var(--ok-t)}.badge.warn{color:var(--warn-t)}.badge.mute{color:var(--muted)}
+.pchip{font:500 10.5px var(--mono);color:var(--suggest);background:var(--suggest-tint);border:1px solid var(--suggest-line);border-radius:4px;padding:0 6px;line-height:17px;white-space:nowrap}
+.lock{font:500 10.5px var(--mono);color:var(--warn-t);background:var(--warn-tint);border-radius:4px;padding:0 6px;line-height:17px;white-space:nowrap}
+.kcard.blocked{opacity:.7;border-style:dashed}
+.bl{margin-top:14px;border:1px solid var(--line);border-radius:var(--r);background:var(--card);overflow:hidden}
+.task2{display:grid;grid-template-columns:20px minmax(0,1fr) auto 28px 108px;gap:10px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
+.task2:last-child{border-bottom:0}
+.note{font-size:12px;color:var(--muted)}
+/* comp T additions: tokens the comp-s rules expect, then new vocabulary. Palette is the theme tokens only. */
+:root{--ok:var(--ok-t);--warn:var(--warn-t);--bar-line:#3a4148}
+html,body{height:auto;min-height:100%}
+body{overflow-x:hidden}
+:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+a{color:var(--pri-t)}
+.proto{flex-wrap:wrap}
+.proto select{background:transparent;color:var(--bar-ink);border:1px solid var(--bar-line);border-radius:999px;padding:3px 10px;font:inherit}
+.proto select option{color:#111}
+.proto .grp{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.proto .sp{flex:1}
+.idx{background:var(--thead);border-bottom:1px solid var(--line);padding:0 24px}
+.idx summary{cursor:pointer;padding:8px 0;font-size:13px;color:var(--muted)}
+.idx ol{margin:0;padding:0 0 12px;list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
+.idx li button{width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:var(--rs);padding:8px 10px;cursor:pointer;display:grid;gap:2px}
+.idx li button b{font-size:13px}.idx li button span{font-size:12px;color:var(--muted)}
+.idx li button[aria-current=true]{border-color:var(--pri)}
+.side .nav{cursor:default}
+.nav.sub{padding-left:22px}
+.main{min-width:0}
+.app{grid-template-columns:232px minmax(0,1fr)}
+.work{min-width:0}
+.hide{display:none !important}
+/* form controls (shadcn Input, Textarea, Switch, Badge) */
+.in{display:flex;align-items:center;background:var(--field);border:1px solid var(--line2);border-radius:var(--rs);padding:0 10px;min-height:32px;font-size:13px;color:var(--ink);gap:6px;min-width:0}
+.in input,.in textarea{all:unset;flex:1;min-width:0;padding:6px 0;color:var(--ink);font:inherit}
+.in textarea{display:block;white-space:pre-wrap;min-height:60px;line-height:1.5}
+.in.ta{align-items:flex-start}
+.in .u{color:var(--muted);font:500 12px var(--mono);white-space:nowrap}
+.in.err{border-color:var(--hot)}
+.in.ro{background:var(--soft);color:var(--ink2)}
+.in:focus-within{outline:2px solid var(--pri);outline-offset:1px}
+.in.num input{text-align:right;font-variant-numeric:tabular-nums}
+.errtxt{display:block;color:var(--hot-t);font-size:12px;margin-top:4px}
+.helper{color:var(--muted);font-size:12px;margin-top:4px;display:block}
+.field{display:flex;flex-direction:column;gap:2px;min-width:0}
+.field>label,.lbl2{font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:4px;display:block}
+.sw{display:inline-flex;align-items:center;gap:10px;font-size:13px}
+.sw i{position:relative;width:34px;height:20px;border-radius:999px;background:var(--line2);flex:none;display:inline-block}
+.sw i::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--ink2)}
+.sw[aria-checked=true] i{background:var(--pri)}
+.sw[aria-checked=true] i::after{left:16px;background:var(--pri-ink)}
+.sw[aria-disabled=true]{opacity:.55}
+button.sw{background:none;border:0;padding:0;cursor:pointer;color:inherit}
+button.sw[aria-disabled=true]{cursor:not-allowed}
+.chip.ok{background:var(--ok-tint);color:var(--ok-t)}
+.chip.mute{background:var(--soft);color:var(--ink2)}
+.chip.pri{background:var(--pri-tint);color:var(--pri-t)}
+.chip.warn{background:var(--warn-tint);color:var(--warn-t)}
+.chip.hot{background:var(--hot-tint);color:var(--hot-t)}
+.btn[disabled],.btn[aria-disabled=true]{opacity:.5;cursor:not-allowed}
+.btn.dng{background:var(--hot);border-color:var(--hot);color:#fff}
+.seg span[role=tab]{cursor:pointer}
+.mono-s{font:500 11px var(--mono);color:var(--muted)}
+.prop{font:500 10px var(--mono);letter-spacing:.04em;color:var(--warn-t);background:var(--warn-tint);border-radius:4px;padding:0 6px;line-height:16px;white-space:nowrap;vertical-align:middle}
+.oq{border:1px dashed var(--warn-t);background:var(--warn-tint);border-radius:var(--rs);padding:10px 14px;font-size:13px;color:var(--ink2)}
+.oq b{color:var(--warn-t)}
+.oq ul,.notes ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.notes{border:1px solid var(--line);border-radius:var(--rs);background:var(--facts);padding:12px 16px;font-size:13px;color:var(--ink2)}
+.notes h3{margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;border-radius:4px;color:var(--ink2);overflow-wrap:anywhere}
+.stage{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.stage.one{grid-template-columns:minmax(0,1fr)}
+.frame{border:1px solid var(--line);border-radius:var(--r);background:var(--card);display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.frame>h2{margin:0;padding:10px 16px;font:600 13px var(--body);border-bottom:1px solid var(--line);background:var(--thead);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.frame>h2 .fl{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:5px;background:var(--pri-tint);color:var(--pri-t);font:600 11px var(--mono)}
+.frame>.fb{padding:14px 16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.drawer.static{position:static;width:auto;box-shadow:none;border:1px solid var(--line2);border-radius:var(--r);overflow:hidden}
+.drawer.static .dbody{overflow:visible}
+.banner{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line2);background:var(--soft);border-radius:var(--rs);padding:9px 12px;font-size:13px;color:var(--ink2)}
+.banner.warn{background:var(--warn-tint);border-color:var(--warn-t)}
+.banner.hot{background:var(--hot-tint);border-color:var(--hot)}
+.banner .ic{flex:none;font-weight:700}
+/* metric types list */
+.mt{border:1px solid var(--line);border-radius:var(--r);background:var(--card);overflow:hidden}
+.mt-row{display:grid;grid-template-columns:34px minmax(0,1.6fr) minmax(0,.8fr) 110px 110px 190px;gap:12px;align-items:center;padding:10px 16px;border-top:1px solid var(--line);font-size:13px;min-width:0}
+.mt-row.hd{border-top:0;background:var(--thead);color:var(--muted);font:600 11px var(--body);padding:8px 16px}
+.mt-row.edit{background:var(--rowh)}
+.mt-row.arch .nm{color:var(--muted)}
+.mt-row .acts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.mt-row .nm{font-weight:600;overflow-wrap:anywhere}
+.mt-sub{grid-column:2/-1}
+.mt-add{background:var(--facts)}
+.urlhint{font:500 11px var(--mono);color:var(--muted)}
+/* value table */
+.vt{border:1px solid var(--line);border-radius:var(--rs);background:var(--facts);overflow:hidden}
+.vt-row{display:grid;grid-template-columns:minmax(0,1fr) 150px 150px;gap:10px;align-items:start;padding:9px 12px;border-top:1px solid var(--line);font-size:13px}
+.vt-row.hd{border-top:0;background:var(--thead);color:var(--muted);font:600 11px var(--body);padding:7px 12px;align-items:center}
+.vt-row .nm{padding-top:6px;overflow-wrap:anywhere}
+.vt-row .nm small{display:block;color:var(--muted);font:500 11px var(--mono)}
+.vt-row.arch{background:var(--soft)}
+.vt-row .ro-n{padding-top:6px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink2)}
+.vt-row .emph{background:var(--pri-tint);color:var(--pri-t)}
+.vt-foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;border-top:1px solid var(--line);background:var(--thead)}
+/* task drawer */
+.fgrid{display:grid;gap:14px}
+.tagrow{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chiprow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.plink{display:inline-flex;gap:6px;align-items:center;font:500 12px var(--mono);color:var(--suggest);background:var(--suggest-tint);border:1px solid var(--suggest-line);border-radius:4px;padding:2px 8px;text-decoration:none}
+.absent{border:1px dashed var(--line2);border-radius:var(--rs);padding:10px 14px;font-size:12.5px;color:var(--muted)}
+.absent s{color:var(--ink2);text-decoration-color:var(--muted)}
+/* lock, toast, dialog, menu */
+.kcard.locked{border-color:var(--warn-t)}
+.waiting{display:inline-flex;align-items:center;gap:6px;font:600 11.5px var(--body);color:var(--warn-t);background:var(--warn-tint);border-radius:4px;padding:1px 8px}
+.kcard.nodrag{cursor:not-allowed}
+.tip{align-self:flex-start;background:var(--bar);color:var(--bar-ink);border:1px solid var(--line2);border-radius:6px;padding:4px 9px;font-size:12px;font-weight:600;max-width:100%;overflow-wrap:anywhere}
+.menu div[aria-disabled=true]{opacity:.55;cursor:not-allowed}
+.menu div .lnk{margin-left:auto;color:var(--pri-t);font-weight:600;font-size:12px}
+.act{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:var(--rs);overflow:hidden}
+.act li{display:flex;gap:10px;padding:10px 12px;font-size:13px;align-items:flex-start;border-top:1px solid var(--line);min-width:0}
+.act li:first-child{border-top:0}
+.act li>div{min-width:0;overflow-wrap:anywhere}
+.act .av{margin-left:0;flex:none}
+.act small{display:block;color:var(--muted);font:500 11px var(--mono);margin-top:2px}
+.vt-row.hd .rz{background:var(--pri-tint);color:var(--pri-t);border-radius:4px;padding:3px 8px;text-align:right}
+.pk li.dis{opacity:.85}
+.pk li.dis .cb{border-style:dashed;opacity:.6}
+.pk li .go{margin-top:6px}
+.meter.over::after{content:"";position:absolute;right:0;top:0;bottom:0;width:4px;background:var(--hot)}
+.mcard .big.neg{color:var(--hot-t)}
+.brk{border-top:1px solid var(--line);margin-top:4px;padding-top:6px;display:flex;flex-direction:column}
+.brk-row{display:grid;grid-template-columns:minmax(0,1fr) 92px 92px;gap:8px;font-size:12px;padding:3px 0;align-items:baseline}
+.brk-row.hd{font:600 11px var(--body);color:var(--muted)}
+.brk-row .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.brk-row .id{font:500 11px var(--mono);color:var(--muted);margin-right:4px}
+.brk-row .ti{overflow-wrap:anywhere}
+.toast{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--hot);border-left-width:4px;border-radius:var(--rs);padding:10px 12px;font-size:13px;box-shadow:0 10px 28px rgb(0 0 0/.3)}
+.toast b{display:block}
+.dlg{border:1px solid var(--line2);border-radius:var(--r);background:var(--card);box-shadow:0 18px 44px rgb(0 0 0/.4);overflow:hidden}
+.dlg-h{padding:14px 18px 6px}.dlg-h h3{margin:0;font:600 16px var(--display);text-transform:none;letter-spacing:0;color:var(--ink)}
+.dlg-b{padding:6px 18px 14px;display:flex;flex-direction:column;gap:12px;font-size:13px;color:var(--ink2)}
+.dlg-f{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--line);background:var(--thead)}
+.opentasks{margin:0;padding:0;list-style:none;border:1px solid var(--line);border-radius:var(--rs);overflow:hidden}
+.opentasks li{display:flex;gap:8px;align-items:center;padding:6px 10px;border-top:1px solid var(--line);font-size:12.5px}
+.opentasks li:first-child{border-top:0}
+.opentasks li span:first-child{flex:1;min-width:0;overflow-wrap:anywhere}
+.menu{border:1px solid var(--line2);border-radius:var(--rs);background:var(--card);box-shadow:0 10px 28px rgb(0 0 0/.3);padding:4px;max-width:340px}
+.menu div{display:flex;gap:8px;align-items:center;padding:7px 10px;border-radius:5px;font-size:13px}
+.menu div.on{background:var(--rowh)}
+.menu div small{margin-left:auto;color:var(--warn-t);font-size:11px}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+/* picker */
+.pk{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:var(--rs);overflow:hidden}
+.pk li{display:grid;grid-template-columns:20px minmax(0,1fr);gap:10px;padding:10px 12px;border-top:1px solid var(--line);font-size:13px}
+.pk li:first-child{border-top:0}
+.pk .meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:3px;font-size:12px;color:var(--muted)}
+.cb{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--line2);margin-top:2px;display:grid;place-items:center;font-size:11px}
+.cb.on{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}
+.tabs2{display:flex;gap:4px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tabs2 span{padding:7px 12px;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs2 span.on{color:var(--ink);font-weight:600;border-bottom-color:var(--pri)}
+.tabs2 .n{font:500 11px var(--mono);margin-left:6px;background:var(--soft);border-radius:999px;padding:0 6px}
+/* outcome */
+.mtot{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.mcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.mcard .nm{font:600 13px var(--body)}
+.mcard .big{font:600 22px var(--display);color:var(--metric);font-variant-numeric:tabular-nums}
+.mcard .big small{font:500 12px var(--mono);color:var(--muted)}
+.meter{position:relative;height:8px;border-radius:4px;background:var(--soft);overflow:hidden}
+.meter i{position:absolute;left:0;top:0;bottom:0;background:var(--metric)}
+.mrow{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--ink2);flex-wrap:wrap}
+.mrow b{font-variant-numeric:tabular-nums}
+.empty{border:1px dashed var(--line2);border-radius:var(--r);padding:22px 16px;text-align:center;color:var(--muted);font-size:13px;display:flex;flex-direction:column;gap:6px;align-items:center}
+.empty b{color:var(--ink);font-size:14px}
+.ir{grid-template-columns:70px minmax(0,1fr) 150px 130px}
+.kcard.selected{outline:2px solid var(--pri);outline-offset:-1px}
+.kcard{min-width:0}.kcard h4{overflow-wrap:anywhere}
+@media (max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{display:none}
+  .work{padding:16px}
+  .topbar{padding:8px 16px;flex-wrap:wrap}
+  .idx{padding:0 16px}
+  .lanes{grid-template-columns:repeat(5,220px);overflow-x:auto;padding-bottom:6px}
+  .stage{grid-template-columns:minmax(0,1fr)}
+  .sprhd,.spr{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sprhd>div,.spr>div{border-left:0 !important;border-top:1px solid var(--line)}
+  .cfgrow{grid-template-columns:22px minmax(0,1fr)}
+  .cfgrow>*:nth-child(n+3){grid-column:2}
+  .cfgrow.hd{display:none}
+  .mt-row{grid-template-columns:minmax(0,1fr) auto;row-gap:6px}
+  .mt-row.hd{display:none}
+  .mt-row>.ix{display:none}
+  .mt-row .acts{grid-column:1/-1;justify-content:flex-start}
+  .mt-sub{grid-column:1/-1}
+  .vt-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .vt-row .nm{grid-column:1/-1;padding-top:0}
+  .vt-row.hd span:first-child{display:none}
+  .task2{grid-template-columns:20px minmax(0,1fr) auto}
+  .task2>*:nth-child(n+4){display:none}
+  .ir{grid-template-columns:60px minmax(0,1fr)}
+  .ir>*:nth-child(n+3){display:none}
+  .ir.hd{display:none}
+  .dhead{flex-wrap:wrap}
+  .stepper{flex-wrap:wrap}
+  .step{flex:1 1 30%}
+  .menu{max-width:none}
+}
+.lock{white-space:normal;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="proto"><b>Collega &middot; Board References, decisions of 2026-10-16</b>
+  <span class="grp" role="group" aria-label="Screens">
+    <button id="u1" aria-pressed="true" onclick="go(1)">1 Metric types</button>
+    <button id="u2" aria-pressed="false" onclick="go(2)">2 Value section</button>
+    <button id="u3" aria-pressed="false" onclick="go(3)">3 Task drawer</button>
+    <button id="u4" aria-pressed="false" onclick="go(4)">4 Reference-lane lock</button>
+    <button id="u5" aria-pressed="false" onclick="go(5)">5 Lane setting</button>
+    <button id="u6" aria-pressed="false" onclick="go(6)">6 Pull picker</button>
+    <button id="u7" aria-pressed="false" onclick="go(7)">7 Outcome totals</button>
+  </span>
+  <span class="sp"></span>
+  <label for="theme" style="font-size:12px">Theme</label>
+  <select id="theme" aria-label="Theme"><option value="graphite">Graphite</option><option value="terrazzo">Terrazzo</option><option value="portico">Portico</option><option value="sera">Piazza Sera</option><option value="lagoon">Lagoon</option></select>
+</div>
+
+<details class="idx" open>
+  <summary>Screen index: what each screen shows and which decision it draws</summary>
+  <ol>
+    <li><button onclick="go(1)"><b>1 &middot; Settings, Metric types</b><span>Org Admin list, add, edit, archive, restore, includeArchived. Read-only for User and Read Only.</span></button></li>
+    <li><button onclick="go(2)"><b>2 &middot; Idea drawer, Value</b><span>Unit after the number, whole-set Save, Realized tint in a final lane, archived board, App Admin hint.</span></button></li>
+    <li><button onclick="go(3)"><b>3 &middot; Task drawer</b><span>Task fields, status select, sprint and blockers chips, parent link. No Value section.</span></button></li>
+    <li><button onclick="go(4)"><b>4 &middot; Reference-lane lock</b><span>Card cannot be dragged, disabled Remove and picker row, Org Admin Move anyway, reason dialog, activity entry.</span></button></li>
+    <li><button onclick="go(5)"><b>5 &middot; Statuses, lane row</b><span>Reference selector plus Auto-create one task on entry; auto-off note when the reference is removed.</span></button></li>
+    <li><button onclick="go(6)"><b>6 &middot; Pull picker</b><span>Tasks are never listed; a hidden-tasks line shows only when a search would have matched them.</span></button></li>
+    <li><button onclick="go(7)"><b>7 &middot; Outcome page</b><span>metricTotals meters (over, negative, not yet), per-idea breakdown, done counts, State chip, empty state.</span></button></li>
+  </ol>
+</details>
+
+<div class="app">
+  <aside class="side" aria-label="Primary">
+    <div class="brand"><span class="mark">Co</span><div><b>Collega</b><small>Northwind Logistics</small></div></div>
+    <div class="navlbl">Workspace</div>
+    <div class="nav"><span>Home</span></div>
+    <div class="nav" id="nv-board"><span>Boards</span><small>3</small></div>
+    <div class="nav"><span>Ideas</span><small>46</small></div>
+    <div class="nav" id="nv-out"><span>Outcomes</span><small>4</small></div>
+    <div class="navlbl">Settings</div>
+    <div class="nav"><span>Tags</span></div>
+    <div class="nav" id="nv-mt"><span>Metric types</span></div>
+    <div class="navlbl">Me</div>
+    <div class="nav"><span>My tasks</span><small>5</small></div>
+    <div class="nav"><span>Inbox</span><small>2</small></div>
+    <div class="me"><span class="av a1" style="margin:0;width:30px;height:30px;font-size:11px">DK</span><div><b>Dana Kim</b><small>Org Admin</small></div></div>
+  </aside>
+
+  <main class="main">
+
+  <!-- ============ 1: Metric types ============ -->
+  <section id="v1" data-nav="nv-mt" aria-labelledby="h1-1">
+    <div class="topbar"><span class="crumb">Settings / <b>Metric types</b></span></div>
+    <div class="work" id="mt-work" data-role="admin">
+      <div class="pghead"><div><h1 id="h1-1">Metric types</h1><p>The kinds of value an idea can carry. Every board in the organization shares them, and Outcomes add them up.</p></div>
+        <div class="seg" role="group" aria-label="View as role"><span class="on" data-r="admin" role="button" tabindex="0">Org Admin</span><span data-r="user" role="button" tabindex="0">User</span><span data-r="ro" role="button" tabindex="0">Read Only</span></div></div>
+
+      <div class="banner adm-hide" id="mt-ro" style="display:none"><span class="ic">i</span><span>You can see the metric types but only an Org Admin can add or change them.</span></div>
+
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+        <button class="sw" id="inc" role="switch" aria-checked="false" aria-label="Show archived types"><i></i><span>Show archived</span></button>
+        <span class="urlhint" id="inc-url">GET /metric-types</span>
+      </div>
+
+      <div class="mt" role="table" aria-label="Metric types">
+        <div class="mt-row hd" role="row"><span class="ix">#</span><span>Name</span><span>Unit</span><span>Status</span><span>Created</span><span class="adm" style="text-align:right">Actions</span></div>
+
+        <div class="mt-row" role="row"><span class="ix mono-s">1</span><span class="nm">Hours saved</span><span class="mono">h</span><span><span class="chip ok"><span class="dot" style="background:var(--ok)"></span>Active</span></span><span class="mono-s">Oct 2, 2026</span>
+          <span class="acts adm"><button class="btn sm">Edit</button><button class="btn sm ghost">Archive</button></span></div>
+
+        <div class="mt-row edit" role="row"><span class="ix mono-s">2</span>
+          <span class="field"><label class="lbl2" for="e-name" style="margin:0 0 3px">Name</label><span class="in"><input id="e-name" value="Cost savings"></span></span>
+          <span class="field"><label class="lbl2" for="e-unit" style="margin:0 0 3px">Unit</label><span class="in"><input id="e-unit" value="USD"></span></span>
+          <span><span class="chip ok"><span class="dot" style="background:var(--ok)"></span>Active</span></span><span class="mono-s">Oct 2, 2026</span>
+          <span class="acts adm"><button class="btn sm pri">Save</button><button class="btn sm ghost">Cancel</button></span>
+          <span class="mt-sub banner warn" role="status" style="margin-top:2px"><span class="ic">!</span><span><b>Existing values are not converted.</b> Changing the unit from <code>$</code> to <code>USD</code> leaves a saved 48,000.00 as 48,000.00, now shown as 48,000.00 USD. Shown inline while the unit is being edited, before Save.</span></span></div>
+
+        <div class="mt-row" role="row"><span class="ix mono-s">3</span><span class="nm">Defects avoided</span><span class="mono-s">No unit</span><span><span class="chip ok"><span class="dot" style="background:var(--ok)"></span>Active</span></span><span class="mono-s">Oct 9, 2026</span>
+          <span class="acts adm"><button class="btn sm">Edit</button><button class="btn sm ghost">Archive</button></span></div>
+
+        <div class="mt-row arch" role="row" data-arch="1" style="display:none"><span class="ix mono-s">4</span><span class="nm">Cost savings</span><span class="mono">&euro;</span><span><span class="chip mute"><span class="dot" style="background:var(--muted)"></span>Archived</span></span><span class="mono-s">Oct 3, 2026</span>
+          <span class="acts adm"><button class="btn sm">Edit</button><button class="btn sm ghost">Restore</button></span>
+          <span class="mt-sub note">Archived. Its values stay on ideas, hidden from value entry and from Outcome totals until restored. The name repeats an active type, which is allowed.</span></div>
+
+        <div class="mt-row arch" role="row" data-arch="1" style="display:none"><span class="ix mono-s">5</span><span class="nm">Cycle time</span><span class="mono">days</span><span><span class="chip mute"><span class="dot" style="background:var(--muted)"></span>Archived</span></span><span class="mono-s">Oct 6, 2026</span>
+          <span class="acts adm"><button class="btn sm">Edit</button><button class="btn sm ghost">Restore</button></span></div>
+
+        <div class="mt-row mt-add adm" role="row"><span class="ix mono-s">+</span>
+          <span class="field"><span class="in"><input aria-label="New type name" placeholder="Name, for example Customer satisfaction" maxlength="80"></span><span class="helper">Required, up to 80 characters.</span></span>
+          <span class="field"><span class="in"><input aria-label="New type unit" placeholder="Unit (optional)" maxlength="20"></span><span class="helper">Up to 20 characters.</span></span>
+          <span></span><span></span><span class="acts"><button class="btn sm pri">Add type</button></span></div>
+      </div>
+
+      <div class="dlg" role="dialog" aria-labelledby="ar-t" style="max-width:460px">
+        <div class="dlg-h"><h3 id="ar-t">Archive 'Hours saved'?</h3></div>
+        <div class="dlg-b"><span>3 items keep their values; it stops counting in Outcome totals. You can restore it.</span></div>
+        <div class="dlg-f"><button class="btn">Cancel</button><button class="btn pri">Archive</button></div>
+      </div>
+      <div class="note">Shown when Archive is pressed on a type that items hold values for (here, 3 items). A type nothing uses archives at once, with no dialog.</div>
+
+      <div class="notes"><h3>Notes</h3>
+        <ul>
+          <li>Rows are in created order. There is no drag reorder; the order is the order of the value table in every drawer.</li>
+          <li>There is no delete. Archive hides a type and keeps its values; Restore brings both back. Names may repeat.</li>
+          <li>A unit change does not convert values; the inline warning on edit says so. The unit is free text shown after the number ("12,500.00 $", "120 h").</li>
+          <li><b>Show archived</b> is off when the page opens and is not remembered: leave and return and it is off again. Turn it on (above) to see archived rows and Restore.</li>
+          <li><b>Org Admin</b> sees the add row and the Edit, Archive and Restore actions. <b>User</b> and <b>Read Only</b> see the same list with those controls gone (try the switch above).</li>
+          <li>Source: <code>contracts/metric-types.md</code>, decision "Metric types are an organization table" (2026-10-16).</li>
+        </ul></div>
+    </div>
+  </section>
+
+  <!-- ============ 2: Value section ============ -->
+  <section id="v2" class="hide" data-nav="nv-board" aria-labelledby="h1-2">
+    <div class="topbar"><span class="crumb">Boards / Continuous Improvement / <b>CI-19</b></span></div>
+    <div class="work">
+      <div class="pghead"><div><h1 id="h1-2">Idea drawer, Value section</h1><p>One projected and one realized number for each active metric type, saved as a whole set.</p></div></div>
+      <div class="stage">
+
+        <div class="frame"><h2><span class="fl">A</span>Active board: CI-19 in Implementation, editing</h2>
+          <div class="fb">
+            <aside class="drawer static" aria-label="Idea drawer, CI-19">
+              <div class="dhead"><div><div class="eb">CI-19 &middot; CONTINUOUS IMPROVEMENT</div><h2>Cut onboarding time</h2></div><span class="sp"></span><button class="btn ghost sm">Close</button></div>
+              <div class="dbody">
+                <div class="sect"><div class="sechd"><h3>Value</h3><span class="mono-s">saved together</span></div>
+                  <div class="vt">
+                    <div class="vt-row hd"><span>Metric</span><span style="text-align:right">Projected</span><span style="text-align:right">Realized</span></div>
+                    <div class="vt-row"><div class="nm">Hours saved<small>unit: h</small></div>
+                      <div class="field"><span class="in num"><input aria-label="Hours saved projected" value="1200.00"><span class="u">h</span></span></div>
+                      <div class="field"><span class="in num"><input aria-label="Hours saved realized" placeholder="Not yet"><span class="u">h</span></span></div></div>
+                    <div class="vt-row"><div class="nm">Cost savings<small>unit: $</small></div>
+                      <div class="field"><span class="in num"><input aria-label="Cost savings projected" value="48000.00"><span class="u">$</span></span></div>
+                      <div class="field"><span class="in num"><input aria-label="Cost savings realized" value="-1250.00"><span class="u">$</span></span><span class="helper">Negatives are allowed, for example an overspend.</span></div></div>
+                    <div class="vt-row"><div class="nm">Defects avoided<small>no unit</small></div>
+                      <div class="field"><span class="in num err"><input aria-label="Defects avoided projected" aria-invalid="true" aria-describedby="e-p" value="12.345"></span><span class="errtxt" id="e-p" role="alert">Projected must have at most 2 decimal places.</span></div>
+                      <div class="field"><span class="in num"><input aria-label="Defects avoided realized" placeholder="Not yet"></span></div></div>
+                    <div class="vt-row arch"><div class="nm">Cycle time<small>unit: days &middot; <span class="chip mute" style="padding:0 7px">Archived type</span></small></div>
+                      <div class="ro-n">14.00 days</div><div class="ro-n">11.50 days</div>
+                      <div class="mt-sub note" style="grid-column:1/-1">Read only. This type is archived, so it is not counted in Outcome totals. An Org Admin can restore it in Settings, Metric types.</div></div>
+                    <div class="vt-foot"><button class="btn pri sm">Save values</button><button class="btn sm ghost">Discard</button><span class="sp"></span><span class="note">Clearing both numbers on a row removes that value.</span></div>
+                  </div>
+                  <div class="note" style="margin-top:6px">Realized is not gated. It is usually entered once the idea is Completed.</div>
+                </div>
+              </div>
+            </aside>
+            <div class="notes"><h3>Validation, as the server words it</h3>
+              <ul>
+                <li><code>Projected must have at most 2 decimal places.</code> shown under the field, <code>aria-invalid</code> on it, one alert per field.</li>
+                <li><code>Projected must be between -999999999999999.99 and 999999999999999.99.</code> likewise for Realized.</li>
+                <li><code>Metric type not found.</code> is not reachable from this form: archived types are read only and unknown types cannot be picked.</li>
+                <li>Nothing is saved while any row is invalid (whole-set write).</li>
+              </ul></div>
+          </div>
+        </div>
+
+        <div class="frame"><h2><span class="fl">B</span>Archived board: CI-04 in Completed, Value stays editable</h2>
+          <div class="fb">
+            <aside class="drawer static" aria-label="Idea drawer, CI-04 on an archived board">
+              <div class="dhead"><div><div class="eb">CI-04 &middot; CONTINUOUS IMPROVEMENT 2025 <span class="chip mute" style="margin-left:6px">Archived board</span></div><h2>Retire paper timesheets</h2></div><span class="sp"></span><button class="btn ghost sm">Close</button></div>
+              <div class="dbody">
+                <div class="banner"><span class="ic">i</span><span><b>This board is archived.</b> The idea is read only, except its Value. Realized values often arrive after the work is done.</span></div>
+                <div class="field"><span class="lbl2">Title</span><span class="in ro">Retire paper timesheets</span></div>
+                <div class="field"><span class="lbl2">Description</span><span class="in ro ta">Move all depot timesheets to the scanner app and stop printing the weekly packs.</span></div>
+                <div class="sect"><div class="sechd"><h3>Value</h3></div>
+                  <div class="note" style="margin-bottom:6px">This board is archived. Values can still be updated.</div>
+                  <div class="vt">
+                    <div class="vt-row hd"><span>Metric</span><span style="text-align:right">Projected</span><span class="rz">Realized &mdash; enter now</span></div>
+                    <div class="vt-row"><div class="nm">Hours saved<small>unit: h</small></div>
+                      <div class="field"><span class="in num"><input aria-label="Hours saved projected" value="410.00"><span class="u">h</span></span></div>
+                      <div class="field"><span class="in num"><input aria-label="Hours saved realized" value="388.50"><span class="u">h</span></span></div></div>
+                    <div class="vt-row"><div class="nm">Cost savings<small>unit: $</small></div>
+                      <div class="field"><span class="in num"><input aria-label="Cost savings projected" value="25000.00"><span class="u">$</span></span></div>
+                      <div class="field"><span class="in num"><input aria-label="Cost savings realized" value="22000.00"><span class="u">$</span></span></div></div>
+                    <div class="vt-foot"><button class="btn pri sm">Save values</button><span class="sp"></span><span class="note">Allowed on an archived board, by decision. The tint blocks nothing.</span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="dfoot"><span class="note">No other field here can be saved.</span></div>
+            </aside>
+          </div>
+        </div>
+        <div class="frame"><h2><span class="fl">C</span>Direct App Admin, no View As: Value is replaced</h2>
+          <div class="fb">
+            <aside class="drawer static" aria-label="Idea drawer, CI-19, App Admin">
+              <div class="dhead"><div><div class="eb">CI-19 &middot; CONTINUOUS IMPROVEMENT</div><h2>Cut onboarding time</h2></div><span class="sp"></span><button class="btn ghost sm">Close</button></div>
+              <div class="dbody">
+                <div class="banner"><span class="ic">i</span><span>Values are visible through View As.</span></div>
+              </div>
+            </aside>
+            <div class="note">The detail returns <code>metrics: []</code> for a direct Site Admin (shown as App Admin), so the whole Value section, heading included, is replaced by this line. View As an organization member shows the table in A.</div>
+          </div>
+        </div>
+      </div>
+      <div class="notes"><h3>Notes</h3>
+        <ul>
+          <li>Rows are the active metric types, in created order, plus any archived type that already holds a value (flagged, read only).</li>
+          <li>Numbers: two decimal places, negatives allowed. The unit always follows the number ("12,500.00 $", "120 h"). The thousands separator is the browser locale's, so a German browser shows 12.500,00.</li>
+          <li>Inside a field the value is unformatted (25000.00); display formatting with separators applies outside the field, in read-only cells, the Outcome and the list.</li>
+          <li>Entry: the field takes digits, one ".", and a leading "-"; typed commas are stripped as you type, so "1,200" and "1200" both end as 1200.</li>
+          <li>When the idea is in a final lane (frame B, Completed) the Realized column header is tinted and reads "Realized &mdash; enter now". Frame A is in a lane that is not final, so its header is plain. Nothing is blocked either way.</li>
+          <li>Source: <code>contracts/metric-types.md</code> (<code>PUT /ideas/{ideaId}/metrics</code>), decision 4 of "Board References follow-ups" (2026-10-16).</li>
+        </ul></div>
+    </div>
+  </section>
+
+  <!-- ============ 3: Task drawer ============ -->
+  <section id="v3" class="hide" data-nav="nv-board" aria-labelledby="h1-3">
+    <div class="topbar"><span class="crumb">Boards / Implementation / <b>IMPL-48</b></span></div>
+    <div class="work">
+      <div class="pghead"><div><h1 id="h1-3">Task drawer</h1><p>A card with a parent, opened on the Implementation board. Four editable fields, then sprint and blockers.</p></div></div>
+      <div class="stage">
+        <aside class="drawer static" aria-label="Task drawer, IMPL-48">
+          <div class="dhead"><div><div class="eb">IMPL-48 &middot; IMPLEMENTATION</div><h2>Train regional managers</h2></div><span class="sp"></span><button class="btn ghost sm">Close</button></div>
+          <div class="dbody">
+            <div class="chiprow"><span class="plink" title="Open the parent idea">&#8627; CI-19 &middot; Cut onboarding time</span></div>
+            <div class="field"><span class="lbl2" id="t-st-l">Status</span><span class="sel" role="combobox" aria-labelledby="t-st-l" aria-expanded="false"><span class="chip pri"><span class="dot" style="background:var(--pri)"></span>In Progress</span><span>&#9662;</span></span><span class="helper">The same status select as an idea. Dragging on the board still works.</span></div>
+            <div class="field"><label class="lbl2" for="t-title">Title</label><span class="in"><input id="t-title" value="Train regional managers"></span></div>
+            <div class="field"><label class="lbl2" for="t-desc">Description</label><span class="in ta"><textarea id="t-desc" rows="3">Two half-day sessions per region using the new SOP and the updated LMS courses.</textarea></span></div>
+            <div class="field"><span class="lbl2">Assignees</span><div class="tagrow"><span class="avs"><span class="av a2">LE</span><span class="av a1">DK</span></span><span style="font-size:13px">Lee Evans, Dana Kim</span><button class="btn sm ghost">+ Assign</button></div></div>
+            <div class="field"><span class="lbl2">Tags</span><div class="tagrow"><span class="tag" style="--tc:#5CC8E0">training</span><span class="tag" style="--tc:#F5A524">regional</span><button class="btn sm ghost">+ Tag</button></div></div>
+            <div class="sect"><div class="sechd"><h3>Sprint</h3><span class="mono-s">saves on its own</span></div>
+              <div class="chiprow"><span class="pchip">Sprint 14 &middot; Oct 12 &ndash; Oct 25</span><button class="btn sm ghost">Change sprint</button></div></div>
+            <div class="sect"><div class="sechd"><h3>Blockers</h3><span class="mono-s">saves on its own</span></div>
+              <div class="chiprow"><span class="lock">&#128274; blocked by Draft the onboarding SOP &middot; IMPL-45 &middot; Complete</span><button class="btn sm ghost">Edit blockers</button></div>
+              <div class="note" style="margin-top:4px">The task can leave the first lane once every blocker is final.</div></div>
+            <div class="note">Comments and activity follow the same drawer pattern as an idea.</div>
+          </div>
+          <div class="dfoot"><button class="btn pri">Save changes</button><button class="btn">Cancel</button><span class="sp"></span><span class="mono-s">Author or Org Admin</span></div>
+        </aside>
+
+        <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+          <div class="absent"><b style="color:var(--ink2)">Not on a task, so not drawn:</b> <s>Value</s>, <s>Priority</s>, <s>Problem</s>, <s>Proposed solutions</s>, <s>Impact rationale</s>, <s>Idea type</s>, <s>Business impact</s>, <s>Effort</s>, <s>Outcome</s>. These are <code>null</code> on a task and are never sent.</div>
+          <div class="notes"><h3>Notes</h3>
+            <ul>
+              <li>Editable through <code>PUT /ideas/{ideaId}</code>: title, description, assignees, tags. Title is required.</li>
+              <li>Status changes in the drawer (the select) as well as by dragging. It honours the board's <code>allowUserStatusUpdate</code> exactly as an idea does: where a User may not change status, the select is read only. Sprint and blockers use their own routes and save immediately, which is why they sit under a plain label rather than inside the form.</li>
+              <li>The task has its own key (IMPL-48), from the board's key prefix.</li>
+              <li>The parent chip shows the key (CI-19) and opens the parent. It matches the <code>&#8627;</code> chip on the card.</li>
+              <li>There is no Value section, so <code>422 taskCannotCarryMetrics</code> cannot be reached from the UI.</li>
+              <li>Not the author or an Org Admin: the same drawer with every field, status included, read only (below). Read Only never edits.</li>
+            </ul></div>
+          <div class="frame"><h2><span class="fl">R</span>Same drawer, someone who may not edit</h2>
+            <div class="fb">
+              <div class="field"><span class="lbl2">Status</span><span class="in ro">In Progress</span></div>
+              <div class="field"><span class="lbl2">Title</span><span class="in ro">Train regional managers</span></div>
+              <div class="note">Fields read only. Sprint and blockers follow the existing sprint and dependency rules.</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4: Reference-lane lock ============ -->
+  <section id="v4" class="hide" data-nav="nv-board" aria-labelledby="h1-4">
+    <div class="topbar"><span class="crumb">Boards / <b>Continuous Improvement</b></span></div>
+    <div class="work">
+      <div class="pghead"><div><h1 id="h1-4">Reference-lane lock</h1><p>A card in a reference lane stays until its tasks are final. It cannot be dragged, removed from the board or pulled. An Org Admin can override from a menu or a picker row, never by drag.</p></div></div>
+
+      <div class="lanes" aria-label="Continuous Improvement board">
+        <div class="lane"><div class="lanehd"><span>Pending</span><small>4</small></div></div>
+        <div class="lane"><div class="lanehd"><span>Scoping</span><small>3</small></div></div>
+        <div class="lane"><div class="lanehd"><span>Approved</span><small>2</small></div></div>
+        <div class="lane" style="min-height:240px"><div class="lanehd"><span>Implementation</span> <small>3</small></div>
+          <div class="kcard locked selected nodrag" aria-describedby="tip-lock"><h4>Cut onboarding time</h4>
+            <div class="prog"><i style="width:25%;background:var(--ok)"></i></div>
+            <span class="waiting">&#128274; Waiting on 3 tasks</span>
+            <div class="krow"><span class="kmeta">CI-19 &middot; 1 of 4 tasks</span><span class="avs"><span class="av a1">DK</span></span></div></div>
+          <div class="tip" id="tip-lock" role="tooltip">Waiting on 3 tasks</div>
+          <div class="kcard"><h4>Buddy program</h4><div class="prog"><i style="width:100%;background:var(--ok)"></i></div><div class="krow"><span class="kmeta">CI-21 &middot; 5 of 5 tasks</span><span class="avs"><span class="av a3">SM</span></span></div></div></div>
+        <div class="lane" style="min-height:240px"><div class="lanehd"><span>Completed</span><small>9</small></div></div>
+      </div>
+      <div class="note">Pressing the locked card shows the tooltip and nothing lifts. No lane highlights as a drop target and a drop on another lane is not accepted, so there is no snap back.</div>
+
+      <div class="stage">
+        <div class="frame"><h2><span class="fl">A</span>A User: what they see</h2>
+          <div class="fb">
+            <div class="tip" role="tooltip">Waiting on 3 tasks</div>
+            <div class="note">The tooltip is on the card (above) and on every disabled control below. For a status change made in the drawer, the server's refusal appears as a toast:</div>
+            <div class="toast" role="alert"><span style="font-weight:700;color:var(--hot-t)">&#9888;</span><div><b>Can't move CI-19</b>'Cut onboarding time' is waiting on 3 open tasks, so it cannot be moved.</div></div>
+            <div class="note">The select snaps back to Implementation. The same toast text answers a request that slips past the up-front block.</div>
+          </div></div>
+
+        <div class="frame"><h2><span class="fl">B</span>Org Admin: Move anyway</h2>
+          <div class="fb">
+            <div class="menu" role="menu" aria-label="Card actions, CI-19, Org Admin">
+              <div role="menuitem">Open</div><div role="menuitem">Copy link</div><hr>
+              <div class="on" role="menuitem">Move anyway&hellip; <small>Org Admin</small></div>
+            </div>
+            <div class="note">Reached from the card menu, the separate override item in C, or the picker row in D. Never by dragging.</div>
+            <div class="dlg" role="dialog" aria-labelledby="dl-t">
+              <div class="dlg-h"><h3 id="dl-t">Move past 3 open tasks?</h3></div>
+              <div class="dlg-b">
+                <span>'Cut onboarding time' (CI-19) is waiting on these tasks. Moving it to <b>Completed</b> leaves them open on the Implementation board.</span>
+                <ul class="opentasks">
+                  <li><span>Train regional managers</span><span class="st p"><span class="dot" style="background:var(--pri)"></span>In Progress</span></li>
+                  <li><span>Measure time to first shipment</span><span class="st a"><span class="dot" style="background:var(--muted)"></span>Pending</span></li>
+                  <li><span>Update LMS courses</span><span class="st a"><span class="dot" style="background:var(--muted)"></span>Pending</span></li>
+                </ul>
+                <div class="field"><label class="lbl2" for="reason">Reason (required)</label>
+                  <span class="in ta"><textarea id="reason" rows="2" placeholder="Why is this idea moving before its tasks are done?" aria-required="true"></textarea></span>
+                  <span class="helper">Move anyway stays disabled until a reason is typed.</span></div>
+                <div class="note">Recorded in the audit log as <code>IdeaMovedPastOpenTasks</code> with your reason and the open task count. The tasks are not changed.</div>
+              </div>
+              <div class="dlg-f"><button class="btn">Cancel</button><button class="btn dng" id="go-anyway" disabled>Move anyway</button></div>
+            </div>
+          </div></div>
+
+        <div class="frame"><h2><span class="fl">C</span>Remove from board is disabled</h2>
+          <div class="fb">
+            <div class="lbl">User</div>
+            <div class="menu" role="menu" aria-label="Row actions, CI-19, User">
+              <div role="menuitem">Open</div><div role="menuitem">Copy link</div><hr>
+              <div class="on" role="menuitem" aria-disabled="true" title="Waiting on 3 tasks">&#128274; Remove from board <small>Waiting on 3 tasks</small></div>
+            </div>
+            <div class="lbl">Org Admin</div>
+            <div class="menu" role="menu" aria-label="Row actions, CI-19, Org Admin">
+              <div role="menuitem">Open</div><div role="menuitem">Copy link</div><hr>
+              <div class="on" role="menuitem" aria-disabled="true">&#128274; Remove from board <small>Waiting on 3 tasks</small></div>
+              <div role="menuitem"><span class="lnk">Remove anyway&hellip;</span></div>
+            </div>
+            <div class="note">The Org Admin's disabled item has a separate override item right under it. "Remove anyway&hellip;" opens the dialog in B, titled "Remove from board anyway?" with the button "Remove anyway", the same required reason and the same audit event. If a request still gets through (a race), the server answers <code>'Cut onboarding time' is waiting on 3 open tasks, so it cannot be removed from the board.</code></div>
+          </div></div>
+
+        <div class="frame"><h2><span class="fl">D</span>Pull picker: the card's row is disabled</h2>
+          <div class="fb">
+            <div class="lbl">User</div>
+            <ul class="pk">
+              <li class="dis" aria-disabled="true"><span class="cb"></span><span><b>Cut onboarding time</b><span class="meta"><span>by Dana Kim</span><span class="chip mute">Continuous Improvement</span><span class="waiting">&#128274; Waiting on 3 tasks</span></span></span></li>
+            </ul>
+            <div class="lbl">Org Admin</div>
+            <ul class="pk">
+              <li class="dis" aria-disabled="true"><span class="cb"></span><span><b>Cut onboarding time</b><span class="meta"><span>by Dana Kim</span><span class="chip mute">Continuous Improvement</span><span class="waiting">&#128274; Waiting on 3 tasks</span></span><button class="btn sm go">Pull anyway&hellip;</button></span></li>
+            </ul>
+            <div class="note">The row cannot be ticked. "Pull anyway&hellip;" opens the override dialog with the required reason. A stale request that names the card is still refused with <code>'Cut onboarding time' is waiting on 3 open tasks, so it cannot be pulled.</code>, and an Org Admin may override with <code>forceReason</code>.</div>
+          </div></div>
+
+        <div class="frame"><h2><span class="fl">E</span>All tasks complete: the completion prompt</h2>
+          <div class="fb">
+            <div class="suggest"><span class="mono" style="color:var(--suggest)">&#10022;</span><div><b>All 4 tasks are complete.</b> Move to Completed?</div><span class="sp"></span><button class="btn sm pri">Move</button><button class="btn sm ghost">Not yet</button></div>
+            <div class="kcard" style="max-width:320px"><h4>Cut onboarding time</h4><div class="prog"><i style="width:100%;background:var(--ok)"></i></div><div class="krow"><span class="kmeta">CI-19 &middot; 4 of 4 tasks</span><span class="avs"><span class="av a1">DK</span></span></div></div>
+            <div class="note">The lock is gone once the last task is final, but nothing moves by itself: a person confirms. The prompt sits at the top of the drawer, as in the earlier comp.</div>
+          </div></div>
+
+        <div class="frame"><h2><span class="fl">F</span>The activity entry for an override</h2>
+          <div class="fb">
+            <ul class="act" aria-label="Activity, CI-19">
+              <li><span class="av a1">DK</span><div><b>Dana Kim</b> Moved past 3 open tasks &mdash; Client signed off; the remaining tasks are post-launch cleanup.<small>Oct 16, 2026 &middot; 14:05</small></div></li>
+              <li><span class="av a3">SM</span><div><b>Sam Mora</b> moved this to Implementation.<small>Oct 14, 2026 &middot; 09:12</small></div></li>
+            </ul>
+            <div class="note">The reason is shown verbatim after "Moved past N open tasks &mdash;", with who did it and when.</div>
+          </div></div>
+      </div>
+
+      <div class="notes"><h3>Notes</h3>
+        <ul>
+          <li>The lock shows only when a reference-lane card has open tasks. A card with no tasks shows "0 tasks" and moves freely.</li>
+          <li>Every control is disabled up front with the same text, "Waiting on N tasks": the card (not draggable), Remove from board, and the card's row in another board's picker. The server still refuses with <code>422 parentHasOpenTasks</code> for a request that gets past them.</li>
+          <li>Only an Org Admin is offered the override (<code>forceReason</code>; anyone else sending it gets <code>403</code>), from the card menu, a separate override item next to the disabled one, or the picker row. Never by drag.</li>
+          <li>The dialog's confirm button is disabled until a reason is typed, so an empty reason can never be sent and no error text is needed.</li>
+          <li>"Waiting on N tasks" counts tasks not in a final lane; the progress bar is tasks done of total.</li>
+          <li>Source: decisions "A reference lane locks its card until its tasks are final" and "Board References UI" (2026-10-16); <code>contracts/ideas.md</code>, <code>contracts/boards.md</code> "Pulling items".</li>
+        </ul></div>
+    </div>
+  </section>
+
+  <!-- ============ 5: Statuses lane row ============ -->
+  <section id="v5" class="hide" data-nav="nv-board" aria-labelledby="h1-5">
+    <div class="topbar"><span class="crumb">Boards / Continuous Improvement / <b>Statuses</b></span></div>
+    <div class="work">
+      <div class="pghead"><div><h1 id="h1-5">Statuses</h1><p>The lanes of Continuous Improvement. A status can hand work to another board and take the card back when that work is done.</p></div><button class="btn pri">+ Add status</button></div>
+      <div class="bl" style="margin-top:0">
+        <div class="cfgrow hd"><span></span><span>Status</span><span>Kind</span><span>Board reference</span><span></span></div>
+        <div class="cfgrow"><span class="grip">&#8942;&#8942;</span><b>Pending</b><span>Start</span><span class="note">&mdash;</span><span></span></div>
+        <div class="cfgrow"><span class="grip">&#8942;&#8942;</span><b>Scoping</b><span>Active</span><span class="note">&mdash;</span><span></span></div>
+        <div class="cfgrow" style="background:var(--rowh)"><span class="grip">&#8942;&#8942;</span><b>Approved for Implementation</b><span>Active</span>
+          <span class="sel"><span>None</span><span>&#9662;</span></span><span></span></div>
+        <div class="cfgrow" style="background:var(--rowh)"><span class="grip">&#8942;&#8942;</span><span><b>Implementation</b> <span class="refpill">&#8627; board reference</span></span><span>Active</span>
+          <span class="sel"><span>Implementation board</span><span>&#9662;</span></span><span style="text-align:right"><button class="btn sm ghost">Remove</button></span></div>
+        <div style="padding:0 16px 14px 50px;background:var(--rowh);display:flex;flex-direction:column;gap:4px">
+          <button class="sw" id="auto" role="switch" aria-checked="true" aria-describedby="h-on"><i></i><span>Auto-create one task on entry</span></button>
+          <span class="helper" id="h-on">A card entering this lane gets one task named after it, in the first lane of <b>Implementation board</b> (Pending). The card then waits on it.</span>
+          <span class="helper">Cards already in this lane are not changed.</span>
+          <span class="helper">Applies however the card arrives: a status move, a pull from another board, or a bulk lane move when a board is edited. If creating the task fails, the whole change is rolled back.</span>
+        </div>
+        <div class="cfgrow"><span class="grip">&#8942;&#8942;</span><b>Completed</b><span>Final</span><span class="note">&mdash;</span><span></span></div>
+      </div>
+      <div class="panel" style="padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+        <div class="lbl">What this does</div>
+        <div style="font-size:13px;color:var(--ink2)">With the switch <b>on</b>, one task is created for every card that enters <b>Implementation</b>, and the card waits on it. With it <b>off</b>, people add tasks by hand, as many as they need, and the card still waits on whatever exists.</div>
+        <div class="note">Removing the board reference turns the switch off in the same step, with an inline note (below). If a save carried the switch on with no reference, the server would answer <code>422 autoCreateTaskRequiresReference</code>; this form never lets you get there.</div>
+        <div class="note">3 ideas currently sit in Implementation, so this reference can't be changed to another board while they do.</div>
+      </div>
+      <div class="frame"><h2><span class="fl">A</span>After Remove on the reference, with the switch on: the switch goes away</h2>
+        <div class="fb">
+          <div class="bl" style="margin:0">
+            <div class="cfgrow" style="background:var(--rowh)"><span class="grip">&#8942;&#8942;</span><span><b>Implementation</b></span><span>Active</span>
+              <span class="sel"><span>None</span><span>&#9662;</span></span><span></span></div>
+            <div style="padding:0 16px 14px 50px;background:var(--rowh);display:flex;flex-direction:column;gap:4px">
+              <span class="helper" id="h-auto-off" role="status">Auto-create turned off &mdash; it needs a referenced board.</span>
+            </div>
+          </div>
+          <div class="note">The reference and the switch change together and save in one step; there is no second save and no confirmation. The switch is shown only on lanes that reference a board, so it is gone here; putting a reference back does not turn it on again.</div>
+        </div></div>
+    </div>
+  </section>
+
+  <!-- ============ 6: Pull picker ============ -->
+  <section id="v6" class="hide" data-nav="nv-board" aria-labelledby="h1-6">
+    <div class="topbar"><span class="crumb">Boards / Client Onboarding / <b>Edit board</b></span></div>
+    <div class="work">
+      <div class="pghead"><div><h1 id="h1-6">Pull picker: tasks are not listed</h1><p>Editing the Client Onboarding board, step "Add existing items", tab "Ideas on other boards". The picker says nothing about tasks unless a search would have matched them.</p></div></div>
+      <div class="stage">
+        <aside class="drawer static" aria-label="Edit board, search matched tasks">
+          <div class="dhead"><div><div class="eb">EDIT BOARD</div><h2>Client Onboarding</h2></div><span class="sp"></span><button class="btn ghost sm">Close</button></div>
+          <div class="dbody">
+            <div class="sect"><div class="sechd"><h3>Add existing items</h3><span class="mono-s">1 selected</span></div>
+              <div class="tabs2" role="tablist"><span>Unassigned ideas<span class="n">3</span></span><span class="on" role="tab" aria-selected="true">Ideas on other boards<span class="n">4</span></span><span>Backlog Issues<span class="n">2</span></span></div>
+              <div class="field" style="margin-top:8px"><span class="in"><input aria-label="Search" value="train"></span></div>
+              <p class="note" style="margin:8px 0" role="status">2 tasks are hidden &mdash; they stay on their parent's board.</p>
+              <ul class="pk">
+                <li><span class="cb on">&#10003;</span><span><b>Train-the-trainer playbook</b><span class="meta"><span>by Lena Park</span><span class="chip mute">Continuous Improvement</span><span class="chip mute"><span class="dot" style="background:var(--muted)"></span>Scoping</span></span></span></li>
+              </ul>
+            </div>
+          </div>
+          <div class="dfoot"><button class="btn pri">Save changes</button><button class="btn">Cancel</button></div>
+        </aside>
+        <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+          <div class="frame"><h2><span class="fl">B</span>No search, or a search that matches no task: no line</h2>
+            <div class="fb">
+              <div class="tabs2" role="tablist"><span>Unassigned ideas<span class="n">3</span></span><span class="on" role="tab" aria-selected="true">Ideas on other boards<span class="n">4</span></span><span>Backlog Issues<span class="n">2</span></span></div>
+              <ul class="pk">
+                <li><span class="cb on">&#10003;</span><span><b>Dock scheduling app</b><span class="meta"><span>by Lena Park</span><span class="chip mute">Continuous Improvement</span><span class="chip mute"><span class="dot" style="background:var(--muted)"></span>Pending</span></span></span></li>
+                <li><span class="cb"></span><span><b>Replace badge printer</b><span class="meta"><span>by Dana Kim</span><span class="chip mute">Implementation</span><span class="chip pri"><span class="dot" style="background:var(--pri)"></span>In Progress</span><span class="mono-s">standalone</span></span></span></li>
+                <li><span class="cb"></span><span><b>Barcode every returned item</b><span class="meta"><span>by Marta Cruz</span><span class="chip mute">Continuous Improvement</span><span class="chip mute"><span class="dot" style="background:var(--muted)"></span>Scoping</span></span></span></li>
+              </ul>
+              <div class="note">There is no standing note about tasks. A person who never searches for one never reads about them.</div>
+            </div></div>
+          <div class="frame"><h2><span class="fl">&#8856;</span>What "train" would have matched (not drawn in the real picker)</h2>
+            <div class="fb">
+              <ul class="pk" style="opacity:.75">
+                <li><span class="cb" style="border-style:dashed"></span><span><s>Train regional managers</s> <span class="plink">&#8627; CI-19</span><span class="meta"><span>Implementation</span><span>a task</span></span></span></li>
+                <li><span class="cb" style="border-style:dashed"></span><span><s>Train facilitators</s> <span class="plink">&#8627; CI-21</span><span class="meta"><span>Implementation</span><span>a task</span></span></span></li>
+              </ul>
+              <div class="note">Shown only to explain the count in A. If a stale request still names a task, the server refuses: <code>'{title}' is a task, so it cannot be pulled. Tasks stay on their parent's reference board.</code> It cannot be overridden, even by an Org Admin.</div>
+            </div></div>
+          <div class="notes"><h3>Notes</h3>
+            <ul>
+              <li>The line appears only when the search would have matched one or more tasks, and reads "N tasks are hidden &mdash; they stay on their parent's board." with the real count. It sits under the tabs, on the tab where those tasks would have appeared.</li>
+              <li>Counts on the tabs exclude tasks. Standalone cards on a work board (no parent, drawn: Replace badge printer) are listed as usual.</li>
+              <li>The picker read needs a hidden-task count for the current search: a contract addition for a later backend slice, recorded in the 2026-10-16 decision.</li>
+              <li>Source: decision 2, "Board References follow-ups", and "Board References UI" (2026-10-16).</li>
+            </ul></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 7: Outcome page ============ -->
+  <section id="v7" class="hide" data-nav="nv-out" aria-labelledby="h1-7">
+    <div class="topbar"><span class="crumb">Outcomes / <b>Faster onboarding</b></span></div>
+    <div class="work">
+      <div class="pghead"><div><h1 id="h1-7">Faster onboarding</h1><p>New hires reach their first shipment in under 10 days.</p></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn">Edit outcome</button><button class="btn pri">+ Add idea</button></div></div>
+
+      <dl class="sprhd" style="margin:0">
+        <div><dt>STATE</dt><dd><span class="chip pri"><span class="dot" style="background:var(--pri)"></span>In its window</span></dd></div>
+        <div><dt>WINDOW</dt><dd>Oct 1 &ndash; Dec 31</dd></div>
+        <div><dt>SPRINTS</dt><dd>Oct 12 &ndash; Nov 22</dd></div>
+        <div><dt>TODAY</dt><dd>Oct 16</dd></div>
+      </dl>
+      <div class="note">State is worked out in the browser from today's date and the Outcome's window: Planned, In its window, or Past its window. The sprint span is the earliest sprint start and latest sprint end among the tasks; it reads "No sprint dates" when no task has a sprint.</div>
+
+      <dl class="spr" style="margin:0">
+        <div><dt>IDEAS</dt><dd>9 <span style="font:500 13px var(--body);color:var(--muted)">3 done</span></dd><small>done = in a final lane</small></div>
+        <div><dt>TASKS</dt><dd>24 <span style="font:500 13px var(--body);color:var(--muted)">of 31 done</span></dd><small>cards under these ideas</small></div>
+        <div><dt>SPRINT SPAN</dt><dd>6 <span style="font:500 13px var(--body);color:var(--muted)">weeks</span></dd><small>Oct 12 &ndash; Nov 22</small></div>
+        <div><dt>METRIC TYPES</dt><dd>3 <span style="font:500 13px var(--body);color:var(--muted)">active</span></dd><small>archived types are left out</small></div>
+      </dl>
+
+      <div class="sect"><div class="sechd"><h3>Value</h3><span class="mono-s">projected vs realized, over ideas only</span></div>
+        <div class="mtot">
+          <div class="mcard"><span class="nm">Hours saved</span>
+            <div class="big">1,450.50 <small>h realized</small></div>
+            <div class="meter" role="img" aria-label="Realized 1,450.50 h of 3,100.00 h projected, 47 percent"><i style="width:47%"></i></div>
+            <div class="mrow"><span>Projected <b>3,100.00 h</b></span><span>47% realized</span></div>
+            <div class="brk" role="table" aria-label="Hours saved by idea"><div class="brk-row hd" role="row"><span>Idea</span><span class="n">Projected</span><span class="n">Realized</span></div><div class="brk-row"><span><span class="id">CI-19</span><span class="ti">Cut onboarding time</span></span><span class="n">1,200.00 h</span><span class="n"><span class="pend">Not yet</span></span></div><div class="brk-row"><span><span class="id">CI-21</span><span class="ti">Buddy program</span></span><span class="n">1,500.00 h</span><span class="n">1,450.50 h</span></div><div class="brk-row"><span><span class="id">CI-24</span><span class="ti">Welcome kit</span></span><span class="n">400.00 h</span><span class="n"><span class="pend">Not yet</span></span></div></div></div>
+          <div class="mcard"><span class="nm">Cost savings</span>
+            <div class="big">61,200.00 <small>$ realized</small></div>
+            <div class="meter" role="img" aria-label="Realized 61,200.00 $ of 124,000.00 $ projected, 49 percent"><i style="width:49%"></i></div>
+            <div class="mrow"><span>Projected <b>124,000.00 $</b></span><span>49% realized</span></div>
+            <div class="brk" role="table" aria-label="Cost savings by idea"><div class="brk-row hd" role="row"><span>Idea</span><span class="n">Projected</span><span class="n">Realized</span></div><div class="brk-row"><span><span class="id">CI-19</span><span class="ti">Cut onboarding time</span></span><span class="n">48,000.00 $</span><span class="n">-1,250.00 $</span></div><div class="brk-row"><span><span class="id">CI-21</span><span class="ti">Buddy program</span></span><span class="n">60,000.00 $</span><span class="n">62,450.00 $</span></div><div class="brk-row"><span><span class="id">CI-24</span><span class="ti">Welcome kit</span></span><span class="n">16,000.00 $</span><span class="n"><span class="pend">Not yet</span></span></div></div></div>
+          <div class="mcard"><span class="nm">Defects avoided</span>
+            <div class="big">Realized: not yet</div>
+            <div class="meter" role="img" aria-label="Nothing realized yet of 40.00 projected"></div>
+            <div class="mrow"><span>Projected <b>40.00</b></span><span class="note">realized adds in once entered</span></div>
+            <div class="brk" role="table" aria-label="Defects avoided by idea"><div class="brk-row hd" role="row"><span>Idea</span><span class="n">Projected</span><span class="n">Realized</span></div><div class="brk-row"><span><span class="id">CI-19</span><span class="ti">Cut onboarding time</span></span><span class="n">25.00</span><span class="n"><span class="pend">Not yet</span></span></div><div class="brk-row"><span><span class="id">CI-24</span><span class="ti">Welcome kit</span></span><span class="n">15.00</span><span class="n"><span class="pend">Not yet</span></span></div></div></div>
+        </div>
+        <div class="note" style="margin-top:6px">Totals add the values on this Outcome's ideas only. Tasks carry no values, so nothing is counted twice. A total with no numbers entered is empty, not zero. Under each card the ideas that make up the totals are listed with their own values.</div>
+      </div>
+
+      <div class="frame"><h2><span class="fl">A</span>The meter at its edges</h2>
+        <div class="fb">
+          <div class="mtot">
+            <div class="mcard"><span class="nm">Training hours</span>
+            <div class="big">1,180.00 <small>h realized</small></div>
+            <div class="meter over" role="img" aria-label="Realized 1,180.00 h of 1,000.00 h projected, over projected, meter full"><i style="width:100%"></i></div>
+            <div class="mrow"><span>Projected <b>1,000.00 h</b></span><span><span class="chip warn">over projected</span> 118% realized</span></div>
+            <div class="brk" role="table" aria-label="Training hours by idea"><div class="brk-row hd" role="row"><span>Idea</span><span class="n">Projected</span><span class="n">Realized</span></div><div class="brk-row"><span><span class="id">CI-19</span><span class="ti">Cut onboarding time</span></span><span class="n">600.00 h</span><span class="n">700.00 h</span></div><div class="brk-row"><span><span class="id">CI-21</span><span class="ti">Buddy program</span></span><span class="n">400.00 h</span><span class="n">480.00 h</span></div></div></div>
+            <div class="mcard"><span class="nm">Cost avoidance</span>
+            <div class="big neg">-1,250.00 <small>$ realized</small></div>
+            <div class="meter" role="img" aria-label="Realized -1,250.00 $ of 8,000.00 $ projected, below zero, meter empty"></div>
+            <div class="mrow"><span>Projected <b>8,000.00 $</b></span><span>realized is below zero</span></div>
+            <div class="brk" role="table" aria-label="Cost avoidance by idea"><div class="brk-row hd" role="row"><span>Idea</span><span class="n">Projected</span><span class="n">Realized</span></div><div class="brk-row"><span><span class="id">CI-19</span><span class="ti">Cut onboarding time</span></span><span class="n">5,000.00 $</span><span class="n">-1,250.00 $</span></div><div class="brk-row"><span><span class="id">CI-24</span><span class="ti">Welcome kit</span></span><span class="n">3,000.00 $</span><span class="n"><span class="pend">Not yet</span></span></div></div></div>
+          </div>
+          <div class="note">Realized above projected: the meter stops at 100% and an "over projected" marker (the red end cap and the chip) says so; the percentage stays exact. A negative total: the meter is empty and the number is in the danger colour. Both are also written out in words, so colour is never the only signal.</div>
+        </div></div>
+
+      <div class="oc">
+        <div class="oc-h"><h2>Ideas in this outcome</h2><span class="sp" style="flex:1"></span><div class="seg"><span class="on">All</span><span>Implementing</span><span>Completed</span></div></div>
+        <div class="ir hd"><span>Key</span><span>Idea</span><span>Status</span><span>Tasks</span></div>
+        <div class="ir"><span class="id">CI-19</span><span style="font-weight:600">Cut onboarding time</span><span><span class="chip pri"><span class="dot" style="background:var(--pri)"></span>Implementation</span></span><span class="bar"><span class="t"><i style="width:25%;background:var(--ok)"></i></span><small>1/4</small></span></div>
+        <div class="ir"><span class="id">CI-21</span><span style="font-weight:600">Buddy program</span><span><span class="chip ok"><span class="dot" style="background:var(--ok)"></span>Completed</span></span><span class="bar"><span class="t"><i style="width:100%;background:var(--ok)"></i></span><small>5/5</small></span></div>
+        <div class="ir"><span class="id">CI-24</span><span style="font-weight:600">Welcome kit for new hires</span><span><span class="chip mute"><span class="dot" style="background:var(--muted)"></span>Approved</span></span><span class="bar"><span class="t"></span><small>0/0</small></span></div>
+      </div>
+
+      <div class="frame"><h2><span class="fl">B</span>An Outcome with no values yet: "Warehouse safety &middot; Q1"</h2>
+        <div class="fb">
+          <dl class="sprhd" style="margin:0">
+            <div><dt>STATE</dt><dd><span class="chip mute"><span class="dot" style="background:var(--muted)"></span>Planned</span></dd></div>
+            <div><dt>WINDOW</dt><dd>Jan 5 &ndash; Mar 31</dd></div>
+            <div><dt>SPRINTS</dt><dd>No sprint dates</dd></div>
+            <div><dt>IDEAS</dt><dd>2 &middot; 0 done</dd></div>
+          </dl>
+          <div class="empty"><b>No values yet</b><span>Projected and realized values entered on this Outcome's ideas add up here, one card per metric type.</span><span class="lbl">Org Admin</span><a class="btn sm" href="#s1" onclick="go(1);return false">Set up metric types</a><span class="lbl">Everyone else</span><span class="note">No values yet &mdash; add them on each idea.</span></div>
+        </div></div>
+
+      <div class="notes"><h3>Notes</h3>
+        <ul>
+          <li>One card per active metric type that has a value under this Outcome, in created order: the realized total large, the meter is realized against projected, both numbers with the unit after them. A type with only projected values still gets a card, with an empty meter and "Realized: not yet".</li>
+          <li>The meter is clipped at 100% with an "over projected" marker when realized passes projected; a negative total shows an empty meter and the number in the danger colour; the numbers are always exact.</li>
+          <li><b>Per-idea breakdown (needs a contract addition).</b> The cards list each idea's key, title, projected and realized under the type's totals. <code>metricTotals</code> returns totals only today, so the per-idea values need a contract addition in a later backend slice; this comp draws the decided design, and the contract shape is not set here.</li>
+          <li>Source: <code>contracts/outcomes.md</code> and <code>contracts/metric-types.md</code> "Outcome totals"; State is not returned by the API.</li>
+        </ul></div>
+    </div>
+  </section>
+
+  </main>
+</div>
+<script>
+var N=7,NAV={};
+function go(n){
+  for(var i=1;i<=N;i++){
+    var s=document.getElementById('v'+i),b=document.getElementById('u'+i);
+    s.classList.toggle('hide',i!==n);
+    b.setAttribute('aria-pressed',String(i===n));
+    document.querySelectorAll('.idx li button')[i-1].setAttribute('aria-current',String(i===n));
+  }
+  document.querySelectorAll('.side .nav').forEach(function(x){x.removeAttribute('aria-current')});
+  var nv=document.getElementById(document.getElementById('v'+n).dataset.nav);if(nv)nv.setAttribute('aria-current','page');
+  try{history.replaceState(null,'','#s'+n)}catch(e){}
+  window.scrollTo(0,0);
+}
+(function(){
+  var sel=document.getElementById('theme');
+  function setTheme(k){document.documentElement.dataset.protoTheme=k;sel.value=k;try{localStorage.setItem('collega-theme',k)}catch(e){}}
+  var saved='graphite';try{saved=localStorage.getItem('collega-theme')||'graphite'}catch(e){}
+  setTheme(['graphite','terrazzo','portico','sera','lagoon'].indexOf(saved)>=0?saved:'graphite');
+  sel.onchange=function(){setTheme(sel.value)};
+  var m=/^#s([1-7])$/.exec(location.hash);go(m?+m[1]:1);
+  // screen 1: role and includeArchived
+  var w=document.getElementById('mt-work'),ro=document.getElementById('mt-ro');
+  document.querySelectorAll('.seg [data-r]').forEach(function(s){
+    function pick(){
+      document.querySelectorAll('.seg [data-r]').forEach(function(x){x.classList.toggle('on',x===s)});
+      var admin=s.dataset.r==='admin';
+      w.dataset.role=s.dataset.r;
+      w.querySelectorAll('.adm').forEach(function(x){x.style.display=admin?'':'none'});
+      w.querySelectorAll('.mt-row.edit').forEach(function(x){x.style.display=admin?'':'none'});
+      ro.style.display=admin?'none':'flex';
+    }
+    s.onclick=pick;s.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();pick()}};
+  });
+  w.querySelectorAll('[data-arch]').forEach(function(x){x.style.display='none'});
+  var inc=document.getElementById('inc');
+  inc.onclick=function(){
+    var on=inc.getAttribute('aria-checked')!=='true';
+    inc.setAttribute('aria-checked',String(on));
+    w.querySelectorAll('[data-arch]').forEach(function(x){x.style.display=on?'':'none'});
+    document.getElementById('inc-url').textContent='GET /metric-types'+(on?'?includeArchived=true':'');
+  };
+  // screen 4: the reason gates Move anyway
+  var r=document.getElementById('reason'),g=document.getElementById('go-anyway');
+  r.addEventListener('input',function(){g.disabled=r.value.trim().length===0});
+  // screen 5: auto-create switch
+  var a=document.getElementById('auto');a.onclick=function(){a.setAttribute('aria-checked',String(a.getAttribute('aria-checked')!=='true'))};
+})();
+</script>
+</body>
+</html>

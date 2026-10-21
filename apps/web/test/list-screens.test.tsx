@@ -55,14 +55,15 @@ const as = (role: Role, children: ReactNode) => (
 )
 
 const BOARD_REFS: BoardRef[] = [
-  { id: 'open', name: 'Assembly', isArchived: false },
-  { id: 'shut', name: 'Old plant', isArchived: true },
+  { id: 'open', name: 'Assembly', isArchived: false, hasReferenceLane: false },
+  { id: 'shut', name: 'Old plant', isArchived: true, hasReferenceLane: false },
 ]
 
 function ideaOn(boardId: string, title: string): Idea {
   return {
     id: `idea-${boardId}`,
     boardId,
+    authorUserId: null,
     statusId: 's1',
     statusName: 'New',
     title,
@@ -76,6 +77,10 @@ function ideaOn(boardId: string, title: string): Idea {
     upvotes: 0,
     hasUpvoted: false,
     effort: null,
+    itemKey: null,
+    parentIdeaId: null,
+    taskCounts: null,
+    blockedBy: [],
   }
 }
 
@@ -149,6 +154,9 @@ function boardOverview(name: string, overrides: Partial<BoardOverview> = {}): Bo
     userStatusMoves: false,
     isArchived: false,
     archivedOn: null,
+    keyPrefix: null,
+    sprintsEnabled: false,
+    ideaFeaturesEnabled: true,
     ...overrides,
   }
 }

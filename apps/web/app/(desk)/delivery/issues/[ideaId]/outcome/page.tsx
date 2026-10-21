@@ -4,8 +4,9 @@ import { notFound } from 'next/navigation'
 import { InertForm } from '@/components/common/inert-form'
 import { CloseOnEscape } from '@/components/inspector/close-on-escape'
 import { Topbar } from '@/components/nav/topbar'
-import { getIssue, getIssuesForOutcome, getOutcome, getOutcomes } from '@/lib/data'
+import { getIssue, getOutcomeRoadmap } from '@/lib/data'
 import { EFFORT_COLORS } from '@/lib/display'
+import { monthsOf } from '@/lib/outcome-display'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser, deliveryAdminDenial } from '@/lib/session'
 
@@ -29,10 +30,9 @@ export async function generateMetadata({ params }: { params: Promise<{ ideaId: s
  * Docked as a third column rather than a drawer, like the idea inspector: nothing is covered,
  * nothing needs `inert`, there is no focus trap, and Escape closes.
  *
- * **The list is empty and the only choice is "No outcome"**, because Outcomes are Slice 2 and have
- * no table, service or route — `lib/data/delivery.ts` says why the readers answer empty rather than
- * offering three invented themes. The screen is left standing rather than deleted: its shape is the
- * decided one, and the form was already inert.
+ * **Read-only for now.** The choices are the organization's real Outcomes, and the issue's current
+ * one is found in the roadmap read (the delivery card carries no `outcomeId`). Saving needs
+ * `PUT /ideas/{id}/outcomes`, which this screen does not call yet, so the form stays inert.
  */
 export default async function SetOutcomePage({ params }: { params: Promise<{ ideaId: string }> }) {
   // Identity first, and in this segment — `lib/server/current-user.ts` says why every one.
@@ -42,17 +42,8 @@ export default async function SetOutcomePage({ params }: { params: Promise<{ ide
   const issue = await getIssue(ideaId)
   if (!issue) notFound()
 
-  const [current, outcomes] = await Promise.all([getOutcome(issue.outcomeId), getOutcomes()])
-  // The per-outcome counts beside each radio; read together so they are one round trip apiece
-  // rather than one after another.
-  const counts = new Map(
-    await Promise.all(
-      outcomes.map(
-        async (outcome) =>
-          [outcome.id, (await getIssuesForOutcome(outcome.id)).length] as [string, number],
-      ),
-    ),
-  )
+  const { outcomes } = await getOutcomeRoadmap()
+  const current = outcomes.find((outcome) => outcome.ideas.some((idea) => idea.id === issue.id))
   const backHref = `/delivery/issues/${issue.id}`
 
   // Grouping an issue is administrator-only (SPEC/20-feature-issues-and-delivery.md): a Site Admin
@@ -105,7 +96,7 @@ export default async function SetOutcomePage({ params }: { params: Promise<{ ide
 
           <div className="flex flex-col gap-1 border-b px-6 py-4">
             <div className="flex items-start gap-3">
-              <span className="font-mono text-[0.68rem] uppercase tracking-wider text-muted-foreground">
+              <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
                 Set outcome
               </span>
               <Link
@@ -129,7 +120,7 @@ export default async function SetOutcomePage({ params }: { params: Promise<{ ide
               <legend className="sr-only">Outcome</legend>
               <div className="flex flex-col rounded-md border">
                 {outcomes.map((outcome) => {
-                  const count = counts.get(outcome.id) ?? 0
+                  const count = outcome.ideaCount
                   return (
                     <div
                       key={outcome.id}
@@ -153,7 +144,8 @@ export default async function SetOutcomePage({ params }: { params: Promise<{ ide
                           {outcome.name}
                         </span>
                         <span className="mt-0.5 block text-xs text-muted-foreground">
-                          {count} {count === 1 ? 'issue' : 'issues'} &middot; {outcome.quarter}
+                          {count} {count === 1 ? 'item' : 'items'} &middot;{' '}
+                          {monthsOf(outcome.targetStartDate, outcome.targetEndDate)}
                         </span>
                       </label>
                     </div>
@@ -196,10 +188,8 @@ export default async function SetOutcomePage({ params }: { params: Promise<{ ide
               </Button>
             )}
             <p className="m-0 text-xs italic text-muted-foreground">
-              There is nothing to pick yet: outcomes have no table, no service and no route, so
-              saving would need{' '}
-              <code className="font-mono">PUT /ideas/&#123;id&#125;/outcomes</code> and the outcome
-              CRUD behind it &mdash; Slice 2 of Issues and Delivery.
+              Choosing an outcome is not wired up yet: saving would call{' '}
+              <code className="font-mono">PUT /ideas/&#123;id&#125;/outcomes</code>.
             </p>
           </InertForm>
         </aside>

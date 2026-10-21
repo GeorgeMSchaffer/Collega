@@ -4,16 +4,28 @@ import type {
   IdeaAssistTurn,
   IdeaDraft,
   IdeaDraftModel,
+  IdeaDraftV2,
 } from '@collega/application/ai'
 import {
+  clampDraftV2,
   EMPTY_IDEA_DRAFT,
+  finalizeTurnV2,
   IDEA_ASSIST_ASSISTANT_ROLE,
   IDEA_ASSIST_USER_ROLE,
   IdeaDraftModelError,
+  prepareTurnInputV2,
   sanitizeDraft,
 } from '@collega/application/ai'
 import type { EvalCase } from './corpus.ts'
-import type { AbortReason, TrialRecord, TrialStatus, TurnRecord } from './run-file.ts'
+import type {
+  AbortReason,
+  RunFixture,
+  TrialRecord,
+  TrialStatus,
+  TurnRecord,
+  V2Draft,
+} from './run-file.ts'
+import { applyChanges, wireDraft, wireFieldName } from './v2-draft.ts'
 
 export interface Ceilings {
   readonly maxCalls: number
@@ -30,9 +42,13 @@ export interface TrialSpec {
   readonly evalCase: EvalCase
   readonly repeat: number
   readonly context: IdeaAssistContext
+  /** The fixture's derived ids; a v2 trial needs them to put the case's draft on the wire. */
+  readonly catalog?: Pick<RunFixture, 'ideaTypes' | 'businessImpacts' | 'fields'>
 }
 
 export interface LoopOptions {
+  /** Which turn to drive. v2 runs the service's pipeline around the adapter's `continueTurnV2`. */
+  readonly assistant?: 'v1' | 'v2'
   readonly model: IdeaDraftModel
   readonly ceilings: Ceilings
   readonly concurrency: number
@@ -122,6 +138,12 @@ export async function runTrials(
     const turns: TurnRecord[] = []
     let transcript: IdeaAssistTurn[] = []
     let draft: IdeaDraft = EMPTY_IDEA_DRAFT
+    // v2 state: the client's draft and the previous turn's `nextStep`, as the form would send them.
+    const v2 = options.assistant === 'v2'
+    const catalog = spec.catalog ?? { ideaTypes: [], businessImpacts: [] }
+    let draftV2: V2Draft = wireDraft(evalCase.draft, catalog)
+    const lockedFields = evalCase.lockedFields.map((name) => wireFieldName(name, catalog))
+    let step: string | null = null
     let status: TrialStatus = 'completed'
     let release = await awaitWarmCache(evalCase.fixture)
 
@@ -137,6 +159,64 @@ export async function runTrials(
         ]
         const started = options.stopwatch.elapsedMs()
         try {
+          if (v2) {
+            // What IdeaAssistService.continueTurnV2 does around the model call (rule 8): the
+            // request is normalised against the catalog, and the response is finalized, so the
+            // scorer reads what the service would return.
+            const input = prepareTurnInputV2(
+              context,
+              clampDraftV2(draftV2 as IdeaDraftV2),
+              lockedFields,
+              step,
+            )
+            const response = await options.model.continueTurnV2(context, request, input)
+            const latencyMs = options.stopwatch.elapsedMs() - started
+            const usage: AiTokenUsage = {
+              inputTokens: response.inputTokens,
+              outputTokens: response.outputTokens,
+              cacheReadInputTokens: response.cacheReadInputTokens,
+              cacheCreationInputTokens: response.cacheCreationInputTokens,
+            }
+            addUsage(usage)
+            const rawChanges =
+              typeof response.changes === 'object' && response.changes !== null
+                ? (response.changes as Partial<V2Draft>)
+                : null
+            const finalized = response.inScope ? finalizeTurnV2(response, context, input) : null
+            const changes = (finalized?.changes ?? {}) as Partial<V2Draft>
+            const nextStep = finalized?.nextStep ?? input.step ?? 'problem'
+            const draftAfter = applyChanges(draftV2, changes)
+            turns.push({
+              index,
+              transcript: request,
+              draftSent: null,
+              inScope: response.inScope,
+              nextQuestion: response.nextQuestion,
+              rawDraft: null,
+              sanitizedDraft: null,
+              usage,
+              latencyMs,
+              error: null,
+              v2: {
+                draftSent: draftV2,
+                lockedFields,
+                rawChanges,
+                changes,
+                draft: draftAfter,
+                suggestions: finalized?.suggestions ?? null,
+                nextStep,
+              },
+            })
+            if (response.inScope) {
+              transcript = [
+                ...request,
+                { role: IDEA_ASSIST_ASSISTANT_ROLE, text: response.nextQuestion },
+              ]
+              draftV2 = draftAfter
+              step = nextStep
+            }
+            continue
+          }
           const response = await options.model.continueTurn(context, request, draft)
           const latencyMs = options.stopwatch.elapsedMs() - started
           const usage: AiTokenUsage = {
@@ -175,7 +255,7 @@ export async function runTrials(
           turns.push({
             index,
             transcript: request,
-            draftSent: draft,
+            draftSent: v2 ? null : draft,
             inScope: null,
             nextQuestion: null,
             rawDraft: null,

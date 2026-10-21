@@ -45,7 +45,8 @@ database per run, so the role in `DATABASE_URL` needs `CREATEDB`. The local Dock
 - Write SQL as the house style has it: UPPERCASE keywords, lowercase identifiers, no `SELECT *`,
   meaningful aliases.
 - Seeding is composed (`compose.ts`) from per-area modules and must stay deterministic and
-  idempotent — no clock, no randomness.
+  idempotent: ids and content come from names, never from randomness; dates may be relative to the
+  run day.
 
 There is deliberately no root entrypoint: `package.json` exports only `./*`, so
 `@collega/infrastructure` on its own does not resolve. Import the feature subpath.

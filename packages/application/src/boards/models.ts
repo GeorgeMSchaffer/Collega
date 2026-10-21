@@ -1,9 +1,18 @@
 // Command and result shapes for board configuration (SPEC/30-Contracts.md "Board Contracts").
 
+import type { IdeaPhase, Priority } from '@collega/domain/enums'
+import type { Page } from '../common/index.js'
+
 /** A requested swimlane: which status, and its position. Order is normalized densely 0..n-1. */
 export type SwimlaneInput = {
   readonly statusId: string
   readonly order: number
+  /** Absent is `false`. A board may have several final lanes. */
+  readonly isFinal?: boolean | undefined
+  /** The board whose tasks this lane hands work to; absent or `null` is none. */
+  readonly referencesBoardId?: string | null | undefined
+  /** Absent is `false`. Requires `referencesBoardId`. */
+  readonly autoCreateTask?: boolean | undefined
 }
 
 export type CreateBoardCommand = {
@@ -12,6 +21,15 @@ export type CreateBoardCommand = {
   readonly description?: string | null | undefined
   readonly allowUserStatusUpdate: boolean
   readonly swimlanes: readonly SwimlaneInput[]
+  /** Absent or blank: no key prefix. */
+  readonly keyPrefix?: string | null | undefined
+  readonly sprintsEnabled?: boolean | undefined
+  readonly ideaFeaturesEnabled?: boolean | undefined
+  /** Ideas and backlog Issues to pull onto the new board (SPEC/20-feature-board-pull-in.md). At
+   * most 100; absent or empty pulls nothing. */
+  readonly pullItemIds?: readonly string[] | undefined
+  /** An Org Admin's reason for pulling items past open tasks in a reference lane. */
+  readonly forceReason?: string | null | undefined
 }
 
 export type UpdateBoardCommand = {
@@ -20,9 +38,17 @@ export type UpdateBoardCommand = {
   readonly description?: string | null | undefined
   readonly allowUserStatusUpdate: boolean
   readonly swimlanes: readonly SwimlaneInput[]
+  /** Absent leaves the stored value unchanged; `null` or blank clears the prefix. */
+  readonly keyPrefix?: string | null | undefined
+  readonly sprintsEnabled?: boolean | undefined
+  readonly ideaFeaturesEnabled?: boolean | undefined
   /** Where the ideas in each removed lane go. Absent is none; required per removed lane that
    * still holds live ideas (SPEC/contracts/boards.md `PUT /boards/{boardId}`). */
   readonly ideaMoves?: readonly IdeaMoveInput[] | undefined
+  /** As on create; applied after `ideaMoves`, against the lanes the save leaves. */
+  readonly pullItemIds?: readonly string[] | undefined
+  /** As on create. */
+  readonly forceReason?: string | null | undefined
 }
 
 /** One removed lane's ideas, and the lane that stays on the board they move to. */
@@ -58,6 +84,15 @@ export type BoardListItem = {
   /** Archived in place of deletion (2026-09-27); listed only with `includeArchived`. */
   readonly isArchived: boolean
   readonly archivedAtUtc: Date | null
+  readonly keyPrefix: string | null
+  readonly sprintsEnabled: boolean
+  readonly ideaFeaturesEnabled: boolean
+  /** The number the next item key takes; `1` means no key has been issued on the board. */
+  readonly nextItemNumber: number
+  /** The board has at least one lane with `referencesBoardId` set. */
+  readonly hasReferenceLane: boolean
+  /** Non-archived boards with a lane referencing this board; empty when none. */
+  readonly referencedByBoardIds: readonly string[]
 }
 
 export type BoardListQuery = {
@@ -92,6 +127,9 @@ export type SwimlaneDetail = {
   readonly statusColor: string
   readonly order: number
   readonly statusIsDeleted: boolean
+  readonly isFinal: boolean
+  readonly referencesBoardId: string | null
+  readonly autoCreateTask: boolean
 }
 
 /** Shape matches `GET /boards/{id}` detail. */
@@ -105,6 +143,23 @@ export type BoardDetail = {
   /** The same two fields the list item carries, so a board's own page can open read-only. */
   readonly isArchived: boolean
   readonly archivedAtUtc: Date | null
+  readonly keyPrefix: string | null
+  readonly sprintsEnabled: boolean
+  readonly ideaFeaturesEnabled: boolean
+  /** As on the list item: `1` means no key has been issued. */
+  readonly nextItemNumber: number
+}
+
+/** A `PUT /boards/{boardId}` result: the detail, plus what was pulled when the save pulled. */
+export type UpdateBoardResult = BoardDetail & {
+  readonly pulledItems?: readonly PulledItem[]
+}
+
+/** Where a pulled item came from and the status it now has. */
+export type PulledItem = {
+  readonly ideaId: string
+  readonly fromBoardId: string | null
+  readonly statusId: string
 }
 
 /** Shape matches the `POST /organizations/{id}/boards` create response. */
@@ -112,4 +167,40 @@ export type CreateBoardResult = {
   readonly boardId: string
   readonly name: string
   readonly swimlanes: readonly SwimlaneDetail[]
+  /** Present only when the request pulled items. */
+  readonly pulledItems?: readonly PulledItem[]
+}
+
+/** Which population `GET /organizations/{id}/boards/pull-candidates` lists. */
+export type PullCandidateSource = 'unassigned' | 'boards' | 'backlog'
+
+export type PullCandidatesQuery = {
+  readonly source: string | null
+  /** The board being created or edited, whose own ideas are never offered. */
+  readonly excludeBoardId: string | null
+  readonly search: string | null
+  readonly tags: readonly string[]
+  readonly authorUserId: string | null
+  readonly page: number | null
+  readonly pageSize: number | null
+}
+
+/** A page of the picker, with how many tasks the same filters matched and withheld. */
+export type PullCandidatePage = Page<PullCandidate> & { readonly hiddenTaskCount: number }
+
+/** One card in the pull picker. */
+export type PullCandidate = {
+  readonly ideaId: string
+  readonly title: string
+  readonly authorUserId: string
+  readonly authorName: string
+  readonly boardId: string | null
+  readonly boardName: string | null
+  readonly statusId: string
+  readonly statusName: string
+  readonly phase: IdeaPhase
+  readonly tags: readonly string[]
+  readonly priority: Priority | null
+  readonly upvoteCount: number
+  readonly isMine: boolean
 }

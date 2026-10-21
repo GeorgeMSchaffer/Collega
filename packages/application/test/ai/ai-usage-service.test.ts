@@ -46,7 +46,11 @@ function harness(options: {
   const added: AiUsageRecord[] = []
   const updated: AiUsageRecord[] = []
   const countCalls: CountCall[] = []
-  const outcomeCalls: { organizationId: string; actorUserId: string | null; boardId: string }[] = []
+  const outcomeCalls: {
+    organizationId: string
+    actorUserId: string | null
+    boardId: string | null
+  }[] = []
   const usageWindows: { from: Date; to: Date; organizationId: string | null | undefined }[] = []
 
   const usageRepository: AiUsageRepository = {

@@ -36,7 +36,7 @@
 // anything tested. Flagged here rather than fixed there - `packages/application/**` is out of this
 // slice's globs.
 
-import { ConflictError } from '@collega/application/common'
+import { ConflictError, ValidationError } from '@collega/application/common'
 import { Prisma } from '../generated/prisma/index.js'
 
 /** One hand-written partial unique index this file knows how to translate. */
@@ -59,6 +59,16 @@ const KNOWN_CONSTRAINTS: readonly KnownConstraint[] = [
     message: 'A fieldset with this name already exists in this organization.',
   },
   {
+    modelName: 'boards',
+    columns: ['organization_id', 'key_prefix'],
+    message: 'keyPrefixTaken',
+  },
+  {
+    modelName: 'ideas',
+    columns: ['board_id', 'item_number'],
+    message: 'itemNumberTaken',
+  },
+  {
     modelName: 'impersonation_sessions',
     columns: ['real_user_id'],
     message: 'This user already has an open View As session.',
@@ -69,6 +79,33 @@ const KNOWN_CONSTRAINTS: readonly KnownConstraint[] = [
     message: 'Another prompt version is already active.',
   },
 ]
+
+/** The text `PrismaBoardRepository.reassignIdeas`'s closing statement fails on, then the title in hex. */
+export const PULL_UNAVAILABLE_MARKER = 'pull-unavailable:'
+
+/** The same for `PrismaBoardRepository.verifyIdeasMoved`: an `ideaMoves` idea that did not land. */
+export const MOVE_UNAVAILABLE_MARKER = 'move-unavailable:'
+
+/**
+ * The item named by a failed landing check (`reassignIdeas` or `verifyIdeasMoved` in
+ * `PrismaBoardRepository`) carrying `marker`, or `null` for any other error. That check casts
+ * `<marker><hex of the title>` to an integer, which Postgres refuses
+ * with SQLSTATE 22P02 and Prisma reports as P2010. The SQLSTATE and the hex marker are both
+ * independent of the server's message language, and the hex keeps quotes, newlines and any length of
+ * title from needing to be parsed out of prose.
+ */
+function markedTitle(error: unknown, marker: string): string | null {
+  if (
+    !(error instanceof Prisma.PrismaClientKnownRequestError) ||
+    error.code !== 'P2010' ||
+    error.meta?.code !== '22P02'
+  ) {
+    return null
+  }
+  const message = typeof error.meta.message === 'string' ? error.meta.message : ''
+  const hex = new RegExp(`${marker}([0-9a-f]*)`).exec(message)?.[1]
+  return hex === undefined ? null : Buffer.from(hex, 'hex').toString('utf8')
+}
 
 function targetColumns(target: unknown): readonly string[] {
   if (Array.isArray(target)) {
@@ -96,6 +133,19 @@ function sameColumnSet(a: readonly string[], b: readonly string[]): boolean {
  * original Prisma error is kept as `.cause` so a caller that wants the underlying detail still can.
  */
 export function translateWriteError(error: unknown): unknown {
+  const unavailableItem = markedTitle(error, PULL_UNAVAILABLE_MARKER)
+  if (unavailableItem !== null) {
+    return new ValidationError('One or more fields are invalid.', {
+      pullItemIds: [`'${unavailableItem}' is no longer available.`],
+    })
+  }
+  const unmovedIdea = markedTitle(error, MOVE_UNAVAILABLE_MARKER)
+  if (unmovedIdea !== null) {
+    return new ValidationError('One or more fields are invalid.', {
+      ideaMoves: [`'${unmovedIdea}' is no longer in that lane.`],
+    })
+  }
+
   if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
     return error
   }

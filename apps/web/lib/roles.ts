@@ -11,6 +11,7 @@
  * disappearing.
  */
 
+import { waitingText } from './board-work'
 import type { Role } from './types'
 
 export type { Role } from './types'
@@ -42,6 +43,17 @@ export function boardCreateDenial(role: Role): string | null {
   if (role === 'OrgAdmin' || role === 'User') return null
   if (role === 'SiteAdmin') return 'Act as a member'
   return 'Read-only account'
+}
+
+/**
+ * Whether the role may add an Issue directly from the Backlog: a User or an Org Admin, the roles of
+ * `POST /organizations/{id}/issues` (`20-feature-issues-and-delivery.md` "Backlog: add and edit").
+ * A Site Admin is sent to View As, where the role is the target's.
+ */
+export function issueAddDenial(role: Role): string | null {
+  if (role === 'SiteAdmin') return 'Act as a member to add issues. Use View As.'
+  if (role === 'ReadOnly') return 'Read Only members cannot add issues.'
+  return null
 }
 
 /**
@@ -127,4 +139,36 @@ export function mayWorkOnIssue(
   if (role === 'OrgAdmin') return true
   if (role !== 'User') return false
   return issue.authorUserId === userId || issue.assignees.some((person) => person.id === userId)
+}
+
+/**
+ * What Remove from board offers the reader on an idea (`20-feature-board-pull-in.md` rules 5 and 6):
+ * `null` when the control is not shown at all - the idea is already in the pool, or the reader is
+ * neither its author nor an Org Admin - and otherwise `{ reason }`, `null` when it works. An Issue
+ * and an archived board a User may not touch show it disabled, with the reason beside it.
+ */
+export function detachOffer(
+  role: Role,
+  userId: string,
+  idea: {
+    boardId: string | null
+    authorUserId: string | null
+    /** Only on an idea in a lane that references a board; its open tasks hold it there. */
+    taskCounts?: { total: number; done: number } | null
+  },
+  context: { isIssue: boolean; boardArchived: boolean },
+): { reason: string | null; override?: boolean } | null {
+  if (idea.boardId === null) return null
+  const admin = role === 'OrgAdmin'
+  const author = role === 'User' && idea.authorUserId !== null && idea.authorUserId === userId
+  if (!admin && !author) return null
+  if (context.isIssue) return { reason: 'Issues return to Discovery first.' }
+  // The reference-lane lock (`parentHasOpenTasks`): disabled with the lock's text, and an Org
+  // Admin is offered the override beside it (comp T screen 4, frame C).
+  const open = idea.taskCounts ? Math.max(0, idea.taskCounts.total - idea.taskCounts.done) : 0
+  if (open > 0) return { reason: waitingText(open), ...(admin ? { override: true } : {}) }
+  if (context.boardArchived && !admin) {
+    return { reason: 'Only an Org Admin can remove ideas from an archived board.' }
+  }
+  return { reason: null }
 }

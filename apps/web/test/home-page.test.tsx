@@ -5,6 +5,7 @@ import type { Role } from '@/lib/roles'
 import type {
   BoardOverview,
   HomeIdea,
+  InboxItem,
   OrganizationHome,
   PlatformHome,
   PlatformOrganization,
@@ -12,7 +13,7 @@ import type {
 import { actAs } from './support/acting-role'
 
 /**
- * What Home draws for each role (slices 132 and 155, `app/(desk)/home/page.tsx`, comp R
+ * What Home draws for each role (slices 132 and 155, `app/(desk)/page.tsx`, comp R
  * `comp-r-home-dashboard.html`): the greeting's counts, the tiles with the untracked figures saying
  * so, the attention queue, Assigned to me, the boards, the current sprint and Most upvoted, their
  * empty states, the no-boards state and who may act on it, and the Site Admin's roll-up.
@@ -20,6 +21,7 @@ import { actAs } from './support/acting-role'
  * The readers are the boundary and are replaced by what `home-reads.test.ts` proves they return.
  */
 const readers = vi.hoisted(() => ({
+  getInbox: vi.fn(),
   getOrganizationHome: vi.fn(),
   getPlatformHome: vi.fn(),
 }))
@@ -65,6 +67,9 @@ function board(over: Partial<BoardOverview> = {}): BoardOverview {
     userStatusMoves: true,
     isArchived: false,
     archivedOn: null,
+    keyPrefix: null,
+    sprintsEnabled: false,
+    ideaFeaturesEnabled: true,
     ...over,
   }
 }
@@ -189,7 +194,7 @@ async function resolveAsync(node: ReactNode): Promise<ReactNode> {
 
 async function renderHome(role: Role) {
   actAs(role)
-  const { default: HomePage } = await import('@/app/(desk)/home/page')
+  const { default: HomePage } = await import('@/app/(desk)/page')
   const tree = await resolveAsync(await HomePage())
   render(<div>{tree}</div>)
 }
@@ -199,10 +204,14 @@ const panel = (name: string) => screen.getByRole('region', { name })
 beforeEach(() => {
   readers.getOrganizationHome.mockReset().mockResolvedValue(orgHome())
   readers.getPlatformHome.mockReset().mockResolvedValue(platformHome)
+  readers.getInbox
+    .mockReset()
+    .mockResolvedValue({ items: [], page: 1, pageSize: 50, totalCount: 0 })
   localStorage.clear()
 })
 
-describe('Home for a member of an organization', () => {
+// These render the whole Home page and exceed the 5 s default when the full suite loads every core.
+describe('Home for a member of an organization', { timeout: 30_000 }, () => {
   it.each([['OrgAdmin'], ['User']] as const)(
     'greets %s with what needs them and the organization counts',
     async (role) => {
@@ -354,7 +363,7 @@ describe('Home for a member of an organization', () => {
   })
 })
 
-describe('Home for an organization with no boards', () => {
+describe('Home for an organization with no boards', { timeout: 30_000 }, () => {
   beforeEach(() => {
     readers.getOrganizationHome.mockResolvedValue(
       orgHome({ counts: { ideas: 0, boards: 0, issues: 0 }, boards: [] }),
@@ -387,7 +396,7 @@ describe('Home for an organization with no boards', () => {
   })
 })
 
-describe('Home for an App Admin', () => {
+describe('Home for an App Admin', { timeout: 30_000 }, () => {
   it('shows the platform roll-up and never reads an organization’s home', async () => {
     await renderHome('SiteAdmin')
     expect(readers.getOrganizationHome).not.toHaveBeenCalled()
@@ -446,5 +455,120 @@ describe('Home for an App Admin', () => {
       '/settings/organizations/new',
     )
     expect(screen.queryByRole('list')).toBeNull()
+  })
+})
+
+function notification(over: Partial<InboxItem> = {}): InboxItem {
+  return {
+    id: 'n-1',
+    eventType: 'CommentAdded',
+    ideaId: 'i-1',
+    ideaTitle: 'Slow conveyor',
+    actor: { name: 'Ada Lovelace', initials: 'AL' },
+    statusName: null,
+    boardName: 'Assembly',
+    occurredAtUtc: '2026-09-29T10:00:00Z',
+    when: '2h ago',
+    unread: true,
+    ...over,
+  }
+}
+
+describe('Home’s Unread notifications panel', () => {
+  it('asks the inbox for the first five unread notifications', async () => {
+    await renderHome('User')
+    expect(readers.getInbox).toHaveBeenCalledTimes(1)
+    expect(readers.getInbox).toHaveBeenCalledWith({ page: 1, pageSize: 5, unreadOnly: true })
+  })
+
+  it('lists the rows the inbox answers and takes the count from totalCount, not the page length', async () => {
+    readers.getInbox.mockResolvedValue({
+      items: [
+        notification(),
+        notification({ id: 'n-2', ideaId: 'i-2', ideaTitle: 'Guard rails', boardName: null }),
+      ],
+      page: 1,
+      pageSize: 5,
+      totalCount: 12,
+    })
+    await renderHome('User')
+    const unread = panel('Unread notifications 12')
+    const link = within(unread).getByRole('link', { name: 'Slow conveyor' })
+    expect(link.getAttribute('href')).toBe('/inbox?idea=i-1')
+    expect(within(unread).getByRole('link', { name: 'Guard rails' })).toBeTruthy()
+    expect(unread.textContent).toContain('Ada Lovelace commented on this')
+    expect(within(unread).getByRole('link', { name: 'Open inbox' }).getAttribute('href')).toBe(
+      '/inbox',
+    )
+  })
+
+  it('says everything is read when there are no unread notifications', async () => {
+    await renderHome('OrgAdmin')
+    const unread = panel('Unread notifications 0')
+    expect(unread.textContent).toContain('You’re all caught up.')
+    expect(within(unread).queryByRole('link', { name: 'Open inbox' })).toBeNull()
+  })
+
+  it('gives a Site Admin no inbox, so no panel is filled and the inbox is not read', async () => {
+    await renderHome('SiteAdmin')
+    expect(readers.getInbox).not.toHaveBeenCalled()
+    expect(screen.queryByRole('region', { name: /Unread notifications/ })).toBeNull()
+  })
+})
+
+// Slice 156: every Home number opens a list showing the set it counts. The readers prove which
+// hrefs are built (`home-reads.test.ts`); these prove the page draws each one as a link to it.
+describe('Home’s links and counts', { timeout: 30_000 }, () => {
+  const hrefOf = (name: string, inside: HTMLElement) =>
+    within(inside).getByRole('link', { name }).getAttribute('href')
+
+  it('links the greeting’s ideas to the live boards’ list, its boards to /boards and its issues to every Issue', async () => {
+    readers.getOrganizationHome.mockResolvedValue(
+      orgHome({ ideasHref: '/ideas?phase=Ideas&board=b1&board=b2' }),
+    )
+    await renderHome('User')
+    const greeting = screen.getByRole('heading', { level: 1 }).parentElement as HTMLElement
+    expect(hrefOf('41 ideas', greeting)).toBe('/ideas?phase=Ideas&board=b1&board=b2')
+    expect(hrefOf('2 boards', greeting)).toBe('/boards')
+    expect(hrefOf('1 delivery issue', greeting)).toBe('/ideas?phase=Issues')
+  })
+
+  it('draws no link for zero delivery issues', async () => {
+    readers.getOrganizationHome.mockResolvedValue(
+      orgHome({ counts: { ideas: 3, boards: 1, issues: 0 } }),
+    )
+    await renderHome('User')
+    expect(screen.queryByRole('link', { name: '0 delivery issues' })).toBeNull()
+    expect(document.body.textContent).toContain('0 delivery issues')
+  })
+
+  it('links You created to the ideas the reader created', async () => {
+    await renderHome('OrgAdmin')
+    expect(hrefOf('5', screen.getByRole('list', { name: 'Your numbers' }))).toBe(
+      '/ideas?scope=created',
+    )
+  })
+
+  it('links Needs your attention and Assigned to me “View all” to the lists they count', async () => {
+    await renderHome('OrgAdmin')
+    expect(hrefOf('View all 12', panel('Needs your attention'))).toBe(
+      '/ideas?phase=Ideas&priority=Critical&priority=High',
+    )
+    expect(hrefOf('View all 7', panel('Assigned to me 7'))).toBe(
+      '/ideas?scope=assigned&sort=priority&dir=desc',
+    )
+  })
+
+  it('links the sprint’s backlog figure to the Backlog', async () => {
+    await renderHome('User')
+    expect(hrefOf('6 in the backlog', panel('Current sprint'))).toBe('/delivery/backlog')
+  })
+
+  it('says what the Not tracked yet tile is waiting for', async () => {
+    await renderHome('OrgAdmin')
+    const tiles = screen.getByRole('list', { name: 'Your numbers' }).children
+    expect((tiles[3] as HTMLElement).textContent).toContain(
+      'which status means in review or complete, and when an idea moved',
+    )
   })
 })

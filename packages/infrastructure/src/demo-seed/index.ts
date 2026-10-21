@@ -1,5 +1,6 @@
 import type { PrismaClient } from '../generated/prisma/client.js'
 import { order } from './compose.js'
+import { boardReferencesSeed } from './modules/board-references.js'
 import { boardsAndStatusesSeed } from './modules/boards-and-statuses.js'
 import { commentsSeed } from './modules/comments.js'
 import { deliverySeed } from './modules/delivery.js'
@@ -30,6 +31,7 @@ const MODULES: readonly SeedModule[] = [
   commentsSeed,
   deliverySeed,
   fieldsSeed,
+  boardReferencesSeed,
 ]
 
 export type SeedOutcome = {
@@ -94,7 +96,14 @@ export async function resetDemoSeed(prisma: PrismaClient): Promise<number> {
   await remove(prisma.idea_field_values.deleteMany({ where: byIdea }))
   await remove(prisma.issue_tasks.deleteMany({ where: byIdea }))
   await remove(prisma.notification_events.deleteMany({ where: org }))
+  // Blocker links and metric values go with their ideas (ON DELETE CASCADE). A task's parent link
+  // is RESTRICT, checked row by row, so the tasks go before the ideas they hang from.
+  await remove(prisma.ideas.deleteMany({ where: { ...org, parent_idea_id: { not: null } } }))
   await remove(prisma.ideas.deleteMany({ where: org }))
+  await remove(prisma.outcomes.deleteMany({ where: org }))
+  await remove(prisma.metric_types.deleteMany({ where: org }))
+  // Sprints can belong to a board (sprints.board_id), so they go before the boards do.
+  await remove(prisma.sprints.deleteMany({ where: org }))
   await remove(prisma.board_swimlanes.deleteMany({ where: { boards: org } }))
   await remove(prisma.boards.deleteMany({ where: org }))
   await remove(prisma.idea_type_fieldsets.deleteMany({ where: { idea_types: org } }))
@@ -107,7 +116,6 @@ export async function resetDemoSeed(prisma: PrismaClient): Promise<number> {
   await remove(prisma.statuses.deleteMany({ where: org }))
   await remove(prisma.tags.deleteMany({ where: org }))
   await remove(prisma.business_impacts.deleteMany({ where: org }))
-  await remove(prisma.sprints.deleteMany({ where: org }))
   await remove(prisma.ai_usage_records.deleteMany({ where: org }))
   await remove(
     prisma.impersonation_sessions.deleteMany({

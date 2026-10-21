@@ -4,6 +4,7 @@ import { cn } from '../lib/cn.js'
 export type Effort = 'Low' | 'Medium' | 'High'
 
 const FILLED: Record<Effort, number> = { Low: 1, Medium: 2, High: 3 }
+const LETTER: Record<Effort, string> = { Low: 'L', Medium: 'M', High: 'H' }
 
 /**
  * Comp R's `.effbar` with its words: three short segments, one to three filled in the theme's
@@ -19,8 +20,9 @@ export function EffortBar({
   const filled = FILLED[effort]
   return (
     <span
+      title={`${effort} effort`}
       className={cn(
-        'inline-flex items-center gap-1.5 whitespace-nowrap font-mono text-[11px] font-medium text-muted-foreground',
+        'inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-muted-foreground',
         className,
       )}
       {...props}
@@ -33,7 +35,8 @@ export function EffortBar({
           />
         ))}
       </span>
-      {effort} effort
+      <span aria-hidden="true">{LETTER[effort]}</span>
+      <span className="sr-only">{effort} effort</span>
     </span>
   )
 }

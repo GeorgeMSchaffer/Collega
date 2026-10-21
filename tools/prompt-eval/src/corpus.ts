@@ -38,6 +38,11 @@ export interface V2Expectations extends V1Expectations {
   readonly fieldValues?: Readonly<Record<string, string>>
   /** The field the reply asks about, named as the v2 contract names it, or `done`. */
   readonly nextStep?: string
+  /**
+   * Draft fields (`lockedFields` names) the person owns that this turn's message would change: the
+   * reply must say "I kept your edit to <Field>" for each (v2 "Suggested vs owned").
+   */
+  readonly keptEdit?: readonly string[]
   readonly suggestions?: {
     readonly solutions?: CountRange
     readonly rationales?: CountRange
@@ -154,6 +159,7 @@ const V2_EXPECT_KEYS = new Set([
   'tags',
   'fieldValues',
   'nextStep',
+  'keptEdit',
   'suggestions',
 ])
 const ASSISTANT_VERSIONS: readonly string[] = ['v1', 'v2', 'both']
@@ -500,6 +506,14 @@ function validateCase(
       }
     }
   }
+  if (isV2 && isRecord(raw.expect) && Array.isArray(raw.expect.keptEdit)) {
+    const owned = Array.isArray(raw.lockedFields) ? raw.lockedFields : []
+    for (const name of (raw.expect.keptEdit as unknown[]).filter((n) => !owned.includes(n))) {
+      problems.push(
+        `${file}: expect.keptEdit names "${String(name)}", which is not in lockedFields`,
+      )
+    }
+  }
   if (problems.length > before) return null
 
   return {
@@ -641,6 +655,15 @@ function validateV2Expectation(
     case 'nextStep':
       if (typeof value !== 'string' || !isV2FieldName(value, fixture, NEXT_STEPS)) {
         problems.push(`${where} must be a field the interview asks about, or "done"`)
+      }
+      return
+    case 'keptEdit':
+      if (
+        !Array.isArray(value) ||
+        value.length === 0 ||
+        !value.every((n) => typeof n === 'string' && isV2FieldName(n, fixture, V2_DRAFT_FIELDS))
+      ) {
+        problems.push(`${where} must be a non-empty array of v2 draft field names`)
       }
       return
     case 'suggestions':

@@ -43,6 +43,20 @@ export function TagList({ tags, max = 3 }: { tags: readonly TagRef[]; max?: numb
   )
 }
 
+/** The one empty-assignee pattern (comp S): a dashed "—" avatar, never the word. */
+export function NoAssignee() {
+  return (
+    <span
+      role="img"
+      aria-label="Unassigned"
+      title="Unassigned"
+      className="inline-grid size-6 place-items-center rounded-full border border-dashed border-input text-xs text-muted-foreground"
+    >
+      —
+    </span>
+  )
+}
+
 /** Overlapping initials, with every name in accessible text. */
 export function People({
   people,
@@ -51,11 +65,11 @@ export function People({
 }: {
   people: readonly PersonRef[]
   max?: number
-  /** Render nothing, rather than "Unassigned", when there is no one — on a card. */
+  /** Render nothing, rather than the empty mark, when there is no one — on a card. */
   quiet?: boolean
 }) {
   if (people.length === 0) {
-    return quiet ? null : <span className="text-xs text-muted-foreground">Unassigned</span>
+    return quiet ? null : <NoAssignee />
   }
   return (
     <span className="inline-flex items-center" title={people.map((p) => p.name).join(', ')}>
@@ -63,7 +77,7 @@ export function People({
         <Avatar
           key={person.id}
           initials={person.initials}
-          className="-ml-1.5 size-6 border-2 border-card text-[10px] first:ml-0"
+          className="-ml-1.5 size-6 border-2 border-card text-xs first:ml-0"
         />
       ))}
       {people.length > max ? (

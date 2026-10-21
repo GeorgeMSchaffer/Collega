@@ -32,6 +32,7 @@ function fromRow(row: SprintRow): Sprint {
     startDate: toDateString(row.start_date),
     endDate: toDateString(row.end_date),
     ownerUserId: row.owner_user_id,
+    boardId: row.board_id,
     state: row.state as SprintState,
     isDeleted: row.is_deleted,
     createdAtUtc: row.created_at_utc,
@@ -82,6 +83,14 @@ export class PrismaSprintRepository implements SprintRepository, SprintLookupPor
     return rows.map(fromRow)
   }
 
+  async listByBoard(boardId: string, state: SprintState | null): Promise<readonly Sprint[]> {
+    const rows = await this.prisma.sprints.findMany({
+      where: { board_id: boardId, is_deleted: false, ...(state ? { state } : {}) },
+      orderBy: [{ start_date: 'desc' }, { name: 'asc' }],
+    })
+    return rows.map(fromRow)
+  }
+
   async add(sprint: Sprint): Promise<void> {
     this.unitOfWork.enqueue(this.prisma.sprints.create({ data: writeData(sprint) }))
   }
@@ -102,6 +111,7 @@ function writeData(sprint: Sprint) {
     start_date: fromDateString(sprint.startDate),
     end_date: fromDateString(sprint.endDate),
     owner_user_id: sprint.ownerUserId,
+    board_id: sprint.boardId,
     state: sprint.state,
     is_deleted: sprint.isDeleted,
     created_at_utc: sprint.createdAtUtc,

@@ -60,7 +60,7 @@ export function InboxLink({
       {unread > 0 ? (
         <span
           aria-hidden="true"
-          className="ml-auto h-5 min-w-5 rounded-full bg-sidebar-accent-foreground px-1.5 text-center text-[11px] leading-5 font-bold text-sidebar tabular-nums"
+          className="ml-auto h-5 min-w-5 rounded-full bg-sidebar-accent-foreground px-1.5 text-center text-xs leading-5 font-bold text-sidebar tabular-nums"
         >
           {unread > 99 ? '99+' : unread}
         </span>

@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en" data-proto-theme="graphite">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega Board References, core pieces (comp U)</title>
+<!-- Comp U: throwaway review comp. Redraws the Board References pieces comp T depends on, to the decisions of 2026-10-15 and 2026-10-16
+     (SPEC/20-feature-board-references.md; SPEC/decisions.md "Board References replace the Delivery phase", "A reference lane locks its card until
+     its tasks are final", "Board References UI"). Page structure, theme switcher and tokens are comp T's; the rules are comp S's and comp T's, with
+     additions at the end. Where comp T decided copy, it is reused unchanged. Any string no spec or comp T decides carries a COPY PROPOSED tag; genuinely
+     undecided behaviour sits in per-screen "Open questions" boxes. Not a reference until approved. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&family=Figtree:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Lexend:wght@500;600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=Schibsted+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root,:root[data-proto-theme="portico"]{--suggest:#3B6E51;--suggest-tint:#E3EEE7;color-scheme:light;
+--bg:#F1F5F5;--ink:#16292E;--ink2:#2C4247;--muted:#56696D;--line:#DDE6E7;--line2:#C6D3D5;--card:#FFFFFF;--soft:#E8EFF0;--rowh:#F6FAFA;--thead:#F7FAFA;--facts:#F6FAFA;
+--pri:#1F6A80;--pri-h:#185769;--pri-t:#1B5F73;--pri-tint:#E1EEF1;--pri-ink:#FFFFFF;--vote:#F2B28A;--vote-ink:#16292E;
+--hot:#B64A34;--hot-t:#963B28;--hot-tint:#F6E1DB;--ok-t:#3B6E51;--ok-tint:#E3EEE7;--warn-t:#8E4A1F;--warn-tint:#FCEBDF;
+--side:#FFFFFF;--side-ink:#2C4247;--side-line:#DDE6E7;--side-hover:#EEF4F4;--side-on:#E1EEF1;--side-on-ink:#16292E;--bar:#16292E;--bar-ink:#E3EEF0;
+--tag:#E1EEF1;--tag-ink:#1B5566;--av1:#1F6A80;--av1i:#FFFFFF;--av2:#F2B28A;--av2i:#16292E;--av3:#7A5AA6;--av3i:#FFFFFF;--av4:#4F8A6A;--av4i:#FFFFFF;
+--shadow:22 41 46;--r:14px;--rs:10px;--display:"Outfit",ui-sans-serif,system-ui,sans-serif;--body:"Figtree",ui-sans-serif,system-ui,sans-serif;--mono:"DM Mono",ui-monospace,monospace;--h-weight:600}
+:root[data-proto-theme="sera"]{--suggest:#2E6E4C;--suggest-tint:#E1EFE7;--bg:#F3F4F7;--ink:#1C2236;--ink2:#343B52;--muted:#5C6378;--line:#E2E4EC;--line2:#CCD0DC;--soft:#ECEEF3;--rowh:#F7F8FB;--thead:#F7F8FB;--facts:#F5F6FA;
+--pri:#3450A8;--pri-h:#2A4290;--pri-t:#2E4799;--pri-tint:#E6EAF6;--vote:#E3B04B;--vote-ink:#1C2236;--hot:#B8553F;--hot-t:#94402D;--hot-tint:#F6E3DE;--ok-t:#2E6E4C;--ok-tint:#E1EFE7;--warn-t:#83590C;--warn-tint:#FAF0DA;
+--side:#1F2540;--side-ink:#CDD1E3;--side-line:#2D3454;--side-hover:#272E4D;--side-on:#2E3760;--side-on-ink:#FFFFFF;--bar:#0F1426;--bar-ink:#E6E9F5;--tag:#ECEEF3;--tag-ink:#343B52;
+--av1:#3450A8;--av1i:#FFFFFF;--av2:#E3B04B;--av2i:#1C2236;--av3:#B8553F;--av3i:#FFFFFF;--av4:#3E8A62;--av4i:#FFFFFF;--shadow:28 34 54;--r:16px;--display:"Bricolage Grotesque",ui-sans-serif,sans-serif;--body:"DM Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="lagoon"]{--suggest:#2F5F9E;--suggest-tint:#E3ECF8;--bg:#F3F4EF;--ink:#13302B;--ink2:#2A4640;--muted:#5A6B66;--line:#E1E5DF;--line2:#CBD3CB;--soft:#EAEFEA;--rowh:#F7F9F5;--thead:#F7F9F5;--facts:#F5F8F3;
+--pri:#0E6B5C;--pri-h:#0A5649;--pri-t:#0C6154;--pri-tint:#DCEFEA;--vote:#F08A6C;--vote-ink:#13302B;--hot:#C2412D;--hot-t:#9E3322;--hot-tint:#F9E1DA;--ok-t:#2F6B3F;--ok-tint:#E2F0E4;--warn-t:#7A5410;--warn-tint:#F8EDD3;
+--side:#FFFFFF;--side-ink:#2A4640;--side-line:#E1E5DF;--side-hover:#EFF3EE;--side-on:#DCEFEA;--side-on-ink:#13302B;--bar:#0F2A25;--bar-ink:#E2F0EC;--tag:#DCEFEA;--tag-ink:#0C5549;
+--av1:#0E6B5C;--av1i:#FFFFFF;--av2:#F08A6C;--av2i:#13302B;--av3:#3D6FB6;--av3i:#FFFFFF;--av4:#8C6A1F;--av4i:#FFFFFF;--shadow:19 48 43;--r:16px;--rs:12px;--display:"Lexend",ui-sans-serif,sans-serif;--body:"Nunito Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:600}
+:root[data-proto-theme="terrazzo"]{--suggest:#3F6B2E;--suggest-tint:#E6F2DF;--bg:#F5F6F8;--ink:#1E2733;--ink2:#36414F;--muted:#5E6978;--line:#E3E6EB;--line2:#CDD2DA;--soft:#EDF0F3;--rowh:#F8F9FB;--thead:#F8F9FB;--facts:#F6F7F9;
+--pri:#3D5A80;--pri-h:#324B6B;--pri-t:#35507A;--pri-tint:#E4EAF2;--vote:#F4C7C3;--vote-ink:#1E2733;--hot:#B84A4A;--hot-t:#963636;--hot-tint:#F7E2E2;--ok-t:#3F6B2E;--ok-tint:#E6F2DF;--warn-t:#7F5A12;--warn-tint:#F7EDD6;
+--side:#FFFFFF;--side-ink:#36414F;--side-line:#E3E6EB;--side-hover:#F1F3F6;--side-on:#E4EAF2;--side-on-ink:#1E2733;--bar:#1E2733;--bar-ink:#E8ECF2;--tag:#F4E4E1;--tag-ink:#7A3B34;
+--av1:#3D5A80;--av1i:#FFFFFF;--av2:#F4C7C3;--av2i:#1E2733;--av3:#4E7A40;--av3i:#FFFFFF;--av4:#7A5AA6;--av4i:#FFFFFF;--shadow:30 39 51;--r:8px;--rs:6px;--display:"Schibsted Grotesk",ui-sans-serif,sans-serif;--body:"Public Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="graphite"]{color-scheme:dark;--metric:#5CC8E0;--suggest:#5CC8E0;--suggest-tint:#0F1D21;--suggest-line:#2E6A78;
+--bg:#0F1113;--ink:#E6E8EA;--ink2:#C4CAD0;--muted:#9BA3AB;--line:#22272C;--line2:#2C3238;--card:#16191C;--soft:#1C2024;--rowh:#1A1E22;--thead:#121518;--facts:#1A1E22;--field:#0F1113;
+--pri:#F5A524;--pri-h:#FFC35C;--pri-t:#F5A524;--pri-tint:#2A2418;--pri-ink:#16120A;--vote:#2A2418;--vote-ink:#F3E3C3;--me:#2A2418;--me-ink:#F3E3C3;
+--hot:#E5484D;--hot-t:#FF8A8E;--hot-tint:#2E1719;--ok-t:#58C781;--ok-tint:#13241A;--warn-t:#F5B456;--warn-tint:#2A2418;
+--side:#121518;--side-ink:#AEB5BC;--side-line:#22272C;--side-hover:#1A1E22;--side-on:#1C2024;--side-on-ink:#E6E8EA;--bar:#0B0D0F;--bar-ink:#AEB5BC;--tag:#1C2024;--tag-ink:#C4CAD0;
+--av1:#2A2418;--av1i:#F5A524;--av2:#153038;--av2i:#5CC8E0;--av3:#262B30;--av3i:#C4CAD0;--av4:#1C2A20;--av4i:#58C781;--shadow:0 0 0;--r:8px;--rs:6px;
+--display:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;--h-weight:600}
+:root{--metric:var(--pri);--field:var(--card);--suggest-line:var(--suggest);--me:var(--pri);--me-ink:var(--pri-ink);--drawer:clamp(380px,28vw,520px);--drawer-wide:clamp(720px,62vw,1100px)}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--body);display:flex;flex-direction:column}
+button{font:inherit;color:inherit}
+.proto{display:flex;align-items:center;gap:12px;padding:8px 16px;background:var(--bar);color:var(--bar-ink);font-size:13px;flex:none}
+.proto button{background:transparent;border:1px solid #3a4148;border-radius:999px;padding:3px 12px;color:var(--bar-ink);cursor:pointer}
+.proto button[aria-pressed=true]{background:var(--bar-ink);color:var(--bar)}
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);flex:1}
+.side{background:var(--side);border-right:1px solid var(--side-line);padding:14px 10px;display:flex;flex-direction:column;gap:2px;color:var(--side-ink)}
+.brand{display:flex;gap:10px;align-items:center;padding:4px 6px 12px}
+.brand b{display:block;font:600 16px/1.1 var(--display);color:var(--ink)}.brand small{font-size:12px;opacity:.75}
+.mark{display:grid;place-items:center;width:30px;height:30px;border-radius:var(--rs);background:var(--pri);color:var(--pri-ink);font:600 12px var(--display)}
+.navlbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.7;padding:10px 8px 4px}
+.nav{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:var(--rs);color:var(--side-ink)}
+.nav[aria-current=page]{background:var(--side-on);color:var(--side-on-ink);font-weight:600}
+.nav span{flex:1}.nav small{font-weight:600;opacity:.8}
+.me{margin-top:auto;display:flex;gap:10px;align-items:center;padding:10px 6px 2px;border-top:1px solid var(--side-line)}
+.me b{display:block;font-size:13px;color:var(--ink)}.me small{font-size:12px;opacity:.75}
+.main{min-width:0;display:flex;flex-direction:column;position:relative}
+.topbar{display:flex;align-items:center;gap:8px;min-height:52px;padding:8px 24px;border-bottom:1px solid var(--line);background:var(--card)}
+.crumb{color:var(--muted)}.crumb b{color:var(--ink)}
+.work{padding:20px 24px 32px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.pghead{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.pghead h1{margin:0;font:var(--h-weight) 28px/1.15 var(--display);letter-spacing:-.02em}
+.pghead p{margin:4px 0 0;color:var(--muted);max-width:64ch}
+.btn{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13px;height:32px;padding:0 12px;border-radius:var(--rs);border:1px solid var(--line2);background:var(--card);cursor:pointer}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}
+.btn.sm{height:28px;padding:0 10px;font-size:12px}
+.btn.ghost{border-color:transparent;background:transparent}
+.seg{display:inline-flex;background:var(--soft);border-radius:var(--rs);padding:2px}
+.seg span{padding:4px 12px;font-size:13px;color:var(--muted);border-radius:5px}
+.seg span.on{background:var(--card);color:var(--ink);font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:1px 8px;border-radius:999px;background:color-mix(in srgb,var(--tc,var(--muted)) 16%,var(--card));color:color-mix(in srgb,var(--tc,var(--muted)) 62%,var(--ink));border:1px solid color-mix(in srgb,var(--tc,var(--muted)) 30%,transparent)}
+.avs{display:inline-flex}.av{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;font:700 10px var(--body);border:2px solid var(--card);margin-left:-6px}
+.avs .av:first-child{margin-left:0}
+.a1{background:var(--av1);color:var(--av1i)}.a2{background:var(--av2);color:var(--av2i)}.a3{background:var(--av3);color:var(--av3i)}.a4{background:var(--av4);color:var(--av4i)}
+.mono{font-family:var(--mono)}
+/* board */
+.lanes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.lane{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:520px;padding:6px 6px 12px;border-radius:14px;background:color-mix(in srgb,var(--soft) 55%,transparent);border:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
+.lanehd{display:flex;align-items:center;gap:8px;padding:6px 12px;font-weight:600;font-size:13px}
+.lanehd span{flex:1}.lanehd small{font:500 12px var(--mono);opacity:.8}
+.kcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:7px}
+.kcard h4{margin:0;font-size:13px;font-weight:600;line-height:1.35}
+.kcard.sel{outline:2px solid var(--pri);outline-offset:-1px}
+.krow{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.kmeta{font:500 11px var(--mono);color:var(--muted)}
+.prog{display:flex;gap:2px;height:5px;border-radius:3px;overflow:hidden;background:var(--soft)}
+.prog i{display:block;height:100%}
+/* drawer */
+.drawer{position:absolute;top:0;right:0;bottom:0;width:560px;background:var(--card);border-left:1px solid var(--line2);box-shadow:-18px 0 40px rgb(0 0 0/.45);display:flex;flex-direction:column;z-index:5}
+.dhead{display:flex;align-items:flex-start;gap:8px;padding:16px 18px 10px;border-bottom:1px solid var(--line)}
+.eb{font:500 11px var(--mono);color:var(--muted);letter-spacing:.03em}
+.dhead h2{margin:2px 0 0;font:var(--h-weight) 19px/1.25 var(--display)}
+.dbody{flex:1;overflow:auto;padding:16px 18px;display:flex;flex-direction:column;gap:16px}
+.dfoot{display:flex;gap:8px;align-items:center;padding:12px 18px;border-top:1px solid var(--line);background:var(--thead)}
+.sp{flex:1}
+.stepper{display:flex;gap:4px}
+.step{flex:1;text-align:center;font-size:11.5px;font-weight:600;padding:6px 2px;border-radius:var(--rs);background:var(--soft);color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+.step.done{color:var(--ink2);border-bottom-color:var(--ok)}
+.step.cur{background:var(--pri-tint);color:var(--pri-t);border-bottom-color:var(--pri)}
+.suggest{display:flex;gap:10px;align-items:center;background:var(--suggest-tint);border:1px solid var(--suggest-line);border-radius:var(--rs);padding:10px 12px;font-size:13px}
+.suggest b{color:var(--suggest)}
+.suggest .sp{flex:1}
+.sect h3,.lbl{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+.sechd{display:flex;align-items:center;gap:8px;margin-bottom:6px}.sechd h3{margin:0}
+.panel{border:1px solid var(--line);border-radius:var(--rs);background:var(--facts);overflow:hidden}
+table.v{border-collapse:collapse;width:100%}
+table.v th{font:600 11px var(--body);color:var(--muted);text-align:left;padding:7px 12px;background:var(--thead);border-bottom:1px solid var(--line)}
+table.v td{padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
+table.v tr:last-child td{border-bottom:0}
+.r{text-align:right !important;font-variant-numeric:tabular-nums}
+.metric{color:var(--metric);font-weight:600}
+.pend{color:var(--muted);font-size:12px;font-style:italic}
+.task{display:grid;grid-template-columns:20px minmax(0,1fr) 28px 110px;gap:10px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
+.task:last-child{border-bottom:0}
+.task:hover{background:var(--rowh)}
+.ck{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--line2);display:grid;place-items:center;font-size:11px;line-height:1}
+.ck.ok{background:var(--ok);border-color:var(--ok);color:#0F1113}
+.ck.ip{border-color:var(--pri);background:linear-gradient(90deg,var(--pri) 50%,transparent 50%)}
+.task .done-t{color:var(--muted);text-decoration:line-through}
+.st{font-size:12px;font-weight:600;display:inline-flex;gap:6px;align-items:center}
+.st.a{color:var(--muted)}.st.p{color:var(--pri-t)}.st.c{color:var(--ok-t)}
+.addrow{display:flex;gap:8px;padding:8px 12px;color:var(--muted);font-size:13px;border-top:1px solid var(--line)}
+/* outcome page */
+.spr{background:var(--card);border:1px solid var(--line);border-radius:var(--r);display:grid;grid-template-columns:repeat(4,1fr)}
+.spr>div{padding:14px 18px;display:flex;flex-direction:column;gap:4px}
+.spr>div+div{border-left:1px solid var(--line)}
+.spr dt{font:500 10.5px var(--mono);color:var(--muted);letter-spacing:.06em}
+.spr dd{margin:0;font:600 22px var(--display)}
+.spr small{font:500 11px var(--mono);color:var(--muted)}
+.oc{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.oc-h{display:flex;align-items:center;gap:12px;padding:12px 16px;flex-wrap:wrap}
+.oc-h h2{margin:0;font:var(--h-weight) 15px var(--display)}
+.ir{display:grid;grid-template-columns:70px minmax(0,1fr) 150px 130px 130px;align-items:center;gap:12px;min-height:38px;padding:4px 16px;font-size:13px;border-top:1px solid var(--line)}
+.ir.hd{font:600 11px var(--body);color:var(--muted);background:var(--thead);min-height:30px}
+.ir .id{font:500 11px var(--mono);color:var(--muted)}
+.bar{display:flex;align-items:center;gap:8px}
+.bar .t{flex:1;height:6px;border-radius:3px;background:var(--soft);overflow:hidden;position:relative}
+.bar .t i{position:absolute;left:0;top:0;bottom:0;background:var(--metric)}
+.bar small{font:500 11px var(--mono);color:var(--muted);min-width:34px;text-align:right}
+.hide{display:none}
+.cfgrow{display:grid;grid-template-columns:22px minmax(0,1fr) 150px 190px 80px;gap:12px;align-items:center;padding:10px 16px;border-top:1px solid var(--line);font-size:.85rem}
+.cfgrow .note,.cfgrow .sel{font-size:inherit}
+.cfgrow.hd{font:600 1rem var(--body);color:var(--muted);background:var(--thead);border-top:0;padding:8px 16px}
+.grip{color:var(--muted);font-size:14px;letter-spacing:-2px}
+.refpill{display:inline-flex;align-items:center;gap:6px;font:500 11px var(--mono);color:var(--suggest);background:var(--suggest-tint);border:1px solid var(--suggest-line);border-radius:4px;padding:0 7px;line-height:20px}
+.sel{background:var(--field);border:1px solid var(--line2);border-radius:var(--rs);padding:6px 10px;font-size:13px;display:flex;justify-content:space-between;color:var(--ink2)}
+.sprhd{background:var(--card);border:1px solid var(--line);border-radius:var(--r);display:grid;grid-template-columns:minmax(0,1fr) repeat(3,150px)}
+.sprhd>div{padding:12px 18px;display:flex;flex-direction:column;gap:4px}
+.sprhd>div+div{border-left:1px solid var(--line)}
+.sprhd dt{font:500 10.5px var(--mono);color:var(--muted);letter-spacing:.06em}
+.sprhd dd{margin:0;font:500 13px var(--mono)}
+.badge{font:500 10.5px var(--mono);border:1px solid currentColor;border-radius:4px;padding:0 6px;line-height:18px;letter-spacing:.04em}
+.badge.ok{color:var(--ok-t)}.badge.warn{color:var(--warn-t)}.badge.mute{color:var(--muted)}
+.pchip{font:500 10.5px var(--mono);color:var(--suggest);background:var(--suggest-tint);border:1px solid var(--suggest-line);border-radius:4px;padding:0 6px;line-height:17px;white-space:nowrap}
+.lock{font:500 10.5px var(--mono);color:var(--warn-t);background:var(--warn-tint);border-radius:4px;padding:0 6px;line-height:17px;white-space:nowrap}
+.kcard.blocked{opacity:.7;border-style:dashed}
+.bl{margin-top:14px;border:1px solid var(--line);border-radius:var(--r);background:var(--card);overflow:hidden}
+.task2{display:grid;grid-template-columns:20px minmax(0,1fr) auto 28px 108px;gap:10px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
+.task2:last-child{border-bottom:0}
+.note{font-size:12px;color:var(--muted)}
+/* comp T additions: tokens the comp-s rules expect, then new vocabulary. Palette is the theme tokens only. */
+:root{--ok:var(--ok-t);--warn:var(--warn-t);--bar-line:#3a4148}
+html,body{height:auto;min-height:100%}
+body{overflow-x:hidden}
+:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+a{color:var(--pri-t)}
+.proto{flex-wrap:wrap}
+.proto select{background:transparent;color:var(--bar-ink);border:1px solid var(--bar-line);border-radius:999px;padding:3px 10px;font:inherit}
+.proto select option{color:#111}
+.proto .grp{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.proto .sp{flex:1}
+.idx{background:var(--thead);border-bottom:1px solid var(--line);padding:0 24px}
+.idx summary{cursor:pointer;padding:8px 0;font-size:13px;color:var(--muted)}
+.idx ol{margin:0;padding:0 0 12px;list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}
+.idx li button{width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:var(--rs);padding:8px 10px;cursor:pointer;display:grid;gap:2px}
+.idx li button b{font-size:13px}.idx li button span{font-size:12px;color:var(--muted)}
+.idx li button[aria-current=true]{border-color:var(--pri)}
+.side .nav{cursor:default}
+.nav.sub{padding-left:22px}
+.main{min-width:0}
+.app{grid-template-columns:232px minmax(0,1fr)}
+.work{min-width:0}
+.hide{display:none !important}
+/* form controls (shadcn Input, Textarea, Switch, Badge) */
+.in{display:flex;align-items:center;background:var(--field);border:1px solid var(--line2);border-radius:var(--rs);padding:0 10px;min-height:32px;font-size:13px;color:var(--ink);gap:6px;min-width:0}
+.in input,.in textarea{all:unset;flex:1;min-width:0;padding:6px 0;color:var(--ink);font:inherit}
+.in textarea{display:block;white-space:pre-wrap;min-height:60px;line-height:1.5}
+.in.ta{align-items:flex-start}
+.in .u{color:var(--muted);font:500 12px var(--mono);white-space:nowrap}
+.in.err{border-color:var(--hot)}
+.in.ro{background:var(--soft);color:var(--ink2)}
+.in:focus-within{outline:2px solid var(--pri);outline-offset:1px}
+.in.num input{text-align:right;font-variant-numeric:tabular-nums}
+.errtxt{display:block;color:var(--hot-t);font-size:12px;margin-top:4px}
+.helper{color:var(--muted);font-size:12px;margin-top:4px;display:block}
+.field{display:flex;flex-direction:column;gap:2px;min-width:0}
+.field>label,.lbl2{font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:4px;display:block}
+.sw{display:inline-flex;align-items:center;gap:10px;font-size:13px}
+.sw i{position:relative;width:34px;height:20px;border-radius:999px;background:var(--line2);flex:none;display:inline-block}
+.sw i::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--ink2)}
+.sw[aria-checked=true] i{background:var(--pri)}
+.sw[aria-checked=true] i::after{left:16px;background:var(--pri-ink)}
+.sw[aria-disabled=true]{opacity:.55}
+button.sw{background:none;border:0;padding:0;cursor:pointer;color:inherit}
+button.sw[aria-disabled=true]{cursor:not-allowed}
+.chip.ok{background:var(--ok-tint);color:var(--ok-t)}
+.chip.mute{background:var(--soft);color:var(--ink2)}
+.chip.pri{background:var(--pri-tint);color:var(--pri-t)}
+.chip.warn{background:var(--warn-tint);color:var(--warn-t)}
+.chip.hot{background:var(--hot-tint);color:var(--hot-t)}
+.btn[disabled],.btn[aria-disabled=true]{opacity:.5;cursor:not-allowed}
+.btn.dng{background:var(--hot);border-color:var(--hot);color:#fff}
+.seg span[role=tab]{cursor:pointer}
+.mono-s{font:500 11px var(--mono);color:var(--muted)}
+.prop{font:500 10px var(--mono);letter-spacing:.04em;color:var(--warn-t);background:var(--warn-tint);border-radius:4px;padding:0 6px;line-height:16px;white-space:nowrap;vertical-align:middle}
+.oq{border:1px dashed var(--warn-t);background:var(--warn-tint);border-radius:var(--rs);padding:10px 14px;font-size:13px;color:var(--ink2)}
+.oq b{color:var(--warn-t)}
+.oq ul,.notes ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.notes{border:1px solid var(--line);border-radius:var(--rs);background:var(--facts);padding:12px 16px;font-size:13px;color:var(--ink2)}
+.notes h3{margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+code,.code{font:500 12px var(--mono);background:var(--soft);padding:1px 5px;border-radius:4px;color:var(--ink2);overflow-wrap:anywhere}
+.stage{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.stage.one{grid-template-columns:minmax(0,1fr)}
+.frame{border:1px solid var(--line);border-radius:var(--r);background:var(--card);display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.frame>h2{margin:0;padding:10px 16px;font:600 13px var(--body);border-bottom:1px solid var(--line);background:var(--thead);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.frame>h2 .fl{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:5px;background:var(--pri-tint);color:var(--pri-t);font:600 11px var(--mono)}
+.frame>.fb{padding:14px 16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.drawer.static{position:static;width:auto;box-shadow:none;border:1px solid var(--line2);border-radius:var(--r);overflow:hidden}
+.drawer.static .dbody{overflow:visible}
+.banner{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line2);background:var(--soft);border-radius:var(--rs);padding:9px 12px;font-size:13px;color:var(--ink2)}
+.banner.warn{background:var(--warn-tint);border-color:var(--warn-t)}
+.banner.hot{background:var(--hot-tint);border-color:var(--hot)}
+.banner .ic{flex:none;font-weight:700}
+/* metric types list */
+.mt{border:1px solid var(--line);border-radius:var(--r);background:var(--card);overflow:hidden}
+.mt-row{display:grid;grid-template-columns:34px minmax(0,1.6fr) minmax(0,.8fr) 110px 110px 190px;gap:12px;align-items:center;padding:10px 16px;border-top:1px solid var(--line);font-size:13px;min-width:0}
+.mt-row.hd{border-top:0;background:var(--thead);color:var(--muted);font:600 11px var(--body);padding:8px 16px}
+.mt-row.edit{background:var(--rowh)}
+.mt-row.arch .nm{color:var(--muted)}
+.mt-row .acts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.mt-row .nm{font-weight:600;overflow-wrap:anywhere}
+.mt-sub{grid-column:2/-1}
+.mt-add{background:var(--facts)}
+.urlhint{font:500 11px var(--mono);color:var(--muted)}
+/* value table */
+.vt{border:1px solid var(--line);border-radius:var(--rs);background:var(--facts);overflow:hidden}
+.vt-row{display:grid;grid-template-columns:minmax(0,1fr) 150px 150px;gap:10px;align-items:start;padding:9px 12px;border-top:1px solid var(--line);font-size:13px}
+.vt-row.hd{border-top:0;background:var(--thead);color:var(--muted);font:600 11px var(--body);padding:7px 12px;align-items:center}
+.vt-row .nm{padding-top:6px;overflow-wrap:anywhere}
+.vt-row .nm small{display:block;color:var(--muted);font:500 11px var(--mono)}
+.vt-row.arch{background:var(--soft)}
+.vt-row .ro-n{padding-top:6px;text-align:right;font-variant-numeric:tabular-nums;color:var(--ink2)}
+.vt-row .emph{background:var(--pri-tint);color:var(--pri-t)}
+.vt-foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;border-top:1px solid var(--line);background:var(--thead)}
+/* task drawer */
+.fgrid{display:grid;gap:14px}
+.tagrow{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chiprow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.plink{display:inline-flex;gap:6px;align-items:center;font:500 12px var(--mono);color:var(--suggest);background:var(--suggest-tint);border:1px solid var(--suggest-line);border-radius:4px;padding:2px 8px;text-decoration:none}
+.absent{border:1px dashed var(--line2);border-radius:var(--rs);padding:10px 14px;font-size:12.5px;color:var(--muted)}
+.absent s{color:var(--ink2);text-decoration-color:var(--muted)}
+/* lock, toast, dialog, menu */
+.kcard.locked{border-color:var(--warn-t)}
+.waiting{display:inline-flex;align-items:center;gap:6px;font:600 11.5px var(--body);color:var(--warn-t);background:var(--warn-tint);border-radius:4px;padding:1px 8px}
+.kcard.nodrag{cursor:not-allowed}
+.tip{align-self:flex-start;background:var(--bar);color:var(--bar-ink);border:1px solid var(--line2);border-radius:6px;padding:4px 9px;font-size:12px;font-weight:600;max-width:100%;overflow-wrap:anywhere}
+.menu div[aria-disabled=true]{opacity:.55;cursor:not-allowed}
+.menu div .lnk{margin-left:auto;color:var(--pri-t);font-weight:600;font-size:12px}
+.act{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:var(--rs);overflow:hidden}
+.act li{display:flex;gap:10px;padding:10px 12px;font-size:13px;align-items:flex-start;border-top:1px solid var(--line);min-width:0}
+.act li:first-child{border-top:0}
+.act li>div{min-width:0;overflow-wrap:anywhere}
+.act .av{margin-left:0;flex:none}
+.act small{display:block;color:var(--muted);font:500 11px var(--mono);margin-top:2px}
+.vt-row.hd .rz{background:var(--pri-tint);color:var(--pri-t);border-radius:4px;padding:3px 8px;text-align:right}
+.pk li.dis{opacity:.85}
+.pk li.dis .cb{border-style:dashed;opacity:.6}
+.pk li .go{margin-top:6px}
+.meter.over::after{content:"";position:absolute;right:0;top:0;bottom:0;width:4px;background:var(--hot)}
+.mcard .big.neg{color:var(--hot-t)}
+.brk{border-top:1px solid var(--line);margin-top:4px;padding-top:6px;display:flex;flex-direction:column}
+.brk-row{display:grid;grid-template-columns:minmax(0,1fr) 92px 92px;gap:8px;font-size:12px;padding:3px 0;align-items:baseline}
+.brk-row.hd{font:600 11px var(--body);color:var(--muted)}
+.brk-row .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.brk-row .id{font:500 11px var(--mono);color:var(--muted);margin-right:4px}
+.brk-row .ti{overflow-wrap:anywhere}
+.toast{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--hot);border-left-width:4px;border-radius:var(--rs);padding:10px 12px;font-size:13px;box-shadow:0 10px 28px rgb(0 0 0/.3)}
+.toast b{display:block}
+.dlg{border:1px solid var(--line2);border-radius:var(--r);background:var(--card);box-shadow:0 18px 44px rgb(0 0 0/.4);overflow:hidden}
+.dlg-h{padding:14px 18px 6px}.dlg-h h3{margin:0;font:600 16px var(--display);text-transform:none;letter-spacing:0;color:var(--ink)}
+.dlg-b{padding:6px 18px 14px;display:flex;flex-direction:column;gap:12px;font-size:13px;color:var(--ink2)}
+.dlg-f{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--line);background:var(--thead)}
+.opentasks{margin:0;padding:0;list-style:none;border:1px solid var(--line);border-radius:var(--rs);overflow:hidden}
+.opentasks li{display:flex;gap:8px;align-items:center;padding:6px 10px;border-top:1px solid var(--line);font-size:12.5px}
+.opentasks li:first-child{border-top:0}
+.opentasks li span:first-child{flex:1;min-width:0;overflow-wrap:anywhere}
+.menu{border:1px solid var(--line2);border-radius:var(--rs);background:var(--card);box-shadow:0 10px 28px rgb(0 0 0/.3);padding:4px;max-width:340px}
+.menu div{display:flex;gap:8px;align-items:center;padding:7px 10px;border-radius:5px;font-size:13px}
+.menu div.on{background:var(--rowh)}
+.menu div small{margin-left:auto;color:var(--warn-t);font-size:11px}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+/* picker */
+.pk{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:var(--rs);overflow:hidden}
+.pk li{display:grid;grid-template-columns:20px minmax(0,1fr);gap:10px;padding:10px 12px;border-top:1px solid var(--line);font-size:13px}
+.pk li:first-child{border-top:0}
+.pk .meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:3px;font-size:12px;color:var(--muted)}
+.cb{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--line2);margin-top:2px;display:grid;place-items:center;font-size:11px}
+.cb.on{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}
+.tabs2{display:flex;gap:4px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tabs2 span{padding:7px 12px;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs2 span.on{color:var(--ink);font-weight:600;border-bottom-color:var(--pri)}
+.tabs2 .n{font:500 11px var(--mono);margin-left:6px;background:var(--soft);border-radius:999px;padding:0 6px}
+/* outcome */
+.mtot{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.mcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.mcard .nm{font:600 13px var(--body)}
+.mcard .big{font:600 22px var(--display);color:var(--metric);font-variant-numeric:tabular-nums}
+.mcard .big small{font:500 12px var(--mono);color:var(--muted)}
+.meter{position:relative;height:8px;border-radius:4px;background:var(--soft);overflow:hidden}
+.meter i{position:absolute;left:0;top:0;bottom:0;background:var(--metric)}
+.mrow{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--ink2);flex-wrap:wrap}
+.mrow b{font-variant-numeric:tabular-nums}
+.empty{border:1px dashed var(--line2);border-radius:var(--r);padding:22px 16px;text-align:center;color:var(--muted);font-size:13px;display:flex;flex-direction:column;gap:6px;align-items:center}
+.empty b{color:var(--ink);font-size:14px}
+.ir{grid-template-columns:70px minmax(0,1fr) 150px 130px}
+.kcard.selected{outline:2px solid var(--pri);outline-offset:-1px}
+.kcard{min-width:0}.kcard h4{overflow-wrap:anywhere}
+@media (max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{display:none}
+  .work{padding:16px}
+  .topbar{padding:8px 16px;flex-wrap:wrap}
+  .idx{padding:0 16px}
+  .lanes{grid-template-columns:repeat(5,220px);overflow-x:auto;padding-bottom:6px}
+  .stage{grid-template-columns:minmax(0,1fr)}
+  .sprhd,.spr{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sprhd>div,.spr>div{border-left:0 !important;border-top:1px solid var(--line)}
+  .cfgrow{grid-template-columns:22px minmax(0,1fr)}
+  .cfgrow>*:nth-child(n+3){grid-column:2}
+  .cfgrow.hd{display:none}
+  .mt-row{grid-template-columns:minmax(0,1fr) auto;row-gap:6px}
+  .mt-row.hd{display:none}
+  .mt-row>.ix{display:none}
+  .mt-row .acts{grid-column:1/-1;justify-content:flex-start}
+  .mt-sub{grid-column:1/-1}
+  .vt-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .vt-row .nm{grid-column:1/-1;padding-top:0}
+  .vt-row.hd span:first-child{display:none}
+  .task2{grid-template-columns:20px minmax(0,1fr) auto}
+  .task2>*:nth-child(n+4){display:none}
+  .ir{grid-template-columns:60px minmax(0,1fr)}
+  .ir>*:nth-child(n+3){display:none}
+  .ir.hd{display:none}
+  .dhead{flex-wrap:wrap}
+  .stepper{flex-wrap:wrap}
+  .step{flex:1 1 30%}
+  .menu{max-width:none}
+}
+.lock{white-space:normal;line-height:1.5}
+/* comp U additions: tokens only */
+.eff{display:inline-flex;align-items:center;font:500 11px var(--mono);color:var(--muted)}
+.effbar{display:inline-flex;gap:2px;margin-right:6px}
+.effbar i{width:10px;height:4px;border-radius:1px;background:var(--line2);display:block}
+.effbar.e1 i:nth-child(1),.effbar.e2 i:nth-child(-n+2),.effbar.e3 i{background:var(--metric)}
+.lanes.l4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.ln{display:grid;grid-template-columns:54px minmax(0,1.2fr) 170px minmax(0,1.3fr) 110px;gap:12px;align-items:center;padding:10px 16px;border-top:1px solid var(--line);font-size:13px;min-width:0}
+.ln.hd{border-top:0;background:var(--thead);color:var(--muted);font:600 11px var(--body);padding:8px 16px}
+.ln .ord{display:flex;gap:6px;align-items:center}
+.ln .nm{overflow-wrap:anywhere}
+.ln-sub{padding:0 16px 14px 82px;background:var(--rowh);display:flex;flex-direction:column;gap:4px}
+.ln.on-row{background:var(--rowh)}
+.why{font-size:12px;color:var(--warn-t);display:block;margin-top:4px}
+.sel{min-width:0;gap:8px}
+.sel>span:first-child{overflow-wrap:anywhere}
+.sel[aria-disabled=true]{opacity:.6;background:var(--soft)}
+.seg.kind span{padding:4px 10px;font-size:12.5px}
+.seg [role=radio]{cursor:pointer}
+.seg [aria-checked=true]{background:var(--card);color:var(--ink);font-weight:600}
+[data-role=user] .ctl,[data-role=ro] .ctl{pointer-events:none}
+[data-role=user] .sel,[data-role=ro] .sel,[data-role=user] .seg.kind,[data-role=ro] .seg.kind{background:transparent;border-color:transparent}
+[data-role=user] .sel .car,[data-role=ro] .sel .car{display:none}
+[data-role=user] .seg.kind span:not([aria-checked=true]),[data-role=ro] .seg.kind span:not([aria-checked=true]){display:none}
+[data-role=user] .adm,[data-role=ro] .adm{display:none !important}
+.menu.wide{max-width:430px}
+.menu div{flex-wrap:wrap}
+.menu div .rs{flex-basis:100%;color:var(--warn-t);font-size:11.5px;margin-left:0}
+.menu div[aria-disabled=true] .nmx{color:var(--muted)}
+.fields3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+.fcard{border:1px solid var(--line);border-radius:var(--rs);background:var(--facts);padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.fcard .t{font-size:13px;font-weight:600}
+.kcard.fresh{border-color:var(--ok-t);outline:2px solid var(--ok-t);outline-offset:-1px}
+.kcard.ghostdrag{opacity:.7;border-style:dashed}
+.toast.ok{border-color:var(--ok-t)}
+.toast .acts{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.toast{min-width:0}.toast>div{min-width:0;overflow-wrap:anywhere}
+.deferred{position:relative;border:2px dashed var(--warn-t);border-radius:var(--r);padding:38px 12px 12px;background:color-mix(in srgb,var(--warn-tint) 40%,transparent)}
+.defer-tag{position:absolute;top:8px;left:12px;font:600 11px var(--mono);letter-spacing:.05em;color:var(--warn-t);background:var(--warn-tint);border-radius:4px;padding:2px 8px;max-width:calc(100% - 24px)}
+.deferred .ghostin{opacity:.5;pointer-events:none}
+.trow{display:grid;grid-template-columns:20px minmax(0,1fr) 28px 112px;gap:10px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
+.trow:last-child{border-bottom:0}
+.trow:hover{background:var(--rowh)}
+.trow .ti{min-width:0;overflow-wrap:anywhere}
+.trow .ti a{color:var(--ink);font-weight:500;text-decoration:none}
+.trow .ti a:hover{text-decoration:underline}
+.trow .sub{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:3px}
+.auto-t{font:500 10.5px var(--mono);color:var(--muted);border:1px solid var(--line2);border-radius:4px;padding:0 6px;line-height:17px}
+.addform{border-top:1px solid var(--line);background:var(--rowh);padding:12px;display:flex;flex-direction:column;gap:12px}
+.bchip{display:inline-flex;align-items:center;gap:6px;font:500 11.5px var(--mono);color:var(--warn-t);background:var(--warn-tint);border-radius:4px;padding:2px 4px 2px 8px;max-width:100%;overflow-wrap:anywhere}
+.bchip.ok{color:var(--ok-t);background:var(--ok-tint);padding-right:8px}
+.bchip button{all:unset;cursor:pointer;width:20px;height:20px;display:grid;place-items:center;border-radius:4px;font-size:14px;line-height:1;flex:none}
+.bchip button:hover{background:color-mix(in srgb,var(--warn-t) 20%,transparent)}
+.bchip button:focus-visible{outline:2px solid var(--pri)}
+.cand{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:var(--rs);overflow:hidden}
+.cand li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:9px 12px;border-top:1px solid var(--line);font-size:13px;align-items:center}
+.cand li:first-child{border-top:0}
+.cand li[aria-disabled=true]{opacity:.75}
+.cand .k{font:500 11px var(--mono);color:var(--muted);margin-right:6px}
+.cand .why{grid-column:1/-1;margin-top:0}
+.cand .t{min-width:0;overflow-wrap:anywhere}
+.kv{display:grid;grid-template-columns:130px minmax(0,1fr);gap:6px 12px;font-size:13px;margin:0}
+.kv dt{color:var(--muted)}.kv dd{margin:0;overflow-wrap:anywhere}
+.sw-line{display:flex;flex-direction:column;gap:2px}
+.board-opts{display:grid;gap:14px}
+@media (max-width:900px){
+  .lanes.l4{grid-template-columns:repeat(4,220px);overflow-x:auto;padding-bottom:6px}
+  .ln{grid-template-columns:54px minmax(0,1fr)}
+  .ln>*:nth-child(n+3){grid-column:2}
+  .ln.hd{display:none}
+  .ln-sub{padding-left:16px}
+  .fields3{grid-template-columns:minmax(0,1fr)}
+  .trow{grid-template-columns:20px minmax(0,1fr) auto}
+  .trow>.av{display:none}
+  .kv{grid-template-columns:minmax(0,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="proto"><b>Collega &middot; Board References, core pieces (comp U)</b>
+  <span class="grp" role="group" aria-label="Screens">
+    <button id="u1" aria-pressed="true" onclick="go(1)">1 Lanes editor</button>
+    <button id="u2" aria-pressed="false" onclick="go(2)">2 Idea board</button>
+    <button id="u3" aria-pressed="false" onclick="go(3)">3 Work board</button>
+    <button id="u4" aria-pressed="false" onclick="go(4)">4 Tasks section</button>
+    <button id="u5" aria-pressed="false" onclick="go(5)">5 Effort field</button>
+    <button id="u6" aria-pressed="false" onclick="go(6)">6 Blockers</button>
+  </span>
+  <span class="sp"></span>
+  <label for="theme" style="font-size:12px">Theme</label>
+  <select id="theme" aria-label="Theme"><option value="graphite">Graphite</option><option value="terrazzo">Terrazzo</option><option value="portico">Portico</option><option value="sera">Piazza Sera</option><option value="lagoon">Lagoon</option></select>
+</div>
+
+<details class="idx" open>
+  <summary>Screen index: what each screen shows and which decision it draws</summary>
+  <ol>
+    <li><button onclick="go(1)"><b>1 &middot; Board settings, lanes editor</b><span>Kind, board reference (one level), auto-create, key prefix lock, Sprints and Idea features. Org Admin only.</span></button></li>
+    <li><button onclick="go(2)"><b>2 &middot; Idea board (CI)</b><span>Item keys, N of M tasks, lock, auto-created task, Effort on cards, Effort-required refusal.</span></button></li>
+    <li><button onclick="go(3)"><b>3 &middot; Work board (IMPL)</b><span>Task keys, parent chip, blocked-by, standalone cards. Sprint header as a deferred ghost.</span></button></li>
+    <li><button onclick="go(4)"><b>4 &middot; Parent drawer, Tasks</b><span>Task list, + Add task, blocked-by chips, completion prompt, late addition.</span></button></li>
+    <li><button onclick="go(5)"><b>5 &middot; Idea form, Effort</b><span>Low / Medium / High, why it matters, the error when a move was refused.</span></button></li>
+    <li><button onclick="go(6)"><b>6 &middot; Blockers</b><span>Add and remove a blocked-by link; a blocked task cannot leave the first lane.</span></button></li>
+  </ol>
+</details>
+
+<div class="app">
+  <aside class="side" aria-label="Primary">
+    <div class="brand"><span class="mark">Co</span><div><b>Collega</b><small>Northwind Logistics</small></div></div>
+    <div class="navlbl">Workspace</div>
+    <div class="nav"><span>Home</span></div>
+    <div class="nav" id="nv-board"><span>Boards</span><small>3</small></div>
+    <div class="nav"><span>Ideas</span><small>46</small></div>
+    <div class="nav"><span>Outcomes</span><small>4</small></div>
+    <div class="navlbl">Settings</div>
+    <div class="nav"><span>Tags</span></div>
+    <div class="nav"><span>Metric types</span></div>
+    <div class="navlbl">Me</div>
+    <div class="nav"><span>My tasks</span><small>5</small></div>
+    <div class="nav"><span>Inbox</span><small>2</small></div>
+    <div class="me"><span class="av a1" style="margin:0;width:30px;height:30px;font-size:11px">DK</span><div><b>Dana Kim</b><small>Org Admin</small></div></div>
+  </aside>
+
+  <main class="main">
+
+  <!-- ============ 1: Lanes editor ============ -->
+  <section id="v1" data-nav="nv-board" aria-labelledby="h1-1">
+    <div class="topbar"><span class="crumb">Boards / Continuous Improvement / <b>Settings</b></span></div>
+    <div class="work" id="s1-work" data-role="admin">
+      <div class="pghead"><div><h1 id="h1-1">Board settings</h1><p>The lanes of Continuous Improvement, and the board's own switches. Only an Org Admin changes them.</p></div>
+        <div class="seg" role="group" aria-label="View as role"><span class="on" data-r="admin" role="button" tabindex="0">Org Admin</span><span data-r="user" role="button" tabindex="0">User</span><span data-r="ro" role="button" tabindex="0">Read Only</span></div></div>
+
+      <div class="banner" id="s1-ro" style="display:none"><span class="ic">i</span><span>You can see this board's settings but only an Org Admin can change them. <span class="prop">COPY PROPOSED</span></span></div>
+
+      <div class="frame"><h2><span class="fl">A</span>Continuous Improvement &middot; board fields <span class="prop">COPY PROPOSED labels</span></h2>
+        <div class="fb">
+          <div class="fields3">
+            <div class="field">
+              <label class="lbl2" for="kp">Key prefix</label>
+              <span class="in ro"><span aria-hidden="true">&#128274;</span><input id="kp" value="CI" readonly aria-describedby="kp-h"></span>
+              <span class="helper" id="kp-h">Locked. Keys CI-1 to CI-24 have been issued, so the prefix can't change. <span class="prop">COPY PROPOSED</span></span>
+              <span class="helper">Items on this board are keyed CI-1, CI-2 &hellip; and never renumbered.</span>
+            </div>
+            <div class="sw-line">
+              <button class="sw ctl" role="switch" aria-checked="false" aria-describedby="sp-h"><i></i><span>Sprints</span></button>
+              <span class="helper" id="sp-h">Group this board's cards into time-boxed sprints. A sprint can hold cards from many ideas. Off here: Continuous Improvement holds ideas, not tasks. <span class="prop">COPY PROPOSED</span></span>
+            </div>
+            <div class="sw-line">
+              <button class="sw ctl" role="switch" aria-checked="true" aria-describedby="if-h"><i></i><span>Idea features</span></button>
+              <span class="helper" id="if-h">Upvotes, idea types and their fields, and AI assist. On for ordinary boards. <span class="prop">COPY PROPOSED</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bl" style="margin-top:0" role="table" aria-label="Lanes of Continuous Improvement">
+        <div class="ln hd" role="row"><span>Order</span><span>Status</span><span>Kind</span><span>References board</span><span class="adm" style="text-align:right">Lane</span></div>
+
+        <div class="ln" role="row"><span class="ord"><span class="grip adm" aria-label="Drag to reorder">&#8942;&#8942;</span><span class="mono-s">1</span></span><b class="nm">Pending</b>
+          <div class="seg kind ctl" role="radiogroup" aria-label="Kind of Pending"><span role="radio" aria-checked="true">Normal</span><span role="radio" aria-checked="false">Final</span></div>
+          <span><span class="sel ctl" aria-disabled="false"><span>None</span><span class="car">&#9662;</span></span></span>
+          <span class="adm" style="text-align:right"><button class="btn sm ghost">Remove</button></span></div>
+
+        <div class="ln" role="row"><span class="ord"><span class="grip adm">&#8942;&#8942;</span><span class="mono-s">2</span></span><b class="nm">Scoping</b>
+          <div class="seg kind ctl" role="radiogroup" aria-label="Kind of Scoping"><span role="radio" aria-checked="true">Normal</span><span role="radio" aria-checked="false">Final</span></div>
+          <span><span class="sel ctl"><span>None</span><span class="car">&#9662;</span></span></span>
+          <span class="adm" style="text-align:right"><button class="btn sm ghost">Remove</button></span></div>
+
+        <div class="ln" role="row"><span class="ord"><span class="grip adm">&#8942;&#8942;</span><span class="mono-s">3</span></span><b class="nm">Approved for Implementation</b>
+          <div class="seg kind ctl" role="radiogroup" aria-label="Kind of Approved for Implementation"><span role="radio" aria-checked="true">Normal</span><span role="radio" aria-checked="false">Final</span></div>
+          <span><span class="sel ctl"><span>None</span><span class="car">&#9662;</span></span></span>
+          <span class="adm" style="text-align:right"><button class="btn sm ghost">Remove</button></span></div>
+
+        <div class="ln on-row" role="row"><span class="ord"><span class="grip adm">&#8942;&#8942;</span><span class="mono-s">4</span></span><span class="nm"><b>Implementation</b> <span class="refpill">&#8627; board reference</span></span>
+          <div class="seg kind ctl" role="radiogroup" aria-label="Kind of Implementation"><span role="radio" aria-checked="true">Normal</span><span role="radio" aria-checked="false">Final</span></div>
+          <span><span class="sel ctl" aria-disabled="true"><span>Implementation board</span><span class="car">&#9662;</span></span>
+            <span class="why">3 ideas currently sit in Implementation, so this reference can't be changed to another board while they do.</span></span>
+          <span class="adm" style="text-align:right"><button class="btn sm ghost" disabled title="3 ideas sit in this lane">Remove</button></span></div>
+        <div class="ln-sub">
+          <button class="sw ctl" id="auto" role="switch" aria-checked="true" aria-describedby="h-on"><i></i><span>Auto-create one task on entry</span></button>
+          <span class="helper" id="h-on">A card entering this lane gets one task named after it, in the first lane of <b>Implementation board</b> (Pending). The card then waits on it.</span>
+          <span class="helper">Cards already in this lane are not changed.</span>
+        </div>
+
+        <div class="ln" role="row"><span class="ord"><span class="grip adm">&#8942;&#8942;</span><span class="mono-s">5</span></span><b class="nm">Completed</b>
+          <div class="seg kind ctl" role="radiogroup" aria-label="Kind of Completed"><span role="radio" aria-checked="false">Normal</span><span role="radio" aria-checked="true">Final</span></div>
+          <span><span class="sel ctl"><span>None</span><span class="car">&#9662;</span></span></span>
+          <span class="adm" style="text-align:right"><button class="btn sm ghost" disabled title="9 ideas sit in this lane">Remove</button></span></div>
+
+        <div class="ln" role="row"><span class="ord"><span class="grip adm">&#8942;&#8942;</span><span class="mono-s">6</span></span><b class="nm">Declined</b>
+          <div class="seg kind ctl" role="radiogroup" aria-label="Kind of Declined"><span role="radio" aria-checked="false">Normal</span><span role="radio" aria-checked="true">Final</span></div>
+          <span><span class="sel ctl"><span>None</span><span class="car">&#9662;</span></span></span>
+          <span class="adm" style="text-align:right"><button class="btn sm ghost">Remove</button></span></div>
+
+        <div class="ln adm" style="background:var(--facts)"><span class="mono-s">+</span><span class="sel" style="color:var(--muted)"><span>Add a status&hellip;</span><span class="car">&#9662;</span></span><span></span><span></span><span style="text-align:right"><button class="btn sm pri">+ Add status</button></span></div>
+      </div>
+      <div class="note">Kind: <b>Normal</b> or <b>Final</b>. A board may have several Final lanes (here Completed and Declined); only Final lanes count as done, for task rollups and for the lock. Remove is disabled with the reason on a lane that has cards (the guard is <code>laneInUse</code>). <span class="prop">COPY PROPOSED</span> for the Remove reason; the reference reason is comp T's.</div>
+
+      <div class="stage">
+        <div class="frame"><h2><span class="fl">B</span>The References board selector, opened on a lane with no cards</h2>
+          <div class="fb">
+            <div class="menu wide" role="listbox" aria-label="References board for Scoping">
+              <div role="option" class="on"><span class="nmx">None</span></div>
+              <div role="option"><span class="nmx">Implementation board</span></div>
+              <div role="option" aria-disabled="true"><span class="nmx">Release Planning</span><span class="rs">It has a reference lane of its own. Only one level of references is allowed. <span class="prop">COPY PROPOSED</span></span></div>
+              <div role="option" aria-disabled="true"><span class="nmx">Continuous Improvement (this board)</span><span class="rs">A lane can't reference its own board. <span class="prop">COPY PROPOSED</span></span></div>
+            </div>
+            <div class="note">One level at launch (<code>referenceChainNotAllowed</code>, <code>laneReferencesOwnBoard</code>). A board with a reference lane of its own can't be a target, so it is listed but disabled with the reason. Archived boards are not offered at all (<code>referencesBoardInvalid</code>).</div>
+          </div></div>
+
+        <div class="frame"><h2><span class="fl">C</span>Implementation board, the other side of the same rule</h2>
+          <div class="fb">
+            <div class="bl" style="margin:0">
+              <div class="ln hd" role="row"><span>Order</span><span>Status</span><span>Kind</span><span>References board</span><span></span></div>
+              <div class="ln" role="row"><span class="ord"><span class="mono-s">1</span></span><b class="nm">Pending</b><div class="seg kind" aria-label="Kind"><span aria-checked="true" role="radio">Normal</span><span role="radio" aria-checked="false">Final</span></div>
+                <span><span class="sel" aria-disabled="true"><span>None</span><span class="car">&#9662;</span></span></span><span></span></div>
+              <div class="ln" role="row"><span class="ord"><span class="mono-s">4</span></span><b class="nm">Complete</b><div class="seg kind" aria-label="Kind"><span role="radio" aria-checked="false">Normal</span><span role="radio" aria-checked="true">Final</span></div>
+                <span><span class="sel" aria-disabled="true"><span>None</span><span class="car">&#9662;</span></span></span><span></span></div>
+            </div>
+            <span class="why" style="margin-top:0">Implementation is the target of a reference lane on Continuous Improvement, so none of its lanes can reference another board. <span class="prop">COPY PROPOSED</span></span>
+            <div class="note">Every selector on this board is disabled with one reason shown once, above, not repeated per row.</div>
+          </div></div>
+
+        <div class="frame"><h2><span class="fl">D</span>Implementation board fields</h2>
+          <div class="fb">
+            <div class="fields3" style="grid-template-columns:minmax(0,1fr)">
+              <div class="field">
+                <label class="lbl2" for="kp2">Key prefix</label>
+                <span class="in ro"><span aria-hidden="true">&#128274;</span><input id="kp2" value="IMPL" readonly></span>
+                <span class="helper">Locked. Keys IMPL-1 to IMPL-51 have been issued, so the prefix can't change. <span class="prop">COPY PROPOSED</span></span>
+              </div>
+              <div class="sw-line">
+                <button class="sw ctl" role="switch" aria-checked="false" aria-describedby="if2-h"><i></i><span>Idea features</span></button>
+                <span class="helper" id="if2-h">Off, because this board is the target of a reference. Cards here show title, description, assignees, tags, sprint and blockers. An Org Admin can turn it on. <span class="prop">COPY PROPOSED</span></span>
+              </div>
+              <div class="sw-line">
+                <button class="sw ctl" role="switch" aria-checked="true" aria-describedby="sp2-h"><i></i><span>Sprints</span></button>
+                <span class="helper" id="sp2-h">On. The sprint header and sprint chips show on the work board, see screen 3. <span class="prop">COPY PROPOSED</span></span>
+              </div>
+            </div>
+          </div></div>
+
+        <div class="frame"><h2><span class="fl">E</span>A new board, before its first key: the prefix is editable</h2>
+          <div class="fb">
+            <div class="field">
+              <label class="lbl2" for="kp3">Key prefix</label>
+              <span class="in err"><input id="kp3" value="ci-" aria-invalid="true" aria-describedby="kp3-e" maxlength="10"></span>
+              <span class="errtxt" id="kp3-e">Use 2 to 10 letters or digits, A to Z and 0 to 9. <span class="prop">COPY PROPOSED</span></span>
+            </div>
+            <div class="field">
+              <label class="lbl2" for="kp4">Key prefix</label>
+              <span class="in err"><input id="kp4" value="IMPL" aria-invalid="true" aria-describedby="kp4-e" maxlength="10"></span>
+              <span class="errtxt" id="kp4-e">IMPL is already used by another board. <span class="prop">COPY PROPOSED</span> <code>409 keyPrefixTaken</code></span>
+            </div>
+            <div class="field">
+              <label class="lbl2" for="kp5">Key prefix (optional)</label>
+              <span class="in"><input id="kp5" value="OPS" maxlength="10"></span>
+              <span class="helper">Upper-cased as you type. Editable until the first key is issued; leave empty and cards on this board have no key. <span class="prop">COPY PROPOSED</span></span>
+            </div>
+          </div></div>
+      </div>
+
+      <div class="notes"><h3>Notes</h3>
+        <ul>
+          <li>The auto-create switch sits on a second line under the lane row and only on a lane that references a board, exactly as comp T screen 5. Its helper, "Cards already in this lane are not changed." and the auto-off note when the reference is removed are comp T's decided copy (see comp T screen 5, frame A, for the auto-off note).</li>
+          <li><b>Org Admin only.</b> Switch the role above: a User or Read Only sees the same page with every control replaced by its value and no grips, Remove or Add status. The server answers <code>403</code> to anyone else.</li>
+          <li>The Implementation lane's reference selector and Remove are disabled while 3 ideas sit in it (comp T's decided sentence). Comp T drew Remove enabled on that row; comp U follows the guard in <code>20-feature-board-references.md</code> Behavior 6.</li>
+          <li>Key prefix: 2 to 10 characters A-Z0-9, unique per organization. Editable only until the first key is issued, then <code>422 keyPrefixLocked</code>; the locked field shows its reason instead.</li>
+          <li>Idea features defaults on for ordinary boards and off for a board named as a reference target (<code>contracts/boards.md</code>). An Org Admin may change either.</li>
+          <li>Source: <code>20-feature-board-references.md</code> Further decisions (final lane, item keys, idea-only fields, nesting); <code>contracts/boards.md</code> "Board References"; decision "Board References UI" item 5.</li>
+        </ul></div>
+
+      <div class="oq"><b>Open questions</b>
+        <ul>
+          <li><b>Decided 2026-10-19:</b> a Final lane cannot reference a board (<code>422 finalLaneCannotReference</code>); the reference selector is disabled on a Final lane.</li>
+          <li>The first time a lane names a board as a target, that board's Idea features flips to off (<code>contracts/boards.md</code>). Should the Org Admin be told at save (a line under the selector or in the save toast), or is it silent?</li>
+          <li>Archived boards: hidden from the selector (drawn) or listed and disabled with a reason?</li>
+          <li>Changing a lane's Kind to Final or back changes which tasks count as done, and can unlock a parent. Allowed with cards present, with or without a confirmation?</li>
+          <li>Turning Idea features off on a board that already has upvotes, types and field values: allowed? What happens to the stored data and to existing cards?</li>
+          <li><b>Decided 2026-10-19:</b> the sprint header and chips are in this round (screen 3), so the Sprints switch is shown.</li>
+        </ul></div>
+    </div>
+  </section>
+
+  <!-- ============ 2: Idea board ============ -->
+  <section id="v2" class="hide" data-nav="nv-board" aria-labelledby="h1-2">
+    <div class="topbar"><span class="crumb">Boards / <b>Continuous Improvement</b></span></div>
+    <div class="work">
+      <div class="pghead"><div><h1 id="h1-2">Continuous Improvement</h1><p>Ideas move through the lanes. Implementation hands each idea's work to the Implementation board and takes the idea back when that work is done.</p></div><button class="btn pri">+ New idea</button></div>
+
+      <div class="lanes" aria-label="Continuous Improvement board">
+        <div class="lane" style="min-height:360px"><div class="lanehd"><span>Pending</span><small>2</small></div>
+          <div class="kcard"><h4>Dock scheduling app</h4><span class="eff"><span class="effbar e1"><i></i><i></i><i></i></span>Low</span><div class="krow"><span class="kmeta">CI-14</span><span class="avs"><span class="av a4">JB</span></span></div></div>
+          <div class="kcard"><h4>Weekly carrier scorecard</h4><span class="eff"><span class="effbar e2"><i></i><i></i><i></i></span>Medium</span><div class="krow"><span class="kmeta">CI-17</span><span class="avs"><span class="av a3">SM</span></span></div></div></div>
+        <div class="lane" style="min-height:360px"><div class="lanehd"><span>Scoping</span><small>1</small></div>
+          <div class="kcard"><h4>Retire manual badge sign-in</h4><div class="krow"><span class="kmeta">CI-18</span><span class="avs"><span class="av a2">LE</span></span></div></div></div>
+        <div class="lane" style="min-height:360px"><div class="lanehd"><span>Approved</span><small>2</small></div>
+          <div class="kcard ghostdrag" aria-label="CI-24, being dragged to Implementation"><h4>Automate weekly reporting</h4><div class="krow"><span class="kmeta">CI-24</span><span class="avs"><span class="av a1">DK</span></span></div></div>
+          <div class="kcard"><h4>Cross-train dock leads</h4><span class="eff"><span class="effbar e2"><i></i><i></i><i></i></span>Medium</span><div class="krow"><span class="kmeta">CI-25</span><span class="avs"><span class="av a3">SM</span></span></div></div></div>
+        <div class="lane" style="min-height:360px"><div class="lanehd"><span>Implementation</span> <span class="refpill" style="flex:none">&#8627; IMPL</span><small>4</small></div>
+          <div class="kcard fresh" aria-label="CI-23, just entered"><h4>Barcode every returned item</h4>
+            <div class="prog"><i style="width:0%;background:var(--ok)"></i></div>
+            <span class="waiting">&#128274; Waiting on 1 task</span>
+            <span class="eff"><span class="effbar e3"><i></i><i></i><i></i></span>High</span>
+            <div class="krow"><span class="kmeta">CI-23 &middot; 0 of 1 task</span><span class="avs"><span class="av a2">LE</span></span></div></div>
+          <div class="kcard locked nodrag"><h4>Cut onboarding time</h4>
+            <div class="prog"><i style="width:25%;background:var(--ok)"></i></div>
+            <span class="waiting">&#128274; Waiting on 3 tasks</span>
+            <span class="eff"><span class="effbar e2"><i></i><i></i><i></i></span>Medium</span>
+            <div class="krow"><span class="kmeta">CI-19 &middot; 1 of 4 tasks</span><span class="avs"><span class="av a1">DK</span></span></div></div>
+          <div class="kcard locked nodrag"><h4>Buddy program</h4>
+            <div class="prog"><i style="width:67%;background:var(--ok)"></i></div>
+            <span class="waiting">&#128274; Waiting on 1 task</span>
+            <span class="eff"><span class="effbar e1"><i></i><i></i><i></i></span>Low</span>
+            <div class="krow"><span class="kmeta">CI-21 &middot; 2 of 3 tasks</span><span class="avs"><span class="av a3">SM</span></span></div></div>
+          <div class="kcard locked nodrag"><h4>Migrate course catalog</h4>
+            <div class="prog"><i style="width:0%;background:var(--ok)"></i></div>
+            <span class="waiting">&#128274; Waiting on 1 task</span>
+            <span class="eff"><span class="effbar e3"><i></i><i></i><i></i></span>High</span>
+            <div class="krow"><span class="kmeta">CI-22 &middot; 0 of 1 task</span><span class="avs"><span class="av a4">JB</span></span></div></div></div>
+        <div class="lane" style="min-height:360px"><div class="lanehd"><span>Completed</span><small>1</small></div>
+          <div class="kcard"><h4>Retire paper timesheets</h4><span class="eff"><span class="effbar e2"><i></i><i></i><i></i></span>Medium</span><div class="krow"><span class="kmeta">CI-12</span><span class="avs"><span class="av a1">DK</span></span></div></div></div>
+      </div>
+      <div class="note">CI-24 is shown mid-drag from Approved toward Implementation. It has no Effort, so the bar is absent (the bar shows whenever Effort is set). CI-23 has just entered with its task auto-created. The lock badge and the progress bar are comp T's.</div>
+
+      <div class="stage">
+        <div class="frame"><h2><span class="fl">A</span>A card just entered, task auto-created</h2>
+          <div class="fb">
+            <div class="kcard fresh" style="max-width:280px"><h4>Barcode every returned item</h4>
+              <div class="prog"><i style="width:0%;background:var(--ok)"></i></div>
+              <span class="waiting">&#128274; Waiting on 1 task</span>
+              <span class="eff"><span class="effbar e3"><i></i><i></i><i></i></span>High</span>
+              <div class="krow"><span class="kmeta">CI-23 &middot; 0 of 1 task</span><span class="avs"><span class="av a2">LE</span></span></div></div>
+            <div class="toast ok" role="status"><span style="font-weight:700;color:var(--ok-t)">&#10003;</span><div><b>Task created <span class="prop">COPY PROPOSED</span></b>IMPL-51 &ldquo;Barcode every returned item&rdquo; was added to Pending on the Implementation board.</div></div>
+            <div class="note">The lane's switch is on, so the move created one task named after the card, in the first lane of the Implementation board (comp T screen 5). The card then waits on it: lock badge, "0 of 1 task", unlocked once IMPL-51 reaches a Final lane. The highlight is the one-off confirmation and fades; the toast is proposed, nothing in the specs asks for it.</div>
+          </div></div>
+
+        <div class="frame"><h2><span class="fl">B</span>Dragging a card with no Effort into the reference lane</h2>
+          <div class="fb">
+            <div class="toast" role="alert"><span style="font-weight:700;color:var(--hot-t)">&#9888;</span><div><b>Can't move CI-24 <span class="prop">COPY PROPOSED</span></b>Add Effort to &lsquo;Automate weekly reporting&rsquo; before moving it to Implementation.
+              <span class="acts"><button class="btn sm pri">Add effort</button><button class="btn sm ghost">Dismiss</button></span></div></div>
+            <div class="note">Effort is required to enter any reference lane (<code>422 effortRequiredForReferenceLane</code>). The card goes back to Approved. "Add effort" opens the idea drawer on the Effort field (screen 5); the person then drags the card again. The server's message is not specified; the text above is proposed. The same text answers a status change made in the drawer.</div>
+          </div></div>
+
+        <div class="frame"><h2><span class="fl">C</span>How the person tells why it failed, and fixes it</h2>
+          <div class="fb">
+            <ol style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--ink2)">
+              <li>Drop on Implementation. The toast in B names the card, the missing field and the lane.</li>
+              <li>Press <b>Add effort</b>. The drawer opens on the Effort field with the error state from screen 5, frame C.</li>
+              <li>Choose Low, Medium or High and Save. The card shows its Effort bar on the board.</li>
+              <li>Drag it to Implementation again. It enters, and the lane's switch creates the task (frame A).</li>
+            </ol>
+            <div class="note">A person who sets Effort first never sees the toast: the drawer's helper under Effort (screen 5) says it is needed for Implementation.</div>
+          </div></div>
+
+        <div class="frame"><h2><span class="fl">D</span>Reference-lane cards, closer</h2>
+          <div class="fb">
+            <div class="kcard locked nodrag" style="max-width:280px"><h4>Cut onboarding time</h4>
+              <div class="prog"><i style="width:25%;background:var(--ok)"></i></div>
+              <span class="waiting">&#128274; Waiting on 3 tasks</span>
+              <span class="eff"><span class="effbar e2"><i></i><i></i><i></i></span>Medium</span>
+              <div class="krow"><span class="kmeta">CI-19 &middot; 1 of 4 tasks</span><span class="avs"><span class="av a1">DK</span></span></div></div>
+            <div class="tip" role="tooltip">Waiting on 3 tasks</div>
+            <div class="note">As comp T screen 4: not draggable, other lanes do not accept a drop, tooltip on press. The key sits with the rollup, "CI-19 &middot; 1 of 4 tasks". The progress bar is tasks done of total. Effort sits on its own line under the badge, so the card reads title, progress, wait, effort, then key and assignee.</div>
+          </div></div>
+      </div>
+
+      <div class="notes"><h3>Notes</h3>
+        <ul>
+          <li><b>Item keys.</b> Every card carries its key (CI-19) in the meta line, from the board's key prefix. A board with no prefix shows no key.</li>
+          <li><b>Effort</b> shows as comp R's three-segment bar plus the word, on every card that has one, in every lane (<code>contracts/ideas.md</code>: it shows whenever it is set). A card with no Effort shows nothing there.</li>
+          <li>The lock and "N of M tasks" show only in the reference lane, on a card that has tasks. A card with no tasks shows "0 tasks" and moves freely (comp T screen 4 note).</li>
+          <li>The lane header shows the reference as the same pill the Statuses page uses, "&#8627; IMPL". <span class="prop">COPY PROPOSED</span></li>
+          <li>Source: decisions "Board References replace the Delivery phase" (Entry condition: Effort is required to enter any reference lane; no per-lane rules) and "A reference lane locks its card"; <code>contracts/ideas.md</code> "Tasks and item keys".</li>
+        </ul></div>
+
+      <div class="oq"><b>Open questions</b>
+        <ul>
+          <li><b>Decided 2026-10-19:</b> a card with no Effort is refused up front on a reference lane: no drop target, tooltip "Add Effort first". No toast, so the toast frame drawn below is superseded and its "Add effort" retry question is moot. The server rule stays as the backstop.</li>
+          <li>Should a card with no Effort show a muted hint (for example "No effort") in the lane before a reference lane, or stay silent as drawn?</li>
+          <li>The rule is stated for a move. Does it also bind a pull (<code>pullItemIds</code>) and a bulk lane move (<code>ideaMoves</code>) into a reference lane, and where is the refusal shown in those flows?</li>
+          <li>Is the "Task created" toast wanted at all, or is the highlighted card and "0 of 1 task" enough?</li>
+          <li>Singular and zero forms of the rollup: "0 of 1 task" and "1 of 4 tasks" are drawn; comp T only drew the plural.</li>
+        </ul></div>
+    </div>
+  </section>
+
+  <!-- ============ 3: Work board ============ -->
+  <section id="v3" class="hide" data-nav="nv-board" aria-labelledby="h1-3">
+    <div class="topbar"><span class="crumb">Boards / <b>Implementation</b></span></div>
+    <div class="work">
+      <div class="pghead"><div><h1 id="h1-3">Implementation</h1><p>Tasks from every idea that reaches Implementation on Continuous Improvement, plus standalone work.</p></div></div>
+
+      <div class="deferred" aria-label="Deferred, not in this round">
+        <span class="defer-tag">IN THIS ROUND (decided 2026-10-19) &middot; sprint header &middot; backend reads still to be specified</span>
+        <div class="ghostin" aria-hidden="true">
+          <dl class="sprhd" style="margin:0">
+            <div><dt>SPRINT 14</dt><dd>Oct 12 &ndash; Oct 25 <span class="badge ok" style="margin-left:6px">ACTIVE</span></dd></div>
+            <div><dt>TASKS</dt><dd>9 &middot; 4 done</dd></div>
+            <div><dt>IDEAS</dt><dd>3</dd></div>
+            <div><dt>ENDS IN</dt><dd>10 days</dd></div>
+          </dl>
+        </div>
+        <div class="note" style="margin-top:8px">Comp S's header, unchanged: sprint name and dates, task and idea counts, time left. It would appear above the lanes when the board's Sprints switch is on, with a Sprint | Backlog toggle and sprint chips on cards. Included in this round by the owner's 2026-10-19 answer; the reads it needs are open items in <code>decisions.md</code>.</div>
+      </div>
+
+      <div class="lanes l4" aria-label="Implementation board">
+        <div class="lane" style="min-height:420px"><div class="lanehd"><span>Pending</span><small>3</small></div>
+          <div class="kcard blocked"><h4>Measure time to first shipment</h4>
+            <span class="lock">&#128274; blocked by IMPL-48 +1</span>
+            <div class="krow"><span class="kmeta">IMPL-49</span><a class="pchip" href="#s2" onclick="go(2);return false" title="Open CI-19 on Continuous Improvement">&#8627; CI-19</a></div></div>
+          <div class="kcard blocked"><h4>Update LMS courses</h4>
+            <span class="lock">&#128274; blocked by IMPL-49</span>
+            <div class="krow"><span class="kmeta">IMPL-50</span><a class="pchip" href="#s2" onclick="go(2);return false" title="Open CI-19 on Continuous Improvement">&#8627; CI-19</a></div>
+            <div class="krow"><span></span><span class="avs"><span class="av a3">SM</span></span></div></div>
+          <div class="kcard fresh"><h4>Barcode every returned item</h4>
+            <div class="krow"><span class="kmeta">IMPL-51</span><a class="pchip" href="#s2" onclick="go(2);return false" title="Open CI-23 on Continuous Improvement">&#8627; CI-23</a></div></div></div>
+        <div class="lane" style="min-height:420px"><div class="lanehd"><span>In Progress</span><small>3</small></div>
+          <div class="kcard"><h4>Train regional managers</h4>
+            <div class="krow"><span class="kmeta">IMPL-48</span><a class="pchip" href="#s2" onclick="go(2);return false" title="Open CI-19 on Continuous Improvement">&#8627; CI-19</a></div>
+            <div class="krow"><span></span><span class="avs"><span class="av a2">LE</span><span class="av a1">DK</span></span></div></div>
+          <div class="kcard"><h4>Migrate course catalog</h4>
+            <div class="krow"><span class="kmeta">IMPL-46</span><a class="pchip" href="#s2" onclick="go(2);return false" title="Open CI-22 on Continuous Improvement">&#8627; CI-22</a></div>
+            <div class="krow"><span></span><span class="avs"><span class="av a4">JB</span></span></div></div>
+          <div class="kcard"><h4>Replace badge printer</h4>
+            <div class="krow"><span class="kmeta">IMPL-47</span><span class="avs"><span class="av a1">DK</span></span></div></div></div>
+        <div class="lane" style="min-height:420px"><div class="lanehd"><span>Review</span><small>1</small></div>
+          <div class="kcard"><h4>Choose buddy matching rules</h4>
+            <div class="krow"><span class="kmeta">IMPL-44</span><a class="pchip" href="#s2" onclick="go(2);return false" title="Open CI-21 on Continuous Improvement">&#8627; CI-21</a></div>
+            <div class="krow"><span></span><span class="avs"><span class="av a3">SM</span></span></div></div></div>
+        <div class="lane" style="min-height:420px"><div class="lanehd"><span>Complete</span><small>1</small></div>
+          <div class="kcard"><h4>Draft the onboarding SOP</h4>
+            <div class="krow"><span class="kmeta">IMPL-45</span><a class="pchip" href="#s2" onclick="go(2);return false" title="Open CI-19 on Continuous Improvement">&#8627; CI-19</a></div>
+            <div class="krow"><span><span class="badge ok">DONE</span></span><span class="avs"><span class="av a1">DK</span></span></div></div></div>
+      </div>
+      <div class="note">Complete is this board's Final lane. IMPL-51 is highlighted because it was just auto-created from CI-23 (screen 2). IMPL-47 is standalone: it has its own key and no parent chip, and is simply not part of any idea's rollup.</div>
+
+      <div class="stage">
+        <div class="frame"><h2><span class="fl">A</span>The three kinds of card</h2>
+          <div class="fb">
+            <div class="kcard"><h4>Train regional managers</h4>
+              <div class="krow"><span class="kmeta">IMPL-48</span><a class="pchip" href="#s2" onclick="go(2);return false">&#8627; CI-19</a></div></div>
+            <div class="note">A task: its own key, and the <code>&#8627; parent key</code> chip. The chip is a link: it opens the parent on its own board. The same chip heads the task drawer (comp T screen 3).</div>
+            <div class="kcard blocked"><h4>Measure time to first shipment</h4>
+              <span class="lock">&#128274; blocked by IMPL-48 +1</span>
+              <div class="krow"><span class="kmeta">IMPL-49</span><a class="pchip" href="#s2" onclick="go(2);return false">&#8627; CI-19</a></div></div>
+            <div class="note">A blocked task: dashed and dimmed as in comp S, with the blocker's key spelled out in the badge. It cannot leave Pending until both its blockers, IMPL-48 and IMPL-46, are in Final lanes (screen 6). <span class="prop">COPY PROPOSED</span> "blocked by IMPL-48"; comp S drew only "blocked".</div>
+            <div class="kcard"><h4>Replace badge printer</h4>
+              <div class="krow"><span class="kmeta">IMPL-47</span><span class="avs"><span class="av a1">DK</span></span></div></div>
+            <div class="note">Standalone: no parent chip. Nothing marks it as standalone; the absence of the chip is the signal.</div>
+          </div></div>
+
+        <div class="frame"><h2><span class="fl">B</span>A card with more than one blocker</h2>
+          <div class="fb">
+            <div class="kcard blocked"><h4>Measure time to first shipment</h4>
+              <span class="lock">&#128274; blocked by IMPL-48 +1</span>
+              <div class="krow"><span class="kmeta">IMPL-49</span><a class="pchip" href="#s2" onclick="go(2);return false">&#8627; CI-19</a></div></div>
+            <div class="note">The same card shown with its blockers cleared. With several open blockers the badge names the first one and counts the rest (the full list is in the task drawer, screen 6). <span class="prop">COPY PROPOSED</span> "+1" form.</div>
+            <div class="kcard"><h4>Measure time to first shipment</h4>
+              <span class="badge ok">UNBLOCKED</span>
+              <div class="krow"><span class="kmeta">IMPL-49</span><a class="pchip" href="#s2" onclick="go(2);return false">&#8627; CI-19</a></div></div>
+            <div class="note">When the last blocker reaches a Final lane the lock badge disappears and the card is normal. No "UNBLOCKED" badge is drawn in the board itself; this one is shown only to mark the change. <span class="prop">COPY PROPOSED</span> (a pure illustration, not a request).</div>
+          </div></div>
+
+        <div class="frame"><h2><span class="fl">C</span>What a work board does not show</h2>
+          <div class="fb">
+            <div class="absent"><b style="color:var(--ink2)">Idea features are off on this board, so cards carry no:</b> <s>upvote count</s>, <s>idea type</s>, <s>Effort bar</s>, <s>Outcome</s>. Cards show title, key, parent chip, assignees, tags, sprint and blockers only.</div>
+            <div class="note">Tags and sprint chips, when set, take the same place as on any card. Sprint chips are part of the deferred sprint pieces.</div>
+          </div></div>
+      </div>
+
+      <div class="notes"><h3>Notes</h3>
+        <ul>
+          <li>Tasks carry their <b>own keys</b> from this board's prefix (IMPL-48), not their parent's. The parent's key appears only in the chip.</li>
+          <li>The board's lanes are the board's own: Pending, In Progress, Review, Complete. Complete is Final. A task entering the board starts in the first lane (Pending).</li>
+          <li>Standalone cards are allowed on a work board and appear in the same lanes (decision 2026-10-15). Creating one uses the existing board create flow, unchanged.</li>
+          <li>A task is edited only in its task fields; its status changes by drag or from the drawer's status select (comp T screen 3).</li>
+          <li>Source: decisions "Board References replace the Delivery phase" and "Further decisions" (item keys, idea-only fields per board); <code>contracts/ideas.md</code> "Tasks and item keys".</li>
+        </ul></div>
+
+      <div class="oq"><b>Open questions</b>
+        <ul>
+          <li><b>Decided 2026-10-19:</b> the sprint header and chips are included in this round, not deferred. The ghost below is to be drawn live; the backend gaps (card sprint read, header counts, putting a task in a sprint) are recorded in <code>decisions.md</code> for the tracker.</li>
+          <li><b>Decided 2026-10-19:</b> the blocked badge shows only while the task sits in its first lane; a blocker added later is allowed and shows no badge.</li>
+          <li>The blocked badge on a card with several blockers: first open blocker plus a count (drawn), or just "blocked by 2"?</li>
+          <li>Should the board offer a filter for "only tasks" or "only standalone"? Nothing in the specs asks for one.</li>
+        </ul></div>
+    </div>
+  </section>
+
+  <!-- ============ 4: Parent drawer, Tasks ============ -->
+  <section id="v4" class="hide" data-nav="nv-board" aria-labelledby="h1-4">
+    <div class="topbar"><span class="crumb">Boards / Continuous Improvement / <b>CI-19</b></span></div>
+    <div class="work">
+      <div class="pghead"><div><h1 id="h1-4">Parent drawer, Tasks section</h1><p>The idea's drawer while it sits in the reference lane. Tasks are listed, added and followed here; the lock and the completion prompt come from the tasks' states.</p></div></div>
+
+      <div class="stage">
+        <aside class="drawer static" aria-label="Idea drawer, CI-19">
+          <div class="dhead"><div><div class="eb">CI-19 &middot; CONTINUOUS IMPROVEMENT</div><h2>Cut onboarding time</h2></div><span class="sp"></span><button class="btn ghost sm">Close</button></div>
+          <div class="dbody">
+            <div class="chiprow"><span class="chip pri"><span class="dot" style="background:var(--pri)"></span>Implementation</span><span class="waiting">&#128274; Waiting on 3 tasks</span><span class="eff"><span class="effbar e2"><i></i><i></i><i></i></span>Medium</span></div>
+
+            <div class="sect">
+              <div class="sechd"><h3>Tasks</h3><span class="mono-s">1 of 4 done</span><span class="sp"></span><button class="btn sm" aria-expanded="true">+ Add task</button></div>
+              <div class="panel">
+                <div class="trow"><span class="ck ok" aria-label="Done">&#10003;</span>
+                  <span class="ti"><a href="#s4" onclick="return false"><span class="done-t">Draft the onboarding SOP</span></a><span class="sub"><span class="mono-s">IMPL-45</span><span class="auto-t">auto-created</span></span></span>
+                  <span class="av a1" title="Dana Kim">DK</span><span class="st c"><span class="dot" style="background:var(--ok)"></span>Complete</span></div>
+                <div class="trow"><span class="ck ip" aria-label="In progress"></span>
+                  <span class="ti"><a href="#s4" onclick="return false">Train regional managers</a><span class="sub"><span class="mono-s">IMPL-48</span></span></span>
+                  <span class="avs"><span class="av a2" title="Lee Evans">LE</span></span><span class="st p"><span class="dot" style="background:var(--pri)"></span>In Progress</span></div>
+                <div class="trow"><span class="ck" aria-label="Open"></span>
+                  <span class="ti"><a href="#s4" onclick="return false">Measure time to first shipment</a><span class="sub"><span class="mono-s">IMPL-49</span><span class="lock">&#128274; blocked by IMPL-48 +1</span></span></span>
+                  <span class="av a3" title="Sam Mora">SM</span><span class="st a"><span class="dot" style="background:var(--muted)"></span>Pending</span></div>
+                <div class="trow"><span class="ck" aria-label="Open"></span>
+                  <span class="ti"><a href="#s4" onclick="return false">Update LMS courses</a><span class="sub"><span class="mono-s">IMPL-50</span><span class="lock">&#128274; blocked by IMPL-49</span></span></span>
+                  <span class="av a3" title="Sam Mora">SM</span><span class="st a"><span class="dot" style="background:var(--muted)"></span>Pending</span></div>
+
+                <div class="addform" role="group" aria-label="Add task">
+                  <div class="field"><label class="lbl2" for="at-title">Title (required)</label><span class="in"><input id="at-title" value="Collect first-shipment baselines"></span></div>
+                  <div class="field"><label class="lbl2" for="at-desc">Description</label><span class="in ta"><textarea id="at-desc" rows="2" placeholder="What needs doing"></textarea></span></div>
+                  <div class="field"><span class="lbl2">Assignees</span><div class="tagrow"><button class="btn sm ghost">+ Assign</button></div></div>
+                  <div class="field"><span class="lbl2">Tags</span><div class="tagrow"><button class="btn sm ghost">+ Tag</button></div></div>
+                  <span class="helper">It will start in the first lane of the Implementation board (Pending), with its own key. <span class="prop">COPY PROPOSED</span></span>
+                  <div style="display:flex;gap:8px"><button class="btn pri sm">Add task</button><button class="btn sm">Cancel</button></div>
+                </div>
+              </div>
+              <div class="note" style="margin-top:6px">Each row: done state, title and key, assignee, the task's own lane. The title opens the task drawer (comp T screen 3). Rows follow creation order. Dragging a task to a Final lane on its board ticks the row here.</div>
+            </div>
+            <div class="note">The drawer's other sections (Details, Value, Comments) are unchanged and not redrawn.</div>
+          </div>
+          <div class="dfoot"><button class="btn pri">Save changes</button><button class="btn">Cancel</button></div>
+        </aside>
+
+        <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+          <div class="frame"><h2><span class="fl">B</span>Every task is complete: the completion prompt</h2>
+            <div class="fb">
+              <div class="chiprow"><span class="chip pri"><span class="dot" style="background:var(--pri)"></span>Implementation</span><span class="mono-s">4 of 4 tasks</span></div>
+              <div class="suggest"><span class="mono" style="color:var(--suggest)">&#10022;</span><div><b>All 4 tasks are complete.</b> Move to Completed?</div><span class="sp"></span><button class="btn sm pri">Move</button><button class="btn sm ghost">Not yet</button></div>
+              <div class="panel">
+                <div class="trow"><span class="ck ok">&#10003;</span><span class="ti"><span class="done-t">Draft the onboarding SOP</span><span class="sub"><span class="mono-s">IMPL-45</span></span></span><span class="av a1">DK</span><span class="st c"><span class="dot" style="background:var(--ok)"></span>Complete</span></div>
+                <div class="trow"><span class="ck ok">&#10003;</span><span class="ti"><span class="done-t">Train regional managers</span><span class="sub"><span class="mono-s">IMPL-48</span></span></span><span class="av a2">LE</span><span class="st c"><span class="dot" style="background:var(--ok)"></span>Complete</span></div>
+                <div class="trow"><span class="ck ok">&#10003;</span><span class="ti"><span class="done-t">Measure time to first shipment</span><span class="sub"><span class="mono-s">IMPL-49</span></span></span><span class="av a3">SM</span><span class="st c"><span class="dot" style="background:var(--ok)"></span>Complete</span></div>
+                <div class="trow"><span class="ck ok">&#10003;</span><span class="ti"><span class="done-t">Update LMS courses</span><span class="sub"><span class="mono-s">IMPL-50</span></span></span><span class="av a3">SM</span><span class="st c"><span class="dot" style="background:var(--ok)"></span>Complete</span></div>
+              </div>
+              <div class="note">Shown when every task is in a Final lane. The lock is gone, nothing moves by itself, and a person confirms. The prompt sits at the top of the drawer. <b>Not yet</b> dismisses it for now; the card stays where it is. The next status is the lane after the reference lane.</div>
+            </div></div>
+
+          <div class="frame"><h2><span class="fl">C</span>Adding a task to an idea already past the reference lane</h2>
+            <div class="fb">
+              <div class="dlg" role="dialog" aria-labelledby="mb-t" style="max-width:460px">
+                <div class="dlg-h"><h3 id="mb-t">Move back to Implementation?</h3></div>
+                <div class="dlg-b"><span>&lsquo;Cut onboarding time&rsquo; (CI-19) is in Completed. A task can only be added while it is in Implementation. <span class="prop">COPY PROPOSED</span></span></div>
+                <div class="dlg-f"><button class="btn">Cancel</button><button class="btn pri">Move back</button></div>
+              </div>
+              <div class="note">Spec Behavior 5 sets the prompt's title, "Move back to &lt;status&gt;?"; the body and buttons are proposed. The server refuses a task on an idea outside the lane (<code>422 parentNotInReferenceLane</code>), so the person moves it back first, then adds. Entering the lane is an ordinary entry (see the open question).</div>
+            </div></div>
+
+          <div class="frame"><h2><span class="fl">D</span>Auto-created task, lane with the switch on</h2>
+            <div class="fb">
+              <div class="chiprow"><span class="chip pri"><span class="dot" style="background:var(--pri)"></span>Implementation</span><span class="waiting">&#128274; Waiting on 1 task</span></div>
+              <div class="panel">
+                <div class="trow"><span class="ck" aria-label="Open"></span>
+                  <span class="ti"><a href="#s4" onclick="return false">Barcode every returned item</a><span class="sub"><span class="mono-s">IMPL-51</span><span class="auto-t">auto-created</span></span></span>
+                  <span class="avs"><span class="av a2">LE</span></span><span class="st a"><span class="dot" style="background:var(--muted)"></span>Pending</span></div>
+              </div>
+              <div class="note">The task takes the card's title and starts in Pending. "auto-created" is a quiet tag so a person knows it was not typed in. <span class="prop">COPY PROPOSED</span> Further tasks can still be added by hand with + Add task.</div>
+            </div></div>
+
+          <div class="notes"><h3>Notes</h3>
+            <ul>
+              <li><b>+ Add task</b> takes task fields only: title (required), description, assignees, tags. Nothing else is asked or sent (<code>POST /ideas/{ideaId}/board-tasks</code>). Sprint and blockers are set afterwards from the task's own drawer.</li>
+              <li><b>Who may add:</b> anyone who may edit the parent. Read Only sees the list and no + Add task; a direct Site Admin sees the section through View As only.</li>
+              <li><b>Blocked-by chips</b> in the list are the same lock badge as the board's, spelling the blocker's key. Adding or removing blockers is screen 6.</li>
+              <li><b>Done state.</b> The tick and strike-through mean "in a Final lane" (<code>blockedBy.isFinal</code>, <code>taskCounts.done</code>), not a separate checkbox; ticking is not a control here.</li>
+              <li><b>Lock.</b> While any row is open the card shows "Waiting on N tasks" and the lock behaves as comp T screen 4. An Org Admin's "Move anyway" is not repeated here.</li>
+              <li>Source: <code>20-feature-board-references.md</code> Behavior 1 to 5; <code>contracts/ideas.md</code> "Tasks and item keys".</li>
+            </ul></div>
+        </div>
+      </div>
+
+      <div class="oq"><b>Open questions</b>
+        <ul>
+          <li><b>Decided 2026-10-19:</b> moving the idea back into an auto-create lane creates no second automatic task; auto-create is skipped when the idea already has a task on the referenced board.</li>
+          <li>Opening a task from this list: a second drawer stacked on this one, or a switch to the Implementation board? Comp T only drew the task drawer on its own.</li>
+          <li>Can a task be removed from its parent here, or deleted? The specs only say an idea with live tasks cannot be deleted.</li>
+          <li>Read Only: hide + Add task (drawn in the notes) or show it disabled with a reason?</li>
+          <li>Row order: creation order (drawn) or by lane?</li>
+        </ul></div>
+    </div>
+  </section>
+
+  <!-- ============ 5: Idea form, Effort ============ -->
+  <section id="v5" class="hide" data-nav="nv-board" aria-labelledby="h1-5">
+    <div class="topbar"><span class="crumb">Boards / Continuous Improvement / <b>New idea</b></span></div>
+    <div class="work">
+      <div class="pghead"><div><h1 id="h1-5">Idea form, Effort</h1><p>Effort is optional to save and required to enter a reference lane. The field sits directly under Title, where the Delivery group was.</p></div></div>
+
+      <div class="stage">
+        <aside class="drawer static" aria-label="New idea, Continuous Improvement">
+          <div class="dhead"><div><div class="eb">NEW IDEA &middot; CONTINUOUS IMPROVEMENT</div><h2>Automate weekly reporting</h2></div><span class="sp"></span><button class="btn ghost sm">Close</button></div>
+          <div class="dbody">
+            <div class="field"><label class="lbl2" for="i-title">Title</label><span class="in"><input id="i-title" value="Automate weekly reporting"></span></div>
+
+            <div class="field eff-in" data-eff>
+              <span class="lbl2" id="ef-l">Effort</span>
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <div class="seg kind" role="radiogroup" aria-labelledby="ef-l" aria-describedby="ef-h">
+                  <span role="radio" aria-checked="false" tabindex="0">Low</span><span role="radio" aria-checked="false" tabindex="0">Medium</span><span role="radio" aria-checked="false" tabindex="0">High</span></div>
+                <span class="eff" data-prev></span>
+                <button class="btn sm ghost" data-clear hidden>Clear</button>
+              </div>
+              <span class="helper" id="ef-h">Low, Medium or High. Needed before this idea can move into Implementation. <span class="prop">COPY PROPOSED</span></span>
+            </div>
+
+            <div class="field"><label class="lbl2" for="i-desc">Description</label><span class="in ta"><textarea id="i-desc" rows="3">Replace the Friday spreadsheet with a scheduled export.</textarea></span></div>
+            <div class="note">Below, unchanged: Problem, Proposed solutions, Impact rationale, Priority, Idea type, Business impact, Tags, Assignees, Due date. Idea types and their fields only appear because Idea features are on for this board.</div>
+          </div>
+          <div class="dfoot"><button class="btn pri">Create idea</button><button class="btn">Cancel</button></div>
+        </aside>
+
+        <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+          <div class="frame"><h2><span class="fl">B</span>Chosen</h2>
+            <div class="fb">
+              <div class="field eff-in" data-eff>
+                <span class="lbl2" id="ef2-l">Effort</span>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                  <div class="seg kind" role="radiogroup" aria-labelledby="ef2-l">
+                    <span role="radio" aria-checked="false" tabindex="0">Low</span><span role="radio" aria-checked="true" tabindex="0">Medium</span><span role="radio" aria-checked="false" tabindex="0">High</span></div>
+                  <span class="eff" data-prev><span class="effbar e2"><i></i><i></i><i></i></span>Medium</span>
+                  <button class="btn sm ghost" data-clear>Clear</button>
+                </div>
+                <span class="helper">Low, Medium or High. Needed before this idea can move into Implementation. <span class="prop">COPY PROPOSED</span></span>
+              </div>
+              <div class="note">The bar is the one on the cards (screen 2), so the choice reads the same everywhere. Press a choice to try it; <b>Clear</b> removes it (the API takes <code>null</code> to clear and an absent key to leave it alone).</div>
+            </div></div>
+
+          <div class="frame"><h2><span class="fl">C</span>After a move was refused: the error state</h2>
+            <div class="fb">
+              <div class="field eff-in">
+                <span class="lbl2" id="ef3-l">Effort</span>
+                <div class="seg kind" role="radiogroup" aria-labelledby="ef3-l" aria-invalid="true" aria-describedby="ef3-e" style="outline:1px solid var(--hot);outline-offset:2px;align-self:flex-start">
+                  <span role="radio" aria-checked="false" tabindex="0">Low</span><span role="radio" aria-checked="false" tabindex="0">Medium</span><span role="radio" aria-checked="false" tabindex="0">High</span></div>
+                <span class="errtxt" id="ef3-e" role="alert">Add Effort to move this idea to Implementation. <span class="prop">COPY PROPOSED</span></span>
+              </div>
+              <div class="note">Reached from the toast's "Add effort" on screen 2. The drawer opens with this error already showing and Effort focused; the message clears as soon as a choice is made. It is the same refusal as the toast, reduced to the field.</div>
+            </div></div>
+
+          <div class="frame"><h2><span class="fl">D</span>A board with no reference lane</h2>
+            <div class="fb">
+              <div class="field eff-in">
+                <span class="lbl2" id="ef4-l">Effort</span>
+                <div class="seg kind" role="radiogroup" aria-labelledby="ef4-l" style="align-self:flex-start">
+                  <span role="radio" aria-checked="false" tabindex="0">Low</span><span role="radio" aria-checked="false" tabindex="0">Medium</span><span role="radio" aria-checked="false" tabindex="0">High</span></div>
+                <span class="helper">Optional. <span class="prop">COPY PROPOSED</span></span>
+              </div>
+              <div class="note">The "needed before Implementation" line names the lane, so it only appears on a board that has a reference lane. Effort still shows on cards whenever it is set.</div>
+            </div></div>
+
+          <div class="absent"><b style="color:var(--ink2)">Not on a task, so not drawn:</b> <s>Effort</s>. It is <code>null</code> on a task and never sent (comp T screen 3), because a task never enters a reference lane. An idea-board card is the only thing that carries it.</div>
+
+          <div class="notes"><h3>Notes</h3>
+            <ul>
+              <li><b>Required where?</b> Not to create or save an idea. Only to move into a reference lane (<code>422 effortRequiredForReferenceLane</code>). Nothing else is gated on it; there are no per-lane rules.</li>
+              <li><b>Values.</b> <code>Low</code>, <code>Medium</code>, <code>High</code>: T-shirt sizing, not story points (<code>20-feature-issues-and-delivery.md</code>).</li>
+              <li><b>Placement.</b> Directly under Title, as the 2026-10-15 decision "The Delivery group stays directly under Title" fixed for the Issue form. The Delivery group's Sprint field is not drawn; sprints are deferred.</li>
+              <li>The same control appears wherever an idea is edited: new idea, edit idea, and the drawer's Details.</li>
+              <li>Source: decision "Board References replace the Delivery phase" (Further decisions, Entry condition); <code>contracts/ideas.md</code> "Tasks and item keys", create and update bodies.</li>
+              <li><b>Spec text to correct.</b> <code>contracts/ideas.md</code> still says <code>effort</code> "may only be set while the idea is in the Discovery phase", which the removal of phases makes stale. Drawn here as settable at any time.</li>
+            </ul></div>
+        </div>
+      </div>
+
+      <div class="oq"><b>Open questions</b>
+        <ul>
+          <li><b>Decided 2026-10-19:</b> Effort on a card in a reference lane can be changed, not cleared (<code>422 effortRequiredInReferenceLane</code>).</li>
+          <li>Should the "needed before Implementation" helper show only on boards with a reference lane (drawn), or always?</li>
+          <li>Confirm the placement under Title for board ideas, or after the idea fields.</li>
+          <li>Is choosing Effort in the form the only route, or should the card menu also offer "Set effort" for a quicker fix from the board?</li>
+        </ul></div>
+    </div>
+  </section>
+
+  <!-- ============ 6: Blockers ============ -->
+  <section id="v6" class="hide" data-nav="nv-board" aria-labelledby="h1-6">
+    <div class="topbar"><span class="crumb">Boards / Implementation / <b>IMPL-49</b></span></div>
+    <div class="work">
+      <div class="pghead"><div><h1 id="h1-6">Blockers</h1><p>A "blocked by" link says one task cannot start until another is final. No links means parallel. A blocked task cannot leave its board's first lane.</p></div></div>
+
+      <div class="stage">
+        <aside class="drawer static" aria-label="Task drawer, IMPL-49">
+          <div class="dhead"><div><div class="eb">IMPL-49 &middot; IMPLEMENTATION</div><h2>Measure time to first shipment</h2></div><span class="sp"></span><button class="btn ghost sm">Close</button></div>
+          <div class="dbody">
+            <div class="chiprow"><a class="plink" href="#s2" onclick="go(2);return false">&#8627; CI-19 &middot; Cut onboarding time</a></div>
+            <div class="field"><span class="lbl2" id="b-st-l">Status</span><span class="sel" role="combobox" aria-labelledby="b-st-l" aria-expanded="false"><span class="chip mute"><span class="dot" style="background:var(--muted)"></span>Pending</span><span class="car">&#9662;</span></span></div>
+
+            <div class="sect">
+              <div class="sechd"><h3>Blockers</h3><span class="mono-s">saves on its own</span></div>
+              <div class="chiprow" id="bl-chips">
+                <span class="bchip" data-k="IMPL-48">&#128274; IMPL-48 &middot; Train regional managers &middot; In Progress <button aria-label="Remove blocker IMPL-48">&times;</button></span>
+                <span class="bchip" data-k="IMPL-46">&#128274; IMPL-46 &middot; Migrate course catalog &middot; In Progress <button aria-label="Remove blocker IMPL-46">&times;</button></span>
+                <button class="btn sm ghost" id="bl-add" aria-expanded="true">+ Add blocker</button>
+              </div>
+              <div class="note" id="bl-note" style="margin-top:4px">2 open blockers. The task can leave Pending once every blocker is final. <span class="prop">COPY PROPOSED</span></div>
+
+              <div class="panel" style="margin-top:10px;padding:12px;display:flex;flex-direction:column;gap:10px" role="group" aria-label="Add blocker">
+                <div class="field"><label class="lbl2" for="bl-q" style="margin:0 0 3px">Blocked by</label><span class="in"><input id="bl-q" placeholder="Search cards on this board" aria-describedby="bl-h"></span><span class="helper" id="bl-h">Cards on the Implementation board. Tasks of other ideas and standalone cards are listed. <span class="prop">COPY PROPOSED</span></span></div>
+                <ul class="cand" id="bl-list">
+                  <li data-k="IMPL-48" data-t="Train regional managers" data-s="In Progress"><span class="t"><span class="k">IMPL-48</span>Train regional managers</span><span class="mono-s">Added</span></li>
+                  <li data-k="IMPL-46" data-t="Migrate course catalog" data-s="In Progress"><span class="t"><span class="k">IMPL-46</span>Migrate course catalog <span class="pchip">&#8627; CI-22</span></span><span class="mono-s">Added</span></li>
+                  <li data-k="IMPL-47" data-t="Replace badge printer" data-s="In Progress"><span class="t"><span class="k">IMPL-47</span>Replace badge printer <span class="mono-s">standalone</span></span><button class="btn sm" data-addb>Add</button></li>
+                  <li data-k="IMPL-45" data-t="Draft the onboarding SOP" data-s="Complete"><span class="t"><span class="k">IMPL-45</span>Draft the onboarding SOP <span class="badge ok">COMPLETE</span></span><button class="btn sm" data-addb>Add</button></li>
+                  <li aria-disabled="true"><span class="t"><span class="k">IMPL-50</span>Update LMS courses</span><button class="btn sm" disabled>Add</button><span class="why">It is already waiting on this task, so adding it would make a loop. <span class="prop">COPY PROPOSED</span></span></li>
+                </ul>
+              </div>
+            </div>
+            <div class="note">Adding or removing a link saves at once (<code>PUT /ideas/{ideaId}/blocked-by</code> replaces the whole set); there is no Save button for blockers. Try the &times; on a chip and Add on a row.</div>
+          </div>
+        </aside>
+
+        <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+          <div class="frame"><h2><span class="fl">B</span>A blocked task cannot leave the first lane</h2>
+            <div class="fb">
+              <div class="lanes l2" style="grid-template-columns:repeat(2,minmax(0,1fr))" aria-label="Implementation board, first two lanes">
+                <div class="lane" style="min-height:150px"><div class="lanehd"><span>Pending</span><small>1</small></div>
+                  <div class="kcard blocked nodrag" aria-describedby="tip-bl"><h4>Measure time to first shipment</h4><span class="lock">&#128274; blocked by IMPL-48 +1</span>
+                    <div class="krow"><span class="kmeta">IMPL-49</span><span class="pchip">&#8627; CI-19</span></div></div>
+                  <div class="tip" id="tip-bl" role="tooltip">Blocked by IMPL-48 and 1 more <span class="prop">COPY PROPOSED</span></div></div>
+                <div class="lane" style="min-height:150px"><div class="lanehd"><span>In Progress</span><small>0</small></div></div>
+              </div>
+              <div class="note">The blocked card cannot be dragged and In Progress does not accept it, exactly as the reference-lane lock in comp T screen 4. It can still be edited, commented on and re-blocked. The same holds for a status change from its drawer.</div>
+              <div class="toast" role="alert"><span style="font-weight:700;color:var(--hot-t)">&#9888;</span><div><b>Can't move IMPL-49 <span class="prop">COPY PROPOSED</span></b>&lsquo;Measure time to first shipment&rsquo; is blocked by 2 open tasks, so it cannot leave Pending.</div></div>
+              <div class="note">The refusal a stale request or a drawer status change gets (<code>422 taskBlocked</code>); the select snaps back to Pending. The message is proposed, the contract names only the error.</div>
+            </div></div>
+
+          <div class="frame"><h2><span class="fl">C</span>When the blockers finish</h2>
+            <div class="fb">
+              <div class="chiprow"><span class="bchip ok">&#10003; IMPL-48 &middot; Train regional managers &middot; Complete</span><span class="bchip ok">&#10003; IMPL-46 &middot; Migrate course catalog &middot; Complete</span></div>
+              <div class="note">A blocker in a Final lane turns its chip from the warning badge to the done tone. When the last one does, the card's lock badge goes and the task moves freely.</div>
+              <div class="kcard" style="max-width:280px"><h4>Measure time to first shipment</h4><div class="krow"><span class="kmeta">IMPL-49</span><span class="pchip">&#8627; CI-19</span></div></div>
+            </div></div>
+
+          <div class="frame"><h2><span class="fl">D</span>Someone who may not edit</h2>
+            <div class="fb">
+              <div class="chiprow"><span class="bchip" style="padding-right:8px">&#128274; IMPL-48 &middot; Train regional managers &middot; In Progress</span><span class="bchip" style="padding-right:8px">&#128274; IMPL-46 &middot; Migrate course catalog &middot; In Progress</span></div>
+              <div class="note">Read Only sees the chips with no &times; and no + Add blocker. Anyone who may edit the card may change its blockers (<code>contracts/idea-dependencies.md</code>).</div>
+            </div></div>
+
+          <div class="notes"><h3>Notes</h3>
+            <ul>
+              <li><b>What can be picked.</b> Cards on the same board only (<code>blockerOnOtherBoard</code>, never listed); never the card itself (<code>blockerIsSelf</code>, never listed); never one that would form a loop (<code>dependencyCycle</code>, listed disabled with its reason).</li>
+              <li><b>A blocker that is already final</b> may be added; it simply has no effect on moves.</li>
+              <li><b>Already past the first lane.</b> Adding a blocker to a task that has left its first lane is allowed and only affects later moves (<code>contracts/idea-dependencies.md</code>); the board then shows no lock for it.</li>
+              <li><b>Parent's view.</b> The blocked-by chip also shows on the task's row in the parent drawer (screen 4).</li>
+              <li><b>Delete.</b> Deleting a card removes its links in both directions; a blocked card is not stuck by it.</li>
+              <li>Source: <code>20-feature-board-references.md</code> Decisions (Sequencing) and Behavior 2; <code>contracts/ideas.md</code> (<code>blockedBy</code>, <code>taskBlocked</code>); <code>contracts/idea-dependencies.md</code>.</li>
+            </ul></div>
+        </div>
+      </div>
+
+      <div class="oq"><b>Open questions</b>
+        <ul>
+          <li><b>Decided 2026-10-19:</b> up-front block, as drawn: a blocked card cannot be dragged out of its first lane, no drop target, and the tooltip names the blocker.</li>
+          <li>Removing a blocker: immediate with no confirmation (drawn), or an undo toast?</li>
+          <li>The picker lists any card on the board, including standalone cards and tasks of other ideas, because the contract only requires "same board". Limit it to tasks, or to tasks of the same parent?</li>
+          <li><b>Decided 2026-10-19:</b> a task past its first lane that gains a blocker shows no badge and no hint, as drawn.</li>
+          <li>Blockers on a card on the idea board (CI): the same control, or only on work boards? The contract allows both.</li>
+        </ul></div>
+    </div>
+  </section>
+
+  </main>
+</div>
+<script>
+var N=6;
+function go(n){
+  for(var i=1;i<=N;i++){
+    var s=document.getElementById('v'+i),b=document.getElementById('u'+i);
+    s.classList.toggle('hide',i!==n);
+    b.setAttribute('aria-pressed',String(i===n));
+    document.querySelectorAll('.idx li button')[i-1].setAttribute('aria-current',String(i===n));
+  }
+  document.querySelectorAll('.side .nav').forEach(function(x){x.removeAttribute('aria-current')});
+  var nv=document.getElementById(document.getElementById('v'+n).dataset.nav);if(nv)nv.setAttribute('aria-current','page');
+  try{history.replaceState(null,'','#s'+n)}catch(e){}
+  window.scrollTo(0,0);
+}
+(function(){
+  var sel=document.getElementById('theme');
+  function setTheme(k){document.documentElement.dataset.protoTheme=k;sel.value=k;try{localStorage.setItem('collega-theme',k)}catch(e){}}
+  var saved='graphite';try{saved=localStorage.getItem('collega-theme')||'graphite'}catch(e){}
+  setTheme(['graphite','terrazzo','portico','sera','lagoon'].indexOf(saved)>=0?saved:'graphite');
+  sel.onchange=function(){setTheme(sel.value)};
+  var m=/^#s([1-6])$/.exec(location.hash);go(m?+m[1]:1);
+
+  // screen 1: role switch
+  var w=document.getElementById('s1-work'),ro=document.getElementById('s1-ro');
+  document.querySelectorAll('#v1 .pghead .seg [data-r]').forEach(function(s){
+    function pick(){
+      document.querySelectorAll('#v1 .pghead .seg [data-r]').forEach(function(x){x.classList.toggle('on',x===s)});
+      w.dataset.role=s.dataset.r;
+      ro.style.display=s.dataset.r==='admin'?'none':'flex';
+      w.querySelectorAll('.sel.ctl,.sw.ctl,.seg.ctl').forEach(function(x){x.setAttribute('aria-disabled',s.dataset.r==='admin'?'false':'true')});
+    }
+    s.onclick=pick;s.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();pick()}};
+  });
+  // switches
+  document.querySelectorAll('button.sw').forEach(function(b){b.onclick=function(){b.setAttribute('aria-checked',String(b.getAttribute('aria-checked')!=='true'))}});
+  // radio groups (Kind, Effort)
+  function eff(group){
+    var f=group.closest('[data-eff]');if(!f)return;
+    var r=group.querySelectorAll('[role=radio]'),idx=-1;
+    r.forEach(function(x,i){if(x.getAttribute('aria-checked')==='true')idx=i});
+    var prev=f.querySelector('[data-prev]'),clr=f.querySelector('[data-clear]');
+    if(prev)prev.innerHTML=idx<0?'':'<span class="effbar e'+(idx+1)+'"><i></i><i></i><i></i></span>'+r[idx].textContent;
+    if(clr)clr.hidden=idx<0;
+  }
+  document.querySelectorAll('[role=radiogroup]').forEach(function(g){
+    var r=g.querySelectorAll('[role=radio]');
+    function set(x){r.forEach(function(y){y.setAttribute('aria-checked',String(y===x))});eff(g)}
+    r.forEach(function(x){x.onclick=function(){set(x)};x.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();set(x)}}});
+    var f=g.closest('[data-eff]');
+    if(f){var c=f.querySelector('[data-clear]');if(c)c.onclick=function(){r.forEach(function(y){y.setAttribute('aria-checked','false')});eff(g)}}
+  });
+  // screen 6: blockers
+  var chips=document.getElementById('bl-chips'),list=document.getElementById('bl-list'),note=document.getElementById('bl-note');
+  function sync(){
+    var n=chips.querySelectorAll('.bchip').length;
+    note.innerHTML=(n?n+' open blocker'+(n>1?'s':'')+'. The task can leave Pending once every blocker is final.':'No blockers. The task can leave Pending.')+' <span class="prop">COPY PROPOSED</span>';
+    list.querySelectorAll('li[data-k]').forEach(function(li){
+      var has=!!chips.querySelector('.bchip[data-k="'+li.dataset.k+'"]');
+      var b=li.querySelector(':scope > button');
+      if(has&&b){b.outerHTML='<span class="mono-s">Added</span>'}
+      if(!has&&!li.querySelector(':scope > button')){li.querySelector(':scope > span.mono-s').outerHTML='<button class="btn sm" data-addb>Add</button>';wire(li)}
+    });
+  }
+  function wire(li){var b=li.querySelector('[data-addb]');if(b)b.onclick=function(){add(li)}}
+  function bind(c){c.querySelector('button').onclick=function(){c.remove();sync()}}
+  function add(li){
+    var c=document.createElement('span');c.className='bchip';c.dataset.k=li.dataset.k;
+    c.innerHTML='\u{1F512} '+li.dataset.k+' · '+li.dataset.t+' · '+li.dataset.s+' <button aria-label="Remove blocker '+li.dataset.k+'">×</button>';
+    chips.insertBefore(c,document.getElementById('bl-add'));bind(c);sync();
+  }
+  chips.querySelectorAll('.bchip').forEach(bind);
+  list.querySelectorAll('li[data-k]').forEach(wire);
+})();
+</script>
+</body>
+</html>

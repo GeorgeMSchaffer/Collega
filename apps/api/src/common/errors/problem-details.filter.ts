@@ -1,5 +1,10 @@
 import { randomUUID } from 'node:crypto'
-import { ApplicationError, RateLimitedError, ValidationError } from '@collega/application/common'
+import {
+  ApplicationError,
+  RateLimitedError,
+  UnprocessableError,
+  ValidationError,
+} from '@collega/application/common'
 import {
   type ArgumentsHost,
   Catch,
@@ -137,7 +142,9 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       detail:
         exception instanceof ValidationError
           ? 'The request failed validation. See the errors property for field-level details.'
-          : exception.message,
+          : exception instanceof UnprocessableError
+            ? exception.code
+            : exception.message,
       instance,
       traceId,
     }
@@ -214,6 +221,7 @@ const KERNEL_TYPE: Readonly<Record<string, string>> = {
   lockedOut: 'https://collega.dev/problems/too-many-requests',
   rateLimited: 'https://collega.dev/problems/too-many-requests',
   aiAssistUnavailable: 'https://collega.dev/problems/service-unavailable',
+  unprocessable: 'https://collega.dev/problems/unprocessable-entity',
 }
 
 const KERNEL_STATUS: Readonly<Record<string, number>> = {
@@ -225,6 +233,7 @@ const KERNEL_STATUS: Readonly<Record<string, number>> = {
   lockedOut: HttpStatus.TOO_MANY_REQUESTS,
   rateLimited: HttpStatus.TOO_MANY_REQUESTS,
   aiAssistUnavailable: HttpStatus.SERVICE_UNAVAILABLE,
+  unprocessable: HttpStatus.UNPROCESSABLE_ENTITY,
 }
 
 const KERNEL_TITLE: Readonly<Record<string, string>> = {
@@ -236,6 +245,7 @@ const KERNEL_TITLE: Readonly<Record<string, string>> = {
   lockedOut: 'Too Many Requests',
   rateLimited: 'Too Many Requests',
   aiAssistUnavailable: 'Service Unavailable',
+  unprocessable: 'Unprocessable Entity',
 }
 
 /** RFC 9110 URIs for a framework-level rejection. 401 and 403 are the two the corpus records this

@@ -1,17 +1,25 @@
 import type {
   AiAssistSettings,
+  IdeaAssistFieldValue,
   IdeaAssistTurn,
-  IdeaAssistTurnResult,
-  IdeaDraft,
+  IdeaAssistTurnResultV2,
+  IdeaDraftV2,
 } from '@collega/application/ai'
 import {
   IDEA_ASSIST_ASSISTANT_ROLE,
   IDEA_ASSIST_USER_ROLE,
   IdeaAssistService,
   TRANSCRIPT_ENTRY_MAX_LENGTH,
+  TURN_V2_BOUNDS,
 } from '@collega/application/ai'
 import { Priority, Role } from '@collega/domain/enums'
-import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from '@collega/domain/ideas'
+import {
+  DESCRIPTION_MAX_LENGTH,
+  IMPACT_RATIONALE_MAX_LENGTH,
+  PROBLEM_MAX_LENGTH,
+  PROPOSED_SOLUTION_MAX_LENGTH,
+  TITLE_MAX_LENGTH,
+} from '@collega/domain/ideas'
 import { ORGANIZATION_AI_SCOPE_STATEMENT_MAX_LENGTH } from '@collega/domain/organizations'
 import { Body, Controller, Get, Param, Post, Put, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '../auth/auth.guard.js'
@@ -23,22 +31,29 @@ import {
   RequestValidationError,
   validateFields,
 } from '../common/errors/request-validation.error.js'
-import { optional, optionalGuid } from '../common/request-values.js'
+import { EMPTY_GUID, optional, optionalGuid, stringList } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
-/** The draft fields, on both the request and the response (D-PREFILL). */
+/** The full current form on the request (v2 contract). Every key is optional. */
 type IdeaDraftBody = {
-  title?: string | null
-  description?: string | null
-  ideaTypeId?: string | null
-  businessImpactId?: string | null
-  priority?: string | null
+  title?: unknown
+  problem?: unknown
+  proposedSolutions?: unknown
+  impactRationale?: unknown
+  businessImpactId?: unknown
+  ideaTypeId?: unknown
+  priority?: unknown
+  tagNames?: unknown
+  fieldValues?: unknown
+  description?: unknown
 }
 
 /** `POST /boards/{boardId}/idea-assist/turns` request body. */
 type IdeaAssistTurnBody = {
   transcript?: unknown
   draft?: IdeaDraftBody | null
+  lockedFields?: unknown
+  step?: unknown
 }
 
 /** `PUT /organizations/{organizationId}/ai-assist/settings` request body. */
@@ -127,27 +142,120 @@ function readPriority(value: unknown): Priority | null {
 }
 
 /**
- * The `draft` the client echoes back so the model revises rather than restates. Unknown or
- * inactive ids are discarded by `IdeaAssistService` rather than rejected here, so the GUID
- * coercion's empty-GUID fallback resolves against nothing and falls out on its own.
+ * The `draft` the client echoes back so the model revises rather than restates (v2 contract
+ * "Request"). Limits are those of idea create. Unknown or inactive ids, tags outside the
+ * vocabulary and custom-field entries for a field not visible for the type are discarded by
+ * `IdeaAssistService` rather than rejected here.
  */
-function readDraft(body: IdeaDraftBody | null | undefined): IdeaDraft | null {
-  if (body === null || body === undefined) {
+function readDraft(body: IdeaDraftBody | null | undefined): IdeaDraftV2 | null {
+  if (body === null || body === undefined || typeof body !== 'object') {
     return null
   }
 
-  validateFields({
-    title: { value: body.title, maxLength: TITLE_MAX_LENGTH },
-    description: { value: body.description, maxLength: DESCRIPTION_MAX_LENGTH },
-  })
+  const failures: Record<string, readonly string[]> = {}
+  try {
+    validateFields({
+      title: { value: body.title, maxLength: TITLE_MAX_LENGTH },
+      problem: { value: body.problem, maxLength: PROBLEM_MAX_LENGTH },
+      impactRationale: { value: body.impactRationale, maxLength: IMPACT_RATIONALE_MAX_LENGTH },
+      description: { value: body.description, maxLength: DESCRIPTION_MAX_LENGTH },
+    })
+  } catch (error) {
+    if (!(error instanceof RequestValidationError)) throw error
+    Object.assign(failures, error.failures)
+  }
+
+  const proposedSolutions = readStrings('proposedSolutions', body.proposedSolutions, failures)
+  if (proposedSolutions !== null) {
+    const messages: string[] = []
+    if (proposedSolutions.length > TURN_V2_BOUNDS.proposedSolutions.max) {
+      messages.push(
+        `${displayName('proposedSolutions')} must have ${TURN_V2_BOUNDS.proposedSolutions.max} items or fewer.`,
+      )
+    }
+    if (proposedSolutions.some((item) => item.length > PROPOSED_SOLUTION_MAX_LENGTH)) {
+      messages.push(
+        `Each proposed solution must be ${PROPOSED_SOLUTION_MAX_LENGTH} characters or fewer.`,
+      )
+    }
+    if (messages.length > 0) failures.proposedSolutions = messages
+  }
+
+  const tagNames = readStrings('tagNames', body.tagNames, failures)
+  if (tagNames !== null) {
+    const distinct = new Set(tagNames.map((t) => t.trim().toLowerCase()).filter((t) => t !== ''))
+    if (distinct.size > TURN_V2_BOUNDS.tagNames.max) {
+      failures.tagNames = [
+        `${displayName('tagNames')} must have ${TURN_V2_BOUNDS.tagNames.max} items or fewer.`,
+      ]
+    }
+  }
+
+  if (Object.keys(failures).length > 0) {
+    throw new RequestValidationError(failures)
+  }
 
   return {
     title: optional(body.title),
-    description: optional(body.description),
-    ideaTypeId: optionalGuid(body.ideaTypeId),
+    problem: optional(body.problem),
+    proposedSolutions,
+    impactRationale: optional(body.impactRationale),
     businessImpactId: optionalGuid(body.businessImpactId),
+    ideaTypeId: optionalGuid(body.ideaTypeId),
     priority: readPriority(body.priority),
+    tagNames,
+    fieldValues: readFieldValues(body.fieldValues),
+    description: optional(body.description),
   }
+}
+
+/** A string array body property: absent and null stay absent, a non-array is a keyed `400`. */
+function readStrings(
+  field: string,
+  value: unknown,
+  failures: Record<string, readonly string[]>,
+): readonly string[] | null {
+  try {
+    return stringList(field, value)
+  } catch (error) {
+    if (!(error instanceof RequestValidationError)) throw error
+    Object.assign(failures, error.failures)
+    return null
+  }
+}
+
+/** `{ fieldDefinitionId, value }` entries; one that is not that shape is dropped, as v1 drops an unknown id. */
+function readFieldValues(value: unknown): readonly IdeaAssistFieldValue[] | null {
+  if (!Array.isArray(value)) {
+    return null
+  }
+  return value.flatMap((entry): IdeaAssistFieldValue[] => {
+    const item = (typeof entry === 'object' && entry !== null ? entry : {}) as Record<
+      string,
+      unknown
+    >
+    const fieldDefinitionId = optionalGuid(item.fieldDefinitionId)
+    return fieldDefinitionId !== null &&
+      fieldDefinitionId !== EMPTY_GUID &&
+      typeof item.value === 'string'
+      ? [{ fieldDefinitionId, value: item.value }]
+      : []
+  })
+}
+
+/** `lockedFields` is a string array and `step` a string; anything else is a keyed `400`. */
+function readLockedFields(value: unknown): readonly string[] {
+  return (stringList('lockedFields', value) ?? []).filter((name) => name.trim() !== '')
+}
+
+function readStep(value: unknown): string | null {
+  if (value === undefined || value === null) {
+    return null
+  }
+  if (typeof value !== 'string') {
+    throw new RequestValidationError({ step: [`${displayName('step')} is invalid.`] })
+  }
+  return value
 }
 
 /**
@@ -188,11 +296,30 @@ export class IdeaAssistController {
   async continueTurn(
     @Param('boardId', UuidParamPipe) boardId: string,
     @Body() body: IdeaAssistTurnBody,
-  ): Promise<IdeaAssistTurnResult> {
-    return this.ideaAssist.continueTurn({
+  ): Promise<IdeaAssistTurnResultV2> {
+    return this.turn(boardId, body)
+  }
+
+  /**
+   * The organization-level turn: the same behaviour with no board, for an idea drafted from the
+   * Ideas list that will start in the pool. Same roles, limits, metering and audit; the usage
+   * record carries no board, and the three-strikes close counts the caller's board-less turns.
+   */
+  @Post('idea-assist/turns')
+  @UseGuards(AuthGuard)
+  async continueOrganizationTurn(
+    @Body() body: IdeaAssistTurnBody,
+  ): Promise<IdeaAssistTurnResultV2> {
+    return this.turn(null, body)
+  }
+
+  private turn(boardId: string | null, body: IdeaAssistTurnBody) {
+    return this.ideaAssist.continueTurnV2({
       boardId,
       transcript: readTranscript(body.transcript),
       draft: readDraft(body.draft),
+      lockedFields: readLockedFields(body.lockedFields),
+      step: readStep(body.step),
     })
   }
 

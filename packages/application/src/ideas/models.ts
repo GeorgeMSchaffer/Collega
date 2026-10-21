@@ -1,6 +1,7 @@
 import type { DeliveryStatus, EffortLevel, IdeaPhase } from '@collega/domain/enums'
 import type { IdeaFieldValueInput } from '@collega/domain/ideas'
 import type { Page, PageRequest, SortDirection } from '../common/index.js'
+import type { IdeaMetric } from '../metric-types/models.js'
 
 // Commands / queries -------------------------------------------------------------------------
 
@@ -29,6 +30,40 @@ export type CreateIdeaCommand = {
   readonly mentionEmails: readonly string[] | null
   /** Omit (or pass null) to leave the org's default field schema entirely unfilled. */
   readonly fieldValues: readonly IdeaFieldValueWrite[] | null
+  /** Optional Discovery-phase estimate (`Low`/`Medium`/`High`); absent or blank stores none. */
+  readonly effort?: string | null
+}
+
+/** `POST /ideas/{ideaId}/board-tasks`: a task takes only these four. The idea-only fields are not
+ * taken; the service stores the organization's default type and impact (Board References Ruling 2)
+ * and placeholders where the schema needs a value. */
+export type CreateBoardTaskCommand = Pick<
+  CreateIdeaCommand,
+  'title' | 'description' | 'assigneeUserIds' | 'tagNames'
+>
+
+/** `PUT /ideas/{ideaId}` on a task: the same four fields; the idea-only ones are not taken. */
+export type UpdateTaskCommand = CreateBoardTaskCommand
+
+/** The card a task is auto-created for on entering an `autoCreateTask` lane. */
+export type AutoCreateTaskParent = {
+  readonly id: string
+  readonly organizationId: string
+  readonly title: string
+  readonly parentIdeaId: string | null
+}
+
+/** `POST /organizations/{organizationId}/ideas`: the create shape without `statusId`, which a pool
+ * idea does not choose. */
+export type CreatePoolIdeaCommand = Omit<CreateIdeaCommand, 'statusId'>
+
+/** `POST /organizations/{organizationId}/issues`: the pool create's fields plus the promotion's
+ * `effort` and `sprintId`. */
+export type AddIssueCommand = CreatePoolIdeaCommand & {
+  /** Required: `Low`, `Medium` or `High`. */
+  readonly effort: string
+  /** `null` adds the Issue to the delivery backlog. */
+  readonly sprintId: string | null
 }
 
 export type UpdateIdeaCommand = {
@@ -48,21 +83,22 @@ export type UpdateIdeaCommand = {
    * explicit (possibly empty) list reconciles them (see `Idea.replaceFieldValues`). */
   readonly fieldValues: readonly IdeaFieldValueWrite[] | null
   /**
-   * The optional Discovery-phase effort estimate (`Low`/`Medium`/`High`).
+   * The optional effort estimate (`Low`/`Medium`/`High`), settable at any time.
    *
    * THREE-STATE, unlike `dueDate`: the key being ABSENT means "not provided, leave it alone", an
    * explicit `null` clears it, and a value sets it. A two-state optional would make every client
-   * that predates this field silently clear the estimate on an unrelated edit - and on an Issue
-   * that estimate is half of what the promotion gate recorded.
+   * that predates this field silently clear the estimate on an unrelated edit.
    *
-   * Setting it on a `Delivery`-phase item is rejected (`400`, field `effort`): effort is chosen at
-   * the gate, and re-estimating a live Issue is not modelled in this slice.
+   * Clearing it while the idea sits in a reference lane is refused (`422`,
+   * `effortRequiredInReferenceLane`).
    */
   readonly effort?: string | null
 }
 
 export type ChangeIdeaStatusCommand = {
   readonly statusId: string
+  /** An Org Admin's reason for moving out of a reference lane past open tasks. */
+  readonly forceReason?: string | null | undefined
 }
 
 // Delivery (Issues-and-Delivery Slice 1) --------------------------------------------------------
@@ -124,7 +160,6 @@ export type IssueProvenance = {
 export type DeliveryCard = IdeaListItem & {
   readonly phase: IdeaPhase
   readonly deliveryStatus: DeliveryStatus | null
-  readonly sprint: IssueSprintSummary | null
   readonly taskSummary: IssueTaskSummary
   readonly provenance: IssueProvenance
 }
@@ -142,6 +177,10 @@ export type IdeaListQuery = {
   readonly tags: readonly string[]
   readonly priorities: readonly string[]
   readonly dueBefore: string | null
+  /** Only items in this sprint. */
+  readonly sprintId?: string | null | undefined
+  /** Only items in no sprint: the board backlog (`sprintId=none`). */
+  readonly noSprint?: boolean | undefined
   readonly sortBy: string | null
   readonly sortDirection: string | null
 }
@@ -179,6 +218,9 @@ export type OrganizationIdeaListQuery = {
   readonly fieldFilters: ReadonlyMap<string, string> | null
   /** Repeatable, any-of within each, AND across them and the rest (2026-09-27). */
   readonly boardIds: readonly string[]
+  /** The literal `none` in the `boardId` filter: any-of with `boardIds`, so an idea matches when it
+   * is on one of those boards or, with this set, on no board. */
+  readonly includeNoBoard: boolean
   readonly statusIds: readonly string[]
   readonly priorities: readonly string[]
   readonly tags: readonly string[]
@@ -273,24 +315,47 @@ export type IdeaTagDto = {
   readonly color: string
 }
 
+export type TaskCounts = { readonly total: number; readonly done: number }
+
+/** A blocker of an item; `isFinal` is true when it sits in a final lane of its board. */
+export type BlockedByDto = {
+  readonly ideaId: string
+  readonly itemKey: string | null
+  readonly isFinal: boolean
+}
+
 export type IdeaListItem = {
   readonly ideaId: string
-  readonly boardId: string
+  readonly boardId: string | null
+  /** `<board keyPrefix>-<itemNumber>`; `null` on a board without a prefix or with no board. */
+  readonly itemKey: string | null
+  /** Set on a task: the idea it was created from. */
+  readonly parentIdeaId: string | null
+  /** The parent's `itemKey`; `null` with no parent or when the parent has no key. */
+  readonly parentItemKey: string | null
+  /** Only on an item whose lane references a board; `done` counts children in a final lane of their own board. */
+  readonly taskCounts: TaskCounts | null
+  /** The items that must be final before this one can leave its board's first lane. */
+  readonly blockedBy: readonly BlockedByDto[]
   readonly title: string
-  readonly priority: string
-  readonly ideaTypeId: string
-  readonly ideaTypeName: string
+  readonly priority: string | null
+  /** The type and impact fields are `null` on an item of a board with idea features off, and on a task. */
+  readonly ideaTypeId: string | null
+  readonly ideaTypeName: string | null
   readonly ideaTypeColorHex: string | null
   readonly ideaTypeIcon: string | null
-  readonly businessImpactId: string
-  readonly businessImpactName: string
-  readonly businessImpactColor: string
+  readonly businessImpactId: string | null
+  readonly businessImpactName: string | null
+  readonly businessImpactColor: string | null
   readonly dueDate: string | null
   readonly assignees: readonly IdeaAssigneeDto[]
   readonly tagNames: readonly string[]
   /** The same tags as `tagNames`, in the same order. */
   readonly tags: readonly IdeaTagDto[]
   readonly effort: EffortLevel | null
+  readonly phase: IdeaPhase
+  /** The sprint the item is in, for the card's sprint chip. */
+  readonly sprint: IssueSprintSummary | null
   readonly statusId: string
   readonly statusName: string
   readonly upvoteCount: number
@@ -300,23 +365,52 @@ export type IdeaListItem = {
   readonly createdAtUtc: Date
 }
 
+/** One task of a parent idea (`GET /ideas/{ideaId}/board-tasks`). */
+export type BoardTaskListItem = {
+  readonly ideaId: string
+  readonly itemKey: string | null
+  readonly title: string
+  readonly statusId: string
+  readonly statusName: string
+  /** The task sits in a final lane of its own board. */
+  readonly isFinal: boolean
+  readonly assignees: readonly IdeaAssigneeDto[]
+  readonly blockedBy: readonly BlockedByDto[]
+  /** The system made the task on entry to an `autoCreateTask` lane; `false` for one added by hand. */
+  readonly autoCreated: boolean
+}
+
 export type IdeaDetail = {
   readonly ideaId: string
-  readonly boardId: string
+  /** The item's metric values; `[]` for a card with a parent (`contracts/metric-types.md`). */
+  readonly metrics: readonly IdeaMetric[]
+  readonly boardId: string | null
+  readonly itemKey: string | null
+  /** Set on a task: the idea it was created from. */
+  readonly parentIdeaId: string | null
+  /** The parent's `itemKey`; `null` with no parent or when the parent has no key. */
+  readonly parentItemKey: string | null
+  /** Only on an item whose lane references a board; `done` counts children in a final lane of their own board. */
+  readonly taskCounts: TaskCounts | null
+  /** The items that must be final before this one can leave its board's first lane. */
+  readonly blockedBy: readonly BlockedByDto[]
   readonly title: string
-  readonly problem: string
+  readonly problem: string | null
   readonly proposedSolutions: readonly string[]
-  readonly impactRationale: string
+  readonly impactRationale: string | null
   readonly description: string | null
-  readonly priority: string
-  readonly ideaTypeId: string
-  readonly ideaTypeName: string
+  readonly priority: string | null
+  /** The type and impact fields are `null` on an item of a board with idea features off, and on a task. */
+  readonly ideaTypeId: string | null
+  readonly ideaTypeName: string | null
   readonly ideaTypeColorHex: string | null
   readonly ideaTypeIcon: string | null
-  readonly businessImpactId: string
-  readonly businessImpactName: string
-  readonly businessImpactColor: string
+  readonly businessImpactId: string | null
+  readonly businessImpactName: string | null
+  readonly businessImpactColor: string | null
   readonly dueDate: string | null
+  /** `null` on a task. */
+  readonly effort: EffortLevel | null
   readonly assignees: readonly IdeaAssigneeDto[]
   readonly statusId: string
   readonly statusName: string
@@ -348,12 +442,15 @@ export type IdeaDetail = {
 
 export type CreateIdeaResult = {
   readonly ideaId: string
-  readonly boardId: string
+  readonly boardId: string | null
+  readonly itemKey: string | null
+  readonly parentIdeaId: string | null
   readonly statusId: string
   readonly title: string
-  readonly priority: string
-  readonly ideaTypeId: string
-  readonly businessImpactId: string
+  readonly priority: string | null
+  /** `null` on a board task: the stored default is not exposed. */
+  readonly ideaTypeId: string | null
+  readonly businessImpactId: string | null
   readonly dueDate: string | null
 }
 
@@ -472,3 +569,14 @@ export function isReservedColumn(fieldName: string | null | undefined): boolean 
 }
 
 export type { IdeaFieldValueInput }
+
+/** One audit event on an idea, as the activity read answers it. */
+export type IdeaActivityEntry = {
+  readonly eventType: string
+  readonly message: string
+  readonly occurredAtUtc: Date
+  readonly actorUserId: string | null
+  readonly onBehalfOfUserId: string | null
+  /** The stored metadata object, or `null` when none or not an object. */
+  readonly metadata: Readonly<Record<string, unknown>> | null
+}

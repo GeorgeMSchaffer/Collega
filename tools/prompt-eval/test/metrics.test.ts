@@ -407,6 +407,77 @@ test('a v2 case passes only when every declared field holds', () => {
   assert.deepEqual([c.passes, c.trials, c.flaky], [1, 2, true])
 })
 
+test('keptEdit: the reply must say it kept the edit and name the field', () => {
+  const run = makeRun({ a: v2Case({ keptEdit: ['problem', 'fieldValues.Line'] }) }, [
+    trial('a', 0, {
+      ...turn(),
+      nextQuestion: "I kept your edit to Problem and to Line. What's next?",
+    }),
+    trial('a', 1, { ...turn(), nextQuestion: 'I kept your edit to Problem. What else?' }),
+    trial('a', 2, { ...turn(), nextQuestion: 'Here is a reworded problem. What else?' }),
+  ])
+  const { keptEdit } = computeMetrics(run).fields
+  assert.deepEqual([keptEdit.correct, keptEdit.wrong, keptEdit.empty], [1, 1, 1])
+})
+
+// --- v2 results ---------------------------------------------------------------------------------
+
+test('v2 results are null for a run that never drove the v2 turn', () => {
+  const run = makeRun({ a: runCase({ expect: { inScope: true, titleSet: true } }) }, [
+    trial('a', 0, turn()),
+  ])
+  assert.equal(computeMetrics(run).v2, null)
+})
+
+test('v2 results pool the v2 trials by group and keep v1 trials out of the scope gate', () => {
+  const run = makeRun(
+    {
+      structured: v2Case({ problemSet: true, impactRationaleSet: true }),
+      order: v2Case({ nextStep: 'problem' }),
+      brainstorm: v2Case({ suggestions: { solutions: { min: 1, max: 3 } } }),
+      custom: v2Case({ fieldValues: { Line: 'Packing' } }),
+      refuse: v2Case({}, { expect: { inScope: false } }),
+      legacy: runCase({ expect: { inScope: true, titleSet: true } }),
+    },
+    [
+      trial('structured', 0, turn({ v2: { draft: { problem: 'p', impactRationale: 'r' } } })),
+      trial('structured', 1, turn({ v2: { draft: { problem: 'p' } } })),
+      trial('order', 0, turn({ v2: { nextStep: 'problem' } })),
+      trial('order', 1, turn({ v2: { nextStep: 'title' } })),
+      trial('brainstorm', 0, turn({ v2: { suggestions: { solutions: ['a'] } } })),
+      trial(
+        'custom',
+        0,
+        turn({
+          v2: {
+            draft: { fieldValues: [{ fieldDefinitionId: 'field-line', value: 'line-packing' }] },
+          },
+        }),
+      ),
+      // A refusal that was right, and one wrongly answered.
+      trial('refuse', 0, turn({ inScope: false, v2: {} })),
+      trial('refuse', 1, turn({ v2: {} })),
+      // A v1 trial: outside every v2 figure.
+      trial('legacy', 0, turn({ inScope: false })),
+    ],
+  )
+  const v2 = computeMetrics(run).v2
+  assert.ok(v2)
+  assert.equal(v2.trials, 8)
+  assert.deepEqual(
+    [v2.scopeGate.truePositives, v2.scopeGate.falseNegatives, v2.scopeGate.falsePositives],
+    [1, 1, 0],
+    'the wrongly refused v1 trial is not counted',
+  )
+  assert.deepEqual([v2.groups.structuredFields.k, v2.groups.structuredFields.n], [3, 4])
+  assert.deepEqual([v2.groups.interviewOrder.k, v2.groups.interviewOrder.n], [1, 2])
+  assert.deepEqual([v2.groups.brainstorm.k, v2.groups.brainstorm.n], [1, 1])
+  assert.deepEqual([v2.groups.customFields.k, v2.groups.customFields.n], [1, 1])
+  assert.equal(v2.groups.ownedEdits.n, 0, 'nothing declares keptEdit here')
+  // Mapping counts the in-scope v2 cases' mapping fields: 3 + 2 + 1 (suggestions excluded) + 1.
+  assert.deepEqual([v2.mapping.k, v2.mapping.n], [5, 7])
+})
+
 // --- Locked fields ------------------------------------------------------------------------------
 
 const LOCKED = v2Case(

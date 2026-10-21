@@ -23,6 +23,7 @@ export function Drawer({
   title,
   eyebrow,
   wide = false,
+  bleed = false,
   footer,
   returnFocusTo,
   focusKey,
@@ -35,6 +36,8 @@ export function Drawer({
   eyebrow?: ReactNode
   /** The create-with-assistant width. */
   wide?: boolean
+  /** The body has no padding or scroll of its own; the content lays out and scrolls itself. */
+  bleed?: boolean
   footer?: ReactNode
   returnFocusTo?: HTMLElement | null
   /**
@@ -94,15 +97,13 @@ export function Drawer({
       <div className="flex items-start gap-2 border-b px-[18px] pt-4 pb-2.5">
         <div className="min-w-0">
           {eyebrow ? (
-            <div className="font-mono text-[11px] tracking-wide text-muted-foreground">
-              {eyebrow}
-            </div>
+            <div className="font-mono text-xs tracking-wide text-muted-foreground">{eyebrow}</div>
           ) : null}
           <h2
             ref={heading}
             id={headingId}
             tabIndex={-1}
-            className="m-0 mt-0.5 text-[19px] leading-tight text-balance focus:outline-none"
+            className="m-0 mt-0.5 text-lg leading-tight text-balance focus:outline-none"
           >
             {title}
           </h2>
@@ -116,7 +117,12 @@ export function Drawer({
           <Icon name="x" />
         </button>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-auto px-[18px] py-4">
+      <div
+        className={cn(
+          'flex min-h-0 flex-1 flex-col',
+          bleed ? 'overflow-hidden' : 'gap-3.5 overflow-auto px-[18px] py-4',
+        )}
+      >
         {children}
       </div>
       {footer ? (

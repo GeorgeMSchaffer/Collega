@@ -27,7 +27,7 @@ stack is never deployed.
 > `apps/*/vercel.json`, `apps/api/server.js`, the migration and bootstrap steps — is committed and
 > was exercised locally. **On Vercel itself, little has been verified.** Projects and a database
 > now exist — the pre-existing `collega` web project carries the stale settings §11 describes, and
-> Preview's `DATABASE_URL` points at the database holding the real Site Admin, confirmed from a
+> Preview's `DATABASE_URL` points at the database holding the real App Admin, confirmed from a
 > build log — but most of §11 is still unproven. §11 lists what remains unproven and what proving
 > it would take; §12 is the ordered list of what only the account holder can do; the Owner-side
 > list in `SPEC/implementation-agent-tracker.md` is current. *(Corrected 2026-09-29: this said the
@@ -300,7 +300,7 @@ every name for local development; nothing in this table belongs in a committed f
 | `DATABASE_URL` | Production, Preview | **yes** | The build fails at `db:migrate`; if it somehow got past, every request 500s. Production and Preview hold **different** values — production and staging. |
 | `ACCESS_TOKEN_SIGNING_KEY` | Production, Preview | **yes** | The API **refuses to boot** (see below), and refuses again if it is shorter than 32 characters. Generate with `openssl rand -base64 48`, which gives 64; a different value per environment. |
 | `SITE_ADMIN_EMAIL` | Production, Preview | **yes** | The API refuses to boot, and nothing creates the first administrator (§8). |
-| `SITE_ADMIN_PASSWORD` | Production, Preview | **yes** | Same, and **not removable** — `siteAdminFragment` reads it through `required()`, so deleting it after the first login takes the API down on the next cold start. Nothing reads the value: the bootstrap script reads `process.env` directly, so the fragment's only effect is to refuse boot. See the note under §8. |
+| `SITE_ADMIN_PASSWORD` | Production, Preview | **yes** | Same. Only the build-time `db:bootstrap-admin` reads it; the API no longer requires it at runtime, so it can be removed after the first login (`SPEC/decisions.md` 2026-10-15). |
 | `ACCESS_TOKEN_LIFETIME_MINUTES` | optional | no | Defaults to 480 (8h). |
 | `ANTHROPIC_API_KEY` | optional | no | Without it AI idea assist runs dark — the turn endpoint answers `503`, availability reports `false`, and the client degrades to the plain form (`SPEC/20-feature-ai-idea-assist.md` rule 31). Setting it turns the assistant on: D6 is built. |
 | `POSTGRES_*` | — | **no** | Do not set them. They are the local container's parts; `DATABASE_URL` wins anyway, and having both invites the two drifting. |
@@ -442,7 +442,7 @@ pnpm --filter @collega/infrastructure db:bootstrap-admin
     variables and your local `.env`, both untracked.
   - **It shares the demo seed's id derivation**, so a development database that has seen both the
     demo seed and this bootstrap holds one row rather than colliding on the unique email index.
-- **Leave `SITE_ADMIN_PASSWORD` in place** after the first login and password change: the API refuses to boot without it (the note at the top of this section, and §12 step 10). *Corrected 2026-09-29 (`SPEC/decisions.md` 2026-09-29, "Spec contradictions resolved"): this said it could be deleted, which would take the deployment down on the next cold start.*
+- **`SITE_ADMIN_PASSWORD` can be removed** after the first login and password change: the API no longer requires it at runtime (only the build-time bootstrap reads it).
 
 ### When the address is owned by an account that cannot administer anything
 
@@ -472,11 +472,11 @@ pnpm --filter @collega/infrastructure db:bootstrap-admin
 
 ## 8a. The first organization
 
-- §8 leaves a fresh deployment with **exactly one row**. The Site Admin belongs to no organization
+- §8 leaves a fresh deployment with **exactly one row**. The App Admin (the Site Admin role in code and specs) belongs to no organization
   by design (`SPEC/20-feature-organizations-and-users.md` User Rule 7), so it signs in, changes its
   password, and lands in an application with no organization, no board, and no catalogs. It can
-  create an organization (Settings → Organizations → New, which provisions the defaults) and its
-  users (Settings → Users → New), and act inside it through Settings → View As; or this section's
+  create an organization (Settings → Organizations → Add New Organization, which provisions the defaults) and its
+  users (Settings → Users → Add New User), and act inside it through Settings → View as; or this section's
   script does the first two from a shell. *Corrected 2026-09-29 (slice 135): this said the Site
   Admin could create none of them, because `apps/web`'s only writes were sign-in/out and the three
   idea actions.*
@@ -508,8 +508,8 @@ pnpm --filter @collega/infrastructure db:bootstrap-organization
   Self-registration always produces role `User` (`SPEC/20-feature-auth.md` requirement 17,
   org-and-users requirement #4) and nothing promotes the first member, so the only route to an Org
   Admin is org-and-users "Direct creation by an admin" #1 — *Site Admin can add users to any
-  organization*, choosing the role and issuing an initial password. That is
-  `POST /organizations/:id/users` — in the UI, Settings → Users → New (*corrected 2026-09-29: this
+  organization* (the App Admin, in the UI's wording), choosing the role and issuing an initial password. That is
+  `POST /organizations/:id/users` — in the UI, Settings → Users → Add New User (*corrected 2026-09-29: this
   said it had no UI yet*) — and setting `BOOTSTRAP_ORG_ADMIN_EMAIL`
   makes the script do the same thing against the same columns:
   role `OrgAdmin`, status `Active`, `must_change_password` set. Its password is generated by the
@@ -592,16 +592,21 @@ pnpm --filter @collega/infrastructure db:bootstrap-organization
 
 ## 10. Rollback posture
 
-**The rollback unit is the database, not a previous stack.** `SPEC/50-typescript-migration.md` §7
-settled this: the .NET stack was never deployed, so there is nothing to fall back to, and after F6
-there is no .NET code either. What follows is that statement made operational.
+**Code rolls back; the database does not, and there is no older stack behind either.**
+`SPEC/50-typescript-migration.md` §7 settled the last part: the .NET stack was never deployed, so there is
+nothing to fall back to, and after F6 there is no .NET code either. What follows is that statement made
+operational, and it matches `SPEC/50-cutover-runbook.md` §3.
 
 - **Code rolls back instantly and by itself.** Vercel keeps every deployment; Instant Rollback
   repoints production at the previous one in seconds, per project. Roll back `collega` (web) and
-  `collega-api` **together** unless you know the pair is compatible.
+  `collega-api` **together** unless you know the pair is compatible. The previous deployment keeps
+  serving; at the release's database swap, repointing `DATABASE_URL` at the old database is that
+  step's rollback (runbook §2 step 2).
 - **The database does not roll back with it.** A rollback restores code against a schema that has
   already moved. So: **every migration must be backward-compatible with the deployment before it**
-  — add columns and tables, do not drop or rename them in the same release that stops using them.
+  — add columns and tables, do not drop or rename them in the same release that stops using them,
+  and do not loosen a constraint (drop `NOT NULL`) or drop an index the previous deployment relies on.
+  A fresh production database passes this trivially; the rule stands for later releases.
   Drop in a later, separate deployment, once the rollback window has closed. A migration that
   breaks this rule is the point of no return for that release, and should be announced as one
   rather than discovered.
@@ -644,7 +649,7 @@ thing that bites:
 | That the `prisma+postgres://` URL works with the pinned client | Boot failure naming the datasource protocol | Swap to the direct `postgresql://` string (§5) |
 | Node 24 selection on the build image — **verified for `collega-api`** (it builds) | `Invalid Node.js Version` during install | Set the project's Node.js Version to 24.x |
 | Deployment Protection on the API (§7) | Web previews receiving HTML from every API call | Turn Vercel Authentication off for `collega-api` |
-| That preview builds see Preview-scoped variables at build time — **observed wrong**: Preview's `DATABASE_URL` points at the database holding the real Site Admin | `db:migrate` failing or migrating the wrong database | The first preview build's log — **check which database it touched** (§12 step 10, required) |
+| That preview builds see Preview-scoped variables at build time — **observed wrong**: Preview's `DATABASE_URL` points at the database holding the real App Admin | `db:migrate` failing or migrating the wrong database | The first preview build's log — **check which database it touched** (§12 step 10, required) |
 | **Observed, not hypothetical:** stale settings on a project repointed rather than created | Build fails asking you to remove the `public` output directory so the Next.js build output can be used | Clear the Output Directory override *and* set Root Directory — see below |
 
 ### Stale project settings on a repointed project
@@ -754,7 +759,7 @@ database; step 10 is verification; steps 11–12 populate the deployment and get
    > entry: the environment badges are shown on the row.
 8. **Deploy the API** by pushing a commit that touches `apps/api/` — a Redeploy is cancelled by the
    ignore step (`apps/web/AGENTS.md`). *Corrected 2026-09-29: this said "push, or Redeploy".* The
-   build runs the migration and creates the Site Admin; the log ends with either `created Site Admin …` or `… already exists`. Note the deployment's
+   build runs the migration and creates the App Admin; the log ends with either `created Site Admin …` or `… already exists`. Note the deployment's
    hostname.
 9. **Set the web project's variables**, then deploy it:
 
@@ -774,13 +779,11 @@ database; step 10 is verification; steps 11–12 populate the deployment and get
     - Open the web app, sign in as `SITE_ADMIN_EMAIL`. It must **force a password change**; that is
       requirement 9 working, not a bug.
     - Change the password. The application is empty at this point. An organization can be created
-      here, under Settings → Organizations → New, or by step 11's script. *Corrected 2026-09-29
+      here, under Settings → Organizations → Add New Organization, or by step 11's script. *Corrected 2026-09-29
       (slice 135): this said there was no admin write path in the UI; Settings → Organizations →
-      New, Settings → Users → New and Settings → View As now exist.*
-    - **Leave `SITE_ADMIN_PASSWORD` in place.** An earlier draft of this checklist said it could be
-      deleted once the password had been changed. It cannot: the API refuses to boot without it, so
-      deleting it works until the next cold start and then takes the deployment down. That the
-      credential outlives its usefulness is a real wart — §8 records the choice it needs.
+      Add New Organization, Settings → Users → Add New User and Settings → View as now exist.*
+    - **`SITE_ADMIN_PASSWORD` can be removed** once the password has been changed: the API no longer
+      requires it at runtime; only the build-time bootstrap reads it.
 11. **Populate the deployment** — once, from a shell with the production `DATABASE_URL` exported,
     **not** from the build command and **not** as project environment variables (§8a says why):
 

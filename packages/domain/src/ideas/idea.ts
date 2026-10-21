@@ -57,7 +57,17 @@ export type IdeaFieldValueRecord = {
 export type Idea = Auditable & {
   readonly id: string
   readonly organizationId: string
-  readonly boardId: string
+  /** `null` for an idea in the organization's pool (SPEC/20-feature-board-pull-in.md). */
+  readonly boardId: string | null
+  /**
+   * Position in the board's key sequence, assigned once when the idea lands on a board that has a
+   * key prefix and never reused. `null` in the pool and on a board without a prefix.
+   */
+  readonly itemNumber: number | null
+  /** The idea this item is a task of; `null` for an ordinary idea. A task cannot itself be a parent. */
+  readonly parentIdeaId: string | null
+  /** A task the system made on entry to an `autoCreateTask` lane; `false` for one added by hand. */
+  readonly autoCreated: boolean
   /**
    * The ideation status. Frozen at its last Discovery value on promotion and never cleared:
    * ideation `Complete` and delivery `Complete` are distinct terminal states, and an item in
@@ -89,6 +99,8 @@ export type Idea = Auditable & {
   readonly deliveryStatus: DeliveryStatus | null
   /** Null means the delivery backlog. Only meaningful in Delivery. */
   readonly sprintId: string | null
+  /** The single Outcome this top-level item is grouped under; null when ungrouped. */
+  readonly outcomeId: string | null
   /** Promotion snapshot: who committed to this work, when, and how much support it had then. */
   readonly promotedAtUtc: Date | null
   readonly promotedByUserId: string | null
@@ -100,7 +112,13 @@ export type CreateIdeaProps = {
    * not generate ids (SPEC/decisions.md). */
   readonly id: string
   readonly organizationId: string
-  readonly boardId: string
+  /** `null` creates the idea in the pool. */
+  readonly boardId: string | null
+  /** Allocated by the application layer; omitted or `null` for no key. */
+  readonly itemNumber?: number | null
+  /** Set when the idea is a board task of another idea. */
+  readonly parentIdeaId?: string | null
+  readonly autoCreated?: boolean
   readonly statusId: string
   readonly title: string
   readonly description: string | null
@@ -252,7 +270,10 @@ export function createIdea(props: CreateIdeaProps): Idea {
     props.organizationId,
     'Organization id is required.',
   )
-  const boardId = assertRequiredId('boardId', props.boardId, 'Board id is required.')
+  const boardId =
+    props.boardId === null
+      ? null
+      : assertRequiredId('boardId', props.boardId, 'Board id is required.')
   const statusId = assertRequiredId('statusId', props.statusId, 'Status id is required.')
   const authorUserId = assertRequiredId(
     'authorUserId',
@@ -270,6 +291,9 @@ export function createIdea(props: CreateIdeaProps): Idea {
     id,
     organizationId,
     boardId,
+    itemNumber: boardId === null ? null : (props.itemNumber ?? null),
+    parentIdeaId: props.parentIdeaId ?? null,
+    autoCreated: props.autoCreated ?? false,
     statusId,
     title: normalizeTitle(props.title),
     description: normalizeDescription(props.description),
@@ -288,6 +312,7 @@ export function createIdea(props: CreateIdeaProps): Idea {
     effort: null,
     deliveryStatus: null,
     sprintId: null,
+    outcomeId: null,
     promotedAtUtc: null,
     promotedByUserId: null,
     upvoteCountAtPromotion: null,
@@ -366,15 +391,63 @@ export function changeIdeaStatus(
 }
 
 /**
- * Sets or clears the optional Discovery-phase effort estimate.
- *
- * Discovery only, deliberately. In Delivery, `effort` is no longer a working estimate - it is half
- * of what the promotion gate recorded, sitting beside `promotedByUserId` and
- * `upvoteCountAtPromotion`, and a later edit through the ordinary update path would quietly rewrite
- * the answer to "how big did we think this was when we committed to it". Re-estimating a live Issue
- * is not modelled in this slice; the gate is where an effort is chosen.
- *
- * A `null` clears it, matching `dueDate` - the only other optional scalar on the edit path.
+ * Removes a Discovery idea from its board, leaving it in the pool. Status, tags and the rest are
+ * untouched. An Issue is refused (return it to Discovery first); an idea already in the pool is
+ * returned as is, so the caller can tell there is nothing to save.
+ */
+export function detachIdeaFromBoard(idea: Idea, nowUtc: Date, actorUserId: string | null): Idea {
+  if (idea.phase !== IdeaPhase.Discovery) {
+    throw new IdeaPhaseConflictError(
+      'An issue cannot be removed from its board; return it to discovery first.',
+    )
+  }
+  if (idea.boardId === null) {
+    return idea
+  }
+  // A task off its parent's board is no longer that parent's task.
+  return markUpdated(
+    { ...idea, boardId: null, itemNumber: null, parentIdeaId: null, autoCreated: false },
+    nowUtc,
+    actorUserId,
+  )
+}
+
+/**
+ * Files an idea or backlog Issue onto a board in the given lane (SPEC/20-feature-board-pull-in.md
+ * rules 13 and 14). A backlog Issue is returned to Discovery first, so it lands as an ordinary
+ * idea; unlike the standalone return, nothing here looks at the board it is leaving. An Issue in
+ * a sprint is refused: the sprint has to release it first.
+ */
+export function pullIdeaOntoBoard(
+  idea: Idea,
+  boardId: string,
+  statusId: string,
+  nowUtc: Date,
+  actorUserId: string | null,
+): Idea {
+  let pulled = idea
+  if (pulled.phase === IdeaPhase.Delivery) {
+    if (pulled.sprintId !== null) {
+      throw new IdeaPhaseConflictError('An issue in a sprint cannot be moved to a board.')
+    }
+    pulled = returnIdeaToDiscovery(pulled, nowUtc, actorUserId)
+  }
+  return markUpdated(
+    {
+      ...pulled,
+      boardId: assertRequiredId('boardId', boardId, 'Board id is required.'),
+      // The number belongs to the board it was issued on; the new board issues its own.
+      itemNumber: null,
+      statusId: assertRequiredId('statusId', statusId, 'Status id is required.'),
+    },
+    nowUtc,
+    actorUserId,
+  )
+}
+
+/**
+ * Sets or clears the optional effort estimate, in any phase. A `null` clears it, matching
+ * `dueDate` - the only other optional scalar on the edit path.
  */
 export function setIdeaEffort(
   idea: Idea,
@@ -382,12 +455,6 @@ export function setIdeaEffort(
   nowUtc: Date,
   actorUserId: string | null,
 ): Idea {
-  if (idea.phase !== IdeaPhase.Discovery) {
-    throw new IdeaDomainError(
-      'effort',
-      'Effort is recorded at the promotion gate and cannot be changed on an issue.',
-    )
-  }
   return markUpdated({ ...idea, effort }, nowUtc, actorUserId)
 }
 
@@ -493,6 +560,29 @@ export function assignIdeaToSprint(
 ): Idea {
   requireDeliveryPhase(idea, 'sprintId', 'Only a promoted idea can be assigned to a sprint.')
   return markUpdated({ ...idea, sprintId }, nowUtc, actorUserId)
+}
+
+/**
+ * Board-sprint membership: sets or clears `sprintId` with no phase guard, because a board item
+ * (a task or a card) is not a Delivery-phase Issue. The same-board rule is the application's.
+ */
+export function setIdeaBoardSprint(
+  idea: Idea,
+  sprintId: string | null,
+  nowUtc: Date,
+  actorUserId: string | null,
+): Idea {
+  return markUpdated({ ...idea, sprintId }, nowUtc, actorUserId)
+}
+
+/** Groups the item under an Outcome, or ungroups it with null. Eligibility is the application's. */
+export function setIdeaOutcome(
+  idea: Idea,
+  outcomeId: string | null,
+  nowUtc: Date,
+  actorUserId: string | null,
+): Idea {
+  return markUpdated({ ...idea, outcomeId }, nowUtc, actorUserId)
 }
 
 /**

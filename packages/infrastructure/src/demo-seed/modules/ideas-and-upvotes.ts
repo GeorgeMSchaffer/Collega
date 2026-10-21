@@ -136,6 +136,8 @@ export const ideasAndUpvotesSeed: SeedModule = {
               id: ideaId,
               organization_id: organizationId,
               board_id: boardId,
+              // Creation order per board; every seeded board has a key prefix.
+              item_number: i + 1,
               status_id: seedId('status', scenario.slug, status.name),
               title: board.ideas ? ideaScenario.title : `${board.focus}: ${ideaScenario.title}`,
               description: board.ideas
@@ -167,6 +169,11 @@ export const ideasAndUpvotesSeed: SeedModule = {
           await prisma.ideas.updateMany({
             where: { id: ideaId, impact_rationale: NOT_CAPTURED_TEXT },
             data: structured,
+          })
+          // Likewise for a database seeded before item numbers existed.
+          await prisma.ideas.updateMany({
+            where: { id: ideaId, item_number: null },
+            data: { item_number: i + 1 },
           })
 
           const relatedCount = i % 3
@@ -241,6 +248,13 @@ export const ideasAndUpvotesSeed: SeedModule = {
           seededSoFar++
           ideasInStatus++
         }
+
+        // The next number follows the ones just issued; never lowered below what a user has used.
+        const seededCount = (board.ideas ?? IDEA_SCENARIOS).length
+        await prisma.boards.updateMany({
+          where: { id: boardId, next_item_number: { lte: seededCount } },
+          data: { next_item_number: seededCount + 1 },
+        })
       }
     }
   },

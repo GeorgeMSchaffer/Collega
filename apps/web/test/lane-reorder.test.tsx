@@ -53,6 +53,7 @@ function idea(id: string, statusId: string): Idea {
   return {
     id,
     boardId: 'board-1',
+    authorUserId: null,
     statusId,
     statusName: statusId,
     title: `Idea ${id}`,
@@ -66,6 +67,10 @@ function idea(id: string, statusId: string): Idea {
     upvotes: 0,
     hasUpvoted: false,
     effort: null,
+    itemKey: null,
+    parentIdeaId: null,
+    taskCounts: null,
+    blockedBy: [],
   }
 }
 
@@ -87,7 +92,9 @@ function workspace(role: Role, b: ReturnType<typeof board>) {
       <IdeaWorkspace
         rows={[idea('a', 'new'), idea('b', 'review')]}
         total={2}
-        boards={[{ id: 'board-1', name: 'Assembly', isArchived: b.isArchived }]}
+        boards={[
+          { id: 'board-1', name: 'Assembly', isArchived: b.isArchived, hasReferenceLane: false },
+        ]}
         statuses={b.lanes}
         tags={[]}
         board={b}

@@ -9,6 +9,7 @@ import { Role } from '@collega/domain/enums'
 import { createStatus, type Status, softDeleteStatus } from '@collega/domain/statuses'
 import { describe, expect, it } from 'vitest'
 import { BoardService } from '../../src/boards/board-service.js'
+import type { AutoCreateTaskPort } from '../../src/boards/index.js'
 import type { CreateBoardCommand, UpdateBoardCommand } from '../../src/boards/models.js'
 import type {
   BoardRepository,
@@ -24,11 +25,13 @@ import {
   NotFoundError,
   ValidationError,
 } from '../../src/common/index.js'
+import type { IdeaRepository } from '../../src/ideas/ports.js'
 import type { StatusRepository } from '../../src/statuses/ports.js'
 import {
   countingUnitOfWork,
   fixedClock,
   impersonating,
+  lanes,
   member,
   NOW,
   ORG_A,
@@ -61,7 +64,7 @@ function board(overrides: { id?: string; organizationId?: string; name?: string 
     organizationId: overrides.organizationId ?? ORG_A,
     name: overrides.name ?? 'Acme Board',
     allowUserStatusUpdate: false,
-    orderedStatusIds: [STATUS_1, STATUS_2],
+    orderedLanes: lanes(STATUS_1, STATUS_2),
     nowUtc: NOW,
     actorUserId: 'seed',
   })
@@ -132,6 +135,11 @@ function harness(options: {
       return []
     },
     async moveIdeas() {},
+    async verifyIdeasMoved() {},
+    async reassignIdeas() {},
+    async listPullCandidates() {
+      return { items: [], page: 1, pageSize: 20, totalCount: 0, hiddenTaskCount: 0 }
+    },
   }
 
   const statuses: StatusRepository = {
@@ -171,6 +179,8 @@ function harness(options: {
       audit,
       options.currentUser,
       fixedClock(),
+      {} as IdeaRepository,
+      {} as AutoCreateTaskPort,
     ),
     added,
     saved,
@@ -433,7 +443,7 @@ describe('BoardService list card aggregates', () => {
       name: `Board ${id}`,
       allowUserStatusUpdate: false,
       // Deliberately not the statuses' own sort order: lanes follow the board, not the status.
-      orderedStatusIds: [STATUS_3, STATUS_1, STATUS_2],
+      orderedLanes: lanes(STATUS_3, STATUS_1, STATUS_2),
       nowUtc: NOW,
       actorUserId: createdByUserId,
     })

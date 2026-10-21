@@ -9,6 +9,9 @@ export interface SprintRepository {
   /** Active sprints for an organization, optionally narrowed to one state. */
   listByOrganization(organizationId: string, state: SprintState | null): Promise<readonly Sprint[]>
 
+  /** Active sprints on one board, optionally narrowed to one state. */
+  listByBoard(boardId: string, state: SprintState | null): Promise<readonly Sprint[]>
+
   add(sprint: Sprint): Promise<void>
 
   save(sprint: Sprint): Promise<void>
@@ -27,15 +30,33 @@ export interface SprintIssuesPort {
   listBySprint(sprintId: string): Promise<readonly Idea[]>
 
   /** `issueCount`/`doneCount` per sprint, in one query - the sprint list renders both for every
-   * row, and a per-row count would be the N+1 the delivery reads were written to avoid. */
+   * row, and a per-row count would be the N+1 the delivery reads were written to avoid. A board
+   * sprint counts an item done when it sits in a final lane of its own board; a sprint with no
+   * board keeps the delivery-status rule. */
   countsBySprintIds(sprintIds: readonly string[]): Promise<ReadonlyMap<string, SprintIssueCounts>>
 
   update(idea: Idea): Promise<void>
 }
 
+/** What sprint management needs to know about a board; a slice of the board repository. */
+export type SprintBoard = {
+  readonly id: string
+  readonly organizationId: string
+  readonly sprintsEnabled: boolean
+  readonly isArchived: boolean
+  /** Statuses of the board's final lanes: an item in one of them is done. */
+  readonly finalStatusIds: readonly string[]
+}
+
+export interface SprintBoardsPort {
+  getSprintBoard(boardId: string): Promise<SprintBoard | null>
+}
+
 export type SprintIssueCounts = {
   readonly issueCount: number
   readonly doneCount: number
+  /** Distinct parent ideas of the sprint's tasks. */
+  readonly ideaCount: number
 }
 
 /** Just enough of a user to validate a sprint owner: same organization, and active. */

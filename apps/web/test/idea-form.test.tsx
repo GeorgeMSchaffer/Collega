@@ -51,6 +51,10 @@ function idea(overrides: Partial<IdeaDetail> = {}): IdeaDetail {
     upvotes: 0,
     hasUpvoted: false,
     effort: null,
+    itemKey: null,
+    parentIdeaId: null,
+    taskCounts: null,
+    blockedBy: [],
     problem: 'Changeovers take two hours.',
     proposedSolutions: ['Pre-stage tooling'],
     impactRationale: 'Six hours a week of idle line.',
@@ -67,6 +71,7 @@ function idea(overrides: Partial<IdeaDetail> = {}): IdeaDetail {
     comments: [],
     isFollowing: false,
     followerCount: 0,
+    metrics: [],
     ...overrides,
   }
 }

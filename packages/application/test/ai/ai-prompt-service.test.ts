@@ -95,6 +95,9 @@ function harness(options: {
   let probeIndex = 0
   const model: IdeaDraftModel = {
     isConfigured: options.isConfigured ?? true,
+    continueTurnV2: async () => {
+      throw new Error('not exercised by this v1 double')
+    },
     async continueTurn(context) {
       probeContexts.push(context)
       if (options.probeError) {

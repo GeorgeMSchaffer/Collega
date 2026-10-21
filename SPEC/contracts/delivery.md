@@ -9,7 +9,7 @@ shared data rules). Canonical, and read, not edited, by implementation slices.
 Added 2026-09-11, Issues and Delivery Slice 1 (`SPEC/20-feature-issues-and-delivery.md`).
 
 Section-wide rules:
-- **An Issue is not a new resource** — it is the same `ideas` row in its `Delivery` phase, so every route below addresses an idea by its existing `{ideaId}` and there is no `/issues` root.
+- **An Issue is not a new resource** — it is the same `ideas` row in its `Delivery` phase, so every route below addresses an idea by its existing `{ideaId}` and there is no `/issues` root for reading or changing one. **One exception, added 2026-10-15:** `POST /api/v1/organizations/{organizationId}/issues` *creates* an Issue, so there is no `{ideaId}` yet; it is organization-scoped like the pool create.
 - The Slice 2 Outcome and Roadmap routes are deliberately absent; nothing here carries an `outcomeId`.
 - Two refusals are distinct on purpose and must not be collapsed:
   - **`409`** — the item is in the wrong phase *for the phase transition itself*: promoting something already in `Delivery`, or returning something already in `Discovery`. Nothing to fix in the request; the item has already reached the state being asked for.
@@ -52,6 +52,29 @@ The promotion gate — the explicit, audited decision that flips an idea from `D
   - writes an `IdeaPromotedToIssue` audit event and an `IdeaPromoted` notification to the author and assignees, self-suppressed
   - the item leaves the ideation board (which filters to `Discovery`) and appears on the sprint board or backlog
   - Authorization is evaluated **before** the phase check, so an unauthorized caller gets `403` even when the item is already promoted: a caller who may not promote must not learn the item's phase.
+
+### `POST /api/v1/organizations/{organizationId}/issues`
+Add an Issue directly: creates an idea that belongs to no board and promotes it, in one commit. Added 2026-10-15 (`SPEC/decisions.md` 2026-10-15; the Backlog's *Add issue*, `SPEC/20-feature-issues-and-delivery.md`). It is the only route in this section that creates a row; the row is still an `ideas` row in its `Delivery` phase, so every other route here addresses it by `{ideaId}` as before.
+
+- **Roles:** User and Org Admin of the organization (a Site Admin through View As, acting as the target). Read Only is `403`; a Site Admin acting as themselves is refused. The same set that may create a pool idea (`POST /api/v1/organizations/{organizationId}/ideas`) and, as the author, promote it.
+- **Request:** body
+  - the fields, limits and validation of `POST /api/v1/organizations/{organizationId}/ideas` (see [`contracts/ideas.md`](ideas.md)), **except there is no `statusId`**: a `statusId` sent is ignored. Idea Type, Business Impact, assignees and field values are validated against `{organizationId}`.
+  - `effort` **required** string: `Low`, `Medium`, or `High`. There is no default, as at the promotion gate.
+  - `sprintId` optional GUID string or `null` — the sprint to add the Issue to. `null` or omitted adds it to the delivery backlog. Must name a non-`Completed` sprint in the organization.
+- **Response:** `201` — the shape of `POST /api/v1/organizations/{organizationId}/ideas`, with `boardId` `null`. `statusId` is the organization's first non-deleted status in sort order. The delivery card is read with `GET /api/v1/ideas/{ideaId}/delivery`.
+- **Errors:**
+  - `400` the pool create's field errors, keyed the same way, including `statusId` ("The organization has no active status to place the idea in.") when the organization has no active status; `effort` is missing or not one of the three values (keyed `effort`); `sprintId` names no assignable sprint in this organization, or names a `Completed` one (keyed `sprintId`)
+  - `401` caller is not authenticated
+  - `403` Read Only, or a Site Admin acting as themselves
+  - `404` `{organizationId}` is not the caller's organization
+- **Rules:**
+  - one commit, all or nothing: the idea is created as the pool create creates it, then promoted as `POST /api/v1/ideas/{ideaId}/promote` promotes — `phase` `Delivery`, `deliveryStatus` `Pending`, the given `effort`, `sprintId`, `promotedAtUtc`, `promotedByUserId` the creator, and `upvoteCountAtPromotion` 0 (a new idea has no upvotes)
+  - the idea sits in no lane and has no position. The ideation `statusId` is the one the pool create assigns and is never cleared, as on promotion.
+  - the author follows automatically, as for every created idea
+  - writes the `IdeaCreated` audit event as the pool create writes it, and an `IdeaPromotedToIssue` audit event as promote writes it, each attributed to the real user with the View As target on behalf of; the audit writer has its own commit, so a failure there can lose entries but never the Issue
+  - writes the `IdeaPromoted` notification as promote does, to the idea's followers other than the actor; the creator is the author and the actor, so only assignees (who follow automatically) can receive it
+  - the Issue can be pulled onto a board only after Return to Discovery (`POST /api/v1/ideas/{ideaId}/return-to-discovery`), which puts it in the pool, by the existing rule in `SPEC/20-feature-board-pull-in.md` rule 14
+  - Authorization is evaluated before validation, so a caller who may not add an Issue learns nothing about the request's fields.
 
 ### `POST /api/v1/ideas/{ideaId}/return-to-discovery`
 Recover a mis-promotion. Deliberately reversible rather than prevented by a stronger confirm.
@@ -101,6 +124,7 @@ Pull an Issue into a sprint, or return it to the delivery backlog.
   - `403` caller is not an in-scope admin, or is a Site Admin acting directly
   - `404` idea does not exist, is deleted, or is outside caller scope
 - **Rules:**
+  - **A board sprint (added 2026-10-19, decided by the orchestrator under the owner's spec-and-build approval 2026-10-19; owner to review):** when the target sprint has a `boardId`, the item must be on that board, in any phase, or the request is `422` `sprintItemOnOtherBoard` (`"A sprint holds items from its own board only."`); the Discovery-phase `400` above does not apply. Returning an item to the backlog (`null`) from a board sprint likewise has no phase guard. A task is an item like any other, so this is how a task is put in a sprint, changed, or taken out.
   - assigning the sprint the Issue is already in is a no-op: no audit event
   - otherwise writes an `IssueSprintAssignmentChanged` audit event. No notification — sprint membership is a planning decision, not something to page the room about.
 
@@ -113,6 +137,7 @@ The sprint board and the delivery backlog — `Delivery`-phase items as cards.
   - `deliveryStatus` optional — `Pending`, `Scoping`, `Development`, `Review`, or `Complete`. An unrecognised value is ignored rather than refused, matching the board list's other optional filters.
 - **Response:** `200`: an **unpaged** array (a sprint is a bounded, human-sized set) of the `GET /api/v1/boards/{boardId}/ideas` item shape plus:
   - `phase` string — always `Delivery` for this endpoint
+  - `boardId` is `null` for an Issue promoted from the organization's pool, an idea that belongs to no board (added 2026-10-13); returning that Issue to Discovery puts it back in the pool
   - `effort` string or `null`: `Low`, `Medium`, `High`
   - `deliveryStatus` string or `null`
   - `sprint` object or `null`: `sprintId`, `name`, `startDate`, `endDate`

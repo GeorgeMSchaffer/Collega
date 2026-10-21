@@ -18,12 +18,13 @@ List ideas on a board with pagination.
   - `tag` optional
   - `priority` optional `Low`, `Medium`, `High`, or `Critical`
   - `dueBefore` optional date string (`YYYY-MM-DD`)
+  - `sprintId` optional (added 2026-10-19, decided by the orchestrator under the owner's spec-and-build approval 2026-10-19; owner to review): a sprint GUID returns only the items in that sprint; the literal **`none`** (case-insensitive) returns only items in no sprint — the board backlog for the Sprint | Backlog toggle. Absent applies no sprint filter. Any other value matches nothing and returns an empty page, like `statusId`. The board list shows Discovery-phase items only, so with this filter a legacy Delivery-phase item in a board sprint is counted in the sprint's `issueCount` but appears only in the sprint detail read (`GET /organizations/{organizationId}/sprints/{sprintId}`); tasks are always Discovery-phase, so the work board is unaffected.
   - `sortBy` optional `createdAt`, `updatedAt`, `upvoteCount`, `priority`, or `dueDate`; **added 2026-09-27**: `title`, `status` (lane order), `assignedTo`, `tags`
   - `statusId`, `priority` and `tag` are repeatable from 2026-09-27 (any-of within a parameter)
   - `sortDirection` optional `asc` or `desc`
 - **Response:** `200` paged item shape
   - `ideaId`
-  - `boardId`
+  - `boardId` string, or **`null` for an idea that belongs to no board** (added 2026-10-13, `20-feature-board-pull-in.md`). Never `null` on this board-scoped list; the organization list, the delivery card and the detail can return it.
   - `title`
   - `priority` string
   - `ideaTypeId` GUID string
@@ -43,6 +44,7 @@ List ideas on a board with pagination.
   - `createdAtUtc`
   - Added 2026-09-28 (comp R, `SPEC/decisions.md` 2026-09-28):
     - `tags` array — the same tags as `tagNames`, in the same order, each `{ tagId, name, color }`, so a card can colour its chips without a second request. `tagNames` stays, unchanged, for every client written before it.
+    - `sprint` object or `null` (added 2026-10-19, decided by the orchestrator under the owner's spec-and-build approval 2026-10-19; owner to review): `sprintId`, `name`, `startDate`, `endDate` — the sprint the item is in, for the sprint chip on a card. The shape the delivery card already carried, now on every item of this shape, so the delivery card's own `sprint` is unchanged.
     - `effort` string or `null`: `Low`, `Medium`, `High` — the idea's effort, for the effort bar on idea cards and rows, which shows whenever it is set (answered 2026-09-28). The delivery card already carried `effort`; it is the same field.
 - **Errors:** —
 - **Rules:**
@@ -60,12 +62,13 @@ Cross-board, organization-scoped idea list for the global `/ideas` page (`SPEC/2
   - `scope` optional `all` (default), `created` (authored by the caller), or `assigned` (assigned to the caller) — the caller's me-chips
   - `tag` optional — filter to ideas carrying a tag whose normalized name equals the given value (same normalization/semantics as the board list's `tag`)
   - `user` optional GUID — user-association search box: filter to ideas the given user **authored or is assigned to** (`SPEC/Bug Triage.md`). `Guid.Empty` is treated as absent. Composes (AND) with `scope`/`tag`/`search`/`fieldFilters` when combined.
-  - `sortBy` optional `createdAt` (default), `title`, `createdBy` (author name), `assignedTo` (alphabetically-first assignee's name), or `status` (status name); **added 2026-09-27** for the list pattern: `board` (board name), `priority` (Low→Critical order), `upvoteCount`, and `tags` (alphabetically-first tag)
+  - `sortBy` optional `createdAt` (default), `title`, `createdBy` (author name), `assignedTo` (alphabetically-first assignee's name), or `status` (status name); **added 2026-09-27** for the list pattern: `board` (board name; ideas with no board sort **after** every named board in both directions), `priority` (Low→Critical order), `upvoteCount`, and `tags` (alphabetically-first tag)
   - `boardId`, `statusId`, `priority` optional and repeatable (added 2026-09-27); `tag` becomes repeatable with any-of semantics
+  - `boardId` also accepts the literal **`none`** (case-insensitive; added 2026-10-13): the idea has no board. It is any-of with the other `boardId` values, so `boardId=none` returns only board-less ideas, `boardId=none&boardId={id}` returns board-less ideas and those on that board, and `boardId={id}` alone never returns a board-less idea. A value that is neither a GUID nor `none` matches nothing.
   - `sortDirection` optional `asc` or `desc` (the page requests `desc` for newest-first). All sorts apply a stable `ideaId` tiebreaker so ordering is deterministic across pages.
   - `fieldFilters[<fieldDefinitionId>]=<value>` optional, repeatable — filter by User-Defined Field value (T059). Semantics per field type: `Text`/`Url` contains; `Number` range `<min>:<max>` (either side omittable); `Date` range `<from>:<to>` (ISO-8601, either side omittable); `Boolean` `true`/`false`; `Dropdown` exact option id; `MultiSelect` any-of (matches when the stored option ids include the value). Unknown/invalid `fieldDefinitionId` keys and unparseable values are silently ignored.
   - `phase` optional (added 2026-09-11, Issues and Delivery Slice 1) — `All` (**default**), `Ideas` (`Discovery`-phase only), or `Issues` (`Delivery`-phase only). Unrecognised values are treated as `All`.
-- **Response:** `200`: same paged item shape as `GET /api/v1/boards/{boardId}/ideas`.
+- **Response:** `200`: same paged item shape as `GET /api/v1/boards/{boardId}/ideas`, plus `phase` (added 2026-10-19, Sprint 14 follow-up): `Discovery` or `Delivery`, so the page can tell Issues from ideas without a second request. The board list carries the same field, always `Discovery`.
 - **Errors:** —
 - **Rules:**
   - The `phase` default spans **both** phases, unlike the board list: this is the list somebody uses to find an item they cannot see on a board, and hiding promoted ones would lose them. Omitting it therefore leaves the response exactly as it was before the parameter existed.
@@ -127,6 +130,7 @@ Create a new idea on a board.
   - `statusId` optional GUID string, defaults to the left-most swimlane when omitted
   - `tagNames` optional string array
   - `mentionEmails` optional string array
+  - `effort` optional string: `Low`, `Medium` or `High` (added 2026-10-20, slice 298; owner to review). Absent, `null` or blank stores no estimate; the stored value is never `null`-coerced from anything else. An unrecognised value is a field-keyed `400` (`effort`), as on `PUT /api/v1/ideas/{ideaId}`. An idea cannot be created directly into a reference lane, so the lane rule below is unchanged.
 - **Response:** `201`
   - `ideaId`
   - `boardId`
@@ -139,7 +143,22 @@ Create a new idea on a board.
 - **Errors:** —
 - **Rules:** —
 
-### `POST /api/v1/boards/{boardId}/ideas/ai-draft`
+### `POST /api/v1/organizations/{organizationId}/ideas`
+Create an idea that belongs to no board (the organization's pool; added 2026-10-13, `20-feature-board-pull-in.md` rules 3 and 4).
+
+- **Roles:** User and Org Admin of the organization (a Site Admin through View As, acting as the target). Read Only is `403`; a Site Admin acting as themselves is refused, as for every organization-content write.
+- **Request:** body — the same fields, limits and validation as `POST /api/v1/boards/{boardId}/ideas`, **except there is no `statusId`**: a `statusId` sent is ignored. `effort` is taken as on the board create (added 2026-10-20, slice 298; owner to review). Idea Type, Business Impact, assignees and field values are validated against `{organizationId}`.
+- **Response:** `201` — the shape of `POST /api/v1/boards/{boardId}/ideas`, with `boardId` always `null`. `statusId` is the organization's first non-deleted status in sort order.
+- **Errors:**
+  - `400` the board create's field errors, keyed the same way; plus `statusId` ("The organization has no active status to place the idea in.") when the organization has no active status
+  - `403` Read Only, or a Site Admin acting as themselves
+  - `404` `{organizationId}` is not the caller's organization
+- **Rules:**
+  - The idea sits in no lane and has no position. Its status cannot be changed on its own (`POST /api/v1/ideas/{ideaId}/status` answers `400`); only pulling it onto a board sets one.
+  - The author follows automatically, and the audit event is the same `IdeaCreated` (metadata `title`, `priority`, `statusId`).
+  - CSV import and the idea assistant remain board-scoped and never create these ideas.
+
+### `POST /api/v1/boards/{boardId}/ideas/ai-draft` — withdrawn (2026-09-27, idea assistant v2)
 > **Withdrawn 2026-09-27** (`20-feature-ai-idea-assist-v2.md` "Contract changes"): never built, and extraction is covered by the v2 turn endpoint. Kept for history.
 
 Turn a plain-English description into a pre-filled, unsaved idea draft for review.
@@ -181,7 +200,7 @@ Turn a plain-English description into a pre-filled, unsaved idea draft for revie
   - unambiguous resolutions are returned pre-filled; ambiguous or unresolved mentions and no-signal required fields are returned in `clarifications`
   - at most one clarification round is supported; the client resolves the returned questions locally and does not call this endpoint again for the same input
 
-### `POST /api/v1/boards/{boardId}/ideas/ai-polish`
+### `POST /api/v1/boards/{boardId}/ideas/ai-polish` — withdrawn (2026-09-27, idea assistant v2)
 > **Withdrawn 2026-09-27**: never built; polishing belongs to the future refinement spec. Kept for history.
 
 Rewrite a draft description on explicit user request. This is the opt-in "Polish with AI" action and is never invoked automatically.
@@ -203,12 +222,13 @@ Return full idea detail.
 - **Request:** —
 - **Response:** `200`
   - `ideaId`
-  - `boardId`
+  - `boardId` string, or `null` for an idea that belongs to no board (added 2026-10-13)
   - `title`
   - `problem` string (added 2026-09-27)
   - `proposedSolutions` string array (added 2026-09-27)
   - `impactRationale` string (added 2026-09-27)
   - `description` string or `null`
+  - `metrics` array, the item's projected and realized values as `GET /ideas/{ideaId}/metrics` returns them; `[]` for a card with a parent (added 2026-10-16, `contracts/metric-types.md`) and `[]` for a direct Site Admin, who sees values only through View As (decided 2026-10-16)
   - `priority`
   - `ideaTypeId`
   - `ideaTypeName`
@@ -218,6 +238,8 @@ Return full idea detail.
   - `businessImpactName`
   - `businessImpactColor`
   - `dueDate`
+  - `effort` string or `null`: `Low`, `Medium`, `High`; the same field and values as on the list item; `null` on a task (added 2026-10-20, slice 298)
+  - `parentItemKey` string or `null`: beside `parentIdeaId`, the parent's `itemKey` (added 2026-10-20, slice 298; see "Tasks and item keys")
   - `assignees` array using the board-list assignee item shape
   - `statusId`
   - `statusName`
@@ -245,7 +267,7 @@ Return full idea detail.
 - **Rules:**
   - `author` and `createdAtUtc` were added 2026-09-10: the detail header renders "by {author} on {date}" and had no source for either. `author` is the full persona rather than the bare `authorUserId` the list item carries, so the name renders without a second request per idea opened. It is nullable only because `ideas.author_user_id` carries no foreign key; no code path deletes a user, so a `null` there is data damage rather than an ordinary case to design a label for.
   - `ideaTypeColorHex`, `ideaTypeIcon` and `fieldValues` were **missing from this document, not from the endpoint** — all three have been returned since long before the 2026-09-10 additions above, and the recorded corpus carries them. Written down 2026-09-10 because a contract that omits fields the endpoint really answers misleads every reader of it; nothing about the response changed.
-  - There is deliberately **no** `reference` field. The comps show `IDEA-101`, but no reference column exists and the Prisma schema is frozen at S0.2 — a real reference needs a per-organization sequence and therefore a schema amendment slice.
+  - There is deliberately **no** `reference` field. The comps show `IDEA-101`, but no reference column exists and the Prisma schema is frozen at S0.2 — a real reference needs a per-organization sequence and therefore a schema amendment slice. (Superseded for boards with a key prefix: "Tasks and item keys" below adds `itemKey`.)
   - `PUT /api/v1/ideas/{ideaId}` answers this same detail shape, and carries both fields with it.
 
 ### `PUT /api/v1/ideas/{ideaId}`
@@ -265,16 +287,17 @@ Update idea content.
   - `assigneeUserIds` optional array of zero to five distinct GUID strings; every newly selected user must be active and belong to the idea's organization
   - `tagNames` optional array of no more than 10 distinct normalized tag names
   - `mentionEmails` optional string array
-  - `effort` optional string: `Low`, `Medium`, or `High` — the optional Discovery-phase effort estimate (added 2026-09-11, Issues and Delivery Slice 1)
+  - `effort` optional string: `Low`, `Medium`, or `High` — the optional effort estimate (added 2026-09-11, Issues and Delivery Slice 1; settable at any time, corrected 2026-10-19)
 - **Response:** the detail shape of `GET /api/v1/ideas/{ideaId}` (stated there).
+- **Updating a task (an item with a parent; decided 2026-10-16):** the same route, task fields only. The author or an in-scope Org Admin may change `title`, `description`, `assigneeUserIds` and `tagNames`, under the rules above; `title` is required. `problem`, `proposedSolutions`, `impactRationale`, `priority`, `ideaTypeId`, `businessImpactId`, `dueDate`, `effort` and `mentionEmails` are not taken: they are ignored if sent, as on `POST …/board-tasks`, and are not required. The idea-only fields that are read stay `null` (or `[]`); `mentionEmails` has no read field and no mention notification is sent. Sprint and blockers keep their own routes. Read Only `403`; a direct Site Admin as for any idea update.
 - **Errors:**
   - unauthorized description changes return `403 Forbidden`.
   - unauthorized assignment changes return `403 Forbidden`.
   - duplicate assignee IDs, more than five assignee IDs, inactive newly selected users, cross-organization users, or more than 10 distinct tags return `400 Bad Request`.
-  - `effort`: an unrecognised value is a field-keyed `400`; supplying it for a `Delivery`-phase item returns `400` keyed on `effort`.
+  - `effort`: an unrecognised value is a field-keyed `400`. An explicit `null` while the idea sits in a reference lane is `422` `effortRequiredInReferenceLane` (decided 2026-10-19).
 - **Rules:**
   - **`effort` is three-state, and that is deliberate** — it is the only field on this payload that is. The key being **absent** means "not provided": the stored estimate is left untouched. An explicit **`null`** clears it. A **value** sets it. Why: a plain two-state optional (absent reading as `null`, the way `dueDate` does) would make every client that predates this field silently clear the estimate on an unrelated edit, and on a promoted Issue that estimate is half of what the promotion gate recorded.
-  - `effort` may only be set while the idea is in the **`Discovery`** phase: effort is chosen at the promotion gate, alongside `promotedByUserId` and `upvoteCountAtPromotion`, and re-estimating a live Issue is not modelled in this slice. Omitting the key on an Issue is always valid.
+  - **`effort` may be set at any time (corrected 2026-10-19).** The earlier Discovery-phase-only rule dates from the removed Discovery/Delivery phases and no longer applies. In a reference lane it may be changed but not cleared: `null` is `422` `effortRequiredInReferenceLane`. Omitting the key is always valid.
   - description updates are accepted only from the idea author, an in-scope Org Admin, or Site Admin.
   - assignee updates replace the complete collection atomically and are accepted only from the idea author, an in-scope Org Admin, or Site Admin.
   - UI behavior contract:
@@ -290,8 +313,34 @@ Move an idea to another board status.
 - **Request:** body
   - `statusId` required GUID string
 - **Response:** `204 No Content`
-- **Errors:** —
+- **Errors:**
+  - `400` keyed `statusId` ("This idea is not on a board.") when the idea belongs to no board (added 2026-10-13): it sits in no lane, and only pulling it onto a board sets a status
 - **Rules:** —
+
+### `DELETE /api/v1/ideas/{ideaId}/board`
+Remove an idea from its board, leaving it in the organization's pool (added 2026-10-13, `20-feature-board-pull-in.md` rules 5, 6 and 19).
+
+- **Roles:** the idea's author, or an Org Admin of its organization (a Site Admin through View As, acting as the target); the caller must be a User or Org Admin, so a Read Only author is refused. A Site Admin acting as themselves is refused.
+- **Request:** optional body `{ "forceReason": string }`, Org Admin only (added 2026-10-16); otherwise —
+- **Response:** `204 No Content`
+- **Errors:**
+  - `403` the caller is neither the author nor an Org Admin, is Read Only, or is a Site Admin acting as themselves
+  - `404` the idea does not exist, is deleted, or belongs to another organization
+  - `409` the idea is an Issue ("An issue cannot be removed from its board; return it to discovery first."), or its board is archived and the caller is not an Org Admin ("The board is archived, so only an Org Admin can remove its ideas.")
+  - `422` (`parentHasOpenTasks`) the idea sits in a reference lane and any of its tasks is not in a final lane (added 2026-10-16). An Org Admin may send `forceReason` (non-empty text) in the request body to override; any other role sending it gets `403`. Message (decided 2026-10-16): `'{title}' is waiting on {n} open tasks, so it cannot be removed from the board.` Audited as `IdeaMovedPastOpenTasks`; the tasks stay on the child board.
+- **Rules:**
+  - **Idempotent.** An idea already in the pool answers `204` with nothing written: no `updated_at_utc` stamp, no audit event. An Issue is refused (`409`) whether or not it has a board.
+  - The idea keeps its status, tags, assignees, comments, upvotes and followers; `updatedAtUtc` is stamped. No notification is sent.
+  - Writes one `IdeaBoardChanged` audit event (`entityType` `Idea`, message `Idea '{title}' removed from its board.`, metadata `{ fromBoardId, toBoardId }` with `toBoardId` `null`), attributed to the real user with the View As target as the intended actor, as every content write is.
+
+### `GET /api/v1/ideas/{ideaId}/activity`
+*Confirmed by the owner 2026-10-19. Needed by the lock override's activity entry ("Moved past N open tasks — reason"); no route read audit events before.*
+
+- **Roles:** whoever may read `GET /api/v1/ideas/{ideaId}` (same scope and `404`s).
+- **Request:** query `page`, `pageSize` (standard paging, default 20, 1–100).
+- **Response:** `200`: `{ items, page, pageSize, totalCount }`, newest first (then id). Each item: `eventType` (e.g. `IdeaStatusChanged`, `IdeaBoardChanged`, `IdeaMovedPastOpenTasks`), `message`, `occurredAtUtc`, `actorUserId` and `onBehalfOfUserId` (GUID or `null`), `metadata` (the stored metadata object, or `null`; for `IdeaMovedPastOpenTasks` `{ reason, openTaskCount }`).
+- **Rules:** the audit events whose entity is this idea; a read only. A client resolves names from the users list.
+- **Errors:** `401`, `404`.
 
 ### `DELETE /api/v1/ideas/{ideaId}`
 Soft-delete an idea while preserving its row and audit history.
@@ -308,3 +357,37 @@ Soft-delete an idea while preserving its row and audit history.
 - **Rules:**
   - normal board, list, and detail endpoints exclude soft-deleted ideas
   - no restore endpoint is exposed in this release
+  - an idea with live child tasks cannot be deleted: `422` `hasOpenTasks`
+
+## Tasks and item keys (planned 2026-10-15)
+
+*Specified in `SPEC/20-feature-board-references.md`. Not built until Plan 2.*
+
+- **Item fields (added):**
+  - `itemKey` string or `null`: `<board keyPrefix>-<itemNumber>`, e.g. `CI-19`; `null` for an item on a board with no prefix or no board. Assigned once, never reused.
+  - `parentIdeaId` GUID or `null`: set on a task. A task's board must be the board referenced by a lane the parent currently sits in when the task is created.
+  - `parentItemKey` string or `null` (added 2026-10-20, slice 298; owner to review): beside `parentIdeaId` on the board list, the organization list and the idea detail, the parent's `itemKey`. `null` when there is no parent or the parent has no key.
+  - `blockedBy` array of `{ ideaId, itemKey, isFinal }`: the tasks that must be final before this one can leave its board's first lane.
+  - `taskCounts` object `{ total, done }` on an item whose lane references a board: `done` counts children in a final lane.
+- **Routes (added):**
+  - `POST /api/v1/ideas/{ideaId}/board-tasks` creates a task on the referenced board. Body (decided 2026-10-16): `title` required (as for an idea); optional `description`, `assigneeUserIds`, `tagNames`, with the idea create rules (`tagNames` against the child board's organization). `problem`, `proposedSolutions`, `impactRationale`, `priority`, `ideaTypeId` and `businessImpactId` are not taken and are `null` (or `[]`) on a task; a sprint is set through the sprint routes. Success `201` with the task.
+    - **Roles:** anyone who may edit the parent idea; Read Only `403`; a direct Site Admin `403`.
+    - **Errors:** `401`; `403`; `404` the parent is missing or out of scope; `422` `parentNotInReferenceLane`, `parentIsTask`, `referencedBoardArchived`, `noDefaultIdeaType`, `noDefaultBusinessImpact`.
+    - Late additions require moving the parent back into the reference lane first.
+    - Named `board-tasks` so it does not collide with the checklist routes in `contracts/issue-tasks.md`, which stay until Plan 4 retires them; Plan 4 may then rename it to `/tasks`.
+  - `GET /api/v1/ideas/{ideaId}/board-tasks` lists the parent's tasks in creation order (added 2026-10-20, slice 298; owner to review). Response `200`: an array of `{ ideaId, itemKey, title, statusId, statusName, isFinal, assignees, blockedBy, autoCreated }`. `isFinal` is true when the task sits in a final lane of its own board; `assignees` uses the board-list assignee item shape; `blockedBy` is `{ ideaId, itemKey, isFinal }[]`. The open count is the rows with `isFinal` false. A parent with no tasks answers `[]`.
+    - **Roles:** anyone who can read the parent, as for the idea detail; Read Only allowed.
+    - **Errors:** `401`; `404` the parent is missing or out of scope.
+    - **`autoCreated`** (added 2026-10-20, slice 303; owner-approved contract change and schema column): boolean, `true` when the system made the task on entry to an `autoCreateTask` lane (the move route, a pull, or a bulk lane move), `false` for one added through `POST /ideas/{ideaId}/board-tasks`. Stored as `ideas.auto_created` (default `false`; existing rows read `false`). Returned only on this list, not on idea reads or the board and organization lists.
+  - `DELETE /api/v1/ideas/{ideaId}/board-tasks/{taskId}` removes a task from its parent by soft-deleting the task card, as `DELETE /api/v1/ideas/{ideaId}` does (added 2026-10-20, slice 298; decided by the owner, roles and errors owner to review). Its blocker links are dropped in both directions. The parent's `taskCounts` and reference-lane lock follow from the live children, so the parent unlocks when the removed task was its last open one. Success `204`.
+    - **Roles:** anyone who may edit the parent idea (as for creating a task); Read Only `403`; a direct Site Admin `403`. Unlike `DELETE /api/v1/ideas/{ideaId}`, this is not Org Admin only.
+    - **Errors:** `401`; `403`; `404` the parent or the task is missing or out of scope, or the task is not a child of that parent.
+    - Audited as `BoardTaskDeleted` on the task (parent id and board id in metadata), written after the commit.
+  - `PUT /api/v1/ideas/{ideaId}/blocked-by` replaces the blocker set. Body `{ "ideaIds": [...] }`. Details in `contracts/idea-dependencies.md`.
+- **Rules:**
+  - Moving an idea into a reference lane requires `effort` to be set; otherwise `422` (`effortRequiredForReferenceLane`). It stays set while the idea is in the lane: an update with `effort` `null` there is `422` (`effortRequiredInReferenceLane`; decided 2026-10-19). The client refuses the move up front (no drop target, tooltip "Add Effort first"); these server rules are the backstop for every path (pull, `ideaMoves`, other clients).
+  - A task cannot itself be a parent (no sub-tasks at launch) and cannot be grouped under an Outcome; both `422`.
+  - Moving an idea out of a reference lane while any of its tasks is not in a final lane is refused with `422` (`parentHasOpenTasks`). An Org Admin may send `forceReason` (non-empty text) on the move to override; any other role sending it gets `403`. The override is audited as `IdeaMovedPastOpenTasks` (reason, open task count) and does not touch the tasks. The refusal message (decided 2026-10-16) is `'{title}' is waiting on {n} open tasks, so it cannot be moved.` The stored metadata is `{ reason, openTaskCount }`. How the UI shows it as an activity entry is intent, not contract: see `decisions.md` "Board References UI" (2026-10-16); no route reads audit events yet.
+  - A card entering a lane with `autoCreateTask` by any path (this route, a pull with `pullItemIds`, or a bulk lane move with `ideaMoves` on a board edit; decided 2026-10-16) gets one task on the referenced board in the same transaction (the card's title, the board's first lane); a failure rolls the whole write back. **First entry only (amended 2026-10-19):** a card that already has at least one task on the referenced board (any lane) gets none, so moving it back into the lane does not add a second automatic task.
+  - An item with a parent is never pulled onto another board (`contracts/boards.md`, "Pulling items").
+  - A task cannot leave its board's first lane while any blocker is not in a final lane; `422` (`taskBlocked`). The client refuses it up front (no drop target, a tooltip naming the blocker; decided 2026-10-19), and shows the blocked badge only while the task sits in its first lane: a blocker added after the task left it is allowed and shows no badge.

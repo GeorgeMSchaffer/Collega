@@ -195,6 +195,20 @@ export type Status = {
 }
 
 /**
+ * A status as one board uses it: the lane's display fields plus its Board References flags
+ * (`contracts/boards.md`). `isFinal` marks where an item counts as done, `referencesBoardId` is the
+ * board whose tasks the lane hands work to, and `autoCreateTask` makes entering the lane create one.
+ */
+export type BoardLane = Status & {
+  isFinal: boolean
+  referencesBoardId: string | null
+  autoCreateTask: boolean
+}
+
+/** The Board References flags of a lane, keyed by status id on the board form so a save sends them back. */
+export type LaneFlags = Pick<BoardLane, 'isFinal' | 'referencesBoardId' | 'autoCreateTask'>
+
+/**
  * A board as `/settings/boards` administers it, which is a different question from what the
  * workspace list shows.
  *
@@ -315,6 +329,9 @@ export type BoardOverview = {
   userStatusMoves: boolean
   isArchived: boolean
   archivedOn: string | null
+  keyPrefix: string | null
+  sprintsEnabled: boolean
+  ideaFeaturesEnabled: boolean
 }
 
 /**
@@ -328,12 +345,17 @@ export type BoardOverview = {
 export type BoardWithLanes = {
   id: string
   name: string
-  lanes: Status[]
+  lanes: BoardLane[]
   /** Whether a plain User may move a card between lanes, or only an administrator. */
   allowUserStatusUpdate: boolean
   description: string | null
   /** An archived board opens read-only (`20-feature-boards-and-statuses.md` rule 13). */
   isArchived: boolean
+  keyPrefix: string | null
+  /** The number the next item key takes; above `1`, keys have been issued and the prefix is locked. */
+  nextItemNumber: number
+  sprintsEnabled: boolean
+  ideaFeaturesEnabled: boolean
 }
 
 /**
@@ -345,6 +367,70 @@ export type BoardRef = {
   id: string
   name: string
   isArchived: boolean
+  /** Has a lane that references another board, so an idea's Effort gates a move into it. */
+  hasReferenceLane: boolean
+}
+
+/**
+ * A board a lane could name as its reference, as the board form's selector offers it. Only active
+ * boards other than the one being edited; `hasReferenceLane` is what makes one a disallowed target
+ * (one level of references at launch, `contracts/boards.md`).
+ */
+export type ReferenceChoice = {
+  id: string
+  name: string
+  keyPrefix: string | null
+  /** The name of the board's first lane, where an auto-created task lands. */
+  firstLaneName: string | null
+  hasReferenceLane: boolean
+}
+
+/** What the lane editor needs beyond the board itself to offer a reference. */
+export type ReferenceContext = {
+  choices: ReferenceChoice[]
+  /** The boards with a lane that references this one; while there are any, none of this board's lanes may reference a board. */
+  referencedBy: { id: string; name: string }[]
+}
+
+/** Where the board form's *Add existing items* step reads from (`contracts/boards.md`, pull-candidates). */
+export type PullSource = 'unassigned' | 'boards' | 'backlog'
+
+/** An item the pull step offers: an idea in the pool or on another board, or a backlog Issue. */
+export type PullCandidate = {
+  id: string
+  title: string
+  authorUserId: string
+  authorName: string
+  /** Null for an idea in the pool. */
+  boardId: string | null
+  boardName: string | null
+  statusId: string
+  statusName: string
+  /** `Discovery` for an idea, `Delivery` for a backlog Issue. */
+  phase: string
+  tags: string[]
+  isMine: boolean
+  priority: Priority | null
+  upvotes: number
+}
+
+export type PullCandidatePage = {
+  items: PullCandidate[]
+  page: number
+  pageSize: number
+  totalCount: number
+}
+
+/** The pull picker's question: one tab's items, filtered, a page at a time. */
+export type PullCandidateQuery = {
+  source: PullSource
+  /** The board being edited, whose own items are never offered. */
+  excludeBoardId?: string | undefined
+  search?: string | undefined
+  tag?: string | undefined
+  authorUserId?: string | undefined
+  page: number
+  pageSize: number
 }
 
 /** A tag where it labels something: its name, which is always the chip's text, and its colour. */
@@ -374,7 +460,10 @@ export type TagOverview = TagRef & {
  */
 export type Idea = {
   id: string
-  boardId: string
+  /** Null for an idea in the pool: it belongs to no board and sits in no lane. */
+  boardId: string | null
+  /** Who raised it. The list item sends the bare id, so a row can tell its author without a detail. */
+  authorUserId: string | null
   statusId: string
   /**
    * The lane the idea sits in, spelled out. A list item carries it, so a row that names its status
@@ -383,7 +472,7 @@ export type Idea = {
    */
   statusName: string
   title: string
-  priority: Priority
+  priority: Priority | null
   ideaType: string
   businessImpact: string
   /** The first tag's name. Null when an idea carries none. */
@@ -398,6 +487,16 @@ export type Idea = {
   hasUpvoted: boolean
   /** Optional in Discovery. The idea detail does not carry it, so a detail's is always null. */
   effort: Effort | null
+  /** `<board prefix>-<number>`; null on a board without a prefix, and in the pool. */
+  itemKey: string | null
+  /** Set on a task: the idea it was created from. */
+  parentIdeaId: string | null
+  /** The parent's key, for the chip on a task; null when there is no parent or it has no key. */
+  parentItemKey?: string | null | undefined
+  /** Only on an item in a lane that references a board; `done` counts tasks in a final lane. */
+  taskCounts: { total: number; done: number } | null
+  /** Items that must be final before this one leaves its board's first lane. */
+  blockedBy: { ideaId: string; itemKey: string | null; isFinal: boolean }[]
 }
 
 /**
@@ -504,9 +603,9 @@ export type Comment = {
  * page. See `getIdea` for why the drawer reads it from here.
  */
 export type IdeaDetail = Idea & {
-  problem: string
+  problem: string | null
   proposedSolutions: string[]
-  impactRationale: string
+  impactRationale: string | null
   /** An optional summary since 2026-09-27. */
   description: string | null
   ideaTypeId: string
@@ -524,6 +623,59 @@ export type IdeaDetail = Idea & {
   /** The reader's own follow state, and the follower count the toggle shows. */
   isFollowing: boolean
   followerCount: number
+  /** The item's metric values; empty for a card with a parent (`contracts/metric-types.md`). */
+  metrics: IdeaMetric[]
+}
+
+/** A parent's task as the drawer lists it (`GET /ideas/{id}/board-tasks`). */
+export type BoardTask = {
+  id: string
+  itemKey: string | null
+  title: string
+  statusId: string
+  statusName: string
+  isFinal: boolean
+  assignees: PersonRef[]
+  blockedBy: { ideaId: string; itemKey: string | null; isFinal: boolean }[]
+  /** The system made it on entry to an auto-create lane, not a person. */
+  autoCreated: boolean
+}
+
+/**
+ * What the drawer's Tasks section needs beyond the idea (Board References, comp U screen 4). Present
+ * for a parent that sits in a reference lane or past one; `inLane` says which.
+ */
+export type IdeaTasks = {
+  tasks: BoardTask[]
+  /** The board the reference lane hands work to; its lanes colour each task's status. */
+  referenced: { id: string; name: string; lanes: Status[] }
+  /** The reference lane: where a task may be added, and where "Move back" goes. */
+  referenceLane: { id: string; name: string }
+  inLane: boolean
+  /** The lane after the reference lane, for the completion prompt; null at the board's end. */
+  nextLane: { id: string; name: string } | null
+  /** Role, archived board and `allowUserStatusUpdate` already folded in. */
+  canMove: boolean
+  /** Null when the reader may not add or remove tasks (hidden, not disabled). */
+  adding: { members: MemberOption[]; tags: TagRef[] } | null
+}
+
+/** A card the Blockers picker offers: on the item's own board, never the item itself. */
+export type BlockerCandidate = {
+  id: string
+  itemKey: string | null
+  title: string
+  statusName: string
+  parentItemKey: string | null
+  /** It already waits on this item, so adding it would make a loop. */
+  cycle: boolean
+}
+
+/** The drawer's Blockers section: the board's cards, to name chips and to pick from. */
+export type IdeaBlockers = {
+  candidates: BlockerCandidate[]
+  /** The board's cards by id, to give a blocker chip the title and lane `blockedBy` lacks. */
+  cards: Record<string, { title: string; statusName: string }>
 }
 
 /** `NotificationEventType`, as the inbox sends it. */
@@ -612,8 +764,8 @@ export type Sprint = {
  *
  * `outcomeId` is nullable and **single-valued** — with one outcome per issue every roadmap total is
  * a plain count, where a checkbox list would make each total a cover, and covers do not add up
- * (`SPEC/decisions.md` 2026-09-02). It is present on the type and always `null` in practice, which
- * `lib/data/delivery.ts` explains: Outcomes are Slice 2 and have no table, service or route yet.
+ * (`SPEC/decisions.md` 2026-09-02). It is present on the type and always `null` in practice: the
+ * delivery card does not carry it (`lib/data/delivery.ts`).
  */
 export type Issue = {
   id: string
@@ -624,7 +776,7 @@ export type Issue = {
   effort: Effort
   assigneeInitials: string | null
   upvotesAtPromotion: number
-  boardId: string
+  boardId: string | null
   authorUserId: string
   assignees: PersonRef[]
   tags: TagRef[]
@@ -654,8 +806,7 @@ export type MemberOption = { id: string; name: string }
  * A named, dated theme that Issues are grouped under — a lens over the delivery set, not a
  * container that owns it (`SPEC/20-feature-issues-and-delivery.md` Slice 2).
  *
- * The type exists because the roadmap and the outcome picker are built; nothing populates it. See
- * `lib/data/delivery.ts` for why those readers answer empty rather than inventing rows.
+ * `quarter` is the calendar quarter the target window starts in.
  */
 export type Outcome = { id: string; name: string; color: string; quarter: string }
 
@@ -732,6 +883,8 @@ export type HomeKpi = {
   href: string | null
   /** Where the detail's own number opens, when it has one (the critical share). */
   detailHref?: string | undefined
+  /** A tile that asks for something (Needs a board): drawn with an accent outline and this link. */
+  action?: { label: string; href: string } | undefined
 }
 
 /** An idea in one of Home's lists: the attention queue, Assigned to me, Most upvoted. */
@@ -741,7 +894,7 @@ export type HomeIdea = {
   boardName: string | null
   ideaType: string
   status: Status
-  priority: Priority
+  priority: Priority | null
   createdAtUtc: string
   upvotes: number
   hasUpvoted: boolean
@@ -792,4 +945,87 @@ export type PlatformHome = {
   kpis: HomeKpi[]
   /** Largest first by ideas. */
   organizations: PlatformOrganization[]
+}
+
+// Board References: metric types, Outcomes with rollups, board sprints (slice 260). Appended; the
+// screens that draw them come later.
+
+/** An organization's metric type (`contracts/metric-types.md`). */
+export type MetricType = {
+  id: string
+  name: string
+  /** Null when the type has no unit. */
+  unit: string | null
+  isArchived: boolean
+}
+
+/** One stored value on an item, with the type it belongs to. Null is "not entered". */
+export type IdeaMetric = {
+  metricTypeId: string
+  name: string
+  unit: string | null
+  isArchived: boolean
+  projected: number | null
+  realized: number | null
+}
+
+/** One Outcome's sum for an active metric type; a sum with no number in it is null. */
+export type MetricTotal = {
+  metricTypeId: string
+  name: string
+  unit: string | null
+  projected: number | null
+  realized: number | null
+}
+
+/** A top-level item grouped under an Outcome, as the Outcome page and the roadmap draw it. */
+export type OutcomeIdea = {
+  id: string
+  /** Null without a board prefix or an item number. */
+  itemKey: string | null
+  title: string
+  statusId: string
+  effort: Effort | null
+  assigneeUserIds: string[]
+  sprintId: string | null
+  /** `YYYY-MM-DD`. */
+  sprintStart: string | null
+  sprintEnd: string | null
+  /** Over active metric types; names and units come from the Outcome's `metricTotals`. */
+  metrics: { metricTypeId: string; projected: number | null; realized: number | null }[]
+}
+
+/** An Outcome with its rollup. `OutcomeIdea` rows come with the detail and the roadmap only. */
+export type OutcomeSummary = {
+  id: string
+  name: string
+  description: string | null
+  /** `YYYY-MM-DD`. */
+  targetStartDate: string
+  targetEndDate: string
+  ownerUserId: string | null
+  sortOrder: number
+  color: string
+  ideaCount: number
+  doneIdeaCount: number
+  taskCount: number
+  doneTaskCount: number
+  sprintStart: string | null
+  sprintEnd: string | null
+  metricTotals: MetricTotal[]
+}
+
+export type OutcomeWithIdeas = OutcomeSummary & { ideas: OutcomeIdea[] }
+
+export type OutcomeSummaryPage = {
+  outcomes: OutcomeSummary[]
+  page: number
+  pageSize: number
+  totalCount: number
+}
+
+/** `GET /organizations/{id}/roadmap`: every Outcome in order, and the items under none. */
+export type OutcomeRoadmap = {
+  outcomes: OutcomeWithIdeas[]
+  ungrouped: OutcomeIdea[]
 }

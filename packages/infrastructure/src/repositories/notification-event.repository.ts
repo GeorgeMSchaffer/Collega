@@ -44,10 +44,12 @@ type InboxSqlRow = {
 
 /** The recipient's rows inside the window, leaving out a soft-deleted idea's (feature rule 27).
  * `notification_events.idea_id` has no foreign key, so a row whose idea is gone is left out too. */
-function inboxWhere(recipientUserId: string, sinceUtc: Date): Prisma.Sql {
+function inboxWhere(recipientUserId: string, sinceUtc: Date, unreadOnly = false): Prisma.Sql {
+  const unread = unreadOnly ? Prisma.sql`AND notification.read_at_utc IS NULL` : Prisma.empty
   return Prisma.sql`
     notification.recipient_user_id = ${recipientUserId}::uuid
     AND notification.occurred_at_utc >= ${sinceUtc}
+    ${unread}
     AND EXISTS (
       SELECT 1 FROM ideas AS idea WHERE idea.id = notification.idea_id AND idea.is_deleted = FALSE
     )`
@@ -79,9 +81,10 @@ export class PrismaNotificationEventRepository
   async listForRecipient(query: {
     readonly recipientUserId: string
     readonly sinceUtc: Date
+    readonly unreadOnly: boolean
     readonly page: PageRequest
   }): Promise<Page<InboxRow>> {
-    const where = inboxWhere(query.recipientUserId, query.sinceUtc)
+    const where = inboxWhere(query.recipientUserId, query.sinceUtc, query.unreadOnly)
     const { page, pageSize } = query.page
 
     const rows = await this.prisma.$queryRaw<InboxSqlRow[]>(Prisma.sql`

@@ -4,6 +4,7 @@ import { cn, Meta, Skeleton, SkeletonRegion } from '@collega/design-system'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useSyncExternalStore } from 'react'
+import { formatDay, formatWindow } from '@/lib/outcome-display'
 import {
   DEFAULT_ZOOM,
   dayNumber,
@@ -17,7 +18,7 @@ import {
   ZOOMS,
   type Zoom,
 } from '@/lib/roadmap-window'
-import type { Sprint } from '@/lib/types'
+import type { OutcomeWithIdeas, Sprint } from '@/lib/types'
 
 const noSubscribe = () => () => {}
 
@@ -26,7 +27,7 @@ const noSubscribe = () => () => {}
  * a placeholder and the browser draws the timeline, rather than hydrating one drawn in the server's
  * timezone and shifting it a day for anyone east or west of it.
  */
-function useLocalToday(): string | null {
+export function useLocalToday(): string | null {
   return useSyncExternalStore(
     noSubscribe,
     () => localToday(new Date()),
@@ -63,7 +64,7 @@ function ZoomSwitch({ value, onChange }: { value: Zoom; onChange: (zoom: Zoom) =
           aria-pressed={zoom === value}
           onClick={() => onChange(zoom)}
           className={cn(
-            'rounded-sm px-3 py-1 text-[13px] text-muted-foreground hover:text-foreground',
+            'rounded-sm px-3 py-1 text-xs text-muted-foreground hover:text-foreground',
             zoom === value && 'bg-card font-semibold text-foreground shadow-xs',
           )}
         >
@@ -99,7 +100,7 @@ function SprintRow({ sprint, range }: { sprint: Sprint; range: RoadmapWindow }) 
 
   const label = `${sprint.doneCount} / ${sprint.issueCount} DONE`
   const bar = cn(
-    '@container absolute top-3 flex h-6 items-center rounded-sm font-mono text-[10.5px] font-medium whitespace-nowrap',
+    '@container absolute top-3 flex h-6 items-center rounded-sm font-mono text-xs font-medium whitespace-nowrap',
     sprint.state === 'Active' && 'border border-primary bg-accent text-foreground',
     sprint.state === 'Planned' &&
       'border border-dashed border-muted-foreground bg-card text-foreground',
@@ -128,7 +129,7 @@ function SprintRow({ sprint, range }: { sprint: Sprint; range: RoadmapWindow }) 
 
   return (
     <li className={ROW}>
-      <div className="flex min-w-0 items-center gap-2 px-4 text-[13px]">
+      <div className="flex min-w-0 items-center gap-2 px-4 text-xs">
         <span className="truncate" title={sprint.name}>
           {sprint.name}
           {sprint.state === 'Active' ? null : (
@@ -164,11 +165,102 @@ function SprintRow({ sprint, range }: { sprint: Sprint; range: RoadmapWindow }) 
 }
 
 /**
- * The Roadmap's zoom and timeline: the column header, the TODAY rule, and the Sprints group of rows
- * (`SPEC/20-feature-issues-and-delivery.md`, "Roadmap (comp R)"). Outcome rows join it when
- * Outcomes are built.
+ * One Outcome: its target window as a bar in its colour (a dashed outline while it is planned), and
+ * beneath it a thin line for the span its items' sprints actually cover — where the two disagree is
+ * what the roadmap exists to show.
  */
-export function RoadmapTimeline({ sprints }: { sprints: readonly Sprint[] }) {
+function OutcomeRow({
+  outcome,
+  range,
+  today,
+}: {
+  outcome: OutcomeWithIdeas
+  range: RoadmapWindow
+  today: string
+}) {
+  const span = spanIn(range, outcome.targetStartDate, outcome.targetEndDate)
+  const sprintSpan =
+    outcome.sprintStart && outcome.sprintEnd
+      ? spanIn(range, outcome.sprintStart, outcome.sprintEnd)
+      : null
+  // The contract returns no delivery status per item, so "planned" is: not started yet, and
+  // nothing in a final lane.
+  const planned = outcome.targetStartDate > today && outcome.doneIdeaCount === 0
+  const label = planned
+    ? `PLANNED · 0 / ${outcome.ideaCount}`
+    : `${outcome.doneIdeaCount} / ${outcome.ideaCount} DONE`
+  const window = `${formatDay(outcome.targetStartDate)} to ${formatDay(outcome.targetEndDate)}`
+
+  return (
+    <li className={cn(ROW, 'min-h-14')}>
+      <div className="flex min-w-0 items-center gap-2 px-4 text-xs">
+        <span
+          aria-hidden="true"
+          className={cn('size-2.5 shrink-0 rounded-sm', planned && 'border border-dashed')}
+          style={{
+            background: planned ? 'transparent' : outcome.color,
+            borderColor: outcome.color,
+          }}
+        />
+        <Link
+          href={`/delivery/outcomes/${outcome.id}`}
+          className="truncate text-foreground no-underline hover:underline"
+          title={outcome.name}
+        >
+          {outcome.name}
+        </Link>
+      </div>
+      <div className="relative h-full min-h-14">
+        <Columns range={range} />
+        {span ? (
+          <Link
+            href={`/delivery/outcomes/${outcome.id}`}
+            aria-label={`${outcome.name}, ${window}`}
+            title={`${outcome.name}, ${window}`}
+            className={cn(
+              '@container absolute top-2.5 flex h-6 items-center rounded-sm border px-2 font-mono text-xs font-medium whitespace-nowrap text-foreground no-underline',
+              planned && 'border-dashed bg-card',
+            )}
+            style={{
+              left: `${span.left}%`,
+              width: `max(${span.width}%, 6px)`,
+              borderColor: outcome.color,
+              ...(planned
+                ? {}
+                : { background: `color-mix(in srgb, ${outcome.color} 30%, var(--card))` }),
+            }}
+          >
+            <span className="hidden @min-[7rem]:inline">{label}</span>
+          </Link>
+        ) : null}
+        {sprintSpan ? (
+          <span
+            aria-hidden="true"
+            title={`Sprints: ${formatWindow(outcome.sprintStart ?? '', outcome.sprintEnd ?? '')}`}
+            className="absolute bottom-2.5 h-0.5 rounded-full"
+            style={{
+              left: `${sprintSpan.left}%`,
+              width: `max(${sprintSpan.width}%, 6px)`,
+              background: outcome.color,
+            }}
+          />
+        ) : null}
+      </div>
+    </li>
+  )
+}
+
+/**
+ * The Roadmap's zoom and timeline: the column header, the TODAY rule, the Outcomes group of rows
+ * and the Sprints group (`SPEC/20-feature-issues-and-delivery.md`, "Roadmap (comp R)").
+ */
+export function RoadmapTimeline({
+  sprints,
+  outcomes = [],
+}: {
+  sprints: readonly Sprint[]
+  outcomes?: readonly OutcomeWithIdeas[]
+}) {
   const [zoom, setZoom] = useZoom()
   const today = useLocalToday()
 
@@ -179,6 +271,13 @@ export function RoadmapTimeline({ sprints }: { sprints: readonly Sprint[] }) {
       : sprints
           .filter((sprint) => spanIn(range, sprint.startDate, sprint.endDate) !== null)
           .sort((a, b) => a.startDate.localeCompare(b.startDate) || a.name.localeCompare(b.name))
+
+  const inWindow =
+    range === null
+      ? []
+      : outcomes.filter(
+          (outcome) => spanIn(range, outcome.targetStartDate, outcome.targetEndDate) !== null,
+        )
 
   return (
     <>
@@ -210,11 +309,30 @@ export function RoadmapTimeline({ sprints }: { sprints: readonly Sprint[] }) {
             </div>
             <div className={cn(ROW, 'min-h-8')}>
               <span className="px-4">
-                <Meta caps>Sprints</Meta>
+                <Meta caps>Outcomes</Meta>
               </span>
               <div className="relative h-full min-h-8">
                 <Columns range={range} labelled />
               </div>
+            </div>
+
+            {inWindow.length === 0 ? (
+              <p className="m-0 px-4 py-3 text-sm text-muted-foreground">
+                No outcomes in this window.
+              </p>
+            ) : (
+              <ul aria-label="Outcomes" className="m-0 list-none p-0">
+                {inWindow.map((outcome) => (
+                  <OutcomeRow key={outcome.id} outcome={outcome} range={range} today={today} />
+                ))}
+              </ul>
+            )}
+
+            <div className={cn(ROW, 'min-h-8 border-t')}>
+              <span className="px-4">
+                <Meta caps>Sprints</Meta>
+              </span>
+              <div className="relative h-full min-h-8" />
             </div>
 
             {visible.length === 0 ? (

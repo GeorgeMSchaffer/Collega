@@ -17,7 +17,10 @@ import type {
   BoardsPort,
   BusinessImpactSummary,
   CommentsPort,
+  DependencyEdge,
+  IdeaActivityPort,
   IdeaClassificationPort,
+  IdeaDependenciesPort,
   IdeaFieldValuesPort,
   IdeaFollowersPort,
   IdeaListFilter,
@@ -36,12 +39,15 @@ import type {
   UserSummary,
   UsersPort,
 } from '../../src/ideas/ports.js'
+import type { IdeaMetricValuesPort } from '../../src/metric-types/ports.js'
 import {
+  type CountingUnitOfWork,
   countingUnitOfWork,
   fixedClock,
   NOW,
   ORG_A,
   ORG_B,
+  type RecordingAudit,
   recordingAudit,
 } from '../support/fixtures.js'
 
@@ -61,9 +67,11 @@ export function board(overrides: Partial<BoardContext> = {}): BoardContext {
     name: 'Acme Board',
     allowUserStatusUpdate: false,
     isArchived: false,
+    keyPrefix: null,
+    ideaFeaturesEnabled: true,
     swimlanes: [
-      { statusId: STATUS_1, displayOrder: 0 },
-      { statusId: STATUS_2, displayOrder: 1 },
+      { statusId: STATUS_1, displayOrder: 0, isFinal: false, referencesBoardId: null },
+      { statusId: STATUS_2, displayOrder: 1, isFinal: false, referencesBoardId: null },
     ],
     ...overrides,
   }
@@ -145,6 +153,7 @@ export const ORG_LIST_QUERY: OrganizationIdeaListQuery = {
   sortDirection: null,
   fieldFilters: null,
   boardIds: [],
+  includeNoBoard: false,
   statusIds: [],
   priorities: [],
   tags: [],
@@ -156,14 +165,24 @@ export type Harness = {
   service: IdeaService
   saved: Idea[]
   added: Idea[]
+  /** Every `hasTaskOnBoard` question the service asked, in order. */
+  taskLookups: { parentId: string; boardId: string }[]
   audit: ReturnType<typeof recordingAudit>
+  /** The unit of work the service commits through; `saves` counts its commits. */
+  unitOfWork: CountingUnitOfWork
   notifications: NotificationInput[]
   /** Who follows each idea; edit it to model an unfollow or a follower who is not the author. */
   followersByIdea: Map<string, Set<string>>
   boardFilters: IdeaListFilter[]
   orgFilters: OrganizationIdeaListFilter[]
+  /** Every `listDelivery` filter the service sent the repository. */
+  deliveryFilters: Parameters<IdeaRepository['listDelivery']>[0][]
+  /** The id list of every `SprintLookupPort.listByIds` call, in order. */
+  sprintLookups: (readonly string[])[]
   /** Tags `getOrCreate` created, in order, with the colour the service picked for each. */
   createdTags: TagSummary[]
+  /** The blocked-by links; edit it to model existing dependencies. */
+  edges: DependencyEdge[]
 }
 
 export function harness(options: {
@@ -179,17 +198,39 @@ export function harness(options: {
   followers?: Readonly<Record<string, readonly string[]>>
   /** Overrides for the user-defined-field port, e.g. to make a save change a field value. */
   fieldValues?: Partial<IdeaFieldValuesPort>
+  /** The metric-value reader behind `IdeaDetail.metrics`; omitted, as in a host that has none. */
+  metricValues?: Pick<IdeaMetricValuesPort, 'listByIdea'>
+  /** What `getFirstActiveStatusId` answers; `null` models an organization with no active status. */
+  firstActiveStatusId?: string | null
+  /** What `countChildrenByParentIds` answers per parent id. */
+  childCounts?: Readonly<Record<string, { total: number; done: number }>>
+  /** Parent ids that already have a task on the referenced board. */
+  parentsWithTasks?: readonly string[]
+  /** Boards each parent id has a task on; when given for a parent it replaces `parentsWithTasks`. */
+  tasksOnBoards?: Readonly<Record<string, readonly string[]>>
+  /** The audit-trail reader behind `listActivity`; omitted, as in a host that has none. */
+  activity?: IdeaActivityPort
+  /** Overrides for the classification port, e.g. an organization with no active type. */
+  classification?: Partial<IdeaClassificationPort>
+  /** Existing blocked-by links. */
+  dependencies?: readonly DependencyEdge[]
+  /** Replaces the recording audit writer, e.g. to note what had been committed at each write. */
+  audit?: RecordingAudit
 }): Harness {
   const boardsById = new Map((options.boards ?? [board()]).map((b) => [b.boardId, b]))
   const ideasById = new Map((options.ideas ?? []).map((i) => [i.id, i]))
   const usersById = new Map((options.users ?? [summary()]).map((u) => [u.id, u]))
   const sprintsById = new Map((options.sprints ?? []).map((s) => [s.id, s]))
+  const nextItemNumbers = new Map<string, number>()
 
   const saved: Idea[] = []
   const added: Idea[] = []
+  const taskLookups: { parentId: string; boardId: string }[] = []
   const notifications: NotificationInput[] = []
   const boardFilters: IdeaListFilter[] = []
+  const deliveryFilters: Parameters<IdeaRepository['listDelivery']>[0][] = []
   const orgFilters: OrganizationIdeaListFilter[] = []
+  const sprintLookups: (readonly string[])[] = []
   const tagsById = new Map((options.tags ?? []).map((t) => [t.id, t]))
   const createdTags: TagSummary[] = []
 
@@ -233,16 +274,44 @@ export function harness(options: {
         sortDirection: 'asc',
       }
     },
+    async listByIds(ideaIds) {
+      return ideaIds.flatMap((id) => {
+        const idea = ideasById.get(id)
+        return idea && !idea.isDeleted ? [idea] : []
+      })
+    },
+    async listChildren(parentId) {
+      return [...ideasById.values()]
+        .filter((i) => i.parentIdeaId === parentId && !i.isDeleted)
+        .sort((a, b) => a.createdAtUtc.getTime() - b.createdAtUtc.getTime())
+    },
     async getFieldValuesByIdeaIds() {
       return []
     },
     async listDelivery(filter) {
+      deliveryFilters.push(filter)
       return [...ideasById.values()].filter(
         (i) => i.organizationId === filter.organizationId && i.phase === IdeaPhase.Delivery,
       )
     },
     async listBySprint() {
       return []
+    },
+    async hasTaskOnBoard(parentId, boardId) {
+      taskLookups.push({ parentId, boardId })
+      const boardsOfParent = options.tasksOnBoards?.[parentId]
+      if (boardsOfParent) {
+        return boardsOfParent.includes(boardId)
+      }
+      return options.parentsWithTasks?.includes(parentId) ?? false
+    },
+    async countChildrenByParentIds(parentIds) {
+      return new Map(
+        parentIds.flatMap((id) => {
+          const counts = options.childCounts?.[id]
+          return counts ? [[id, counts] as const] : []
+        }),
+      )
     },
   }
 
@@ -258,6 +327,49 @@ export function harness(options: {
         isDeleted: false,
       }
       return new Map([[STATUS_1, info]])
+    },
+    async getFirstActiveStatusId() {
+      return options.firstActiveStatusId === undefined ? STATUS_1 : options.firstActiveStatusId
+    },
+    async allocateItemNumber(boardId) {
+      if (!boardsById.get(boardId)?.keyPrefix) {
+        return null
+      }
+      const next = nextItemNumbers.get(boardId) ?? 1
+      nextItemNumbers.set(boardId, next + 1)
+      return next
+    },
+    async getBoardReadFacts(boardIds) {
+      return new Map(
+        boardIds.flatMap((id) => {
+          const found = boardsById.get(id)
+          return found
+            ? [
+                [
+                  id,
+                  {
+                    ideaFeaturesEnabled: found.ideaFeaturesEnabled,
+                    referencedBoardByStatusId: new Map(
+                      found.swimlanes.flatMap((lane) =>
+                        lane.referencesBoardId
+                          ? [[lane.statusId, lane.referencesBoardId] as const]
+                          : [],
+                      ),
+                    ),
+                  },
+                ] as const,
+              ]
+            : []
+        }),
+      )
+    },
+    async getKeyPrefixes(boardIds) {
+      return new Map(
+        boardIds.flatMap((id) => {
+          const prefix = boardsById.get(id)?.keyPrefix
+          return prefix ? [[id, prefix] as const] : []
+        }),
+      )
     },
   }
 
@@ -348,6 +460,7 @@ export function harness(options: {
     async listBusinessImpactsByOrganization(organizationId) {
       return businessImpacts.filter((b) => b.organizationId === organizationId)
     },
+    ...options.classification,
   }
 
   const baseFieldValues: IdeaFieldValuesPort = {
@@ -399,6 +512,7 @@ export function harness(options: {
       return sprintsById.get(sprintId) ?? null
     },
     async listByIds(ids) {
+      sprintLookups.push(ids)
       return ids.flatMap((id) => {
         const found = sprintsById.get(id)
         return found ? [found] : []
@@ -438,13 +552,59 @@ export function harness(options: {
     },
   }
 
+  const edges: DependencyEdge[] = [...(options.dependencies ?? [])]
+  const dependencies: IdeaDependenciesPort = {
+    async listBlockerIds(blockedId) {
+      return edges.filter((e) => e.blockedId === blockedId).map((e) => e.blockerId)
+    },
+    async listBlockersByBlockedIds(blockedIds) {
+      const result = new Map<
+        string,
+        { ideaId: string; boardId: string | null; statusId: string; itemNumber: number | null }[]
+      >()
+      for (const edge of edges) {
+        const blocker = ideasById.get(edge.blockerId)
+        if (!blockedIds.includes(edge.blockedId) || !blocker || blocker.isDeleted) {
+          continue
+        }
+        result.set(edge.blockedId, [
+          ...(result.get(edge.blockedId) ?? []),
+          {
+            ideaId: blocker.id,
+            boardId: blocker.boardId,
+            statusId: blocker.statusId,
+            itemNumber: blocker.itemNumber,
+          },
+        ])
+      }
+      return result
+    },
+    async listEdgesForBoard(boardId) {
+      return edges.filter((e) => ideasById.get(e.blockedId)?.boardId === boardId)
+    },
+    async replaceBlockers(blockedId, blockerIds) {
+      const kept = edges.filter((e) => e.blockedId !== blockedId)
+      edges.splice(
+        0,
+        edges.length,
+        ...kept,
+        ...blockerIds.map((blockerId) => ({ blockedId, blockerId })),
+      )
+    },
+    async deleteAllFor(ideaId) {
+      const kept = edges.filter((e) => e.blockedId !== ideaId && e.blockerId !== ideaId)
+      edges.splice(0, edges.length, ...kept)
+    },
+  }
+
   const notificationsPort: NotificationsPort = {
     async notify(input) {
       notifications.push(input)
     },
   }
 
-  const audit = recordingAudit()
+  const audit = options.audit ?? recordingAudit()
+  const unitOfWork = countingUnitOfWork()
 
   return {
     service: new IdeaService(
@@ -460,20 +620,28 @@ export function harness(options: {
       taskRollup,
       notificationsPort,
       followers,
-      countingUnitOfWork(),
+      dependencies,
+      unitOfWork,
       audit,
       options.currentUser,
       fixedClock(),
       options.random ?? { nextInt: () => 0 },
+      options.metricValues,
+      options.activity,
     ),
     saved,
+    taskLookups,
     added,
     audit,
+    unitOfWork,
     notifications,
     followersByIdea,
     boardFilters,
     orgFilters,
+    deliveryFilters,
+    sprintLookups,
     createdTags,
+    edges,
   }
 }
 

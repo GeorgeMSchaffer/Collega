@@ -12,7 +12,10 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { ApiError, apiDelete, apiPath, apiPost, apiPut } from '../api/client'
+import { ApiError, apiDelete, apiPath, apiPost, apiPostReturning, apiPut } from '../api/client'
+import type { WireCreatedIdea } from '../api/wire'
+import { actingOrganizationId } from './current-user'
+import type { IdeaInput, SaveIdeaResult } from './idea-actions'
 
 export type DeliveryResult = { error: string | null }
 
@@ -32,7 +35,7 @@ export type CreateSprintResult =
 function refusal(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 401) redirect('/login?expired=1')
-    if ([400, 403, 404, 409].includes(error.status)) return error.detail
+    if ([400, 403, 404, 409, 422].includes(error.status)) return error.detail
   }
   throw error
 }
@@ -51,6 +54,64 @@ async function attempt(write: () => Promise<unknown>): Promise<DeliveryResult> {
   }
   revalidateDelivery()
   return { error: null }
+}
+
+/** The idea form's fields as `saveIdea` takes them, less the board, plus the two an Issue needs. */
+export type IssueInput = Omit<IdeaInput, 'ideaId' | 'boardId'> & {
+  effort: 'Low' | 'Medium' | 'High'
+  /** Empty adds it to the Backlog. */
+  sprintId: string
+}
+
+/**
+ * Add an Issue directly (`POST /organizations/{organizationId}/issues`): a board-less idea promoted
+ * in the same commit. The answer is `saveIdea`'s, so the form reads a 400's field errors (`effort`
+ * and `sprintId` included) the same way. The org is read from the session rather than passed, since
+ * the form has no other use for it.
+ */
+export async function addIssue(input: IssueInput): Promise<SaveIdeaResult> {
+  let ideaId: string
+  try {
+    const organizationId = await actingOrganizationId()
+    if (organizationId === null) {
+      return {
+        ok: false,
+        error: 'An App Admin belongs to no organization. Use View As to act as a member of one.',
+        errors: {},
+      }
+    }
+    const created = await apiPostReturning<WireCreatedIdea>(
+      apiPath`/organizations/${organizationId}/issues`,
+      {
+        title: input.title,
+        problem: input.problem,
+        proposedSolutions: input.proposedSolutions,
+        impactRationale: input.impactRationale,
+        description: input.description,
+        priority: input.priority,
+        ideaTypeId: input.ideaTypeId,
+        businessImpactId: input.businessImpactId,
+        dueDate: input.dueDate || null,
+        tagNames: input.tagNames,
+        assigneeUserIds: input.assigneeUserIds,
+        mentionEmails: input.mentionEmails,
+        fieldValues: input.fieldValues,
+        effort: input.effort,
+        sprintId: input.sprintId || null,
+      },
+    )
+    ideaId = created.ideaId
+  } catch (error) {
+    const message = refusal(error)
+    const errors = error instanceof ApiError ? error.errors : {}
+    return { ok: false, error: Object.keys(errors).length > 0 ? null : message, errors }
+  }
+
+  revalidateDelivery()
+  // The new idea is on no board, but the sidebar's counts and the Ideas list read it.
+  revalidatePath('/ideas')
+  revalidatePath('/', 'layout')
+  return { ok: true, ideaId }
 }
 
 export async function setDeliveryStatus(

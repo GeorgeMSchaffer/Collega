@@ -5,6 +5,7 @@ import type {
   UnitOfWork,
 } from '@collega/application/common'
 import type {
+  SprintBoardsPort,
   SprintIssuesPort,
   SprintRepository,
   SprintUsersPort,
@@ -50,7 +51,18 @@ import { SprintsController } from './sprints.controller.js'
         auditEvents: AuditEventWriter,
         currentUser: CurrentUserContext,
         clock: Clock,
-      ) => new SprintService(sprints, issues, users, unitOfWork, auditEvents, currentUser, clock),
+        boards: SprintBoardsPort,
+      ) =>
+        new SprintService(
+          sprints,
+          issues,
+          users,
+          unitOfWork,
+          auditEvents,
+          currentUser,
+          clock,
+          boards,
+        ),
       inject: [
         PORT_TOKENS.SprintRepository,
         PORT_TOKENS.SprintIssuesPort,
@@ -59,6 +71,7 @@ import { SprintsController } from './sprints.controller.js'
         PORT_TOKENS.AuditEventWriter,
         PORT_TOKENS.CurrentUserContext,
         PORT_TOKENS.Clock,
+        PORT_TOKENS.SprintBoardsPort,
       ],
     },
   ],

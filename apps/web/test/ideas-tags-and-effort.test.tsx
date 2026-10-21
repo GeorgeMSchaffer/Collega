@@ -46,6 +46,7 @@ function idea(id: string, effort: Idea['effort']): Idea {
   return {
     id,
     boardId: 'b1',
+    authorUserId: null,
     statusId: 's1',
     statusName: 'New',
     title: `Idea ${id}`,
@@ -59,6 +60,10 @@ function idea(id: string, effort: Idea['effort']): Idea {
     upvotes: 0,
     hasUpvoted: false,
     effort,
+    itemKey: null,
+    parentIdeaId: null,
+    taskCounts: null,
+    blockedBy: [],
   }
 }
 
@@ -70,7 +75,7 @@ function workspace(rows: Idea[]) {
       <IdeaWorkspace
         rows={rows}
         total={rows.length}
-        boards={[{ id: 'b1', name: 'Assembly', isArchived: false }]}
+        boards={[{ id: 'b1', name: 'Assembly', isArchived: false, hasReferenceLane: false }]}
         statuses={[{ id: 's1', name: 'New', color: '#999' }]}
         tags={CATALOG}
         board={null}

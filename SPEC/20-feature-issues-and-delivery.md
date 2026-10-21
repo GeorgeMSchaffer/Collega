@@ -1,5 +1,7 @@
 # Feature: Issues and Delivery (Idea → Execution)
 
+> **Superseded in part, 2026-10-15.** Slice 1 (phase model, promotion gate, fixed delivery statuses, checklist Tasks, org-wide Sprints) is replaced by `SPEC/20-feature-board-references.md`. Slice 2 (Outcomes) stands and is extended there. Until Plan 4 of that spec ships, this document still describes the running code.
+
 > **At a glance** (added 2026-09-28; the text below wins where they differ)
 > - **Scope:** Slice 1 (P0) promotion, Sprints, Tasks; Slice 2 (P1) Outcomes/Roadmap, backend unbuilt.
 > - **Key rules:** an Issue is the same row as its Idea, in Delivery phase; promotion is an explicit gate
@@ -303,11 +305,12 @@ All under `/api/v1`, org-scoped, following existing conventions and problem-deta
 | Method | Route | Body | Permission |
 |---|---|---|---|
 | `POST` | `/ideas/{ideaId}/promote` | `{ "effort": "Medium", "sprintId": "<guid|null>", "note": "<optional>" }` | Author or in-scope admin |
+| `POST` | `/organizations/{orgId}/issues` | the pool create's fields plus `{ "effort": "Medium", "sprintId": "<guid|null>" }` (added 2026-10-15) | User or Org Admin |
 | `POST` | `/ideas/{ideaId}/return-to-discovery` | — | In-scope admin |
 | `PUT` | `/ideas/{ideaId}/delivery-status` | `{ "deliveryStatus": "Development" }` | Author, assignee, or in-scope admin |
 | `PUT` | `/ideas/{ideaId}/sprint` | `{ "sprintId": "<guid|null>" }` | In-scope admin |
 
-`effort` is **required** on `promote`. Promoting an already-Delivery item → `409`. A delivery-status or sprint change on a Discovery item → `400`.
+`effort` is **required** on `promote` and on `POST /organizations/{orgId}/issues`, which creates a board-less idea and promotes it in one commit (2026-10-15; the Backlog's *Add issue*). Promoting an already-Delivery item → `409`. A delivery-status or sprint change on a Discovery item → `400`.
 
 ### Sprints (Admin only for management; read available to all org members)
 
@@ -354,6 +357,8 @@ All under `/api/v1`, org-scoped, following existing conventions and problem-deta
 | `DELETE` | `/organizations/{orgId}/outcomes/{id}` | Soft-delete; grouped Issues are ungrouped |
 | `GET` | `/organizations/{orgId}/roadmap` | Roadmap grid (`?granularity=quarter|sprint`) — *granularity superseded 2026-09-28: the client draws the axis; see `GetRoadmapAsync`* |
 | `PUT` | `/ideas/{ideaId}/outcomes` | Set an Issue's outcome grouping — body `{ "outcomeId": <guid|null> }`; null ungroups |
+
+*Decided 2026-10-15: the list is paged, the roadmap read is unpaged and separate, reorder takes `orderedIds`, and a Site Admin acting directly is refused on every route (reads through View As). Statuses, bodies and every other rule: `contracts/outcomes.md`, which wins where this table is silent or differs.*
 
 ---
 
@@ -418,8 +423,25 @@ An Issue selected on the Sprint board, the Backlog or (once Outcomes exist) the 
 - **Delivery facts:** **Status** — a select of the five delivery statuses for the author, an assignee or an in-scope admin (saving through `PUT /ideas/{ideaId}/delivery-status`; the keyboard and touch path for moving a card), plain text for everyone else; **Effort** (the bar and its words); **Sprint** (name and window, or *Backlog*); **Outcome** (*Not grouped* until Outcomes exist); and the **Provenance** panel specified above (raised by, when, upvotes at promotion and now, promoted by and when).
 - **Tasks:** the checklist with its *N of M done* counter and the controls already given to the author, assignees and admins; read-only for everyone else.
 - **The idea's own content**, as the idea drawer shows it: Problem, Proposed solutions, Impact rationale, Summary, custom fields and the discussion.
-- **Footer:** Edit (the idea form, as for ideas) where the role may edit.
+- **Footer:** Edit (the idea form, as for ideas) for the author and an in-scope Org Admin; disabled with a reason for other writers (decided 2026-10-15).
 - **Data:** the delivery card, `GET /ideas/{ideaId}` and `GET /ideas/{ideaId}/tasks`. From a board it uses the card in hand; from a **deep link** (`?idea={ideaId}` on a delivery screen) or **`/delivery/issues/{ideaId}`** (kept for existing links) the card comes from **`GET /ideas/{ideaId}/delivery`** — the single-Issue read the user added on 2026-09-28 (`30-Contracts.md`), replacing the web app's fetch of every sprint and the backlog to find one Issue.
+
+#### Backlog: add and edit (2026-10-15)
+
+Decided by the user 2026-10-15 (`decisions.md` "Issues can be added directly from the Backlog"): the Backlog page can **add** an Issue directly and exposes **Edit**. Items marked *proposed* are the assistant's readings, for the user to overrule. Comp R draws no Backlog screen; the page as built on the Slice 1 API is the reference, and the add form below is on the list and detail pattern's drawer.
+
+- **Add New Issue** is the page's creation action, worded as the list and detail pattern words it (`20-feature-client-ui.md`). It sits in the **page header's action slot** (`PageHeader` `action`), not the topbar (the user, 2026-10-15); the topbar keeps *Start {sprint}*, which renders only while a `Planned` sprint exists. It follows the Denied rule: shown to every role and **disabled with a reason** for a role that may not add, never omitted. The roles that may add are those of `POST /organizations/{orgId}/issues`: User and Org Admin. A **Site Admin acting directly** sees it disabled with *Act as a member to add issues. Use View As.* (kept by the user, 2026-10-15, though the delivery screens' older wording says "administrator"), and through View As gets the target's button. *Proposed reason text for Read Only:* *Read Only members cannot add issues.*
+- **The create drawer** (comp A, approved 2026-10-15) opens over the Backlog in create mode (eyebrow *New issue*): Title, then the **Delivery group directly under it**, as the approved comp draws it (the user, 2026-10-15): **Effort** (required, Low, Medium or High, no default, as the promotion gate has none) and **Sprint** (optional, defaulting to *Backlog*; the choices are Backlog and every `Planned` or `Active` sprint); then the rest of the idea form's fields in its order and with its limits and custom fields — Problem, Proposed solutions, Impact rationale, Summary, Priority, Idea type, Business impact, Due date, Assignees, Tags. There is **no Board field** (the Issue has no board) and **no Status field** (an Issue has no ideation lane; delivery status starts at `Pending`). Footer: Cancel and *Add issue*. API field errors sit beside their fields, `effort` and `sprintId` included.
+- **On success** the drawer switches to the new Issue in view mode (`?idea={ideaId}`), a toast confirms it, and the Backlog refreshes: with *Backlog* chosen the row appears in the list, and with a sprint chosen the Issue is in that sprint, so it is not on the Backlog and the toast says which sprint. The drawer reads the Issue through `GET /ideas/{ideaId}/delivery`, so it opens either way.
+- **Ordering.** The Backlog sorts most upvoted first, so a new Issue, with 0 upvotes, lands at the bottom of the list. The UI must therefore scroll the new row into view and highlight it, which is the quick-add rule too: the order follows the active sort, the new row is highlighted for a few seconds, and if paging hides it the toast says where it went ("Quick-add" below and `decisions.md`). *Proposed copy:* *Issue added* and *Issue added to {sprint name}*.
+- **Sprint choice is open to everyone who may add.** `PUT /ideas/{ideaId}/sprint` is an in-scope admin's, but the promotion gate already lets an author choose the sprint, and the add form follows the gate.
+- **Quick-add row** (comp B, approved 2026-10-15; the pattern is in `20-feature-client-ui.md`, "Quick-add row"). A spreadsheet-style row at the top of the Backlog list takes the minimum fields: Title, Effort and Sprint (all three pre-fill the drawer; Sprint defaults to *Backlog*). Enter submits and the row stays focused for the next entry. **Hand-off:** `POST /organizations/{orgId}/issues` still requires Problem, Proposed solutions, Impact rationale, Priority, Idea type and Business impact (the idea form defaults Priority to Medium and the last two to the first active options), plus any custom field the organization requires, and the row cannot always supply them, so on the Backlog **Enter always opens the create drawer pre-populated with the row's values and nothing is created until that form is saved.** Idea type and Business impact default to the first active options, as the idea form preselects them. The row is today a fast way into the pre-populated form; no contract is relaxed. For Read Only the row is hidden (the header button keeps its disabled-with-reason state); on phones the row is hidden and the header button opens the drawer full-screen. There is no Undo: nothing is created until the drawer form is saved.
+- **Provenance** on a directly added Issue reads as for any Issue (raised by and promoted by the same person, *0 upvotes at promotion*); whether it says *Added directly* is for the comp.
+- **After adding**, the Issue behaves as any other. It has no board, so it can be pulled onto one only after an Org Admin's Return to Discovery (`20-feature-board-pull-in.md` rule 14), which puts it in the pool.
+- **The empty state** (*Nothing waiting*) gains *Add issue* as its action beside *Open the ideas board*, disabled with the reason for a role that may not add, and its line *New issues arrive here when an idea is promoted from a board* no longer holds: it says issues arrive by promotion or by being added here.
+- **Edit** is offered where the Issue drawer already puts it (the footer; "The Issue in the drawer" above) and, new, as a row action on each Backlog row, which opens the same edit drawer. It is the author's and an in-scope Org Admin's (`PUT /ideas/{ideaId}`): other writers see the footer Edit disabled with the reason *Only the author or an Org Admin can edit this issue.* (Read Only and a direct Site Admin get no Edit), and the row action hidden (the Denied rule's row-action exception).
+- **The edit form of an Issue** is the idea form prefilled, saving through `PUT /ideas/{ideaId}`. It carries no Board field (the route has none), no Status field (the route has none, and an Issue sits in no lane), and **no Effort field**, because the route refuses `effort` on a `Delivery` item and the estimate was set at the gate. Sprint and delivery status keep their own controls in the drawer's facts. A board-less Issue and an Issue promoted from a board show the same form.
+- **Comps.** Drawn 2026-10-15 as throwaway comps in `SPEC/mockups/` (`comp-r-backlog-add-a-drawer.html`, `comp-r-backlog-add-b-inline.html`, and a combined `-c-two-paths.html`); the user chose **A (the drawer) with B (the inline quick-add row)**. They are on branch `feature/185-backlog-add-comps`, not this one. Production React waits on their merge; where the comps and this text differ, this text wins until the user says otherwise.
 
 #### Roadmap (comp R)
 
@@ -463,6 +485,7 @@ An Issue selected on the Sprint board, the Backlog or (once Outcomes exist) the 
 | Action | Site Admin | Org Admin (own org) | User | Read Only |
 |---|:--:|:--:|:--:|:--:|
 | Promote idea → Issue | ✓ | ✓ | Author only | |
+| Add an Issue directly from the Backlog *(2026-10-15)* | ✓ | ✓ | ✓ | |
 | Return Issue → Discovery | ✓ | ✓ | | |
 | Change delivery status | ✓ | ✓ | Author or assignee | |
 | Create / start / complete / edit / delete sprints | ✓ | ✓ | | |
@@ -474,7 +497,7 @@ An Issue selected on the Sprint board, the Backlog or (once Outcomes exist) the 
 | Group an Issue under an Outcome *(Slice 2)* | ✓ | ✓ | | |
 | View Tasks and the Roadmap | ✓ | ✓ | ✓ | ✓ |
 
-A Site Admin tick on a **mutating** row is exercised through View As, never directly: promotion, sprint and outcome management, delivery-status and grouping changes, and tasks are organization content under `20-feature-view-as.md` rules 25/25c. Direct Site Admin access to this feature is read-only. Reconciled 2026-09-03 against the standing product rule (tracker, 2026-08-14).
+A Site Admin tick on a **mutating** row is exercised through View As, never directly: promotion, adding an Issue directly from the Backlog, sprint and outcome management, delivery-status and grouping changes, and tasks are organization content under `20-feature-view-as.md` rules 25/25c. Direct Site Admin access to this feature is read-only. Reconciled 2026-09-03 against the standing product rule (tracker, 2026-08-14).
 
 ---
 

@@ -136,7 +136,7 @@ export default async function UsersPage() {
               <tr key={member.id} className="border-b last:border-0">
                 <td className="px-4 py-2.5">
                   <span className="flex items-center gap-2">
-                    <Avatar initials={member.initials} className="size-6 text-[10px]" />
+                    <Avatar initials={member.initials} className="size-6 text-xs" />
                     <b className="font-medium">{member.displayName}</b>
                   </span>
                 </td>

@@ -6,9 +6,16 @@
 >
 > **Promotion path:** idea → user discussion → canonical spec (`SPEC/20-feature-*.md`) → sprint plan (`SPEC/sprints/`). Once an idea is promoted, delete it here — the spec becomes its home.
 
+## Move one idea to another board
+
+> **Triage 2026-10-20: valid, to be specced.** Raised 2026-10-13, out of scope for Sprint 14 (`SPEC/20-feature-board-pull-in.md` "Out of scope").
+> Sprint 14 pulls items onto a board from the board's own form, in bulk. A single-idea *Move to
+> another board* action on the idea drawer would reuse the re-board primitive slice 180 builds.
+> Unrefined: who may move someone else's idea, and whether a move notifies followers, are open.
+
 ## Chat assistant: ingestion, and refining ideas that already exist (needs a spec)
 
-> Raised 2026-09-13. **Still unrefined, but no longer unowned:** the AI integration is rescoped and
+> **Triage 2026-10-20: valid, deferred until after assistant v2 ships; specify ingestion and refinement separately.** Raised 2026-09-13. **Still unrefined, but no longer unowned:** the AI integration is rescoped and
 > respecified after the current batch (`SPEC/decisions.md` 2026-09-13), and this is one of the things
 > that rescope has to answer. Captured because the gap is visible in shipped code rather than
 > hypothetical: `SPEC/20-feature-ai-idea-assist.md` is live behind eleven endpoints, and it is scoped
@@ -51,45 +58,6 @@ does today, and several of its rules constrain what either of these may do.
 
 ---
 
-## Roadmaps → Sprints → Issues (still being explored)
-
-> **Kept here deliberately, not an oversight** (user decision, 2026-08-27). The promote-and-delete rule below would normally send this to its spec and delete it here — but the user is still exploring the shape and expects to revisit it **after the MVP, or immediately before it**. Until then this stays as the original unrefined brainstorm.
->
-> **A canonical spec already exists for the first slice: `SPEC/20-feature-issues-and-delivery.md`** (interview-resolved 2026-08-10, post-MVP, not scheduled). Where the two disagree, the spec is the considered version and this text is the raw prompt that produced it. The differences are the interesting part:
->
-> - This text makes **Roadmaps** core scope. The spec **explicitly defers** Roadmaps/Epics, the Impact×Effort prioritization view, crowd-backlog auto-surfacing, and AI-assisted promotion to later slices.
-> - This text reads as *"Issues are an extension of an Idea"* — a second object. The spec resolves that to **same object, two phases**: an item carries a `Phase` of `Discovery` or `Delivery`, and promotion flips it. Same row, so provenance survives. The spec calls overloading a terminal status like `Complete` to also mean "committed to delivery" the source of the concept's awkwardness — which is the awkwardness the brainstorm below names but does not resolve.
-> - The spec adds an explicit **"Promote to Issue" decision gate** rather than promotion-by-status.
->
-> Read the spec before re-opening this; it already answers several of the questions below.
-
-Help me come up with a new feature.  The overall idea is that the board is used to manage the process of brainstorming and fleshing out ideas, think of it as a Trello, Jira, Workspace hybrid.  I want to enable the user to manage the process of implementing the idea using AGILE Best practices.  Admins should be able to create Roadmaps. These roadmaps, will consit of Sprints, which consits of Tasks, which are Ideas translated to tasks.  However the idea seems a bit uncooked and potential akward.  Help me to refine the idea for this feature by making recommendations, referencing best practices, and ideas that could differantiate product from Trello and Jira.
-
-    * Main Funtionality
-        * Create Roadmap(s)
-            * Should have the following fields
-                * Title
-                * Goal Description Field
-                * Start Date
-                * End Date
-                * The ability to assign Roadmap Owner(s)
-
-        * Sprints should be assignable to a Road Map, the fields on the Sprint:
-            * Title
-            * Start Date
-            * End Date
-            * Sprint Goal
-            * Sprint Owner
-            * Tags
-        * Sprints will consits of one to many Issues.  Issues are an extension of an Idea, however it should have additional fields for:
-            * Start Date
-            * End Date
-            * Effort (Low, Medium, High)
-            * Sprint Tags
-            * Status: Pending, Scoping, Development, Review and Complete
-
----
-
 ## Org bootstrap templates
 
 *Parked 2026-08-13 after a brainstorm on "should the Site Admin be able to edit the default statuses?" — explored, recommendation was **don't build now**. Captured so the reasoning isn't re-derived.*
@@ -116,11 +84,10 @@ Help me come up with a new feature.  The overall idea is that the board is used 
 
 *Parked 2026-08-27 from `mockups/comp-g-signal.html` (drawn 2026-08-16 in the locked Comp C language, so only the feature is under review, not the look). Proposal items #1, #2, #5.*
 
-Five capabilities the comp argues are worth little alone and a lot together — they turn the board from *a list of what exists* into *a list of what needs attention*:
+Four capabilities the comp argues (a fifth, Effort, shipped in slices 297-301 and is no longer part of this idea) are worth little alone and a lot together — they turn the board from *a list of what exists* into *a list of what needs attention*:
 
 - **Status semantics — "Counts as".** Every status gets one of four meanings: Open / Waiting–external / Closed–succeeded / Closed–declined. Today a status is a name, a colour and a sort order, so **nothing in the product can tell "In Review" from "Complete"** — no other item here works without this.
 - **Per-status ageing.** A "flag after N days" threshold per status; an idea past it reads as stalled, with an age badge on the list and a stalled count in statuses admin.
-- **Effort.** A third sizing field beside Priority and Business Impact (Low/Medium/High/Not sized), deliberately rendered with **no colour at all**.
 - **Triage grid.** A 3×3 Impact × Effort view as a third board mode; dragging between cells edits both. The comp rejects a single computed score (RICE/ICE) on the grounds that *"a single computed number hides the disagreement that actually matters."*
 - **Saved views.** Named filter+sort+column sets, personal or org-pinned, with a dirty-state "Update view" affordance.
 
@@ -132,7 +99,9 @@ Five capabilities the comp argues are worth little alone and a lot together — 
 
 *Parked 2026-08-27 from `mockups/comp-h-loop.html`. Proposal item #3.*
 
-One loop, not three features: *mention → notification → reply → read*. The comp's argument for building them together is that *"a notification with nothing to notify about is empty, and an activity feed nobody is addressed by is noise."* Covers @mention autocomplete in the comment composer, an Inbox rail item with unread badge and tabbed filters (mentions / assigned / replies / archived) each carrying a "why" line, an org activity feed that **replaces the existing "Activity feed coming soon" placeholder**, a separate "Waiting on you" panel (the subset addressed to you — the actual to-do list), unread markers in threads, snooze as well as archive, and a per-event-type preferences screen.
+**Audited 2026-10-21 against what shipped.** Email-based mentions on ideas and comments, an in-app Inbox (one order, no filter, mark read and read all, an unread count) and an activity panel on Home already exist. What remains of the idea: @mention autocomplete in the comment composer, the Inbox's tabbed filters (mentions / assigned / replies / archived) with a "why" line on each item, a "Waiting on you" panel, unread markers in threads, snooze as well as archive, a full org activity feed, and a per-event-type preferences screen.
+
+The comp's argument for building these together still holds: *"a notification with nothing to notify about is empty, and an activity feed nobody is addressed by is noise."*
 
 Two things to settle before this could be specced:
 

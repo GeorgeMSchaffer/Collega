@@ -37,10 +37,9 @@ describe('loadConfig - AI asymmetry', () => {
     expect(() => loadConfig(env)).toThrow(/SITE_ADMIN_EMAIL/)
   })
 
-  it('throws ConfigError naming SITE_ADMIN_PASSWORD when it is absent', () => {
+  it('does not require SITE_ADMIN_PASSWORD at runtime', () => {
     const env = validEnv({ SITE_ADMIN_PASSWORD: undefined })
-    expect(() => loadConfig(env)).toThrow(ConfigError)
-    expect(() => loadConfig(env)).toThrow(/SITE_ADMIN_PASSWORD/)
+    expect(() => loadConfig(env)).not.toThrow()
   })
 
   it('the missing AI key and the missing Site Admin values are handled oppositely', () => {
@@ -56,7 +55,7 @@ describe('loadConfig - AI asymmetry', () => {
 describe('loadConfig - reports every problem at once', () => {
   it('names all missing required variables in a single thrown message', () => {
     const env: NodeJS.ProcessEnv = {
-      // SITE_ADMIN_EMAIL, SITE_ADMIN_PASSWORD, POSTGRES_USER, POSTGRES_PASSWORD all absent,
+      // SITE_ADMIN_EMAIL, POSTGRES_USER, POSTGRES_PASSWORD all absent,
       // and no DATABASE_URL to short-circuit the database fragment.
     }
 
@@ -70,7 +69,7 @@ describe('loadConfig - reports every problem at once', () => {
     expect(thrown).toBeInstanceOf(ConfigError)
     const message = (thrown as ConfigError).message
     expect(message).toContain('SITE_ADMIN_EMAIL')
-    expect(message).toContain('SITE_ADMIN_PASSWORD')
+    expect(message).not.toContain('SITE_ADMIN_PASSWORD')
     expect(message).toContain('POSTGRES_USER')
     expect(message).toContain('POSTGRES_PASSWORD')
   })

@@ -62,6 +62,16 @@
   --font-sans: var(--font-body);
   --font-heading: var(--font-display);
   --font-mono: var(--font-code);
+  /* Type scale: 0.9rem floor, each step x1.125 (2026-10-15). Replaces Tailwind's defaults, so
+     `text-xs` is the smallest text anywhere; use these, not px sizes. */
+  --text-xs: 0.9rem;
+  --text-sm: 1.013rem;
+  --text-base: 1.139rem;
+  --text-lg: 1.281rem;
+  --text-xl: 1.442rem;
+  --text-2xl: 1.622rem;
+  --text-3xl: 1.825rem;
+  --text-4xl: 2.053rem;
 }
 
 /* ------------------------------------------------------------
@@ -321,13 +331,13 @@
    override any of them.
    ------------------------------------------------------------ */
 :root {
-  /* Comp R's density (2026-09-28): 32/28px buttons, 34px fields, 12px labels. */
+  /* Comp R's density (2026-09-28): 32/28px buttons, 34px fields, labels at the type scale's floor. */
   --control-h: 2rem;
   --control-h-sm: 1.75rem;
   --control-h-lg: 2.25rem;
   --control-px: 0.75rem;
   --field-h: 2.125rem;
-  --label-size: 0.75rem;
+  --label-size: 0.9rem;
 
   --drawer: clamp(380px, 28vw, 520px);
   --drawer-wide: clamp(720px, 62vw, 1100px);
@@ -384,7 +394,7 @@
   /* shadcn Input / Textarea / Select (native) */
   input[type=text], input[type=password], input[type=search], input[type=email], input[type=url],
   input[type=tel], input[type=number], input[type=date], input[type=file], textarea, select {
-    @apply flex h-[var(--field-h)] w-full rounded-md border border-input bg-field px-2.5 py-[7px] text-[13px] leading-[1.45] shadow-xs
+    @apply flex h-[var(--field-h)] w-full rounded-md border border-input bg-field px-2.5 py-[7px] text-xs leading-[1.45] shadow-xs
            placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1
            focus-visible:ring-ring;
   }
@@ -403,4 +413,21 @@
   tfoot td { @apply border-t-2 bg-muted/40 px-3 py-2 font-medium; }
   button { font-family: inherit; }
   code { @apply rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]; }
+}
+
+/* A field the assistant filled and the person has not touched (comp R's .field.suggested). Unlayered,
+   so it wins over the base layer's input border and ground. */
+[data-suggested] :is(input:not([type=checkbox]), textarea, select) {
+  border-color: var(--suggest-line);
+  background-color: var(--suggest-tint);
+}
+[data-flash] :is(input:not([type=checkbox]), textarea, select) {
+  animation: suggest-fill 0.9s ease;
+}
+@keyframes suggest-fill {
+  0% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--suggest) 35%, transparent); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-flash] :is(input:not([type=checkbox]), textarea, select) { animation: none; }
 }

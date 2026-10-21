@@ -21,7 +21,7 @@ import {
 } from 'react'
 import { GatedAction } from '@/components/common/gated-action'
 import { PageHeader } from '@/components/common/page-header'
-import { People, TagList } from '@/components/ideas/idea-chips'
+import { NoAssignee, People, TagList } from '@/components/ideas/idea-chips'
 import { useDrawerUrl } from '@/components/ideas/use-drawer-url'
 import { ConfirmDialog, Drawer } from '@/components/list'
 import { DELIVERY_STATUSES } from '@/lib/display'
@@ -57,7 +57,7 @@ function Badge({ tone, children }: { tone: 'success' | 'warning' | 'muted'; chil
   return (
     <span
       className={cn(
-        'rounded-[4px] border border-current px-1.5 font-mono text-[10.5px] font-medium leading-[18px] tracking-[0.04em]',
+        'rounded-[4px] border border-current px-1.5 font-mono text-xs font-medium leading-[18px] tracking-[0.04em]',
         tone === 'success' && 'text-success',
         tone === 'warning' && 'text-warning',
         tone === 'muted' && 'text-muted-foreground',
@@ -74,7 +74,7 @@ function StripCell({ term, children }: { term: string; children: ReactNode }) {
       <dt>
         <Meta caps>{term}</Meta>
       </dt>
-      <dd className="m-0 flex flex-wrap items-center gap-2 font-mono text-[13px] font-medium">
+      <dd className="m-0 flex flex-wrap items-center gap-2 font-mono text-xs font-medium">
         {children}
       </dd>
     </div>
@@ -126,6 +126,7 @@ export function SprintBoard({
   const [pending, startTransition] = useTransition()
   const [dragging, setDragging] = useState<string | null>(null)
   const [over, setOver] = useState<string | null>(null)
+  const [mobileLane, setMobileLane] = useState<string>(DELIVERY_STATUSES[0]?.id ?? '')
 
   // A drop moves the card at once; the page re-reads on success, and a refusal puts it back.
   const [shown, moveCard] = useOptimistic(
@@ -284,7 +285,31 @@ export function SprintBoard({
             </StripCell>
           </dl>
 
-          <div className="grid grid-cols-[repeat(5,minmax(200px,1fr))] gap-2.5 overflow-x-auto pb-3 min-[900px]:grid-cols-5 min-[900px]:overflow-visible">
+          {/* Mobile lane switcher */}
+          <div className="mt-5 hidden gap-1 overflow-x-auto pb-2 max-[768px]:flex">
+            {DELIVERY_STATUSES.map((status) => (
+              <button
+                key={status.id}
+                type="button"
+                onClick={() => setMobileLane(status.id)}
+                className={cn(
+                  'whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium transition-colors',
+                  mobileLane === status.id
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground hover:bg-muted-foreground/20',
+                )}
+              >
+                {status.name}
+              </button>
+            ))}
+          </div>
+
+          <div
+            className={cn(
+              'grid gap-2.5 overflow-x-auto pb-3 min-[900px]:grid-cols-5 min-[900px]:overflow-visible',
+              'max-[768px]:grid-cols-1',
+            )}
+          >
             {DELIVERY_STATUSES.map((status) => {
               const inLane = shown.filter((issue) => issue.deliveryStatusId === status.id)
               return (
@@ -304,18 +329,20 @@ export function SprintBoard({
                   className={cn(
                     'flex min-h-[min(56vh,520px)] min-w-0 flex-col gap-2 rounded-[14px] border border-border/70 bg-muted/55 px-1.5 pt-1.5 pb-3',
                     over === status.id && 'border-primary',
+                    'max-[768px]:hidden',
+                    mobileLane === status.id && 'max-[768px]:flex',
                   )}
                 >
                   {/* The status colour is data, so it tints the header against the theme's card
                       and ink rather than standing alone as a raw fill. */}
                   <div
-                    className="flex items-center gap-2 rounded-t-xl rounded-b-sm px-3 py-1.5 text-[13px] font-semibold"
+                    className="flex items-center gap-2 rounded-t-xl rounded-b-sm px-3 py-1.5 text-xs font-semibold"
                     style={{
                       background: `color-mix(in srgb, ${status.color} 14%, var(--card))`,
                       color: `color-mix(in srgb, ${status.color} 55%, var(--foreground))`,
                     }}
                   >
-                    <h2 className="m-0 flex-1 text-[13px] font-semibold">{status.name}</h2>
+                    <h2 className="m-0 flex-1 text-xs font-semibold">{status.name}</h2>
                     <span className="font-mono text-xs font-medium opacity-80">
                       {inLane.length}
                       <span className="sr-only"> issues</span>
@@ -343,7 +370,7 @@ export function SprintBoard({
                           }}
                           aria-current={selectedId === issue.id ? 'true' : undefined}
                           className={cn(
-                            'flex flex-col gap-2 rounded-[10px] border bg-card p-2.5 text-foreground hover:border-primary',
+                            'flex min-w-0 flex-col gap-2 rounded-[10px] border bg-card p-2.5 text-foreground hover:border-primary',
                             movable && 'cursor-grab active:cursor-grabbing',
                             issue.deliveryStatusId === COMPLETE && 'bg-muted/60',
                             selectedId === issue.id &&
@@ -355,21 +382,14 @@ export function SprintBoard({
                             {issue.assignees.length > 0 ? (
                               <People people={issue.assignees} quiet />
                             ) : (
-                              <span
-                                role="img"
-                                aria-label="Unassigned"
-                                title="Unassigned"
-                                className="inline-grid size-6 place-items-center rounded-full border border-dashed border-input text-[10px] text-muted-foreground"
-                              >
-                                —
-                              </span>
+                              <NoAssignee />
                             )}
                           </div>
                           <button
                             type="button"
                             data-issue={issue.id}
                             onClick={(event) => open(issue.id, event.currentTarget)}
-                            className="text-left text-[13px] leading-snug font-semibold hover:text-accent-foreground hover:underline"
+                            className="text-left text-xs leading-snug font-semibold hover:text-accent-foreground hover:underline min-w-0 break-words"
                           >
                             {issue.title}
                           </button>

@@ -4,6 +4,7 @@ import { cn } from '@collega/design-system'
 import type { ReactNode } from 'react'
 import { Icon } from './icons'
 import { nextSort, type Sort } from './list-state'
+import type { QuickAddLayout } from './quick-add-row'
 
 export type Column<T> = {
   key: string
@@ -34,6 +35,7 @@ export function DataTable<T>({
   actions,
   empty = 'Nothing matches these filters.',
   selectedKey,
+  quickAdd,
 }: {
   /** Names the table for assistive technology; rendered visually hidden. */
   caption: string
@@ -46,6 +48,8 @@ export function DataTable<T>({
   empty?: ReactNode
   /** The row whose drawer is open, marked `aria-current`. */
   selectedKey?: string | null
+  /** A quick-add row (`QuickAddRow`), rendered as the first body row under the same columns. */
+  quickAdd?: (layout: QuickAddLayout) => ReactNode
 }) {
   return (
     <div className="overflow-x-auto rounded-lg border bg-card">
@@ -93,6 +97,7 @@ export function DataTable<T>({
           </tr>
         </thead>
         <tbody>
+          {quickAdd?.({ columns, hasActions: !!actions })}
           {rows.length === 0 ? (
             <tr>
               <td
@@ -106,7 +111,12 @@ export function DataTable<T>({
             rows.map((row) => {
               const key = rowKey(row)
               return (
-                <tr key={key} aria-current={selectedKey === key ? 'true' : undefined}>
+                <tr
+                  key={key}
+                  data-row-key={key}
+                  aria-current={selectedKey === key ? 'true' : undefined}
+                  className="data-[added]:bg-accent"
+                >
                   {columns.map((column) => (
                     <td
                       key={column.key}

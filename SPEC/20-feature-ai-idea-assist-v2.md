@@ -168,6 +168,26 @@ custom fields of the draft's Idea Type (types and option-id enums).
 `ai-draft` and `ai-polish` (specified, never built) are **withdrawn**: v2's turn endpoint covers
 extraction, and polishing belongs to the refinement spec.
 
+## Slices (added 2026-10-20)
+
+Built already: the v1 assistant backend (`packages/application/src/ai`, `apps/api/src/ai-assist`),
+the Settings AI page, the structured fields (Problem, Proposed solutions, Impact rationale), the
+prompt-eval runner with its v1 baseline and ten v2 corpus cases. Not built: any chat UI.
+
+| Slice | Role | Scope | Depends on |
+|---|---|---|---|
+| 305 | Backend + QA | **Prompt-eval v2 scoring.** Make the runner report v2 scope-gate precision/recall and field-mapping accuracy over the v2 cases (structured fields, brainstorm turns, locked fields, custom fields); record the v2 target thresholds. Check first what the runner already reports (`20-feature-prompt-eval-runner.md`). | none |
+| 306 | Backend | **Contract and turn schema.** Update `contracts/ai-assist.md` (request `draft`, `lockedFields`, `step`; response `changes`, `suggestions`, `nextStep`); build the per-request JSON Schema including the chosen Idea Type's custom fields (types, option-id enums). Withdraw `ai-draft`/`ai-polish` from the contract. | none |
+| 307 | Backend | **v2 turn.** Implement the endpoint behaviour: server-side `lockedFields` stripping (custom fields as `fieldValues.<id>`), interview order and `nextStep`, `suggestions` (up to 3 solutions, one problem rewrite, up to 3 rationales), validation against active organization options, the v2 system prompt. v1 rules for cap, scope gate, 429 and usage metering carry. | 306 |
+| 308 | UI | **Chat shell.** The wide create drawer (`clamp(720px, 62vw, 1100px)`, chat ~42% left, form right, stacked when narrow), greeting and starter prompts, transcript, composer, pending/cancel, availability read and the 32c notice, *Fill out manually* / *Skip the assistant* / *Use the assistant* with the conversation intact. Comp R is the reference. | 306 (contract); can mock the turn |
+| 309 | UI | **Field wiring.** Apply `changes` to the form; Suggested vs owned marking (`--suggest-tint`, `✦ Suggested`, cleared on edit, `lockedFields` sent every turn), the *Filled in: …* line, "I kept your edit to …" replies, solution/sharpen/rationale chips, *Review and create*. | 307, 308 |
+| 310 | UI | **Failure and hand-off.** Any failed turn ends the conversation and hands off to the form with the notice; place the failing turn's text per the spec rule; `429` shows the retry message without ending the chat; off-topic and cap behaviour as v1. | 308, 309 |
+| 311 | QA | Tests for 305-310, a browser walk of the full flow, then a prompt-eval run against the baseline. **The v2 prompt is not enabled until this passes.** Passed 2026-10-20 (slice 315): the v2 baseline meets every target and the browser walk ran against the real model. | 305, 307, 310 |
+
+Order: 305 and 306 first, in parallel. 307 follows 306. 308 can start once the contract (306) is
+fixed. 309 and 310 follow. 311 gates enablement. Slices 305-306 and 308 touch different areas and
+can run at the same time.
+
 ## Acceptance criteria
 
 - [ ] *Add New Idea* opens the wide create drawer with assistant and form side by side; with the

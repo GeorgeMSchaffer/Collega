@@ -1,5 +1,5 @@
 import { estimatedCostOf } from '@collega/domain/ai'
-import type { Priority } from '@collega/domain/enums'
+import type { FieldType, Priority } from '@collega/domain/enums'
 
 // Prompt management (Site-Admin settings surface) -------------------------------------------
 
@@ -170,6 +170,8 @@ export type IdeaAssistContext = {
   readonly statuses: readonly string[]
   readonly tags: readonly string[]
   readonly memberNames: readonly string[]
+  /** v2: the custom fields visible for each active Idea Type, by Idea Type id. */
+  readonly fieldsByIdeaType?: Readonly<Record<string, readonly IdeaAssistFieldDefinition[]>>
   /** The prompt text in force - deployment-level, not organization-level, and the one member
    * here that is not org-scoped. It rides on the context because that is the only object
    * reaching the prompt builder, and because the model port has no scoped repository of its
@@ -400,4 +402,105 @@ export function reportTotalTokens(report: AiUsageReport): number {
 
 export function reportTotalEstimatedCost(report: AiUsageReport): number {
   return report.organizations.reduce((sum, o) => sum + o.estimatedCost, 0)
+}
+
+// Idea assistant v2 (SPEC/contracts/ai-assist.md "v2 turn contract") ------------------------------
+// Not wired into the live turn endpoint until slice 307; the v1 types above stay in force until then.
+
+/** One custom-field value. `value` is the `IdeaFieldValue` string serialization, per field type. */
+export type IdeaAssistFieldValue = {
+  readonly fieldDefinitionId: string
+  readonly value: string
+}
+
+/**
+ * The full v2 draft the client sends. Every key is optional: an absent key and `null` both mean
+ * "nothing there yet".
+ */
+export type IdeaDraftV2 = {
+  readonly title?: string | null
+  readonly problem?: string | null
+  readonly proposedSolutions?: readonly string[] | null
+  readonly impactRationale?: string | null
+  readonly businessImpactId?: string | null
+  readonly ideaTypeId?: string | null
+  readonly priority?: Priority | null
+  readonly tagNames?: readonly string[] | null
+  readonly fieldValues?: readonly IdeaAssistFieldValue[] | null
+  readonly description?: string | null
+}
+
+/** Only the fields a turn set: the draft's shape, without `null`s. */
+export type IdeaDraftChanges = {
+  readonly title?: string
+  readonly problem?: string
+  readonly proposedSolutions?: readonly string[]
+  readonly impactRationale?: string
+  readonly businessImpactId?: string
+  readonly ideaTypeId?: string
+  readonly priority?: Priority
+  readonly tagNames?: readonly string[]
+  readonly fieldValues?: readonly IdeaAssistFieldValue[]
+  readonly description?: string
+}
+
+/** Offers the client applies only when the person chooses them. */
+export type IdeaAssistSuggestions = {
+  readonly solutions?: readonly string[]
+  readonly problemRewrite?: string
+  readonly rationales?: readonly string[]
+}
+
+export type IdeaAssistTurnRequestV2 = {
+  /** Null for the organization-level turn: the idea is being drafted for the pool. */
+  readonly boardId: string | null
+  readonly transcript: readonly IdeaAssistTurn[]
+  readonly draft: IdeaDraftV2 | null
+  /** Draft keys, or `fieldValues.<fieldDefinitionId>`, the person owns. */
+  readonly lockedFields: readonly string[]
+  /** The previous turn's `nextStep`. */
+  readonly step: string | null
+}
+
+export type IdeaAssistTurnResultV2 = {
+  readonly inScope: boolean
+  readonly conversationClosed: boolean
+  readonly nextQuestion: string
+  readonly changes: IdeaDraftChanges
+  readonly suggestions?: IdeaAssistSuggestions
+  readonly nextStep: string
+  readonly turnsRemaining: number
+}
+
+/** A custom field visible for an Idea Type, with the options a Dropdown or MultiSelect offers. */
+export type IdeaAssistFieldDefinition = {
+  readonly id: string
+  readonly name: string
+  readonly fieldType: FieldType
+  readonly isRequired: boolean
+  readonly options: readonly { readonly id: string; readonly label: string }[]
+}
+
+/** What the model port receives on a v2 turn: the request already normalised against the catalog. */
+export type IdeaAssistTurnInputV2 = {
+  readonly draft: IdeaDraftV2
+  /** Known lockable names only (draft keys and `fieldValues.<id>` of a real field). */
+  readonly lockedFields: readonly string[]
+  /** The previous turn's `nextStep`, when it is in the vocabulary. */
+  readonly step: string | null
+  /** The custom fields visible for the draft's Idea Type. */
+  readonly customFields: readonly IdeaAssistFieldDefinition[]
+}
+
+/**
+ * What the model returned on a v2 turn, before the service validates it. `changes` and
+ * `suggestions` are UNTRUSTED and deliberately loose: `finalizeTurnV2` is the one place that
+ * decides what survives.
+ */
+export type IdeaDraftModelResponseV2 = AiTokenUsage & {
+  readonly inScope: boolean
+  readonly nextQuestion: string
+  readonly nextStep: string
+  readonly changes: unknown
+  readonly suggestions: unknown
 }

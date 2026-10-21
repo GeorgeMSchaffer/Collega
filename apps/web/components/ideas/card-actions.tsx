@@ -42,15 +42,29 @@ export function CardActions({
   nextStatusId,
   canMove,
   upvoteDenial,
+  previousRefusal = null,
+  nextRefusal = null,
+  openTasks = 0,
+  blockers = 0,
 }: {
   idea: Idea
-  boardId: string
+  boardId: string | null
   /** The lane to the left and to the right, or null at the ends of the board. */
   previousStatusId: string | null
   nextStatusId: string | null
   canMove: boolean
   /** Why this role may not vote, or null when it may. */
   upvoteDenial: string | null
+  /**
+   * Why the arrow that way is refused up front (the lock, a blocker, a missing Effort), or null.
+   * Such an arrow is `aria-disabled` with the reason as its title, so it stays focusable and the
+   * reason is announced, as every refused control here is.
+   */
+  previousRefusal?: string | null
+  nextRefusal?: string | null
+  /** What the card knows, so a refusal that still arrives from the server can name it. */
+  openTasks?: number
+  blockers?: number
 }) {
   const [moveState, move, moving] = useActionState(moveIdea, IDLE)
   const [voteState, vote, voting] = useActionState(toggleUpvote, IDLE)
@@ -65,7 +79,7 @@ export function CardActions({
     <>
       {upvoteDenial === null ? (
         <form action={vote}>
-          <input type="hidden" name="boardId" value={boardId} />
+          <input type="hidden" name="boardId" value={boardId ?? ''} />
           <input type="hidden" name="ideaId" value={idea.id} />
           <button
             type="submit"
@@ -99,15 +113,24 @@ export function CardActions({
 
       {canMove ? (
         <form action={move} className="flex items-center gap-1">
-          <input type="hidden" name="boardId" value={boardId} />
+          <input type="hidden" name="boardId" value={boardId ?? ''} />
           <input type="hidden" name="ideaId" value={idea.id} />
+          <input type="hidden" name="title" value={idea.title} />
+          <input type="hidden" name="openTasks" value={openTasks || ''} />
+          <input type="hidden" name="blockers" value={blockers || ''} />
           <button
             type="submit"
             name="statusId"
             value={previousStatusId ?? ''}
             disabled={previousStatusId === null || moving}
-            aria-label={`Move ${idea.title} one lane left`}
-            className={ARROW}
+            aria-disabled={previousRefusal ? 'true' : undefined}
+            title={previousRefusal ?? undefined}
+            onClick={(event) => {
+              // aria-disabled is advisory - the click still arrives, so the guard lives here.
+              if (previousRefusal) event.preventDefault()
+            }}
+            aria-label={`Move ${idea.title} one lane left${previousRefusal ? `. ${previousRefusal}` : ''}`}
+            className={cn(ARROW, previousRefusal && 'opacity-40')}
           >
             <Icon name="prev" className="size-3.5" />
           </button>
@@ -116,8 +139,13 @@ export function CardActions({
             name="statusId"
             value={nextStatusId ?? ''}
             disabled={nextStatusId === null || moving}
-            aria-label={`Move ${idea.title} one lane right`}
-            className={ARROW}
+            aria-disabled={nextRefusal ? 'true' : undefined}
+            title={nextRefusal ?? undefined}
+            onClick={(event) => {
+              if (nextRefusal) event.preventDefault()
+            }}
+            aria-label={`Move ${idea.title} one lane right${nextRefusal ? `. ${nextRefusal}` : ''}`}
+            className={cn(ARROW, nextRefusal && 'opacity-40')}
           >
             <Icon name="next" className="size-3.5" />
           </button>
@@ -125,7 +153,7 @@ export function CardActions({
       ) : null}
 
       {error ? (
-        <p className="m-0 w-full text-[0.8rem] font-medium text-destructive" role="status">
+        <p className="m-0 w-full text-xs font-medium text-destructive" role="status">
           {error}
         </p>
       ) : null}

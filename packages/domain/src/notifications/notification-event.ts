@@ -13,7 +13,8 @@ export type NotificationEvent = {
   readonly id: string
   readonly eventType: NotificationEventType
   readonly organizationId: string
-  readonly boardId: string
+  /** `null` for an idea in the pool. */
+  readonly boardId: string | null
   readonly ideaId: string
   readonly ideaTitle: string
   readonly actorUserId: string
@@ -32,7 +33,8 @@ export type CreateNotificationEventProps = {
   readonly id: string
   readonly eventType: NotificationEventType
   readonly organizationId: string
-  readonly boardId: string
+  /** `null` for an idea in the pool. */
+  readonly boardId: string | null
   readonly ideaId: string
   readonly ideaTitle: string
   readonly actorUserId: string

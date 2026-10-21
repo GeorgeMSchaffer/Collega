@@ -460,8 +460,8 @@ describe('IdeaService board scoping', () => {
       boards: [
         board({
           swimlanes: [
-            { statusId: STATUS_2, displayOrder: 5 },
-            { statusId: STATUS_1, displayOrder: 1 },
+            { statusId: STATUS_2, displayOrder: 5, isFinal: false, referencesBoardId: null },
+            { statusId: STATUS_1, displayOrder: 1, isFinal: false, referencesBoardId: null },
           ],
         }),
       ],

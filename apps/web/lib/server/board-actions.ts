@@ -23,7 +23,9 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { ApiError, apiPath, apiPost, apiPostReturning, apiPut } from '../api/client'
+import type { LaneFlags } from '../types'
 import { actingOrganizationId } from './current-user'
+import { KEY_PREFIX_RULE, ruleMessage } from './rule-messages'
 
 /**
  * What the board form renders back.
@@ -32,18 +34,114 @@ import { actingOrganizationId } from './current-user'
  * in `SwimlanePicker`'s own state, so React's reset after an action resolves costs nothing that
  * the next render does not restore.
  */
-export type BoardFormState = { error: string | null }
+export type BoardFormState = { error: string | null; pullErrors?: string[] } & FieldRefusals
 
-/** The drawer's form. `savedId` is the board written, its cue to move on: nothing redirects it. */
-export type BoardDrawerState = { error: string | null; savedId: string | null }
+/**
+ * Refusals the form shows beside the control they name rather than in the banner: the key prefix
+ * (`locked` when keys have been issued, so the field turns read-only with its reason) and, where
+ * the submitted lanes make it plain which lane broke a rule, that lane.
+ */
+export type FieldRefusals = {
+  keyPrefix?: { message: string; locked: boolean }
+  laneErrors?: Record<string, string>
+}
+
+/**
+ * The drawer's form. `savedId` is the board written, its cue to move on: nothing redirects it.
+ * `pullErrors` is one message per item the API refused to pull, for the step to mark.
+ */
+export type BoardDrawerState = {
+  error: string | null
+  savedId: string | null
+  pullErrors?: string[]
+} & FieldRefusals
 
 function refusal(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 401) redirect('/login?expired=1')
-    // 409 is an archived board: its settings are frozen until it is unarchived.
-    if ([400, 403, 404, 409].includes(error.status)) return error.detail
+    // 409 is an archived board: its settings are frozen until it is unarchived. 422 is a Board
+    // References rule (`referencesBoardInvalid`, `laneInUse`, ...) whose `detail` is the rule key
+    // until the API sends a message; it shows as it arrives, and a later `message` member lands in
+    // `ApiError.detail` rather than here.
+    if ([400, 403, 404, 409, 422].includes(error.status)) return ruleMessage(error.detail)
   }
   throw error
+}
+
+/**
+ * A refused save: the banner message, the per-item messages of a refused pull (which the step shows
+ * beside the items they name), and the refusals that belong on a field. The banner keeps only what
+ * is left over.
+ */
+function refusedSave(
+  error: unknown,
+  form: FormData,
+): { error: string | null; pullErrors: string[] } & FieldRefusals {
+  if (error instanceof ApiError) {
+    const { keyPrefix, ...rest } = error.errors
+    if (error.status === 400 && (keyPrefix || error.errorLists.pullItemIds)) {
+      const pullErrors = [...(error.errorLists.pullItemIds ?? [])]
+      const other = Object.entries(rest)
+        .filter(([field]) => field !== 'pullItemIds')
+        .map(([, message]) => message)
+      return {
+        error: other.length > 0 ? other.join(' ') : null,
+        pullErrors,
+        ...(keyPrefix ? { keyPrefix: { message: KEY_PREFIX_RULE, locked: false } } : {}),
+      }
+    }
+    if (error.status === 422 && error.detail === 'keyPrefixLocked') {
+      return {
+        error: null,
+        pullErrors: [],
+        keyPrefix: { message: ruleMessage(error.detail), locked: true },
+      }
+    }
+    if (error.status === 409 && error.detail === 'keyPrefixTaken') {
+      const prefix = String(form.get('keyPrefix') ?? '')
+        .trim()
+        .toUpperCase()
+      return {
+        error: null,
+        pullErrors: [],
+        keyPrefix: { message: `${prefix} is already used by another board.`, locked: false },
+      }
+    }
+    if (error.status === 422) {
+      const laneErrors = laneRefusals(error.detail, form)
+      if (laneErrors) return { error: null, pullErrors: [], laneErrors }
+    }
+  }
+  return { error: refusal(error), pullErrors: [] }
+}
+
+/**
+ * Pins the lane rules a submitted form makes plain to the lane that broke them. The API names the
+ * rule and not the lane, so a rule that cannot be attributed from the form (a lane in use, a
+ * reference chain) stays in the banner.
+ */
+function laneRefusals(rule: string, form: FormData): Record<string, string> | null {
+  const boardId = String(form.get('boardId') ?? '')
+  const flags = JSON.parse(String(form.get('laneFlags') ?? '{}')) as Record<
+    string,
+    Partial<LaneFlags> | undefined
+  >
+  const broken = form
+    .getAll('swimlaneIds')
+    .map(String)
+    .filter((statusId) => {
+      const lane = flags[statusId]
+      if (rule === 'finalLaneCannotReference') return lane?.isFinal && lane.referencesBoardId
+      if (rule === 'autoCreateTaskRequiresReference') {
+        return lane?.autoCreateTask && !lane.referencesBoardId
+      }
+      if (rule === 'laneReferencesOwnBoard')
+        return boardId !== '' && lane?.referencesBoardId === boardId
+      return false
+    })
+  return broken.length > 0
+    ? Object.fromEntries(broken.map((statusId) => [statusId, ruleMessage(rule)]))
+    : null
 }
 
 /**
@@ -57,6 +155,12 @@ function refusal(error: unknown): string {
  * sorts on it, so any increasing sequence would render the same board; a dense one is the one that
  * survives a round trip unchanged, which is what makes the edit form show what was saved.
  *
+ * **Lane flags travel with the form.** `PUT` rebuilds every lane from the request, and an absent
+ * `isFinal`, `referencesBoardId` or `autoCreateTask` means false or none, so a save that sent only
+ * `{statusId, order}` wiped them. The edit form carries the flags it was loaded with as one hidden
+ * `laneFlags` field (status id to flags), and each lane sends its own back; a lane the person just
+ * added has none and sends the defaults. Nothing on this form edits them.
+ *
  * An unchecked checkbox posts nothing at all, which is why `allowUserStatusUpdate` is a presence
  * test rather than a value read — `String(form.get(...))` would be `"null"`, a truthy string, and
  * the setting would be impossible to turn off.
@@ -65,18 +169,37 @@ function boardBody(form: FormData): {
   name: string
   description: string
   allowUserStatusUpdate: boolean
-  swimlanes: { statusId: string; order: number }[]
+  keyPrefix?: string | null
+  ideaFeaturesEnabled?: boolean
+  swimlanes: ({ statusId: string; order: number } & LaneFlags)[]
+  pullItemIds?: string[]
 } {
+  // Left out when empty, so a save that pulls nothing is the request it was before the step existed.
+  const pullItemIds = form.getAll('pullItemIds').map(String)
+  const flags = JSON.parse(String(form.get('laneFlags') ?? '{}')) as Record<
+    string,
+    Partial<LaneFlags> | undefined
+  >
   return {
     name: String(form.get('name') ?? ''),
     // Always sent, blank included: on `PUT` an absent description means "leave it", so emptying the
     // field has to arrive as an empty string for the API to clear it.
     description: String(form.get('description') ?? ''),
     allowUserStatusUpdate: form.get('userStatusMoves') !== null,
+    // Present only on a form that has the fields; a caller without them (the quick-add row) leaves
+    // both to the API's defaults, and on `PUT` an absent value means "leave it".
+    ...(form.has('keyPrefix') ? { keyPrefix: String(form.get('keyPrefix')).trim() || null } : {}),
+    ...(form.has('ideaFeaturesEnabled')
+      ? { ideaFeaturesEnabled: form.get('ideaFeaturesEnabled') === 'true' }
+      : {}),
     swimlanes: form.getAll('swimlaneIds').map((statusId, order) => ({
       statusId: String(statusId),
       order,
+      isFinal: flags[String(statusId)]?.isFinal ?? false,
+      referencesBoardId: flags[String(statusId)]?.referencesBoardId ?? null,
+      autoCreateTask: flags[String(statusId)]?.autoCreateTask ?? false,
     })),
+    ...(pullItemIds.length > 0 ? { pullItemIds } : {}),
   }
 }
 
@@ -93,13 +216,16 @@ function ideaMoves(form: FormData): { fromStatusId: string; toStatusId: string }
 }
 
 /** Creates the board, answering its id, or the refusal to show. */
-async function create(form: FormData): Promise<{ boardId: string } | { error: string }> {
+async function create(
+  form: FormData,
+): Promise<{ boardId: string } | ({ error: string | null; pullErrors: string[] } & FieldRefusals)> {
   const organizationId = await actingOrganizationId()
   if (organizationId === null) {
     return {
       error:
         'An App Admin belongs to no organization, so there is no organization to create a board ' +
         'in. Use View As to act as an administrator of one.',
+      pullErrors: [],
     }
   }
 
@@ -113,7 +239,7 @@ async function create(form: FormData): Promise<{ boardId: string } | { error: st
     )
     boardId = created.boardId
   } catch (error) {
-    return { error: refusal(error) }
+    return refusedSave(error, form)
   }
 
   // The sidebar's board count and the workspace list both change, and both are rendered above this
@@ -123,13 +249,15 @@ async function create(form: FormData): Promise<{ boardId: string } | { error: st
 }
 
 /** Saves the board, answering the refusal to show or `null` once it is written. */
-async function save(form: FormData): Promise<string | null> {
+async function save(
+  form: FormData,
+): Promise<({ error: string | null; pullErrors: string[] } & FieldRefusals) | null> {
   const boardId = String(form.get('boardId') ?? '')
 
   try {
     await apiPut(apiPath`/boards/${boardId}`, { ...boardBody(form), ideaMoves: ideaMoves(form) })
   } catch (error) {
-    return refusal(error)
+    return refusedSave(error, form)
   }
 
   // The lanes changed, so the board itself is stale as well as the lists. Escaped for the reason
@@ -138,6 +266,50 @@ async function save(form: FormData): Promise<string | null> {
   revalidatePath(`/boards/${encodeURIComponent(boardId)}`)
   revalidatePath('/', 'layout')
   return null
+}
+
+/**
+ * The Boards list's quick-add row: a board from just a name, on the lanes the page chose (the
+ * catalog's first two statuses, as the drawer defaults them) with `allowUserStatusUpdate` off. The
+ * same `POST /organizations/{id}/boards` as the drawer; a refusal comes back keyed by field so the
+ * row can mark the name.
+ */
+export async function quickAddBoard(
+  name: string,
+  statusIds: string[],
+): Promise<
+  | { ok: true; boardId: string }
+  | { ok: false; error: string | null; errors: Record<string, string> }
+> {
+  const organizationId = await actingOrganizationId()
+  if (organizationId === null) {
+    return {
+      ok: false,
+      error: 'An App Admin belongs to no organization. Use View As to act as an administrator.',
+      errors: {},
+    }
+  }
+
+  try {
+    const created = await apiPostReturning<{ boardId: string }>(
+      apiPath`/organizations/${organizationId}/boards`,
+      {
+        name,
+        description: '',
+        allowUserStatusUpdate: false,
+        swimlanes: statusIds.map((statusId, order) => ({ statusId, order })),
+      },
+    )
+    revalidatePath('/', 'layout')
+    return { ok: true, boardId: created.boardId }
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 400) {
+      const { name: nameError, ...rest } = error.errors
+      const other = Object.values(rest).join(' ')
+      if (nameError) return { ok: false, error: other || null, errors: { name: nameError } }
+    }
+    return { ok: false, error: refusal(error), errors: {} }
+  }
 }
 
 export async function createBoard(
@@ -155,8 +327,8 @@ export async function saveBoard(
   _previous: BoardFormState,
   form: FormData,
 ): Promise<BoardFormState> {
-  const error = await save(form)
-  if (error !== null) return { error }
+  const refused = await save(form)
+  if (refused !== null) return refused
   redirect('/settings/boards')
 }
 
@@ -165,17 +337,17 @@ export async function createBoardInPlace(
   form: FormData,
 ): Promise<BoardDrawerState> {
   const result = await create(form)
-  return 'error' in result
-    ? { error: result.error, savedId: null }
-    : { error: null, savedId: result.boardId }
+  return 'error' in result ? { ...result, savedId: null } : { error: null, savedId: result.boardId }
 }
 
 export async function saveBoardInPlace(
   _previous: BoardDrawerState,
   form: FormData,
 ): Promise<BoardDrawerState> {
-  const error = await save(form)
-  return { error, savedId: error === null ? String(form.get('boardId') ?? '') : null }
+  const refused = await save(form)
+  return refused === null
+    ? { error: null, savedId: String(form.get('boardId') ?? '') }
+    : { ...refused, savedId: null }
 }
 
 /**

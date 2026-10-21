@@ -1,7 +1,7 @@
 // The prompt-eval runner (SPEC/20-feature-prompt-eval-runner.md). Invoked through the package's
 // `eval` script, which Turbo never runs (rule 40):
 //
-//   pnpm -C tools/prompt-eval eval [--dry-run] [--baseline <file>] [options]
+//   pnpm -C tools/prompt-eval eval [--dry-run] [--assistant v1|v2] [--baseline <file>] [options]
 //   pnpm -C tools/prompt-eval eval dump-prompt --fixture <name> [--prompt-file <path>]
 //   pnpm -C tools/prompt-eval eval rescore <run.json> [--baseline <file>]
 //   pnpm -C tools/prompt-eval eval compare <baseline.json> <candidate.json>
@@ -24,6 +24,7 @@ import {
   caseContentSha256,
   type PreparedFixture,
   prepareFixture,
+  type RunAssistant,
   schemaPriorities,
 } from './fixture-context.ts'
 import { computeMetrics } from './metrics.ts'
@@ -90,6 +91,7 @@ interface Options {
   readonly files: readonly string[]
   readonly baseline: string | undefined
   readonly dryRun: boolean
+  readonly assistant: RunAssistant
   readonly cases: readonly string[] | null
   readonly repeats: number
   readonly concurrency: number
@@ -143,6 +145,11 @@ function parseOptions(argv: readonly string[]): Options {
   const model = values.model ?? DEFAULT_AI_USAGE_LIMITS.model
   if (model.trim().length === 0) throw new UsageError('--model must not be blank.')
 
+  const assistant = values.assistant ?? 'v1'
+  if (assistant !== 'v1' && assistant !== 'v2') {
+    throw new UsageError('--assistant must be v1 or v2.')
+  }
+
   if (command === 'dump-prompt' && values.fixture === undefined) {
     throw new UsageError('dump-prompt needs --fixture <name>.')
   }
@@ -152,6 +159,7 @@ function parseOptions(argv: readonly string[]): Options {
     files,
     baseline: values.baseline,
     dryRun: values['dry-run'] ?? false,
+    assistant,
     cases: values.case && values.case.length > 0 ? [...new Set(values.case)] : null,
     repeats: positiveInteger(values.repeats, 5, '--repeats'),
     concurrency: positiveInteger(values.concurrency, 1, '--concurrency'),
@@ -173,6 +181,7 @@ function parse(argv: readonly string[]) {
     strict: true,
     options: {
       'dry-run': { type: 'boolean' },
+      assistant: { type: 'string' },
       case: { type: 'string', multiple: true },
       repeats: { type: 'string' },
       concurrency: { type: 'string' },
@@ -197,20 +206,37 @@ function positiveInteger(raw: string | undefined, fallback: number, flag: string
   return Number(raw)
 }
 
-/** Cases the v1 turn runs: `assistant` of `v1` or `both`, narrowed by `--case`. */
-function selectCases(corpus: Corpus, requested: readonly string[] | null): EvalCase[] {
-  const runnable = corpus.cases.filter((c) => c.assistant !== 'v2')
+/** The cases a turn runs: its own and `both`, narrowed by `--case`. */
+function runsUnder(evalCase: EvalCase, assistant: RunAssistant): boolean {
+  return evalCase.assistant === 'both' || evalCase.assistant === assistant
+}
+
+function selectCases(
+  corpus: Corpus,
+  requested: readonly string[] | null,
+  assistant: RunAssistant,
+): EvalCase[] {
+  const runnable = corpus.cases.filter((c) => runsUnder(c, assistant))
   if (requested === null) return runnable
   const unknown = requested.filter((id) => !runnable.some((c) => c.id === id))
   if (unknown.length > 0) {
-    throw new UsageError(`Unknown or non-v1 case: ${unknown.join(', ')}.`)
+    throw new UsageError(
+      `Unknown case, or one that does not run under ${assistant}: ${unknown.join(', ')}.`,
+    )
   }
   return runnable.filter((c) => requested.includes(c.id))
 }
 
-function prepareAll(corpus: Corpus, prompt: PromptSource): Map<string, PreparedFixture> {
+function prepareAll(
+  corpus: Corpus,
+  prompt: PromptSource,
+  assistant: RunAssistant,
+): Map<string, PreparedFixture> {
   return new Map(
-    [...corpus.fixtures.values()].map((f) => [f.name, prepareFixture(f, prompt.prompts)]),
+    [...corpus.fixtures.values()].map((f) => [
+      f.name,
+      prepareFixture(f, prompt.prompts, assistant),
+    ]),
   )
 }
 
@@ -236,7 +262,7 @@ function printDryRun(
   prompt: PromptSource,
   cases: readonly EvalCase[],
   fixtures: ReadonlyMap<string, PreparedFixture>,
-  v2Only: readonly EvalCase[],
+  notRun: readonly EvalCase[],
 ): void {
   const calls = plannedCalls(cases, options.repeats)
   let inputTokens = 0
@@ -276,9 +302,11 @@ function printDryRun(
     )
   }
   out.push('')
-  if (v2Only.length > 0) {
+  if (notRun.length > 0) {
+    const other = options.assistant === 'v1' ? 'v2' : 'v1'
     out.push(
-      `Validated, not run (${v2Only.length} v2 cases; the v2 turn is not built): ${v2Only.map((c) => c.id).join(', ')}`,
+      `Validated, not run under ${options.assistant} (${notRun.length} ${other} cases; ` +
+        `--assistant ${other} runs them): ${notRun.map((c) => c.id).join(', ')}`,
     )
     out.push('')
   }
@@ -341,6 +369,7 @@ async function liveRun(
       evalCase,
       repeat,
       context: (fixtures.get(evalCase.fixture) as PreparedFixture).context,
+      catalog: (fixtures.get(evalCase.fixture) as PreparedFixture).catalog,
     })),
   )
 
@@ -350,6 +379,7 @@ async function liveRun(
   )
   const result = await runTrials(specs, {
     model,
+    assistant: options.assistant,
     ceilings: { maxCalls: options.maxCalls, maxTokens: options.maxTokens },
     concurrency: options.concurrency,
     stopwatch: deps.stopwatch,
@@ -382,6 +412,7 @@ async function liveRun(
       caseSelection: options.cases,
       cases: cases.map((c) => c.id),
       prompt: { source: prompt.source, templateSha256: prompt.templateSha256 },
+      ...(options.assistant === 'v2' ? { assistant: 'v2' as const } : {}),
       caseHashes: Object.fromEntries(cases.map((c) => [c.id, caseContentSha256(c)])),
       fixtureHashes: mapValues(usedFixtures, (f) => f.contentSha256),
       fixtureCatalogHashes: mapValues(usedFixtures, (f) => f.catalogSha256),
@@ -480,9 +511,9 @@ export async function main(
     if (options.command === 'rescore') return await rescore(options)
     if (options.command === 'compare') return await compare(options)
 
-    const prompt = await loadPromptSource(options.promptFile)
+    const prompt = await loadPromptSource(options.promptFile, options.assistant)
     const corpus = await loadCorpus(deps.corpusRoot, schemaPriorities())
-    const fixtures = prepareAll(corpus, prompt)
+    const fixtures = prepareAll(corpus, prompt, options.assistant)
 
     if (options.command === 'dump-prompt') {
       const fixture = fixtures.get(options.fixture as string)
@@ -491,12 +522,12 @@ export async function main(
       return EXIT_PASS
     }
 
-    const cases = selectCases(corpus, options.cases)
+    const cases = selectCases(corpus, options.cases, options.assistant)
     if (options.dryRun) {
       // Read as a live run would, so a bad --baseline fails here rather than after the spend.
       const baseline = options.baseline === undefined ? null : await loadBaseline(options.baseline)
-      const v2Only = corpus.cases.filter((c) => c.assistant === 'v2')
-      printDryRun(options, prompt, cases, fixtures, v2Only)
+      const notRun = corpus.cases.filter((c) => !runsUnder(c, options.assistant))
+      printDryRun(options, prompt, cases, fixtures, notRun)
       if (baseline !== null) {
         console.log(`Baseline   ${baseline.path} (${baseline.run.trials.length} trials, readable)`)
       }

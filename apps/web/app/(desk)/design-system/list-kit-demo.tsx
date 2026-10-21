@@ -13,7 +13,9 @@ import {
   MultiSelectFilter,
   Pager,
   pageRows,
+  QuickAddRow,
   RowActions,
+  type Sort,
   sortRows,
   useListState,
   ViewSwitch,
@@ -164,6 +166,8 @@ export function ListKitDemo({ boards }: { boards: BoardOverview[] }) {
           onPageChange={(n) => update({ page: n })}
           onSizeChange={(size) => update({ size })}
         />
+
+        <QuickAddDemo />
       </CardContent>
 
       <Drawer
@@ -227,5 +231,163 @@ export function ListKitDemo({ boards }: { boards: BoardOverview[] }) {
         onCancel={() => setConfirming(null)}
       />
     </Card>
+  )
+}
+
+type DemoIssue = { id: string; title: string; effort: string; sprint: string }
+
+const DEMO_EFFORTS = ['Low', 'Medium', 'High'].map((value) => ({ value, label: value }))
+const DEMO_SPRINTS = [
+  { value: '', label: 'Backlog' },
+  { value: 'Sprint 14', label: 'Sprint 14' },
+]
+const DEMO_COLUMNS: Column<DemoIssue>[] = [
+  { key: 'title', header: 'Title', cell: (issue) => issue.title },
+  { key: 'effort', header: 'Effort', cell: (issue) => issue.effort },
+  { key: 'sprint', header: 'Sprint', cell: (issue) => issue.sprint || 'Backlog' },
+]
+
+/**
+ * The quick-add row on a small local table, in both hand-off modes. Nothing is saved: "create"
+ * adds to local state after a short delay (a title containing "fail" is refused, to show the error
+ * state), and "drawer" opens a stand-in drawer showing the values it would pre-populate. Widen the
+ * window to md or more to see the row; below that it is hidden and the header button is the path.
+ */
+function QuickAddDemo() {
+  const [mode, setMode] = useState<'drawer' | 'create'>('drawer')
+  const [canAdd, setCanAdd] = useState(true)
+  const [sort, setSort] = useState<Sort | null>({ key: 'title', dir: 'asc' })
+  const [issues, setIssues] = useState<DemoIssue[]>([
+    { id: 'd1', title: 'Archive exports', effort: 'Medium', sprint: '' },
+    { id: 'd2', title: 'Bulk edit tags', effort: 'High', sprint: 'Sprint 14' },
+    { id: 'd3', title: 'Quieter digests', effort: 'Low', sprint: '' },
+  ])
+  const [handoff, setHandoff] = useState<Record<string, string> | null>(null)
+  const sorted = sortRows(issues, sort, (issue, key) => issue[key as keyof DemoIssue] as string)
+
+  return (
+    <section aria-labelledby="quick-add-demo" className="flex flex-col gap-3 border-t pt-4">
+      <h3 id="quick-add-demo" className="m-0 text-base">
+        Quick-add row
+      </h3>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+        <label className="m-0 flex items-center gap-2 font-normal">
+          <input
+            type="checkbox"
+            checked={mode === 'create'}
+            onChange={(event) => setMode(event.target.checked ? 'create' : 'drawer')}
+          />
+          Create directly (unticked, Enter hands off to a drawer)
+        </label>
+        <label className="m-0 flex items-center gap-2 font-normal">
+          <input
+            type="checkbox"
+            checked={canAdd}
+            onChange={(event) => setCanAdd(event.target.checked)}
+          />
+          This role may add (unticked is Read Only: the row is hidden)
+        </label>
+      </div>
+      <DataTable
+        caption="Quick-add demo"
+        columns={DEMO_COLUMNS}
+        rows={sorted}
+        rowKey={(issue) => issue.id}
+        sort={sort}
+        onSortChange={setSort}
+        quickAdd={(layout) => {
+          const fields = [
+            {
+              name: 'title',
+              label: 'Title',
+              required: true,
+              placeholder: 'Add an issue, then press Enter',
+              maxLength: 120,
+            },
+            {
+              name: 'effort',
+              label: 'Effort',
+              column: 'effort',
+              required: true,
+              options: DEMO_EFFORTS,
+              placeholder: 'Choose effort',
+            },
+            {
+              name: 'sprint',
+              label: 'Sprint',
+              column: 'sprint',
+              options: DEMO_SPRINTS,
+              defaultValue: '',
+            },
+          ]
+          const common = {
+            layout,
+            fields,
+            canAdd,
+            label: 'Quick add issue',
+            rowIds: issues.map((issue) => issue.id).join(','),
+            testId: 'quick-add-demo',
+          }
+          return mode === 'drawer' ? (
+            <QuickAddRow {...common} handoff="drawer" onHandoff={setHandoff} />
+          ) : (
+            <QuickAddRow
+              {...common}
+              handoff="create"
+              onHandoff={setHandoff}
+              onSubmit={async (values) => {
+                await new Promise((resolve) => setTimeout(resolve, 600))
+                if (/fail/i.test(values.title ?? '')) {
+                  return {
+                    ok: false,
+                    error: null,
+                    errors: { title: 'That title was refused (demo).' },
+                  }
+                }
+                const id = `d${Date.now()}`
+                setIssues((list) => [
+                  ...list,
+                  {
+                    id,
+                    title: values.title ?? '',
+                    effort: values.effort ?? '',
+                    sprint: values.sprint ?? '',
+                  },
+                ])
+                return {
+                  ok: true,
+                  id,
+                  message: values.sprint ? `Issue added to ${values.sprint}` : 'Issue added',
+                }
+              }}
+            />
+          )
+        }}
+      />
+      <Drawer
+        open={handoff !== null}
+        onClose={() => setHandoff(null)}
+        eyebrow="New issue"
+        title="Add New Issue"
+        footer={
+          <Button variant="outline" onClick={() => setHandoff(null)}>
+            Close
+          </Button>
+        }
+      >
+        <p className="m-0 text-sm text-muted-foreground">
+          The drawer opens pre-populated with the row&rsquo;s values (nothing is created until its
+          form is saved):
+        </p>
+        <dl className="m-0 grid grid-cols-2 gap-3 rounded-md bg-muted/60 p-3 text-sm">
+          {Object.entries(handoff ?? {}).map(([name, value]) => (
+            <div key={name}>
+              <dt className="text-xs uppercase tracking-wide text-muted-foreground">{name}</dt>
+              <dd className="m-0 mt-0.5 font-medium">{value || 'Backlog / empty'}</dd>
+            </div>
+          ))}
+        </dl>
+      </Drawer>
+    </section>
   )
 }

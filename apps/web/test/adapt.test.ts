@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { toCurrentUser, toIdea } from '@/lib/api/adapt'
-import type { WireCurrentUser, WireIdeaListItem } from '@/lib/api/wire'
+import { toBoardTask, toCurrentUser, toIdea } from '@/lib/api/adapt'
+import type { WireBoardTask, WireCurrentUser, WireIdeaListItem } from '@/lib/api/wire'
 
 /**
  * The wire-to-view boundary.
@@ -40,6 +40,10 @@ const WIRE_IDEA: WireIdeaListItem = {
   tagNames: [],
   tags: [],
   effort: null,
+  itemKey: 'ASM-4',
+  parentIdeaId: null,
+  taskCounts: { total: 3, done: 1 },
+  blockedBy: [{ ideaId: 'b-1', itemKey: 'ASM-2', isFinal: false }],
   statusId: '3f7b0a3c-1d9e-4a2b-8c55-2f0f9c1d7e41',
   statusName: 'New / Pending',
   upvoteCount: 0,
@@ -106,6 +110,7 @@ describe('toIdea', () => {
     expect(toIdea(WIRE_IDEA)).toEqual({
       id: WIRE_IDEA.ideaId,
       boardId: WIRE_IDEA.boardId,
+      authorUserId: WIRE_IDEA.authorUserId,
       statusId: WIRE_IDEA.statusId,
       statusName: WIRE_IDEA.statusName,
       title: WIRE_IDEA.title,
@@ -119,6 +124,10 @@ describe('toIdea', () => {
       upvotes: 0,
       hasUpvoted: false,
       effort: null,
+      itemKey: 'ASM-4',
+      parentIdeaId: null,
+      taskCounts: { total: 3, done: 1 },
+      blockedBy: [{ ideaId: 'b-1', itemKey: 'ASM-2', isFinal: false }],
     })
   })
 
@@ -130,6 +139,10 @@ describe('toIdea', () => {
         `The API returned an unknown priority: ${priority}`,
       )
     }
+  })
+
+  it("adapts a task's null priority without throwing", () => {
+    expect(toIdea({ ...WIRE_IDEA, priority: null }).priority).toBeNull()
   })
 
   it('takes the first tag and reads no tags as none', () => {
@@ -145,5 +158,23 @@ describe('toIdea', () => {
         .assigneeInitials,
     ).toBe('MO')
     expect(toIdea({ ...WIRE_IDEA, assignees: [] }).assigneeInitials).toBeNull()
+  })
+})
+
+describe('toBoardTask', () => {
+  const WIRE_TASK: WireBoardTask = {
+    ideaId: 't-1',
+    itemKey: 'IMPL-1',
+    title: 'Wire the sensor',
+    statusId: 'l-open',
+    statusName: 'Open',
+    isFinal: false,
+    assignees: [],
+    blockedBy: [],
+    autoCreated: true,
+  }
+
+  it.each([true, false])('carries autoCreated %j from the wire to the view', (autoCreated) => {
+    expect(toBoardTask({ ...WIRE_TASK, autoCreated }).autoCreated).toBe(autoCreated)
   })
 })

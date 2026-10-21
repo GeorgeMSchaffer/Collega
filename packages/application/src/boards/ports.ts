@@ -2,6 +2,9 @@
 // Prisma; this feature only depends on the shapes below, never on Prisma or Nest directly.
 
 import type { Board } from '@collega/domain/boards'
+import type { EffortLevel, IdeaPhase } from '@collega/domain/enums'
+import type { AutoCreateTaskParent } from '../ideas/models.js'
+import type { PullCandidatePage } from './models.js'
 
 export interface BoardRepository {
   add(board: Board): Promise<void>
@@ -70,12 +73,74 @@ export interface BoardRepository {
     nowUtc: Date,
     actorUserId: string | null,
   ): Promise<void>
+
+  /**
+   * Stages a check, after `moveIdeas`, that every given idea landed in `toStatusId` in this save.
+   * A miss fails the whole save with a `400` keyed `ideaMoves` naming the idea. Used only where a
+   * move auto-creates a task, which must not be committed for an idea that never entered the lane.
+   */
+  verifyIdeasMoved(
+    boardId: string,
+    ideas: readonly { readonly ideaId: string; readonly title: string }[],
+    toStatusId: string,
+    nowUtc: Date,
+  ): Promise<void>
+
+  /**
+   * Stages filing the given items onto `boardId`, in the same unit of work as the board's own add
+   * or save (SPEC/20-feature-board-pull-in.md rules 13 to 16). Each item is written only if it is
+   * still as `from` describes it; one that is not - moved, deleted or promoted since it was read -
+   * fails the whole commit with a `ValidationError` keyed `pullItemIds` that names it, so nothing
+   * is saved. The target board must already be staged ahead of this call when it is new.
+   */
+  reassignIdeas(
+    boardId: string,
+    items: readonly IdeaReassignment[],
+    nowUtc: Date,
+    actorUserId: string | null,
+  ): Promise<void>
+
+  /**
+   * One page of the items the pull picker offers, oldest first and tie-broken on title then id so
+   * paging is stable. The caller has already decided what the user may see and passes it in.
+   */
+  listPullCandidates(filter: PullCandidateFilter): Promise<PullCandidatePage>
+}
+
+export type IdeaReassignment = {
+  readonly ideaId: string
+  /** For the "no longer available" message. */
+  readonly title: string
+  readonly from: {
+    readonly boardId: string | null
+    readonly statusId: string
+    readonly phase: IdeaPhase
+    readonly sprintId: string | null
+  }
+  readonly toStatusId: string
+  /** True for a backlog Issue: its phase becomes Discovery and its delivery status and sprint clear. */
+  readonly returnsToDiscovery: boolean
+}
+
+export type PullCandidateFilter = {
+  readonly organizationId: string
+  readonly source: 'unassigned' | 'boards' | 'backlog'
+  readonly excludeBoardId: string | null
+  readonly search: string | null
+  /** Normalized tag names, any-of. */
+  readonly tags: readonly string[]
+  readonly authorUserId: string | null
+  /** The caller, for `isMine`. */
+  readonly currentUserId: string
+  readonly page: { readonly page: number; readonly pageSize: number }
 }
 
 export type LaneIdea = {
   readonly ideaId: string
   readonly title: string
   readonly statusId: string
+  /** For the Effort entry rule when a move lands in a lane that references a board. */
+  readonly effort: EffortLevel | null
 }
 
 export type BoardStatusIdeaCount = {
@@ -105,4 +170,16 @@ export type UserName = {
  */
 export interface OrganizationExistenceLookup {
   existsById(organizationId: string): Promise<boolean>
+}
+
+/**
+ * The auto-create on entering an `autoCreateTask` lane by a pull or an `ideaMoves` entry. Satisfied
+ * by `IdeaService`, which owns the one task-creation path: it stages the task in this save's unit
+ * of work and hands back what to run once the save has committed (its audit entries).
+ */
+export interface AutoCreateTaskPort {
+  stageAutoCreatedTask(
+    parent: AutoCreateTaskParent,
+    referencedBoardId: string,
+  ): Promise<() => Promise<void>>
 }

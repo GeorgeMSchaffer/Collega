@@ -4,7 +4,9 @@ import {
   BoardService,
   type CreateBoardResult,
   type IdeaMoveInput,
+  type PullCandidatePage,
   type SwimlaneInput,
+  type UpdateBoardResult,
 } from '@collega/application/boards'
 import { BOARD_NAME_MAX_LENGTH } from '@collega/domain/boards'
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
@@ -14,17 +16,34 @@ import {
   RequestValidationError,
   validateFields,
 } from '../common/errors/request-validation.error.js'
-import { queryBool } from '../common/request-values.js'
+import {
+  optional,
+  optionalGuid,
+  optionalInt,
+  queryBool,
+  queryList,
+} from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 /** One entry of a request's `swimlanes` array - `SwimlaneRequest` on the .NET side. */
-type SwimlaneBody = { statusId?: string; order?: number }
+type SwimlaneBody = {
+  statusId?: string
+  order?: number
+  isFinal?: boolean
+  referencesBoardId?: string | null
+  autoCreateTask?: boolean
+}
 
 type CreateBoardBody = {
   name?: string
   description?: string | null
   allowUserStatusUpdate?: boolean
   swimlanes?: readonly SwimlaneBody[]
+  keyPrefix?: string | null
+  sprintsEnabled?: boolean
+  ideaFeaturesEnabled?: boolean
+  pullItemIds?: unknown
+  forceReason?: unknown
 }
 
 /** One entry of `PUT`'s `ideaMoves` (added 2026-09-29): a removed lane and where its ideas go. */
@@ -82,7 +101,27 @@ function toSwimlaneInputs(swimlanes: unknown): readonly SwimlaneInput[] {
     statusId: typeof entry?.statusId === 'string' ? entry.statusId : '',
     // `int`, not `int?`, on the .NET record - an absent order bound to 0 rather than failing.
     order: typeof entry?.order === 'number' ? entry.order : 0,
+    isFinal: entry?.isFinal === true,
+    referencesBoardId:
+      typeof entry?.referencesBoardId === 'string' ? entry.referencesBoardId : null,
+    autoCreateTask: entry?.autoCreateTask === true,
   }))
+}
+
+/** As `toDescription`: absent stays `undefined` (on `PUT`, "leave it alone"), `null` clears. */
+function toKeyPrefix(keyPrefix: unknown): string | null | undefined {
+  if (keyPrefix === undefined || keyPrefix === null || typeof keyPrefix === 'string') {
+    return keyPrefix
+  }
+  throw new RequestValidationError({ keyPrefix: ['Key prefix must be a string.'] })
+}
+
+/** A flag the body did not send stays `undefined`, which leaves the stored value (or default). */
+function toFlag(name: string, value: unknown): boolean | undefined {
+  if (value === undefined || typeof value === 'boolean') {
+    return value
+  }
+  throw new RequestValidationError({ [name]: [`${name} must be true or false.`] })
 }
 
 /**
@@ -98,6 +137,21 @@ function toIdeaMoves(moves: unknown): readonly IdeaMoveInput[] {
     fromStatusId: typeof entry?.fromStatusId === 'string' ? entry.fromStatusId : '',
     toStatusId: typeof entry?.toStatusId === 'string' ? entry.toStatusId : '',
   }))
+}
+
+/**
+ * `pullItemIds`: absent or `null` pulls nothing. The body type is compile-time only, so anything
+ * but an array of strings is refused here under the field's key; what the ids name, how many and
+ * whether they repeat is the Application layer's.
+ */
+function toPullItemIds(value: unknown): readonly string[] {
+  if (value === undefined || value === null) {
+    return []
+  }
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== 'string')) {
+    throw new RequestValidationError({ pullItemIds: ['Pull item ids must be an array of ids.'] })
+  }
+  return value as readonly string[]
 }
 
 /**
@@ -127,6 +181,26 @@ export class BoardsController {
     return this.boards.list(organizationId, { includeArchived: queryBool(includeArchived) })
   }
 
+  /**
+   * The pull picker's read (SPEC/contracts/boards.md). Declared beside the list rather than under
+   * `boards/:boardId`, so it cannot be mistaken for a board id.
+   */
+  @Get('organizations/:organizationId/boards/pull-candidates')
+  async pullCandidates(
+    @Param('organizationId', UuidParamPipe) organizationId: string,
+    @Query() query: Record<string, unknown>,
+  ): Promise<PullCandidatePage> {
+    return this.boards.listPullCandidates(organizationId, {
+      source: optional(query.source),
+      excludeBoardId: optionalGuid(query.excludeBoardId),
+      search: optional(query.search)?.trim() ?? null,
+      tags: queryList(query.tag),
+      authorUserId: optionalGuid(query.authorUserId),
+      page: optionalInt(query.page),
+      pageSize: optionalInt(query.pageSize),
+    })
+  }
+
   @Post('organizations/:organizationId/boards')
   @HttpCode(201)
   async create(
@@ -141,6 +215,11 @@ export class BoardsController {
       // A .NET `bool` (not `bool?`): an absent value bound to false.
       allowUserStatusUpdate: body.allowUserStatusUpdate === true,
       swimlanes: toSwimlaneInputs(body.swimlanes),
+      keyPrefix: toKeyPrefix(body.keyPrefix),
+      sprintsEnabled: toFlag('sprintsEnabled', body.sprintsEnabled),
+      ideaFeaturesEnabled: toFlag('ideaFeaturesEnabled', body.ideaFeaturesEnabled),
+      pullItemIds: toPullItemIds(body.pullItemIds),
+      forceReason: optional(body.forceReason),
     })
   }
 
@@ -153,7 +232,7 @@ export class BoardsController {
   async update(
     @Param('boardId', UuidParamPipe) boardId: string,
     @Body() body: UpdateBoardBody,
-  ): Promise<BoardDetail> {
+  ): Promise<UpdateBoardResult> {
     validateFields(boardBodyRules(body))
 
     return this.boards.update(boardId, {
@@ -161,7 +240,12 @@ export class BoardsController {
       description: toDescription(body.description),
       allowUserStatusUpdate: body.allowUserStatusUpdate === true,
       swimlanes: toSwimlaneInputs(body.swimlanes),
+      keyPrefix: toKeyPrefix(body.keyPrefix),
+      sprintsEnabled: toFlag('sprintsEnabled', body.sprintsEnabled),
+      ideaFeaturesEnabled: toFlag('ideaFeaturesEnabled', body.ideaFeaturesEnabled),
       ideaMoves: toIdeaMoves(body.ideaMoves),
+      pullItemIds: toPullItemIds(body.pullItemIds),
+      forceReason: optional(body.forceReason),
     })
   }
 

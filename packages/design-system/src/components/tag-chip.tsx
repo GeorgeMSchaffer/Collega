@@ -40,7 +40,7 @@ export function TagChip({
         'in-data-[theme=sera]:bg-(color:--chip-bg-sera) in-data-[theme=sera]:text-(color:--chip-fg-sera)',
         'in-data-[theme=lagoon]:bg-(color:--chip-bg-lagoon) in-data-[theme=lagoon]:text-(color:--chip-fg-lagoon)',
         'in-data-[theme=graphite]:bg-(color:--chip-bg-graphite) in-data-[theme=graphite]:text-(color:--chip-fg-graphite)',
-        size === 'lg' ? 'px-3 py-0.5 text-sm' : 'px-2 py-px text-[11px]',
+        size === 'lg' ? 'px-3 py-0.5 text-sm' : 'px-2 py-px text-xs',
         className,
       )}
       style={{ ...(vars as CSSProperties), ...style }}

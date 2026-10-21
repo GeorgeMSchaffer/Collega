@@ -9,7 +9,7 @@
 // Also provides `listActiveWithFieldNames`, satisfying `AiIdeaTypesPort` (ai/ports.ts) - the same
 // field-resolution composition, so it lives beside it rather than being duplicated.
 
-import type { AiIdeaTypesPort } from '@collega/application/ai'
+import type { AiIdeaTypesPort, IdeaAssistFieldDefinition } from '@collega/application/ai'
 import { ValidationError } from '@collega/application/common'
 import type { FieldValueWrite } from '@collega/application/fields'
 import { validateFieldValues } from '@collega/application/fields'
@@ -521,6 +521,7 @@ export class PrismaIdeaFieldValuesRepository implements IdeaFieldValuesPort, AiI
       readonly id: string
       readonly name: string
       readonly fieldNames: readonly string[]
+      readonly fields: readonly IdeaAssistFieldDefinition[]
     }[]
   > {
     const [ideaTypeRows, activeDefinitions, fieldsetsById] = await Promise.all([
@@ -540,6 +541,16 @@ export class PrismaIdeaFieldValuesRepository implements IdeaFieldValuesPort, AiI
         id: ideaType.id,
         name: ideaType.name,
         fieldNames: effective.map((f) => f.field.name),
+        // The v2 assistant fills these, so it needs ids, types and option ids as well as names.
+        fields: effective.map((f) => ({
+          id: f.field.id,
+          name: f.field.name,
+          fieldType: f.field.fieldType,
+          isRequired: f.required,
+          options: [...f.field.options]
+            .sort((a, b) => a.displayOrder - b.displayOrder)
+            .map((o) => ({ id: o.id, label: o.label })),
+        })),
       }
     })
   }

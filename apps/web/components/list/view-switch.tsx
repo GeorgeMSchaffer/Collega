@@ -25,7 +25,7 @@ export function ViewSwitch({
           aria-pressed={view === value}
           onClick={() => onChange(view)}
           className={cn(
-            'rounded-sm px-3 py-1 text-[13px] text-muted-foreground hover:text-foreground',
+            'rounded-sm px-3 py-1 text-xs text-muted-foreground hover:text-foreground',
             view === value && 'bg-card font-semibold text-foreground shadow-xs',
           )}
         >

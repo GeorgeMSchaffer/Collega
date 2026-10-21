@@ -6,7 +6,7 @@ export function Kbd({ className, ...props }: HTMLAttributes<HTMLSpanElement>) {
   return (
     <span
       className={cn(
-        'rounded-sm border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground',
+        'rounded-sm border bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground',
         className,
       )}
       {...props}
@@ -23,7 +23,7 @@ export function Avatar({
   return (
     <span
       className={cn(
-        'flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium text-foreground',
+        'flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-foreground',
         className,
       )}
       aria-hidden="true"
@@ -52,7 +52,7 @@ export function Meta({
     <span
       className={cn(
         'font-mono font-medium text-muted-foreground',
-        caps ? 'text-[10.5px] uppercase tracking-[0.06em]' : 'text-[11px] tracking-[0.04em]',
+        caps ? 'text-xs uppercase tracking-[0.06em]' : 'text-xs tracking-[0.04em]',
         className,
       )}
       {...props}

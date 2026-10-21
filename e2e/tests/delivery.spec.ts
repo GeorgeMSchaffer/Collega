@@ -187,7 +187,7 @@ test.describe
       await expect(page.getByRole('heading', { name: 'No outcomes yet' })).toBeVisible({
         timeout: 30_000,
       })
-      await expect(page.getByText(/delivery issues? and nothing to group them by/)).toBeVisible()
+      await expect(page.getByText(/items? and nothing to group them by/)).toBeVisible()
       const first = page.getByRole('button', { name: 'Add the first outcome' })
       await expect(first).toHaveAttribute('aria-disabled', 'true')
     })

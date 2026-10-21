@@ -31,6 +31,8 @@ export interface RunHeader {
   /** The case ids that ran, in run order. */
   readonly cases: readonly string[]
   readonly prompt: { readonly source: string; readonly templateSha256: string }
+  /** Set to `v2` when the run drove the v2 turn; absent on a v1 run, as in the v1 baseline. */
+  readonly assistant?: 'v2'
   readonly caseHashes: Readonly<Record<string, string>>
   readonly fixtureHashes: Readonly<Record<string, string>>
   /** Template-independent fixture hashes; see `PreparedFixture.catalogSha256`. */

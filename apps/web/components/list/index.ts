@@ -22,6 +22,15 @@ export {
 export { ListToolbar } from './list-toolbar'
 export { type FilterOption, MultiSelectFilter } from './multi-select-filter'
 export { Pager } from './pager'
+export { QuickAddBar } from './quick-add-bar'
+export {
+  type QuickAddField,
+  type QuickAddLayout,
+  type QuickAddResult,
+  QuickAddRow,
+  type QuickAddValues,
+} from './quick-add-row'
 export { type RowAction, RowActions } from './row-actions'
+export { useAddedHighlight } from './use-added-highlight'
 export { useListState } from './use-list-state'
 export { ViewSwitch } from './view-switch'

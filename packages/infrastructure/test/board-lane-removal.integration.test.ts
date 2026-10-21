@@ -8,6 +8,7 @@
 // Audit events go to an in-memory writer so the run leaves no rows behind.
 
 import { randomUUID } from 'node:crypto'
+import type { AutoCreateTaskPort } from '@collega/application/boards'
 import { BoardService } from '@collega/application/boards'
 import type { AuditEventInput, CurrentUserContext } from '@collega/application/common'
 import { updateBoard } from '@collega/domain/boards'
@@ -16,6 +17,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { PrismaClient } from '../src/generated/prisma/index.js'
 import { PrismaUnitOfWork } from '../src/persistence/unit-of-work.js'
 import { PrismaBoardRepository } from '../src/repositories/board.repository.js'
+import { PrismaIdeaRepository } from '../src/repositories/idea.repository.js'
 import { OrganizationExistenceLookupRepository } from '../src/repositories/organization-existence-lookup.repository.js'
 import { PrismaStatusRepository } from '../src/repositories/status.repository.js'
 
@@ -51,6 +53,8 @@ describe.skipIf(!DATABASE_URL)('Removing a lane that holds ideas, against a live
       { write: async (event) => void audit.push(event) },
       currentUser,
       { now: () => SAVED },
+      new PrismaIdeaRepository(prisma, unitOfWork),
+      {} as AutoCreateTaskPort,
     )
   }
 
@@ -214,7 +218,9 @@ describe.skipIf(!DATABASE_URL)('Removing a lane that holds ideas, against a live
       new PrismaUnitOfWork(prisma),
     ).listLaneIdeas(boardId, [REVIEW])
 
-    expect(ideas).toEqual([{ ideaId: live, title: `Probe idea ${live}`, statusId: REVIEW }])
+    expect(ideas).toEqual([
+      { ideaId: live, title: `Probe idea ${live}`, statusId: REVIEW, effort: null },
+    ])
   })
 
   it('moves the live Discovery ideas and leaves soft-deleted ideas and Issues where they were', async () => {
@@ -327,7 +333,15 @@ describe.skipIf(!DATABASE_URL)('Removing a lane that holds ideas, against a live
     await boards.save(
       updateBoard(
         existing,
-        { name: 'Lanes', allowUserStatusUpdate: true, orderedStatusIds: [NEW, DONE] },
+        {
+          name: 'Lanes',
+          allowUserStatusUpdate: true,
+          orderedLanes: [NEW, DONE].map((statusId) => ({
+            statusId,
+            isFinal: false,
+            referencesBoardId: null,
+          })),
+        },
         SAVED,
         adminId,
       ),

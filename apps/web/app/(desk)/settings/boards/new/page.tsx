@@ -1,7 +1,8 @@
+import { loadPullSetup } from '@/components/boards/load-pull-setup'
 import { BoardRefusal } from '@/components/settings/admin-only'
 import { BoardForm } from '@/components/settings/board-form'
 import { SettingsPage } from '@/components/settings/settings-page'
-import { getStatuses, SWIMLANE_FLOOR } from '@/lib/data'
+import { getBoardOverviews, getReferenceContext, getStatuses, SWIMLANE_FLOOR } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
@@ -18,7 +19,11 @@ export default async function NewBoardPage() {
     return <BoardRefusal title="New board" reading="board creation" />
   }
 
-  const statuses = await getStatuses()
+  const [statuses, boards, references] = await Promise.all([
+    getStatuses(),
+    getBoardOverviews({ includeArchived: true }),
+    getReferenceContext(null),
+  ])
 
   return (
     <SettingsPage
@@ -29,6 +34,7 @@ export default async function NewBoardPage() {
       <BoardForm
         boardId={null}
         userStatusMoves={true}
+        references={references}
         // The first lanes of the catalog, because the API refuses a board with fewer than two and
         // a form that opens below its own floor cannot be submitted until the person works out
         // why. Which two is not a decision worth making for them — the picker is right there —
@@ -37,6 +43,12 @@ export default async function NewBoardPage() {
         statuses={statuses}
         submitLabel="Create board"
         explainerHeading="New board"
+        pullSetup={
+          await loadPullSetup({
+            isAdmin: true,
+            archivedBoardIds: boards.filter((board) => board.isArchived).map((board) => board.id),
+          })
+        }
       />
     </SettingsPage>
   )

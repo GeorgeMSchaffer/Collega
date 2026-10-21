@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comp S — design critique fixes (Graphite)</title>
+<style>
+:root{--bg:#0F1113;--fg:#E6E8EA;--card:#16191C;--muted:#9BA3AB;--sec:#1C2024;--pri:#F5A524;--prif:#16120A;--border:#22272C;--input:#2C3238;--side:#121518;--ok:#58C781;--info:#7C9EEA;--purple:#AC88EC;--warn:#DFAA6D;--r:6px;
+--sans:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,Menlo,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:#08090A;color:var(--fg);font:14px/1.45 var(--sans)}
+header.doc{padding:28px 32px 8px;max-width:1500px;margin:0 auto}
+header.doc h1{margin:0 0 4px;font-size:22px}
+header.doc p{margin:0;color:var(--muted);max-width:80ch}
+section.cmp{max-width:1500px;margin:0 auto;padding:28px 32px}
+section.cmp>h2{font-size:15px;margin:0 0 2px;color:var(--pri)}
+section.cmp>p.why{margin:0 0 14px;color:var(--muted);max-width:90ch}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:1000px){.pair{grid-template-columns:1fr}}
+.tag{font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.tag.b{color:#FF8A8E}.tag.a{color:var(--ok)}
+.frame{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;overflow:hidden;min-height:200px}
+.note{margin:10px 0 0;font-size:12px;color:var(--muted)}
+.note b{color:var(--fg)}
+/* primitives */
+.btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:var(--r);border:1px solid var(--input);background:var(--card);color:var(--fg);font:500 13px var(--sans)}
+.btn.p{background:var(--pri);border-color:var(--pri);color:var(--prif)}
+.btn.dis{opacity:.45}
+.chip{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:5px;background:var(--sec);font-size:12px;color:#C4CAD0;white-space:nowrap}
+.chip i{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block}
+.tagc{display:inline-flex;height:22px;align-items:center;padding:0 9px;border-radius:999px;font-size:12px;border:1px solid}
+.tagc.q{color:#7CD2C6;border-color:#1F4A47;background:#10201F}
+.tagc.s{color:#C7A6F5;border-color:#3A2A57;background:#1A1426}
+.av{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#2A3036;font:600 10px var(--mono);color:#D6DBE0}
+.mono{font-family:var(--mono)}
+.muted{color:var(--muted)}
+.eff{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.eff u{display:inline-flex;gap:2px;text-decoration:none}
+.eff u s{width:8px;height:3px;background:#2C3238;display:block}
+.eff u s.on{background:#5CC8E0}
+/* sprint */
+.lanes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.lane{background:#12151a;border:1px solid var(--border);border-radius:8px;padding:6px;min-height:210px}
+.lane h4{margin:0 0 8px;padding:4px 8px;border-radius:5px;font-size:12px;display:flex;justify-content:space-between}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:8px;margin-bottom:6px;font-size:12px;font-weight:600;min-width:0}
+.sc .m{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;font-weight:400}
+.sc.bad{overflow:visible}
+.sc.bad .eff{white-space:nowrap;font-family:var(--mono);margin-right:-60px}
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font:500 12px var(--sans);color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--border)}
+td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+td.t{font-weight:600}
+.bad-table{width:640px}
+.bad-add{width:70px;font-size:11px;color:var(--muted)}
+.bad-add input{width:60px;height:26px;border:1px solid var(--input);background:var(--bg);border-radius:5px;color:var(--muted);font-size:11px;padding:0 6px}
+.bad-add kbd,.kbd{font:11px var(--mono);background:var(--sec);border-radius:4px;padding:1px 5px}
+.addbar{display:flex;gap:8px;align-items:center;padding:8px 10px;border:1px dashed var(--input);border-radius:var(--r);margin-bottom:8px}
+.addbar input{flex:1;height:30px;border:0;background:transparent;color:var(--fg);font:13px var(--sans);outline:0}
+.addbar input::placeholder{color:var(--muted)}
+.trunc{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* home */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tile{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px}
+.tile .l{font:11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.tile .n{font-size:26px;font-weight:600;margin:4px 0 2px}
+.tile .d{font-size:12px;color:var(--muted)}
+.tile.dash{background:transparent;border-style:dashed}
+.banner{border:1px solid var(--border);border-left:3px solid var(--pri);border-radius:8px;background:var(--card);padding:12px 14px;margin-bottom:10px;display:flex;justify-content:space-between;gap:12px;font-size:13px}
+.banner.quiet{border-left-color:var(--border);padding:8px 12px;color:var(--muted)}
+.empty{border:1px dashed var(--input);border-radius:8px;padding:22px;text-align:center}
+.skel{height:70px;border-radius:6px;background:var(--sec);margin-bottom:12px}
+.settings{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.sCard{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px}
+.sCard b{display:block;margin-bottom:4px}
+.sCard.amb b{color:var(--pri)}
+.sCard span{font-size:12px;color:var(--muted)}
+/* mobile */
+.phone{width:300px;border:1px solid var(--border);border-radius:18px;overflow:hidden;background:var(--bg)}
+.phone .top{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--side);border-bottom:1px solid var(--border)}
+.phone .navwrap{padding:10px 12px;background:var(--side);display:flex;flex-wrap:wrap;gap:10px 14px;font-size:13px;border-bottom:1px solid var(--border)}
+.seg{display:flex;gap:4px;padding:8px 12px;overflow:hidden}
+.seg span{padding:4px 10px;border-radius:999px;background:var(--sec);font-size:12px;white-space:nowrap}
+.seg span.on{background:#2A2418;color:var(--pri)}
+.ico{width:32px;height:32px;display:inline-grid;place-items:center;border-radius:6px;color:var(--muted)}
+.spec{margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.spec div{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px}
+.spec b{display:block;margin-bottom:2px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle}
+</style>
+</head>
+<body>
+<header class="doc">
+  <h1>Comp S — design critique fixes <span class="muted" style="font-weight:400">· Graphite</span></h1>
+  <p>Before/after for the findings from the 2026-10-19 walkthrough. “Before” is a faithful sketch of the current screens at ~1000px; “After” is the proposal. Throwaway comp for review, not production.</p>
+</header>
+
+<!-- 1 SPRINT -->
+<section class="cmp">
+  <h2>1 · Sprint board — cards stay inside their lanes</h2>
+  <p class="why">Effort labels in mono overflow the card and lane. Proposal: a 3-segment bar with an H/M/L letter, card min-width 0, title wraps, assignee pinned top-right.</p>
+  <div class="pair">
+    <div><div class="tag b">Before</div><div class="frame"><div class="lanes">
+      <div class="lane"><h4 style="background:#1c2024">Pending <span>0</span></h4></div>
+      <div class="lane"><h4 style="background:#1a1d2e">Scoping <span>1</span></h4><div class="sc bad">Assembly cell reliability: Standardize the intake checklist<div class="m"><span class="tagc q">quality</span></div><div class="m"><span class="eff">▬▬▬ Low effort</span></div></div></div>
+      <div class="lane"><h4 style="background:#1a2230">Development <span>1</span></h4><div class="sc bad">Assembly cell reliability: Reduce manual handoffs<div class="m"><span class="eff">▬▬▬ High effort</span></div></div></div>
+      <div class="lane"><h4 style="background:#2a1a1a">Review <span>1</span></h4><div class="sc bad">Assembly cell reliability: Add proactive alerts<div class="m"><span class="eff">▬▬▬ Medium effort</span></div></div></div>
+      <div class="lane"><h4 style="background:#12241b">Complete <span>1</span></h4><div class="sc bad">Assembly cell reliability: Pilot a faster review path<div class="m"><span class="eff">▬▬▬ Medium effort</span></div></div></div>
+    </div></div></div>
+    <div><div class="tag a">After</div><div class="frame"><div class="lanes">
+      <div class="lane"><h4 style="background:#1c2024;color:#C4CAD0">Pending <span>0</span></h4><div class="empty" style="padding:10px;font-size:11px;color:var(--muted)">No issues</div></div>
+      <div class="lane"><h4 style="background:#1a1d2e;color:#B9C3F0">Scoping <span>1</span></h4><div class="sc"><div style="display:flex;justify-content:space-between;gap:6px"><span style="min-width:0">Assembly cell reliability: Standardize the intake checklist</span><span class="av">MC</span></div><div class="m"><span class="tagc q">quality</span><span class="eff" title="Low effort"><u><s class="on"></s><s></s><s></s></u>L</span></div></div></div>
+      <div class="lane"><h4 style="background:#1a2230;color:#B6CBF5">Development <span>1</span></h4><div class="sc"><div style="display:flex;justify-content:space-between;gap:6px"><span style="min-width:0">Assembly cell reliability: Reduce manual handoffs</span><span class="av">—</span></div><div class="m"><span class="eff"><u><s class="on"></s><s class="on"></s><s class="on"></s></u>H</span></div></div></div>
+      <div class="lane"><h4 style="background:#2a1a1a;color:#F2B3B3">Review <span>1</span></h4><div class="sc"><div style="display:flex;justify-content:space-between;gap:6px"><span style="min-width:0">Assembly cell reliability: Add proactive alerts</span><span class="av">NC</span></div><div class="m"><span class="tagc s">safety</span><span class="eff"><u><s class="on"></s><s class="on"></s><s></s></u>M</span></div></div></div>
+      <div class="lane"><h4 style="background:#12241b;color:#A6E3BC">Complete <span>1</span></h4><div class="sc"><div style="display:flex;justify-content:space-between;gap:6px"><span style="min-width:0">Assembly cell reliability: Pilot a faster review path</span><span class="av">—</span></div><div class="m"><span class="eff"><u><s class="on"></s><s class="on"></s><s></s></u>M</span></div></div></div>
+    </div></div></div>
+  </div>
+  <p class="note"><b>Also:</b> lane header text raised to ≥4.5:1 against its tint; effort is sans, not mono; empty assignee is one pattern (“—” avatar), never “Unassigned” text.</p>
+</section>
+
+<!-- 2 IDEAS TABLE + ADD ROW -->
+<section class="cmp">
+  <h2>2 · Ideas table and inline add — full-width add bar, flexible title column</h2>
+  <p class="why">The add input lives in the Title column (~60px) with a 4-line hint. Proposal: a full-width add bar above the table (hint in a placeholder, shortcut chip at right); title column grows, secondary columns truncate; Tags and Board collapse under 1100px.</p>
+  <div class="pair">
+    <div><div class="tag b">Before</div><div class="frame"><div style="width:100%;overflow:hidden"><table class="bad-table">
+      <tr><th>Title</th><th>Board</th><th>Status</th><th>Priority</th><th>Assignees</th><th>Tags</th></tr>
+      <tr><td class="bad-add"><input value="Add an idea"><div><span style="color:var(--pri)">More fields</span></div><div><kbd>Enter</kbd> opens the form · <kbd>Esc</kbd> clears</div></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td class="t" style="width:110px">Field service enablement: Retire the legacy step</td><td>Opportunities</td><td><span class="chip" style="color:var(--ok)"><i></i>Complete</span></td><td><span class="chip">High</span></td><td class="mono">NC</td><td><span class="tagc q">customer-…</span></td></tr>
+      <tr><td class="t">Field service enablement: Measure time saved</td><td>Opportunities</td><td><span class="chip" style="color:var(--ok)"><i></i>Complete</span></td><td><span class="chip">Medium</span></td><td class="muted">Unassigned</td><td></td></tr>
+    </table></div></div></div>
+    <div><div class="tag a">After</div><div class="frame">
+      <div class="addbar"><span style="color:var(--pri)">＋</span><input placeholder="Add an idea — press Enter for more fields"><span class="kbd">N</span><span class="btn" style="height:26px">More fields</span></div>
+      <table>
+        <tr><th>Title</th><th>Status</th><th>Priority</th><th>Owner</th><th>Tags</th></tr>
+        <tr><td class="t"><div class="trunc">Field service enablement: Retire the legacy step</div><div class="muted" style="font-size:12px;font-weight:400">Opportunities</div></td><td><span class="chip" style="color:var(--ok)"><i></i>Complete</span></td><td><span class="chip">High</span></td><td><span class="av">NC</span></td><td><span class="tagc q">customer-facing</span></td></tr>
+        <tr><td class="t"><div class="trunc">Field service enablement: Measure time saved</div><div class="muted" style="font-size:12px;font-weight:400">Opportunities</div></td><td><span class="chip" style="color:var(--ok)"><i></i>Complete</span></td><td><span class="chip">Medium</span></td><td><span class="av">—</span></td><td></td></tr>
+        <tr><td class="t"><div class="trunc">Field service enablement: Roll out the proven workflow</div><div class="muted" style="font-size:12px;font-weight:400">Opportunities</div></td><td><span class="chip" style="color:var(--ok)"><i></i>Complete</span></td><td><span class="chip">Low</span></td><td><span class="av">MC</span></td><td><span class="tagc s">diagnostics</span></td></tr>
+      </table>
+    </div></div>
+  </div>
+  <p class="note"><b>Same pattern</b> for Boards and Backlog: one full-width add bar; when the table has ≤1 rows the bar collapses behind the “Add New …” button.</p>
+</section>
+
+<!-- 3 HOME -->
+<section class="cmp">
+  <h2>3 · Home — quieter onboarding, no “not tracked” tile</h2>
+  <p class="why">The amber banner competes with the greeting and the dashed “Not tracked yet” tile advertises a gap. Proposal: neutral one-line tip, three tiles that all carry data.</p>
+  <div class="pair">
+    <div><div class="tag b">Before</div><div class="frame">
+      <h3 style="margin:0 0 4px;font-size:20px">Good to see you, Olivia.</h3>
+      <div class="muted" style="margin-bottom:10px">Acme Robotics has <span style="color:var(--pri)">17 ideas</span> across <span style="color:var(--pri)">4 boards</span>.</div>
+      <div class="banner"><div><b>New to Collega?</b> An idea moves New → In Review → In Progress → Client Review → Complete…</div><span class="btn">Got it</span></div>
+      <div class="tiles" style="grid-template-columns:1fr 1fr"><div class="tile"><div class="l">Assigned to me</div><div class="n">6</div><div class="d">none critical</div></div><div class="tile"><div class="l">Critical &amp; high</div><div class="n">8</div><div class="d">still on a board</div></div><div class="tile"><div class="l">You created</div><div class="n">8</div><div class="d">ideas and issues</div></div><div class="tile dash"><div class="l">Not tracked yet</div><div class="d" style="margin-top:6px">Open ideas — <br>Awaiting review — <br>Completed · 30d —</div></div></div>
+    </div></div>
+    <div><div class="tag a">After</div><div class="frame">
+      <h3 style="margin:0 0 4px;font-size:20px">Good to see you, Olivia.</h3>
+      <div class="muted" style="margin-bottom:10px">Acme Robotics has 17 ideas across 4 boards and 5 delivery issues.</div>
+      <div class="banner quiet"><span>Tip · press <span class="kbd">Ctrl K</span> to jump to any idea, board or issue.</span><span class="muted">Dismiss</span></div>
+      <div class="tiles"><div class="tile"><div class="l">Assigned to me</div><div class="n">6</div><div class="d">none critical</div></div><div class="tile"><div class="l">Critical &amp; high</div><div class="n">8</div><div class="d">still on a board</div></div><div class="tile"><div class="l">You created</div><div class="n">8</div><div class="d">ideas and issues</div></div></div>
+    </div></div>
+  </div>
+</section>
+
+<!-- 4 ROADMAP + SETTINGS -->
+<section class="cmp">
+  <h2>4 · Roadmap empty state and Settings hierarchy</h2>
+  <p class="why">One empty state instead of a skeleton plus duplicate disabled CTAs; Settings card titles in foreground colour so amber means “action”.</p>
+  <div class="pair">
+    <div><div class="tag b">Before</div><div class="frame">
+      <div style="margin-bottom:10px"><span class="btn p dis">Add New Outcome</span> <i class="muted">Outcomes arrive in a later release</i></div>
+      <div class="skel"></div>
+      <div class="empty" style="text-align:left"><b>No outcomes yet</b><div class="muted" style="margin:4px 0 10px">Outcomes arrive in a later release.</div><span class="btn p dis">Add the first outcome</span> <i class="muted">Outcomes arrive in a later release</i></div>
+      <div class="settings" style="margin-top:14px"><div class="sCard amb"><b>My profile</b><span>Your name, portrait, password.</span></div><div class="sCard amb"><b>Users</b><span>Who is in this organization.</span></div><div class="sCard amb"><b>Boards</b><span>The boards you track.</span></div></div>
+    </div></div>
+    <div><div class="tag a">After</div><div class="frame">
+      <div class="empty" style="padding:30px"><div style="font-size:15px;font-weight:600">Roadmap outcomes are coming</div><div class="muted" style="margin:4px auto 0;max-width:44ch">5 delivery issues are waiting to be grouped. Outcomes will let you plan them by week, month or quarter.</div><div style="margin-top:12px"><a class="btn" href="#">View the 5 issues</a></div></div>
+      <div class="settings" style="margin-top:14px"><div class="sCard"><b>My profile</b><span>Your name, portrait, password.</span></div><div class="sCard"><b>Users</b><span>Who is in this organization.</span></div><div class="sCard"><b>Boards</b><span>The boards you track.</span></div></div>
+      <p class="note">Roadmap also leaves the sidebar until shipped (or shows a “Soon” badge).</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- 5 MOBILE -->
+<section class="cmp">
+  <h2>5 · Mobile — compact bar, lane switcher</h2>
+  <p class="why">The wrapped nav takes a third of the first screen and sprint lanes are off-screen. Proposal: top bar with menu, and one lane at a time with a segmented switcher.</p>
+  <div class="pair" style="grid-template-columns:auto auto 1fr;align-items:start">
+    <div><div class="tag b">Before</div><div class="phone"><div class="top"><b>▣ Collega</b></div><div class="navwrap"><span>Home</span><span>Inbox</span><span>Boards 4</span><span>Ideas 22</span><span>Sprint board</span><span>Backlog 1</span><span>Roadmap</span><span>Settings</span><span>Sign out</span></div><div style="padding:12px"><b style="font-size:18px">Current sprint</b><div class="muted" style="margin-top:6px">State · Window · Issues · Progress stacked in four rows…</div></div></div></div>
+    <div><div class="tag a">After</div><div class="phone"><div class="top"><span class="ico">☰</span><b>Sprint board</b><span class="ico">⌕</span></div><div style="padding:12px 12px 4px"><b style="font-size:18px">Current sprint</b><div class="muted" style="font-size:12px;margin-top:2px">14–28 Oct · 1 of 4 done</div><div style="height:4px;border-radius:2px;background:#2C3238;margin-top:8px"><div style="width:25%;height:100%;background:var(--ok);border-radius:2px"></div></div></div><div class="seg"><span>Pending 0</span><span class="on">Scoping 1</span><span>Dev 1</span><span>Review 1</span></div><div style="padding:0 12px 14px"><div class="sc"><div style="display:flex;justify-content:space-between"><span>Assembly cell reliability: Standardize the intake checklist</span><span class="av">MC</span></div><div class="m"><span class="tagc q">quality</span><span class="eff"><u><s class="on"></s><s></s><s></s></u>L</span></div></div></div></div></div>
+    <div class="spec">
+      <div><b>Tokens (no new colours)</b><span class="sw" style="background:#F5A524"></span>primary = actions only<br><span class="sw" style="background:#5CC8E0"></span>effort/metric<br><span class="sw" style="background:#E6E8EA"></span>card titles use foreground</div>
+      <div><b>Touch targets</b>Row actions and lane arrows ≥ 32px hit area (visual icon stays 16px).</div>
+      <div><b>Type</b>Mono labels ≥ 12px; chips share two shapes: status (dot) and tag (pill).</div>
+      <div><b>Breakpoints</b>&lt;1100 table drops Board/Tags · &lt;768 sidebar → top bar, lanes → switcher.</div>
+    </div>
+  </div>
+</section>
+</body>
+</html>

@@ -1,7 +1,16 @@
 'use client'
 
 import { Alert, Button, EffortBar, TagChip } from '@collega/design-system'
-import { useLayoutEffect, useMemo, useOptimistic, useRef, useState, useTransition } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useOptimistic,
+  useRef,
+  useState,
+  useTransition,
+} from 'react'
 import {
   type Column,
   ConfirmDialog,
@@ -9,12 +18,29 @@ import {
   ListToolbar,
   MultiSelectFilter,
   Pager,
+  QuickAddBar,
+  type QuickAddValues,
   RowActions,
+  useAddedHighlight,
   useListState,
   ViewSwitch,
 } from '@/components/list'
 import { Icon } from '@/components/list/icons'
 import {
+  blockedBadge,
+  blockedTooltip,
+  isBlockedHere,
+  moveRefusal,
+  NO_EFFORT_TEXT,
+  openTaskCount,
+  progressPercent,
+  rollupText,
+  type WorkLane,
+  waitingText,
+} from '@/lib/board-work'
+import { TITLE_MAX_LENGTH } from '@/lib/limits'
+import {
+  detachOffer,
   engagementDenial,
   followDenial,
   mayDeleteIdeas,
@@ -22,19 +48,37 @@ import {
   writeDenial,
 } from '@/lib/roles'
 import { reorderLanes } from '@/lib/server/board-actions'
-import { deleteIdea, moveIdea } from '@/lib/server/idea-actions'
+import { deleteIdea, detachIdea, moveIdea } from '@/lib/server/idea-actions'
 import { useCurrentUser } from '@/lib/session-client'
-import type { BoardRef, Idea, IdeaDetail, IdeaFormOptions, Status, TagRef } from '@/lib/types'
+import type {
+  BoardRef,
+  Idea,
+  IdeaBlockers,
+  IdeaDetail,
+  IdeaFormOptions,
+  IdeaTasks,
+  Status,
+  TagRef,
+} from '@/lib/types'
+import type { CardWork } from './idea-card'
 import { People, PriorityMarker, StatusMarker, TagList } from './idea-chips'
 import { type DrawerMode, IdeaDrawer } from './idea-drawer'
 import { BOARD_LIST, IDEAS_LIST, PHASES, PRIORITIES, SCOPES } from './idea-list-config'
 import { type CardDrag, Lane, type LaneReorder } from './lane'
+import { MoveAnywayDialog } from './move-anyway-dialog'
+import { RemoveFromBoardButton } from './remove-from-board'
 import { useDrawerUrl } from './use-drawer-url'
 
 type BoardContext = {
   id: string
   name: string
-  lanes: Status[]
+  /** With the Board References flags when the page read them; a lane without them is ordinary. */
+  lanes: WorkLane[]
+  /**
+   * The board each reference lane hands work to, by id: its name, and the key prefix its pill
+   * shows ("IMPL"). A board with no prefix shows its name.
+   */
+  referenceBoards?: Readonly<Record<string, { name: string; label: string }>>
   isArchived: boolean
   /** The role and the board's `allowUserStatusUpdate`, decided by the page. */
   canMove: boolean
@@ -42,7 +86,36 @@ type BoardContext = {
   canReorder: boolean
 }
 
-type Removing = { id: string; title: string; boardId: string }
+type Removing = { id: string; title: string; boardId: string | null }
+
+/** An idea whose Remove from board is awaiting its confirm. */
+type Detaching = { id: string; title: string; boardId: string; boardName: string }
+
+/**
+ * An Org Admin's override of the reference-lane lock, awaiting its reason: a move to `toLane`, or
+ * Remove from board. `openTasks` and `referencedBoard` are what the card showed when it was asked.
+ */
+type Forcing = {
+  idea: { id: string; title: string; itemKey: string | null; boardId: string | null }
+  openTasks: number
+  /** The board the tasks live on, when the lane that holds the card says which. */
+  referencedBoard: string | null
+} & ({ kind: 'move'; toLane: WorkLane } | { kind: 'remove'; boardId: string; boardName: string })
+
+/**
+ * The override dialog's body, from the decided copy (`decisions.md` 2026-10-16, point 3). The comp
+ * lists the open tasks under it; no read returns them yet, so the count stands in for "these".
+ */
+function forcingBody(forcing: Forcing | null): string {
+  if (!forcing) return ''
+  const { idea, openTasks, referencedBoard } = forcing
+  const tasks = `${openTasks} open ${openTasks === 1 ? 'task' : 'tasks'}`
+  const named = `‘${idea.title}’${idea.itemKey ? ` (${idea.itemKey})` : ''} is waiting on ${tasks}.`
+  const left = referencedBoard ? `the ${referencedBoard} board` : 'their own board'
+  return forcing.kind === 'move'
+    ? `${named} Moving it leaves them open on ${left}.`
+    : `${named} Removing it from ${forcing.boardName} leaves them open on ${left}.`
+}
 
 /**
  * An idea list on the comp R pattern — the Ideas page (`board` null: List or Cards) or a board's own
@@ -62,6 +135,7 @@ export function IdeaWorkspace({
   tags,
   board,
   drawer,
+  issueIds = [],
 }: {
   rows: Idea[]
   total: number
@@ -72,17 +146,42 @@ export function IdeaWorkspace({
   /** The Tags filter's options: the organization's whole catalog. */
   tags: TagRef[]
   board: BoardContext | null
-  drawer: { mode: DrawerMode | null; idea: IdeaDetail | null; formOptions: IdeaFormOptions | null }
+  drawer: {
+    mode: DrawerMode | null
+    idea: IdeaDetail | null
+    formOptions: IdeaFormOptions | null
+    /** The open idea is in Delivery, which the detail does not say. */
+    isIssue?: boolean
+    assistAvailable?: boolean
+    tasks?: IdeaTasks | null
+    blockers?: IdeaBlockers | null
+  }
+  /** Which of `rows` are Issues, which the list items do not say. */
+  issueIds?: readonly string[]
 }) {
   const user = useCurrentUser()
   const config = board ? BOARD_LIST : IDEAS_LIST
   const [state, update] = useListState(config)
   const openDrawer = useDrawerUrl()
+  // The quick-add row's Title, handed to the create form; spent once the form is open.
+  const [prefill, setPrefill] = useState<{ title: string } | null>(null)
+  const quickAdded = useRef(false)
 
   const [trigger, setTrigger] = useState<HTMLElement | null>(null)
   const [removing, setRemoving] = useState<Removing | null>(null)
   const [removeError, setRemoveError] = useState<string | null>(null)
   const [deleting, startDelete] = useTransition()
+  const [detaching, setDetaching] = useState<Detaching | null>(null)
+  const [detachError, setDetachError] = useState<string | null>(null)
+  const [detachPending, startDetach] = useTransition()
+  const [forcing, setForcing] = useState<Forcing | null>(null)
+  // A move refused for a missing Effort: the card, and the lane it was headed for.
+  const [effortFix, setEffortFix] = useState<{
+    ideaId: string
+    title: string
+    laneName: string
+  } | null>(null)
+  const [forcePending, startForce] = useTransition()
 
   // The lane order as last saved, or as the reorder in flight has it. A refusal ends the transition
   // with `board.lanes` unchanged, so the columns fall back on their own; a save revalidates the
@@ -121,11 +220,30 @@ export function IdeaWorkspace({
   const [overCardLane, setOverCardLane] = useState<string | null>(null)
 
   // The same `moveIdea` the card's arrows submit, so one rule decides what a move may do.
-  const moveCard = (ideaId: string, boardId: string, to: Status, announce?: string) => {
+  const moveCard = (
+    ideaId: string,
+    boardId: string,
+    to: WorkLane,
+    announce?: string,
+    forceReason?: string,
+  ) => {
     const form = new FormData()
     form.set('boardId', boardId)
     form.set('ideaId', ideaId)
     form.set('statusId', to.id)
+    // What the card shows, so a refusal that still arrives from the API can name it.
+    const idea = laneRows.find((row) => row.id === ideaId)
+    if (idea) {
+      form.set('title', idea.title)
+      const open = openTaskCount(
+        idea,
+        lanes.find((lane) => lane.id === idea.statusId),
+      )
+      if (open > 0) form.set('openTasks', String(open))
+      const blockers = idea.blockedBy.filter((blocker) => !blocker.isFinal).length
+      if (blockers > 0) form.set('blockers', String(blockers))
+    }
+    if (forceReason) form.set('forceReason', forceReason)
     setMoveError(null)
     startCardMove(async () => {
       setCardLane({ ideaId, statusId: to.id, statusName: to.name })
@@ -140,6 +258,16 @@ export function IdeaWorkspace({
     const idea = laneRows.find((row) => row.id === ideaId)
     // The card sits in its optimistic lane, so a press before the save settles moves it on from there.
     if (!board || !to || !idea) return
+    // The same refusals the drop and the arrows give, said aloud: nothing is sent.
+    const refusal = moveRefusal(idea, lanes, to.id)
+    if (refusal) {
+      setMoveError(null)
+      setCardNews(`${idea.title} can’t move to ${to.name}. ${refusal}`)
+      if (refusal === NO_EFFORT_TEXT) {
+        setEffortFix({ ideaId: idea.id, title: idea.title, laneName: to.name })
+      }
+      return
+    }
     refocusCard.current = ideaId
     setCardNews('')
     moveCard(ideaId, board.id, to, idea.title)
@@ -177,15 +305,96 @@ export function IdeaWorkspace({
     })
   }
 
+  // What Board References adds to a card in `lanes[index]`: the lock, the rollup, a blocker, and
+  // which neighbouring lane refuses it. An Org Admin's way past the lock goes to the next lane, or
+  // the previous one at the board's end.
+  const workFor = (idea: Idea, index: number): CardWork => {
+    const lane = lanes[index]
+    const open = openTaskCount(idea, lane)
+    const blockedHere = isBlockedHere(idea, lanes)
+    const previous = lanes[index - 1]
+    const next = lanes[index + 1]
+    const target = next ?? previous
+    const referenced = lane?.referencesBoardId
+      ? (board?.referenceBoards?.[lane.referencesBoardId]?.name ?? null)
+      : null
+    return {
+      lockText: open > 0 ? waitingText(open) : null,
+      rollup: lane?.referencesBoardId ? rollupText(idea.taskCounts) : null,
+      progress: progressPercent(idea.taskCounts),
+      blockedText: blockedHere ? blockedBadge(idea) : null,
+      blockedTip: blockedHere ? blockedTooltip(idea) : null,
+      previousRefusal: previous ? moveRefusal(idea, lanes, previous.id) : null,
+      nextRefusal: next ? moveRefusal(idea, lanes, next.id) : null,
+      openTasks: open,
+      blockers: idea.blockedBy.filter((blocker) => !blocker.isFinal).length,
+      onMoveAnyway:
+        open > 0 && user.role === 'OrgAdmin' && board?.canMove && target
+          ? () =>
+              setForcing({
+                kind: 'move',
+                idea: {
+                  id: idea.id,
+                  title: idea.title,
+                  itemKey: idea.itemKey,
+                  boardId: idea.boardId,
+                },
+                openTasks: open,
+                referencedBoard: referenced,
+                toLane: target,
+              })
+          : null,
+    }
+  }
+
+  const confirmForce = (reason: string, laneId: string | null) => {
+    if (!forcing) return
+    const current = forcing
+    if (current.kind === 'move') {
+      // The card moves through the same optimistic path as any other; its transition is the pending.
+      setForcing(null)
+      const to = lanes.find((lane) => lane.id === laneId) ?? current.toLane
+      if (board) moveCard(current.idea.id, board.id, to, undefined, reason)
+      return
+    }
+    startForce(async () => {
+      const result = await detachIdea(current.idea.id, current.boardId, {
+        forceReason: reason,
+        title: current.idea.title,
+        openTasks: current.openTasks,
+      })
+      setDetachError(result.error)
+      setForcing(null)
+    })
+  }
+
   const boardsById = useMemo(() => new Map(boards.map((b) => [b.id, b])), [boards])
   const statusById = useMemo(() => new Map(statuses.map((s) => [s.id, s])), [statuses])
 
   const denial = writeDenial(user.role)
-  const archived = (boardId: string) => boardsById.get(boardId)?.isArchived ?? false
-  const canEdit = (idea: { boardId: string }) => denial === null && !archived(idea.boardId)
-  const canDelete = (idea: { boardId: string }) =>
+  const archived = (boardId: string | null) =>
+    boardId ? (boardsById.get(boardId)?.isArchived ?? false) : false
+  const canEdit = (idea: { boardId: string | null }) => denial === null && !archived(idea.boardId)
+  const canDelete = (idea: { boardId: string | null }) =>
     mayDeleteIdeas(user.role) && !archived(idea.boardId)
   const engagement = engagementDenial(user.role)
+  // Whoever sees the page header's Add New Idea: a role that may write, on a board not archived.
+  const canAdd = denial === null && !board?.isArchived
+  const rowIds = rows.map((row) => row.id).join(',')
+  const highlight = useAddedHighlight(rowIds)
+  const applied = useCallback(() => setPrefill(null), [])
+
+  // The form has read `initial` on mounting, so the Title is spent once it is open.
+  const createOpen = drawer.mode === 'create' && drawer.formOptions !== null
+  useEffect(() => {
+    if (prefill && createOpen) applied()
+  }, [prefill, createOpen, applied])
+
+  const handoff = (values: QuickAddValues) => {
+    setPrefill({ title: values.title ?? '' })
+    quickAdded.current = true
+    openDrawer({ create: true })
+  }
 
   const drawerOpen = drawer.mode !== null
   const view = (ideaId: string, from: HTMLElement) => {
@@ -200,12 +409,57 @@ export function IdeaWorkspace({
   const confirmRemove = () => {
     if (!removing) return
     startDelete(async () => {
-      const result = await deleteIdea(removing.id, removing.boardId)
+      const result = await deleteIdea(removing.id, removing.boardId ?? '')
       setRemoveError(result.error)
       if (!result.error && drawer.idea?.id === removing.id) openDrawer(null)
       setRemoving(null)
     })
   }
+
+  const confirmDetach = () => {
+    if (!detaching) return
+    startDetach(async () => {
+      const result = await detachIdea(detaching.id, detaching.boardId)
+      setDetachError(result.error)
+      setDetaching(null)
+    })
+  }
+
+  const issues = new Set(issueIds)
+  const offerDetach = (idea: Idea, isIssue: boolean) =>
+    detachOffer(user.role, user.userId, idea, { isIssue, boardArchived: archived(idea.boardId) })
+  const detachButton = (
+    idea: Pick<Idea, 'id' | 'title' | 'boardId' | 'itemKey' | 'taskCounts'>,
+    offer: { reason: string | null; override?: boolean },
+  ) => (
+    <RemoveFromBoardButton
+      title={idea.title}
+      offer={offer}
+      onOverride={() => {
+        if (!idea.boardId || !idea.taskCounts) return
+        setDetachError(null)
+        setForcing({
+          kind: 'remove',
+          idea: { id: idea.id, title: idea.title, itemKey: idea.itemKey, boardId: idea.boardId },
+          openTasks: Math.max(0, idea.taskCounts.total - idea.taskCounts.done),
+          referencedBoard: null,
+          boardId: idea.boardId,
+          boardName: boardName(idea.boardId),
+        })
+      }}
+      onRemove={() => {
+        if (idea.boardId) {
+          setDetachError(null)
+          setDetaching({
+            id: idea.id,
+            title: idea.title,
+            boardId: idea.boardId,
+            boardName: boardName(idea.boardId),
+          })
+        }
+      }}
+    />
+  )
 
   const selectedTags = state.filters.tag ?? []
   // The filter is by name. A selected name the catalog no longer has (a link to a deleted tag) stays
@@ -226,18 +480,25 @@ export function IdeaWorkspace({
   const selectedId =
     drawer.mode === 'view' || drawer.mode === 'edit' ? (drawer.idea?.id ?? null) : null
 
-  const actions = (idea: Idea) => (
-    <RowActions
-      itemLabel={idea.title}
-      onView={(from) => view(idea.id, from)}
-      onEdit={(from) => edit(idea.id, from)}
-      onRemove={() => setRemoving({ id: idea.id, title: idea.title, boardId: idea.boardId })}
-      canEdit={canEdit(idea)}
-      canRemove={canDelete(idea)}
-    />
-  )
+  const actions = (idea: Idea) => {
+    const offer = board ? null : offerDetach(idea, issues.has(idea.id))
+    return (
+      <span className="inline-flex flex-wrap items-center gap-1">
+        <RowActions
+          itemLabel={idea.title}
+          onView={(from) => view(idea.id, from)}
+          onEdit={(from) => edit(idea.id, from)}
+          onRemove={() => setRemoving({ id: idea.id, title: idea.title, boardId: idea.boardId })}
+          canEdit={canEdit(idea)}
+          canRemove={canDelete(idea)}
+        />
+        {offer ? detachButton(idea, offer) : null}
+      </span>
+    )
+  }
 
-  const boardName = (boardId: string) => boardsById.get(boardId)?.name ?? board?.name ?? ''
+  const boardName = (boardId: string | null) =>
+    boardId === null ? 'No board' : (boardsById.get(boardId)?.name ?? board?.name ?? '')
 
   const columns: Column<Idea>[] = [
     {
@@ -245,33 +506,23 @@ export function IdeaWorkspace({
       header: 'Title',
       cell: (idea) => (
         <>
-          <button
-            type="button"
-            onClick={(event) => view(idea.id, event.currentTarget)}
-            className="text-left font-semibold hover:text-accent-foreground hover:underline"
-          >
-            {idea.title}
-          </button>
+          <div className="flex flex-col">
+            <button
+              type="button"
+              onClick={(event) => view(idea.id, event.currentTarget)}
+              className="text-left font-semibold hover:text-accent-foreground hover:underline truncate"
+            >
+              {idea.title}
+            </button>
+            <span className="text-xs text-muted-foreground font-normal">
+              {boardName(idea.boardId)}
+              {archived(idea.boardId) ? ' · Archived' : ''}
+            </span>
+          </div>
           {idea.effort ? <EffortBar effort={idea.effort} className="mt-1 flex w-fit" /> : null}
         </>
       ),
     },
-    ...(board
-      ? []
-      : [
-          {
-            key: 'board',
-            header: 'Board',
-            cell: (idea: Idea) => (
-              <>
-                {boardName(idea.boardId)}
-                {boardsById.get(idea.boardId)?.isArchived ? (
-                  <span className="block text-xs text-muted-foreground">Archived</span>
-                ) : null}
-              </>
-            ),
-          },
-        ]),
     {
       key: 'status',
       header: 'Status',
@@ -282,14 +533,27 @@ export function IdeaWorkspace({
     {
       key: 'priority',
       header: 'Priority',
-      cell: (idea) => <PriorityMarker priority={idea.priority} />,
+      cell: (idea) => (idea.priority ? <PriorityMarker priority={idea.priority} /> : null),
     },
-    { key: 'assignedTo', header: 'Assignees', cell: (idea) => <People people={idea.assignees} /> },
-    { key: 'tags', header: 'Tags', cell: (idea) => <TagList tags={idea.tags} max={2} /> },
+    {
+      key: 'assignedTo',
+      header: 'Assignees',
+      cell: (idea) => <People people={idea.assignees} />,
+    },
+    {
+      key: 'tags',
+      header: 'Tags',
+      cell: (idea) => <TagList tags={idea.tags} max={2} />,
+      className: 'hidden min-[1100px]:table-cell',
+    },
     { key: 'upvoteCount', header: 'Votes', numeric: true, cell: (idea) => idea.upvotes },
   ]
 
+  // The idea read does not carry Effort (`contracts/ideas.md`), the list rows do: take it from the
+  // row, which is on this page whenever the drawer was opened from it.
   const drawerIdea = drawer.idea
+    ? { ...drawer.idea, effort: rows.find((row) => row.id === drawer.idea?.id)?.effort ?? null }
+    : null
   const drawerBoardId = drawerIdea?.boardId ?? board?.id ?? null
   // An `&edit=1` link to an idea this reader may not edit opens it to read instead.
   const drawerMode =
@@ -312,10 +576,14 @@ export function IdeaWorkspace({
         {board ? null : (
           <MultiSelectFilter
             label="Board"
-            options={boards.map((b) => ({
-              value: b.id,
-              label: b.isArchived ? `${b.name} (archived)` : b.name,
-            }))}
+            options={[
+              // `none` is the API's own spelling of the ideas that belong to no board.
+              { value: 'none', label: 'No board' },
+              ...boards.map((b) => ({
+                value: b.id,
+                label: b.isArchived ? `${b.name} (archived)` : b.name,
+              })),
+            ]}
             selected={state.filters.board ?? []}
             onChange={(next) => update({ filters: { ...state.filters, board: next } })}
           />
@@ -371,6 +639,11 @@ export function IdeaWorkspace({
           <span>{removeError}</span>
         </Alert>
       ) : null}
+      {detachError ? (
+        <Alert variant="destructive" role="alert">
+          <span>{detachError}</span>
+        </Alert>
+      ) : null}
 
       {state.view === 'lanes' && board ? (
         <>
@@ -399,6 +672,22 @@ export function IdeaWorkspace({
               <span>{moveError}</span>
             </Alert>
           ) : null}
+          {effortFix ? (
+            <Alert variant="destructive" role="alert">
+              <span>
+                Can’t move {effortFix.title}. Add Effort to ‘{effortFix.title}’ before moving it to{' '}
+                {effortFix.laneName}.
+              </span>
+              <span className="flex gap-2">
+                <Button size="sm" onClick={() => openDrawer({ edit: effortFix.ideaId })}>
+                  Add effort
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setEffortFix(null)}>
+                  Dismiss
+                </Button>
+              </span>
+            </Alert>
+          ) : null}
           {total > rows.length ? (
             <p className="m-0 text-sm text-muted-foreground">
               Showing the first {rows.length} of {total} ideas. Filter to narrow the board, or
@@ -423,12 +712,24 @@ export function IdeaWorkspace({
                 selectedId={selectedId}
                 onOpen={view}
                 onKeyMove={board.canMove ? keyMoveCard : undefined}
+                referenceLabel={
+                  status.referencesBoardId
+                    ? (board.referenceBoards?.[status.referencesBoardId]?.label ?? null)
+                    : null
+                }
+                cardWork={(idea) => workFor(idea, index)}
                 cardDrag={
                   board.canMove
                     ? ({
                         active: draggingCard !== null,
                         draggingId: draggingCard?.id ?? null,
                         over: draggingCard !== null && overCardLane === status.id,
+                        refusal: (() => {
+                          const dragged = draggingCard
+                            ? laneRows.find((row) => row.id === draggingCard.id)
+                            : undefined
+                          return dragged ? moveRefusal(dragged, lanes, status.id) : null
+                        })(),
                         onDragStart: (ideaId) => {
                           const idea = laneRows.find((row) => row.id === ideaId)
                           if (idea) setDraggingCard({ id: ideaId, statusId: idea.statusId })
@@ -437,11 +738,14 @@ export function IdeaWorkspace({
                           setDraggingCard(null)
                           setOverCardLane(null)
                         },
-                        // A drop on the card's own lane does nothing, so it is not offered.
+                        // A drop on the card's own lane does nothing, so it is not offered; nor is
+                        // one a rule would refuse (the lane says why while the drag is under way).
                         onDragOver: () => {
                           if (draggingCard === null || draggingCard.statusId === status.id) {
                             return false
                           }
+                          const dragged = laneRows.find((row) => row.id === draggingCard.id)
+                          if (dragged && moveRefusal(dragged, lanes, status.id)) return false
                           setOverCardLane(status.id)
                           return true
                         },
@@ -451,7 +755,14 @@ export function IdeaWorkspace({
                           const dragged = draggingCard
                           setDraggingCard(null)
                           setOverCardLane(null)
-                          if (dragged && dragged.statusId !== status.id) {
+                          const idea = dragged
+                            ? laneRows.find((row) => row.id === dragged.id)
+                            : null
+                          if (
+                            dragged &&
+                            dragged.statusId !== status.id &&
+                            !(idea && moveRefusal(idea, lanes, status.id))
+                          ) {
                             moveCard(dragged.id, board.id, status)
                           }
                         },
@@ -522,7 +833,7 @@ export function IdeaWorkspace({
                         name={idea.statusName}
                         color={statusById.get(idea.statusId)?.color}
                       />
-                      <PriorityMarker priority={idea.priority} />
+                      {idea.priority ? <PriorityMarker priority={idea.priority} /> : null}
                       {idea.effort ? <EffortBar effort={idea.effort} /> : null}
                     </div>
                     <TagList tags={idea.tags} />
@@ -538,17 +849,37 @@ export function IdeaWorkspace({
               )}
             </div>
           ) : (
-            <DataTable
-              caption={board ? `Ideas on ${board.name}` : 'Ideas'}
-              columns={columns}
-              rows={rows}
-              rowKey={(idea) => idea.id}
-              sort={state.sort}
-              onSortChange={(sort) => update({ sort })}
-              actions={actions}
-              empty={empty}
-              selectedKey={selectedId}
-            />
+            <>
+              {rows.length > 1 ? (
+                <QuickAddBar
+                  fields={[
+                    {
+                      name: 'title',
+                      label: 'Title',
+                      required: true,
+                      placeholder: 'Add an idea — press Enter for more fields',
+                      maxLength: TITLE_MAX_LENGTH,
+                    },
+                  ]}
+                  canAdd={canAdd}
+                  label="Quick add idea"
+                  handoff="drawer"
+                  onHandoff={handoff}
+                  testId="ideas-quick-add-bar"
+                />
+              ) : null}
+              <DataTable
+                caption={board ? `Ideas on ${board.name}` : 'Ideas'}
+                columns={columns}
+                rows={rows}
+                rowKey={(idea) => idea.id}
+                sort={state.sort}
+                onSortChange={(sort) => update({ sort })}
+                actions={actions}
+                empty={empty}
+                selectedKey={selectedId}
+              />
+            </>
           )}
           <Pager
             page={state.page}
@@ -563,11 +894,43 @@ export function IdeaWorkspace({
       <IdeaDrawer
         mode={drawerMode}
         idea={drawerIdea}
-        boardName={drawerBoardId ? boardName(drawerBoardId) : null}
+        boardName={
+          drawerIdea
+            ? boardName(drawerIdea.boardId)
+            : drawerBoardId
+              ? boardName(drawerBoardId)
+              : null
+        }
+        boardLine={
+          drawerIdea && drawer.mode !== 'create'
+            ? {
+                name: drawerIdea.boardId === null ? null : boardName(drawerIdea.boardId),
+                archived: archived(drawerIdea.boardId),
+                action: (() => {
+                  const offer = offerDetach(drawerIdea, drawer.isIssue === true)
+                  return offer ? detachButton(drawerIdea, offer) : null
+                })(),
+              }
+            : null
+        }
         statusColor={drawerIdea ? statusById.get(drawerIdea.statusId)?.color : undefined}
         formOptions={drawer.formOptions}
-        createBoards={board ? null : boards}
+        assistAvailable={drawer.assistAvailable === true}
+        tasks={drawer.tasks}
+        blockers={drawer.blockers}
+        referenceLane={
+          drawerIdea?.boardId
+            ? (boardsById.get(drawerIdea.boardId)?.hasReferenceLane ?? false)
+            : false
+        }
+        effortNeeded={
+          effortFix && drawerIdea?.id === effortFix.ideaId
+            ? `Add Effort to move this idea to ${effortFix.laneName}.`
+            : undefined
+        }
+        createBoards={boards}
         createBoardId={board?.id ?? null}
+        initial={prefill ?? undefined}
         canEdit={drawerIdea ? canEdit(drawerIdea) : false}
         canDelete={drawerIdea ? canDelete(drawerIdea) : false}
         contentLocked={
@@ -579,6 +942,7 @@ export function IdeaWorkspace({
         onEdit={() => drawerIdea && openDrawer({ edit: drawerIdea.id })}
         onView={() => drawerIdea && openDrawer({ view: drawerIdea.id })}
         onClose={() => {
+          quickAdded.current = false
           openDrawer(null)
           setTrigger(null)
         }}
@@ -586,7 +950,45 @@ export function IdeaWorkspace({
           drawerIdea &&
           setRemoving({ id: drawerIdea.id, title: drawerIdea.title, boardId: drawerIdea.boardId })
         }
-        onSaved={(ideaId) => openDrawer({ view: ideaId })}
+        onSaved={(ideaId) => {
+          // Only an idea added through the quick-add row is scrolled to and highlighted.
+          if (quickAdded.current) highlight(ideaId)
+          quickAdded.current = false
+          setEffortFix(null)
+          openDrawer({ view: ideaId })
+        }}
+      />
+
+      <MoveAnywayDialog
+        open={forcing !== null}
+        title={
+          forcing?.kind === 'remove'
+            ? 'Remove from board anyway?'
+            : `Move past ${forcing?.openTasks ?? 0} open ${forcing?.openTasks === 1 ? 'task' : 'tasks'}?`
+        }
+        body={forcingBody(forcing)}
+        confirmLabel={forcing?.kind === 'remove' ? 'Remove anyway' : 'Move anyway'}
+        lanes={
+          forcing?.kind === 'move'
+            ? lanes.filter(
+                (lane) => lane.id !== laneRows.find((r) => r.id === forcing.idea.id)?.statusId,
+              )
+            : undefined
+        }
+        defaultLaneId={forcing?.kind === 'move' ? forcing.toLane.id : undefined}
+        pending={forcePending}
+        onConfirm={confirmForce}
+        onCancel={() => setForcing(null)}
+      />
+
+      <ConfirmDialog
+        open={detaching !== null}
+        title={`Remove “${detaching?.title ?? ''}” from ${detaching?.boardName ?? 'its board'}?`}
+        description="It moves to the Ideas list with no board and keeps its status, comments, upvotes and followers. No one is notified. Anyone who can pull it can put it on a board later."
+        confirmLabel="Remove from board"
+        pending={detachPending}
+        onConfirm={confirmDetach}
+        onCancel={() => setDetaching(null)}
       />
 
       <ConfirmDialog

@@ -272,6 +272,12 @@ const ASSIGNED = { total: 4, critical: 1, rows: [
   { title: 'Automate weekly reliability reporting', board: 'Ideas', status: 'In Progress', priority: 'Medium' },
 ] };
 const CREATED = 5;
+const UNREAD = { total: 7, rows: [
+  { title: 'Remote fault diagnostics for field units', who: 'Priya Nair', verb: 'mentioned you in a comment on', board: 'Opportunities', when: '12m' },
+  { title: 'Customer-visible repair status', who: 'Sam Okafor', verb: 'moved', tail: ' to <b>Client Review</b>', board: 'Opportunities', when: '2h' },
+  { title: 'Torque audit on every tenth unit', who: 'Lena Fischer', verb: 'commented on', board: 'Ideas', when: '5h' },
+  { title: 'Offline service manuals on the tablet', who: 'Priya Nair', verb: 'edited', board: 'Opportunities', when: '1d' },
+] };
 const TOP_VOTED = [
   { title: 'Customer-visible repair status', board: 'Opportunities', status: 'Client Review', votes: 9, mine: true },
   { title: 'Remote fault diagnostics for field units', board: 'Opportunities', status: 'In Review', votes: 7, mine: true },
@@ -357,6 +363,12 @@ function orgHome() {
   const activity = panel(11, 'act-h', 'Recent activity', 'What changed on boards you can see, newest first.',
     `<div class="needs">${needs('a read route over status changes and edits')}<span>Not available yet. Moves, comments and edits will be listed here once the activity feed is switched on.</span></div>`);
 
+  const unread = panel(14, 'unr-h', `Unread notifications <span class="count">${UNREAD.total}</span>`, 'Mentions and activity on ideas you follow, newest first.',
+    UNREAD.rows.length
+      ? `<div class="box"><ul class="rows">${UNREAD.rows.map((r) => `<li><span class="t"><b>${ideaLink(r.title)}</b><span class="sub">${esc(r.who)} ${esc(r.verb)} this${r.tail || ''} · ${esc(r.board)}</span></span><span class="m"><span class="age">${r.when}</span></span></li>`).join('')}</ul>
+         <div class="more"><a href="#" data-noop>Open inbox</a></div></div>`
+      : `<div class="empty"><b>You’re all caught up.</b></div>`);
+
   const assigned = panel(7, 'asg-h', `Assigned to me <span class="count">${a.total}</span>`, 'Highest priority first.',
     a.rows.length
       ? `<div class="box"><ul class="rows">${a.rows.map((r) => `<li><span class="t">${ideaLink(r.title)}<span class="sub">${esc(r.board)}</span></span><span class="m">${marker(r.status, SCOLOR[r.status])}${prio(r.priority)}</span></li>`).join('')}</ul></div>`
@@ -374,7 +386,7 @@ function orgHome() {
   const voted = panel(9, 'vot-h', 'Most upvoted', 'Ideas on a board with the most upvotes.',
     `<div class="box"><ul class="rows">${TOP_VOTED.map((r) => `<li><span class="t">${ideaLink(r.title)}<span class="sub">${esc(r.board)}</span></span><span class="m">${marker(r.status, SCOLOR[r.status])}<span class="votes ${r.mine ? 'has' : ''}" title="${r.mine ? 'You upvoted this' : 'Upvotes'}">${svg('up')}${r.votes}</span></span></li>`).join('')}</ul></div>`);
 
-  return head + kpis + `<div class="dash"><div class="col">${attention}${boardsPanel}${activity}</div><div class="col">${assigned}${sprint}${voted}</div></div>`;
+  return head + kpis + `<div class="dash"><div class="col">${attention}${boardsPanel}${activity}</div><div class="col">${unread}${assigned}${sprint}${voted}</div></div>`;
 }
 
 // ---------- Site Admin's platform roll-up ----------
@@ -421,7 +433,8 @@ const NOTES_ORG = [
   [9, 'Most upvoted', [`GET ${ORG}/ideas?phase=Ideas&sortBy=upvoteCount&sortDirection=desc&pageSize=5`], 'New panel. It includes Complete-lane ideas (status categories again). Is it worth the space on a “basic” Home?'],
   [10, 'Current sprint', [`GET ${ORG}/sprints?state=Active`, `GET ${ORG}/sprints/{sprintId} → issues[].deliveryStatus`, `GET ${ORG}/delivery → backlog length`], 'Hidden when no sprint is Active. If two are Active at once, show the one ending first?'],
   [11, 'Recent activity', [], null, 'a read route over audit_events (IdeaStatusChanged and edits), scoped to the caller — one route serving this and the Loop activity feed (ideas-inbox § Status-change times).'],
-  [12, 'Notifications (bell, top bar)', [], 'A slot only. Should Home also carry an “Unread for you” panel once the inbox exists?', 'the notification inbox, specified in slice 149 (decisions 2026-10-01, “Following an idea…”). Nothing here depends on it.'],
+  [14, 'Unread notifications', [`GET /notifications?pageSize=50 → the unread rows, newest five`, `GET /notifications/unread-count → the count`], 'Added 2026-10-13 at the user’s request, reversing “no Unread for you panel for now” (decisions 2026-10-01). The list route has no unread filter, so Home reads one page and keeps the unread ones. Rows open the idea over the inbox. Not shown for a Site Admin.'],
+  [12, 'Notifications (bell, top bar)', [], 'A slot only.', 'the notification inbox, specified in slice 149 (decisions 2026-10-01, “Following an idea…”). Nothing here depends on it.'],
   [13, 'Empty: no boards', [`GET ${ORG}/boards → []`], 'Creating an organization provisions a first board, so a member reaches this only after every board is archived. Org Admin gets the action; User and Read Only see it refused (“Denied is shown”).'],
   [0, 'Roles', [], 'Read Only sees the same panels; the standfirst reads “what’s moving”, and no create action is offered. Can a Read Only user be assigned an idea? If not, hide their Assigned panel and tile.'],
 ];

@@ -34,6 +34,8 @@ export type Sprint = Auditable & {
   readonly endDate: string
   /** Optional. The active-user-in-this-org check belongs to the Application layer. */
   readonly ownerUserId: string | null
+  /** The board this sprint belongs to; `null` for a sprint from before sprints were per board. */
+  readonly boardId: string | null
   readonly state: SprintState
   readonly isDeleted: boolean
 }
@@ -100,6 +102,7 @@ export function createSprint(params: {
   readonly startDate: string
   readonly endDate: string
   readonly ownerUserId: string | null
+  readonly boardId?: string | null
   readonly nowUtc: Date
   readonly actorUserId: string | null
 }): Sprint {
@@ -116,6 +119,7 @@ export function createSprint(params: {
     startDate: window.start,
     endDate: window.end,
     ownerUserId: params.ownerUserId,
+    boardId: params.boardId ?? null,
     state: SprintState.Planned,
     isDeleted: false,
     ...markCreated(params.nowUtc, params.actorUserId),

@@ -27,7 +27,7 @@ export function useToast(): [ReactNode, (message: string) => void] {
       className="pointer-events-none fixed bottom-5 left-1/2 z-[70] -translate-x-1/2"
     >
       {message ? (
-        <div className="rounded-md bg-foreground px-4 py-2 text-[13px] font-semibold text-background shadow-lg">
+        <div className="rounded-md bg-foreground px-4 py-2 text-xs font-semibold text-background shadow-lg">
           {message.text}
         </div>
       ) : null}

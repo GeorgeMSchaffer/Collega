@@ -8,7 +8,9 @@ import type {
 import type {
   BoardsPort,
   CommentsPort,
+  IdeaActivityPort,
   IdeaClassificationPort,
+  IdeaDependenciesPort,
   IdeaFieldValuesPort,
   IdeaFollowersPort,
   IdeaRepository,
@@ -20,6 +22,7 @@ import type {
   UsersPort,
 } from '@collega/application/ideas'
 import { IdeaService } from '@collega/application/ideas'
+import type { IdeaMetricValuesPort } from '@collega/application/metric-types'
 import { NotificationService } from '@collega/application/notifications'
 import type { IdeaLookupPort, IdeaUpvoteRepository } from '@collega/application/upvotes'
 import { UpvoteService } from '@collega/application/upvotes'
@@ -80,11 +83,14 @@ import { IdeasController } from './ideas.controller.js'
         taskRollup: IssueTaskRollupPort,
         notifications: NotificationsPort,
         followers: IdeaFollowersPort,
+        dependencies: IdeaDependenciesPort,
         unitOfWork: UnitOfWork,
         auditEvents: AuditEventWriter,
         currentUser: CurrentUserContext,
         clock: Clock,
         random: RandomSource,
+        metricValues: IdeaMetricValuesPort,
+        activity: IdeaActivityPort,
       ) =>
         new IdeaService(
           ideaRepository,
@@ -99,11 +105,14 @@ import { IdeasController } from './ideas.controller.js'
           taskRollup,
           notifications,
           followers,
+          dependencies,
           unitOfWork,
           auditEvents,
           currentUser,
           clock,
           random,
+          metricValues,
+          activity,
         ),
       inject: [
         PORT_TOKENS.IdeaRepository,
@@ -118,11 +127,14 @@ import { IdeasController } from './ideas.controller.js'
         PORT_TOKENS.IssueTaskRollupPort,
         NotificationService,
         PORT_TOKENS.IdeaFollowersPort,
+        PORT_TOKENS.IdeaDependenciesPort,
         PORT_TOKENS.UnitOfWork,
         PORT_TOKENS.AuditEventWriter,
         PORT_TOKENS.CurrentUserContext,
         PORT_TOKENS.Clock,
         PORT_TOKENS.RandomSource,
+        PORT_TOKENS.IdeaMetricValuesPort,
+        PORT_TOKENS.IdeaActivityPort,
       ],
     },
     {

@@ -201,7 +201,7 @@ export class PrismaAiUsageRepository implements AiUsageRepository {
   async getRecentOutcomes(
     organizationId: string,
     actorUserId: string | null,
-    boardId: string,
+    boardId: string | null,
     limit: number,
     fromUtc: Date,
   ): Promise<readonly AiCallOutcome[]> {

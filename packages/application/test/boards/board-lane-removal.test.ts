@@ -11,14 +11,17 @@ import { Role } from '@collega/domain/enums'
 import { createStatus, type Status } from '@collega/domain/statuses'
 import { describe, expect, it } from 'vitest'
 import { BoardService } from '../../src/boards/board-service.js'
+import type { AutoCreateTaskPort } from '../../src/boards/index.js'
 import type { IdeaMoveInput, UpdateBoardCommand } from '../../src/boards/models.js'
 import type { BoardRepository, LaneIdea } from '../../src/boards/ports.js'
 import { ConflictError, type CurrentUserContext, ValidationError } from '../../src/common/index.js'
+import type { IdeaRepository } from '../../src/ideas/ports.js'
 import type { StatusRepository } from '../../src/statuses/ports.js'
 import {
   countingUnitOfWork,
   fixedClock,
   impersonating,
+  lanes,
   NOW,
   ORG_A,
   orgAdmin,
@@ -59,7 +62,7 @@ function board(archived = false): Board {
     organizationId: ORG_A,
     name: 'Acme Board',
     allowUserStatusUpdate: false,
-    orderedStatusIds: [NEW, REVIEW, DONE],
+    orderedLanes: lanes(NEW, REVIEW, DONE),
     nowUtc: NOW,
     actorUserId: 'seed',
   })
@@ -67,7 +70,7 @@ function board(archived = false): Board {
 }
 
 function idea(ideaId: string, statusId: string): LaneIdea {
-  return { ideaId, title: `Idea ${ideaId}`, statusId }
+  return { ideaId, title: `Idea ${ideaId}`, statusId, effort: null }
 }
 
 type MoveCall = {
@@ -128,6 +131,11 @@ function harness(
       log.push('move')
       moves.push({ boardId, ideaIds, fromStatusId, toStatusId, nowUtc, actorUserId })
     },
+    async verifyIdeasMoved() {},
+    async reassignIdeas() {},
+    async listPullCandidates() {
+      return { items: [], page: 1, pageSize: 20, totalCount: 0, hiddenTaskCount: 0 }
+    },
   }
 
   const statuses: StatusRepository = {
@@ -166,6 +174,8 @@ function harness(
       audit,
       options.currentUser ?? orgAdmin(ORG_A),
       fixedClock(),
+      {} as IdeaRepository,
+      {} as AutoCreateTaskPort,
     ),
     log,
     moves,

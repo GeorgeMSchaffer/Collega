@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="graphite">
+<head>
+<meta charset="utf-8">
+<title>Board Reference (Graphite)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--metric:#5CC8E0;--suggest:#5CC8E0;--suggest-tint:#0F1D21;--suggest-line:#2E6A78;
+--bg:#0F1113;--ink:#E6E8EA;--ink2:#C4CAD0;--muted:#9BA3AB;--line:#22272C;--line2:#2C3238;--card:#16191C;--soft:#1C2024;--rowh:#1A1E22;--thead:#121518;--facts:#1A1E22;--field:#0F1113;
+--pri:#F5A524;--pri-h:#FFC35C;--pri-t:#F5A524;--pri-tint:#2A2418;--pri-ink:#16120A;
+--hot:#E5484D;--hot-t:#FF8A8E;--hot-tint:#2E1719;--ok:#58C781;--ok-t:#58C781;--ok-tint:#13241A;--warn-t:#F5B456;--warn-tint:#2A2418;
+--side:#121518;--side-ink:#AEB5BC;--side-line:#22272C;--side-hover:#1A1E22;--side-on:#1C2024;--side-on-ink:#E6E8EA;--bar:#0B0D0F;--bar-ink:#AEB5BC;
+--av1:#2A2418;--av1i:#F5A524;--av2:#153038;--av2i:#5CC8E0;--av3:#262B30;--av3i:#C4CAD0;--av4:#1C2A20;--av4i:#58C781;
+--r:8px;--rs:6px;--display:"IBM Plex Sans",system-ui,sans-serif;--body:"IBM Plex Sans",system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;--h-weight:600}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--body);display:flex;flex-direction:column}
+button{font:inherit;color:inherit}
+.proto{display:flex;align-items:center;gap:12px;padding:8px 16px;background:var(--bar);color:var(--bar-ink);font-size:13px;flex:none}
+.proto button{background:transparent;border:1px solid #3a4148;border-radius:999px;padding:3px 12px;color:var(--bar-ink);cursor:pointer}
+.proto button[aria-pressed=true]{background:var(--bar-ink);color:var(--bar)}
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);flex:1}
+.side{background:var(--side);border-right:1px solid var(--side-line);padding:14px 10px;display:flex;flex-direction:column;gap:2px;color:var(--side-ink)}
+.brand{display:flex;gap:10px;align-items:center;padding:4px 6px 12px}
+.brand b{display:block;font:600 16px/1.1 var(--display);color:var(--ink)}.brand small{font-size:12px;opacity:.75}
+.mark{display:grid;place-items:center;width:30px;height:30px;border-radius:var(--rs);background:var(--pri);color:var(--pri-ink);font:600 12px var(--display)}
+.navlbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.7;padding:10px 8px 4px}
+.nav{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:var(--rs);color:var(--side-ink)}
+.nav[aria-current=page]{background:var(--side-on);color:var(--side-on-ink);font-weight:600}
+.nav span{flex:1}.nav small{font-weight:600;opacity:.8}
+.me{margin-top:auto;display:flex;gap:10px;align-items:center;padding:10px 6px 2px;border-top:1px solid var(--side-line)}
+.me b{display:block;font-size:13px;color:var(--ink)}.me small{font-size:12px;opacity:.75}
+.main{min-width:0;display:flex;flex-direction:column;position:relative}
+.topbar{display:flex;align-items:center;gap:8px;min-height:52px;padding:8px 24px;border-bottom:1px solid var(--line);background:var(--card)}
+.crumb{color:var(--muted)}.crumb b{color:var(--ink)}
+.work{padding:20px 24px 32px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.pghead{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.pghead h1{margin:0;font:var(--h-weight) 28px/1.15 var(--display);letter-spacing:-.02em}
+.pghead p{margin:4px 0 0;color:var(--muted);max-width:64ch}
+.btn{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13px;height:32px;padding:0 12px;border-radius:var(--rs);border:1px solid var(--line2);background:var(--card);cursor:pointer}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}
+.btn.sm{height:28px;padding:0 10px;font-size:12px}
+.btn.ghost{border-color:transparent;background:transparent}
+.seg{display:inline-flex;background:var(--soft);border-radius:var(--rs);padding:2px}
+.seg span{padding:4px 12px;font-size:13px;color:var(--muted);border-radius:5px}
+.seg span.on{background:var(--card);color:var(--ink);font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:1px 8px;border-radius:999px;background:color-mix(in srgb,var(--tc,var(--muted)) 16%,var(--card));color:color-mix(in srgb,var(--tc,var(--muted)) 62%,var(--ink));border:1px solid color-mix(in srgb,var(--tc,var(--muted)) 30%,transparent)}
+.avs{display:inline-flex}.av{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;font:700 10px var(--body);border:2px solid var(--card);margin-left:-6px}
+.avs .av:first-child{margin-left:0}
+.a1{background:var(--av1);color:var(--av1i)}.a2{background:var(--av2);color:var(--av2i)}.a3{background:var(--av3);color:var(--av3i)}.a4{background:var(--av4);color:var(--av4i)}
+.mono{font-family:var(--mono)}
+/* board */
+.lanes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.lane{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:520px;padding:6px 6px 12px;border-radius:14px;background:color-mix(in srgb,var(--soft) 55%,transparent);border:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
+.lanehd{display:flex;align-items:center;gap:8px;padding:6px 12px;font-weight:600;font-size:13px}
+.lanehd span{flex:1}.lanehd small{font:500 12px var(--mono);opacity:.8}
+.kcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:7px}
+.kcard h4{margin:0;font-size:13px;font-weight:600;line-height:1.35}
+.kcard.sel{outline:2px solid var(--pri);outline-offset:-1px}
+.krow{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.kmeta{font:500 11px var(--mono);color:var(--muted)}
+.prog{display:flex;gap:2px;height:5px;border-radius:3px;overflow:hidden;background:var(--soft)}
+.prog i{display:block;height:100%}
+/* drawer */
+.drawer{position:absolute;top:0;right:0;bottom:0;width:560px;background:var(--card);border-left:1px solid var(--line2);box-shadow:-18px 0 40px rgb(0 0 0/.45);display:flex;flex-direction:column;z-index:5}
+.dhead{display:flex;align-items:flex-start;gap:8px;padding:16px 18px 10px;border-bottom:1px solid var(--line)}
+.eb{font:500 11px var(--mono);color:var(--muted);letter-spacing:.03em}
+.dhead h2{margin:2px 0 0;font:var(--h-weight) 19px/1.25 var(--display)}
+.dbody{flex:1;overflow:auto;padding:16px 18px;display:flex;flex-direction:column;gap:16px}
+.dfoot{display:flex;gap:8px;align-items:center;padding:12px 18px;border-top:1px solid var(--line);background:var(--thead)}
+.sp{flex:1}
+.stepper{display:flex;gap:4px}
+.step{flex:1;text-align:center;font-size:11.5px;font-weight:600;padding:6px 2px;border-radius:var(--rs);background:var(--soft);color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+.step.done{color:var(--ink2);border-bottom-color:var(--ok)}
+.step.cur{background:var(--pri-tint);color:var(--pri-t);border-bottom-color:var(--pri)}
+.suggest{display:flex;gap:10px;align-items:center;background:var(--suggest-tint);border:1px solid var(--suggest-line);border-radius:var(--rs);padding:10px 12px;font-size:13px}
+.suggest b{color:var(--suggest)}
+.suggest .sp{flex:1}
+.sect h3,.lbl{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600}
+.sechd{display:flex;align-items:center;gap:8px;margin-bottom:6px}.sechd h3{margin:0}
+.panel{border:1px solid var(--line);border-radius:var(--rs);background:var(--facts);overflow:hidden}
+table.v{border-collapse:collapse;width:100%}
+table.v th{font:600 11px var(--body);color:var(--muted);text-align:left;padding:7px 12px;background:var(--thead);border-bottom:1px solid var(--line)}
+table.v td{padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
+table.v tr:last-child td{border-bottom:0}
+.r{text-align:right !important;font-variant-numeric:tabular-nums}
+.metric{color:var(--metric);font-weight:600}
+.pend{color:var(--muted);font-size:12px;font-style:italic}
+.task{display:grid;grid-template-columns:20px minmax(0,1fr) 28px 110px;gap:10px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
+.task:last-child{border-bottom:0}
+.task:hover{background:var(--rowh)}
+.ck{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--line2);display:grid;place-items:center;font-size:11px;line-height:1}
+.ck.ok{background:var(--ok);border-color:var(--ok);color:#0F1113}
+.ck.ip{border-color:var(--pri);background:linear-gradient(90deg,var(--pri) 50%,transparent 50%)}
+.task .done-t{color:var(--muted);text-decoration:line-through}
+.st{font-size:12px;font-weight:600;display:inline-flex;gap:6px;align-items:center}
+.st.a{color:var(--muted)}.st.p{color:var(--pri-t)}.st.c{color:var(--ok-t)}
+.addrow{display:flex;gap:8px;padding:8px 12px;color:var(--muted);font-size:13px;border-top:1px solid var(--line)}
+/* outcome page */
+.spr{background:var(--card);border:1px solid var(--line);border-radius:var(--r);display:grid;grid-template-columns:repeat(4,1fr)}
+.spr>div{padding:14px 18px;display:flex;flex-direction:column;gap:4px}
+.spr>div+div{border-left:1px solid var(--line)}
+.spr dt{font:500 10.5px var(--mono);color:var(--muted);letter-spacing:.06em}
+.spr dd{margin:0;font:600 22px var(--display)}
+.spr small{font:500 11px var(--mono);color:var(--muted)}
+.oc{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.oc-h{display:flex;align-items:center;gap:12px;padding:12px 16px;flex-wrap:wrap}
+.oc-h h2{margin:0;font:var(--h-weight) 15px var(--display)}
+.ir{display:grid;grid-template-columns:70px minmax(0,1fr) 150px 130px 130px;align-items:center;gap:12px;min-height:38px;padding:4px 16px;font-size:13px;border-top:1px solid var(--line)}
+.ir.hd{font:600 11px var(--body);color:var(--muted);background:var(--thead);min-height:30px}
+.ir .id{font:500 11px var(--mono);color:var(--muted)}
+.bar{display:flex;align-items:center;gap:8px}
+.bar .t{flex:1;height:6px;border-radius:3px;background:var(--soft);overflow:hidden;position:relative}
+.bar .t i{position:absolute;left:0;top:0;bottom:0;background:var(--metric)}
+.bar small{font:500 11px var(--mono);color:var(--muted);min-width:34px;text-align:right}
+.hide{display:none}
+</style>
+</head>
+<body>
+<style>
+.cfgrow{display:grid;grid-template-columns:22px minmax(0,1fr) 150px 190px 80px;gap:12px;align-items:center;padding:10px 16px;border-top:1px solid var(--line);font-size:.85rem}
+.cfgrow .note,.cfgrow .sel{font-size:inherit}
+.cfgrow.hd{font:600 1rem var(--body);color:var(--muted);background:var(--thead);border-top:0;padding:8px 16px}
+.grip{color:var(--muted);font-size:14px;letter-spacing:-2px}
+.refpill{display:inline-flex;align-items:center;gap:6px;font:500 11px var(--mono);color:var(--suggest);background:var(--suggest-tint);border:1px solid var(--suggest-line);border-radius:4px;padding:0 7px;line-height:20px}
+.sel{background:var(--field);border:1px solid var(--line2);border-radius:var(--rs);padding:6px 10px;font-size:13px;display:flex;justify-content:space-between;color:var(--ink2)}
+.sprhd{background:var(--card);border:1px solid var(--line);border-radius:var(--r);display:grid;grid-template-columns:minmax(0,1fr) repeat(3,150px)}
+.sprhd>div{padding:12px 18px;display:flex;flex-direction:column;gap:4px}
+.sprhd>div+div{border-left:1px solid var(--line)}
+.sprhd dt{font:500 10.5px var(--mono);color:var(--muted);letter-spacing:.06em}
+.sprhd dd{margin:0;font:500 13px var(--mono)}
+.badge{font:500 10.5px var(--mono);border:1px solid currentColor;border-radius:4px;padding:0 6px;line-height:18px;letter-spacing:.04em}
+.badge.ok{color:var(--ok-t)}.badge.warn{color:var(--warn-t)}.badge.mute{color:var(--muted)}
+.pchip{font:500 10.5px var(--mono);color:var(--suggest);background:var(--suggest-tint);border:1px solid var(--suggest-line);border-radius:4px;padding:0 6px;line-height:17px;white-space:nowrap}
+.lock{font:500 10.5px var(--mono);color:var(--warn-t);background:var(--warn-tint);border-radius:4px;padding:0 6px;line-height:17px;white-space:nowrap}
+.kcard.blocked{opacity:.7;border-style:dashed}
+.bl{margin-top:14px;border:1px solid var(--line);border-radius:var(--r);background:var(--card);overflow:hidden}
+.task2{display:grid;grid-template-columns:20px minmax(0,1fr) auto 28px 108px;gap:10px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--line);font-size:13px}
+.task2:last-child{border-bottom:0}
+.note{font-size:12px;color:var(--muted)}
+</style>
+
+<div class="proto"><b>Collega &middot; Board Reference (Graphite)</b>
+  <button id="u1" aria-pressed="true" onclick="go(1)">1 &middot; Set up the reference</button>
+  <button id="u2" aria-pressed="false" onclick="go(2)">2 &middot; Parent card drawer</button>
+  <button id="u3" aria-pressed="false" onclick="go(3)">3 &middot; Child board with sprint</button>
+</div>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand"><span class="mark">Co</span><div><b>Collega</b><small>Northwind Logistics</small></div></div>
+    <div class="navlbl">Workspace</div>
+    <div class="nav"><span>Home</span></div>
+    <div class="nav" id="nv-b" aria-current="page"><span>Boards</span><small>3</small></div>
+    <div class="nav"><span>Ideas</span><small>46</small></div>
+    <div class="nav"><span>Outcomes</span><small>4</small></div>
+    <div class="navlbl">Me</div>
+    <div class="nav"><span>My tasks</span><small>5</small></div>
+    <div class="nav"><span>Inbox</span><small>2</small></div>
+    <div class="me"><span class="av a1" style="margin:0;width:30px;height:30px;font-size:11px">DK</span><div><b>Dana Kim</b><small>Org Admin</small></div></div>
+  </aside>
+
+  <div class="main">
+
+  <!-- 1: status setup -->
+  <div id="v1">
+    <div class="topbar"><span class="crumb">Boards / Continuous Improvement / <b>Statuses</b></span></div>
+    <div class="work">
+      <div class="pghead"><div><h1>Statuses</h1><p>The lanes of Continuous Improvement. A status can hand work to another board and take the card back when that work is done.</p></div><button class="btn pri">+ Add status</button></div>
+      <div class="bl" style="margin-top:0">
+        <div class="cfgrow hd"><span></span><span>Status</span><span>Kind</span><span>Board reference</span><span></span></div>
+        <div class="cfgrow"><span class="grip">&#8942;&#8942;</span><b>Pending</b><span>Start</span><span class="note">&mdash;</span><span></span></div>
+        <div class="cfgrow"><span class="grip">&#8942;&#8942;</span><b>Scoping</b><span>Active</span><span class="note">&mdash;</span><span></span></div>
+        <div class="cfgrow"><span class="grip">&#8942;&#8942;</span><b>Approved for Implementation</b><span>Active</span><span class="note">&mdash;</span><span></span></div>
+        <div class="cfgrow" style="background:var(--rowh)"><span class="grip">&#8942;&#8942;</span><span><b>Implementation</b> <span class="refpill">&#8627; board reference</span></span><span>Active</span>
+          <span class="sel"><span>Implementation board</span><span>&#9662;</span></span><span style="text-align:right"><button class="btn sm ghost">Remove</button></span></div>
+        <div class="cfgrow"><span class="grip">&#8942;&#8942;</span><b>Completed</b><span>Final</span><span class="note">&mdash;</span><span></span></div>
+      </div>
+      <div class="panel" style="padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+        <div class="lbl">What this does</div>
+        <div style="font-size:13px;color:var(--ink2)">Cards in <b>Implementation</b> can have tasks. Tasks are cards on the <b>Implementation</b> board, which has its own statuses (Pending &rarr; In Progress &rarr; Review &rarr; Complete) and optional sprints. When every task reaches that board's final status, the parent card is offered a move to <b>Completed</b>.</div>
+        <div class="note">Effort must be set before an idea can enter a reference lane.</div>
+        <div class="note">3 ideas currently sit in Implementation, so this reference can't be changed to another board while they do.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2: parent drawer -->
+  <div id="v2" class="hide">
+    <div class="topbar"><span class="crumb">Boards / Continuous Improvement / <b>CI-19</b></span></div>
+    <div class="work" style="padding-right:604px">
+      <div class="pghead"><div><h1>Continuous Improvement</h1><p>Ideas from first spark to proven result.</p></div><button class="btn pri">+ New idea</button></div>
+      <div class="lanes">
+        <div class="lane"><div class="lanehd"><span>Pending</span><small>4</small></div></div>
+        <div class="lane"><div class="lanehd"><span>Scoping</span><small>3</small></div></div>
+        <div class="lane"><div class="lanehd"><span>Approved</span><small>2</small></div></div>
+        <div class="lane"><div class="lanehd"><span>Implementation</span> <small>3</small></div>
+          <div class="kcard sel"><h4>Cut onboarding time</h4><div class="prog"><i style="width:50%;background:var(--ok)"></i></div><div class="krow"><span class="kmeta">CI-19 &middot; 2 of 4 tasks</span><span class="avs"><span class="av a1">DK</span></span></div></div></div>
+        <div class="lane"><div class="lanehd"><span>Completed</span><small>9</small></div></div>
+      </div>
+    </div>
+    <aside class="drawer" style="width:580px">
+      <div class="dhead"><div><div class="eb">CI-19 &middot; CONTINUOUS IMPROVEMENT</div><h2>Cut onboarding time</h2></div><span class="sp"></span><button class="btn ghost sm">Close</button></div>
+      <div class="dbody">
+        <div class="stepper"><div class="step done">Pending</div><div class="step done">Scoping</div><div class="step done">Approved</div><div class="step cur">Implementation &#8627;</div><div class="step">Completed</div></div>
+        <div class="sect"><div class="sechd"><h3>Tasks</h3><span class="mono" style="font-size:11px;color:var(--muted)">2 of 4 done &middot; on Implementation board</span><span class="sp"></span><button class="btn sm">+ Add task</button></div>
+          <div class="panel">
+            <div class="task2"><span class="ck ok">&#10003;</span><span class="done-t">Draft the onboarding SOP</span><span class="pchip">Sprint 14</span><span class="av a1" style="margin:0">DK</span><span class="st c"><span class="dot" style="background:var(--ok)"></span>Complete</span></div>
+            <div class="task2"><span class="ck ok">&#10003;</span><span class="done-t">Update LMS courses</span><span class="pchip">Sprint 14</span><span class="av a3" style="margin:0">SM</span><span class="st c"><span class="dot" style="background:var(--ok)"></span>Complete</span></div>
+            <div class="task2"><span class="ck ip"></span><span>Train regional managers</span><span class="pchip">Sprint 14</span><span class="av a2" style="margin:0">LE</span><span class="st p"><span class="dot" style="background:var(--pri)"></span>In Progress</span></div>
+            <div class="task2"><span class="ck"></span><span>Measure time to first shipment <span class="lock">&#128274; blocked by Train regional managers</span></span><span class="pchip">Sprint 15</span><span class="av a1" style="margin:0">DK</span><span class="st a"><span class="dot" style="background:var(--muted)"></span>Pending</span></div>
+          </div>
+          <div class="note" style="margin-top:6px">Each task is a card on the Implementation board. Open one to change its status, sprint or blockers.</div></div>
+        <div class="sect"><div class="sechd"><h3>Value</h3></div>
+          <div class="panel"><table class="v"><tr><th>Metric</th><th class="r">Projected</th><th class="r">Realized</th></tr>
+          <tr><td>Hours saved / year</td><td class="r">1,200</td><td class="r pend">After Completed</td></tr>
+          <tr><td>Cost saved / year</td><td class="r">$48,000</td><td class="r pend">After Completed</td></tr></table></div></div>
+        <div class="sect"><h3>Outcome</h3><span class="tag" style="--tc:#5CC8E0">Faster onboarding &middot; Q4</span></div>
+      </div>
+      <div class="dfoot"><span class="mono" style="font-size:11px;color:var(--muted)">Effort: Medium</span><span class="sp"></span><button class="btn">Comment</button></div>
+    </aside>
+  </div>
+
+  <!-- 3: child board -->
+  <div id="v3" class="hide">
+    <div class="topbar"><span class="crumb">Boards / <b>Implementation</b></span></div>
+    <div class="work">
+      <div class="pghead"><div><h1>Implementation</h1><p>Tasks from every idea that reaches an Implementation status, plus standalone work.</p></div>
+        <div style="display:flex;gap:8px;align-items:center"><div class="seg"><span class="on">Sprint</span><span>Backlog</span></div><button class="btn pri">+ New task</button></div></div>
+      <dl class="sprhd" style="margin:0">
+        <div><dt>SPRINT 14</dt><dd>Oct 12 &ndash; Oct 25 <span class="badge ok" style="margin-left:6px">ACTIVE</span></dd></div>
+        <div><dt>TASKS</dt><dd>9 &middot; 4 done</dd></div>
+        <div><dt>IDEAS</dt><dd>3</dd></div>
+        <div><dt>ENDS IN</dt><dd>10 days</dd></div>
+      </dl>
+      <div class="lanes" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+        <div class="lane"><div class="lanehd"><span>Pending</span><small>2</small></div>
+          <div class="kcard blocked"><h4>Measure time to first shipment</h4><div class="krow"><span class="pchip">&#8627; CI-19</span><span class="lock">&#128274; blocked</span></div></div>
+          <div class="kcard"><h4>Choose buddy matching rules</h4><div class="krow"><span class="pchip">&#8627; CI-21</span><span class="avs"><span class="av a3">SM</span></span></div></div></div>
+        <div class="lane"><div class="lanehd"><span>In Progress</span><small>3</small></div>
+          <div class="kcard"><h4>Train regional managers</h4><div class="krow"><span class="pchip">&#8627; CI-19</span><span class="avs"><span class="av a2">LE</span></span></div></div>
+          <div class="kcard"><h4>Migrate course catalog</h4><div class="krow"><span class="pchip">&#8627; CI-22</span><span class="avs"><span class="av a4">JB</span></span></div></div>
+          <div class="kcard"><h4>Replace badge printer</h4><div class="krow"><span class="kmeta">standalone</span><span class="avs"><span class="av a1">DK</span></span></div></div></div>
+        <div class="lane"><div class="lanehd"><span>Review</span><small>0</small></div><div style="border:1px dashed var(--line2);border-radius:10px;padding:14px;text-align:center;color:var(--muted);font-size:12px">Nothing in review</div></div>
+        <div class="lane"><div class="lanehd"><span>Complete</span><small>4</small></div>
+          <div class="kcard"><h4>Draft the onboarding SOP</h4><div class="krow"><span class="pchip">&#8627; CI-19</span><span class="avs"><span class="av a1">DK</span></span></div></div>
+          <div class="kcard"><h4>Update LMS courses</h4><div class="krow"><span class="pchip">&#8627; CI-19</span><span class="avs"><span class="av a3">SM</span></span></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</div>
+<script>
+function go(n){
+  [1,2,3].forEach(function(i){
+    document.getElementById('v'+i).classList.toggle('hide', i!==n);
+    document.getElementById('u'+i).setAttribute('aria-pressed', String(i===n));
+  });
+}
+</script>
+</body>
+</html>

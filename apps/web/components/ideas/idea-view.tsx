@@ -1,13 +1,44 @@
-import { Avatar } from '@collega/design-system'
+import { Avatar, EffortBar } from '@collega/design-system'
+import Link from 'next/link'
 import type { ReactNode } from 'react'
 import type { IdeaDetail } from '@/lib/types'
 import { CommentBox, FollowButton, UpvoteButton } from './engagement'
+import { ParentChip } from './idea-badges'
 import { People, PriorityMarker, StatusMarker, TagList } from './idea-chips'
 
-function Fact({ label, children }: { label: string; children: ReactNode }) {
+/** The board line of the drawer's facts: where the idea sits, or that it sits nowhere yet. */
+export type BoardLine = {
+  /** Null for an idea in the pool. */
+  name: string | null
+  archived: boolean
+  /** Remove from board, when the reader is offered it. */
+  action: ReactNode
+}
+
+export function BoardChip({ name }: { name: string | null }) {
+  return name === null ? (
+    <span className="inline-flex items-center rounded-full border border-dashed px-2 py-px text-xs font-semibold italic">
+      No board
+    </span>
+  ) : (
+    <span className="inline-flex items-center rounded-full border bg-secondary px-2 py-px text-xs font-semibold">
+      {name}
+    </span>
+  )
+}
+
+function Fact({
+  label,
+  children,
+  wide = false,
+}: {
+  label: string
+  children: ReactNode
+  wide?: boolean
+}) {
   return (
-    <div className="min-w-0">
-      <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</dt>
+    <div className={wide ? 'col-span-2 min-w-0' : 'min-w-0'}>
+      <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
       <dd className="m-0 mt-0.5 flex flex-wrap items-center gap-1 text-sm font-medium">
         {children}
       </dd>
@@ -37,6 +68,10 @@ export function IdeaView({
   engagementDenial,
   followDenial,
   facts = true,
+  boardLine,
+  tasksPrompt,
+  tasks,
+  blockers,
 }: {
   idea: IdeaDetail
   statusColor: string | undefined
@@ -45,17 +80,58 @@ export function IdeaView({
   followDenial: string | null
   /** False in the Issue drawer, which shows its delivery facts in their place. */
   facts?: boolean
+  boardLine?: BoardLine | null | undefined
+  /** The completion prompt, at the top of the drawer. */
+  tasksPrompt?: ReactNode
+  /** The Tasks section, under the facts. */
+  tasks?: ReactNode
+  /** The Blockers section, under the Tasks. */
+  blockers?: ReactNode
 }) {
   return (
     <>
+      {idea.parentIdeaId ? (
+        // The parent's board is not on the wire, so this opens it in the Ideas list's drawer.
+        <Link
+          href={`/ideas?idea=${encodeURIComponent(idea.parentIdeaId)}`}
+          aria-label={`Parent idea ${idea.parentItemKey ?? ''}`.trim()}
+          className="w-fit hover:underline"
+        >
+          <ParentChip itemKey={idea.parentItemKey ?? null} className="px-2 py-0.5 text-xs" />
+        </Link>
+      ) : null}
+      {tasksPrompt}
       {facts ? (
         <dl className="m-0 grid grid-cols-2 gap-3 rounded-md bg-muted/60 p-3">
+          {boardLine ? (
+            <Fact label="Board" wide>
+              <BoardChip name={boardLine.name} />
+              {boardLine.archived ? (
+                <span className="text-xs font-semibold text-warning">Board archived</span>
+              ) : null}
+              {boardLine.name === null ? (
+                <span className="text-xs font-normal text-muted-foreground">
+                  Waiting on the Ideas list. An Org Admin can pull it onto a board from the board
+                  form.
+                </span>
+              ) : (
+                boardLine.action
+              )}
+            </Fact>
+          ) : null}
           <Fact label="Status">
             <StatusMarker name={idea.statusName} color={statusColor} />
           </Fact>
-          <Fact label="Priority">
-            <PriorityMarker priority={idea.priority} />
-          </Fact>
+          {idea.priority ? (
+            <Fact label="Priority">
+              <PriorityMarker priority={idea.priority} />
+            </Fact>
+          ) : null}
+          {idea.effort ? (
+            <Fact label="Effort">
+              <EffortBar effort={idea.effort} className="text-sm text-foreground" />
+            </Fact>
+          ) : null}
           <Fact label="Business impact">{idea.businessImpact}</Fact>
           <Fact label="Idea type">{idea.ideaType}</Fact>
           <Fact label="Assignees">
@@ -71,21 +147,31 @@ export function IdeaView({
         </dl>
       ) : null}
 
-      <Section title="Problem">
-        <p className="m-0 whitespace-pre-line text-sm">{idea.problem}</p>
-      </Section>
-      <Section title="Proposed solutions">
-        <ol className="m-0 flex list-decimal flex-col gap-1 pl-5 text-sm">
-          {idea.proposedSolutions.map((solution, index) => (
-            // Solutions are ordered prose and may repeat, so position is their identity.
-            // biome-ignore lint/suspicious/noArrayIndexKey: see above
-            <li key={index}>{solution}</li>
-          ))}
-        </ol>
-      </Section>
-      <Section title="Impact rationale">
-        <p className="m-0 whitespace-pre-line text-sm">{idea.impactRationale}</p>
-      </Section>
+      {tasks}
+
+      {blockers}
+
+      {idea.problem ? (
+        <Section title="Problem">
+          <p className="m-0 whitespace-pre-line text-sm">{idea.problem}</p>
+        </Section>
+      ) : null}
+      {idea.proposedSolutions.length > 0 ? (
+        <Section title="Proposed solutions">
+          <ol className="m-0 flex list-decimal flex-col gap-1 pl-5 text-sm">
+            {idea.proposedSolutions.map((solution, index) => (
+              // Solutions are ordered prose and may repeat, so position is their identity.
+              // biome-ignore lint/suspicious/noArrayIndexKey: see above
+              <li key={index}>{solution}</li>
+            ))}
+          </ol>
+        </Section>
+      ) : null}
+      {idea.impactRationale ? (
+        <Section title="Impact rationale">
+          <p className="m-0 whitespace-pre-line text-sm">{idea.impactRationale}</p>
+        </Section>
+      ) : null}
       {idea.description ? (
         <Section title="Summary">
           <p className="m-0 whitespace-pre-line text-sm">{idea.description}</p>
@@ -134,7 +220,7 @@ export function IdeaView({
                 {/* An author the API could not resolve is left unattributed rather than named. */}
                 <Avatar
                   initials={comment.author?.initials ?? '—'}
-                  className="mt-0.5 size-6 text-[10px]"
+                  className="mt-0.5 size-6 text-xs"
                 />
                 <div className="min-w-0">
                   <div className="text-xs text-muted-foreground">

@@ -1,6 +1,9 @@
-import { ValidationError } from '@collega/application/common'
+import { type Page, ValidationError } from '@collega/application/common'
 import {
+  type BoardTaskListItem,
+  type CreateBoardTaskCommand,
   type CreateIdeaResult,
+  type IdeaActivityEntry,
   type IdeaDetail,
   type IdeaFieldValueWrite,
   type IdeaImportResult,
@@ -73,12 +76,22 @@ type CreateIdeaBody = {
   tagNames?: unknown
   mentionEmails?: unknown
   fieldValues?: unknown
+  effort?: unknown
 }
 
-/** `PUT /ideas/{ideaId}` - `UpdateIdeaRequest`: the create shape minus `statusId`. */
-type UpdateIdeaBody = Omit<CreateIdeaBody, 'statusId'>
+/** `POST /organizations/{organizationId}/issues`: the create shape plus the promotion's fields. */
+type AddIssueBody = CreateIdeaBody & { sprintId?: unknown }
 
-type ChangeIdeaStatusBody = { statusId?: unknown }
+/** `PUT /ideas/{ideaId}` - `UpdateIdeaRequest`: the create shape minus `statusId`. */
+type UpdateIdeaBody = Omit<CreateIdeaBody, 'statusId'> & { effort?: unknown }
+
+type ChangeIdeaStatusBody = { statusId?: unknown; forceReason?: unknown }
+
+/** `DELETE /ideas/{ideaId}/board`'s optional body: an Org Admin's override of the reference-lane
+ * lock. */
+type DetachFromBoardBody = { forceReason?: unknown }
+
+type SetBlockedByBody = { ideaIds?: unknown }
 
 type ReassignIdeaTypeBody = { ideaTypeId?: unknown }
 
@@ -137,6 +150,74 @@ function ideaBodyRules(body: CreateIdeaBody): Record<string, FieldRules> {
   }
 }
 
+/** A task's body, on create and on update: the idea-only fields are not taken. */
+function taskBodyRules(body: UpdateIdeaBody): Record<string, FieldRules> {
+  return {
+    title: { value: body.title, required: true, maxLength: TITLE_MAX_LENGTH },
+    description: { value: body.description, maxLength: DESCRIPTION_MAX_LENGTH },
+  }
+}
+
+function taskFields(body: UpdateIdeaBody): CreateBoardTaskCommand {
+  return {
+    title: body.title ?? '',
+    description: optional(body.description),
+    assigneeUserIds: guidList(body.assigneeUserIds),
+    tagNames: stringList('tagNames', body.tagNames),
+  }
+}
+
+/** The create fields the board route and the pool route share. */
+function newIdeaFields(body: CreateIdeaBody) {
+  return {
+    title: body.title ?? '',
+    description: optional(body.description),
+    problem: body.problem ?? '',
+    proposedSolutions: stringList('proposedSolutions', body.proposedSolutions) ?? [],
+    impactRationale: body.impactRationale ?? '',
+    priority: body.priority ?? '',
+    ideaTypeId: guidOrEmpty(body.ideaTypeId),
+    businessImpactId: guidOrEmpty(body.businessImpactId),
+    dueDate: optional(body.dueDate),
+    assigneeUserIds: guidList(body.assigneeUserIds),
+    tagNames: stringList('tagNames', body.tagNames),
+    mentionEmails: stringList('mentionEmails', body.mentionEmails),
+    fieldValues: fieldValues(body.fieldValues),
+    ...effortField(body),
+  }
+}
+
+/** `effort` on the update is three-state: an absent key is left out so the stored estimate is
+ * untouched, an explicit `null` clears it, and anything else goes to the service to be parsed
+ * (a non-string becomes text that no level matches, so it is a field-keyed 400). */
+function effortField(body: UpdateIdeaBody): { effort?: string | null } {
+  if (!('effort' in body) || body.effort === undefined) {
+    return {}
+  }
+  return { effort: body.effort === null ? null : String(body.effort) }
+}
+
+/** `sprintId` on the board list: a GUID, or the literal `none` for the backlog. */
+function sprintFilter(value: unknown): { sprintId: string | null; noSprint: boolean } {
+  const text = optional(value)
+  if (text === null) {
+    return { sprintId: null, noSprint: false }
+  }
+  return text.toLowerCase() === 'none'
+    ? { sprintId: null, noSprint: true }
+    : { sprintId: guidOrEmpty(text), noSprint: false }
+}
+
+/** The organization list's repeatable `boardId`: GUIDs, and the literal `none` for no board. */
+function boardFilter(value: unknown): { boardIds: readonly string[]; includeNoBoard: boolean } {
+  const values = queryList(value)
+  const isNone = (entry: string) => entry.toLowerCase() === 'none'
+  return {
+    boardIds: values.filter((entry) => !isNone(entry)).map(guidOrEmpty),
+    includeNoBoard: values.some(isNone),
+  }
+}
+
 /**
  * `fieldFilters[<fieldDefinitionId>]=<value>` (T059), read straight off the query string.
  *
@@ -179,7 +260,7 @@ function parseFieldFilters(query: Record<string, unknown>): ReadonlyMap<string, 
 /**
  * Idea lifecycle and upvotes (`SPEC/30-Contracts.md` "Idea Contracts" and "Upvote Contracts").
  *
- * **No controller prefix, deliberately.** These eleven routes span three roots - `boards/...`,
+ * **No controller prefix, deliberately.** These thirteen routes span three roots - `boards/...`,
  * `organizations/...` and `ideas/...` - because the .NET controller declared each path in full
  * rather than sharing one, and the golden corpus pins every one of them. A `@Controller('ideas')`
  * with relative paths would move six of the eleven.
@@ -211,6 +292,7 @@ export class IdeasController {
       tags: queryList(query.tag),
       priorities: queryList(query.priority),
       dueBefore: optional(query.dueBefore),
+      ...sprintFilter(query.sprintId),
       sortBy: optional(query.sortBy),
       sortDirection: optional(query.sortDirection),
     })
@@ -230,7 +312,7 @@ export class IdeasController {
       sortBy: optional(query.sortBy),
       sortDirection: optional(query.sortDirection),
       fieldFilters: parseFieldFilters(query),
-      boardIds: guidQueryList(query.boardId),
+      ...boardFilter(query.boardId),
       statusIds: guidQueryList(query.statusId),
       priorities: queryList(query.priority),
       tags: queryList(query.tag),
@@ -248,22 +330,73 @@ export class IdeasController {
     validateFields(ideaBodyRules(body))
 
     return this.ideas.create(boardId, {
-      title: body.title ?? '',
-      description: optional(body.description),
-      problem: body.problem ?? '',
-      proposedSolutions: stringList('proposedSolutions', body.proposedSolutions) ?? [],
-      impactRationale: body.impactRationale ?? '',
-      priority: body.priority ?? '',
-      ideaTypeId: guidOrEmpty(body.ideaTypeId),
-      businessImpactId: guidOrEmpty(body.businessImpactId),
-      dueDate: optional(body.dueDate),
-      assigneeUserIds: guidList(body.assigneeUserIds),
+      ...newIdeaFields(body),
       // `Guid?` here, not `Guid`: omitting it means "the board's left-most swimlane", which is not
       // the same request as naming a status that does not exist.
       statusId: optionalGuid(body.statusId),
-      tagNames: stringList('tagNames', body.tagNames),
-      mentionEmails: stringList('mentionEmails', body.mentionEmails),
-      fieldValues: fieldValues(body.fieldValues),
+    })
+  }
+
+  /** A task on the board the parent's lane references. The body is `title`, `description`,
+   * `assigneeUserIds` and `tagNames`; anything else sent is ignored, as on the other routes here. */
+  @Post('ideas/:ideaId/board-tasks')
+  @HttpCode(201)
+  async createBoardTask(
+    @Param('ideaId', UuidParamPipe) ideaId: string,
+    @Body() body: CreateIdeaBody,
+  ): Promise<CreateIdeaResult> {
+    validateFields(taskBodyRules(body))
+
+    return this.ideas.createBoardTask(ideaId, taskFields(body))
+  }
+
+  /** The parent's tasks in creation order. */
+  @Get('ideas/:ideaId/board-tasks')
+  async listBoardTasks(
+    @Param('ideaId', UuidParamPipe) ideaId: string,
+  ): Promise<readonly BoardTaskListItem[]> {
+    return this.ideas.listBoardTasks(ideaId)
+  }
+
+  /** Deletes the task card; the parent's counts and lock follow. */
+  @Delete('ideas/:ideaId/board-tasks/:taskId')
+  @HttpCode(204)
+  async deleteBoardTask(
+    @Param('ideaId', UuidParamPipe) ideaId: string,
+    @Param('taskId', UuidParamPipe) taskId: string,
+  ): Promise<void> {
+    await this.ideas.deleteBoardTask(ideaId, taskId)
+  }
+
+  /** An idea with no board. The body is the board create's minus `statusId`, which is ignored if
+   * sent: the status is the organization's first active one. */
+  @Post('organizations/:organizationId/ideas')
+  @HttpCode(201)
+  async createInPool(
+    @Param('organizationId', UuidParamPipe) organizationId: string,
+    @Body() body: CreateIdeaBody,
+  ): Promise<CreateIdeaResult> {
+    validateFields(ideaBodyRules(body))
+
+    return this.ideas.createInPool(organizationId, newIdeaFields(body))
+  }
+
+  /** Creates an idea with no board and promotes it in the same commit (an Issue added directly).
+   * The pool create's body plus `effort` and `sprintId`; `statusId` is ignored. Validation runs
+   * inside the service, after authorization, as the contract orders them. */
+  @Post('organizations/:organizationId/issues')
+  @HttpCode(201)
+  async addIssue(
+    @Param('organizationId', UuidParamPipe) organizationId: string,
+    @Body() body: AddIssueBody,
+  ): Promise<CreateIdeaResult> {
+    return this.ideas.addIssue(organizationId, () => {
+      validateFields(ideaBodyRules(body))
+      return {
+        ...newIdeaFields(body),
+        effort: optional(body.effort) ?? '',
+        sprintId: optionalGuid(body.sprintId),
+      }
     })
   }
 
@@ -272,11 +405,28 @@ export class IdeasController {
     return this.ideas.getById(ideaId)
   }
 
+  @Get('ideas/:ideaId/activity')
+  async activity(
+    @Param('ideaId', UuidParamPipe) ideaId: string,
+    @Query() query: Record<string, unknown>,
+  ): Promise<Page<IdeaActivityEntry>> {
+    return this.ideas.listActivity(ideaId, {
+      page: optionalInt(query.page),
+      pageSize: optionalInt(query.pageSize),
+    })
+  }
+
   @Put('ideas/:ideaId')
   async update(
     @Param('ideaId', UuidParamPipe) ideaId: string,
     @Body() body: UpdateIdeaBody,
   ): Promise<IdeaDetail> {
+    // A task takes only its four fields; the idea-only ones are ignored, not validated.
+    if (await this.ideas.isTask(ideaId)) {
+      validateFields(taskBodyRules(body))
+      return this.ideas.updateTask(ideaId, taskFields(body))
+    }
+
     validateFields(ideaBodyRules(body))
 
     return this.ideas.update(ideaId, {
@@ -293,6 +443,7 @@ export class IdeasController {
       tagNames: stringList('tagNames', body.tagNames),
       mentionEmails: stringList('mentionEmails', body.mentionEmails),
       fieldValues: fieldValues(body.fieldValues),
+      ...effortField(body),
     })
   }
 
@@ -307,13 +458,42 @@ export class IdeasController {
     await this.ideas.reassignIdeaType(organizationId, ideaId, guidOrEmpty(body.ideaTypeId))
   }
 
+  /** Replaces the item's blocker set; `[]` clears it. */
+  @Put('ideas/:ideaId/blocked-by')
+  @HttpCode(200)
+  async setBlockedBy(
+    @Param('ideaId', UuidParamPipe) ideaId: string,
+    @Body() body: SetBlockedByBody,
+  ): Promise<IdeaDetail> {
+    const ideaIds = guidList(body.ideaIds)
+    if (ideaIds === null) {
+      throw new ValidationError('One or more fields are invalid.', {
+        ideaIds: ['Provide the complete blocker set; use an empty list to clear it.'],
+      })
+    }
+    return this.ideas.setBlockedBy(ideaId, ideaIds)
+  }
+
   @Post('ideas/:ideaId/status')
   @HttpCode(204)
   async changeStatus(
     @Param('ideaId', UuidParamPipe) ideaId: string,
     @Body() body: ChangeIdeaStatusBody,
   ): Promise<void> {
-    await this.ideas.changeStatus(ideaId, { statusId: guidOrEmpty(body.statusId) })
+    await this.ideas.changeStatus(ideaId, {
+      statusId: guidOrEmpty(body.statusId),
+      forceReason: optional(body.forceReason),
+    })
+  }
+
+  /** Removes an idea from its board; it joins the organization's pool. Idempotent. */
+  @Delete('ideas/:ideaId/board')
+  @HttpCode(204)
+  async detachFromBoard(
+    @Param('ideaId', UuidParamPipe) ideaId: string,
+    @Body() body: DetachFromBoardBody | undefined,
+  ): Promise<void> {
+    await this.ideas.detachFromBoard(ideaId, optional(body?.forceReason))
   }
 
   /** Soft delete. Administrative even for the idea's own author - the corpus pins that. */

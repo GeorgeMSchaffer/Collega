@@ -33,6 +33,13 @@ test.describe('creating an organization', () => {
     await page
       .getByRole('textbox', { name: 'Description', exact: true })
       .fill('Created by the E2E suite.')
+    // The first Org Admin is required (SPEC/decisions.md 2026-10-04); the form will not submit without it.
+    await page.getByRole('textbox', { name: 'First name', exact: true }).fill('Playwright')
+    await page.getByRole('textbox', { name: 'Last name', exact: true }).fill('Admin')
+    await page
+      .getByRole('textbox', { name: 'Email', exact: true })
+      .fill(`playwright-admin-${Date.now()}@example.test`)
+    await page.getByLabel(/initial password/i).fill('Abc123!x')
     await page.getByRole('button', { name: /create organization/i }).click()
 
     await expect(page).toHaveURL(/\/settings\/organizations$/, { timeout: 30_000 })

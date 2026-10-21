@@ -17,11 +17,58 @@
 // before its own `saveChanges()` - matching the .NET, which had the same property.
 
 import { randomUUID } from 'node:crypto'
-import type { AuditEventInput, AuditEventWriter } from '@collega/application/common'
+import type {
+  AuditEventInput,
+  AuditEventWriter,
+  Page,
+  PageRequest,
+} from '@collega/application/common'
+import type { IdeaActivityEntry, IdeaActivityPort } from '@collega/application/ideas'
 import type { PrismaClient } from '../persistence/prisma-client.js'
 
-export class PrismaAuditEventWriter implements AuditEventWriter {
+function parseMetadata(json: string | null): Record<string, unknown> | null {
+  if (json === null) {
+    return null
+  }
+  try {
+    const parsed: unknown = JSON.parse(json)
+    return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null
+  } catch {
+    return null
+  }
+}
+
+export class PrismaAuditEventWriter implements AuditEventWriter, IdeaActivityPort {
   constructor(private readonly prisma: PrismaClient) {}
+
+  /** `ideas.IdeaActivityPort`: the events whose entity is the idea, newest first. */
+  async listForIdea(ideaId: string, request: PageRequest): Promise<Page<IdeaActivityEntry>> {
+    const where = { entity_type: 'Idea', entity_id: ideaId }
+    const [rows, totalCount] = await Promise.all([
+      this.prisma.audit_events.findMany({
+        where,
+        orderBy: [{ occurred_at_utc: 'desc' }, { id: 'desc' }],
+        skip: (request.page - 1) * request.pageSize,
+        take: request.pageSize,
+      }),
+      this.prisma.audit_events.count({ where }),
+    ])
+    return {
+      items: rows.map((row) => ({
+        eventType: row.event_type,
+        message: row.message,
+        occurredAtUtc: row.occurred_at_utc,
+        actorUserId: row.actor_user_id,
+        onBehalfOfUserId: row.on_behalf_of_user_id,
+        metadata: parseMetadata(row.metadata_json),
+      })),
+      page: request.page,
+      pageSize: request.pageSize,
+      totalCount,
+    }
+  }
 
   async write(event: AuditEventInput): Promise<void> {
     await this.prisma.audit_events.create({

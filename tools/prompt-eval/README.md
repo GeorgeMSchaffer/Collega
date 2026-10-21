@@ -1,7 +1,7 @@
 # prompt-eval
 
 The corpus the AI idea-assist prompt was evaluated against
-(`SPEC/20-feature-ai-idea-assist.md`): nine v1 cases, seven v2 cases and four organization
+(`SPEC/20-feature-ai-idea-assist.md`): nine v1 cases, ten v2 cases and four organization
 fixtures.
 
 A runner measures a prompt across the whole corpus: pass rates over repeats, the scope-gate
@@ -32,7 +32,8 @@ Useful options:
 | Option | Default | |
 |---|---|---|
 | `--repeats <n>` | 5 | Trials per case |
-| `--case <name>` | every v1 case | Repeatable; comparing a subset with the baseline warns that the runs are not like with like |
+| `--assistant <v1\|v2>` | v1 | Which turn to drive; `v2` runs the `v2` and `both` cases under the v2 prompt |
+| `--case <name>` | every case for the turn | Repeatable; comparing a subset with the baseline warns that the runs are not like with like |
 | `--prompt-file <path>` | the compiled template | A candidate template, used verbatim |
 | `--baseline <file>` | none | Judge the run against a baseline as well as the absolute floor |
 | `--max-calls <n>` / `--max-tokens <n>` | 200 / 1,000,000 | Ceilings; hitting one aborts the run and exits 2 |
@@ -53,7 +54,8 @@ pnpm -C tools/prompt-eval eval dump-prompt --fixture hostile-catalog            
 
 Exit codes: **0** pass, **1** a threshold failed or `compare` found a regression, **2** the run is not
 valid (aborted by a ceiling, more than 10% errored trials, any errored `refuse-*` trial, or an
-invalid corpus or configuration). Call `node src/cli.ts` directly when the exit code matters, since
+invalid corpus or configuration; for `compare`, also two runs that share no case). `compare` judges
+only the cases both runs share and lists the ones it left out. Call `node src/cli.ts` directly when the exit code matters, since
 `pnpm --filter` reports every failure as 1.
 
 ## Thresholds
@@ -67,6 +69,34 @@ invalid corpus or configuration). Call `node src/cli.ts` directly when the exit 
   than 0.5 apart. It is reported, not gated.
 
 These were confirmed against the first baseline on 2026-09-30 (`SPEC/decisions.md`).
+
+## v2 scoring
+
+A run that drove the v2 turn adds a **v2 results** section to its summary: refusal recall and
+precision, overall mapping accuracy, and pooled accuracy for structured fields, interview order,
+brainstorm suggestions, custom fields and "I kept your edit" replies, beside the locked-field
+proposal and survival figures. Targets (precision 0.85, mapping 0.85, each group 0.75; confirmed 2026-10-20) are
+reported as met or not met, never gating
+(`src/v2-targets.ts`, runner spec rule 33). A survived locked field, the `refuse-*` recall floor
+(which includes `refuse-v2-lock-override`) and a regression against a baseline still fail the run.
+
+**`--assistant v2` drives the v2 turn** (slice 312). It runs the `v2` and `both` cases and lists the
+v1-only ones as not run; the default, `--assistant v1`, is unchanged and lists the v2-only ones. Per
+turn it does what `IdeaAssistService.continueTurnV2` does around the model: the case's `draft`
+(names mapped to the fixture's derived ids), `lockedFields` and the previous `nextStep` form the
+request, `prepareTurnInputV2` normalises it, the adapter's `continueTurnV2` is called with
+`SYSTEM_PROMPT_TEMPLATE_V2` (not the live v1 default; `--prompt-file` overrides it), and
+`finalizeTurnV2` reduces the response, which is what gets scored. A v2 run file marks
+`header.assistant: "v2"` and carries, on each turn, the raw and the finalized `changes`.
+
+```bash
+pnpm -C tools/prompt-eval eval --assistant v2 --label v2-default      # 100 calls at the default 5 repeats
+pnpm -C tools/prompt-eval eval compare baselines/v1-default.json runs/<v2 run>.json
+```
+
+`compare` against the v1 baseline judges the cases both share (the `refuse-*` and `scope-*` ones)
+and warns that the runs are not like with like, since the schema and prompt differ by design.
+`baselines/v2-default.json` (with `v2-default.md`) is the committed v2 baseline, recorded 2026-10-20 after slice 313's prompt tuning.
 
 ## The baseline
 

@@ -29,6 +29,7 @@ Defines the system contracts that implementations must follow.
 - `401 Unauthorized`: the caller is not authenticated or the authentication token is missing, expired, or invalid.
 - `403 Forbidden`: the caller is authenticated but not permitted to perform the requested action in the current scope.
 - `404 Not Found`: the targeted resource does not exist or is not visible within the caller's authorized scope.
+- `422 Unprocessable Entity`: the request is well-formed and the caller may make it, but a named business rule refuses it. The body is Problem Details whose message is the rule key (for example `laneInUse`).
 
 ## Collection Conventions
 - Organization, user, idea, and comment list endpoints support pagination in MVP.
@@ -101,11 +102,14 @@ contract states nothing for that item, and the conventions above apply.
 | User-Defined Field Contracts | [`contracts/field-definitions.md`](contracts/field-definitions.md) | `/organizations/{organizationId}/field-definitions` (and `/{id}`, `/reorder`). Written from the code 2026-09-29 (`SPEC/decisions.md`). |
 | Idea-Type Field Contracts | [`contracts/idea-type-fields.md`](contracts/idea-type-fields.md) | `/organizations/{organizationId}/idea-types/{ideaTypeId}/fields` and `/appearance`, `/organizations/{organizationId}/ideas/{ideaId}/idea-type` |
 | Fieldset Contracts | [`contracts/fieldsets.md`](contracts/fieldsets.md) | `/organizations/{organizationId}/fieldsets` (and `/{id}`, `/{id}/fields`). Specified 2026-10-04 (`SPEC/decisions.md`), before the code. |
-| Board Contracts | [`contracts/boards.md`](contracts/boards.md) | `/organizations/{organizationId}/boards`, `/boards/{boardId}` (and `/archive`, `/unarchive`, `/swimlanes/reorder`) |
-| Idea Contracts | [`contracts/ideas.md`](contracts/ideas.md) | `/boards/{boardId}/ideas` (and `/export`, `/import`, `/ai-draft`, `/ai-polish`), `/organizations/{organizationId}/ideas`, `/ideas/{ideaId}` (and `/status`) |
-| Delivery Contracts | [`contracts/delivery.md`](contracts/delivery.md) | `/ideas/{ideaId}/promote`, `/return-to-discovery`, `/delivery-status`, `/sprint`, `/delivery`; `/organizations/{organizationId}/delivery` |
-| Sprint Contracts | [`contracts/sprints.md`](contracts/sprints.md) | `/organizations/{organizationId}/sprints` (and `/{sprintId}`, `/start`, `/complete`) |
+| Board Contracts | [`contracts/boards.md`](contracts/boards.md) | `/organizations/{organizationId}/boards` (and `/pull-candidates`), `/boards/{boardId}` (and `/archive`, `/unarchive`, `/swimlanes/reorder`) |
+| Idea Contracts | [`contracts/ideas.md`](contracts/ideas.md) | `/boards/{boardId}/ideas` (and `/export`, `/import`; `/ai-draft` and `/ai-polish` withdrawn 2026-09-27, idea assistant v2), `/organizations/{organizationId}/ideas` (list and the board-less create), `/ideas/{ideaId}` (and `/status`, `/board`, `/board-tasks`) |
+| Delivery Contracts | [`contracts/delivery.md`](contracts/delivery.md) | `/ideas/{ideaId}/promote`, `/return-to-discovery`, `/delivery-status`, `/sprint`, `/delivery`; `/organizations/{organizationId}/delivery`, `/organizations/{organizationId}/issues` (add an Issue directly) |
+| Sprint Contracts | [`contracts/sprints.md`](contracts/sprints.md) | `/organizations/{organizationId}/sprints` (and `/{sprintId}`, `/start`, `/complete`), `/boards/{boardId}/sprints` |
+| Idea Dependency Contracts | [`contracts/idea-dependencies.md`](contracts/idea-dependencies.md) | `/ideas/{ideaId}/blocked-by`: blocked-by sets between items on one board (planned 2026-10-15) |
 | Issue Task Contracts | [`contracts/issue-tasks.md`](contracts/issue-tasks.md) | `/ideas/{ideaId}/tasks` (and `/{taskId}`, `/{taskId}/state`, `/order`) |
+| Outcome Contracts | [`contracts/outcomes.md`](contracts/outcomes.md) | `/organizations/{orgId}/outcomes` (and `/{id}`, `/order`), `/organizations/{orgId}/roadmap`, `/ideas/{ideaId}/outcomes`. Specified 2026-10-09 (`SPEC/decisions.md`), before the code; its 17 open questions were decided 2026-10-15 (`SPEC/decisions.md`) and are written into the routes. |
+| Metric Type Contracts | [`contracts/metric-types.md`](contracts/metric-types.md) | `/organizations/{orgId}/metric-types` (and `/{id}`), `/ideas/{ideaId}/metrics`, and the Outcome `metricTotals`. Specified 2026-10-16 (`SPEC/decisions.md`), before the code. |
 | Tag Contracts | [`contracts/tags.md`](contracts/tags.md) | `/organizations/{organizationId}/tags` (and `/catalog`), `/tags/{tagId}`. Subsection: Tag colour and management |
 | Comment Contracts | [`contracts/comments.md`](contracts/comments.md) | `/ideas/{ideaId}/comments`, `/comments/{commentId}` |
 | Upvote Contracts | [`contracts/upvotes.md`](contracts/upvotes.md) | `/ideas/{ideaId}/upvote/toggle` |

@@ -46,6 +46,22 @@ export function fieldErrors(errors: unknown): Readonly<Record<string, string>> {
   )
 }
 
+/**
+ * Every message a validation 400 carries, still keyed by field. `fieldErrors` keeps the first per
+ * field, which is right for a control that shows one; a field that names several refused things —
+ * `pullItemIds` reports one message per item — needs the whole list.
+ */
+export function fieldErrorLists(errors: unknown): Readonly<Record<string, readonly string[]>> {
+  if (typeof errors !== 'object' || errors === null) return {}
+
+  return Object.fromEntries(
+    Object.entries(errors).flatMap(([field, list]): [string, string[]][] => {
+      const messages = Array.isArray(list) ? list.filter((entry) => typeof entry === 'string') : []
+      return messages.length > 0 ? [[field, messages]] : []
+    }),
+  )
+}
+
 /** The same messages as one sentence, for a caller with nowhere to put them field by field. */
 export function fieldMessages(errors: unknown): string | null {
   const messages = Object.values(fieldErrors(errors))

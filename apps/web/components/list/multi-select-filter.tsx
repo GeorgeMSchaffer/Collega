@@ -103,7 +103,7 @@ export function MultiSelectFilter({
           setOpen(!open)
         }}
         className={cn(
-          'inline-flex h-[var(--control-h-sm)] items-center gap-1.5 rounded-full border border-input bg-card px-3 text-[13px] text-foreground hover:border-primary',
+          'inline-flex h-[var(--control-h-sm)] items-center gap-1.5 rounded-full border border-input bg-card px-3 text-xs text-foreground hover:border-primary',
           summary && 'border-primary bg-accent font-semibold text-accent-foreground',
         )}
       >

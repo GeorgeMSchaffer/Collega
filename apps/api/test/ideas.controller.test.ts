@@ -37,6 +37,7 @@ function controller(): { controller: IdeasController; calls: Call[] } {
   const ideas = {
     create: forbidden('create'),
     update: forbidden('update'),
+    isTask: async () => false,
     listByBoard: recorded('listByBoard'),
     listByOrganization: recorded('listByOrganization'),
   } as unknown as IdeaService
@@ -47,6 +48,7 @@ function controller(): { controller: IdeasController; calls: Call[] } {
 function acceptingController(): { controller: IdeasController; calls: Call[] } {
   const calls: Call[] = []
   const ideas = {
+    isTask: async () => false,
     update: async (...args: unknown[]) => {
       calls.push({ method: 'update', args })
       return {}
@@ -178,6 +180,28 @@ describe('proposedSolutions at the HTTP boundary', () => {
     const command = firstCommand<{ proposedSolutions: string[]; description: unknown }>(calls)
     expect(command.proposedSolutions).toEqual(['First', 'Second'])
     expect(command.description).toBeNull()
+  })
+})
+
+describe('effort on PUT', () => {
+  it('leaves effort out of the command when the key is absent', async () => {
+    const { controller: ideas, calls } = acceptingController()
+
+    await ideas.update(IDEA, VALID)
+
+    expect('effort' in firstCommand<object>(calls)).toBe(false)
+  })
+
+  it('passes an explicit null (clear) and a value (set) through', async () => {
+    const { controller: ideas, calls } = acceptingController()
+
+    await ideas.update(IDEA, { ...VALID, effort: null })
+    await ideas.update(IDEA, { ...VALID, effort: 'High' })
+
+    expect(calls.map((call) => (call.args[1] as { effort: unknown }).effort)).toEqual([
+      null,
+      'High',
+    ])
   })
 })
 

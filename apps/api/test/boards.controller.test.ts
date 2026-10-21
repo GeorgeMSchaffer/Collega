@@ -8,6 +8,7 @@
 // `ideaMoves` on PUT (added 2026-09-29) is read here and judged by the Application layer, so its
 // tests pin what the controller hands the service, and one refusal rendered as a response.
 
+import type { AutoCreateTaskPort } from '@collega/application/boards'
 import {
   type BoardRepository,
   BoardService,
@@ -20,6 +21,7 @@ import type {
   CurrentUserContext,
   UnitOfWork,
 } from '@collega/application/common'
+import type { IdeaRepository } from '@collega/application/ideas'
 import type { StatusRepository } from '@collega/application/statuses'
 import { type Board, createBoard } from '@collega/domain/boards'
 import { Role } from '@collega/domain/enums'
@@ -57,14 +59,21 @@ function status(id: string, sortOrder: number): Status {
 }
 
 /** A controller over a real `BoardService`, so the domain's length check is the one exercised. */
-function controller(): { controller: BoardsController; persisted: Board[] } {
+function controller(otherBoards: readonly Board[] = []): {
+  controller: BoardsController
+  persisted: Board[]
+} {
   const statuses = [status(STATUS_1, 10), status(STATUS_2, 20)]
   const existing = createBoard({
     id: BOARD,
     organizationId: ORG,
     name: 'Ideas',
     allowUserStatusUpdate: true,
-    orderedStatusIds: [STATUS_1, STATUS_2],
+    orderedLanes: [STATUS_1, STATUS_2].map((statusId) => ({
+      statusId,
+      isFinal: false,
+      referencesBoardId: null,
+    })),
     nowUtc: NOW,
     actorUserId: ADMIN,
   })
@@ -77,8 +86,8 @@ function controller(): { controller: BoardsController; persisted: Board[] } {
     save: async (board) => {
       persisted.push(board)
     },
-    getById: async (id) => (id === BOARD ? existing : null),
-    listByOrganization: async () => [existing],
+    getById: async (id) => [existing, ...otherBoards].find((b) => b.id === id) ?? null,
+    listByOrganization: async () => [existing, ...otherBoards],
     isStatusReferenced: async () => false,
     countIdeasByBoard: async () => new Map(),
     countIdeasByBoardAndStatus: async () => [],
@@ -86,6 +95,15 @@ function controller(): { controller: BoardsController; persisted: Board[] } {
     getUserNames: async () => new Map(),
     listLaneIdeas: async () => [],
     moveIdeas: async () => {},
+    verifyIdeasMoved: async () => {},
+    reassignIdeas: async () => {},
+    listPullCandidates: async () => ({
+      items: [],
+      page: 1,
+      pageSize: 20,
+      totalCount: 0,
+      hiddenTaskCount: 0,
+    }),
   }
   const statusRepository: StatusRepository = {
     add: async () => {},
@@ -111,6 +129,8 @@ function controller(): { controller: BoardsController; persisted: Board[] } {
         audit,
         CURRENT_USER,
         clock,
+        {} as IdeaRepository,
+        {} as AutoCreateTaskPort,
       ),
     ),
     persisted,
@@ -306,6 +326,236 @@ describe('Board ideaMoves at the HTTP boundary', () => {
         errors: { ideaMoves: ['A move must come from a lane this save removes.'] },
       },
     })
+    expect(persisted).toHaveLength(0)
+  })
+})
+
+describe('Board reference lanes and flags at the HTTP boundary', () => {
+  it('passes isFinal, referencesBoardId, keyPrefix and the flags through to the command', async () => {
+    const commands: UpdateBoardCommand[] = []
+    const service = {
+      update: async (_boardId: string, command: UpdateBoardCommand) => {
+        commands.push(command)
+        return {} as never
+      },
+    } as unknown as BoardService
+
+    await new BoardsController(service).update(BOARD, {
+      name: 'Ideas',
+      keyPrefix: 'ab',
+      sprintsEnabled: true,
+      swimlanes: [
+        { statusId: STATUS_1, order: 0, isFinal: true, referencesBoardId: 'other' },
+        { statusId: STATUS_2, order: 1 },
+      ],
+    })
+
+    expect(commands[0]).toMatchObject({
+      keyPrefix: 'ab',
+      sprintsEnabled: true,
+      ideaFeaturesEnabled: undefined,
+      swimlanes: [
+        { statusId: STATUS_1, order: 0, isFinal: true, referencesBoardId: 'other' },
+        { statusId: STATUS_2, order: 1, isFinal: false, referencesBoardId: null },
+      ],
+    })
+  })
+
+  it('answers 422 with the rule key when a lane references its own board', async () => {
+    const { controller: boards, persisted } = controller()
+
+    const error = await thrownBy(
+      boards.update(BOARD, {
+        name: 'Ideas',
+        swimlanes: [{ statusId: STATUS_1, order: 0, referencesBoardId: BOARD }, SWIMLANES[1] ?? {}],
+      }),
+    )
+
+    const rendered = render(error, `/api/v1/boards/${BOARD}`)
+    expect(rendered.status).toBe(422)
+    expect(JSON.stringify(rendered.body)).toContain('laneReferencesOwnBoard')
+    expect(persisted).toHaveLength(0)
+  })
+})
+
+describe('Board reference lane bodies at the HTTP boundary', () => {
+  const OTHER = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+
+  function recordingController() {
+    const commands: UpdateBoardCommand[] = []
+    const created: unknown[] = []
+    const reordered: unknown[] = []
+    const service = {
+      update: async (_id: string, command: UpdateBoardCommand) => {
+        commands.push(command)
+        return {} as never
+      },
+      create: async (_org: string, command: unknown) => {
+        created.push(command)
+        return {} as never
+      },
+      reorderSwimlanes: async (_id: string, command: unknown) => {
+        reordered.push(command)
+      },
+    } as unknown as BoardService
+    return { controller: new BoardsController(service), commands, created, reordered }
+  }
+
+  it('reads absent keyPrefix and flags as undefined and a null keyPrefix as null', async () => {
+    const { controller: boards, commands } = recordingController()
+
+    await boards.update(BOARD, { name: 'Ideas', swimlanes: SWIMLANES })
+    await boards.update(BOARD, { name: 'Ideas', swimlanes: SWIMLANES, keyPrefix: null })
+
+    expect(commands[0]?.keyPrefix).toBeUndefined()
+    expect(commands[0]?.sprintsEnabled).toBeUndefined()
+    expect(commands[0]?.ideaFeaturesEnabled).toBeUndefined()
+    expect(commands[1]?.keyPrefix).toBeNull()
+  })
+
+  it('passes the same fields on create', async () => {
+    const { controller: boards, created } = recordingController()
+
+    await boards.create(ORG, {
+      name: 'Ideas',
+      keyPrefix: 'ab',
+      sprintsEnabled: false,
+      ideaFeaturesEnabled: false,
+      swimlanes: [
+        { statusId: STATUS_1, order: 0, referencesBoardId: OTHER },
+        { statusId: STATUS_2, order: 1, isFinal: true },
+      ],
+    })
+
+    expect(created[0]).toMatchObject({
+      keyPrefix: 'ab',
+      sprintsEnabled: false,
+      ideaFeaturesEnabled: false,
+      swimlanes: [
+        { statusId: STATUS_1, order: 0, isFinal: false, referencesBoardId: OTHER },
+        { statusId: STATUS_2, order: 1, isFinal: true, referencesBoardId: null },
+      ],
+    })
+  })
+
+  it('reads a non-boolean isFinal as false and a non-string referencesBoardId as none', async () => {
+    const { controller: boards, commands } = recordingController()
+
+    await boards.update(BOARD, {
+      name: 'Ideas',
+      swimlanes: [
+        { statusId: STATUS_1, order: 0, isFinal: 'true', referencesBoardId: 7 },
+        { statusId: STATUS_2, order: 1, isFinal: 1, referencesBoardId: null },
+      ] as never,
+    })
+
+    expect(commands[0]?.swimlanes.map((l) => [l.isFinal, l.referencesBoardId])).toEqual([
+      [false, null],
+      [false, null],
+    ])
+  })
+
+  it('hands the reorder route the same lane shape', async () => {
+    const { controller: boards, reordered } = recordingController()
+
+    await boards.reorderSwimlanes(BOARD, {
+      swimlanes: [
+        { statusId: STATUS_2, order: 0, isFinal: true },
+        { statusId: STATUS_1, order: 1, referencesBoardId: OTHER },
+      ],
+    })
+
+    expect(reordered[0]).toMatchObject({
+      swimlanes: [
+        { statusId: STATUS_2, order: 0, isFinal: true, referencesBoardId: null },
+        { statusId: STATUS_1, order: 1, isFinal: false, referencesBoardId: OTHER },
+      ],
+    })
+  })
+
+  it.each([
+    ['keyPrefix', { keyPrefix: 42 }],
+    ['sprintsEnabled', { sprintsEnabled: 'yes' }],
+    ['ideaFeaturesEnabled', { ideaFeaturesEnabled: 1 }],
+  ])('answers 400 keyed %s for a wrongly typed value, on update and create', async (key, extra) => {
+    const { controller: boards, persisted } = controller()
+    const body = { name: 'Ideas', swimlanes: SWIMLANES, ...extra } as never
+
+    for (const call of [boards.update(BOARD, body), boards.create(ORG, body)]) {
+      const rendered = render(await thrownBy(call), '/x')
+      expect(rendered.status).toBe(400)
+      expect(JSON.stringify(rendered.body)).toContain(key)
+    }
+    expect(persisted).toHaveLength(0)
+  })
+
+  it('renders each lane rule as 422 with its key, and the duplicate prefix as 409', async () => {
+    const referencing = createBoard({
+      id: OTHER,
+      organizationId: ORG,
+      name: 'Other',
+      allowUserStatusUpdate: true,
+      orderedLanes: [
+        { statusId: STATUS_1, isFinal: false, referencesBoardId: BOARD },
+        { statusId: STATUS_2, isFinal: false, referencesBoardId: null },
+      ],
+      keyPrefix: 'DUP',
+      nowUtc: NOW,
+      actorUserId: ADMIN,
+    })
+    const { controller: boards, persisted } = controller([referencing])
+    const lanes = (referencesBoardId: string | null) => [
+      { statusId: STATUS_1, order: 0, referencesBoardId },
+      SWIMLANES[1] ?? {},
+    ]
+    const cases: [string, number, Promise<unknown>][] = [
+      [
+        'referencesBoardInvalid',
+        422,
+        boards.update(BOARD, {
+          name: 'Ideas',
+          swimlanes: lanes('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'),
+        }),
+      ],
+      [
+        'referenceChainNotAllowed',
+        422,
+        boards.update(BOARD, { name: 'Ideas', swimlanes: lanes(OTHER) }),
+      ],
+      [
+        'keyPrefixTaken',
+        409,
+        boards.update(BOARD, { name: 'Ideas', swimlanes: SWIMLANES, keyPrefix: 'dup' }),
+      ],
+    ]
+
+    for (const [key, status, call] of cases) {
+      const rendered = render(await thrownBy(call), '/x')
+      expect(rendered.status).toBe(status)
+      expect(JSON.stringify(rendered.body)).toContain(key)
+    }
+    expect(persisted).toHaveLength(0)
+  })
+
+  it('renders referenceTargetArchived as 422 from the archive route', async () => {
+    const referencing = createBoard({
+      id: OTHER,
+      organizationId: ORG,
+      name: 'Other',
+      allowUserStatusUpdate: true,
+      orderedLanes: [
+        { statusId: STATUS_1, isFinal: false, referencesBoardId: BOARD },
+        { statusId: STATUS_2, isFinal: false, referencesBoardId: null },
+      ],
+      nowUtc: NOW,
+      actorUserId: ADMIN,
+    })
+    const { controller: boards, persisted } = controller([referencing])
+
+    const rendered = render(await thrownBy(boards.archive(BOARD)), '/x')
+
+    expect(rendered.status).toBe(422)
+    expect(JSON.stringify(rendered.body)).toContain('referenceTargetArchived')
     expect(persisted).toHaveLength(0)
   })
 })

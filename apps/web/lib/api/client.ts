@@ -26,7 +26,7 @@ import 'server-only'
 import { failIfRequested, resolve } from '../data/latency'
 import { sessionHeader } from '../server/current-user'
 import { apiBaseUrl } from './config'
-import { fieldErrors, fieldMessages, type ProblemDetails } from './problem'
+import { fieldErrorLists, fieldErrors, fieldMessages, type ProblemDetails } from './problem'
 
 declare const API_PATH: unique symbol
 
@@ -101,12 +101,18 @@ export class ApiError extends Error {
   readonly detail: string
   /** A validation 400's messages keyed by field, so a form can put each beside its control. */
   readonly errors: Readonly<Record<string, string>>
+  /** Every message per field, for the few fields that report one problem per item. */
+  readonly errorLists: Readonly<Record<string, readonly string[]>>
+  /** A `429`'s `Retry-After`, in seconds, when the API sent one. */
+  readonly retryAfter: number | undefined
 
   constructor(
     status: number,
     path: string,
     detail: string,
     errors: Readonly<Record<string, string>> = {},
+    errorLists: Readonly<Record<string, readonly string[]>> = {},
+    retryAfter?: number,
   ) {
     super(`${path} answered ${status}: ${detail}`)
     this.name = 'ApiError'
@@ -114,10 +120,14 @@ export class ApiError extends Error {
     this.path = path
     this.detail = detail
     this.errors = errors
+    this.errorLists = errorLists
+    this.retryAfter = retryAfter
   }
 }
 
 async function failure(response: Response, path: string): Promise<ApiError> {
+  const wait = Number(response.headers.get('retry-after'))
+  const retryAfter = Number.isFinite(wait) && wait > 0 ? wait : undefined
   try {
     const body: unknown = await response.json()
     const problem = body as ProblemDetails
@@ -128,9 +138,11 @@ async function failure(response: Response, path: string): Promise<ApiError> {
       path,
       fieldMessages(problem.errors) ?? detail ?? title ?? response.statusText,
       fieldErrors(problem.errors),
+      fieldErrorLists(problem.errors),
+      retryAfter,
     )
   } catch {
-    return new ApiError(response.status, path, response.statusText)
+    return new ApiError(response.status, path, response.statusText, {}, {}, retryAfter)
   }
 }
 
@@ -242,9 +254,10 @@ export async function apiPut(path: ApiPath, body: unknown = {}): Promise<void> {
  *
  * It goes through `send`, so it carries the same empty JSON body as the rest. The route takes none
  * and ignores it; one request shape across every mutation is worth more than saving two bytes.
+ * `DELETE /ideas/{id}/board` is the exception that reads its body: an Org Admin's `forceReason`.
  */
-export async function apiDelete(path: ApiPath): Promise<void> {
-  return send('DELETE', path, {})
+export async function apiDelete(path: ApiPath, body: unknown = {}): Promise<void> {
+  return send('DELETE', path, body)
 }
 
 /** Whether a thrown value is the API answering `status`. */

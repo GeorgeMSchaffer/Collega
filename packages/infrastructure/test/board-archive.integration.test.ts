@@ -7,6 +7,7 @@
 // Audit events go to an in-memory writer so the run leaves no rows behind.
 
 import { randomUUID } from 'node:crypto'
+import type { AutoCreateTaskPort } from '@collega/application/boards'
 import { BoardService } from '@collega/application/boards'
 import {
   type AuditEventWriter,
@@ -18,6 +19,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { PrismaClient } from '../src/generated/prisma/index.js'
 import { PrismaUnitOfWork } from '../src/persistence/unit-of-work.js'
 import { PrismaBoardRepository } from '../src/repositories/board.repository.js'
+import { PrismaIdeaRepository } from '../src/repositories/idea.repository.js'
 import { OrganizationExistenceLookupRepository } from '../src/repositories/organization-existence-lookup.repository.js'
 import { PrismaStatusRepository } from '../src/repositories/status.repository.js'
 
@@ -59,6 +61,8 @@ describe.skipIf(!DATABASE_URL)('Board archive against a live database', () => {
       audit,
       currentUser,
       { now: () => ARCHIVED },
+      new PrismaIdeaRepository(prisma, unitOfWork),
+      {} as AutoCreateTaskPort,
     )
   }
 

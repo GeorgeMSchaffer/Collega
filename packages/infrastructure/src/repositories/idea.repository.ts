@@ -29,7 +29,7 @@ import type {
 } from '@collega/application/ideas'
 import type { SprintIssueCounts, SprintIssuesPort } from '@collega/application/sprints'
 import type { DeliveryStatus, EffortLevel, IdeaPhase, Priority } from '@collega/domain/enums'
-import { DeliveryStatus as Delivery, IdeaPhase as Phase } from '@collega/domain/enums'
+import { IdeaPhase as Phase } from '@collega/domain/enums'
 import type { Idea, IdeaFieldValueRecord } from '@collega/domain/ideas'
 import type {
   idea_assignees as AssigneeRow,
@@ -74,6 +74,9 @@ function fromRow(row: IdeaRowFull): Idea {
     id: row.id,
     organizationId: row.organization_id,
     boardId: row.board_id,
+    itemNumber: row.item_number,
+    parentIdeaId: row.parent_idea_id,
+    autoCreated: row.auto_created,
     statusId: row.status_id,
     title: row.title,
     description: row.description,
@@ -94,6 +97,7 @@ function fromRow(row: IdeaRowFull): Idea {
     effort: row.effort as EffortLevel | null,
     deliveryStatus: row.delivery_status as DeliveryStatus | null,
     sprintId: row.sprint_id,
+    outcomeId: row.outcome_id,
     promotedAtUtc: row.promoted_at_utc,
     promotedByUserId: row.promoted_by_user_id,
     upvoteCountAtPromotion: row.upvote_count_at_promotion,
@@ -126,6 +130,26 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       include: IDEA_INCLUDE,
     })
     return row ? fromRow(row) : null
+  }
+
+  async listByIds(ideaIds: readonly string[]): Promise<readonly Idea[]> {
+    if (ideaIds.length === 0) {
+      return []
+    }
+    const rows = await this.prisma.ideas.findMany({
+      where: { id: { in: [...ideaIds] }, is_deleted: false },
+      include: IDEA_INCLUDE,
+    })
+    return rows.map(fromRow)
+  }
+
+  async listChildren(parentId: string): Promise<readonly Idea[]> {
+    const rows = await this.prisma.ideas.findMany({
+      where: { parent_idea_id: parentId, is_deleted: false },
+      include: IDEA_INCLUDE,
+      orderBy: [{ created_at_utc: 'asc' }, { title: 'asc' }, { id: 'asc' }],
+    })
+    return rows.map(fromRow)
   }
 
   async add(idea: Idea): Promise<void> {
@@ -199,6 +223,9 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       id: idea.id,
       organization_id: idea.organizationId,
       board_id: idea.boardId,
+      item_number: idea.itemNumber,
+      parent_idea_id: idea.parentIdeaId,
+      auto_created: idea.autoCreated,
       status_id: idea.statusId,
       title: idea.title,
       description: idea.description,
@@ -215,6 +242,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       effort: idea.effort,
       delivery_status: idea.deliveryStatus,
       sprint_id: idea.sprintId,
+      outcome_id: idea.outcomeId,
       promoted_at_utc: idea.promotedAtUtc,
       promoted_by_user_id: idea.promotedByUserId,
       upvote_count_at_promotion: idea.upvoteCountAtPromotion,
@@ -254,7 +282,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       where: {
         organization_id: filter.organizationId,
         is_deleted: false,
-        phase: Phase.Delivery,
+        ...(filter.anyPhase ? {} : { phase: Phase.Delivery }),
         ...(filter.backlogOnly ? { sprint_id: null } : {}),
         ...(filter.sprintId ? { sprint_id: filter.sprintId } : {}),
         ...(filter.deliveryStatus ? { delivery_status: filter.deliveryStatus } : {}),
@@ -263,6 +291,39 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       orderBy: [{ created_at_utc: 'asc' }, { title: 'asc' }],
     })
     return rows.map(fromRow)
+  }
+
+  /**
+   * Live children per parent in one grouped query. A child is done when it sits in a final lane of
+   * its OWN board (the join is on the child's board, not the parent's).
+   */
+  async countChildrenByParentIds(
+    parentIds: readonly string[],
+  ): Promise<ReadonlyMap<string, { readonly total: number; readonly done: number }>> {
+    if (parentIds.length === 0) {
+      return new Map()
+    }
+    const rows = await this.prisma.$queryRaw<
+      { parent_id: string; total: number; done: number }[]
+    >(Prisma.sql`
+      SELECT c.parent_idea_id AS parent_id,
+             COUNT(*)::int AS total,
+             COUNT(*) FILTER (WHERE l.is_final)::int AS done
+      FROM ideas c
+      LEFT JOIN board_swimlanes l ON l.board_id = c.board_id AND l.status_id = c.status_id
+      WHERE c.parent_idea_id IN (${Prisma.join(parentIds.map((id) => Prisma.sql`${id}::uuid`))})
+        AND c.is_deleted = FALSE
+      GROUP BY c.parent_idea_id
+    `)
+    return new Map(rows.map((row) => [row.parent_id, { total: row.total, done: row.done }]))
+  }
+
+  async hasTaskOnBoard(parentId: string, boardId: string): Promise<boolean> {
+    const found = await this.prisma.ideas.findFirst({
+      where: { parent_idea_id: parentId, board_id: boardId, is_deleted: false },
+      select: { id: true },
+    })
+    return found !== null
   }
 
   async listBySprint(sprintId: string): Promise<readonly Idea[]> {
@@ -282,22 +343,33 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       return new Map()
     }
 
-    const grouped = await this.prisma.ideas.groupBy({
-      by: ['sprint_id', 'delivery_status'],
-      where: { sprint_id: { in: [...sprintIds] }, is_deleted: false },
-      _count: { _all: true },
-    })
+    // Legacy sprints count Complete as done; a board sprint counts an item done when it sits in a
+    // final lane of its own board.
+    const rows = await this.prisma.$queryRaw<
+      { sprint_id: string; issue_count: number; done_count: number; idea_count: number }[]
+    >(Prisma.sql`
+      SELECT i.sprint_id AS sprint_id,
+             COUNT(*)::int AS issue_count,
+             COUNT(*) FILTER (
+               WHERE CASE WHEN s.board_id IS NULL
+                          THEN i.delivery_status = 'Complete'::"DeliveryStatus"
+                          ELSE COALESCE(l.is_final, FALSE) END
+             )::int AS done_count,
+             COUNT(DISTINCT CASE WHEN s.board_id IS NOT NULL THEN i.parent_idea_id END)::int AS idea_count
+      FROM ideas i
+      JOIN sprints s ON s.id = i.sprint_id
+      LEFT JOIN board_swimlanes l ON l.board_id = i.board_id AND l.status_id = i.status_id
+      WHERE i.sprint_id IN (${Prisma.join(sprintIds.map((id) => Prisma.sql`${id}::uuid`))})
+        AND i.is_deleted = FALSE
+      GROUP BY i.sprint_id
+    `)
 
     const counts = new Map<string, SprintIssueCounts>()
-    for (const group of grouped) {
-      if (!group.sprint_id) {
-        continue
-      }
-      const current = counts.get(group.sprint_id) ?? { issueCount: 0, doneCount: 0 }
-      const count = group._count._all
-      counts.set(group.sprint_id, {
-        issueCount: current.issueCount + count,
-        doneCount: current.doneCount + (group.delivery_status === Delivery.Complete ? count : 0),
+    for (const row of rows) {
+      counts.set(row.sprint_id, {
+        issueCount: row.issue_count,
+        doneCount: row.done_count,
+        ideaCount: row.idea_count,
       })
     }
     return counts
@@ -317,6 +389,11 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
     if (filter.dueBefore) {
       conditions.push(Prisma.sql`i.due_date < ${filter.dueBefore}::date`)
     }
+    if (filter.sprintId) {
+      conditions.push(Prisma.sql`i.sprint_id = ${filter.sprintId}::uuid`)
+    } else if (filter.noSprint) {
+      conditions.push(Prisma.sql`i.sprint_id IS NULL`)
+    }
     if (filter.search) {
       conditions.push(this.searchCondition(filter, false))
     }
@@ -324,6 +401,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
     return this.listPage({
       conditions,
       sortSql: this.boardSortSql(filter.sortBy),
+      nullsLast: (filter.sortBy ?? '').trim().toLowerCase() === 'priority',
       direction,
       page: filter.page,
       sortBy: filter.sortBy,
@@ -341,7 +419,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       case 'updatedat':
         return Prisma.sql`i.updated_at_utc`
       case 'priority':
-        return Prisma.sql`i.priority`
+        return Prisma.sql`CASE WHEN i.parent_idea_id IS NULL THEN i.priority END`
       case 'duedate':
         return Prisma.sql`i.due_date`
       case 'upvotecount':
@@ -371,8 +449,14 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
     if (filter.phase) {
       conditions.push(Prisma.sql`i.phase = ${filter.phase}::"IdeaPhase"`)
     }
-    if (filter.boardIds.length > 0) {
+    if (filter.boardIds.length > 0 && filter.includeNoBoard) {
+      conditions.push(
+        Prisma.sql`(i.board_id IS NULL OR i.board_id IN (${uuidList(filter.boardIds)}))`,
+      )
+    } else if (filter.boardIds.length > 0) {
       conditions.push(Prisma.sql`i.board_id IN (${uuidList(filter.boardIds)})`)
+    } else if (filter.includeNoBoard) {
+      conditions.push(Prisma.sql`i.board_id IS NULL`)
     }
     if (filter.createdByUserId) {
       conditions.push(Prisma.sql`i.author_user_id = ${filter.createdByUserId}::uuid`)
@@ -400,6 +484,8 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
     return this.listPage({
       conditions,
       sortSql: this.organizationSortSql(filter.sortBy),
+      // An idea with no board has no board name; it sorts after the named ones either way.
+      nullsLast: ['board', 'priority'].includes((filter.sortBy ?? '').trim().toLowerCase()),
       direction,
       page: filter.page,
       sortBy: filter.sortBy,
@@ -424,7 +510,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       case 'board':
         return Prisma.sql`b.name`
       case 'priority':
-        return Prisma.sql`i.priority`
+        return Prisma.sql`CASE WHEN i.parent_idea_id IS NULL THEN i.priority END`
       case 'upvotecount':
         return UPVOTE_COUNT_SQL
       case 'tags':
@@ -446,7 +532,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
     }
     if (filter.priorities.length > 0) {
       conditions.push(
-        Prisma.sql`i.priority IN (${Prisma.join(filter.priorities.map((p) => Prisma.sql`${p}::"Priority"`))})`,
+        Prisma.sql`(i.parent_idea_id IS NULL AND i.priority IN (${Prisma.join(filter.priorities.map((p) => Prisma.sql`${p}::"Priority"`))}))`,
       )
     }
     if (filter.tags.length > 0) {
@@ -476,7 +562,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
     const clauses: Prisma.Sql[] = [
       Prisma.sql`i.title ILIKE ${term}`,
       Prisma.sql`i.problem ILIKE ${term}`,
-      Prisma.sql`i.priority::text ILIKE ${term}`,
+      Prisma.sql`(i.parent_idea_id IS NULL AND i.priority::text ILIKE ${term})`,
       Prisma.sql`(au.first_name ILIKE ${term} OR au.last_name ILIKE ${term} OR (au.first_name || ' ' || au.last_name) ILIKE ${term})`,
       Prisma.sql`EXISTS (SELECT 1 FROM idea_assignees ia3 JOIN users u3 ON u3.id = ia3.user_id WHERE ia3.idea_id = i.id AND (u3.first_name ILIKE ${term} OR u3.last_name ILIKE ${term} OR (u3.first_name || ' ' || u3.last_name) ILIKE ${term}))`,
       Prisma.sql`s.name ILIKE ${term}`,
@@ -510,13 +596,15 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
   private async listPage(input: {
     readonly conditions: readonly Prisma.Sql[]
     readonly sortSql: Prisma.Sql
+    readonly nullsLast?: boolean
     readonly direction: SortDirection
     readonly page: { readonly page: number; readonly pageSize: number }
     readonly sortBy: string | null
   }): Promise<IdeaPage<Idea>> {
     const whereClause = Prisma.join([...input.conditions], ' AND ')
     const directionSql = input.direction === 'desc' ? Prisma.sql`DESC` : Prisma.sql`ASC`
-    const orderByClause = Prisma.sql`ORDER BY ${input.sortSql} ${directionSql}, i.created_at_utc ASC, i.title ASC, i.id ASC`
+    const nullsClause = input.nullsLast ? Prisma.sql` NULLS LAST` : Prisma.empty
+    const orderByClause = Prisma.sql`ORDER BY ${input.sortSql} ${directionSql}${nullsClause}, i.created_at_utc ASC, i.title ASC, i.id ASC`
 
     const fromClause = Prisma.sql`
       FROM ideas i

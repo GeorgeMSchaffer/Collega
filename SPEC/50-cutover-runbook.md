@@ -12,6 +12,10 @@
 >   Vercel projects are configured, and how production gets its first administrator"; 2026-09-11 "The
 >   golden replay is not a gate, and never was meant to be one"; 2026-09-29 "Spec contradictions
 >   resolved".
+> - **Re-verified:** against the code on 2026-10-15 (slice 213). **App Admin** is the label the UI
+>   shows for the role the code and specs call Site Admin (`SPEC/decisions.md` 2026-10-04); this
+>   runbook says App Admin, while log output, `SITE_ADMIN_*` variable names and the `SiteAdmin` role
+>   value keep the old name.
 
 **Owner** marks a step only the account holder can do: it needs the Vercel team, the Prisma Postgres
 console, a production credential, or the merge to `main`. Everything else can be done by whoever
@@ -40,7 +44,7 @@ request, or a commit.**
 | 2 | Playwright suite green | `pnpm test:e2e` against a scratch local database (`e2e/AGENTS.md`); it is not part of CI | anyone |
 | 3 | `SPEC/Bug Triage.md` `TODO` empty, or each open item accepted for this release by the owner | read the section | anyone; acceptance is **Owner** |
 | 4 | Golden replay triage recorded — **not a gate** | the last replay's counts and the fix / accept / do-better call on each unexplained difference, written down (`SPEC/decisions.md` 2026-09-11). An unrunnable or unclean replay blocks nothing | anyone |
-| 5 | The pending migrations are additive | read every directory under `packages/infrastructure/prisma/migrations/` newer than production's last applied one; nothing drops or renames a column or table that the currently deployed code still reads (`SPEC/50-vercel-deployment.md` §10) | anyone |
+| 5 | The pending migrations are additive | read every directory under `packages/infrastructure/prisma/migrations/` newer than production's last applied one; nothing drops or renames a column or table, loosens a constraint (drops `NOT NULL`, as `20261013000000_allow_ideas_without_board` does), or drops an index (as `20261001000000_add_idea_followers_and_inbox` does) that the currently deployed code still relies on (`SPEC/50-vercel-deployment.md` §10). This release goes onto a fresh production database, so the check passes trivially; the rule stands for later releases | anyone |
 
 ### `collega-api` environment variables — **Owner**
 
@@ -52,10 +56,10 @@ environment badges.
 | `DATABASE_URL` | required | required | A direct `postgres://` / `postgresql://` URL, **not** `prisma+postgres://`. Unprefixed — a store connected with `--prefix` writes `<PREFIX>_POSTGRES_URL`, which nothing reads. **Production and Preview hold different databases**; each entry is ticked for exactly one environment. |
 | `ACCESS_TOKEN_SIGNING_KEY` | required | required | At least 32 characters (the API refuses to boot otherwise); different per environment. |
 | `SITE_ADMIN_EMAIL` | required | required | The real address in Production; a throwaway in Preview, so staging never receives the production credential. |
-| `SITE_ADMIN_PASSWORD` | required | required | Present. It stays after first login — deleting it takes the API down on the next cold start (§8 of the deployment spec). |
+| `SITE_ADMIN_PASSWORD` | required | required | Present for the first build. The API no longer requires it at runtime, so it can be removed after first login. |
 | `ANTHROPIC_API_KEY` | optional | optional | Either present, or absent **by decision** — absent means AI idea assist runs dark (`503` on turns, availability `false`). |
 | `ACCESS_TOKEN_LIFETIME_MINUTES` | optional | optional | Unset means 480. |
-| `COLLEGA_ALLOW_DEMO_SEED` | **must be unset** | either | Set, it switches on the Site Admin's demo-data seed and reset (`apps/api/src/demo-seed/`) in production. |
+| `COLLEGA_ALLOW_DEMO_SEED` | **must be unset** | either | Set, it switches on the App Admin's demo-data seed and reset (`apps/api/src/demo-seed/`) in production. |
 | `POSTGRES_*` | **must be unset** | **must be unset** | Local-container parts only. |
 | `BOOTSTRAP_ORG_*` | **must be unset** | **must be unset** | Belong in the operator's shell for one run, never in the project (deployment spec §8a). |
 | `PROMPT_EVAL_ANTHROPIC_API_KEY` | **must be unset** | **must be unset** | A developer tool's key, never production's. |
@@ -82,9 +86,9 @@ None of these can be expressed in `vercel.json`, so nothing in the repository pr
 - [ ] Production branch is `main` on both projects.
 - [ ] A separate staging Prisma Postgres database is provisioned, and Preview's `DATABASE_URL`
       points at it — ticked for Preview only. The tracker records that Preview's `DATABASE_URL`
-      points at the database holding the real Site Admin; **until the staging database exists and
+      points at the database holding the real App Admin; **until the staging database exists and
       Preview points at it, this line is a no-go.** Its first preview build migrates it and creates
-      Preview's throwaway Site Admin; confirm from that build's log which database it touched.
+      Preview's throwaway App Admin; confirm from that build's log which database it touched.
 - [ ] Prisma Postgres backup retention and point-in-time window for the production database are
       known and written down (`SPEC/50-vercel-deployment.md` §10). Not documented in the repository.
 
@@ -108,7 +112,7 @@ In order. Each step says what proves it worked; stop at the first that does not 
    replace `collega-api`'s Production `DATABASE_URL` with it — ticked for Production only. Leave the
    old database as it is: repointing `DATABASE_URL` back at it is this step's rollback. The new value
    reaches nothing until a build runs (step 6), and the first build migrates the empty database and
-   creates the Site Admin. Do this immediately before the merge in step 5. *(**Owner**)*
+   creates the App Admin. Do this immediately before the merge in step 5. *(**Owner**)*
 3. **Confirm the release rebuilds the API**, or step 2's `DATABASE_URL` never takes effect:
    `pnpm turbo query affected --base=<production's last deployed commit> --packages @collega/api`
    must list `@collega/api` for the release range. If it does not, add a commit touching `apps/api/`
@@ -155,22 +159,22 @@ In order. Each step says what proves it worked; stop at the first that does not 
    2. `curl -i https://<api host>/api/v1/auth/me` → `401` with a JSON problem document. HTML, a
       redirect or a 404 means Deployment Protection or the entrypoint (§11 of the deployment spec),
       not a code bug. *(anyone)*
-   3. Open the web app and **sign in as `SITE_ADMIN_EMAIL`**. On the new database the Site Admin was
+   3. Open the web app and **sign in as `SITE_ADMIN_EMAIL`**. On the new database the App Admin was
       just created, so the first sign-in forces a password change, and the change signs you out to
       `/login?passwordChanged=1`; sign in again with the new one. If the build reported
       `… already exists` instead, there is no forced change — sign in with the existing password.
       *(**Owner** — only they hold the credential)*
-   4. **Create an organization:** Settings → Organizations → New. It is provisioned with default
+   4. **Create an organization:** Settings → Organizations → Add New Organization. It is provisioned with default
       statuses, idea types, business impacts and an `Ideas` board; its invite code shows on the
       Organizations list. *(**Owner**)*
-   5. **Create an Org Admin:** Settings → Users → New, choosing that organization and the Org Admin
-      role, and set the initial password yourself — the API does not generate one. Hand it over out
+   5. **Create an Org Admin:** Settings → Users → Add New User (or Add Org Admin on the organization's own page), choosing
+      that organization and the Org Admin role, and set the initial password yourself — the API does not generate one. Hand it over out
       of band; the account must change it at first sign-in. *(**Owner**)*
    6. **Register a user:** in a private window, `/register` with the invite code typed into the field
       (not in the URL). It returns to `/login` with *Your account was created*; sign in. *(anyone
       given the code)*
-   7. **Create a board:** as the Org Admin (a User may too, since 2026-10-04) — or as the Site Admin through Settings → View As, since a
-      direct Site Admin cannot change organization content — Settings → Boards → New. *(Owner or the
+   7. **Create a board:** as the Org Admin (a User may too, since 2026-10-04) — or as the App Admin through Settings → View as, since a
+      direct App Admin cannot change organization content — Settings → Boards → Add New Board. *(Owner or the
       Org Admin)*
    8. **Create an idea** on that board as the registered user, and see it on the board. *(the
       registered user)*

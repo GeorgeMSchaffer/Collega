@@ -1,10 +1,12 @@
 'use client'
 
 import { Button, Dot, EffortBar, Marker, Select } from '@collega/design-system'
+import Link from 'next/link'
 import { type ReactNode, useId, useOptimistic, useState, useTransition } from 'react'
+import { GatedAction } from '@/components/common/gated-action'
 import { People, TagList } from '@/components/ideas/idea-chips'
 import { IdeaForm } from '@/components/ideas/idea-form'
-import { IdeaView } from '@/components/ideas/idea-view'
+import { BoardChip, IdeaView } from '@/components/ideas/idea-view'
 import { useDrawerUrl } from '@/components/ideas/use-drawer-url'
 import { Drawer } from '@/components/list'
 import { Icon } from '@/components/list/icons'
@@ -24,7 +26,7 @@ import type { IssueDrawerData } from './load-issue-drawer'
 function Fact({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="min-w-0">
-      <dt className="font-mono text-[10.5px] uppercase tracking-[0.06em] text-muted-foreground">
+      <dt className="font-mono text-xs uppercase tracking-[0.06em] text-muted-foreground">
         {label}
       </dt>
       <dd className="m-0 mt-0.5 flex flex-wrap items-center gap-1 text-sm font-medium">
@@ -96,10 +98,20 @@ export function IssueDrawer({
       </Button>
     </>
   ) : canEdit ? (
-    <Button onClick={() => openDrawer({ edit: data.issue.id })}>
-      <Icon name="edit" />
-      Edit
-    </Button>
+    <GatedAction
+      id={`${formId}-why-edit`}
+      label="Edit"
+      denial={
+        mayEditIdeaContent(user.role, user.userId, data.idea.authorUserId)
+          ? null
+          : 'Only the author or an Org Admin can edit this issue.'
+      }
+    >
+      <Button onClick={() => openDrawer({ edit: data.issue.id })}>
+        <Icon name="edit" />
+        Edit
+      </Button>
+    </GatedAction>
   ) : null
 
   return (
@@ -134,11 +146,11 @@ export function IssueDrawer({
         <>
           <dl className="m-0 grid grid-cols-2 gap-3 rounded-md bg-muted/60 p-3">
             <div className="min-w-0">
-              <dt className="font-mono text-[10.5px] uppercase tracking-[0.06em] text-muted-foreground">
+              <dt className="font-mono text-xs uppercase tracking-[0.06em] text-muted-foreground">
                 {canWork ? (
                   <label
                     htmlFor={statusId}
-                    className="m-0 font-mono text-[10.5px] font-medium text-muted-foreground"
+                    className="m-0 font-mono text-xs font-medium text-muted-foreground"
                   >
                     Status
                   </label>
@@ -180,7 +192,7 @@ export function IssueDrawer({
               {issue.sprint ? (
                 <>
                   {issue.sprint.name}
-                  <span className="font-mono text-[11px] text-muted-foreground">
+                  <span className="font-mono text-xs text-muted-foreground">
                     {issue.sprint.window}
                   </span>
                 </>
@@ -188,8 +200,23 @@ export function IssueDrawer({
                 'Backlog'
               )}
             </Fact>
+            <Fact label="Board">
+              <BoardChip name={data.boardName} />
+            </Fact>
             <Fact label="Outcome">
-              <span className="text-muted-foreground">Not grouped</span>
+              {data.outcome ? (
+                <Link
+                  href={`/delivery/outcomes/${data.outcome.id}`}
+                  className="inline-flex items-center gap-1.5 text-foreground no-underline hover:underline"
+                >
+                  <Dot color={data.outcome.color} />
+                  {data.outcome.name}
+                </Link>
+              ) : (
+                <span className="text-muted-foreground">
+                  {data.outcome === null ? 'Not grouped' : '—'}
+                </span>
+              )}
             </Fact>
             <Fact label="Assignees">
               <People people={issue.assignees} />

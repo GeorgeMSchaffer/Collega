@@ -172,6 +172,14 @@ export type WireBoardListItem = {
   tagCount: number
   isArchived: boolean
   archivedAtUtc: string | null
+  keyPrefix: string | null
+  sprintsEnabled: boolean
+  ideaFeaturesEnabled: boolean
+  /** The number the next item key takes; `1` means no key has been issued (slice 292). */
+  nextItemNumber: number
+  hasReferenceLane: boolean
+  /** The non-archived boards with a lane that references this one. */
+  referencedByBoardIds: readonly string[]
 }
 
 export type WireBoardLaneCount = {
@@ -191,6 +199,10 @@ export type WireBoardDetail = {
   description: string | null
   swimlanes: readonly WireSwimlane[]
   isArchived: boolean
+  keyPrefix: string | null
+  sprintsEnabled: boolean
+  ideaFeaturesEnabled: boolean
+  nextItemNumber: number
 }
 
 export type WireSwimlane = {
@@ -199,6 +211,9 @@ export type WireSwimlane = {
   statusColor: string
   order: number
   statusIsDeleted: boolean
+  isFinal: boolean
+  referencesBoardId: string | null
+  autoCreateTask: boolean
 }
 
 /** `GET /organizations/{id}/statuses`. */
@@ -339,13 +354,13 @@ export type WireIdeaComment = {
  */
 export type WireIdeaDetail = {
   ideaId: string
-  boardId: string
+  boardId: string | null
   title: string
-  problem: string
+  problem: string | null
   proposedSolutions: readonly string[]
-  impactRationale: string
+  impactRationale: string | null
   description: string | null
-  priority: string
+  priority: string | null
   ideaTypeId: string
   ideaTypeName: string
   businessImpactId: string
@@ -373,7 +388,35 @@ export type WireIdeaDetail = {
   /** The caller's own follow state, and how many follow (`contracts/following.md`). */
   isFollowing: boolean
   followerCount: number
+  itemKey: string | null
+  parentIdeaId: string | null
+  /** The parent's `itemKey`; absent from a response that predates slice 298. */
+  parentItemKey?: string | null
+  taskCounts: WireTaskCounts | null
+  blockedBy: readonly WireBlockedBy[]
+  /** `[]` for a card with a parent (`contracts/metric-types.md`). */
+  metrics: readonly WireIdeaMetric[]
 }
+
+/** One row of `GET /ideas/{id}/board-tasks`, in creation order. */
+export type WireBoardTask = {
+  ideaId: string
+  itemKey: string | null
+  title: string
+  statusId: string
+  statusName: string
+  /** In a final lane of its own board. */
+  isFinal: boolean
+  assignees: readonly WireIdeaAssignee[]
+  blockedBy: readonly WireBlockedBy[]
+  autoCreated: boolean
+}
+
+/** Only on an item in a lane that references a board; `done` counts tasks in a final lane. */
+export type WireTaskCounts = { total: number; done: number }
+
+/** A blocker of an item; `isFinal` is true when it sits in a final lane of its board. */
+export type WireBlockedBy = { ideaId: string; itemKey: string | null; isFinal: boolean }
 
 export type WireIdeaFieldValue = {
   fieldDefinitionId: string
@@ -407,9 +450,9 @@ export type WireCreatedIdea = { ideaId: string }
 /** `GET /boards/{id}/ideas` and `GET /organizations/{id}/ideas` items. */
 export type WireIdeaListItem = {
   ideaId: string
-  boardId: string
+  boardId: string | null
   title: string
-  priority: string
+  priority: string | null
   ideaTypeName: string
   businessImpactName: string
   assignees: readonly WireIdeaAssignee[]
@@ -425,6 +468,29 @@ export type WireIdeaListItem = {
   commentCount: number
   authorUserId: string
   createdAtUtc: string
+  itemKey: string | null
+  parentIdeaId: string | null
+  /** The parent's `itemKey`; absent from a response that predates slice 298. */
+  parentItemKey?: string | null
+  taskCounts: WireTaskCounts | null
+  blockedBy: readonly WireBlockedBy[]
+}
+
+/** `GET /organizations/{id}/boards/pull-candidates` items. */
+export type WirePullCandidate = {
+  ideaId: string
+  title: string
+  authorUserId: string
+  authorName: string
+  boardId: string | null
+  boardName: string | null
+  statusId: string
+  statusName: string
+  phase: string
+  tags: readonly string[]
+  isMine: boolean
+  priority: string | null
+  upvoteCount: number
 }
 
 /**
@@ -503,7 +569,7 @@ export type WireSprint = {
  */
 export type WireDeliveryCard = {
   ideaId: string
-  boardId: string
+  boardId: string | null
   title: string
   authorUserId: string
   effort: string | null
@@ -555,6 +621,9 @@ export type WireViewAsCandidate = {
   selectable: boolean
 }
 
+/** `GET /ai-assist/availability`. A bare boolean by design. */
+export type WireAiAssistAvailability = { available: boolean }
+
 /** `GET /organizations/{id}/ai-assist/settings`. Never carries key material. */
 export type WireAiAssistSettings = {
   aiAssistAvailable: boolean
@@ -599,4 +668,89 @@ export type WireAiUsageReport = {
   dailyTokenLimit: number | null
   tokensUsedToday: number | null
   totals: Omit<WireAiUsageSummary, 'organizationId' | 'organizationName'>
+}
+
+// Board References: metric types, Outcomes, board sprints (slice 260). Appended; numbers are JSON
+// numbers and dates are `YYYY-MM-DD` strings, as `packages/application/src/*/models.ts` declares.
+
+/** `GET/POST/PUT …/metric-types` items. */
+export type WireMetricType = {
+  metricTypeId: string
+  organizationId: string
+  name: string
+  unit: string | null
+  isArchived: boolean
+}
+
+/** `GET/PUT /ideas/{id}/metrics` items. */
+export type WireIdeaMetric = {
+  metricTypeId: string
+  name: string
+  unit: string | null
+  isArchived: boolean
+  projected: number | null
+  realized: number | null
+}
+
+/** One Outcome's sum for an active metric type. */
+export type WireMetricTotal = {
+  metricTypeId: string
+  name: string
+  unit: string | null
+  projected: number | null
+  realized: number | null
+}
+
+/** A grouped top-level item on the Outcome detail and the roadmap. */
+export type WireOutcomeIdea = {
+  ideaId: string
+  /** `<board keyPrefix>-<itemNumber>`; null without a prefix or a number. */
+  itemKey: string | null
+  title: string
+  statusId: string
+  effort: string | null
+  assigneeUserIds: readonly string[]
+  sprintId: string | null
+  sprintStart: string | null
+  sprintEnd: string | null
+  metrics: readonly { metricTypeId: string; projected: number | null; realized: number | null }[]
+}
+
+/** An Outcome and its rollup: `GET …/outcomes` items. */
+export type WireOutcome = {
+  outcomeId: string
+  organizationId: string
+  name: string
+  description: string | null
+  targetStartDate: string
+  targetEndDate: string
+  ownerUserId: string | null
+  sortOrder: number
+  color: string
+  ideaCount: number
+  doneIdeaCount: number
+  taskCount: number
+  doneTaskCount: number
+  sprintStart: string | null
+  sprintEnd: string | null
+  metricTotals: readonly WireMetricTotal[]
+}
+
+/** `GET …/outcomes/{outcomeId}`, and each entry of the roadmap. */
+export type WireOutcomeDetail = WireOutcome & { ideas: readonly WireOutcomeIdea[] }
+
+/** `GET …/outcomes`. */
+export type WireOutcomePage = {
+  items: readonly WireOutcome[]
+  page: number
+  pageSize: number
+  totalCount: number
+  sortBy: string
+  sortDirection: string
+}
+
+/** `GET …/roadmap`. */
+export type WireRoadmap = {
+  outcomes: readonly WireOutcomeDetail[]
+  ungrouped: readonly WireOutcomeIdea[]
 }
