@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { toCurrentUser, toIdea } from '@/lib/api/adapt'
-import type { WireCurrentUser, WireIdeaListItem } from '@/lib/api/wire'
+import { toBoardTask, toCurrentUser, toIdea } from '@/lib/api/adapt'
+import type { WireBoardTask, WireCurrentUser, WireIdeaListItem } from '@/lib/api/wire'
 
 /**
  * The wire-to-view boundary.
@@ -158,5 +158,23 @@ describe('toIdea', () => {
         .assigneeInitials,
     ).toBe('MO')
     expect(toIdea({ ...WIRE_IDEA, assignees: [] }).assigneeInitials).toBeNull()
+  })
+})
+
+describe('toBoardTask', () => {
+  const WIRE_TASK: WireBoardTask = {
+    ideaId: 't-1',
+    itemKey: 'IMPL-1',
+    title: 'Wire the sensor',
+    statusId: 'l-open',
+    statusName: 'Open',
+    isFinal: false,
+    assignees: [],
+    blockedBy: [],
+    autoCreated: true,
+  }
+
+  it.each([true, false])('carries autoCreated %j from the wire to the view', (autoCreated) => {
+    expect(toBoardTask({ ...WIRE_TASK, autoCreated }).autoCreated).toBe(autoCreated)
   })
 })
