@@ -46,3 +46,10 @@ them directly.
   `bootstrap.ts` before changing either.
 
 Tests are route-level and hermetic. An agent does not write tests for its own endpoints.
+
+**Deploys.** `vercel.json`'s `ignoreCommand` builds `collega-api` only when `@collega/api` or a
+workspace dependency changed since the previous build. A redeploy of an unchanged commit, or a
+change that touches only another project, shows **Canceled** (that is the ignore step working, not
+a failure). A build that fails leaves the last good deployment serving. The build also runs
+`db:migrate` and `db:bootstrap-admin` against the target database, and `bootstrap-admin` runs under
+plain `node`, so what it imports must not use `.js` specifiers for sibling `.ts` files.
