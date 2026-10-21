@@ -32,7 +32,7 @@ import {
 } from '@collega/application/organizations'
 import { normalizeInviteCode } from '@collega/domain/organizations'
 import { generateTemporaryPassword, normalizeEmail } from '@collega/domain/users'
-import { seedId } from '../../src/demo-seed/modules/scenario.ts'
+import { seedId } from '../../src/demo-seed/modules/seed-id.ts'
 import type { PrismaClient as PrismaClientType } from '../../src/generated/prisma/client.js'
 import { PrismaClient } from '../../src/generated/prisma/client.js'
 import { RandomInviteCodeGenerator } from '../../src/integrations/organizations/random-invite-code-generator.ts'

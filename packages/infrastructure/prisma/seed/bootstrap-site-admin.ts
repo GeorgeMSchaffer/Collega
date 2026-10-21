@@ -23,7 +23,7 @@
 
 import { randomUUID } from 'node:crypto'
 import { normalizeEmail } from '@collega/domain/users'
-import { seedId } from '../../src/demo-seed/modules/scenario.ts'
+import { seedId } from '../../src/demo-seed/modules/seed-id.ts'
 import type { Role, UserStatus } from '../../src/generated/prisma/client.js'
 import { PrismaClient } from '../../src/generated/prisma/client.js'
 import { Pbkdf2PasswordHasher } from '../../src/security/pbkdf2-password-hasher.ts'
