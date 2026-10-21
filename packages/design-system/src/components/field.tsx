@@ -137,7 +137,7 @@ export function Field({
 
   return (
     <div
-      className={cn('mb-4', className)}
+      className={cn('mb-[var(--field-gap,1rem)]', className)}
       data-invalid={error ? '' : undefined}
       data-suggested={suggested ? '' : undefined}
       data-flash={suggested && flash ? '' : undefined}
