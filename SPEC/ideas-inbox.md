@@ -99,7 +99,9 @@ Four capabilities the comp argues (a fifth, Effort, shipped in slices 297-301 an
 
 *Parked 2026-08-27 from `mockups/comp-h-loop.html`. Proposal item #3.*
 
-One loop, not three features: *mention → notification → reply → read*. The comp's argument for building them together is that *"a notification with nothing to notify about is empty, and an activity feed nobody is addressed by is noise."* Covers @mention autocomplete in the comment composer, an Inbox rail item with unread badge and tabbed filters (mentions / assigned / replies / archived) each carrying a "why" line, an org activity feed that **replaces the existing "Activity feed coming soon" placeholder**, a separate "Waiting on you" panel (the subset addressed to you — the actual to-do list), unread markers in threads, snooze as well as archive, and a per-event-type preferences screen.
+**Audited 2026-10-21 against what shipped.** Email-based mentions on ideas and comments, an in-app Inbox (one order, no filter, mark read and read all, an unread count) and an activity panel on Home already exist. What remains of the idea: @mention autocomplete in the comment composer, the Inbox's tabbed filters (mentions / assigned / replies / archived) with a "why" line on each item, a "Waiting on you" panel, unread markers in threads, snooze as well as archive, a full org activity feed, and a per-event-type preferences screen.
+
+The comp's argument for building these together still holds: *"a notification with nothing to notify about is empty, and an activity feed nobody is addressed by is noise."*
 
 Two things to settle before this could be specced:
 
