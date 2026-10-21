@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-21 | Analytics runs without a consent banner | Current | Full below |
 | 2026-10-21 | Production runs with `COLLEGA_ALLOW_DEMO_SEED` set | active | full below |
 | 2026-10-20 | Idea assistant v2: enablement gate passed; the v1 default prompt stays | active | full below |
 | 2026-10-20 | Idea assistant v2: the idea type never auto-routes to a board | active | full below |
@@ -138,6 +139,13 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-10-21 — Analytics runs without a consent banner
+
+Vercel Analytics is used for page views and a small set of custom events (`SPEC/20-feature-analytics.md`).
+It sets no cookies, and the events carry no identifiers or personal data, so there is no consent
+banner. Revisit if an event ever needs a user identifier, or if analytics gains a cookie or a
+third-party script.
 
 ## 2026-10-21 — Production runs with `COLLEGA_ALLOW_DEMO_SEED` set
 
