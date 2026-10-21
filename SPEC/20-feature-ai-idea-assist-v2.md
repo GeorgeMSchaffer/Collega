@@ -182,7 +182,7 @@ prompt-eval runner with its v1 baseline and ten v2 corpus cases. Not built: any 
 | 308 | UI | **Chat shell.** The wide create drawer (`clamp(720px, 62vw, 1100px)`, chat ~42% left, form right, stacked when narrow), greeting and starter prompts, transcript, composer, pending/cancel, availability read and the 32c notice, *Fill out manually* / *Skip the assistant* / *Use the assistant* with the conversation intact. Comp R is the reference. | 306 (contract); can mock the turn |
 | 309 | UI | **Field wiring.** Apply `changes` to the form; Suggested vs owned marking (`--suggest-tint`, `✦ Suggested`, cleared on edit, `lockedFields` sent every turn), the *Filled in: …* line, "I kept your edit to …" replies, solution/sharpen/rationale chips, *Review and create*. | 307, 308 |
 | 310 | UI | **Failure and hand-off.** Any failed turn ends the conversation and hands off to the form with the notice; place the failing turn's text per the spec rule; `429` shows the retry message without ending the chat; off-topic and cap behaviour as v1. | 308, 309 |
-| 311 | QA | Tests for 305-310, a browser walk of the full flow, then a prompt-eval run against the baseline. **The v2 prompt is not enabled until this passes.** | 305, 307, 310 |
+| 311 | QA | Tests for 305-310, a browser walk of the full flow, then a prompt-eval run against the baseline. **The v2 prompt is not enabled until this passes.** Passed 2026-10-20 (slice 315): the v2 baseline meets every target and the browser walk ran against the real model. | 305, 307, 310 |
 
 Order: 305 and 306 first, in parallel. 307 follows 306. 308 can start once the contract (306) is
 fixed. 309 and 310 follow. 311 gates enablement. Slices 305-306 and 308 touch different areas and

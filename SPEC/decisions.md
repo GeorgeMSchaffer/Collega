@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-20 | Idea assistant v2: enablement gate passed; the v1 default prompt stays | active | full below |
 | 2026-10-20 | Idea assistant v2: the idea type never auto-routes to a board | active | full below |
 | 2026-10-20 | Idea assistant v2: starter prompts and the no-board create | active | full below |
 | 2026-10-20 | Prompt-eval v2 targets confirmed: 0.85 / 0.85 / 0.75, report-only | active | full below |
@@ -136,6 +137,14 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-10-20 — Idea assistant v2: enablement gate passed; the v1 default prompt stays
+
+**Decided.** Slice 311's gate is met. The v2 baseline (`tools/prompt-eval/baselines/v2-default.json`, slice 314) has `refuse-*` recall 20/20, refusal precision 1.00, mapping 0.99, custom fields 1.00, interview order 0.90, "I kept your edit" 1.00 and no surviving locked field, and every v2 target is met. A browser walk against the real model filled the form as Suggested, kept an edited Title and said so, and *Fill out manually* / *Use the assistant* kept the conversation.
+
+**What "enabled" means.** `continueTurnV2` already sends `SYSTEM_PROMPT_TEMPLATE_V2` on every v2 turn, so there is nothing to switch on. `SYSTEM_PROMPT_TEMPLATE` is **not** promoted: it stays the v1 text, which the v1 baseline, the v1 eval cases and the advisory prompt probes still measure. Promoting it would invalidate all three for no behavioral gain.
+
+**Why not promote.** The stored prompt versions and "reset" are v1 text and are never sent on a v2 turn, so changing the default only moves what the v1 tooling sees.
 
 ## 2026-10-20 — Idea assistant v2: the idea type never auto-routes to a board
 
