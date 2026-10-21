@@ -1,7 +1,7 @@
 # Feature: Analytics and Search Metadata
 
-**Status:** draft. Scope agreed 2026-10-21 (tracking plus SEO metadata). Open questions below
-are not decided.
+**Status:** draft. Scope agreed 2026-10-21 (tracking plus SEO metadata). Consent, plan and public
+pages are decided (`SPEC/decisions.md`, 2026-10-21).
 
 ## Purpose
 
@@ -28,8 +28,9 @@ Search metadata is scoped to those and to anything made public later.
    analytics never receives credentials (`SPEC/20-feature-auth.md` item 30).
 4. The root metadata already sets a title and description. Public pages set their own title and
    description. Protected pages set `robots: noindex`.
-5. `app/sitemap.ts` lists the public pages only. `app/robots.ts` allows the public pages and
-   disallows everything else.
+5. `app/sitemap.ts` lists the sign-in and register pages only. `app/robots.ts` allows those two
+   and disallows everything else. A public landing page is a separate slice; when it exists, it
+   joins the sitemap and robots allow-list in that slice.
 6. Analytics is inert in local development and in preview deployments unless enabled explicitly.
    The page code does not depend on it for any behaviour.
 
@@ -44,14 +45,13 @@ Search metadata is scoped to those and to anything made public later.
 
 No properties carry identifiers. Counts and page paths answer the questions this is for.
 
-## Open questions
+## Decisions
 
-- **Consent.** Vercel Analytics does not set cookies, but a decision is needed on whether a notice
-  is required for these events. Default until decided: no banner, events limited as above.
-- **Plan.** Whether custom events are included in the team's current Vercel plan is unverified.
-  Confirm before implementation; page views are the fallback.
-- **Public surface.** Confirm the sign-in and registration pages are the only public pages before
-  writing the sitemap.
+- **Consent.** No banner. Vercel Analytics sets no cookies, and the events carry no personal
+  data. Recorded in `SPEC/decisions.md`.
+- **Plan.** The team is on Vercel Pro or higher, so custom events are included.
+- **Public pages.** Sign-in and register are the public pages for now. A landing page is a
+  separate slice with its own design comp.
 
 ## Out of scope
 
@@ -65,4 +65,4 @@ No properties carry identifiers. Counts and page paths answer the questions this
 - Each event in the table is recorded once in a browser test, and none carries a listed
   forbidden value.
 - The sitemap and robots responses match requirement 5, checked in the browser.
-- The open questions are resolved and recorded in `SPEC/decisions.md`.
+- The consent decision is recorded in `SPEC/decisions.md`.
