@@ -264,7 +264,8 @@ pnpm --filter @collega/infrastructure exec prisma migrate resolve \
 ### The connection string
 
 Paste whatever Prisma Postgres hands over into `DATABASE_URL` verbatim. The database fragment takes
-it as-is (`common/config/fragments/database.ts`); the `POSTGRES_*` parts it can compose from are for
+it as-is (`common/config/fragments/database.ts`), except that on Vercel (`VERCEL` set) it appends
+`connection_limit=1` to a direct `postgres(ql)://` URL that sets none; the `POSTGRES_*` parts it can compose from are for
 the local container only, and must not be set in deployment.
 
 Two things to watch, neither verified against a live Prisma Postgres instance:
@@ -274,9 +275,11 @@ Two things to watch, neither verified against a live Prisma Postgres instance:
   for both. **If the client rejects the URL at boot, switch to the direct string** — that keeps the
   standard engine, changes one environment variable, and needs no code change. Anything that
   required adding an Accelerate extension would be a decision, not a fix.
-- Every warm function instance opens its own pool. Prisma Postgres caps connections; if the API
-  starts reporting connection-limit errors under load, add `?connection_limit=1` to the URL before
-  reaching for anything larger.
+- Every warm function instance opens its own pool. Prisma Postgres caps connections, and on
+  2026-10-21 production hit "too many connections" under a page render's parallel API calls. The
+  fragment now caps each instance at one connection (the URL is a masked secret, so it is done in
+  code, not in the variable). If that is still not enough, the next step is a pooled URL, a
+  decision rather than a fix.
 
 ### Prisma's query engine
 

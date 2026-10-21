@@ -6,6 +6,18 @@ export type DatabaseConfig = {
 }
 
 /**
+ * One connection per function instance on Vercel. Each warm instance opens its own pool, and a
+ * page render fans out into parallel API calls that start several instances at once; with
+ * Prisma's default pool size that exhausted the database's connection cap in production
+ * (2026-10-21, "too many connections for role"). A URL that already sets `connection_limit`, or
+ * isn't a direct `postgres(ql)://` string, is left alone.
+ */
+function limitConnections(url: string): string {
+  if (!/^postgres(ql)?:\/\//.test(url) || /[?&]connection_limit=/.test(url)) return url
+  return `${url}${url.includes('?') ? '&' : '?'}connection_limit=1`
+}
+
+/**
  * DATABASE_URL, or the POSTGRES_* parts the local docker-compose stack already sets.
  *
  * Both are accepted because they serve different places: Prisma Postgres on Vercel hands
@@ -17,7 +29,7 @@ export const databaseFragment: EnvFragment<DatabaseConfig> = {
   name: 'database',
   read(env, problems) {
     const direct = env.DATABASE_URL?.trim()
-    if (direct) return { url: direct }
+    if (direct) return { url: env.VERCEL ? limitConnections(direct) : direct }
 
     const user = required(env, 'POSTGRES_USER', problems, 'Or set DATABASE_URL directly.')
     const password = required(env, 'POSTGRES_PASSWORD', problems, 'Or set DATABASE_URL directly.')
