@@ -339,7 +339,7 @@
   --field-h: 2.125rem;
   --label-size: 0.9rem;
 
-  --drawer: clamp(380px, 28vw, 520px);
+  --drawer: 50vw;
   --drawer-wide: clamp(720px, 62vw, 1100px);
 
   /* Category dots. The fragments name them by comp P's sticker names.
