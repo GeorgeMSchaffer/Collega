@@ -102,6 +102,36 @@ describe('TasksSection: rows', () => {
     expect(screen.getAllByText('blocked by IMPL-9')).toHaveLength(1)
   })
 
+  it('tags only an auto-created task, quietly, beside its key', () => {
+    render(
+      <TasksSection
+        parent={PARENT}
+        tasks={tasksOf([task('1', { autoCreated: true }), task('2'), task('3')])}
+      />,
+    )
+
+    const tags = screen.getAllByText('auto-created')
+    expect(tags).toHaveLength(1)
+    expect(tags[0]?.parentElement?.textContent).toContain('IMPL-1')
+    expect(tags[0]?.parentElement?.textContent).not.toContain('IMPL-2')
+  })
+
+  it('keeps the auto-created tag on a task that is done or blocked', () => {
+    const blockedBy = [{ ideaId: 'x', itemKey: 'IMPL-9', isFinal: false }]
+    render(
+      <TasksSection
+        parent={PARENT}
+        tasks={tasksOf([
+          { ...done('1'), autoCreated: true },
+          task('2', { autoCreated: true, blockedBy }),
+        ])}
+      />,
+    )
+
+    expect(screen.getAllByText('auto-created')).toHaveLength(2)
+    expect(screen.getByText('blocked by IMPL-9')).toBeTruthy()
+  })
+
   it('hides Add task and the delete buttons from a reader who may not edit', () => {
     render(<TasksSection parent={PARENT} tasks={tasksOf([task('1')], { adding: null })} />)
 
