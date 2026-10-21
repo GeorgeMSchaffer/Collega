@@ -100,6 +100,18 @@ describe('loadConfig - empty and whitespace-only values are treated as absent', 
 })
 
 describe('loadConfig - database URL composition', () => {
+  it('caps the pool at one connection on Vercel unless the URL already sets a limit', () => {
+    const url = (u: string) => loadConfig(validEnv({ VERCEL: '1', DATABASE_URL: u })).database.url
+    expect(url('postgresql://u:p@h:5432/db')).toBe('postgresql://u:p@h:5432/db?connection_limit=1')
+    expect(url('postgres://u:p@h/db?sslmode=require')).toBe(
+      'postgres://u:p@h/db?sslmode=require&connection_limit=1',
+    )
+    expect(url('postgresql://u:p@h/db?connection_limit=5')).toBe(
+      'postgresql://u:p@h/db?connection_limit=5',
+    )
+    expect(url('prisma+postgres://h?api_key=k')).toBe('prisma+postgres://h?api_key=k')
+  })
+
   it('uses DATABASE_URL verbatim when present, ignoring the POSTGRES_* parts', () => {
     const config = loadConfig(
       validEnv({
