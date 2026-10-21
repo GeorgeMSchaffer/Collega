@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-21 | Production runs with `COLLEGA_ALLOW_DEMO_SEED` set | active | full below |
 | 2026-10-20 | Idea assistant v2: enablement gate passed; the v1 default prompt stays | active | full below |
 | 2026-10-20 | Idea assistant v2: the idea type never auto-routes to a board | active | full below |
 | 2026-10-20 | Idea assistant v2: starter prompts and the no-board create | active | full below |
@@ -137,6 +138,15 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-10-21 — Production runs with `COLLEGA_ALLOW_DEMO_SEED` set
+
+Decided by the owner at cutover: the production `collega-api` deployment keeps
+`COLLEGA_ALLOW_DEMO_SEED=true`, because the demo is loaded from it today. This supersedes
+`SPEC/50-cutover-runbook.md` §1, which said the variable must be unset in production, and its
+first-day check that it is unset at the end of the day. Consequence: the App Admin can seed and
+reset demo data in production, and a reset drops what is there. Revisit before the first real
+tenant is loaded.
 
 ## 2026-10-20 — Idea assistant v2: enablement gate passed; the v1 default prompt stays
 
