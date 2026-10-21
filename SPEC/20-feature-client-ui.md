@@ -288,7 +288,7 @@ list screen (Settings entities, Delivery lists) moves to as it is touched.
   asks for confirmation first. Edit and Delete/Archive are hidden when the role may not use them (the
   Denied rule's row-action exception).
 - **The drawer** replaces the docked inspector:
-  - slides in from the right and **overlays** the page (`clamp(380px, 28vw, 520px)`; full width
+  - slides in from the right and **overlays** the page (`50vw`; full width
     below 900px), so the list or board underneath never resizes or gains a scrollbar;
   - not modal: no scrim, no focus trap; focus moves to its heading on open and returns to the
     trigger on close; Escape and × close it;
