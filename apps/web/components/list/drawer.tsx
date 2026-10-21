@@ -12,7 +12,7 @@ import { Icon } from './icons'
  * on close it returns to `returnFocusTo`, or else to whatever had focus when it opened. Escape and ×
  * close it, unless something inside claimed the Escape first (a popover, the confirm dialog).
  *
- * Width is `--drawer` (`clamp(380px, 28vw, 520px)`) or `--drawer-wide`
+ * Width is `--drawer` (`50vw`) or `--drawer-wide`
  * (`clamp(720px, 62vw, 1100px)`), both full width below 900px. It stays mounted while closed so it
  * can slide out; `inert` and `visibility` take it out of the tab order and the accessibility tree
  * meanwhile.

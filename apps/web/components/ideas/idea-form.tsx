@@ -540,7 +540,13 @@ export function IdeaForm({
   const lockedHint = contentLocked ? 'Only the author or an Org Admin can change this.' : undefined
 
   return (
-    <form ref={formRef} id={formId} noValidate onSubmit={submit} className="flex flex-col">
+    <form
+      ref={formRef}
+      id={formId}
+      noValidate
+      onSubmit={submit}
+      className="flex flex-col [--field-gap:1.2rem]"
+    >
       {error || unplaced.length > 0 ? (
         <Alert variant="destructive" className="mb-4" role="alert">
           {error ? <span>{error}</span> : null}
@@ -944,7 +950,7 @@ export function TagsField({
 
   return (
     <fieldset
-      className="m-0 mb-4 flex flex-col gap-1.5 border-0 p-0"
+      className="m-0 mb-[var(--field-gap)] flex flex-col gap-1.5 border-0 p-0"
       data-invalid={error ? '' : undefined}
       data-suggested={suggested ? '' : undefined}
       data-flash={suggested && flash ? '' : undefined}
@@ -1096,7 +1102,7 @@ export function AssigneesField({
 
   return (
     <fieldset
-      className="m-0 mb-4 flex flex-col gap-1.5 border-0 p-0"
+      className="m-0 mb-[var(--field-gap)] flex flex-col gap-1.5 border-0 p-0"
       data-invalid={error ? '' : undefined}
     >
       <legend className="mb-[5px] text-[length:var(--label-size)] font-medium text-secondary-foreground">
@@ -1184,7 +1190,7 @@ function SolutionsField({
   const messageId = `${idPrefix}-msg`
   return (
     <fieldset
-      className="m-0 mb-4 flex flex-col gap-1.5 border-0 p-0"
+      className="m-0 mb-[var(--field-gap)] flex flex-col gap-1.5 border-0 p-0"
       data-invalid={error ? '' : undefined}
       data-suggested={suggested ? '' : undefined}
       data-flash={suggested && flash ? '' : undefined}
@@ -1280,7 +1286,7 @@ function CustomField({
   if (field.fieldType === 'MultiSelect') {
     return (
       <fieldset
-        className="m-0 mb-4 border-0 p-0"
+        className="m-0 mb-[var(--field-gap)] border-0 p-0"
         data-invalid={error ? '' : undefined}
         data-suggested={suggested ? '' : undefined}
         data-flash={suggested && flash ? '' : undefined}
