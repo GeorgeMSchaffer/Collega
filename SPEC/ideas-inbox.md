@@ -84,11 +84,10 @@ does today, and several of its rules constrain what either of these may do.
 
 *Parked 2026-08-27 from `mockups/comp-g-signal.html` (drawn 2026-08-16 in the locked Comp C language, so only the feature is under review, not the look). Proposal items #1, #2, #5.*
 
-Five capabilities the comp argues are worth little alone and a lot together — they turn the board from *a list of what exists* into *a list of what needs attention*:
+Four capabilities the comp argues (a fifth, Effort, shipped in slices 297-301 and is no longer part of this idea) are worth little alone and a lot together — they turn the board from *a list of what exists* into *a list of what needs attention*:
 
 - **Status semantics — "Counts as".** Every status gets one of four meanings: Open / Waiting–external / Closed–succeeded / Closed–declined. Today a status is a name, a colour and a sort order, so **nothing in the product can tell "In Review" from "Complete"** — no other item here works without this.
 - **Per-status ageing.** A "flag after N days" threshold per status; an idea past it reads as stalled, with an age badge on the list and a stalled count in statuses admin.
-- **Effort.** A third sizing field beside Priority and Business Impact (Low/Medium/High/Not sized), deliberately rendered with **no colour at all**.
 - **Triage grid.** A 3×3 Impact × Effort view as a third board mode; dragging between cells edits both. The comp rejects a single computed score (RICE/ICE) on the grounds that *"a single computed number hides the disagreement that actually matters."*
 - **Saved views.** Named filter+sort+column sets, personal or org-pinned, with a dirty-state "Update view" affordance.
 
