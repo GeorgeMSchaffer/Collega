@@ -30,6 +30,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { ApiError, apiDelete, apiPath, apiPost, apiPostReturning, apiPut } from '../api/client'
 import type { WireCreatedIdea } from '../api/wire'
+import { recordEvent } from './analytics'
 import { actingOrganizationId } from './current-user'
 import { type RuleContext, ruleMessage } from './rule-messages'
 
@@ -160,7 +161,10 @@ export async function saveIdea(input: IdeaInput): Promise<SaveIdeaResult> {
 
   revalidateIdeaScreens(input.boardId)
   // The sidebar's idea count, which the layout renders, changes on a create.
-  if (!input.ideaId) revalidatePath('/', 'layout')
+  if (!input.ideaId) {
+    revalidatePath('/', 'layout')
+    await recordEvent('idea.created')
+  }
   return { ok: true, ideaId }
 }
 

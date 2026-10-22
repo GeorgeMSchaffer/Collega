@@ -32,9 +32,10 @@ Search metadata is scoped to those and to anything made public later.
    and disallows everything else. A public landing page is a separate slice; when it exists, it
    joins the sitemap and robots allow-list in that slice.
 6. Analytics is inert in local development and in preview deployments unless enabled explicitly.
-   The page code does not depend on it for any behaviour.
+   The page code does not depend on it for any behaviour. "Enabled" means `VERCEL_ENV` is
+   `production`, or `COLLEGA_ANALYTICS=on` is set on the web project.
 
-## Events (proposed, to confirm)
+## Events
 
 | Event | Fired when | Properties |
 |---|---|---|

@@ -1,6 +1,7 @@
 import { Alert, buttonVariants } from '@collega/design-system'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { BoardViewed } from '@/components/analytics/board-viewed'
 import { GatedAction } from '@/components/common/gated-action'
 import { PageHeader } from '@/components/common/page-header'
 import { AddIdeaButton } from '@/components/ideas/add-idea-button'
@@ -87,6 +88,7 @@ export default async function BoardPage({
 
   return (
     <>
+      <BoardViewed />
       <Topbar
         title={
           <span className="text-sm font-normal text-muted-foreground">
