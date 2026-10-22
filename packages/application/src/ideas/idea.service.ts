@@ -1852,9 +1852,10 @@ export class IdeaService {
         continue
       }
       if (original.boardId !== board.boardId) {
-        throw new UnprocessableError(
+        throw itemRefusal(
           'sprintItemOnOtherBoard',
-          `${await this.describeItem(original)}: a sprint holds items from its own board only.`,
+          await this.describeItem(original),
+          'a sprint holds items from its own board only.',
         )
       }
 
@@ -1877,9 +1878,10 @@ export class IdeaService {
         } catch (error) {
           // The refusal is the status move's own; the item that caused it is named.
           if (error instanceof UnprocessableError) {
-            throw new UnprocessableError(
+            throw itemRefusal(
               error.code,
-              `${itemLabel(board.keyPrefix ?? undefined, original)}: ${error.message}`,
+              itemLabel(board.keyPrefix ?? undefined, original),
+              error.message,
             )
           }
           throw error
@@ -3285,6 +3287,12 @@ export class IdeaService {
  */
 function boardRefusesIdeaType(typeName: string): string {
   return `This board doesn't take '${typeName}' ideas.`
+}
+
+/** A 422 about one item: the code, and the item's key leading the message on `ideaIds`. */
+function itemRefusal(code: string, label: string, reason: string): UnprocessableError {
+  const message = `${label}: ${reason}`
+  return new UnprocessableError(code, message, { ideaIds: [message] })
 }
 
 function itemLabel(keyPrefix: string | undefined, idea: Idea): string {

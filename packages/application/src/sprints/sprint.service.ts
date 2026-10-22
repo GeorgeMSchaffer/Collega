@@ -220,16 +220,18 @@ export class SprintService {
     const otherBoard = items.find((idea) => idea.boardId !== board.id)
     if (otherBoard) {
       const own = otherBoard.boardId ? await this.boards.getSprintBoard(otherBoard.boardId) : null
-      throw new UnprocessableError(
+      throw itemRefusal(
         'sprintItemOnOtherBoard',
-        `${itemLabel(own?.keyPrefix, otherBoard)}: a sprint holds items from its own board only.`,
+        itemLabel(own?.keyPrefix, otherBoard),
+        'a sprint holds items from its own board only.',
       )
     }
     const assigned = items.find((idea) => idea.sprintId !== null)
     if (assigned) {
-      throw new UnprocessableError(
+      throw itemRefusal(
         'sprintItemAlreadyAssigned',
-        `${itemLabel(board.keyPrefix, assigned)}: an item already in a sprint cannot be put in a new one.`,
+        itemLabel(board.keyPrefix, assigned),
+        'an item already in a sprint cannot be put in a new one.',
       )
     }
     return items
@@ -503,6 +505,12 @@ function itemLabel(keyPrefix: string | null | undefined, idea: Idea): string {
   return keyPrefix && idea.itemNumber !== null
     ? `${keyPrefix}-${idea.itemNumber}`
     : `'${idea.title}'`
+}
+
+/** A 422 about one item: the code, and the item's key leading the message on `ideaIds`. */
+function itemRefusal(code: string, label: string, reason: string): UnprocessableError {
+  const message = `${label}: ${reason}`
+  return new UnprocessableError(code, message, { ideaIds: [message] })
 }
 
 function idOf(entity: { readonly id: string }): string {

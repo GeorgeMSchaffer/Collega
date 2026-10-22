@@ -150,7 +150,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 **Decided by the owner (the first part), slice 322.** `POST /boards/{boardId}/tasks` without a parent makes a standalone card. It is stored as an ordinary item row, so it keeps the stand-in priority, type, business impact and problem text that a task never shows. **Rule:** a card on a board that a non-archived board's lane references (the same test as `boardIsNotAWorkBoard`) is a task on read, parent or not. Priority, type, business impact, problem, solutions, impact rationale, effort and metrics are hidden on the list and detail reads, and the card is edited as a task. No schema change. The CSV export still writes the stored values for such a card; to be revisited if it matters.
 
-**Keyed 403.** A refusal that is about one field of the request (a non-admin sending `sprintId`) is a `403` whose problem body also carries `errors: { sprintId: [...] }`. In code, `ForbiddenError` takes optional `failures`, and the problem-details filter renders them as `errors`. No other 403 changes.
+**Keyed 403.** A refusal that is about one field of the request (a non-admin sending `sprintId`) is a `403` whose problem body also carries `errors: { sprintId: [...] }`. In code, `ForbiddenError` takes optional `failures`, and the problem-details filter renders them as `errors`. No other 403 changes. **Keyed 422 (slice 324).** `UnprocessableError` likewise takes optional `failures`, rendered as `errors` on a 422 only when set (`detail` stays the code); the per-item refusals of bulk sprint assignment and create-with-tasks key `ideaIds` with a message that starts with the item key. Other 422s unchanged.
 
 ## 2026-10-22 — Tasks get a Backlog and sprints are planned from it (five surfaces)
 

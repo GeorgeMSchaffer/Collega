@@ -152,6 +152,9 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     if (exception instanceof ValidationError) {
       body.errors = exception.failures
     }
+    if (exception instanceof UnprocessableError && exception.failures) {
+      body.errors = exception.failures
+    }
     if (exception instanceof ForbiddenError && exception.failures) {
       body.errors = exception.failures
     }
