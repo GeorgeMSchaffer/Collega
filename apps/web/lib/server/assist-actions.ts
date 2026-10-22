@@ -14,11 +14,14 @@
 
 import { ApiError, apiPath, apiPostReturning } from '../api/client'
 import type { AssistTurnRequest, AssistTurnResponse, AssistTurnResult } from '../assist-turn'
+import { recordEvent } from './analytics'
 
 export async function takeAssistTurn(
   boardId: string | null,
   request: AssistTurnRequest,
 ): Promise<AssistTurnResult> {
+  // On send, whatever the turn's outcome (`SPEC/20-feature-analytics.md` "Events").
+  await recordEvent('idea.assist.used')
   try {
     const turn = await apiPostReturning<AssistTurnResponse>(
       boardId ? apiPath`/boards/${boardId}/idea-assist/turns` : apiPath`/idea-assist/turns`,

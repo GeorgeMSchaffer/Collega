@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
+import { PageAnalytics } from '@/components/analytics/page-analytics'
 import { ThemeProvider } from '@/components/theme/theme-provider'
+import { analyticsEnabled } from '@/lib/server/analytics'
 import { currentTheme } from '@/lib/server/theme'
 import './globals.css'
 
@@ -23,7 +25,7 @@ const FONTS =
   '&family=DM+Mono:wght@400;500&display=swap'
 
 /**
- * The root layout. It owns the document shell and the theme, and nothing else — the desk
+ * The root layout. It owns the document shell, the theme and page-view analytics — the desk
  * shell (sidebar, command palette) is E2's `(desk)/layout.tsx`, which renders into this.
  *
  * The theme comes from a cookie read here, so `<html data-theme>` is already right in the first
@@ -42,6 +44,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       </head>
       <body>
         <ThemeProvider theme={theme}>{children}</ThemeProvider>
+        {analyticsEnabled() ? <PageAnalytics /> : null}
       </body>
     </html>
   )

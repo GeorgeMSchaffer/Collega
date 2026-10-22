@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-22 | A board can limit which idea types it takes | active | full below |
 | 2026-10-21 | Analytics runs without a consent banner | Current | Full below |
 | 2026-10-21 | Production runs with `COLLEGA_ALLOW_DEMO_SEED` set | active | full below |
 | 2026-10-20 | Idea assistant v2: enablement gate passed; the v1 default prompt stays | active | full below |
@@ -140,6 +141,32 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 ---
 
+## 2026-10-22 — A board can limit which idea types it takes
+
+**Decided by the owner** (four answers, 2026-10-22). Reopens the "no per-board setting" clause of
+"Idea assistant v2: the idea type never auto-routes to a board" (2026-10-20) for **restriction
+only**: a type still never chooses a board.
+
+- **Who.** An Org Admin of the organization, or the board's creator (`boards.created_by_user_id`)
+  while they are an active User or Org Admin there. A Site Admin only through View As. The creator
+  right covers this setting only; the rest of the board stays Org Admin only.
+- **Empty means all.** A board with no types selected takes every active type, which is every
+  board today, so nothing is backfilled. Narrowing the list leaves ideas already on the board
+  alone, with the type they have.
+- **Where it bites.** Creating an idea on the board, changing an idea's type while it is on the
+  board, and moving or pulling an idea onto the board. The form lists only the allowed types; an
+  idea already on the board keeps showing its current type, marked as not allowed. A type the
+  assistant detects is used as the form's default only if it is allowed.
+- **Idea features off.** The setting is hidden and ignored while `idea_features_enabled` is off, so
+  reference boards and auto-created tasks are never blocked.
+- **Schema.** The S0.2 freeze is amended a twelfth time: `board_idea_types` (`board_id`,
+  `idea_type_id`, primary key on the pair, cascade on board delete).
+
+- **Details** (owner, same day): the board read carries a server-computed `canSetAllowedIdeaTypes`; a change is audited as `BoardUpdated` with `allowedIdeaTypeIds` in its metadata, not a new event; a CSV row of a disallowed type is refused on its own and the rest import.
+
+Contracts: `contracts/boards.md` "Allowed idea types" and the create, update and pull errors in
+`contracts/ideas.md` and `contracts/boards.md`. Rule 15 of `20-feature-boards-and-statuses.md`.
+
 ## 2026-10-21 — Analytics runs without a consent banner
 
 Vercel Analytics is used for page views and a small set of custom events (`SPEC/20-feature-analytics.md`).
@@ -167,6 +194,8 @@ tenant is loaded.
 ## 2026-10-20 — Idea assistant v2: the idea type never auto-routes to a board
 
 **Decided by the owner.** Supersedes the "type picks the board" clause of the entry below. A detected Idea Type only **defaults the form's type** (Suggested, per 306/309); it never chooses a board. The person picks the board; a board-less create stays in the pool/backlog. No schema change, no per-type or per-board routing setting. Reopen only if admins ask for type-based routing.
+
+> Amended 2026-10-22 ("A board can limit which idea types it takes"): a per-board *restriction* now exists. Routing is still never automatic.
 
 ---
 
