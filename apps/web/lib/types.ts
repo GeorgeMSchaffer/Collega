@@ -559,6 +559,10 @@ export type IdeaListQuery = {
   scope?: 'assigned' | 'created' | undefined
   /** The organization list only: one phase. Absent is both. */
   phase?: 'Ideas' | 'Issues' | undefined
+  /** A board's list only: `none` for the items in no sprint (the Backlog), or one sprint's id. */
+  sprintId?: string | undefined
+  /** A board's list only: leave out items sitting in one of the board's final lanes. */
+  hideFinal?: boolean | undefined
 }
 
 /**
