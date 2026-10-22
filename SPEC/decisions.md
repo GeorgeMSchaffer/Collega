@@ -163,7 +163,7 @@ Rules settled with it:
 
 **Why.** A task is a card on a board but only reachable through its parent, so standalone and cross-idea tasks cannot be managed; and sprint creation, which the person experiences as "plan the next two weeks", had no step for choosing the work. One list serving five entry points avoids five models.
 
-**Build needs** (not specified in a contract yet): sprint on board idea items, a board-task sprint assignment route, `taskIds` on sprint create, and a cross-board task read for the Tasks page only.
+**Build needs** (contracts written 2026-10-22, owner to review, in `contracts/sprints.md` and `contracts/ideas.md`): `ideaIds` on board sprint create, `PUT /boards/{boardId}/sprint-assignments` (bulk, atomic, optional `statusId`), `hideFinal` and the org list's `sprintId`, and `POST /boards/{boardId}/tasks`. The sprint field on board items and the single assignment route already existed; no cross-board task route is needed.
 
 ## 2026-10-22 — The whole idea card drags between lanes
 

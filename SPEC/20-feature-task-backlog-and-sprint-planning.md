@@ -43,21 +43,24 @@ Story points, velocity, capacity limits, drag as the only path, automatic schedu
 - **TB-9 Schedule from the idea (E).** The Tasks section shows each task's sprint and offers "Schedule…" for the unscheduled ones, choosing an existing sprint or opening the TB-4 create flow with those tasks ticked.
 - **TB-10 Roles.** Org Admin: everything. User: sees every surface, may add a standalone or parented task (as in the parent drawer today); sprint creation and assignment stay admin-only, per `contracts/sprints.md`. Read Only: sees, no controls. Site Admin: View As only.
 
-## Contract gaps this needs (from `decisions.md` 2026-10-19, items a to d)
+## Contract gaps (written 2026-10-22, owner to review; not built)
 
-1. Board idea items carry `sprintId` and sprint name (chips, panel, Backlog column).
-2. A board-task sprint assignment route: single (`PUT /ideas/{id}/sprint` generalised off the retired Delivery phase) and bulk add/remove on a sprint.
-3. `taskIds` on sprint create (TB-4).
-4. A cross-board task list read for TB-8 (new; slice 5 only).
-Backlog read and per-board sprints already exist in `contracts/sprints.md` "Sprints per board".
+Checked against the contracts and code: sprint on board idea items, the `sprintId` filter, per-board sprint list/create and single assignment already exist. What was actually missing, now written:
+
+1. `ideaIds` on `POST /boards/{boardId}/sprints`, atomic (TB-4). `contracts/sprints.md`.
+2. `PUT /boards/{boardId}/sprint-assignments`, bulk add, move, remove, with optional `statusId` for the lane drop (TB-5, TB-7, TB-9). `contracts/sprints.md`.
+3. `hideFinal` on the board list, and `sprintId` and `hideFinal` on the organization list, so the Tasks page (TB-8) needs **no new route** (work boards come from `referencedByBoardIds`). `contracts/ideas.md`.
+4. `POST /boards/{boardId}/tasks`, because the board idea create requires idea-only fields a task lacks (TB-2). `contracts/ideas.md`.
+
+Not needed after all: a sprint field on board items, and a cross-board task route.
 
 ## Slices (sequential; each verifiable alone; QA follows each)
 
-1. **Backend:** gaps 1 to 3 plus tests for TB-3 to TB-5.
+1. **Backend:** gaps 1 to 4 plus tests for TB-1 to TB-5.
 2. **UI A+D:** Backlog tab, New task drawer, Backlog panel toggle (TB-1, 2, 6, 7).
 3. **UI A2:** create-sprint picker and "Add to new sprint…" (TB-3, 4).
 4. **UI B:** sprint planning page (TB-5).
-5. **Backend then UI C:** cross-board read, Tasks page (TB-8).
+5. **UI C:** Tasks page (TB-8); backend is the `sprintId` and `hideFinal` params only.
 6. **UI E:** Schedule step in the parent drawer (TB-9).
 
 Gate for each: `pnpm check`; Playwright path for the new surface; browser check per the project memory.
