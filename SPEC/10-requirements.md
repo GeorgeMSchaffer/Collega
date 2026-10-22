@@ -29,7 +29,7 @@ Collega is a collaboration and project management tool for submitting, tracking,
 - Authenticated users without a required password change land on the Dashboard at `/` after login. The standalone `/change-password` route is limited to accounts marked `MustChangePassword`; voluntary password changes remain available from `/settings/profile`.
 - Access tokens expire absolutely after 480 minutes. Authenticated browser sessions also expire after 30 minutes without synchronized cross-tab activity, with a warning and two-minute countdown beginning at minute 28; staying signed in resets only the idle deadline.
 - Successful required and voluntary password changes revoke the current token, clear client authentication state, and return to Login with confirmation. Re-authentication then lands on the Dashboard unless a separate normal return URL applies.
-- Desktop card drag uses a dedicated handle, moves the idea optimistically, and reverts on failure. Changing status in Idea Detail moves the visible card immediately. Keyboard and touch users use the Idea Detail status selector.
+- Desktop card drag starts anywhere on the card, moves the idea optimistically, and reverts on failure. Changing status in Idea Detail moves the visible card immediately. Keyboard and touch users use the Idea Detail status selector. *Changed 2026-10-22 (owner, `SPEC/decisions.md`): the whole card drags; this said a dedicated handle.*
 - Idea authors and in-scope admins can edit descriptions. Only in-scope Org Admins and Site Admins can soft-delete ideas; deleted ideas are excluded from normal queries and restore is deferred.
 - OAuth implementation is scheduled for post-MVP Phase 2, with SAML scheduled in a subsequent post-OAuth phase.
 

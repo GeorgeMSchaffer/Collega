@@ -327,7 +327,7 @@ State legend: **Built** · **Partial** · **Unbuilt** · **Deferred**
 - The card's comment action opens the drawer, scrolls comments into view and **focuses the composer**; where commenting is unavailable, focus moves to the comments heading.
 
 **US-IDEA-04 · User · Built** — *move ideas between swimlanes by drag or by picker, so the board stays current on any input device.*
-- Desktop cards use a **dedicated drag handle**; **keyboard and touch users use the status selector in Idea Detail**.
+- Desktop cards drag from **anywhere on the card**; **keyboard and touch users use the status selector in Idea Detail**. *Changed 2026-10-22 (owner, `SPEC/decisions.md`): the whole card drags; this said a dedicated handle.*
 - Either path **updates the card immediately**; **a failed API call restores the prior swimlane and shows an error**.
 - A successful status change moves the card **without closing Idea Detail**.
 
