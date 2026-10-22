@@ -149,7 +149,7 @@ const MAX_EXPORT_ROWS = 10_000
 /**
  * Idea use cases (SPEC/20-feature-ideas-and-engagement.md, SPEC/30-Contracts.md "Idea
  * Contracts"). Enforces organization scoping, idea-edit vs. description/assignee authorization,
- * board-configured User status moves (rule #34), keeping Complete ideas editable (rule #6/#35),
+ * status moves for every writing role (rule #34), keeping Complete ideas editable (rule #6/#35),
  * and audit emission (rule #36). Upvote toggling itself lives in the sibling `upvotes` feature.
  */
 export class IdeaService {
@@ -1326,7 +1326,7 @@ export class IdeaService {
       })
     }
 
-    this.ensureCanMoveIdea(board)
+    this.ensureCanMoveIdea()
     ensureBoardNotArchived(board)
 
     if (idea.statusId === command.statusId) {
@@ -2757,14 +2757,12 @@ export class IdeaService {
     }
   }
 
-  /** User-role status moves are allowed only when the board opts in (rule #34); Site Admin and
-   * in-scope Org Admin may always move; Read Only never. */
-  private ensureCanMoveIdea(board: BoardContext): void {
+  /** Users, Site Admins and in-scope Org Admins may always move an idea between statuses; Read
+   * Only never (rule #34). The board's `allowUserStatusUpdate` is still stored but no longer
+   * consulted (SPEC/decisions.md 2026-10-22). */
+  private ensureCanMoveIdea(): void {
     const role = this.requireAuthenticatedRole()
-    if (role === Role.SiteAdmin || role === Role.OrgAdmin) {
-      return
-    }
-    if (role === Role.User && board.allowUserStatusUpdate) {
+    if (role === Role.SiteAdmin || role === Role.OrgAdmin || role === Role.User) {
       return
     }
     throw new ForbiddenError('You are not allowed to move ideas on this board.')
