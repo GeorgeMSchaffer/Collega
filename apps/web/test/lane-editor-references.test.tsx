@@ -406,7 +406,48 @@ describe('the auto-create switch', () => {
     fireEvent.change(select('Review'), { target: { value: '' } })
     fireEvent.change(select('Review'), { target: { value: 'b-impl' } })
     expect(screen.queryByRole('status')).toBeNull()
-    expect(autoSwitch('Review')?.getAttribute('aria-checked')).toBe('false')
+    expect(autoSwitch('Review')?.getAttribute('aria-checked')).toBe('true')
+  })
+
+  it('turns on by default when a reference is chosen, and can still be switched off', () => {
+    const { container } = renderFields()
+    fireEvent.change(select('New'), { target: { value: 'b-impl' } })
+    expect(autoSwitch('New')?.getAttribute('aria-checked')).toBe('true')
+    expect(posted(container)['s-new']).toMatchObject({
+      referencesBoardId: 'b-impl',
+      autoCreateTask: true,
+    })
+    fireEvent.click(autoSwitch('New') as HTMLElement)
+    expect(posted(container)['s-new']?.autoCreateTask).toBe(false)
+  })
+
+  it('keeps the person’s choice when the reference moves to another board', () => {
+    const { container } = renderFields({
+      laneFlags: { 's-review': { ...NONE, referencesBoardId: 'b-impl' } },
+    })
+    fireEvent.change(select('Review'), { target: { value: 'b-nokey' } })
+    expect(posted(container)['s-review']).toMatchObject({
+      referencesBoardId: 'b-nokey',
+      autoCreateTask: false,
+    })
+  })
+
+  it('leaves a stored lane’s setting alone when nothing is chosen', () => {
+    const { container } = renderFields({
+      laneFlags: { 's-review': { ...NONE, referencesBoardId: 'b-impl' } },
+    })
+    expect(posted(container)['s-review']?.autoCreateTask).toBe(false)
+  })
+})
+
+describe('the References board label', () => {
+  it('is visible on every editable lane and labels that lane’s select', () => {
+    renderFields()
+    const labels = screen.getAllByText('References board', { selector: 'label' })
+    expect(labels).toHaveLength(3)
+    const label = labels[0] as HTMLLabelElement
+    expect(label.htmlFor).toBe(select('New').id)
+    expect(select('New').labels?.[0]).toBe(label)
   })
 })
 
