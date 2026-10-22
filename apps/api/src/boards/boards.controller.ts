@@ -44,7 +44,11 @@ type CreateBoardBody = {
   ideaFeaturesEnabled?: boolean
   pullItemIds?: unknown
   forceReason?: unknown
+  allowedIdeaTypeIds?: unknown
 }
+
+/** `PUT /boards/{boardId}/allowed-idea-types` (added 2026-10-22). */
+type SetAllowedIdeaTypesBody = { ideaTypeIds?: unknown }
 
 /** One entry of `PUT`'s `ideaMoves` (added 2026-09-29): a removed lane and where its ideas go. */
 type IdeaMoveBody = { fromStatusId?: string; toStatusId?: string }
@@ -155,6 +159,22 @@ function toPullItemIds(value: unknown): readonly string[] {
 }
 
 /**
+ * An allowed-idea-types list (SPEC/contracts/boards.md "Allowed idea types"): anything but an array
+ * of strings is refused here under `field`; whether each string is an id, repeats, or names an
+ * active idea type is the Application layer's. Absent or `null` is empty only where `absentMeansAll`
+ * (on create); the replace route needs the array.
+ */
+function toIdeaTypeIds(field: string, value: unknown, absentMeansAll: boolean): readonly string[] {
+  if (absentMeansAll && (value === undefined || value === null)) {
+    return []
+  }
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== 'string')) {
+    throw new RequestValidationError({ [field]: ['Idea type ids must be an array of ids.'] })
+  }
+  return value as readonly string[]
+}
+
+/**
  * Board configuration (SPEC/30-Contracts.md "Board Contracts").
  *
  * `@Controller()` carries no prefix on purpose. The .NET controller declared a full path on every
@@ -220,6 +240,7 @@ export class BoardsController {
       ideaFeaturesEnabled: toFlag('ideaFeaturesEnabled', body.ideaFeaturesEnabled),
       pullItemIds: toPullItemIds(body.pullItemIds),
       forceReason: optional(body.forceReason),
+      allowedIdeaTypeIds: toIdeaTypeIds('allowedIdeaTypeIds', body.allowedIdeaTypeIds, true),
     })
   }
 
@@ -246,6 +267,20 @@ export class BoardsController {
       ideaMoves: toIdeaMoves(body.ideaMoves),
       pullItemIds: toPullItemIds(body.pullItemIds),
       forceReason: optional(body.forceReason),
+    })
+  }
+
+  /**
+   * Replaces the idea types the board takes (added 2026-10-22). Who may is the Application layer's:
+   * an Org Admin, or the board's creator.
+   */
+  @Put('boards/:boardId/allowed-idea-types')
+  async setAllowedIdeaTypes(
+    @Param('boardId', UuidParamPipe) boardId: string,
+    @Body() body: SetAllowedIdeaTypesBody | undefined,
+  ): Promise<BoardDetail> {
+    return this.boards.setAllowedIdeaTypes(boardId, {
+      ideaTypeIds: toIdeaTypeIds('ideaTypeIds', body?.ideaTypeIds, false),
     })
   }
 

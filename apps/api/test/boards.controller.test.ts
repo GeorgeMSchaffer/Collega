@@ -104,6 +104,8 @@ function controller(otherBoards: readonly Board[] = []): {
       totalCount: 0,
       hiddenTaskCount: 0,
     }),
+    replaceAllowedIdeaTypes: async () => {},
+    listIdeaTypes: async () => [],
   }
   const statusRepository: StatusRepository = {
     add: async () => {},

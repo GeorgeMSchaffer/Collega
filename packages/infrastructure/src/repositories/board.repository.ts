@@ -11,6 +11,7 @@
 import { randomUUID } from 'node:crypto'
 import type { AiBoardLookupPort } from '@collega/application/ai'
 import type {
+  BoardIdeaType,
   BoardRepository,
   BoardStatusIdeaCount,
   BoardTagIdeaCount,
@@ -37,7 +38,31 @@ import {
 import type { PrismaClient } from '../persistence/prisma-client.js'
 import type { PrismaUnitOfWork } from '../persistence/unit-of-work.js'
 
-type BoardRowWithSwimlanes = BoardRow & { board_swimlanes: SwimlaneRow[] }
+type BoardRowWithSwimlanes = BoardRow & {
+  board_swimlanes: SwimlaneRow[]
+  board_idea_types: { idea_type_id: string; idea_types: { name: string; sort_order: number } }[]
+}
+
+/**
+ * What every board read loads: its lanes, and its allowed idea types with their sort keys. An
+ * archived type is left out, so a list holding only archived types reads as empty and the board
+ * takes every type (boards rule 15, decided 2026-10-22).
+ */
+const BOARD_INCLUDE = {
+  board_swimlanes: true,
+  board_idea_types: {
+    where: { idea_types: { is_deleted: false } },
+    select: { idea_type_id: true, idea_types: { select: { name: true, sort_order: true } } },
+  },
+} as const
+
+/** Sort order, then name, as every idea type list is ordered (`idea-type.repository.ts`). */
+function compareIdeaTypes(
+  a: { readonly name: string; readonly sort_order: number },
+  b: { readonly name: string; readonly sort_order: number },
+): number {
+  return a.sort_order - b.sort_order || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)
+}
 
 function boardFromRow(row: BoardRowWithSwimlanes): Board {
   const swimlanes: BoardSwimlane[] = [...row.board_swimlanes]
@@ -63,6 +88,9 @@ function boardFromRow(row: BoardRowWithSwimlanes): Board {
     sprintsEnabled: row.sprints_enabled,
     ideaFeaturesEnabled: row.idea_features_enabled,
     nextItemNumber: row.next_item_number,
+    allowedIdeaTypeIds: [...row.board_idea_types]
+      .sort((a, b) => compareIdeaTypes(a.idea_types, b.idea_types))
+      .map((entry) => entry.idea_type_id),
     createdAtUtc: row.created_at_utc,
     updatedAtUtc: row.updated_at_utc,
     createdByUserId: row.created_by_user_id,
@@ -91,7 +119,7 @@ export class PrismaBoardRepository
   async getById(boardId: string): Promise<Board | null> {
     const row = await this.prisma.boards.findUnique({
       where: { id: boardId },
-      include: { board_swimlanes: true },
+      include: BOARD_INCLUDE,
     })
     return row ? boardFromRow(row) : null
   }
@@ -99,7 +127,7 @@ export class PrismaBoardRepository
   async listByOrganization(organizationId: string): Promise<readonly Board[]> {
     const rows = await this.prisma.boards.findMany({
       where: { organization_id: organizationId },
-      include: { board_swimlanes: true },
+      include: BOARD_INCLUDE,
     })
     return rows.map(boardFromRow)
   }
@@ -478,6 +506,7 @@ export class PrismaBoardRepository
     readonly isArchived: boolean
     readonly keyPrefix: string | null
     readonly ideaFeaturesEnabled: boolean
+    readonly allowedIdeaTypeIds: readonly string[]
     readonly swimlanes: readonly SwimlaneInfo[]
   } | null> {
     const board = await this.getById(boardId)
@@ -492,6 +521,7 @@ export class PrismaBoardRepository
       isArchived: board.isArchived,
       keyPrefix: board.keyPrefix,
       ideaFeaturesEnabled: board.ideaFeaturesEnabled,
+      allowedIdeaTypeIds: board.allowedIdeaTypeIds,
       swimlanes: board.swimlanes,
     }
   }
@@ -636,6 +666,41 @@ export class PrismaBoardRepository
     this.unitOfWork.enqueue(
       this.prisma.board_swimlanes.createMany({ data: this.swimlaneRows(board) }),
     )
+    if (board.allowedIdeaTypeIds.length > 0) {
+      this.unitOfWork.enqueue(
+        this.prisma.board_idea_types.createMany({ data: this.allowedIdeaTypeRows(board) }),
+      )
+    }
+  }
+
+  /** A full replace, like the lanes; stamps the board as updated, and touches nothing else on it. */
+  async replaceAllowedIdeaTypes(board: Board): Promise<void> {
+    this.unitOfWork.enqueue(
+      this.prisma.boards.update({
+        where: { id: board.id },
+        data: {
+          updated_at_utc: board.updatedAtUtc,
+          updated_by_user_id: board.updatedByUserId,
+        },
+      }),
+    )
+    this.unitOfWork.enqueue(
+      this.prisma.board_idea_types.deleteMany({ where: { board_id: board.id } }),
+    )
+    if (board.allowedIdeaTypeIds.length > 0) {
+      this.unitOfWork.enqueue(
+        this.prisma.board_idea_types.createMany({ data: this.allowedIdeaTypeRows(board) }),
+      )
+    }
+  }
+
+  async listIdeaTypes(organizationId: string): Promise<readonly BoardIdeaType[]> {
+    const rows = await this.prisma.idea_types.findMany({
+      where: { organization_id: organizationId },
+      orderBy: [{ sort_order: 'asc' }, { name: 'asc' }],
+      select: { id: true, name: true, is_deleted: true },
+    })
+    return rows.map((row) => ({ id: row.id, name: row.name, isDeleted: row.is_deleted }))
   }
 
   async save(board: Board): Promise<void> {
@@ -664,6 +729,13 @@ export class PrismaBoardRepository
     this.unitOfWork.enqueue(
       this.prisma.board_swimlanes.createMany({ data: this.swimlaneRows(board) }),
     )
+  }
+
+  private allowedIdeaTypeRows(board: Board) {
+    return board.allowedIdeaTypeIds.map((ideaTypeId) => ({
+      board_id: board.id,
+      idea_type_id: ideaTypeId,
+    }))
   }
 
   private swimlaneRows(board: Board) {

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { type ReactNode, Suspense } from 'react'
 import { IdleSignOut } from '@/components/auth/idle-sign-out'
 import { navGroupsWithoutCounts } from '@/components/nav/nav-items'
@@ -6,6 +7,9 @@ import { SidebarNav } from '@/components/nav/sidebar-nav'
 import { ViewAsBanner } from '@/components/nav/view-as-banner'
 import { requireCurrentUser, sessionRemainingMs } from '@/lib/server/current-user'
 import { SessionProvider } from '@/lib/session-client'
+
+/** Every signed-in page stays out of search indexes (`SPEC/20-feature-analytics.md` req. 4). */
+export const metadata: Metadata = { robots: { index: false, follow: false } }
 
 /**
  * Shorter idle timings for trying the warning and the sign-out by hand, in development only: a

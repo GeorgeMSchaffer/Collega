@@ -339,7 +339,8 @@ describe('TasksCompletePrompt', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Move' }))
 
     expect(await screen.findByText('Waiting on 1 task.')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Move' })).toBeTruthy()
+    // The refusal can render a tick before the pending label clears, so wait for "Move" too.
+    expect(await screen.findByRole('button', { name: 'Move' })).toBeTruthy()
   })
 
   it('goes away on Not yet without moving', () => {

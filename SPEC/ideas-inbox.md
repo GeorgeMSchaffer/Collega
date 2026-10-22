@@ -6,6 +6,15 @@
 >
 > **Promotion path:** idea → user discussion → canonical spec (`SPEC/20-feature-*.md`) → sprint plan (`SPEC/sprints/`). Once an idea is promoted, delete it here — the spec becomes its home.
 
+## Mobile: a back button or clickable breadcrumbs
+
+> Raised by the owner 2026-10-22. On a phone there is no sidebar to navigate back with, so a
+> detail screen (a board, an idea, an Outcome, a settings record) needs either a back control or
+> a topbar breadcrumb whose parent segments are links. Today only some topbar titles link their
+> parent (the board page links *Boards*); most render plain text. Unrefined: back button vs.
+> linked breadcrumbs vs. both, whether it shows on desktop too, and how it behaves inside the
+> idea drawer. Comp first (`SPEC/mockups/`), since the mobile layout isn't settled.
+
 ## Move one idea to another board
 
 > **Triage 2026-10-20: valid, to be specced.** Raised 2026-10-13, out of scope for Sprint 14 (`SPEC/20-feature-board-pull-in.md` "Out of scope").

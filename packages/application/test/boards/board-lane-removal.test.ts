@@ -136,6 +136,10 @@ function harness(
     async listPullCandidates() {
       return { items: [], page: 1, pageSize: 20, totalCount: 0, hiddenTaskCount: 0 }
     },
+    async replaceAllowedIdeaTypes() {},
+    async listIdeaTypes() {
+      return []
+    },
   }
 
   const statuses: StatusRepository = {

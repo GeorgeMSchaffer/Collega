@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Collega UX review — exploratory comp</title>
+  <style>
+    /* Graphite values mirror packages/design-system/src/globals.css; kept local for standalone export. */
+    :root {
+      color-scheme: dark;
+      --bg: #0f1113;
+      --surface: #16191c;
+      --surface-raised: #1a1e22;
+      --surface-soft: #20252a;
+      --line: #2c3238;
+      --line-soft: #22272c;
+      --text: #e6e8ea;
+      --text-secondary: #c4cad0;
+      --muted: #9ba3ab;
+      --accent: #f5a524;
+      --accent-soft: #2a2418;
+      --cyan: #5cc8e0;
+      --green: #58c781;
+      --red: #ff8a8e;
+      --radius: 10px;
+      font: 14px/1.45 "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 36px;
+      color: var(--text);
+      background: #090b0d;
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    .intro { max-width: 1280px; margin: 0 auto 30px; }
+    .eyebrow, .label, .nav-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .intro h1 { margin: 8px 0; font-size: 29px; letter-spacing: -.03em; }
+    .intro p { max-width: 76ch; margin-bottom: 0; color: var(--text-secondary); }
+    .gallery { display: grid; grid-template-columns: 1fr; max-width: 1280px; margin: 0 auto; gap: 24px; }
+    .mockup { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: var(--bg); }
+    .mockup-caption { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line); background: #121518; }
+    .mockup-caption h2 { margin: 0; font-size: 14px; }
+    .mockup-caption span { color: var(--muted); font-size: 12px; }
+    .shell { display: grid; grid-template-columns: 190px minmax(0, 1fr); min-height: 620px; }
+    .sidebar { display: flex; flex-direction: column; gap: 3px; padding: 16px 12px; border-right: 1px solid var(--line); background: #121518; }
+    .brand { display: flex; align-items: center; gap: 9px; padding: 4px 7px 20px; font-size: 15px; font-weight: 700; }
+    .brand-mark { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 7px; background: var(--accent); color: #16120a; font-size: 11px; font-weight: 800; }
+    .nav-label { margin: 6px 8px 4px; }
+    .nav-item { display: flex; align-items: center; justify-content: space-between; min-height: 36px; padding: 0 9px; border-radius: 7px; color: var(--text-secondary); text-decoration: none; }
+    .nav-item.active { background: #1c2024; color: var(--text); font-weight: 650; }
+    .nav-count { color: var(--muted); font-size: 12px; }
+    .account { margin-top: auto; padding: 12px 8px 0; border-top: 1px solid var(--line); color: var(--text-secondary); font-size: 12px; }
+    .account strong { display: block; color: var(--text); font-size: 13px; }
+    .main { min-width: 0; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; min-height: 52px; padding: 0 22px; border-bottom: 1px solid var(--line); background: var(--surface); }
+    .crumb { color: var(--muted); font-size: 12px; }
+    .crumb strong { color: var(--text); }
+    .top-actions { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 12px; }
+    .mobile-bar { display: none; }
+    .theme { padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--text-secondary); }
+    .content { padding: 22px; }
+    .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
+    .page-head h3 { margin: 0; font-size: 23px; letter-spacing: -.02em; }
+    .page-head p { max-width: 60ch; margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+    .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .button { display: inline-flex; align-items: center; justify-content: center; min-height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--text); font: inherit; font-size: 13px; font-weight: 650; white-space: nowrap; cursor: pointer; }
+    .button.primary { border-color: var(--accent); background: var(--accent); color: #16120a; }
+    .button.ghost { background: transparent; }
+    .button.small { min-height: 32px; padding: 0 9px; font-size: 12px; }
+    .toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .search, .filter { display: flex; align-items: center; min-height: 34px; padding: 0 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--text-secondary); font-size: 12px; }
+    .search { flex: 1 1 230px; }
+    .filter { gap: 8px; }
+    .filter strong { color: var(--text); font-weight: 600; }
+    .result-count { margin-left: auto; color: var(--muted); font-size: 12px; }
+    .card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .board-card, .panel, .idea-row { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+    .board-card { padding: 15px; }
+    .board-card-top { display: flex; justify-content: space-between; gap: 12px; }
+    .board-card h4 { margin: 0; color: var(--accent); font-size: 16px; }
+    .board-card p { margin: 5px 0 13px; color: var(--muted); font-size: 12px; }
+    .icon-action { display: grid; width: 30px; height: 30px; flex: 0 0 30px; place-items: center; border: 1px solid var(--line); border-radius: 7px; color: var(--text-secondary); font-size: 17px; }
+    .mini-stats { display: flex; flex-wrap: wrap; gap: 7px; margin: 11px 0 13px; }
+    .pill { display: inline-flex; align-items: center; gap: 5px; min-height: 25px; padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-raised); color: var(--text-secondary); font-size: 12px; white-space: nowrap; }
+    .pill.accent { border-color: #705a34; background: var(--accent-soft); color: #ffd084; }
+    .pill.cyan { border-color: #2e6a78; background: #0f1d21; color: var(--cyan); }
+    .pill.green { border-color: #28513a; background: #13241a; color: var(--green); }
+    .pill.red { border-color: #63353a; background: #2e1719; color: var(--red); }
+    .card-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; color: var(--muted); font-size: 12px; }
+    .panel { overflow: hidden; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 15px; border-bottom: 1px solid var(--line); }
+    .panel-head strong { font-size: 13px; }
+    .panel-head span { color: var(--muted); font-size: 11px; }
+    .backlog-item { display: grid; grid-template-columns: minmax(180px, 2.2fr) 1fr .8fr .8fr .7fr auto; align-items: center; gap: 14px; padding: 14px 15px; border-bottom: 1px solid var(--line-soft); }
+    .backlog-item:last-child { border-bottom: 0; }
+    .item-title { min-width: 0; font-size: 13px; font-weight: 650; }
+    .item-sub { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; font-weight: 400; }
+    .field-value { color: var(--text-secondary); font-size: 12px; }
+    .field-value .label { display: block; margin-bottom: 4px; font-size: 11px; }
+    .summary-strip { display: flex; align-items: center; gap: 20px; margin-bottom: 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+    .summary-stat { min-width: 88px; }
+    .summary-stat strong { display: block; font-family: "DM Mono", Consolas, monospace; font-size: 16px; }
+    .summary-stat span { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+    .summary-goal { flex: 1; padding-left: 18px; border-left: 1px solid var(--line); color: var(--text-secondary); font-size: 12px; }
+    .lanes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+    .lane { min-width: 0; padding: 9px; border: 1px solid var(--line); border-radius: 9px; background: #121518; }
+    .lane-head { display: flex; align-items: center; justify-content: space-between; gap: 5px; margin-bottom: 8px; color: var(--text-secondary); font-size: 12px; font-weight: 650; }
+    .lane-count { color: var(--muted); font-family: "DM Mono", Consolas, monospace; }
+    .issue-card { margin-bottom: 7px; padding: 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); }
+    .issue-card:last-child { margin-bottom: 0; }
+    .issue-card strong { display: block; font-size: 12px; line-height: 1.35; }
+    .issue-card small { display: block; margin-top: 6px; color: var(--muted); font-size: 11px; }
+    .idea-list { display: grid; gap: 7px; }
+    .idea-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; align-items: center; gap: 10px; padding: 11px 12px; }
+    .idea-title { color: var(--text); font-size: 12px; font-weight: 650; }
+    .idea-board { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; font-weight: 400; }
+    .people { display: flex; align-items: center; gap: 5px; color: var(--text-secondary); font-size: 12px; }
+    .avatar { display: grid; width: 26px; height: 26px; place-items: center; border-radius: 50%; background: #2a2418; color: var(--accent); font-size: 11px; font-weight: 700; }
+    .detail-layout { display: grid; grid-template-columns: minmax(0, 1fr) 235px; align-items: start; gap: 14px; }
+    .detail-main, .detail-aside { padding: 15px; }
+    .detail-main h4 { margin: 7px 0 13px; font-size: 18px; line-height: 1.3; }
+    .detail-main p { margin: 6px 0 14px; color: var(--text-secondary); font-size: 12px; line-height: 1.55; }
+    .detail-main .label { margin: 14px 0 4px; }
+    .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; border-radius: 8px; background: var(--surface-raised); }
+    .fact span { display: block; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+    .fact strong { display: block; margin-top: 3px; font-size: 12px; }
+    .detail-aside { border-left: 1px solid var(--line); }
+    .detail-aside h5 { margin: 0 0 8px; font-size: 12px; }
+    .detail-aside p { color: var(--muted); font-size: 12px; }
+    .comment { margin-top: 11px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--text-secondary); font-size: 12px; }
+    .recommendation { margin: 12px 0 0; padding: 9px 10px; border-left: 2px solid var(--cyan); background: #101a1d; color: var(--text-secondary); font-size: 12px; }
+    .recommendation strong { color: var(--cyan); }
+    .mobile-note { margin-top: 10px; padding: 9px 10px; border: 1px dashed #705a34; border-radius: 7px; color: #ffd084; font-size: 12px; }
+    :focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+    @media (max-width: 980px) {
+      body { padding: 18px; }
+    }
+    @media (max-width: 700px) {
+      body { padding: 10px; }
+      .shell { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .sidebar.is-open { display: flex; }
+      .mobile-bar { display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding: 0 16px; border-bottom: 1px solid var(--line); background: #121518; }
+      .mobile-brand { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+      .mobile-menu { min-height: 44px; padding: 0 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--text); font: inherit; font-size: 12px; cursor: pointer; }
+      .button, .icon-action { min-height: 44px; }
+      .icon-action { width: 44px; flex-basis: 44px; }
+      .topbar { min-height: 46px; padding: 0 16px; }
+      .content { padding: 16px; }
+      .card-grid { grid-template-columns: 1fr; }
+      .page-head { flex-direction: column; }
+      .summary-strip { flex-wrap: wrap; gap: 12px; }
+      .summary-goal { flex-basis: 100%; padding: 10px 0 0; border-left: 0; border-top: 1px solid var(--line); }
+      .lanes { grid-template-columns: repeat(5, minmax(190px, 1fr)); overflow-x: auto; padding-bottom: 6px; }
+      .backlog-item { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+      .backlog-item .field-value { display: none; }
+      .idea-row { grid-template-columns: minmax(0, 1fr) auto; }
+      .idea-row .people, .idea-row .idea-votes { display: none; }
+      .detail-layout { grid-template-columns: 1fr; }
+      .detail-aside { border-top: 1px solid var(--line); border-left: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="intro">
+    <h1>Make the next decision easier to see.</h1>
+    <p>Four focused refinements based on the live Acme Robotics demo: keep the established Graphite design, bring the most useful context into view, and let each page adapt to narrow screens without hiding important actions.</p>
+  </header>
+
+  <main class="gallery">
+    <section class="mockup" aria-labelledby="frame-title">
+      <div class="mockup-caption"><h2 id="frame-title">01 · App frame + Boards</h2><span>Persistent location · scannable board summaries</span></div>
+      <div class="shell">
+        <nav class="sidebar" id="frame-nav" aria-label="Primary navigation">
+          <div class="brand"><span class="brand-mark">CG</span>Collega</div>
+          <div class="nav-label">Workspace</div>
+          <a class="nav-item" href="#"><span>Home</span></a>
+          <a class="nav-item" href="#"><span>Inbox</span><span class="nav-count">0</span></a>
+          <a class="nav-item active" href="#"><span>Boards</span><span class="nav-count">2</span></a>
+          <a class="nav-item" href="#"><span>Ideas</span><span class="nav-count">22</span></a>
+          <div class="nav-label">Delivery</div>
+          <a class="nav-item" href="#"><span>Sprint board</span></a>
+          <a class="nav-item" href="#"><span>Backlog</span><span class="nav-count">1</span></a>
+          <a class="nav-item" href="#"><span>Roadmap</span></a>
+          <div class="account"><strong>Olivia Administer</strong>Acme Robotics · Org Admin</div>
+        </nav>
+        <div class="main">
+          <div class="mobile-bar"><span class="mobile-brand"><span class="brand-mark">CG</span>Collega</span><button class="mobile-menu" type="button" aria-expanded="false" aria-controls="frame-nav">Menu</button></div>
+          <div class="topbar"><div class="crumb">Workspace / <strong>Boards</strong></div><div class="top-actions"><span>Theme</span><span class="theme">Graphite</span><span class="avatar">OA</span></div></div>
+          <div class="content">
+            <div class="page-head">
+              <div><h3>Boards</h3><p>Every board organizes the same organization’s ideas by status.</p></div>
+              <button class="button primary">＋ New board</button>
+            </div>
+            <div class="toolbar"><div class="search">⌕ &nbsp; Search boards, tags, or owners</div><div class="filter">Status <strong>Active</strong>⌄</div><span class="result-count">2 active boards</span></div>
+            <div class="card-grid">
+              <article class="board-card">
+                <div class="board-card-top"><h4>Ideas</h4><span class="icon-action" aria-label="Board actions">···</span></div>
+                <p>Assembly cell reliability: fewer stoppages, safer cells, shorter cycle times.</p>
+                <div class="mini-stats"><span class="pill">6 ideas</span><span class="pill cyan">2 in progress</span><span class="pill accent">1 client review</span><span class="pill green">3 complete</span></div>
+                <div class="card-footer"><span>quality · safety · +2</span><button class="button small">Open board →</button></div>
+              </article>
+              <article class="board-card">
+                <div class="board-card-top"><h4>Opportunities</h4><span class="icon-action" aria-label="Board actions">···</span></div>
+                <p>Field service: faster diagnosis, the right parts on the van, less customer downtime.</p>
+                <div class="mini-stats"><span class="pill">11 ideas</span><span class="pill">3 new</span><span class="pill">2 in review</span><span class="pill cyan">2 in progress</span><span class="pill accent">1 client review</span><span class="pill green">3 complete</span></div>
+                <div class="card-footer"><span>customer-impact · diagnostics · +2</span><button class="button small">Open board →</button></div>
+              </article>
+            </div>
+            <p class="recommendation"><strong>Frame:</strong> Keep the active destination visible in a persistent desktop rail; collapse it to a clearly labeled, keyboard-operable menu on mobile.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mockup" aria-labelledby="backlog-title">
+      <div class="mockup-caption"><h2 id="backlog-title">02 · Backlog</h2><span>Decision-ready issue rows · no offscreen actions</span></div>
+      <div class="shell">
+        <nav class="sidebar" id="backlog-nav" aria-label="Primary navigation">
+          <div class="brand"><span class="brand-mark">CG</span>Collega</div>
+          <div class="nav-label">Workspace</div>
+          <a class="nav-item" href="#"><span>Home</span></a><a class="nav-item" href="#"><span>Inbox</span><span class="nav-count">0</span></a><a class="nav-item" href="#"><span>Boards</span><span class="nav-count">2</span></a><a class="nav-item" href="#"><span>Ideas</span><span class="nav-count">22</span></a>
+          <div class="nav-label">Delivery</div><a class="nav-item" href="#"><span>Sprint board</span></a><a class="nav-item active" href="#"><span>Backlog</span><span class="nav-count">1</span></a><a class="nav-item" href="#"><span>Roadmap</span></a>
+          <div class="account"><strong>Olivia Administer</strong>Acme Robotics · Org Admin</div>
+        </nav>
+        <div class="main">
+          <div class="mobile-bar"><span class="mobile-brand"><span class="brand-mark">CG</span>Collega</span><button class="mobile-menu" type="button" aria-expanded="false" aria-controls="backlog-nav">Menu</button></div>
+          <div class="topbar"><div class="crumb">Delivery / <strong>Backlog</strong></div><div class="top-actions"><span>Theme</span><span class="theme">Graphite</span><span class="avatar">OA</span></div></div>
+          <div class="content">
+            <div class="page-head">
+              <div><h3>Backlog</h3><p>Committed issues that are not in a sprint yet. Sorted by the organization’s priority.</p></div>
+              <div class="actions"><button class="button">Start next sprint</button><button class="button primary">＋ Add issue</button></div>
+            </div>
+            <div class="toolbar"><div class="search">⌕ &nbsp; Find an issue</div><div class="filter">Sort <strong>Most upvoted</strong>⌄</div><span class="result-count">1 issue · vote snapshot at promotion</span></div>
+            <div class="panel">
+              <div class="panel-head"><strong>Ready for a sprint</strong><span>Assigning a sprint keeps the same issue and history.</span></div>
+              <div class="backlog-item">
+                <div class="item-title">Assembly cell reliability: Improve exception visibility<span class="item-sub">Assembly cell reliability</span></div>
+                <div class="field-value"><span class="label">Outcome</span>Ungrouped</div>
+                <div class="field-value"><span class="label">Effort</span>High</div>
+                <div class="field-value"><span class="label">Status</span>Pending</div>
+                <div class="field-value"><span class="label">Votes</span>2</div>
+                <button class="button small">Edit</button>
+              </div>
+            </div>
+            <div class="mobile-note">On mobile, collapse secondary fields into a short detail line; keep title, status, votes, and the row action visible without horizontal scrolling.</div>
+            <p class="recommendation"><strong>Decision support:</strong> State the sort order and the vote snapshot once, then surface effort and status as readable labels rather than a narrow multi-column table.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mockup" aria-labelledby="ideas-title">
+      <div class="mockup-caption"><h2 id="ideas-title">03 · Ideas</h2><span>Filters stay close to results · actions stay visible</span></div>
+      <div class="shell">
+        <nav class="sidebar" id="ideas-nav" aria-label="Primary navigation">
+          <div class="brand"><span class="brand-mark">CG</span>Collega</div>
+          <div class="nav-label">Workspace</div>
+          <a class="nav-item" href="#"><span>Home</span></a><a class="nav-item" href="#"><span>Inbox</span><span class="nav-count">0</span></a><a class="nav-item" href="#"><span>Boards</span><span class="nav-count">2</span></a><a class="nav-item active" href="#"><span>Ideas</span><span class="nav-count">22</span></a>
+          <div class="nav-label">Delivery</div><a class="nav-item" href="#"><span>Sprint board</span></a><a class="nav-item" href="#"><span>Backlog</span><span class="nav-count">1</span></a><a class="nav-item" href="#"><span>Roadmap</span></a>
+          <div class="account"><strong>Olivia Administer</strong>Acme Robotics · Org Admin</div>
+        </nav>
+        <div class="main">
+          <div class="mobile-bar"><span class="mobile-brand"><span class="brand-mark">CG</span>Collega</span><button class="mobile-menu" type="button" aria-expanded="false" aria-controls="ideas-nav">Menu</button></div>
+          <div class="topbar"><div class="crumb">Workspace / <strong>Ideas</strong></div><div class="top-actions"><span>Theme</span><span class="theme">Graphite</span><span class="avatar">OA</span></div></div>
+          <div class="content">
+            <div class="page-head">
+              <div><h3>Ideas</h3><p>All ideas, whether they’re on a board or still in the pool.</p></div>
+              <button class="button primary">＋ New idea</button>
+            </div>
+            <div class="toolbar"><div class="search">⌕ &nbsp; Search ideas by title, person, or tag</div><div class="filter">Board <strong>All boards</strong>⌄</div><div class="filter">Status <strong>Any</strong>⌄</div><div class="filter">Priority <strong>Any</strong>⌄</div></div>
+            <div class="toolbar"><div class="filter">Tags <strong>Any</strong>⌄</div><button class="button small ghost">More filters</button><span class="result-count">22 ideas · 1–10 shown</span></div>
+            <div class="idea-list">
+              <article class="idea-row"><div class="idea-title">Field service enablement: Retire the legacy step<span class="idea-board">Opportunities · Complete</span></div><span class="pill red">High</span><div class="people"><span class="avatar">NC</span>Noah</div><span class="pill idea-votes">↑ 1</span></article>
+              <article class="idea-row"><div class="idea-title">Field service enablement: Validate the customer feedback loop<span class="idea-board">Opportunities · Client Review</span></div><span class="pill red">Critical</span><div class="people"><span class="avatar">NC</span>Noah</div><span class="pill idea-votes">↑ 1</span></article>
+              <article class="idea-row"><div class="idea-title">Field service enablement: Standardize the intake checklist<span class="idea-board">Opportunities · New / Pending</span></div><span class="pill red">High</span><div class="people"><span class="avatar">OA</span>Olivia</div><span class="pill idea-votes">↑ 2</span></article>
+            </div>
+            <p class="recommendation"><strong>Findability:</strong> Keep frequently used filters visible, tuck infrequent ones under “More filters,” and show applied filters as removable chips with a clear-results action.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mockup" aria-labelledby="detail-title">
+      <div class="mockup-caption"><h2 id="detail-title">04 · Idea detail</h2><span>Readable hierarchy · actions separated from content</span></div>
+      <div class="shell">
+        <nav class="sidebar" id="detail-nav" aria-label="Primary navigation">
+          <div class="brand"><span class="brand-mark">CG</span>Collega</div>
+          <div class="nav-label">Workspace</div>
+          <a class="nav-item" href="#"><span>Home</span></a><a class="nav-item" href="#"><span>Inbox</span><span class="nav-count">0</span></a><a class="nav-item" href="#"><span>Boards</span><span class="nav-count">2</span></a><a class="nav-item active" href="#"><span>Ideas</span><span class="nav-count">22</span></a>
+          <div class="nav-label">Delivery</div><a class="nav-item" href="#"><span>Sprint board</span></a><a class="nav-item" href="#"><span>Backlog</span><span class="nav-count">1</span></a><a class="nav-item" href="#"><span>Roadmap</span></a>
+          <div class="account"><strong>Olivia Administer</strong>Acme Robotics · Org Admin</div>
+        </nav>
+        <div class="main">
+          <div class="mobile-bar"><span class="mobile-brand"><span class="brand-mark">CG</span>Collega</span><button class="mobile-menu" type="button" aria-expanded="false" aria-controls="detail-nav">Menu</button></div>
+          <div class="topbar"><div class="crumb">Ideas / <strong>Retire the legacy step</strong></div><div class="top-actions"><span>Theme</span><span class="theme">Graphite</span><span class="avatar">OA</span></div></div>
+          <div class="content">
+            <div class="page-head">
+              <div><h3>Idea details</h3><p>Keep the decision context readable while making the next action obvious.</p></div>
+              <div class="actions"><button class="button">Close</button><button class="button primary">Edit idea</button></div>
+            </div>
+            <div class="detail-layout">
+              <article class="panel detail-main">
+                <span class="pill green">Complete</span> <span class="pill red">High priority</span>
+                <h4>Field service enablement: Retire the legacy step</h4>
+                <div class="facts">
+                  <div class="fact"><span>Board</span><strong>Opportunities</strong></div>
+                  <div class="fact"><span>Idea type</span><strong>Continuous Improvement</strong></div>
+                  <div class="fact"><span>Assignee</span><strong>Noah Contributor</strong></div>
+                  <div class="fact"><span>Due</span><strong>Nov 7, 2026</strong></div>
+                </div>
+                <div class="label">Problem</div><p>Technicians still fax signed service reports from customer sites, and the office re-enters them, even though the tablet app captures signatures.</p>
+                <div class="label">Proposed solutions</div><p>Retire the fax step after billing confirms tablet signatures are accepted. Remove the old template and tell customers signed reports now arrive by email.</p>
+                <div class="label">Impact rationale</div><p>Re-keying takes the office about 15 hours a week and delays invoicing by two days on average.</p>
+              </article>
+              <aside class="panel detail-aside">
+                <h5>People & discussion</h5><p><span class="pill">↑ 1 vote</span> <span class="pill">2 followers</span></p>
+                <div class="comment"><strong>Maya Collaborator</strong><br>Raised Oct 21, 2026</div>
+                <div class="comment">No comments yet.</div>
+                <button class="button small" style="margin-top:10px">＋ Add comment</button>
+                <div class="mobile-note">Mobile: open as a full-screen detail view with one scroll region and a sticky action bar.</div>
+              </aside>
+            </div>
+            <p class="recommendation"><strong>Readability:</strong> Use one clear title, group related metadata, preserve section headings, and pin Edit/Close instead of making users scroll past long-form content to find actions.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script>
+    document.querySelectorAll(".mobile-menu").forEach((button) => {
+      button.addEventListener("click", () => {
+        const navigation = document.getElementById(button.getAttribute("aria-controls"));
+        const isOpen = button.getAttribute("aria-expanded") === "true";
+        button.setAttribute("aria-expanded", String(!isOpen));
+        navigation.classList.toggle("is-open", !isOpen);
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { boardTakesIdeaType } from '@collega/domain/boards'
 import {
   DeliveryStatus,
   EffortLevel,
@@ -304,6 +305,7 @@ export class IdeaService {
         'Set an Effort on the idea before moving it into a lane that references a board.',
       )
     }
+    await this.ensureBoardTakesIdeaType(board, command.ideaTypeId)
 
     return this.createIdeaRecord(board.organizationId, boardId, statusId, command)
   }
@@ -884,6 +886,15 @@ export class IdeaService {
       )
     }
 
+    // A type the board does not take is refused under its own message first (contracts/ideas.md,
+    // added 2026-10-22); keeping a type the board no longer takes is not a change, so it passes.
+    if (command.ideaTypeId !== idea.ideaTypeId && idea.boardId !== null) {
+      const board = await this.boards.getBoardContext(idea.boardId)
+      if (board) {
+        await this.ensureBoardTakesIdeaType(board, command.ideaTypeId)
+      }
+    }
+
     // Idea Type is immutable on the edit path (SPEC/20-feature-idea-type-fields.md): a normal
     // update may not change it. Business Impact stays mutable.
     if (command.ideaTypeId !== idea.ideaTypeId) {
@@ -1115,6 +1126,14 @@ export class IdeaService {
 
     if (idea.ideaTypeId === ideaTypeId) {
       return
+    }
+
+    // Boards rule 15 binds the break-glass hatch too (decided 2026-10-22).
+    if (idea.boardId !== null) {
+      const board = await this.boards.getBoardContext(idea.boardId)
+      if (board) {
+        await this.ensureBoardTakesIdeaType(board, ideaTypeId)
+      }
     }
 
     const now = this.clock.now()
@@ -1864,6 +1883,10 @@ export class IdeaService {
       const ideaType = typeName ? ideaTypeByName.get(typeName.toLowerCase()) : undefined
       if (!ideaType) {
         reject(`Idea Type '${typeName ?? ''}' is not an active option.`)
+        continue
+      }
+      if (!boardTakesIdeaType(board, ideaType.id)) {
+        reject(boardRefusesIdeaType(ideaType.name))
         continue
       }
 
@@ -2658,6 +2681,23 @@ export class IdeaService {
     return option
   }
 
+  /**
+   * Boards rule 15: a board that limits its idea types refuses any other. An unknown or archived
+   * type passes here, so the active-type check that follows answers with its own message.
+   */
+  private async ensureBoardTakesIdeaType(board: BoardContext, ideaTypeId: string): Promise<void> {
+    if (boardTakesIdeaType(board, ideaTypeId)) {
+      return
+    }
+    const option = ideaTypeId ? await this.classification.getIdeaTypeById(ideaTypeId) : null
+    if (!option || option.organizationId !== board.organizationId || option.isDeleted) {
+      return
+    }
+    throw new ValidationError('One or more fields are invalid.', {
+      ideaTypeId: [boardRefusesIdeaType(option.name)],
+    })
+  }
+
   private async ensureActiveBusinessImpact(
     organizationId: string,
     businessImpactId: string,
@@ -2910,6 +2950,10 @@ export class IdeaService {
  * and no moving, editing or deleting the ones on it - `409`, unarchive it first. Comments and
  * upvotes are separate features and stay open.
  */
+function boardRefusesIdeaType(typeName: string): string {
+  return `This board doesn't take '${typeName}' ideas.`
+}
+
 function ensureBoardNotArchived(board: BoardContext): void {
   if (board.isArchived) {
     throw new ConflictError('This board is archived. Unarchive it before changing its ideas.')

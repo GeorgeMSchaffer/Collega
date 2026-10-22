@@ -51,7 +51,7 @@ Set or clear the Idea Type's badge appearance.
 - **Request:** body
   - `ideaTypeId` GUID string — must be an active Idea Type in the same organization
 - **Response:** `204 No Content`.
-- **Errors:** `400` when `ideaTypeId` names an unknown or archived type; `403` for non-admin callers; `404` when the idea does not exist in the organization.
+- **Errors:** `400` when `ideaTypeId` names an unknown or archived type, or a type the idea's board doesn't take (`contracts/boards.md` "Allowed idea types", added 2026-10-22); `403` for non-admin callers; `404` when the idea does not exist in the organization.
 - **Rules:**
   - Re-resolves the idea's fields; values for fields not in the new type's resolved set are archived (preserved, hidden), not dropped.
   - An `IdeaTypeReassigned` audit event is emitted.

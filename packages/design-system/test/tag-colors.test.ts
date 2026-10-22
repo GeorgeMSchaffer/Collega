@@ -74,10 +74,12 @@ describe('tagChipColors', () => {
     expect(() => tagChipColors('red', 'terrazzo')).toThrow(RangeError)
   })
 
-  // The spec's measurement: a 16-step grid of every channel, in all five themes.
+  // The spec's measurement: a 16-step grid of every channel, in all five themes. Violations are
+  // collected and asserted once: 61k separate `expect` calls timed out under the parallel gate.
   it('stops at or above 4.5:1 within four steps over the 4,096-colour grid, and plain ink never fails', () => {
     const levels = Array.from({ length: 16 }, (_, i) => i * 17)
     const hex = (n: number) => n.toString(16).padStart(2, '0')
+    const failures: string[] = []
     for (const theme of THEME_NAMES) {
       const { ink, textShare: start } = CHIP_THEMES[theme]
       for (const r of levels)
@@ -85,14 +87,15 @@ describe('tagChipColors', () => {
           for (const b of levels) {
             const color = `#${hex(r)}${hex(g)}${hex(b)}`.toUpperCase()
             const chip = tagChipColors(color, theme)
-            expect(chip.ratio, `${color} in ${theme}`).toBeGreaterThanOrEqual(TEXT_CONTRAST_MIN)
-            expect(start - chip.textShare, `${color} in ${theme}`).toBeLessThanOrEqual(4 * 5)
-            expect(
-              contrastRatio(ink, chip.ground),
-              `ink on ${color} in ${theme}`,
-            ).toBeGreaterThanOrEqual(TEXT_CONTRAST_MIN)
+            // Negated so a NaN fails, as the per-colour `expect` it replaced did.
+            if (!(chip.ratio >= TEXT_CONTRAST_MIN))
+              failures.push(`${color} in ${theme}: ${chip.ratio}`)
+            if (!(start - chip.textShare <= 4 * 5)) failures.push(`${color} in ${theme}: steps`)
+            if (!(contrastRatio(ink, chip.ground) >= TEXT_CONTRAST_MIN))
+              failures.push(`ink on ${color} in ${theme}`)
           }
     }
+    expect(failures).toEqual([])
   })
 })
 
