@@ -130,6 +130,24 @@ describe('NewTaskDrawer', () => {
     await waitFor(() => expect(document.activeElement).toBe(title()))
   })
 
+  it('Save and add another says which task was added, for a screen reader', async () => {
+    drawer()
+    expect(screen.getByRole('status').textContent).toBe('')
+    type('  First task ')
+    another()
+    await waitFor(() =>
+      expect(screen.getByRole('status').textContent).toBe('Task added: First task'),
+    )
+  })
+
+  it('says nothing after a plain Add task, which closes the drawer', async () => {
+    drawer()
+    type('Only task')
+    save()
+    await waitFor(() => expect(nav.replace).toHaveBeenCalled())
+    expect(screen.getByRole('status').textContent).toBe('')
+  })
+
   it('Cancel closes without saving', () => {
     drawer()
     type('Never mind')
