@@ -645,6 +645,11 @@ export type BoardTask = {
   blockedBy: { ideaId: string; itemKey: string | null; isFinal: boolean }[]
   /** The system made it on entry to an auto-create lane, not a person. */
   autoCreated: boolean
+  /**
+   * The task's sprint on its own board; `null` in none, absent when the board has sprints off or the
+   * task was not among the board's first page of cards (the drawer then says nothing about it).
+   */
+  sprint?: { id: string; name: string } | null | undefined
 }
 
 /**
@@ -667,6 +672,16 @@ export type IdeaTasks = {
   canMove: boolean
   /** Null when the reader may not add or remove tasks (hidden, not disabled). */
   adding: { members: MemberOption[]; tags: TagRef[] } | null
+  /**
+   * "Schedule…" (TB-9): the work board's open sprints and its Backlog, for the create-sprint drawer.
+   * Null unless the reader may plan (an Org Admin) and the board has sprints on; hidden, not disabled.
+   */
+  scheduling: {
+    sprints: { id: string; name: string; state: SprintState }[]
+    backlog: Idea[]
+    backlogTotal: number
+    members: MemberOption[]
+  } | null
 }
 
 /** A card the Blockers picker offers: on the item's own board, never the item itself. */
