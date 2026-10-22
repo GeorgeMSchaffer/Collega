@@ -1128,6 +1128,14 @@ export class IdeaService {
       return
     }
 
+    // Boards rule 15 binds the break-glass hatch too (decided 2026-10-22).
+    if (idea.boardId !== null) {
+      const board = await this.boards.getBoardContext(idea.boardId)
+      if (board) {
+        await this.ensureBoardTakesIdeaType(board, ideaTypeId)
+      }
+    }
+
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
     const previousTypeId = idea.ideaTypeId
