@@ -322,7 +322,7 @@ describe('POST boards/:boardId/sprints with ideaIds', () => {
 
     await controller.createForBoard(BOARD, { ...BODY, ideaIds: [] })
 
-    expect((created[0]?.[1] as { ideaIds: unknown }).ideaIds).toEqual([])
+    expect((created[0]?.[1] as { ideaIds: unknown } | undefined)?.ideaIds).toEqual([])
   })
 
   it('maps a non-GUID element to the empty GUID', async () => {
@@ -330,7 +330,7 @@ describe('POST boards/:boardId/sprints with ideaIds', () => {
 
     await controller.createForBoard(BOARD, { ...BODY, ideaIds: [A, 'x'] })
 
-    expect((created[0]?.[1] as { ideaIds: unknown }).ideaIds).toEqual([A, EMPTY_GUID])
+    expect((created[0]?.[1] as { ideaIds: unknown } | undefined)?.ideaIds).toEqual([A, EMPTY_GUID])
   })
 
   it('refuses a non-array ideaIds with 400 keyed ideaIds before the service', async () => {

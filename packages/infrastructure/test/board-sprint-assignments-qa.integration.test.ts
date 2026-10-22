@@ -29,8 +29,8 @@ import { PrismaIdeaFollowerRepository } from '../src/repositories/idea-follower.
 import { PrismaIdeaUpvoteRepository } from '../src/repositories/idea-upvote.repository.js'
 import { PrismaIssueTaskRepository } from '../src/repositories/issue-task.repository.js'
 import { PrismaSprintRepository } from '../src/repositories/sprint.repository.js'
-import { PrismaUserRepository } from '../src/repositories/user.repository.js'
 import { PrismaTagRepository } from '../src/repositories/tag.repository.js'
+import { PrismaUserRepository } from '../src/repositories/user.repository.js'
 
 const DATABASE_URL = process.env.DATABASE_URL
 const CREATED = new Date('2026-10-15T09:00:00.000Z')
