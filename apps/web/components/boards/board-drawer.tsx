@@ -31,7 +31,6 @@ export type BoardFormData = {
   laneFlags?: Readonly<Record<string, LaneFlags>> | undefined
   /** Live ideas per lane of the board being edited, for the confirm step a lane removal needs. */
   laneIdeaCounts?: Readonly<Record<string, number>> | undefined
-  keyPrefix?: string | null
   ideaFeaturesEnabled?: boolean
   /** The boards a lane may reference, and which boards reference this one. */
   references?: ReferenceContext | undefined

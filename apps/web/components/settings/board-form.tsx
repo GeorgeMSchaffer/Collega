@@ -218,7 +218,7 @@ export function BoardFields({
   laneFlags?: Readonly<Record<string, LaneFlags>> | undefined
   /** Live ideas per lane of the board being edited; absent on create, where nothing is removed. */
   laneIdeaCounts?: Readonly<Record<string, number>> | undefined
-  /** The prefix as stored (`null` for none) and the idea-features switch as stored. */
+  /** The idea-features switch as stored. */
   ideaFeaturesEnabled?: boolean | undefined
   /** The boards a lane may reference; absent leaves the References controls out. */
   references?: ReferenceContext | undefined

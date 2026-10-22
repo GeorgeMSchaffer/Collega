@@ -9,8 +9,7 @@ import { SessionProvider } from '@/lib/session-client'
 import type { BoardOverview, CurrentUser, LaneFlags, ReferenceContext } from '@/lib/types'
 
 /**
- * The key prefix field (comp U screen 1, frames A, D, E) and what each role gets from the Boards
- * drawer's lane editor (slice 288). The server actions and the router are the boundary.
+ * What each role gets from the Boards drawer's lane editor (slice 288). The server actions and the router are the boundary.
  */
 const search = vi.hoisted(() => ({ params: new URLSearchParams() }))
 vi.mock('next/navigation', () => ({
@@ -89,7 +88,6 @@ const FORM: BoardFormData = {
   swimlaneIds: ['s-new', 's-done'],
   laneFlags: { 's-new': { ...NONE, referencesBoardId: 'b-impl' } },
   laneIdeaCounts: {},
-  keyPrefix: 'DISC',
   ideaFeaturesEnabled: true,
   references: CONTEXT,
   statuses: STATUSES,
@@ -250,7 +248,7 @@ describe('the Boards drawer in edit mode', () => {
   it('creates a board with the same fields from the New board drawer', async () => {
     search.params = new URLSearchParams('board=new')
     screenAs('OrgAdmin', {
-      form: { ...FORM, boardId: null, name: '', keyPrefix: null, laneFlags: {} },
+      form: { ...FORM, boardId: null, name: '', laneFlags: {} },
     })
     const d = within(dialog())
     expect(d.queryByRole('option', { name: /this board/ })).toBeNull()

@@ -56,7 +56,6 @@ async function formFor(
       // The first lanes of the catalog, because the API refuses a board with fewer than two and a
       // form that opens below its own floor cannot be submitted until the person works out why.
       swimlaneIds: statuses.slice(0, SWIMLANE_FLOOR).map((status) => status.id),
-      keyPrefix: null,
       ideaFeaturesEnabled: true,
       references,
       statuses,
@@ -82,7 +81,6 @@ async function formFor(
     swimlaneIds: board.lanes.map((lane) => lane.id),
     laneFlags: laneFlagsOf(board.lanes),
     laneIdeaCounts: Object.fromEntries(listed.lanes.map((lane) => [lane.id, lane.ideaCount])),
-    keyPrefix: board.keyPrefix,
     ideaFeaturesEnabled: board.ideaFeaturesEnabled,
     references,
     // A lane whose status has since been archived is missing from the catalog; merging it in keeps
