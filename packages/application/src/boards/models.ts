@@ -30,6 +30,14 @@ export type CreateBoardCommand = {
   readonly pullItemIds?: readonly string[] | undefined
   /** An Org Admin's reason for pulling items past open tasks in a reference lane. */
   readonly forceReason?: string | null | undefined
+  /** The idea types the board takes (SPEC/contracts/boards.md "Allowed idea types"). Absent or
+   * empty: every type. */
+  readonly allowedIdeaTypeIds?: readonly string[] | undefined
+}
+
+/** `PUT /boards/{boardId}/allowed-idea-types`: replaces the whole list; empty allows every type. */
+export type SetAllowedIdeaTypesCommand = {
+  readonly ideaTypeIds: readonly string[]
 }
 
 export type UpdateBoardCommand = {
@@ -148,6 +156,11 @@ export type BoardDetail = {
   readonly ideaFeaturesEnabled: boolean
   /** As on the list item: `1` means no key has been issued. */
   readonly nextItemNumber: number
+  /** In idea type sort order; empty means every active type is allowed. */
+  readonly allowedIdeaTypeIds: readonly string[]
+  /** Whether this caller may change `allowedIdeaTypeIds`: an Org Admin, or the board's creator
+   * while a User or Org Admin; never on an archived board. */
+  readonly canSetAllowedIdeaTypes: boolean
 }
 
 /** A `PUT /boards/{boardId}` result: the detail, plus what was pulled when the save pulled. */

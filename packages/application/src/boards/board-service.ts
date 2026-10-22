@@ -9,11 +9,13 @@ import {
   type Board,
   BoardArchivedError,
   BoardInvariantError,
+  boardTakesIdeaType,
   createBoard,
   disableIdeaFeatures,
   MIN_SWIMLANES,
   reorderBoardSwimlanes,
   type SwimlaneLane,
+  setAllowedIdeaTypes,
   unarchiveBoard,
   updateBoard,
 } from '@collega/domain/boards'
@@ -58,6 +60,7 @@ import type {
   PullCandidatesQuery,
   PulledItem,
   ReorderSwimlanesCommand,
+  SetAllowedIdeaTypesCommand,
   SwimlaneDetail,
   SwimlaneInput,
   UpdateBoardCommand,
@@ -65,6 +68,7 @@ import type {
 } from './models.js'
 import type {
   AutoCreateTaskPort,
+  BoardIdeaType,
   BoardRepository,
   LaneIdea,
   OrganizationExistenceLookup,
@@ -175,6 +179,14 @@ export class BoardService {
 
     const statusLookup = await this.loadStatusLookup(organizationId)
     const orderedLanes = validateAndOrderSwimlanes(command.swimlanes, statusLookup)
+    const allowedIdeaTypeIds =
+      (command.allowedIdeaTypeIds ?? []).length === 0
+        ? []
+        : validateAllowedIdeaTypeIds(
+            'allowedIdeaTypeIds',
+            command.allowedIdeaTypeIds ?? [],
+            await this.boards.listIdeaTypes(organizationId),
+          )
 
     const now = this.clock.now()
     const board = runDomain(createBoard, {
@@ -187,6 +199,7 @@ export class BoardService {
       keyPrefix: command.keyPrefix,
       sprintsEnabled: command.sprintsEnabled,
       ideaFeaturesEnabled: command.ideaFeaturesEnabled,
+      allowedIdeaTypeIds,
       nowUtc: now,
       actorUserId: this.currentUser.userId,
     })
@@ -238,7 +251,51 @@ export class BoardService {
     this.ensureReadScope(board.organizationId)
 
     const statusLookup = await this.loadStatusLookup(board.organizationId)
-    return toDetail(board, statusLookup)
+    return toDetail(board, statusLookup, this.canSetAllowedIdeaTypes(board))
+  }
+
+  /**
+   * Replaces the idea types the board takes (SPEC/contracts/boards.md "Allowed idea types"). Taken
+   * while Idea features are off too: the list is stored, and applies once they are on. Ideas
+   * already on the board keep their type. Audited as `BoardUpdated`; no notification.
+   */
+  async setAllowedIdeaTypes(
+    boardId: string,
+    command: SetAllowedIdeaTypesCommand,
+  ): Promise<BoardDetail> {
+    const existing = await this.boards.getById(boardId)
+    if (existing === null) {
+      throw new NotFoundError('Board not found.')
+    }
+    this.ensureAllowedIdeaTypesScope(existing)
+
+    const ideaTypeIds = validateAllowedIdeaTypeIds(
+      'ideaTypeIds',
+      command.ideaTypeIds,
+      await this.boards.listIdeaTypes(existing.organizationId),
+    )
+    const now = this.clock.now()
+    const board = runDomain(
+      setAllowedIdeaTypes,
+      existing,
+      ideaTypeIds,
+      now,
+      this.currentUser.userId,
+    )
+    await this.boards.replaceAllowedIdeaTypes(board)
+    await this.unitOfWork.saveChanges()
+
+    await this.audit(
+      'BoardUpdated',
+      board.organizationId,
+      board.id,
+      `Board '${board.name}' updated.`,
+      now,
+      { name: board.name, swimlaneCount: board.swimlanes.length, allowedIdeaTypeIds: ideaTypeIds },
+    )
+
+    const statusLookup = await this.loadStatusLookup(board.organizationId)
+    return toDetail(board, statusLookup, this.canSetAllowedIdeaTypes(board))
   }
 
   async update(boardId: string, command: UpdateBoardCommand): Promise<UpdateBoardResult> {
@@ -366,7 +423,10 @@ export class BoardService {
       await finish()
     }
 
-    return { ...toDetail(board, statusLookup), ...pulledItemsOf(pull) }
+    return {
+      ...toDetail(board, statusLookup, this.canSetAllowedIdeaTypes(board)),
+      ...pulledItemsOf(pull),
+    }
   }
 
   /**
@@ -432,6 +492,13 @@ export class BoardService {
     const userId = this.requireAuthenticatedUserId()
     const found = await Promise.all(requested.map((id) => this.ideas.getById(id, true)))
     const openTasksOf = await this.openTasksHoldingPull(found, board.id)
+    // Rule 15: a board that limits its idea types refuses a pull of any other type.
+    const ideaTypeNames =
+      board.ideaFeaturesEnabled && board.allowedIdeaTypeIds.length > 0
+        ? new Map(
+            (await this.boards.listIdeaTypes(organizationId)).map((type) => [type.id, type.name]),
+          )
+        : new Map<string, string>()
 
     const laneOrder = [...board.swimlanes].sort((a, b) => a.displayOrder - b.displayOrder)
     const laneStatusIds = new Set(laneOrder.map((lane) => lane.statusId))
@@ -449,6 +516,11 @@ export class BoardService {
       const problem = pullRefusal(before, board.id, role, userId)
       if (problem !== null) {
         problems.push(problem)
+        return
+      }
+      if (!boardTakesIdeaType(board, before.ideaTypeId)) {
+        const typeName = ideaTypeNames.get(before.ideaTypeId) ?? before.ideaTypeId
+        problems.push(`'${before.title}' is a ${typeName} idea, and this board doesn't take those.`)
         return
       }
       // The reference-lane lock: being pulled away is an exit from the source board's lane.
@@ -881,6 +953,43 @@ export class BoardService {
     throw new ForbiddenError('You are not allowed to create boards in this organization.')
   }
 
+  /**
+   * Who may set a board's allowed idea types: an Org Admin of its organization, or the board's
+   * creator while a User there (SPEC/decisions.md 2026-10-22). Evaluated against the acting role,
+   * so a Site Admin qualifies only through View As, as the target. Being signed in at all means the
+   * account is active.
+   */
+  private ensureAllowedIdeaTypesScope(board: Board): void {
+    const role = this.requireAuthenticatedRole()
+    ensureNotDirectSiteAdmin(this.currentUser)
+    if (this.currentUser.organizationId !== board.organizationId) {
+      throw new NotFoundError('Board not found.')
+    }
+    if (!this.mayChooseAllowedIdeaTypes(board, role)) {
+      throw new ForbiddenError('You are not allowed to choose the idea types this board takes.')
+    }
+  }
+
+  /** The read flag for `ensureAllowedIdeaTypesScope`, false on an archived board. */
+  private canSetAllowedIdeaTypes(board: Board): boolean {
+    const role = this.currentUser.role
+    return (
+      role !== null &&
+      !board.isArchived &&
+      this.currentUser.organizationId === board.organizationId &&
+      this.mayChooseAllowedIdeaTypes(board, role)
+    )
+  }
+
+  private mayChooseAllowedIdeaTypes(board: Board, role: Role): boolean {
+    return (
+      role === Role.OrgAdmin ||
+      (role === Role.User &&
+        board.createdByUserId !== null &&
+        board.createdByUserId === this.currentUser.userId)
+    )
+  }
+
   private ensureAdminScope(organizationId: string): void {
     const role = this.requireAuthenticatedRole()
 
@@ -1224,7 +1333,39 @@ function runDomain<Args extends readonly unknown[], T>(fn: (...args: Args) => T,
   }
 }
 
-function toDetail(board: Board, statusLookup: ReadonlyMap<string, Status>): BoardDetail {
+/**
+ * Checks a requested allowed-types list against the organization's idea types and answers it in
+ * idea type sort order (SPEC/contracts/boards.md "Allowed idea types"). The controller has already
+ * refused anything but an array of strings, with the first message here.
+ */
+function validateAllowedIdeaTypeIds(
+  field: string,
+  requested: readonly string[],
+  ideaTypes: readonly BoardIdeaType[],
+): readonly string[] {
+  const invalid = (messages: readonly string[]): ValidationError =>
+    new ValidationError('One or more fields are invalid.', { [field]: [...messages] })
+  if (requested.some((id) => !UUID_PATTERN.test(id))) {
+    throw invalid(['Idea type ids must be an array of ids.'])
+  }
+  const wanted = new Set(requested.map((id) => id.toLowerCase()))
+  if (wanted.size !== requested.length) {
+    throw invalid(['An idea type can be named only once.'])
+  }
+  const active = ideaTypes.filter((type) => !type.isDeleted)
+  const activeIds = new Set(active.map((type) => type.id.toLowerCase()))
+  const missing = requested.filter((id) => !activeIds.has(id.toLowerCase()))
+  if (missing.length > 0) {
+    throw invalid(missing.map((id) => `Idea type '${id}' was not found.`))
+  }
+  return active.filter((type) => wanted.has(type.id.toLowerCase())).map((type) => type.id)
+}
+
+function toDetail(
+  board: Board,
+  statusLookup: ReadonlyMap<string, Status>,
+  canSetAllowedIdeaTypes: boolean,
+): BoardDetail {
   return {
     boardId: board.id,
     organizationId: board.organizationId,
@@ -1238,6 +1379,8 @@ function toDetail(board: Board, statusLookup: ReadonlyMap<string, Status>): Boar
     sprintsEnabled: board.sprintsEnabled,
     ideaFeaturesEnabled: board.ideaFeaturesEnabled,
     nextItemNumber: board.nextItemNumber,
+    allowedIdeaTypeIds: board.allowedIdeaTypeIds,
+    canSetAllowedIdeaTypes,
   }
 }
 

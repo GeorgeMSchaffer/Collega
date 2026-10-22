@@ -7,10 +7,24 @@ import type { AutoCreateTaskParent } from '../ideas/models.js'
 import type { PullCandidatePage } from './models.js'
 
 export interface BoardRepository {
+  /** Stages the new board with its lanes and its allowed idea types. */
   add(board: Board): Promise<void>
 
-  /** Persists a mutation made through `updateBoard` or `reorderBoardSwimlanes`. */
+  /**
+   * Persists a mutation made through `updateBoard` or `reorderBoardSwimlanes`. Leaves the allowed
+   * idea types alone, so a board save from a copy read before they changed cannot undo them.
+   */
   save(board: Board): Promise<void>
+
+  /** Stages replacing the board's allowed idea types with `board.allowedIdeaTypeIds`. */
+  replaceAllowedIdeaTypes(board: Board): Promise<void>
+
+  /**
+   * Every idea type of the organization, archived ones included, in idea type sort order (sort
+   * order, then name). Here rather than on an idea types port for the reason `countIdeasByBoard`
+   * gives.
+   */
+  listIdeaTypes(organizationId: string): Promise<readonly BoardIdeaType[]>
 
   getById(boardId: string): Promise<Board | null>
 
@@ -154,6 +168,12 @@ export type BoardTagIdeaCount = {
   readonly tagName: string
   readonly tagColor: string
   readonly ideaCount: number
+}
+
+export type BoardIdeaType = {
+  readonly id: string
+  readonly name: string
+  readonly isDeleted: boolean
 }
 
 export type UserName = {
