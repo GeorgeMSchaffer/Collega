@@ -447,13 +447,14 @@ export function IdeaForm({
     const found: Record<string, string> = {}
     if (!draft.title.trim()) found.title = required('Title')
     if (addingIssue && !effort) found.effort = 'Choose an effort.'
+    // In the order the form shows them, so the first one focused is the first one seen.
     if (!draft.problem.trim()) found.problem = required('Problem')
+    if (!draft.businessImpactId) found.businessImpactId = required('Business Impact')
+    if (!draft.ideaTypeId) found.ideaTypeId = required('Idea Type')
     if (!draft.solutions.some((s) => s.trim())) {
       found.proposedSolutions = 'Add at least one proposed solution.'
     }
     if (!draft.impactRationale.trim()) found.impactRationale = required('Impact Rationale')
-    if (!draft.businessImpactId) found.businessImpactId = required('Business Impact')
-    if (!draft.ideaTypeId) found.ideaTypeId = required('Idea Type')
     if (tagText.trim()) {
       found.tagNames = `Press Enter in Tags to add '${tagText.trim()}', or clear the text.`
     }
@@ -661,35 +662,6 @@ export function IdeaForm({
         />
       </Field>
 
-      <SolutionsField
-        idPrefix={fid('solution')}
-        solutions={draft.solutions}
-        suggested={suggested.has('proposedSolutions')}
-        flash={flash.has('proposedSolutions')}
-        locked={contentLocked}
-        error={errors.proposedSolutions}
-        onChange={(solutions) => set('solutions', solutions)}
-      />
-
-      <Field
-        htmlFor={fid('rationale')}
-        label="Impact rationale"
-        hint={lockedHint ?? 'Why it matters, ideally with a number: hours, cost, incidents.'}
-        error={errors.impactRationale}
-        {...mark('impactRationale')}
-      >
-        <Textarea
-          id={fid('rationale')}
-          data-error-key="impactRationale"
-          rows={2}
-          maxLength={RATIONALE_MAX}
-          readOnly={contentLocked}
-          value={draft.impactRationale}
-          onChange={(event) => set('impactRationale', event.target.value)}
-          aria-invalid={errors.impactRationale ? true : undefined}
-        />
-      </Field>
-
       <FieldRow cols={3}>
         <Field
           htmlFor={fid('impact')}
@@ -775,6 +747,54 @@ export function IdeaForm({
         </Field>
       </FieldRow>
 
+      <SolutionsField
+        idPrefix={fid('solution')}
+        solutions={draft.solutions}
+        suggested={suggested.has('proposedSolutions')}
+        flash={flash.has('proposedSolutions')}
+        locked={contentLocked}
+        error={errors.proposedSolutions}
+        onChange={(solutions) => set('solutions', solutions)}
+      />
+
+      <Field
+        htmlFor={fid('rationale')}
+        label="Impact rationale"
+        hint={lockedHint ?? 'Why it matters, ideally with a number: hours, cost, incidents.'}
+        error={errors.impactRationale}
+        {...mark('impactRationale')}
+      >
+        <Textarea
+          id={fid('rationale')}
+          data-error-key="impactRationale"
+          rows={2}
+          maxLength={RATIONALE_MAX}
+          readOnly={contentLocked}
+          value={draft.impactRationale}
+          onChange={(event) => set('impactRationale', event.target.value)}
+          aria-invalid={errors.impactRationale ? true : undefined}
+        />
+      </Field>
+
+      <Field
+        htmlFor={fid('description')}
+        label="Summary (optional)"
+        hint={lockedHint ?? 'One or two lines, shown in the detail view and in exports.'}
+        error={errors.description}
+        {...mark('description')}
+      >
+        <Textarea
+          id={fid('description')}
+          data-error-key="description"
+          rows={2}
+          maxLength={DESCRIPTION_MAX_LENGTH}
+          readOnly={contentLocked}
+          value={draft.description}
+          onChange={(event) => set('description', event.target.value)}
+          aria-invalid={errors.description ? true : undefined}
+        />
+      </Field>
+
       <TagsField
         id={fid('tags')}
         tags={draft.tags}
@@ -795,25 +815,6 @@ export function IdeaForm({
         error={errors.assigneeUserIds}
         onChange={(assignees) => set('assignees', assignees)}
       />
-
-      <Field
-        htmlFor={fid('description')}
-        label="Summary (optional)"
-        hint={lockedHint ?? 'One or two lines, shown in the detail view and in exports.'}
-        error={errors.description}
-        {...mark('description')}
-      >
-        <Textarea
-          id={fid('description')}
-          data-error-key="description"
-          rows={2}
-          maxLength={DESCRIPTION_MAX_LENGTH}
-          readOnly={contentLocked}
-          value={draft.description}
-          onChange={(event) => set('description', event.target.value)}
-          aria-invalid={errors.description ? true : undefined}
-        />
-      </Field>
 
       <fieldset className="m-0 flex flex-col border-0 border-t p-0 pt-3">
         <legend className="float-left mb-3 w-full text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -1169,7 +1170,7 @@ export function AssigneesField({
   )
 }
 
-/** One to five ordered solutions, each its own line. */
+/** One to five ordered solutions, each its own multi-line box. */
 function SolutionsField({
   idPrefix,
   solutions,
@@ -1202,19 +1203,26 @@ function SolutionsField({
       {solutions.map((solution, index) => (
         // Solutions are ordered and may repeat, so their position is their identity.
         // biome-ignore lint/suspicious/noArrayIndexKey: see above
-        <div key={index} className="flex items-center gap-1.5">
-          <Input
+        <div key={index} className="flex items-start gap-1.5">
+          <Textarea
             id={`${idPrefix}-${index}`}
             data-error-key={index === 0 ? 'proposedSolutions' : undefined}
             aria-label={`Solution ${index + 1}`}
             aria-describedby={error || locked ? messageId : undefined}
             aria-invalid={error ? true : undefined}
+            rows={3}
             maxLength={SOLUTION_MAX}
             readOnly={locked}
             value={solution}
-            onChange={(event) =>
-              onChange(solutions.map((s, i) => (i === index ? event.target.value : s)))
-            }
+            // A box for room to write, but each solution stays one line: the API refuses a line
+            // break inside one, since the CSV export puts one solution per line of a cell.
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !event.nativeEvent.isComposing) event.preventDefault()
+            }}
+            onChange={(event) => {
+              const value = event.target.value.replace(/\r?\n|\r/g, ' ')
+              onChange(solutions.map((s, i) => (i === index ? value : s)))
+            }}
           />
           {!locked && solutions.length > 1 ? (
             <button

@@ -357,3 +357,36 @@ describe('IdeaForm classification defaults', () => {
     expect(screen.getByText('Pick an Idea Type to see its custom fields.')).toBeTruthy()
   })
 })
+
+describe('IdeaForm layout (owner decision 2026-10-22)', () => {
+  it('asks for impact, type, priority and due date before the solutions, and Summary after the rationale', () => {
+    renderForm(null)
+    const order = [
+      'Title',
+      'Problem',
+      'Business impact',
+      'Idea type',
+      'Priority',
+      'Due date (optional)',
+      'Solution 1',
+      'Impact rationale',
+      'Summary (optional)',
+    ].map((label) => screen.getByLabelText(label))
+
+    for (const [index, control] of order.slice(1).entries()) {
+      const before = order[index] as HTMLElement
+      expect(
+        before.compareDocumentPosition(control) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy()
+    }
+  })
+
+  it('gives each solution a multi-line box that still keeps it to one line', () => {
+    renderForm(null)
+    const solution = screen.getByLabelText('Solution 1') as HTMLTextAreaElement
+    expect(solution.tagName).toBe('TEXTAREA')
+
+    fireEvent.change(solution, { target: { value: 'Stage the jig\nbefore the shift' } })
+    expect(solution.value).toBe('Stage the jig before the shift')
+  })
+})
