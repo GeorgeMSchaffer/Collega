@@ -16,7 +16,6 @@ import {
 import Link from 'next/link'
 import { type FormEvent, useActionState, useState, useTransition } from 'react'
 import { IdeaMovesGuard } from '@/components/settings/idea-moves-guard'
-import { KeyPrefixField } from '@/components/settings/key-prefix-field'
 import { type PullSetup, PullStep } from '@/components/settings/pull-step'
 import { NO_FLAGS, SwimlanePicker } from '@/components/settings/swimlane-picker'
 import { PULL_ITEM_CAP } from '@/lib/limits'
@@ -47,12 +46,9 @@ export function BoardForm({
   boardId,
   defaultName = '',
   defaultDescription = '',
-  userStatusMoves,
   swimlaneIds,
   laneFlags,
   laneIdeaCounts,
-  keyPrefix = null,
-  nextItemNumber = 1,
   ideaFeaturesEnabled = true,
   references,
   statuses,
@@ -64,14 +60,11 @@ export function BoardForm({
   boardId: string | null
   defaultName?: string
   defaultDescription?: string
-  userStatusMoves: boolean
   swimlaneIds: string[]
   /** The board's lane flags as loaded, keyed by status id, sent back on save so they survive. */
   laneFlags?: Readonly<Record<string, LaneFlags>> | undefined
   /** Live ideas per lane of the board being edited, keyed by status id. */
   laneIdeaCounts?: Readonly<Record<string, number>> | undefined
-  keyPrefix?: string | null | undefined
-  nextItemNumber?: number | undefined
   ideaFeaturesEnabled?: boolean | undefined
   /** The boards a lane may reference; absent leaves the References controls out. */
   references?: ReferenceContext | undefined
@@ -102,12 +95,9 @@ export function BoardForm({
               boardId={boardId}
               defaultName={defaultName}
               defaultDescription={defaultDescription}
-              userStatusMoves={userStatusMoves}
               swimlaneIds={swimlaneIds}
               laneFlags={laneFlags}
               laneIdeaCounts={laneIdeaCounts}
-              keyPrefix={keyPrefix}
-              nextItemNumber={nextItemNumber}
               ideaFeaturesEnabled={ideaFeaturesEnabled}
               references={references}
               refusals={state}
@@ -205,12 +195,9 @@ export function BoardFields({
   boardId,
   defaultName = '',
   defaultDescription = '',
-  userStatusMoves,
   swimlaneIds,
   laneFlags,
   laneIdeaCounts = {},
-  keyPrefix = null,
-  nextItemNumber = 1,
   ideaFeaturesEnabled = true,
   references,
   refusals,
@@ -221,15 +208,12 @@ export function BoardFields({
   boardId: string | null
   defaultName?: string
   defaultDescription?: string
-  userStatusMoves: boolean
   swimlaneIds: string[]
   /** Posted as one hidden field so a save returns each lane's flags; absent on create. */
   laneFlags?: Readonly<Record<string, LaneFlags>> | undefined
   /** Live ideas per lane of the board being edited; absent on create, where nothing is removed. */
   laneIdeaCounts?: Readonly<Record<string, number>> | undefined
-  /** The prefix as stored (`null` for none) and the idea-features switch as stored. */
-  keyPrefix?: string | null | undefined
-  nextItemNumber?: number | undefined
+  /** The idea-features switch as stored. */
   ideaFeaturesEnabled?: boolean | undefined
   /** The boards a lane may reference; absent leaves the References controls out. */
   references?: ReferenceContext | undefined
@@ -297,12 +281,6 @@ export function BoardFields({
         />
       </Field>
 
-      <KeyPrefixField
-        saved={keyPrefix}
-        nextItemNumber={nextItemNumber}
-        refusal={refusals?.keyPrefix}
-      />
-
       <div className="mb-4">
         <Switch
           checked={ideaFeatures}
@@ -315,25 +293,6 @@ export function BoardFields({
           {references && references.referencedBy.length > 0 && !ideaFeatures
             ? 'Off, because this board is the target of a reference. Cards here show title, description, assignees, tags, sprint and blockers. An Org Admin can turn it on.'
             : 'Upvotes, idea types and their fields, and AI assist. On for ordinary boards.'}
-        </p>
-      </div>
-
-      <div className="mb-4">
-        <span className="flex items-start gap-2">
-          <input
-            type="checkbox"
-            id="user-moves"
-            name="userStatusMoves"
-            defaultChecked={userStatusMoves}
-            className="mt-0.5"
-          />
-          <label htmlFor="user-moves" className="text-sm font-medium">
-            Let Users move ideas between statuses on this board
-          </label>
-        </span>
-        <p className="m-0 mt-1 max-w-prose text-xs text-muted-foreground">
-          With this off, only administrators can change an idea&rsquo;s status here. Read Only
-          accounts can never move anything, on any board.
         </p>
       </div>
 

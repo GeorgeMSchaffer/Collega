@@ -25,13 +25,11 @@ export type BoardFormData = {
   boardId: string | null
   name: string
   description: string
-  userStatusMoves: boolean
   swimlaneIds: string[]
   /** The board's lane flags as loaded, sent back on save so the save does not clear them. */
   laneFlags?: Readonly<Record<string, LaneFlags>> | undefined
   /** Live ideas per lane of the board being edited, for the confirm step a lane removal needs. */
   laneIdeaCounts?: Readonly<Record<string, number>> | undefined
-  keyPrefix?: string | null
   ideaFeaturesEnabled?: boolean
   /** The boards a lane may reference, and which boards reference this one. */
   references?: ReferenceContext | undefined
@@ -165,11 +163,9 @@ export function BoardDrawer({
           boardId={form.boardId}
           defaultName={form.name}
           defaultDescription={form.description}
-          userStatusMoves={form.userStatusMoves}
           swimlaneIds={form.swimlaneIds}
           laneFlags={form.laneFlags}
           laneIdeaCounts={form.laneIdeaCounts}
-          keyPrefix={form.keyPrefix}
           ideaFeaturesEnabled={form.ideaFeaturesEnabled}
           references={form.references}
           refusals={outcome.formKey === formKey ? outcome : undefined}
@@ -252,7 +248,6 @@ function BoardFacts({
     ['Lanes', board.laneCount],
     ['Created', board.createdOn],
     ['By', board.createdBy ?? '—'],
-    ['User status moves', board.userStatusMoves ? 'Allowed' : 'Admins only'],
     ['Key prefix', board.keyPrefix ?? '—'],
     ['Idea features', board.ideaFeaturesEnabled ? 'On' : 'Off'],
     ['Status', board.archivedOn ? `Archived ${board.archivedOn}` : statusLabel(board)],

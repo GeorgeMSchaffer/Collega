@@ -1,6 +1,5 @@
 import { Badge, buttonVariants, Card, EmptyState, Kbd, Meter } from '@collega/design-system'
 import Link from 'next/link'
-import { Fragment } from 'react'
 import {
   CountLegend,
   CountStrip,
@@ -10,7 +9,6 @@ import {
 } from '@/components/boards/board-parts'
 import { GatedAction } from '@/components/common/gated-action'
 import { PageHeader } from '@/components/common/page-header'
-import { FirstRunStrip } from '@/components/home/first-run-strip'
 import {
   EmptyNote,
   IdeaRow,
@@ -135,18 +133,6 @@ function OrganizationDashboard({
 
   return (
     <>
-      <FirstRunStrip>
-        <b>New to Collega?</b> An idea moves{' '}
-        {home.statuses.map((status, index) => (
-          <Fragment key={status.id}>
-            {index > 0 ? ' → ' : null}
-            {status.name}
-          </Fragment>
-        ))}
-        , and the people, comments and history stay attached the whole way. Start one from any
-        board, or press <Kbd>Ctrl K</Kbd> and type &ldquo;new idea&rdquo;.
-      </FirstRunStrip>
-
       <KpiRow label="Your numbers" kpis={home.kpis}>
         <UntrackedTile figures={['Open ideas', 'Awaiting review', 'Completed · 30d']} />
       </KpiRow>

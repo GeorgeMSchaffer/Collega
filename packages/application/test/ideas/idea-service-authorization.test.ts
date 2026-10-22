@@ -274,7 +274,7 @@ describe('IdeaService role matrix', () => {
     await expect(service.listByBoard(BOARD_A, LIST_QUERY)).resolves.toBeDefined()
   })
 
-  it('refuses Read Only a status move even on a board that opts users in', async () => {
+  it('refuses Read Only a status move whatever the stored board setting', async () => {
     const { service } = harness({
       currentUser: readOnly(ORG_A),
       boards: [board({ allowUserStatusUpdate: true })],
@@ -286,24 +286,16 @@ describe('IdeaService role matrix', () => {
     )
   })
 
-  it('lets a User move an idea only when the board opts in (rule #34)', async () => {
-    const opted = harness({
-      currentUser: memberContext(ORG_A),
-      boards: [board({ allowUserStatusUpdate: true })],
-      ideas: [idea()],
-    })
-    await opted.service.changeStatus('idea-1', { statusId: STATUS_2 })
-    expect(opted.saved).toHaveLength(1)
-
-    const locked = harness({
-      currentUser: memberContext(ORG_A),
-      boards: [board({ allowUserStatusUpdate: false })],
-      ideas: [idea()],
-    })
-    await expect(locked.service.changeStatus('idea-1', { statusId: STATUS_2 })).rejects.toThrow(
-      ForbiddenError,
-    )
-    expect(locked.saved).toHaveLength(0)
+  it('lets a User move an idea whatever the stored board setting (rule #34)', async () => {
+    for (const allowUserStatusUpdate of [true, false]) {
+      const { service, saved } = harness({
+        currentUser: memberContext(ORG_A),
+        boards: [board({ allowUserStatusUpdate })],
+        ideas: [idea()],
+      })
+      await service.changeStatus('idea-1', { statusId: STATUS_2 })
+      expect(saved).toHaveLength(1)
+    }
   })
 
   it('lets an Org Admin move an idea regardless of the board setting', async () => {

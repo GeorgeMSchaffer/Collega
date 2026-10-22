@@ -43,7 +43,6 @@ export default async function EditBoardPage({ params }: { params: Promise<{ boar
         boardId={board.id}
         defaultName={board.name}
         defaultDescription={board.description ?? ''}
-        userStatusMoves={board.allowUserStatusUpdate}
         swimlaneIds={board.lanes.map((lane) => lane.id)}
         laneFlags={Object.fromEntries(
           board.lanes.map(({ id, isFinal, referencesBoardId, autoCreateTask }) => [
@@ -54,8 +53,6 @@ export default async function EditBoardPage({ params }: { params: Promise<{ boar
         laneIdeaCounts={Object.fromEntries(
           (overview?.lanes ?? []).map((lane) => [lane.id, lane.ideaCount]),
         )}
-        keyPrefix={board.keyPrefix}
-        nextItemNumber={board.nextItemNumber}
         ideaFeaturesEnabled={board.ideaFeaturesEnabled}
         references={references}
         // A board may hold a lane whose status has since been archived, and the catalog excludes

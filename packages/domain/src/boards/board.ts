@@ -94,7 +94,13 @@ export function boardTakesIdeaType(
   ideaTypeId: string,
 ): boolean {
   const allowed = board.allowedIdeaTypeIds ?? []
-  return !board.ideaFeaturesEnabled || allowed.length === 0 || allowed.includes(ideaTypeId)
+  // Lowercased: a GUID from the request keeps the caller's case, and PostgreSQL matches either.
+  const id = ideaTypeId.toLowerCase()
+  return (
+    !board.ideaFeaturesEnabled ||
+    allowed.length === 0 ||
+    allowed.some((allowedId) => allowedId.toLowerCase() === id)
+  )
 }
 
 /**
@@ -150,6 +156,32 @@ function normalizeKeyPrefix(keyPrefix: string | null): string | null {
     )
   }
   return upper
+}
+
+/**
+ * The prefix a new board gets when none is given: the initials of its name, or the first two
+ * letters when the name has fewer than two words. A clash with a prefix already taken in the
+ * organization gets a number appended (CI, CI2, CI3). Always 2 to 10 characters of A-Z and 0-9.
+ */
+export function deriveKeyPrefix(name: string, taken: readonly string[]): string {
+  const words = name
+    .toUpperCase()
+    .split(/[^A-Z0-9]+/)
+    .filter((word) => word.length > 0)
+  const letters = words.join('')
+  const initials = words.map((word) => word.charAt(0)).join('')
+  const base = (
+    initials.length >= KEY_PREFIX_MIN_LENGTH ? initials : (letters + 'BD').slice(0, 2)
+  ).slice(0, KEY_PREFIX_MAX_LENGTH)
+  if (!taken.includes(base)) {
+    return base
+  }
+  for (let n = 2; ; n++) {
+    const candidate = `${base.slice(0, KEY_PREFIX_MAX_LENGTH - String(n).length)}${n}`
+    if (!taken.includes(candidate)) {
+      return candidate
+    }
+  }
 }
 
 /** Turns caller-ordered lanes into dense, validated swimlanes. */

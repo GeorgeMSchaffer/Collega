@@ -161,9 +161,9 @@ function laneRefusals(rule: string, form: FormData): Record<string, string> | nu
  * `laneFlags` field (status id to flags), and each lane sends its own back; a lane the person just
  * added has none and sends the defaults. Nothing on this form edits them.
  *
- * An unchecked checkbox posts nothing at all, which is why `allowUserStatusUpdate` is a presence
- * test rather than a value read — `String(form.get(...))` would be `"null"`, a truthy string, and
- * the setting would be impossible to turn off.
+ * `allowUserStatusUpdate` is always `true`: Users may always move ideas between statuses and the
+ * form no longer shows the setting (SPEC/decisions.md 2026-10-22). The field stays on the contract
+ * until a later change drops it.
  */
 function boardBody(form: FormData): {
   name: string
@@ -185,7 +185,7 @@ function boardBody(form: FormData): {
     // Always sent, blank included: on `PUT` an absent description means "leave it", so emptying the
     // field has to arrive as an empty string for the API to clear it.
     description: String(form.get('description') ?? ''),
-    allowUserStatusUpdate: form.get('userStatusMoves') !== null,
+    allowUserStatusUpdate: true,
     // Present only on a form that has the fields; a caller without them (the quick-add row) leaves
     // both to the API's defaults, and on `PUT` an absent value means "leave it".
     ...(form.has('keyPrefix') ? { keyPrefix: String(form.get('keyPrefix')).trim() || null } : {}),
@@ -270,9 +270,9 @@ async function save(
 
 /**
  * The Boards list's quick-add row: a board from just a name, on the lanes the page chose (the
- * catalog's first two statuses, as the drawer defaults them) with `allowUserStatusUpdate` off. The
- * same `POST /organizations/{id}/boards` as the drawer; a refusal comes back keyed by field so the
- * row can mark the name.
+ * catalog's first two statuses, as the drawer defaults them). The same
+ * `POST /organizations/{id}/boards` as the drawer; a refusal comes back keyed by field so the row
+ * can mark the name.
  */
 export async function quickAddBoard(
   name: string,
@@ -296,7 +296,7 @@ export async function quickAddBoard(
       {
         name,
         description: '',
-        allowUserStatusUpdate: false,
+        allowUserStatusUpdate: true,
         swimlanes: statusIds.map((statusId, order) => ({ statusId, order })),
       },
     )

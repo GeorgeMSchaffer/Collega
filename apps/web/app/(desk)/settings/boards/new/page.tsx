@@ -33,7 +33,6 @@ export default async function NewBoardPage() {
     >
       <BoardForm
         boardId={null}
-        userStatusMoves={true}
         references={references}
         // The first lanes of the catalog, because the API refuses a board with fewer than two and
         // a form that opens below its own floor cannot be submitted until the person works out

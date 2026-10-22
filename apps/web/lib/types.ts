@@ -647,14 +647,17 @@ export type BoardTask = {
  */
 export type IdeaTasks = {
   tasks: BoardTask[]
-  /** The board the reference lane hands work to; its lanes colour each task's status. */
-  referenced: { id: string; name: string; lanes: Status[] }
+  /**
+   * The board the reference lane hands work to; its lanes colour each task's status, and `isFinal`
+   * picks where a task's checkbox moves it.
+   */
+  referenced: { id: string; name: string; lanes: (Status & Pick<BoardLane, 'isFinal'>)[] }
   /** The reference lane: where a task may be added, and where "Move back" goes. */
   referenceLane: { id: string; name: string }
   inLane: boolean
   /** The lane after the reference lane, for the completion prompt; null at the board's end. */
   nextLane: { id: string; name: string } | null
-  /** Role, archived board and `allowUserStatusUpdate` already folded in. */
+  /** Role and archived board already folded in. */
   canMove: boolean
   /** Null when the reader may not add or remove tasks (hidden, not disabled). */
   adding: { members: MemberOption[]; tags: TagRef[] } | null

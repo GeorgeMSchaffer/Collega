@@ -28,7 +28,9 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-22 | Users always move ideas between statuses | active | full below |
 | 2026-10-22 | A board can limit which idea types it takes | active | full below |
+| 2026-10-21 | Board key prefixes are derived, not typed | active | full below |
 | 2026-10-21 | Analytics runs without a consent banner | Current | Full below |
 | 2026-10-21 | Production runs with `COLLEGA_ALLOW_DEMO_SEED` set | active | full below |
 | 2026-10-20 | Idea assistant v2: enablement gate passed; the v1 default prompt stays | active | full below |
@@ -141,6 +143,23 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 ---
 
+## 2026-10-22 — Users always move ideas between statuses
+
+**Decided by the owner.** The board setting *Let Users move ideas between statuses on this board*
+(`allowUserStatusUpdate`) leaves the UI, and a User may always move an idea between statuses on a
+board they can write on. Read Only still never may, and an archived board still moves nothing.
+
+- **Why.** The setting was rarely wanted and made a User's board behave differently from board to
+  board for no visible reason; the role already says who may write.
+- **What changes.** The board form, the board drawer and the Settings boards list no longer show it.
+  The client sends `allowUserStatusUpdate: true` on every create and update, the quick-add row
+  included (it sent `false` since 2026-10-15). `IdeaService` no longer reads it when a User changes
+  an idea's status, and the web move gates follow the role and the archived state only.
+- **What stays.** The `boards.allow_user_status_update` column, the contract field and the domain
+  and API fields are kept for now: the schema is frozen, and a later change drops them.
+
+Rule 16 of `20-feature-boards-and-statuses.md`.
+
 ## 2026-10-22 — A board can limit which idea types it takes
 
 **Decided by the owner** (four answers, 2026-10-22). Reopens the "no per-board setting" clause of
@@ -167,6 +186,10 @@ only**: a type still never chooses a board.
 
 Contracts: `contracts/boards.md` "Allowed idea types" and the create, update and pull errors in
 `contracts/ideas.md` and `contracts/boards.md`. Rule 15 of `20-feature-boards-and-statuses.md`.
+
+## 2026-10-21 — Board key prefixes are derived, not typed
+
+The board form no longer asks for a key prefix. A new board's prefix is derived from its name (initials, numbered on a clash, `deriveKeyPrefix` in `packages/domain/src/boards/board.ts`), so people can't mistype or collide one. The API still accepts an explicit prefix and the change rule (`422 keyPrefixLocked`) still holds, so existing boards are unchanged. Revisit if people need to choose a key.
 
 ## 2026-10-21 — Analytics runs without a consent banner
 
