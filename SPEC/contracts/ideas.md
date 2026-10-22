@@ -140,7 +140,8 @@ Create a new idea on a board.
   - `ideaTypeId`
   - `businessImpactId`
   - `dueDate`
-- **Errors:** —
+- **Errors:**
+  - an `ideaTypeId` the board does not take (added 2026-10-22, `contracts/boards.md` "Allowed idea types"): `400` keyed `ideaTypeId`, `This board doesn't take '{type name}' ideas.`
 - **Rules:** —
 
 ### `POST /api/v1/organizations/{organizationId}/ideas`
@@ -291,6 +292,7 @@ Update idea content.
 - **Response:** the detail shape of `GET /api/v1/ideas/{ideaId}` (stated there).
 - **Updating a task (an item with a parent; decided 2026-10-16):** the same route, task fields only. The author or an in-scope Org Admin may change `title`, `description`, `assigneeUserIds` and `tagNames`, under the rules above; `title` is required. `problem`, `proposedSolutions`, `impactRationale`, `priority`, `ideaTypeId`, `businessImpactId`, `dueDate`, `effort` and `mentionEmails` are not taken: they are ignored if sent, as on `POST …/board-tasks`, and are not required. The idea-only fields that are read stay `null` (or `[]`); `mentionEmails` has no read field and no mention notification is sent. Sprint and blockers keep their own routes. Read Only `403`; a direct Site Admin as for any idea update.
 - **Errors:**
+  - changing `ideaTypeId` to a type the idea's board does not take (added 2026-10-22, `contracts/boards.md` "Allowed idea types"): `400` keyed `ideaTypeId`, `This board doesn't take '{type name}' ideas.` Keeping a type that is no longer allowed is accepted.
   - unauthorized description changes return `403 Forbidden`.
   - unauthorized assignment changes return `403 Forbidden`.
   - duplicate assignee IDs, more than five assignee IDs, inactive newly selected users, cross-organization users, or more than 10 distinct tags return `400 Bad Request`.
