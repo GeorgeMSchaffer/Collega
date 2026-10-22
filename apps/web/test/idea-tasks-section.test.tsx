@@ -16,6 +16,9 @@ vi.mock('@/lib/server/idea-actions', () => ({
   removeBoardTask: vi.fn(),
 }))
 
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }))
+vi.mock('@/lib/server/sprint-planning-actions', () => ({ moveTasksToSprint: vi.fn() }))
+
 stubDialogMethods()
 
 const add = vi.mocked(addBoardTask)
@@ -53,6 +56,7 @@ function tasksOf(tasks: BoardTask[], over: Partial<IdeaTasks> = {}): IdeaTasks {
     nextLane: { id: 'l-next', name: 'Shipped' },
     canMove: true,
     adding: { members: [{ id: 'u-1', name: 'Ada Lovelace' }], tags: [] },
+    scheduling: null,
     ...over,
   }
 }

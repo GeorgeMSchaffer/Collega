@@ -1,12 +1,15 @@
 'use client'
 
-import { Button, cn, Dot, Field, Input, Textarea } from '@collega/design-system'
+import { Button, cn, Dot, Field, Input, Select, Textarea } from '@collega/design-system'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { type FormEvent, useEffect, useId, useRef, useState, useTransition } from 'react'
+import { SprintCreateDrawer } from '@/components/boards/sprint-create-drawer'
 import { ConfirmDialog } from '@/components/list'
 import { Icon } from '@/components/list/icons'
 import { blockedBadge, blockedTooltip, isBlockedHere } from '@/lib/board-work'
 import { addBoardTask, moveIdea, removeBoardTask } from '@/lib/server/idea-actions'
+import { moveTasksToSprint } from '@/lib/server/sprint-planning-actions'
 import type { BoardTask, IdeaDetail, IdeaTasks } from '@/lib/types'
 import { WARN_BADGE } from './idea-badges'
 import { People } from './idea-chips'
@@ -88,6 +91,10 @@ export function TasksSection({ parent, tasks }: { parent: Parent; tasks: IdeaTas
   const [adding, setAdding] = useState(false)
   const [moveBack, setMoveBack] = useState(false)
   const [removing, setRemoving] = useState<BoardTask | null>(null)
+  const [scheduling, setScheduling] = useState<BoardTask | null>(null)
+  const [creating, setCreating] = useState<string[] | null>(null)
+  const router = useRouter()
+  const { scheduling: plan } = tasks
 
   const done = tasks.tasks.filter((task) => task.isFinal).length
   const formAnchor = useId()
@@ -152,6 +159,7 @@ export function TasksSection({ parent, tasks }: { parent: Parent; tasks: IdeaTas
                 task={task}
                 tasks={tasks}
                 onRemove={tasks.adding ? () => setRemoving(task) : undefined}
+                onSchedule={plan && task.sprint === null ? () => setScheduling(task) : undefined}
               />
             ))}
           </ul>
@@ -169,6 +177,38 @@ export function TasksSection({ parent, tasks }: { parent: Parent; tasks: IdeaTas
         ) : null}
       </div>
 
+      {plan && scheduling ? (
+        <ScheduleDialog
+          task={scheduling}
+          boardId={tasks.referenced.id}
+          sprints={plan.sprints}
+          onClose={() => setScheduling(null)}
+          onScheduled={() => {
+            setScheduling(null)
+            router.refresh()
+          }}
+          onCreate={() => {
+            setCreating([scheduling.id])
+            setScheduling(null)
+          }}
+        />
+      ) : null}
+      {plan ? (
+        <SprintCreateDrawer
+          open={creating !== null}
+          onClose={() => setCreating(null)}
+          boardId={tasks.referenced.id}
+          boardName={tasks.referenced.name}
+          tasks={plan.backlog}
+          total={plan.backlogTotal}
+          initialIds={creating ?? []}
+          members={plan.members}
+          onCreated={() => {
+            setCreating(null)
+            router.refresh()
+          }}
+        />
+      ) : null}
       {moveBack ? (
         <MoveBackDialog
           parent={parent}
@@ -199,10 +239,12 @@ function TaskRow({
   task,
   tasks,
   onRemove,
+  onSchedule,
 }: {
   task: BoardTask
   tasks: IdeaTasks
   onRemove: (() => void) | undefined
+  onSchedule: (() => void) | undefined
 }) {
   const lane = tasks.referenced.lanes.find((candidate) => candidate.id === task.statusId)
   const blocked = isBlockedHere(
@@ -256,6 +298,23 @@ function TaskRow({
             <Dot color={lane?.color} />
             {task.statusName}
           </span>
+          {task.sprint ? (
+            <span className="rounded border border-border px-1.5 text-xs font-medium">
+              {task.sprint.name}
+            </span>
+          ) : task.sprint === null ? (
+            <span className="text-xs text-muted-foreground">No sprint</span>
+          ) : null}
+          {onSchedule ? (
+            <button
+              type="button"
+              onClick={onSchedule}
+              aria-label={`Schedule ${task.itemKey ?? task.title}`}
+              className="rounded px-1 text-xs font-semibold text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              Schedule…
+            </button>
+          ) : null}
         </span>
         {error ? (
           <span id={errorId} role="alert" className="text-xs font-semibold text-destructive">
@@ -554,6 +613,73 @@ function RemoveTaskDialog({
         })
       }
     >
+      {error ? (
+        <p role="alert" className="m-0 mt-3 text-xs font-semibold text-destructive">
+          {error}
+        </p>
+      ) : null}
+    </ConfirmDialog>
+  )
+}
+
+const NEW_SPRINT = 'new'
+
+/** TB-9: an open sprint of the task's board, or the create flow with this task ticked. */
+function ScheduleDialog({
+  task,
+  boardId,
+  sprints,
+  onClose,
+  onScheduled,
+  onCreate,
+}: {
+  task: BoardTask
+  boardId: string
+  sprints: { id: string; name: string; state: string }[]
+  onClose: () => void
+  onScheduled: () => void
+  onCreate: () => void
+}) {
+  const id = useId()
+  const [choice, setChoice] = useState(sprints[0]?.id ?? NEW_SPRINT)
+  const [error, setError] = useState<string | null>(null)
+  const [pending, start] = useTransition()
+  const name = task.itemKey ?? `‘${task.title}’`
+
+  return (
+    <ConfirmDialog
+      open
+      destructive={false}
+      title={`Schedule ${name}`}
+      description="Add the task to a sprint of this board. Its status stays as it is."
+      confirmLabel={choice === NEW_SPRINT ? 'Create a sprint…' : 'Schedule'}
+      pending={pending}
+      onCancel={onClose}
+      onConfirm={() => {
+        if (choice === NEW_SPRINT) return onCreate()
+        start(async () => {
+          setError(null)
+          const result = await moveTasksToSprint(boardId, choice, [task.id])
+          if (result.error) setError(result.error)
+          else onScheduled()
+        })
+      }}
+    >
+      <label htmlFor={`${id}-sprint`} className="mt-3 mb-1 block text-xs font-semibold">
+        Sprint
+      </label>
+      <Select
+        id={`${id}-sprint`}
+        value={choice}
+        onChange={(event) => setChoice(event.target.value)}
+      >
+        {sprints.map((sprint) => (
+          <option key={sprint.id} value={sprint.id}>
+            {sprint.name} · {sprint.state}
+          </option>
+        ))}
+        <option value={NEW_SPRINT}>Create a new sprint…</option>
+      </Select>
       {error ? (
         <p role="alert" className="m-0 mt-3 text-xs font-semibold text-destructive">
           {error}
