@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-22 | Users always move ideas between statuses | active | full below |
 | 2026-10-22 | A board can limit which idea types it takes | active | full below |
 | 2026-10-21 | Board key prefixes are derived, not typed | active | full below |
 | 2026-10-21 | Analytics runs without a consent banner | Current | Full below |
@@ -141,6 +142,23 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-10-22 — Users always move ideas between statuses
+
+**Decided by the owner.** The board setting *Let Users move ideas between statuses on this board*
+(`allowUserStatusUpdate`) leaves the UI, and a User may always move an idea between statuses on a
+board they can write on. Read Only still never may, and an archived board still moves nothing.
+
+- **Why.** The setting was rarely wanted and made a User's board behave differently from board to
+  board for no visible reason; the role already says who may write.
+- **What changes.** The board form, the board drawer and the Settings boards list no longer show it.
+  The client sends `allowUserStatusUpdate: true` on every create and update, the quick-add row
+  included (it sent `false` since 2026-10-15). `IdeaService` no longer reads it when a User changes
+  an idea's status, and the web move gates follow the role and the archived state only.
+- **What stays.** The `boards.allow_user_status_update` column, the contract field and the domain
+  and API fields are kept for now: the schema is frozen, and a later change drops them.
+
+Rule 16 of `20-feature-boards-and-statuses.md`.
 
 ## 2026-10-22 — A board can limit which idea types it takes
 

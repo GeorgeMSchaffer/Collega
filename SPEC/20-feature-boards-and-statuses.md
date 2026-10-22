@@ -6,7 +6,7 @@
 > - **Key rules:** statuses soft-delete only, not while a swimlane on an active board (Status 5-6); an org
 >   keeps at least 2 active statuses (Status 7); a board needs at least 2 swimlanes (Board 3); boards are
 >   archived, not deleted, by an Org Admin, and open read-only (Board 13); removing a lane moves its
->   ideas to a lane the admin picks (Board 14); `/boards`, `/board/{boardId}` (10).
+>   ideas to a lane the admin picks (Board 14); Users always move ideas between statuses (Board 16); `/boards`, `/board/{boardId}` (10).
 > - **Contracts:** contracts/boards.md, contracts/statuses.md
 > - **Decisions:** 2026-09-27 "Boards gain a description, and the board list carries what a card needs";
 >   2026-09-29 "Removing a lane moves its ideas";
@@ -46,7 +46,7 @@ Organizations can manage idea boards using configurable status swimlanes.
 10. Each status has an admin-controlled `SortOrder` (integer): its default position in the organization's status catalog (e.g. the Settings > Statuses list, and the default order offered when configuring a new board's swimlanes).
     - Distinct from a board's own swimlane order, which a board can reorder by drag-and-drop without changing the organization-level catalog order.
 
-> **Quick-add (2026-10-15).** The Boards list gains the list pattern's quick-add row for an Org Admin or User (hidden for Read Only; `20-feature-client-ui.md`, "Quick-add row"). `POST /organizations/{orgId}/boards` requires `name`, `allowUserStatusUpdate` and at least two swimlanes, so the row asks for the name and defaults the lanes to the first two statuses; it sends `allowUserStatusUpdate` as `false` (what the controller already coerces an omitted value to; decided 2026-10-15, `decisions.md`), so Enter creates the board directly. The row is hidden on phones; the header button opens the drawer.
+> **Quick-add (2026-10-15).** The Boards list gains the list pattern's quick-add row for an Org Admin or User (hidden for Read Only; `20-feature-client-ui.md`, "Quick-add row"). `POST /organizations/{orgId}/boards` requires `name`, `allowUserStatusUpdate` and at least two swimlanes, so the row asks for the name and defaults the lanes to the first two statuses; it sends `allowUserStatusUpdate` as `false` (what the controller already coerces an omitted value to; decided 2026-10-15, `decisions.md`), so Enter creates the board directly. *Amended 2026-10-22:* it now sends `true`, as the board form does (Board 16). The row is hidden on phones; the header button opens the drawer.
 
 ## Board Rules
 1. A board is a collection of ideas organized by swimlanes.
@@ -82,6 +82,7 @@ Organizations can manage idea boards using configurable status swimlanes.
     - The limit applies to creating an idea on the board, changing an idea's type while it is there (the admin reassign included), and moving or pulling an idea onto it. Ideas already on the board when the list narrows stay, with their type.
     - The idea form on the board offers only the allowed types. An idea already on the board whose type is no longer allowed shows that type, marked *Not allowed on this board*, until it is changed.
     - While the board's Idea features are off, the setting is hidden and not applied.
+16. **Users may always move ideas between statuses** (2026-10-22, `SPEC/decisions.md` "Users always move ideas between statuses"). Any User, Org Admin, or Site Admin through View As who can write on a board may move its ideas between lanes; Read Only never can, and an archived board moves nothing (13). The board setting *Let Users move ideas between statuses on this board* is no longer shown: `allowUserStatusUpdate` stays in storage and on the contract, the client always sends `true`, and the server no longer reads it. A later change drops it.
 
 ## Approval Workflow Decisions (Post-MVP — Deferred)
 For a future post-MVP approval workflow on board status transitions. **None of these behaviors are implemented in MVP.** When implemented:
