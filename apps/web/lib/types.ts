@@ -497,6 +497,8 @@ export type Idea = {
   taskCounts: { total: number; done: number } | null
   /** Items that must be final before this one leaves its board's first lane. */
   blockedBy: { ideaId: string; itemKey: string | null; isFinal: boolean }[]
+  /** The sprint a list item is in; null (or absent) when it is in none. */
+  sprint?: { id: string; name: string } | null | undefined
 }
 
 /**
@@ -559,9 +561,9 @@ export type IdeaListQuery = {
   scope?: 'assigned' | 'created' | undefined
   /** The organization list only: one phase. Absent is both. */
   phase?: 'Ideas' | 'Issues' | undefined
-  /** A board's list only: `none` for the items in no sprint (the Backlog), or one sprint's id. */
+  /** `none` for the items in no sprint (the Backlog), or one sprint's id. */
   sprintId?: string | undefined
-  /** A board's list only: leave out items sitting in one of the board's final lanes. */
+  /** Leave out items sitting in a final lane of their own board. */
   hideFinal?: boolean | undefined
 }
 

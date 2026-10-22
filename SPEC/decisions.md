@@ -172,6 +172,14 @@ Rules settled with it:
 
 **Build needs** (contracts written 2026-10-22, owner to review, in `contracts/sprints.md` and `contracts/ideas.md`): `ideaIds` on board sprint create, `PUT /boards/{boardId}/sprint-assignments` (bulk, atomic, optional `statusId`), `hideFinal` and the org list's `sprintId`, and `POST /boards/{boardId}/tasks`. The sprint field on board items and the single assignment route already existed; no cross-board task route is needed.
 
+**Tasks page choices (slice 334, 2026-10-22, builder's calls for owner review).**
+- Backlog and My tasks hide finished work; In sprint and All show it.
+- In sprint is one request per open sprint, merged; Completed sprints are excluded (the API has no any-sprint filter).
+- "Move to sprint" only; no return to backlog from this page.
+- The first 100 newest rows, no filters or paging.
+- No Blocked chip, unlike comp W screen 1C: the Tasks table does not know each board's first lane.
+- The "Tasks" nav entry follows Ideas, hidden from a Site Admin acting directly.
+
 ## 2026-10-22 — The whole idea card drags between lanes
 
 **Decided by the owner.** On board lanes a pointer drag anywhere on an idea card moves it to another
