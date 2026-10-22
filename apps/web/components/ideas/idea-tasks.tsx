@@ -210,18 +210,17 @@ function TaskRow({
     tasks.referenced.lanes,
   )
 
+  const [error, setError] = useState<string | null>(null)
+  const errorId = `${useId()}-error`
+
   return (
     <li className="flex items-center gap-2.5 px-3 py-2">
-      <span
-        role="img"
-        aria-label={task.isFinal ? 'Done' : 'Open'}
-        className={cn(
-          'inline-grid size-[18px] shrink-0 place-items-center rounded-full border',
-          task.isFinal ? 'border-success bg-success text-success-foreground' : 'border-input',
-        )}
-      >
-        {task.isFinal ? <Icon name="check" className="size-3" /> : null}
-      </span>
+      <TaskTick
+        task={task}
+        tasks={tasks}
+        errorId={error ? errorId : undefined}
+        onError={setError}
+      />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <Link
           href={`/boards/${encodeURIComponent(tasks.referenced.id)}?idea=${encodeURIComponent(task.id)}`}
@@ -258,6 +257,11 @@ function TaskRow({
             {task.statusName}
           </span>
         </span>
+        {error ? (
+          <span id={errorId} role="alert" className="text-xs font-semibold text-destructive">
+            {error}
+          </span>
+        ) : null}
       </div>
       <People people={task.assignees} />
       {onRemove ? (
@@ -271,6 +275,75 @@ function TaskRow({
         </button>
       ) : null}
     </li>
+  )
+}
+
+/**
+ * The row's status circle, and its checkbox for whoever may move (decided 2026-10-22). Checking
+ * moves the task to its board's first final lane; unchecking, to the last lane that is not final,
+ * since no lane history is kept. It is the card's own `moveIdea`, so blockers, the reference lock
+ * and permissions refuse here as they do on the board; the row shows the refusal and the tick stays.
+ */
+function TaskTick({
+  task,
+  tasks,
+  errorId,
+  onError,
+}: {
+  task: BoardTask
+  tasks: IdeaTasks
+  errorId: string | undefined
+  onError: (error: string | null) => void
+}) {
+  const [pending, start] = useTransition()
+
+  const { lanes } = tasks.referenced
+  const target = task.isFinal
+    ? lanes.findLast((lane) => !lane.isFinal)
+    : lanes.find((lane) => lane.isFinal)
+  const circle = cn(
+    'inline-grid size-[18px] shrink-0 place-items-center rounded-full border',
+    task.isFinal ? 'border-success bg-success text-success-foreground' : 'border-input',
+  )
+  const tick = task.isFinal ? <Icon name="check" className="size-3" /> : null
+
+  if (!tasks.canMove || !target) {
+    return (
+      <span role="img" aria-label={task.isFinal ? 'Done' : 'Open'} className={circle}>
+        {tick}
+      </span>
+    )
+  }
+
+  function toggle(statusId: string) {
+    start(async () => {
+      onError(null)
+      const form = moveForm(
+        { id: task.id, boardId: tasks.referenced.id, title: task.title, itemKey: task.itemKey },
+        statusId,
+      )
+      const blockers = task.blockedBy.filter((blocker) => !blocker.isFinal).length
+      if (blockers > 0) form.set('blockers', String(blockers))
+      const result = await moveIdea({ error: null }, form)
+      if (result.error) onError(result.error)
+    })
+  }
+
+  return (
+    <button
+      type="button"
+      aria-pressed={task.isFinal}
+      aria-label={task.isFinal ? `Reopen ${task.title}` : `Mark ${task.title} done`}
+      aria-describedby={errorId}
+      disabled={pending}
+      onClick={() => toggle(target.id)}
+      className={cn(
+        circle,
+        'cursor-pointer hover:border-success focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-wait disabled:opacity-60',
+      )}
+    >
+      {tick}
+    </button>
   )
 }
 
