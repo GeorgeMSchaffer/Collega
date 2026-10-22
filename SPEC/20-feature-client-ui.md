@@ -299,7 +299,10 @@ list screen (Settings entities, Delivery lists) moves to as it is touched.
     carried — the upvote control, the comment thread and the comment composer; comp R omits it and
     this spec wins — with Edit / Delete in the footer), **edit** (the form in place, Save / Cancel),
     and **create** — which for ideas opens **wide** with the idea assistant beside the form
-    (`20-feature-ai-idea-assist-v2.md` "Surface").
+    (`20-feature-ai-idea-assist-v2.md` "Surface");
+  - **a successful save closes the drawer** (create and edit, ideas and Issues alike) and returns to
+    the list or board it was opened from, which refreshes. *Owner decision 2026-10-22: a save used
+    to switch the drawer to the saved item in view mode.*
 - **Confirmation** for Delete and Archive is the one destructive modal: `role="alertdialog"`,
   focus trapped between Cancel (focused first) and the action, Escape cancels.
 - **Lanes** are quiet full-height columns (a soft tint and hairline border per lane) with the
