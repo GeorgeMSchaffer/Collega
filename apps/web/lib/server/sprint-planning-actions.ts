@@ -13,6 +13,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { ApiError, apiPath, apiPost, apiPut } from '../api/client'
 import type { CreateSprintResult, SprintInput } from './delivery-actions'
+import type { ActionState } from './idea-actions'
 import { ruleMessage } from './rule-messages'
 
 function refusal(error: unknown): {
@@ -23,8 +24,13 @@ function refusal(error: unknown): {
     if (error.status === 401) redirect('/login?expired=1')
     if ([400, 403, 404, 409, 422].includes(error.status)) {
       // A per-item 422 carries its "KEY: reason" message on `ideaIds`; shown as the API wrote it.
-      const keyed = Object.keys(error.errors).length > 0
-      return { error: keyed ? null : ruleMessage(error.detail), errors: error.errors }
+      // Several messages for one field are joined into one line.
+      const errors = { ...error.errors }
+      for (const [field, messages] of Object.entries(error.errorLists)) {
+        if (messages.length > 0) errors[field] = messages.join(' ')
+      }
+      const keyed = Object.keys(errors).length > 0
+      return { error: keyed ? null : ruleMessage(error.detail), errors }
     }
   }
   throw error
@@ -35,6 +41,7 @@ function revalidateBoard(boardId: string): void {
   revalidatePath('/delivery/sprint')
   revalidatePath('/delivery/backlog')
   revalidatePath('/delivery/roadmap')
+  revalidatePath('/tasks')
 }
 
 /** `POST /boards/{boardId}/sprints` with `ideaIds`: the sprint and its tasks, or neither. */
@@ -60,11 +67,11 @@ export async function createBoardSprint(
 }
 
 /** `PUT /boards/{boardId}/sprint-assignments`: add tasks to a sprint, status left as it is. */
-export async function addTasksToSprint(
+export async function moveTasksToSprint(
   boardId: string,
   sprintId: string,
   ideaIds: readonly string[],
-): Promise<{ error: string | null }> {
+): Promise<ActionState> {
   try {
     await apiPut(apiPath`/boards/${boardId}/sprint-assignments`, { ideaIds, sprintId })
   } catch (error) {

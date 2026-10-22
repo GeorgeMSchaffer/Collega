@@ -8,7 +8,7 @@ import { ParentChip } from '@/components/ideas/idea-badges'
 import { People, TagList } from '@/components/ideas/idea-chips'
 import { ListToolbar, MultiSelectFilter } from '@/components/list'
 import { blockedBadge, blockedTooltip, isBlockedHere, type WorkLane } from '@/lib/board-work'
-import { addTasksToSprint } from '@/lib/server/sprint-planning-actions'
+import { moveTasksToSprint } from '@/lib/server/sprint-planning-actions'
 import type { Idea, MemberOption, Sprint } from '@/lib/types'
 import { SprintCreateDrawer } from './sprint-create-drawer'
 
@@ -153,7 +153,7 @@ export function BacklogList({
     const ids = [...selected]
     setBarError(null)
     startAdding(async () => {
-      const result = await addTasksToSprint(boardId, chosen.id, ids)
+      const result = await moveTasksToSprint(boardId, chosen.id, ids)
       if (result.error) {
         setBarError(result.error)
         return
