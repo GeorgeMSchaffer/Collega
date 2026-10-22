@@ -43,8 +43,7 @@ export type BacklogPrefill = { title: string; effort: Effort | ''; sprintId: str
 
 /**
  * The create drawer (comp A): the idea form with Effort and Sprint and no Board or Status, open
- * while `?new` is in the URL. On success it switches to the new Issue in view mode and confirms
- * with a toast; an Issue that landed on the Backlog is scrolled into view and highlighted, since
+ * while `?new` is in the URL. On success it closes and confirms with a toast; an Issue that landed on the Backlog is scrolled into view and highlighted, since
  * with no votes it sorts last.
  *
  * `options` is null while the drawer is closed (the page reads the catalogs only when asked), and
@@ -84,7 +83,7 @@ export function BacklogAdd({
     showToast(sprint ? `Issue added to ${sprint.name}` : 'Issue added')
     // Only a Backlog row has a place in this list to be found.
     highlight(sprint ? null : ideaId)
-    openDrawer({ view: ideaId })
+    openDrawer(null)
   }
 
   return (

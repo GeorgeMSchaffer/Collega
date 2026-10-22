@@ -131,12 +131,17 @@ test.describe('ideas on a board', () => {
       .last()
       .click()
 
-    // The drawer opens on the new idea, so its heading is the proof the create went through.
+    // A save closes the drawer back to the board (2026-10-22), where the new card is the proof the
+    // create went through.
+    await expect(page).not.toHaveURL(/[?&]new=1/, { timeout: 30_000 })
+    const card = page.getByRole('button', { name: title, exact: true })
+    await expect(card).toBeVisible({ timeout: 30_000 })
+    await card.click()
     const drawer = page.getByRole('complementary', { name: title })
     await expect(drawer).toBeVisible({ timeout: 30_000 })
 
     // The drawer lives in the URL, so a reload - or a shared link - reopens it on the same idea.
-    await expect(page).toHaveURL(/[?&]idea=[0-9a-f-]{36}/i)
+    await expect(page).toHaveURL(/[?&]idea=[0-9a-f-]{36}/i, { timeout: 30_000 })
     await page.reload()
     await expect(drawer).toBeVisible({ timeout: 30_000 })
     // The server renders the drawer open; its heading takes focus once it has hydrated, in the same

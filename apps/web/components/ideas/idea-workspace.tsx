@@ -955,7 +955,9 @@ export function IdeaWorkspace({
           if (quickAdded.current) highlight(ideaId)
           quickAdded.current = false
           setEffortFix(null)
-          openDrawer({ view: ideaId })
+          // A save closes the drawer and returns to the list or board it was opened from.
+          openDrawer(null)
+          setTrigger(null)
         }}
       />
 

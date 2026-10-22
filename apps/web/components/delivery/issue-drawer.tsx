@@ -139,7 +139,7 @@ export function IssueDrawer({
           boards={null}
           boardId={null}
           contentLocked={!mayEditIdeaContent(user.role, user.userId, idea.authorUserId)}
-          onSaved={(ideaId) => openDrawer({ view: ideaId })}
+          onSaved={close}
           onPendingChange={setSaving}
         />
       ) : (

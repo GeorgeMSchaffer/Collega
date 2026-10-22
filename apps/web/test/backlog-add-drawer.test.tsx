@@ -151,7 +151,7 @@ describe('BacklogAdd drawer', () => {
 })
 
 describe('BacklogAdd after a save', () => {
-  it('confirms a Backlog add with "Issue added" and views the new Issue', async () => {
+  it('confirms a Backlog add with "Issue added" and closes back to the Backlog', async () => {
     nav.params = new URLSearchParams('new=1&status=Open')
     renderDrawer()
     fillRequired()
@@ -159,7 +159,7 @@ describe('BacklogAdd after a save', () => {
     fireEvent.click(addButton())
 
     expect(await screen.findByText('Issue added')).toBeTruthy()
-    expect(nav.push).toHaveBeenCalledExactlyOnceWith('/delivery/backlog?status=Open&idea=issue-1', {
+    expect(nav.push).toHaveBeenCalledExactlyOnceWith('/delivery/backlog?status=Open', {
       scroll: false,
     })
   })
@@ -177,7 +177,7 @@ describe('BacklogAdd after a save', () => {
     expect(screen.queryByText('Issue added')).toBeNull()
   })
 
-  it('still views the Issue when it went into a sprint', async () => {
+  it('closes the drawer too when the Issue went into a sprint', async () => {
     renderDrawer()
     fillRequired()
     fireEvent.change(screen.getByLabelText(/^Sprint \(optional\)/), {
@@ -187,7 +187,7 @@ describe('BacklogAdd after a save', () => {
     fireEvent.click(addButton())
 
     await waitFor(() => expect(nav.push).toHaveBeenCalled())
-    expect(nav.push.mock.calls[0]?.[0]).toBe('/delivery/backlog?idea=issue-1')
+    expect(nav.push.mock.calls[0]?.[0]).toBe('/delivery/backlog')
   })
 
   it('highlights and scrolls to the new row when it landed on the Backlog', async () => {
