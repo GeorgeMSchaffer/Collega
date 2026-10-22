@@ -1,8 +1,8 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { BacklogList } from '@/components/boards/backlog-list'
-import { addTasksToSprint, createBoardSprint } from '@/lib/server/sprint-planning-actions'
-import type { Sprint } from '@/lib/types'
+import { createBoardSprint, moveTasksToSprint } from '@/lib/server/sprint-planning-actions'
+import type { Idea, Sprint } from '@/lib/types'
 import { TASKS } from './support/backlog-fixtures'
 
 /**
@@ -11,10 +11,10 @@ import { TASKS } from './support/backlog-fixtures'
  * left behind after a success. The server actions are the boundary.
  */
 vi.mock('@/lib/server/sprint-planning-actions', () => ({
-  addTasksToSprint: vi.fn(),
+  moveTasksToSprint: vi.fn(),
   createBoardSprint: vi.fn(),
 }))
-const add = vi.mocked(addTasksToSprint)
+const add = vi.mocked(moveTasksToSprint)
 const create = vi.mocked(createBoardSprint)
 
 const sprint = (id: string, name: string, state: Sprint['state']): Sprint => ({
@@ -35,22 +35,21 @@ const PLANNED = sprint('s-p', 'Sprint 9', 'Planned')
 const DONE = sprint('s-c', 'Sprint 7', 'Completed')
 const LANES = [{ id: 'l-1', name: 'To do', color: '#111111', isFinal: false }]
 
-function list(over: Partial<Parameters<typeof BacklogList>[0]> = {}) {
-  render(
-    <BacklogList
-      boardId="b-1"
-      boardName="Implementation"
-      rows={TASKS}
-      total={TASKS.length}
-      lanes={LANES}
-      canSelect
-      newTaskHref={null}
-      sprints={[ACTIVE]}
-      members={[{ id: 'u-ada', name: 'Ada Lovelace' }]}
-      {...over}
-    />,
-  )
-}
+const props = (over: Partial<Parameters<typeof BacklogList>[0]> = {}) => (
+  <BacklogList
+    boardId="b-1"
+    boardName="Implementation"
+    rows={TASKS}
+    total={TASKS.length}
+    lanes={LANES}
+    canSelect
+    newTaskHref={null}
+    sprints={[ACTIVE]}
+    members={[{ id: 'u-ada', name: 'Ada Lovelace' }]}
+    {...over}
+  />
+)
+const list = (over: Partial<Parameters<typeof BacklogList>[0]> = {}) => render(props(over))
 const pick = (key: string) =>
   fireEvent.click(screen.getByRole('checkbox', { name: `Select ${key}` }))
 const bar = () => screen.queryByRole('region', { name: 'Selected tasks' })
@@ -144,6 +143,29 @@ describe('Backlog selection bar adding to a sprint', () => {
     await waitFor(() => expect(bar()).toBeNull())
     expect(screen.getByText(/Added 2 tasks to Sprint 8\./)).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Clear selection' })).toBeNull()
+  })
+
+  it('puts the confirmation in its own status line, apart from the count, and moves focus to it', async () => {
+    list()
+    pick('W-1')
+    await click(barButton(/^Add to Sprint 8/))
+    const note = await screen.findByText(/Added 1 task to Sprint 8\./)
+    expect(note.getAttribute('role')).toBe('status')
+    expect(note.tabIndex).toBe(-1)
+    await waitFor(() => expect(document.activeElement).toBe(note))
+    const count = screen.getAllByRole('status').find((el) => el !== note) as HTMLElement
+    expect(count.textContent).not.toContain('Added')
+  })
+
+  it('keeps the confirmation, announced, when the Backlog empties after the add', async () => {
+    const view = list({ rows: [TASKS[0] as Idea], total: 1 })
+    pick('W-1')
+    await click(barButton(/^Add to Sprint 8/))
+    await screen.findByText(/Added 1 task to Sprint 8\./)
+    view.rerender(props({ rows: [], total: 0 }))
+    const note = screen.getByText(/Added 1 task to Sprint 8\./)
+    expect(note.getAttribute('role')).toBe('status')
+    expect(screen.getByText('Nothing waiting for a sprint')).toBeTruthy()
   })
 
   it('says "1 task" for a single task', async () => {

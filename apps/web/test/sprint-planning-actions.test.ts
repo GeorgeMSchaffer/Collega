@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError, apiPost, apiPut } from '@/lib/api/client'
-import { addTasksToSprint, createBoardSprint } from '@/lib/server/sprint-planning-actions'
+import { createBoardSprint, moveTasksToSprint } from '@/lib/server/sprint-planning-actions'
 
 /**
  * Sprint planning from a work board's Backlog (TB-4, TB-5): `POST /boards/{id}/sprints` with
@@ -82,6 +82,22 @@ describe('createBoardSprint', () => {
     expect(revalidatePath).not.toHaveBeenCalled()
   })
 
+  it('joins several messages for one field into one line', async () => {
+    post.mockRejectedValue(
+      new ApiError(400, 'p', 'validation', {}, { ideaIds: ['W-1: gone.', 'W-2: gone.'] }),
+    )
+    expect(await createBoardSprint('b-1', input, ['i-1', 'i-2'])).toEqual({
+      ok: false,
+      error: null,
+      errors: { ideaIds: 'W-1: gone. W-2: gone.' },
+    })
+  })
+
+  it('also revalidates the Tasks page on success', async () => {
+    await createBoardSprint('b-1', input, ['i-1'])
+    expect(revalidatePath.mock.calls.map((call) => call[0])).toContain('/tasks')
+  })
+
   it('turns an unkeyed rule refusal into its plain-language message', async () => {
     post.mockRejectedValue(new ApiError(422, '/boards/b-1/sprints', 'sprintsNotEnabled'))
     expect(await createBoardSprint('b-1', input, [])).toEqual({
@@ -104,9 +120,9 @@ describe('createBoardSprint', () => {
   })
 })
 
-describe('addTasksToSprint', () => {
+describe('moveTasksToSprint', () => {
   it('puts sprintId and ideaIds, and no statusId, to the assignment route', async () => {
-    expect(await addTasksToSprint('b-1', 's-1', ['i-1', 'i-2'])).toEqual({ error: null })
+    expect(await moveTasksToSprint('b-1', 's-1', ['i-1', 'i-2'])).toEqual({ error: null })
     expect(put).toHaveBeenCalledExactlyOnceWith('/boards/b-1/sprint-assignments', {
       ideaIds: ['i-1', 'i-2'],
       sprintId: 's-1',
@@ -115,11 +131,11 @@ describe('addTasksToSprint', () => {
   })
 
   it('revalidates the board page on success only', async () => {
-    await addTasksToSprint('b-1', 's-1', ['i-1'])
+    await moveTasksToSprint('b-1', 's-1', ['i-1'])
     expect(revalidatePath.mock.calls.map((call) => call[0])).toContain('/boards/b-1')
     revalidatePath.mockReset()
     put.mockRejectedValue(new ApiError(400, 'p', 'x', { ideaIds: 'W-1: no.' }))
-    await addTasksToSprint('b-1', 's-1', ['i-1'])
+    await moveTasksToSprint('b-1', 's-1', ['i-1'])
     expect(revalidatePath).not.toHaveBeenCalled()
   })
 
@@ -127,7 +143,7 @@ describe('addTasksToSprint', () => {
     put.mockRejectedValue(
       new ApiError(400, 'p', 'validation', { ideaIds: 'W-3: that task is on another board.' }),
     )
-    expect(await addTasksToSprint('b-1', 's-1', ['i-3'])).toEqual({
+    expect(await moveTasksToSprint('b-1', 's-1', ['i-3'])).toEqual({
       error: 'W-3: that task is on another board.',
     })
   })
@@ -138,29 +154,29 @@ describe('addTasksToSprint', () => {
         sprintId: 'A completed sprint cannot take new issues.',
       }),
     )
-    expect(await addTasksToSprint('b-1', 's-1', ['i-3'])).toEqual({
+    expect(await moveTasksToSprint('b-1', 's-1', ['i-3'])).toEqual({
       error: 'A completed sprint cannot take new issues.',
     })
   })
 
   it('falls back to the rule message when nothing is keyed', async () => {
     put.mockRejectedValue(new ApiError(422, 'p', 'sprintItemOnOtherBoard'))
-    expect(await addTasksToSprint('b-1', 's-1', ['i-3'])).toEqual({
+    expect(await moveTasksToSprint('b-1', 's-1', ['i-3'])).toEqual({
       error: 'A sprint holds tasks from its own board only.',
     })
   })
 
   it('shows a 403 in the API’s words', async () => {
     put.mockRejectedValue(new ApiError(403, 'p', 'Only an Org Admin can plan sprints.'))
-    expect((await addTasksToSprint('b-1', 's-1', ['i-3'])).error).toBe(
+    expect((await moveTasksToSprint('b-1', 's-1', ['i-3'])).error).toBe(
       'Only an Org Admin can plan sprints.',
     )
   })
 
   it('sends an expired session to sign-in and rethrows the unexpected', async () => {
     put.mockRejectedValue(new ApiError(401, 'p', 'unauthorized'))
-    await expect(addTasksToSprint('b-1', 's-1', ['i'])).rejects.toThrow('NEXT_REDIRECT')
+    await expect(moveTasksToSprint('b-1', 's-1', ['i'])).rejects.toThrow('NEXT_REDIRECT')
     put.mockRejectedValue(new Error('boom'))
-    await expect(addTasksToSprint('b-1', 's-1', ['i'])).rejects.toThrow('boom')
+    await expect(moveTasksToSprint('b-1', 's-1', ['i'])).rejects.toThrow('boom')
   })
 })

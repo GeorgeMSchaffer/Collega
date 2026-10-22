@@ -10,12 +10,18 @@ import { TASKS, task } from './support/backlog-fixtures'
  * blocker without refusing the pick, counts the selection and puts a refusal under the list.
  */
 function picker(
-  over: { tasks?: readonly Idea[]; selected?: string[]; error?: string | null } = {},
+  over: {
+    tasks?: readonly Idea[]
+    total?: number
+    selected?: string[]
+    error?: string | null
+  } = {},
 ) {
   const onChange = vi.fn()
   const view = render(
     <SprintTaskPicker
       tasks={over.tasks ?? TASKS}
+      total={over.total ?? (over.tasks ?? TASKS).length}
       selected={new Set(over.selected ?? [])}
       onChange={onChange}
       error={over.error ?? null}
@@ -162,6 +168,12 @@ describe('SprintTaskPicker selection', () => {
     expect(ids(onChange)).toEqual(['3'])
   })
 
+  it('gives a screen reader the blocker in words, not only the chip', () => {
+    picker()
+    const row = screen.getByRole('checkbox', { name: /Seven beta/ }).closest('label') as HTMLElement
+    expect(row.textContent).toMatch(/blocked by W-9 \(.+\)/)
+  })
+
   it('shows no blocker chip when the blocker is already done', () => {
     picker({
       tasks: [task('5', { blockedBy: [{ ideaId: 'x', itemKey: 'W-9', isFinal: true }] })],
@@ -199,6 +211,18 @@ describe('SprintTaskPicker counts', () => {
     picker()
     fireEvent.change(parent(), { target: { value: 'p-7' } })
     expect(status()).toContain('2 of 4 unassigned')
+  })
+})
+
+describe('SprintTaskPicker page cap', () => {
+  it('says it shows the first N of M when the Backlog is longer than what arrived', () => {
+    picker({ total: 250 })
+    expect(status()).toContain('Showing first 4 of 250')
+  })
+
+  it('says nothing about a cap when everything arrived', () => {
+    picker()
+    expect(status()).not.toContain('Showing first')
   })
 })
 

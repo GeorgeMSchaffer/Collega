@@ -12,14 +12,14 @@ import { TASKS } from './support/backlog-fixtures'
  */
 vi.mock('@/lib/server/sprint-planning-actions', () => ({
   createBoardSprint: vi.fn(),
-  addTasksToSprint: vi.fn(),
+  moveTasksToSprint: vi.fn(),
 }))
 const create = vi.mocked(createBoardSprint)
 
 const onClose = vi.fn()
 const onCreated = vi.fn()
 
-function drawer(initialIds: readonly string[] = [], open = true) {
+function drawer(initialIds: readonly string[] = [], open = true, total = TASKS.length) {
   return (
     <SprintCreateDrawer
       open={open}
@@ -27,6 +27,7 @@ function drawer(initialIds: readonly string[] = [], open = true) {
       boardId="b-1"
       boardName="Implementation"
       tasks={TASKS}
+      total={total}
       initialIds={initialIds}
       members={[{ id: 'u-ada', name: 'Ada Lovelace' }]}
       onCreated={onCreated}
@@ -131,6 +132,13 @@ describe('SprintCreateDrawer request', () => {
     await submit()
     expect(screen.getByText('Name is required.')).toBeTruthy()
     expect(create).not.toHaveBeenCalled()
+  })
+})
+
+describe('SprintCreateDrawer page cap', () => {
+  it('tells the picker the Backlog is longer than what the drawer was given', () => {
+    render(drawer([], true, 120))
+    expect(screen.getByRole('status').textContent).toContain('Showing first 4 of 120')
   })
 })
 
