@@ -22,6 +22,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { ApiError, apiDelete, apiPath, apiPost } from '../api/client'
+import { recordEvent } from './analytics'
 
 export type ViewAsState = { error: string | null }
 
@@ -42,6 +43,7 @@ export async function startViewAs(_previous: ViewAsState, form: FormData): Promi
   }
 
   revalidatePath('/', 'layout')
+  await recordEvent('view-as.started')
 
   // Home rather than back to the picker: acting as someone is a change of vantage point, and the
   // first useful thing is seeing what they see. `redirect` throws, so it is last and outside `try`.

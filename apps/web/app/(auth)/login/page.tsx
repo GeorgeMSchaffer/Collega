@@ -4,7 +4,10 @@ import { LoginForm } from '@/components/auth/login-form'
 import { SessionEndedSignal } from '@/components/auth/session-ended-signal'
 import { AuthPitch } from '@/components/auth-pitch'
 
-export const metadata = { title: 'Sign in · Collega' }
+export const metadata = {
+  title: 'Sign in · Collega',
+  description: 'Sign in to Collega to share, shape and track your organization’s ideas.',
+}
 
 /**
  * Sign in.
