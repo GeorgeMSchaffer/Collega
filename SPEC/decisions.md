@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-22 | The whole idea card drags between lanes | active | full below |
 | 2026-10-22 | Users always move ideas between statuses | active | full below |
 | 2026-10-22 | A board can limit which idea types it takes | active | full below |
 | 2026-10-21 | Board key prefixes are derived, not typed | active | full below |
@@ -142,6 +143,21 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-10-22 — The whole idea card drags between lanes
+
+**Decided by the owner.** On board lanes a pointer drag anywhere on an idea card moves it to another
+lane; until now only the small grip handle started a drag.
+
+- **Why.** A live report said drag between lanes did not work. The handle drag did; people grab the
+  card body, and the handle was too small to find.
+- **What stays.** A card drags only under its arrows' rule (`canMove`) and never while a reference
+  lock or blocker holds it (the lock icon says why). A press that does not travel is still a click,
+  so the title, upvote and arrows keep working; once a drag starts the browser sends no click. The
+  drag image is the card, and ← → on the focused title still moves it one lane.
+- **Supersedes** the "dedicated drag handle; interactive controls never start a drag" rule in
+  `05-product-definition.md`, `10-requirements.md`, `20-feature-client-ui.md`,
+  `20-feature-ideas-and-engagement.md` and `40-test-strategy.md`, each now carrying a dated note.
 
 ## 2026-10-22 — Users always move ideas between statuses
 
