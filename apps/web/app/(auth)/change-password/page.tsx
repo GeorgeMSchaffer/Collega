@@ -1,7 +1,10 @@
 import { ChangePasswordForm } from '@/components/auth/change-password-form'
 import { AuthPitch } from '@/components/auth-pitch'
 
-export const metadata = { title: 'Change your password · Collega' }
+export const metadata = {
+  title: 'Change your password · Collega',
+  robots: { index: false, follow: false },
+}
 
 /**
  * Forced first-sign-in password change (comp Q `s-first-signin`).

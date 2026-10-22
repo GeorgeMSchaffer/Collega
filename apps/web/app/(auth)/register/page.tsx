@@ -2,7 +2,10 @@ import Link from 'next/link'
 import { RegisterForm } from '@/components/auth/register-form'
 import { AuthPitch } from '@/components/auth-pitch'
 
-export const metadata = { title: 'Create your account · Collega' }
+export const metadata = {
+  title: 'Create your account · Collega',
+  description: 'Join your organization on Collega with the invite code you were given.',
+}
 
 /**
  * Create an account from an invite code (comp Q `s-register`).
