@@ -7,7 +7,7 @@
 //   DATABASE_URL=postgresql://collega:<password>@127.0.0.1:5432/<scratch db> pnpm --filter @collega/infrastructure test -- board-work-board-reads
 
 import { randomUUID } from 'node:crypto'
-import type { OrganizationIdeaListFilter } from '@collega/application/ideas'
+import type { IdeaListFilter, OrganizationIdeaListFilter } from '@collega/application/ideas'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { PrismaClient } from '../src/generated/prisma/index.js'
 import { PrismaUnitOfWork } from '../src/persistence/unit-of-work.js'
@@ -37,6 +37,24 @@ describe.skipIf(!DATABASE_URL)('work-board reads against a live database', () =>
   const keyOf = new Map<string, string>()
   const keys = (items: readonly { id: string }[]) =>
     items.map((i) => keyOf.get(i.id) ?? i.id).sort()
+  const inOrder = (items: readonly { id: string }[]) => items.map((i) => keyOf.get(i.id) ?? i.id)
+
+  const boardFilter = (overrides: Partial<IdeaListFilter> = {}) =>
+    ({
+      boardId: id.work,
+      page: { page: 1, pageSize: 50 },
+      search: null,
+      searchTextFieldIds: [],
+      searchCreatedOnDate: null,
+      statusIds: [],
+      tags: [],
+      priorities: [],
+      dueBefore: null,
+      phase: null,
+      sortBy: null,
+      sortDirection: 'asc',
+      ...overrides,
+    }) as IdeaListFilter
 
   const orgFilter = (overrides: Partial<OrganizationIdeaListFilter> = {}) =>
     ({
@@ -183,7 +201,9 @@ describe.skipIf(!DATABASE_URL)('work-board reads against a live database', () =>
 
     const parent = await addIdea('parent', id.planning, 'High')
     await addIdea('card', id.work, 'Medium')
+    await addIdea('card-low', id.work, 'Low')
     await addIdea('task', id.work, 'Medium', parent)
+    await addIdea('archived-ref-high', id.onlyArchivedRef, 'High')
     await addIdea('plain-medium', id.plain, 'Medium')
     await addIdea('plain-high', id.plain, 'High')
   })
@@ -239,16 +259,28 @@ describe.skipIf(!DATABASE_URL)('work-board reads against a live database', () =>
       expect(keys(page.items)).not.toContain('task')
     })
 
-    // Known defect in slice 322: the priority filter, sort and search hide priority only for a card
-    // with a parent (`i.parent_idea_id IS NULL`), so a standalone card's stand-in 'Medium' still
-    // matches. `it.fails` keeps this green until the repository is fixed; when it is, this flips to
-    // red and should become a plain `it`.
-    it.fails('does not match a standalone card by priority=Medium', async () => {
+    it('does not match a standalone card by priority=Medium', async () => {
       const page = await ideas.listByOrganization(
         orgFilter({ priorities: ['Medium'] as never, boardIds: [id.work] }),
       )
 
-      expect(keys(page.items)).not.toContain('card')
+      expect(keys(page.items)).toEqual([])
+    })
+
+    it('does not match a standalone card by priority=Low either', async () => {
+      const page = await ideas.listByOrganization(
+        orgFilter({ priorities: ['Low'] as never, boardIds: [id.work] }),
+      )
+
+      expect(keys(page.items)).toEqual([])
+    })
+
+    it('still matches a card of a board referenced only by an archived board', async () => {
+      const page = await ideas.listByOrganization(
+        orgFilter({ priorities: ['High'] as never, boardIds: [id.onlyArchivedRef] }),
+      )
+
+      expect(keys(page.items)).toEqual(['archived-ref-high'])
     })
 
     it('still matches an ordinary card of a non-work board by priority', async () => {
@@ -257,6 +289,44 @@ describe.skipIf(!DATABASE_URL)('work-board reads against a live database', () =>
       )
 
       expect(keys(page.items)).toEqual(['plain-medium'])
+    })
+  })
+
+  describe('priority sort and search on a standalone card', () => {
+    it('sorts a standalone card with the tasks, as having no priority, on the organization list', async () => {
+      const page = await ideas.listByOrganization(
+        orgFilter({ sortBy: 'priority', boardIds: [id.work, id.plain] }),
+      )
+
+      // Ordinary cards by rank, then the nulls (cards and the task) by the title tie-break. A leaked
+      // stand-in would put card-low first and card among the ranked ones.
+      expect(inOrder(page.items)).toEqual([
+        'plain-medium',
+        'plain-high',
+        'card',
+        'card-low',
+        'task',
+      ])
+    })
+
+    it('sorts a standalone card as having no priority on the board list', async () => {
+      const page = await ideas.listByBoard(boardFilter({ sortBy: 'priority' }))
+
+      expect(inOrder(page.items)).toEqual(['card', 'card-low', 'task'])
+    })
+
+    it('does not find a standalone card by searching its stored priority', async () => {
+      const work = await ideas.listByOrganization(orgFilter({ search: 'medium' }))
+      const board = await ideas.listByBoard(boardFilter({ search: 'medium' }))
+
+      expect(keys(work.items)).toEqual(['plain-medium'])
+      expect(board.items).toEqual([])
+    })
+
+    it('still finds an ordinary card by its priority', async () => {
+      const page = await ideas.listByOrganization(orgFilter({ search: 'high' }))
+
+      expect(keys(page.items)).toEqual(['archived-ref-high', 'parent', 'plain-high'])
     })
   })
 })
