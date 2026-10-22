@@ -247,6 +247,23 @@ describe('board page role gating', () => {
     })
   })
 
+  it('hands the Org Admin’s Backlog the board’s sprints and the members for the create drawer', async () => {
+    setBoard({ sprintsEnabled: true })
+    mocks.sprints = [{ id: 's-1', state: 'Active' }]
+    await open('OrgAdmin')
+    expect(mocks.backlogProps.mock.calls.at(-1)?.[0]).toMatchObject({
+      sprints: [{ id: 's-1', state: 'Active' }],
+      members: [{ id: 'u', name: 'U' }],
+      canSelect: true,
+    })
+  })
+
+  it('reads the members for the create drawer on the Backlog tab only', async () => {
+    setBoard({ sprintsEnabled: true })
+    await open('OrgAdmin', { tab: 'board' })
+    expect(mocks.getMemberOptions).not.toHaveBeenCalled()
+  })
+
   it('points + New task at the Backlog tab with the drawer parameter', async () => {
     await open('User')
     expect(newTaskLinks()[0]?.getAttribute('href')).toBe('/boards/b-1?tab=backlog&task=new')
