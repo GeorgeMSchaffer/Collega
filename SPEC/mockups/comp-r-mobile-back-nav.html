@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en" data-proto-theme="graphite">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mobile back navigation · comp R</title>
+<!-- Throwaway comp for review (2026-10-22): SPEC/ideas-inbox.md "Mobile: a back button or clickable breadcrumbs".
+     Tokens are comp R's five themes, copied verbatim from comp-r-portico-prototype.html. -->
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&family=Figtree:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Lexend:wght@500;600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=Schibsted+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root,:root[data-proto-theme="portico"]{--suggest:#3B6E51;--suggest-tint:#E3EEE7;color-scheme:light;
+--bg:#F1F5F5;--ink:#16292E;--ink2:#2C4247;--muted:#56696D;--line:#DDE6E7;--line2:#C6D3D5;--card:#FFFFFF;--soft:#E8EFF0;--rowh:#F6FAFA;--thead:#F7FAFA;--facts:#F6FAFA;
+--pri:#1F6A80;--pri-h:#185769;--pri-t:#1B5F73;--pri-tint:#E1EEF1;--pri-ink:#FFFFFF;--vote:#F2B28A;--vote-ink:#16292E;
+--hot:#B64A34;--hot-t:#963B28;--hot-tint:#F6E1DB;--ok-t:#3B6E51;--ok-tint:#E3EEE7;--warn-t:#8E4A1F;--warn-tint:#FCEBDF;
+--side:#FFFFFF;--side-ink:#2C4247;--side-line:#DDE6E7;--side-hover:#EEF4F4;--side-on:#E1EEF1;--side-on-ink:#16292E;--bar:#16292E;--bar-ink:#E3EEF0;
+--tag:#E1EEF1;--tag-ink:#1B5566;--av1:#1F6A80;--av1i:#FFFFFF;--av2:#F2B28A;--av2i:#16292E;--av3:#7A5AA6;--av3i:#FFFFFF;--av4:#4F8A6A;--av4i:#FFFFFF;
+--shadow:22 41 46;--r:14px;--rs:10px;--display:"Outfit",ui-sans-serif,system-ui,sans-serif;--body:"Figtree",ui-sans-serif,system-ui,sans-serif;--mono:"DM Mono",ui-monospace,monospace;--h-weight:600}
+:root[data-proto-theme="sera"]{--suggest:#2E6E4C;--suggest-tint:#E1EFE7;--bg:#F3F4F7;--ink:#1C2236;--ink2:#343B52;--muted:#5C6378;--line:#E2E4EC;--line2:#CCD0DC;--soft:#ECEEF3;--rowh:#F7F8FB;--thead:#F7F8FB;--facts:#F5F6FA;
+--pri:#3450A8;--pri-h:#2A4290;--pri-t:#2E4799;--pri-tint:#E6EAF6;--vote:#E3B04B;--vote-ink:#1C2236;--hot:#B8553F;--hot-t:#94402D;--hot-tint:#F6E3DE;--ok-t:#2E6E4C;--ok-tint:#E1EFE7;--warn-t:#83590C;--warn-tint:#FAF0DA;
+--side:#1F2540;--side-ink:#CDD1E3;--side-line:#2D3454;--side-hover:#272E4D;--side-on:#2E3760;--side-on-ink:#FFFFFF;--bar:#0F1426;--bar-ink:#E6E9F5;--tag:#ECEEF3;--tag-ink:#343B52;
+--av1:#3450A8;--av1i:#FFFFFF;--av2:#E3B04B;--av2i:#1C2236;--av3:#B8553F;--av3i:#FFFFFF;--av4:#3E8A62;--av4i:#FFFFFF;--shadow:28 34 54;--r:16px;--display:"Bricolage Grotesque",ui-sans-serif,sans-serif;--body:"DM Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="lagoon"]{--suggest:#2F5F9E;--suggest-tint:#E3ECF8;--bg:#F3F4EF;--ink:#13302B;--ink2:#2A4640;--muted:#5A6B66;--line:#E1E5DF;--line2:#CBD3CB;--soft:#EAEFEA;--rowh:#F7F9F5;--thead:#F7F9F5;--facts:#F5F8F3;
+--pri:#0E6B5C;--pri-h:#0A5649;--pri-t:#0C6154;--pri-tint:#DCEFEA;--vote:#F08A6C;--vote-ink:#13302B;--hot:#C2412D;--hot-t:#9E3322;--hot-tint:#F9E1DA;--ok-t:#2F6B3F;--ok-tint:#E2F0E4;--warn-t:#7A5410;--warn-tint:#F8EDD3;
+--side:#FFFFFF;--side-ink:#2A4640;--side-line:#E1E5DF;--side-hover:#EFF3EE;--side-on:#DCEFEA;--side-on-ink:#13302B;--bar:#0F2A25;--bar-ink:#E2F0EC;--tag:#DCEFEA;--tag-ink:#0C5549;
+--av1:#0E6B5C;--av1i:#FFFFFF;--av2:#F08A6C;--av2i:#13302B;--av3:#3D6FB6;--av3i:#FFFFFF;--av4:#8C6A1F;--av4i:#FFFFFF;--shadow:19 48 43;--r:16px;--rs:12px;--display:"Lexend",ui-sans-serif,sans-serif;--body:"Nunito Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:600}
+:root[data-proto-theme="terrazzo"]{--suggest:#3F6B2E;--suggest-tint:#E6F2DF;--bg:#F5F6F8;--ink:#1E2733;--ink2:#36414F;--muted:#5E6978;--line:#E3E6EB;--line2:#CDD2DA;--soft:#EDF0F3;--rowh:#F8F9FB;--thead:#F8F9FB;--facts:#F6F7F9;
+--pri:#3D5A80;--pri-h:#324B6B;--pri-t:#35507A;--pri-tint:#E4EAF2;--vote:#F4C7C3;--vote-ink:#1E2733;--hot:#B84A4A;--hot-t:#963636;--hot-tint:#F7E2E2;--ok-t:#3F6B2E;--ok-tint:#E6F2DF;--warn-t:#7F5A12;--warn-tint:#F7EDD6;
+--side:#FFFFFF;--side-ink:#36414F;--side-line:#E3E6EB;--side-hover:#F1F3F6;--side-on:#E4EAF2;--side-on-ink:#1E2733;--bar:#1E2733;--bar-ink:#E8ECF2;--tag:#F4E4E1;--tag-ink:#7A3B34;
+--av1:#3D5A80;--av1i:#FFFFFF;--av2:#F4C7C3;--av2i:#1E2733;--av3:#4E7A40;--av3i:#FFFFFF;--av4:#7A5AA6;--av4i:#FFFFFF;--shadow:30 39 51;--r:8px;--rs:6px;--display:"Schibsted Grotesk",ui-sans-serif,sans-serif;--body:"Public Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="graphite"]{color-scheme:dark;--metric:#5CC8E0;--suggest:#5CC8E0;--suggest-tint:#0F1D21;--suggest-line:#2E6A78;
+--bg:#0F1113;--ink:#E6E8EA;--ink2:#C4CAD0;--muted:#9BA3AB;--line:#22272C;--line2:#2C3238;--card:#16191C;--soft:#1C2024;--rowh:#1A1E22;--thead:#121518;--facts:#1A1E22;--field:#0F1113;
+--pri:#F5A524;--pri-h:#FFC35C;--pri-t:#F5A524;--pri-tint:#2A2418;--pri-ink:#16120A;--vote:#2A2418;--vote-ink:#F3E3C3;--me:#2A2418;--me-ink:#F3E3C3;
+--hot:#E5484D;--hot-t:#FF8A8E;--hot-tint:#2E1719;--ok-t:#58C781;--ok-tint:#13241A;--warn-t:#F5B456;--warn-tint:#2A2418;
+--side:#121518;--side-ink:#AEB5BC;--side-line:#22272C;--side-hover:#1A1E22;--side-on:#1C2024;--side-on-ink:#E6E8EA;--bar:#0B0D0F;--bar-ink:#AEB5BC;--tag:#1C2024;--tag-ink:#C4CAD0;
+--av1:#2A2418;--av1i:#F5A524;--av2:#153038;--av2i:#5CC8E0;--av3:#262B30;--av3i:#C4CAD0;--av4:#1C2A20;--av4i:#58C781;--shadow:0 0 0;--r:8px;--rs:6px;
+--display:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;--h-weight:600}
+:root{--metric:var(--pri);--field:var(--card);--suggest-line:var(--suggest);--me:var(--pri);--me-ink:var(--pri-ink);--drawer:clamp(380px,28vw,520px);--drawer-wide:clamp(720px,62vw,1100px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--body)}
+button{font:inherit;color:inherit}
+a{color:var(--pri-t)}
+:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+svg.i.s{width:14px;height:14px}
+
+/* review chrome, outside the app (comp R's .proto bar) */
+.proto{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:8px 16px;background:var(--bar);color:var(--bar-ink);font-size:13px;position:sticky;top:0;z-index:50}
+.proto b{font-family:var(--display);font-weight:600}
+.proto .sp{flex:1}
+.proto label{display:inline-flex;align-items:center;gap:6px}
+.proto select{background:var(--bar);color:var(--bar-ink);border:1px solid color-mix(in srgb,var(--bar-ink) 30%,transparent);border-radius:999px;padding:3px 8px}
+.intro{max-width:1240px;margin:0 auto;padding:24px 16px 8px}
+.intro h1{margin:0 0 6px;font:var(--h-weight) 24px/1.2 var(--display)}
+.intro p{margin:0 0 6px;color:var(--ink2);max-width:80ch}
+.intro code,.notes code{font:500 12px var(--mono);background:var(--soft);border-radius:4px;padding:0 4px}
+
+.options{max-width:1240px;margin:0 auto;padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,390px),1fr));gap:32px 24px;align-items:start}
+.opt{display:flex;flex-direction:column;gap:18px;min-width:0}
+.opt>header h2{margin:0;font:var(--h-weight) 18px/1.25 var(--display)}
+.opt>header p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.ol{display:inline-grid;place-items:center;width:26px;height:26px;margin-right:8px;border-radius:var(--rs);background:var(--pri);color:var(--pri-ink);font:600 13px var(--display);vertical-align:2px}
+figure{margin:0;display:flex;flex-direction:column;gap:6px}
+figcaption{font:500 11px var(--mono);color:var(--muted);letter-spacing:.03em;text-transform:uppercase}
+
+/* the phone: 390 wide, a static excerpt of the screen */
+.phone{width:390px;max-width:100%;height:520px;border:1px solid var(--line2);border-radius:28px;background:var(--bg);overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 14px 34px rgb(var(--shadow)/.18)}
+.status{flex:none;height:26px;display:flex;justify-content:space-between;align-items:end;padding:0 24px 2px;font:600 12px var(--body);background:var(--card)}
+
+/* mobile topbar (Topbar under md): 56px, back/menu at left, one action + overflow at right */
+.mtop{flex:none;display:flex;align-items:center;gap:2px;min-height:56px;padding:6px 6px;border-bottom:1px solid var(--line);background:var(--card)}
+.ib{width:44px;height:44px;display:grid;place-items:center;border:0;background:none;border-radius:var(--rs);color:var(--ink);flex:none;cursor:pointer;text-decoration:none}
+.ib:hover{background:var(--soft)}
+.ib.back{color:var(--pri-t)}
+.mtitle{flex:1;min-width:0;font:var(--h-weight) 16px/1.2 var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px}
+
+/* option B: tappable trail */
+.crumbs{flex:1;min-width:0}
+.crumbs ol{display:flex;align-items:center;list-style:none;margin:0;padding:0;min-width:0}
+.crumbs li{display:flex;align-items:center;min-width:0;flex:none}
+.crumbs li.cur{flex:1 1 auto}
+.crumbs li.shrink{flex:0 1 auto}
+.crumbs a,.crumbs .more{min-height:44px;display:inline-flex;align-items:center;padding:0 6px;color:var(--muted);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;border:0;background:none;border-radius:var(--rs);cursor:pointer}
+.crumbs a{display:block;line-height:44px}
+.crumbs a:hover,.crumbs .more:hover{color:var(--ink);background:var(--soft)}
+.crumbs .more{min-width:44px;justify-content:center;font-weight:600;letter-spacing:.1em}
+.crumbs b{display:block;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px}
+.crumbs .sep{color:var(--line2);flex:none;display:grid;place-items:center}
+
+/* menus (B's "…", C's path) */
+.menu{position:absolute;z-index:5;min-width:220px;max-width:calc(100% - 24px);background:var(--card);border:1px solid var(--line2);border-radius:var(--rs);box-shadow:0 12px 28px rgb(var(--shadow)/.28);padding:4px;list-style:none;margin:0}
+.menu[hidden]{display:none}
+.menu a,.menu li>span{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border-radius:calc(var(--rs) - 2px);color:var(--ink);text-decoration:none}
+.menu a:hover{background:var(--soft)}
+.menu li>span{color:var(--muted)}
+.menu .lvl{font:500 10.5px var(--mono);color:var(--muted);min-width:14px}
+
+/* option C: title as a path button */
+.pathbtn{flex:1;min-width:0;display:flex;align-items:center;gap:4px;min-height:44px;padding:0 6px;border:0;background:none;border-radius:var(--rs);cursor:pointer;text-align:left}
+.pathbtn:hover{background:var(--soft)}
+.pathbtn span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:var(--h-weight) 16px/1.2 var(--display)}
+.pathbtn small{display:block;font:500 11px var(--body);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pathbtn .stack{min-width:0;display:flex;flex-direction:column}
+.pathbtn svg{color:var(--muted)}
+
+/* screen content (comp R pieces, simplified) */
+.scr{flex:1;min-height:0;overflow:hidden;padding:16px;display:flex;flex-direction:column;gap:12px;position:relative}
+.ph h1{margin:0;font:var(--h-weight) 20px/1.25 var(--display)}
+.ph p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}
+.tabs span{padding:6px 10px;font-size:13px;font-weight:600;color:var(--muted)}
+.tabs span[aria-selected="true"]{color:var(--ink);box-shadow:inset 0 -2px var(--pri)}
+.lanes{display:grid;grid-template-columns:repeat(3,250px);gap:10px;overflow:hidden}
+.lane{display:flex;flex-direction:column;gap:8px;padding:6px 6px 12px;border-radius:12px;background:color-mix(in srgb,var(--soft) 55%,transparent);border:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
+.lanehd{display:flex;justify-content:space-between;padding:4px 8px;font-weight:600;font-size:13px}
+.lanehd small{font:500 12px var(--mono);color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.card.on{border-color:var(--pri);box-shadow:0 0 0 1px var(--pri)}
+.key{font:500 11px var(--mono);color:var(--muted)}
+.card b{font-weight:600;font-size:13px;line-height:1.35}
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:1px 8px;border-radius:999px;background:var(--tag);color:var(--tag-ink);margin-right:4px}
+
+/* drawer: 100vw on mobile, per comp R's max-width:900px rule */
+.drawer{position:absolute;inset:26px 0 0 0;background:var(--card);display:flex;flex-direction:column;z-index:3}
+.dhead{display:flex;align-items:flex-start;gap:2px;padding:6px 6px 10px;border-bottom:1px solid var(--line)}
+.dhead .t{flex:1;min-width:0;padding:8px 6px 0}
+.dhead .eb{font:500 11px var(--mono);color:var(--muted);letter-spacing:.03em}
+.dhead h2{margin:2px 0 0;font:var(--h-weight) 18px/1.25 var(--display)}
+.dtop{display:flex;align-items:center;gap:2px;min-height:56px;padding:6px;border-bottom:1px solid var(--line)}
+.dtitle{padding:12px 16px 0}
+.dtitle .eb{font:500 11px var(--mono);color:var(--muted)}
+.dtitle h2{margin:2px 0 0;font:var(--h-weight) 18px/1.25 var(--display)}
+.dbody{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:var(--facts);border-radius:var(--rs);padding:12px;margin:0}
+.facts dt{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.facts dd{margin:2px 0 0;font-weight:500}
+.sect h3{margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.sect p{margin:0;color:var(--ink2)}
+.chip{display:inline-block;font-size:12px;font-weight:600;padding:1px 9px;border-radius:999px;background:var(--pri-tint);color:var(--pri-t)}
+
+/* settings form */
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:12px;font-weight:500;color:var(--ink2)}
+.field .in{min-height:40px;padding:9px 10px;font-size:14px;border:1px solid var(--line2);border-radius:var(--rs);background:var(--field)}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 16px;font-weight:600;font-size:14px;border-radius:var(--rs);border:1px solid var(--pri);background:var(--pri);color:var(--pri-ink)}
+
+/* "Show tap targets" overlay */
+.targets .tt{outline:1.5px dashed var(--hot-t);outline-offset:-1.5px}
+
+/* notes under each option */
+.notes{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;font-size:13px}
+.notes h3{margin:12px 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.notes h3:first-child{margin-top:0}
+.notes ul{margin:0;padding-left:18px}
+.notes li{margin:2px 0}
+.notes .pro{color:var(--ok-t)}.notes .con{color:var(--hot-t)}
+.shared{max-width:1240px;margin:0 auto;padding:0 16px 40px}
+.shared .notes{max-width:none}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="chev-l" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="chev-r" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
+  <symbol id="chev-d" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+  <symbol id="pen" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></symbol>
+  <symbol id="dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+</svg>
+
+<div class="proto" role="region" aria-label="Comp controls">
+  <b>Comp R · mobile back navigation</b>
+  <span class="sp"></span>
+  <label><input type="checkbox" id="tt"> Show 44px tap targets</label>
+  <label>Theme
+    <select id="pt" aria-label="Theme">
+      <option value="graphite">Graphite (default)</option>
+      <option value="terrazzo">Terrazzo</option>
+      <option value="portico">Portico</option>
+      <option value="sera">Sera</option>
+      <option value="lagoon">Lagoon</option>
+    </select>
+  </label>
+</div>
+
+<div class="intro">
+  <h1>Mobile back navigation</h1>
+  <p>On a phone there is no sidebar, so a detail screen needs a way up. Three options, each shown at 390px on the same three screens: a board, an idea in the drawer over that board, and a nested settings record. Today's topbar (<code>components/nav/topbar.tsx</code>) renders the trail as text, and only the board page links its parent.</p>
+  <p>In every option, <b>back goes to the parent route</b>, never <code>history.back()</code>: a link opened from an email or the inbox gets the same, predictable way up. The menus are live; tick "Show tap targets" to see each 44px hit area.</p>
+</div>
+
+<main class="options">
+
+<!-- ============ OPTION A ============ -->
+<section class="opt" aria-labelledby="a-h">
+  <header><h2 id="a-h"><span class="ol">A</span>Back chevron + page title</h2>
+  <p>One step up, always. The trail is hidden under md; the title is the current page.</p></header>
+
+  <figure>
+    <figcaption>Board · /boards/pay-q4</figcaption>
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>5G</span></div>
+      <header class="mtop">
+        <nav aria-label="Breadcrumb" style="display:contents">
+          <a class="ib back tt" href="#" aria-label="Back to Boards"><svg class="i"><use href="#chev-l"/></svg></a>
+          <span class="mtitle" aria-current="page">Payments — Q4 checkout revamp</span>
+        </nav>
+        <a class="ib tt" href="#" aria-label="Edit board"><svg class="i"><use href="#pen"/></svg></a>
+      </header>
+      <div class="scr">
+        <div class="ph"><h1>Payments — Q4 checkout revamp</h1><p>Move a card with drag, or focus its title and press ← →.</p></div>
+        <div class="tabs"><span aria-selected="true">Lanes</span><span>List</span></div>
+        <div class="lanes">
+          <div class="lane"><div class="lanehd">New <small>4</small></div>
+            <div class="card"><span class="key">CHK-12</span><b>Let shoppers save a card at checkout</b><div><span class="tag">payments</span></div></div>
+            <div class="card"><span class="key">CHK-15</span><b>Apple Pay on the basket page</b></div>
+          </div>
+          <div class="lane"><div class="lanehd">Under review <small>2</small></div>
+            <div class="card"><span class="key">CHK-9</span><b>Show delivery cost before address</b></div>
+          </div>
+          <div class="lane"><div class="lanehd">Planned <small>1</small></div></div>
+        </div>
+      </div>
+    </div>
+  </figure>
+
+  <figure>
+    <figcaption>Idea drawer · /boards/pay-q4?idea=CHK-12</figcaption>
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>5G</span></div>
+      <div class="drawer" role="dialog" aria-labelledby="a-d-h">
+        <div class="dhead">
+          <a class="ib back tt" href="#" aria-label="Back to Payments — Q4 checkout revamp"><svg class="i"><use href="#chev-l"/></svg></a>
+          <div class="t"><div class="eb">CHK-12 · IDEA</div><h2 id="a-d-h">Let shoppers save a card at checkout</h2></div>
+          <a class="ib tt" href="#" aria-label="More actions"><svg class="i"><use href="#dots"/></svg></a>
+        </div>
+        <div class="dbody">
+          <dl class="facts"><div><dt>Status</dt><dd><span class="chip">New</span></dd></div><div><dt>Board</dt><dd>Payments — Q4…</dd></div><div><dt>Type</dt><dd>Feature</dd></div><div><dt>Votes</dt><dd>14</dd></div></dl>
+          <div class="sect"><h3>Problem</h3><p>Returning shoppers re-enter their card every time, and a third abandon the form on mobile.</p></div>
+        </div>
+      </div>
+    </div>
+  </figure>
+
+  <figure>
+    <figcaption>Nested settings · /settings/users/dana</figcaption>
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>5G</span></div>
+      <header class="mtop">
+        <nav aria-label="Breadcrumb" style="display:contents">
+          <a class="ib back tt" href="#" aria-label="Back to People"><svg class="i"><use href="#chev-l"/></svg></a>
+          <span class="mtitle" aria-current="page">Dana Whitfield</span>
+        </nav>
+      </header>
+      <div class="scr">
+        <div class="ph"><h1>Dana Whitfield</h1><p>Member of Northwind since March.</p></div>
+        <div class="field"><label>Display name</label><div class="in">Dana Whitfield</div></div>
+        <div class="field"><label>Email</label><div class="in">dana@northwind.example</div></div>
+        <div class="field"><label>Role</label><div class="in">Member</div></div>
+        <div><span class="btn">Save changes</span></div>
+      </div>
+    </div>
+  </figure>
+
+  <div class="notes">
+    <h3>Back goes to</h3>
+    <ul>
+      <li>Board → <code>/boards</code></li>
+      <li>Drawer → the board, <code>/boards/pay-q4</code> (drops <code>?idea=</code>). The chevron <b>replaces the drawer's ×</b> on mobile: same destination, one control.</li>
+      <li>User record → <code>/settings/users</code> (People), not <code>/settings</code></li>
+    </ul>
+    <h3>Accessibility</h3>
+    <ul>
+      <li>An <code>&lt;a&gt;</code>, not a button: it navigates, so long-press and open-in-tab work. 44×44 hit area around a 20px chevron.</li>
+      <li><code>aria-label="Back to {parent}"</code>, naming the destination, not just "Back".</li>
+      <li>Kept inside <code>&lt;nav aria-label="Breadcrumb"&gt;</code>; the title carries <code>aria-current="page"</code>. The page's one <code>&lt;h1&gt;</code> stays in <code>PageHeader</code>.</li>
+      <li>In the drawer, focus returns to the card the idea was opened from.</li>
+    </ul>
+    <h3>Trade-off</h3>
+    <ul><li class="pro">Smallest, most familiar; title gets the full width.</li><li class="con">Only one level at a time: from a user record, Settings is two taps.</li></ul>
+  </div>
+</section>
+
+<!-- ============ OPTION B ============ -->
+<section class="opt" aria-labelledby="b-h">
+  <header><h2 id="b-h"><span class="ol">B</span>Tappable breadcrumbs, middle collapsed</h2>
+  <p>Today's trail with every parent a link. When it overflows, the middle crumbs fold into "…".</p></header>
+
+  <figure>
+    <figcaption>Board · /boards/pay-q4</figcaption>
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>5G</span></div>
+      <header class="mtop">
+        <nav class="crumbs" aria-label="Breadcrumb"><ol>
+          <li><a class="tt" href="#">Boards</a></li>
+          <li class="sep" aria-hidden="true"><svg class="i s"><use href="#chev-r"/></svg></li>
+          <li class="cur"><b aria-current="page">Payments — Q4 checkout revamp</b></li>
+        </ol></nav>
+        <a class="ib tt" href="#" aria-label="Edit board"><svg class="i"><use href="#pen"/></svg></a>
+      </header>
+      <div class="scr">
+        <div class="ph"><h1>Payments — Q4 checkout revamp</h1><p>Move a card with drag, or focus its title and press ← →.</p></div>
+        <div class="tabs"><span aria-selected="true">Lanes</span><span>List</span></div>
+        <div class="lanes">
+          <div class="lane"><div class="lanehd">New <small>4</small></div>
+            <div class="card"><span class="key">CHK-12</span><b>Let shoppers save a card at checkout</b><div><span class="tag">payments</span></div></div>
+            <div class="card"><span class="key">CHK-15</span><b>Apple Pay on the basket page</b></div>
+          </div>
+          <div class="lane"><div class="lanehd">Under review <small>2</small></div>
+            <div class="card"><span class="key">CHK-9</span><b>Show delivery cost before address</b></div>
+          </div>
+          <div class="lane"><div class="lanehd">Planned <small>1</small></div></div>
+        </div>
+      </div>
+    </div>
+  </figure>
+
+  <figure>
+    <figcaption>Idea drawer · "…" menu open</figcaption>
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>5G</span></div>
+      <div class="drawer" role="dialog" aria-labelledby="b-d-h">
+        <div class="dtop">
+          <nav class="crumbs" aria-label="Breadcrumb"><ol>
+            <li><a class="tt" href="#">Boards</a></li>
+            <li class="sep" aria-hidden="true"><svg class="i s"><use href="#chev-r"/></svg></li>
+            <li><button class="more tt" type="button" aria-label="Show 1 hidden level" aria-haspopup="true" aria-expanded="true" aria-controls="b-m">…</button></li>
+            <li class="sep" aria-hidden="true"><svg class="i s"><use href="#chev-r"/></svg></li>
+            <li class="cur"><b aria-current="page">CHK-12</b></li>
+          </ol></nav>
+          <a class="ib tt" href="#" aria-label="Close, back to Payments — Q4 checkout revamp"><svg class="i"><use href="#x"/></svg></a>
+        </div>
+        <ul class="menu" id="b-m" style="top:58px;left:62px">
+          <li><a href="#"><span class="lvl">2</span>Payments — Q4 checkout revamp</a></li>
+        </ul>
+        <div class="dtitle"><h2 id="b-d-h">Let shoppers save a card at checkout</h2></div>
+        <div class="dbody">
+          <dl class="facts"><div><dt>Status</dt><dd><span class="chip">New</span></dd></div><div><dt>Board</dt><dd>Payments — Q4…</dd></div><div><dt>Type</dt><dd>Feature</dd></div><div><dt>Votes</dt><dd>14</dd></div></dl>
+          <div class="sect"><h3>Problem</h3><p>Returning shoppers re-enter their card every time, and a third abandon the form on mobile.</p></div>
+        </div>
+      </div>
+    </div>
+  </figure>
+
+  <figure>
+    <figcaption>Nested settings · /settings/users/dana</figcaption>
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>5G</span></div>
+      <header class="mtop">
+        <nav class="crumbs" aria-label="Breadcrumb"><ol>
+          <li><a class="tt" href="#">Settings</a></li>
+          <li class="sep" aria-hidden="true"><svg class="i s"><use href="#chev-r"/></svg></li>
+          <li class="shrink"><a class="tt" href="#">People</a></li>
+          <li class="sep" aria-hidden="true"><svg class="i s"><use href="#chev-r"/></svg></li>
+          <li class="cur"><b aria-current="page">Dana Whitfield</b></li>
+        </ol></nav>
+      </header>
+      <div class="scr">
+        <div class="ph"><h1>Dana Whitfield</h1><p>Member of Northwind since March.</p></div>
+        <div class="field"><label>Display name</label><div class="in">Dana Whitfield</div></div>
+        <div class="field"><label>Email</label><div class="in">dana@northwind.example</div></div>
+        <div class="field"><label>Role</label><div class="in">Member</div></div>
+        <div><span class="btn">Save changes</span></div>
+      </div>
+    </div>
+  </figure>
+
+  <div class="notes">
+    <h3>Back goes to</h3>
+    <ul>
+      <li>Any crumb jumps straight to that route: <code>/boards</code>, <code>/settings</code>, <code>/settings/users</code>.</li>
+      <li>Drawer → the board, from the "…" menu or the × (drops <code>?idea=</code>).</li>
+      <li>Collapse rule: keep the root and the current page; fold the middle into "…" only when the row overflows. The current page truncates with an ellipsis last, never below the key (<code>CHK-12</code>).</li>
+    </ul>
+    <h3>Accessibility</h3>
+    <ul>
+      <li><code>&lt;nav aria-label="Breadcrumb"&gt;&lt;ol&gt;</code>, current crumb <code>aria-current="page"</code>, separators <code>aria-hidden</code>.</li>
+      <li>Each crumb link and the "…" button is 44px tall (and "…" 44px wide), with padding, not just its text.</li>
+      <li>"…" is a <code>&lt;button aria-label="Show N hidden levels" aria-expanded&gt;</code>; Esc closes it and returns focus.</li>
+      <li>CSS truncation keeps the full name as the link's accessible name.</li>
+    </ul>
+    <h3>Trade-off</h3>
+    <ul><li class="pro">Same pattern as desktop; any level in one tap.</li><li class="con">Small text targets side by side; in the drawer the most useful crumb (the board) hides behind "…".</li></ul>
+  </div>
+</section>
+
+<!-- ============ OPTION C ============ -->
+<section class="opt" aria-labelledby="c-h">
+  <header><h2 id="c-h"><span class="ol">C</span>Combination: back chevron + path menu</h2>
+  <p>A's chevron for one step up; the title is a button that opens the whole trail.</p></header>
+
+  <figure>
+    <figcaption>Board · /boards/pay-q4</figcaption>
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>5G</span></div>
+      <header class="mtop">
+        <nav aria-label="Breadcrumb" style="display:contents">
+          <a class="ib back tt" href="#" aria-label="Back to Boards"><svg class="i"><use href="#chev-l"/></svg></a>
+          <button class="pathbtn tt" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="c-m1">
+            <span class="stack"><small>Boards</small><span>Payments — Q4 checkout revamp</span></span><svg class="i s"><use href="#chev-d"/></svg>
+          </button>
+        </nav>
+        <a class="ib tt" href="#" aria-label="Edit board"><svg class="i"><use href="#pen"/></svg></a>
+      </header>
+      <ul class="menu" id="c-m1" hidden style="top:84px;left:52px">
+        <li><a href="#"><span class="lvl">1</span>Boards</a></li>
+        <li><span aria-current="page"><span class="lvl">2</span>Payments — Q4 checkout revamp</span></li>
+      </ul>
+      <div class="scr">
+        <div class="ph"><h1>Payments — Q4 checkout revamp</h1><p>Move a card with drag, or focus its title and press ← →.</p></div>
+        <div class="tabs"><span aria-selected="true">Lanes</span><span>List</span></div>
+        <div class="lanes">
+          <div class="lane"><div class="lanehd">New <small>4</small></div>
+            <div class="card"><span class="key">CHK-12</span><b>Let shoppers save a card at checkout</b><div><span class="tag">payments</span></div></div>
+            <div class="card"><span class="key">CHK-15</span><b>Apple Pay on the basket page</b></div>
+          </div>
+          <div class="lane"><div class="lanehd">Under review <small>2</small></div>
+            <div class="card"><span class="key">CHK-9</span><b>Show delivery cost before address</b></div>
+          </div>
+          <div class="lane"><div class="lanehd">Planned <small>1</small></div></div>
+        </div>
+      </div>
+    </div>
+  </figure>
+
+  <figure>
+    <figcaption>Idea drawer · path menu open</figcaption>
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>5G</span></div>
+      <div class="drawer" role="dialog" aria-labelledby="c-d-h">
+        <div class="dtop">
+          <a class="ib back tt" href="#" aria-label="Back to Payments — Q4 checkout revamp"><svg class="i"><use href="#chev-l"/></svg></a>
+          <button class="pathbtn tt" type="button" aria-haspopup="true" aria-expanded="true" aria-controls="c-m2">
+            <span class="stack"><small>Payments — Q4 checkout revamp</small><span>CHK-12</span></span><svg class="i s"><use href="#chev-d"/></svg>
+          </button>
+          <a class="ib tt" href="#" aria-label="More actions"><svg class="i"><use href="#dots"/></svg></a>
+        </div>
+        <ul class="menu" id="c-m2" style="top:58px;left:52px">
+          <li><a href="#"><span class="lvl">1</span>Boards</a></li>
+          <li><a href="#"><span class="lvl">2</span>Payments — Q4 checkout revamp</a></li>
+          <li><span aria-current="page"><span class="lvl">3</span>CHK-12</span></li>
+        </ul>
+        <div class="dtitle"><h2 id="c-d-h">Let shoppers save a card at checkout</h2></div>
+        <div class="dbody">
+          <dl class="facts"><div><dt>Status</dt><dd><span class="chip">New</span></dd></div><div><dt>Board</dt><dd>Payments — Q4…</dd></div><div><dt>Type</dt><dd>Feature</dd></div><div><dt>Votes</dt><dd>14</dd></div></dl>
+          <div class="sect"><h3>Problem</h3><p>Returning shoppers re-enter their card every time, and a third abandon the form on mobile.</p></div>
+        </div>
+      </div>
+    </div>
+  </figure>
+
+  <figure>
+    <figcaption>Nested settings · /settings/users/dana</figcaption>
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>5G</span></div>
+      <header class="mtop">
+        <nav aria-label="Breadcrumb" style="display:contents">
+          <a class="ib back tt" href="#" aria-label="Back to People"><svg class="i"><use href="#chev-l"/></svg></a>
+          <button class="pathbtn tt" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="c-m3">
+            <span class="stack"><small>Settings › People</small><span>Dana Whitfield</span></span><svg class="i s"><use href="#chev-d"/></svg>
+          </button>
+        </nav>
+      </header>
+      <ul class="menu" id="c-m3" hidden style="top:84px;left:52px">
+        <li><a href="#"><span class="lvl">1</span>Settings</a></li>
+        <li><a href="#"><span class="lvl">2</span>People</a></li>
+        <li><span aria-current="page"><span class="lvl">3</span>Dana Whitfield</span></li>
+      </ul>
+      <div class="scr">
+        <div class="ph"><h1>Dana Whitfield</h1><p>Member of Northwind since March.</p></div>
+        <div class="field"><label>Display name</label><div class="in">Dana Whitfield</div></div>
+        <div class="field"><label>Email</label><div class="in">dana@northwind.example</div></div>
+        <div class="field"><label>Role</label><div class="in">Member</div></div>
+        <div><span class="btn">Save changes</span></div>
+      </div>
+    </div>
+  </figure>
+
+  <div class="notes">
+    <h3>Back goes to</h3>
+    <ul>
+      <li>Chevron: the parent route, as in A (<code>/boards</code>; the board; <code>/settings/users</code>).</li>
+      <li>Path menu: any ancestor in one tap, e.g. <code>/settings</code> from a user record.</li>
+      <li>Drawer: chevron replaces the ×; the menu's board entry goes to the same place.</li>
+    </ul>
+    <h3>Accessibility</h3>
+    <ul>
+      <li>Back link as in A: 44×44, <code>aria-label="Back to {parent}"</code>.</li>
+      <li>Title is a <code>&lt;button aria-haspopup aria-expanded&gt;</code>, 44px tall; menu items are 44px links, the current one <code>aria-current="page"</code>.</li>
+      <li>Both sit in <code>&lt;nav aria-label="Breadcrumb"&gt;</code>; the small parent line is visible context, so the trail is never hidden from sighted users.</li>
+    </ul>
+    <h3>Trade-off</h3>
+    <ul><li class="pro">Big targets, full trail on demand, parent always visible.</li><li class="con">Most to build; the title-as-button is less discoverable than visible crumbs.</li></ul>
+  </div>
+</section>
+</main>
+
+<div class="shared">
+  <div class="notes">
+    <h3>Common to all three · open questions for the owner</h3>
+    <ul>
+      <li>Under md only (the sidebar's breakpoint); at md and up the current topbar trail stays, with its parent segments made links either way.</li>
+      <li>"Parent" is a route, not history: every <code>Topbar</code> caller passes its parent <code>href</code> and label, so a deep link and a sidebar visit get the same back.</li>
+      <li>Top-level pages (Boards, Ideas, Settings) have no parent: the left slot holds the mobile menu button instead.</li>
+      <li>Open: should desktop show the back chevron too? Does C's path menu earn its build cost over A?</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+// The theme is remembered per browser, as in comp R.
+const pt = document.getElementById('pt')
+function setTheme(k) { document.documentElement.dataset.protoTheme = k; pt.value = k; try { localStorage.setItem('collega-theme', k) } catch {} }
+let saved = 'graphite'; try { saved = localStorage.getItem('collega-theme') || 'graphite' } catch {}
+setTheme(saved)
+pt.addEventListener('change', () => setTheme(pt.value))
+document.getElementById('tt').addEventListener('change', (e) => document.body.classList.toggle('targets', e.target.checked))
+// Menu buttons ("…" and the path title) toggle the list they control.
+document.querySelectorAll('[aria-controls]').forEach((b) => {
+  const m = document.getElementById(b.getAttribute('aria-controls'))
+  b.addEventListener('click', () => { const open = b.getAttribute('aria-expanded') !== 'true'; b.setAttribute('aria-expanded', open); m.hidden = !open })
+  b.addEventListener('keydown', (e) => { if (e.key === 'Escape') { b.setAttribute('aria-expanded', 'false'); m.hidden = true } })
+})
+document.querySelectorAll('a[href="#"]').forEach((a) => a.addEventListener('click', (e) => e.preventDefault()))
+</script>
+</body>
+</html>
