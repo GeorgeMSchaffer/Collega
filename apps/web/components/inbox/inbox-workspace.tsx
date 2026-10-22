@@ -196,7 +196,7 @@ export function InboxWorkspace({
         onView={() => idea && openDrawer({ view: idea.id })}
         onClose={() => openDrawer(null)}
         onDelete={() => {}}
-        onSaved={(ideaId) => openDrawer({ view: ideaId })}
+        onSaved={() => openDrawer(null)}
       />
     </>
   )

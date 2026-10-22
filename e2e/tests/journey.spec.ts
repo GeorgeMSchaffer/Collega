@@ -298,7 +298,10 @@ test.describe
         .last()
         .click()
 
-      await expect(page.getByRole('heading', { name: world.idea })).toBeVisible({ timeout: 30_000 })
+      // The save closes the drawer, leaving the new card on the board.
+      await expect(page.getByRole('button', { name: world.idea, exact: true })).toBeVisible({
+        timeout: 30_000,
+      })
     })
 
     test('7. the idea moves through the statuses and stays moved', async ({ page }) => {
