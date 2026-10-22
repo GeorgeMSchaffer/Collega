@@ -389,11 +389,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
     if (filter.dueBefore) {
       conditions.push(Prisma.sql`i.due_date < ${filter.dueBefore}::date`)
     }
-    if (filter.sprintId) {
-      conditions.push(Prisma.sql`i.sprint_id = ${filter.sprintId}::uuid`)
-    } else if (filter.noSprint) {
-      conditions.push(Prisma.sql`i.sprint_id IS NULL`)
-    }
+    conditions.push(...this.sprintAndFinalConditions(filter))
     if (filter.search) {
       conditions.push(this.searchCondition(filter, false))
     }
@@ -471,6 +467,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
         Prisma.sql`(i.author_user_id = ${filter.associatedUserId}::uuid OR EXISTS (SELECT 1 FROM idea_assignees ia2 WHERE ia2.idea_id = i.id AND ia2.user_id = ${filter.associatedUserId}::uuid))`,
       )
     }
+    conditions.push(...this.sprintAndFinalConditions(filter))
     for (const fieldFilter of filter.fieldFilters) {
       const fragment = this.fieldFilterFragment(fieldFilter)
       if (fragment) {
@@ -518,6 +515,26 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       default:
         return Prisma.sql`i.created_at_utc`
     }
+  }
+
+  /** `sprintId` (a sprint, or none) and `hideFinal` (not in a final lane of the item's own board). */
+  private sprintAndFinalConditions(filter: {
+    readonly sprintId?: string | null | undefined
+    readonly noSprint?: boolean | undefined
+    readonly hideFinal?: boolean | undefined
+  }): Prisma.Sql[] {
+    const conditions: Prisma.Sql[] = []
+    if (filter.sprintId) {
+      conditions.push(Prisma.sql`i.sprint_id = ${filter.sprintId}::uuid`)
+    } else if (filter.noSprint) {
+      conditions.push(Prisma.sql`i.sprint_id IS NULL`)
+    }
+    if (filter.hideFinal) {
+      conditions.push(
+        Prisma.sql`NOT EXISTS (SELECT 1 FROM board_swimlanes fl WHERE fl.board_id = i.board_id AND fl.status_id = i.status_id AND fl.is_final = TRUE)`,
+      )
+    }
+    return conditions
   }
 
   /** The repeatable filters both lists share: any-of within one, AND across them. */

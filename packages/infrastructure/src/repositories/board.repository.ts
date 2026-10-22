@@ -605,6 +605,14 @@ export class PrismaBoardRepository
     )
   }
 
+  /** `ideas.BoardsPort.isReferencedByLane`. */
+  async isReferencedByLane(boardId: string): Promise<boolean> {
+    const referencing = await this.prisma.board_swimlanes.count({
+      where: { references_board_id: boardId, boards: { is_archived: false } },
+    })
+    return referencing > 0
+  }
+
   /** `ideas.BoardsPort.getBoardReadFacts`. */
   async getBoardReadFacts(boardIds: readonly string[]): Promise<
     ReadonlyMap<

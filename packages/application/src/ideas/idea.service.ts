@@ -67,6 +67,7 @@ import type {
   BoardTaskListItem,
   ChangeDeliveryStatusCommand,
   ChangeIdeaStatusCommand,
+  CreateBoardCardCommand,
   CreateBoardTaskCommand,
   CreateIdeaCommand,
   CreateIdeaResult,
@@ -210,6 +211,7 @@ export class IdeaService {
       dueBefore: parseOptionalDate(query.dueBefore),
       sprintId: query.sprintId ?? null,
       noSprint: query.noSprint ?? false,
+      hideFinal: query.hideFinal ?? false,
       // The ideation board is Discovery, always: a promoted item leaves it (no data loss - the row
       // and its ideation status are retained, and it reappears here if it is returned to
       // Discovery). Nothing is promoted until somebody promotes something, so for an organization
@@ -264,6 +266,9 @@ export class IdeaService {
       priorities: parsePriorityFilters(query.priorities),
       tags: normalizeTagFilters(query.tags),
       associatedUserId: trimOrNull(query.user),
+      sprintId: query.sprintId ?? null,
+      noSprint: query.noSprint ?? false,
+      hideFinal: query.hideFinal ?? false,
       searchCreatedOnDate,
       // Defaults to both phases, unlike the board: this list is where somebody looks for an item
       // they cannot find on a board, so hiding promoted ones here would lose them.
@@ -388,6 +393,119 @@ export class IdeaService {
   }
 
   /**
+   * `POST /boards/{boardId}/tasks`: a task made from the work board itself. With a parent it is
+   * `createBoardTask` for that parent (the board in the path must be the board the parent's lane
+   * references); without, a standalone card in the board's leftmost lane. A sprint needs an
+   * Org Admin and must be a live, non-`Completed` sprint of this board.
+   */
+  async createTaskOnBoard(
+    boardId: string,
+    command: CreateBoardCardCommand,
+  ): Promise<CreateIdeaResult> {
+    ensureNotDirectSiteAdmin(this.currentUser)
+    this.requireIdeaEditRole()
+
+    const board = await this.boards.getBoardContext(boardId)
+    if (!board) {
+      throw new NotFoundError('Board not found.')
+    }
+    this.ensureOrganizationScope(board.organizationId)
+    if (trimOrNull(command.sprintId) !== null && !this.isOrgAdminOf(board.organizationId)) {
+      throw new ForbiddenError('You are not allowed to assign tasks to a sprint.', {
+        sprintId: ['Only an Org Admin can put a task in a sprint.'],
+      })
+    }
+    if (!(await this.boards.isReferencedByLane(boardId))) {
+      throw new UnprocessableError(
+        'boardIsNotAWorkBoard',
+        'No lane references this board, so it takes no tasks.',
+      )
+    }
+
+    const parent = command.parentIdeaId
+      ? await this.ideaRepository.getById(command.parentIdeaId, false)
+      : null
+    if (command.parentIdeaId && !parent) {
+      throw new NotFoundError('Idea not found.')
+    }
+    if (parent) {
+      this.ensureOrganizationScope(parent.organizationId)
+      await this.ensureIdeaBoardNotArchived(parent)
+    }
+    const sprintId = await this.resolveTaskSprint(board, command.sprintId)
+
+    if (parent) {
+      return this.addBoardTask(parent, command, boardId, sprintId)
+    }
+    return this.addStandaloneCard(board, command, sprintId)
+  }
+
+  private isOrgAdminOf(organizationId: string): boolean {
+    return (
+      this.requireAuthenticatedRole() === Role.OrgAdmin &&
+      this.currentUser.organizationId === organizationId
+    )
+  }
+
+  /** A task's sprint: a live, non-`Completed` sprint of the task's own board, or `null`. */
+  private async resolveTaskSprint(
+    board: BoardContext,
+    sprintId: string | null,
+  ): Promise<string | null> {
+    const sprint = await this.resolveAssignableSprintSummary(board.organizationId, sprintId)
+    if (sprint && sprint.boardId !== board.boardId) {
+      throw new ValidationError('One or more fields are invalid.', {
+        sprintId: ['Sprint must be a sprint of this board.'],
+      })
+    }
+    return sprint?.id ?? null
+  }
+
+  /** A card on the work board with no parent: the same stored shape as a task, audited the same. */
+  private async addStandaloneCard(
+    board: BoardContext,
+    command: CreateBoardTaskCommand,
+    sprintId: string | null,
+  ): Promise<CreateIdeaResult> {
+    if (board.isArchived) {
+      throw new UnprocessableError('referencedBoardArchived', 'The board is archived.')
+    }
+    const statusId = leftMostStatusId(board)
+    if (!statusId) {
+      throw new ValidationError('One or more fields are invalid.', {
+        statusId: ['The board has no swimlanes to place the task in.'],
+      })
+    }
+
+    const finishRecord = await this.stageIdeaRecord(
+      board.organizationId,
+      board.boardId,
+      statusId,
+      await this.taskRecordCommand(board.organizationId, command),
+      undefined,
+      null,
+      false,
+      sprintId,
+      true,
+    )
+    await this.unitOfWork.saveChanges()
+
+    const created = await finishRecord()
+    await this.writeAudit({
+      eventType: 'BoardTaskCreated',
+      entityType: 'Idea',
+      entityId: created.ideaId,
+      organizationId: board.organizationId,
+      intendedActorUserId: this.requireAuthenticatedUserId(),
+      message: `Task '${created.title}' created.`,
+      nowUtc: this.clock.now(),
+      metadata: { parentIdeaId: null, boardId: board.boardId },
+    })
+    // Answered as a task is: the stand-in priority and type are not shown.
+    return { ...created, priority: null, ideaTypeId: null, businessImpactId: null }
+  }
+
+  /**
    * The tasks of a parent idea in creation order, for the parent's detail view. Visible to anyone
    * who can read the parent, Read Only included.
    */
@@ -501,13 +619,18 @@ export class IdeaService {
   private async addBoardTask(
     parent: Idea,
     command: CreateBoardTaskCommand,
+    expectedBoardId: string | null = null,
+    sprintId: string | null = null,
   ): Promise<CreateIdeaResult> {
     const parentBoard =
       parent.boardId === null ? null : await this.boards.getBoardContext(parent.boardId)
-    const referencedBoardId =
+    const laneBoardId =
       parentBoard?.swimlanes.find((lane) => lane.statusId === parent.statusId)?.referencesBoardId ??
       null
-    const finish = await this.stageBoardTask(parent, referencedBoardId, command)
+    // A lane that references some other board than the one asked for is no reference lane here.
+    const referencedBoardId =
+      expectedBoardId !== null && laneBoardId !== expectedBoardId ? null : laneBoardId
+    const finish = await this.stageBoardTask(parent, referencedBoardId, command, false, sprintId)
     await this.unitOfWork.saveChanges()
     return finish()
   }
@@ -522,6 +645,7 @@ export class IdeaService {
     referencedBoardId: string | null,
     command: CreateBoardTaskCommand,
     autoCreated = false,
+    sprintId: string | null = null,
   ): Promise<() => Promise<CreateIdeaResult>> {
     if (parent.parentIdeaId !== null) {
       throw new UnprocessableError('parentIsTask', 'A task cannot have tasks of its own.')
@@ -544,47 +668,15 @@ export class IdeaService {
       })
     }
 
-    const ideaTypes = await this.classification.listIdeaTypesByOrganization(
-      parent.organizationId,
-      false,
-    )
-    const defaultType = ideaTypes[0]
-    if (!defaultType) {
-      throw new UnprocessableError('noDefaultIdeaType', 'The organization has no active idea type.')
-    }
-    const impacts = await this.classification.listBusinessImpactsByOrganization(
-      parent.organizationId,
-      false,
-    )
-    const defaultImpact = impacts[0]
-    if (!defaultImpact) {
-      throw new UnprocessableError(
-        'noDefaultBusinessImpact',
-        'The organization has no active business impact.',
-      )
-    }
-
     const finishRecord = await this.stageIdeaRecord(
       parent.organizationId,
       target.boardId,
       statusId,
-      {
-        ...command,
-        // Not taken on a task, but the columns are NOT NULL: the title stands in, and reads do not
-        // show it.
-        problem: command.title,
-        proposedSolutions: [command.title],
-        impactRationale: command.title,
-        priority: 'Medium',
-        dueDate: null,
-        mentionEmails: null,
-        ideaTypeId: defaultType.id,
-        businessImpactId: defaultImpact.id,
-        fieldValues: null,
-      },
+      await this.taskRecordCommand(parent.organizationId, command),
       undefined,
       parent.id,
       autoCreated,
+      sprintId,
     )
 
     return async () => {
@@ -600,6 +692,46 @@ export class IdeaService {
         metadata: { parentIdeaId: parent.id, boardId: target.boardId },
       })
       return created
+    }
+  }
+
+  /**
+   * A task's create fields for `stageIdeaRecord`: the organization's first active idea type and
+   * business impact (NOT NULL columns, never shown) and the title as the stand-in for the rest.
+   */
+  private async taskRecordCommand(
+    organizationId: string,
+    command: CreateBoardTaskCommand,
+  ): Promise<Omit<CreateIdeaCommand, 'statusId'>> {
+    const ideaTypes = await this.classification.listIdeaTypesByOrganization(organizationId, false)
+    const defaultType = ideaTypes[0]
+    if (!defaultType) {
+      throw new UnprocessableError('noDefaultIdeaType', 'The organization has no active idea type.')
+    }
+    const impacts = await this.classification.listBusinessImpactsByOrganization(
+      organizationId,
+      false,
+    )
+    const defaultImpact = impacts[0]
+    if (!defaultImpact) {
+      throw new UnprocessableError(
+        'noDefaultBusinessImpact',
+        'The organization has no active business impact.',
+      )
+    }
+    return {
+      ...command,
+      // Not taken on a task, but the columns are NOT NULL: the title stands in, and reads do not
+      // show it.
+      problem: command.title,
+      proposedSolutions: [command.title],
+      impactRationale: command.title,
+      priority: 'Medium',
+      dueDate: null,
+      mentionEmails: null,
+      ideaTypeId: defaultType.id,
+      businessImpactId: defaultImpact.id,
+      fieldValues: null,
     }
   }
 
@@ -627,13 +759,16 @@ export class IdeaService {
     promotion?: { readonly effort: EffortLevel; readonly sprintId: string | null },
     parentIdeaId: string | null = null,
     autoCreated = false,
+    sprintId: string | null = null,
+    standaloneTask = false,
   ): Promise<() => Promise<CreateIdeaResult>> {
+    const isTask = parentIdeaId !== null || standaloneTask
     const now = this.clock.now()
     const authorId = this.requireAuthenticatedUserId()
     const priority = parsePriority(command.priority)
     const dueDate = parseDueDate(command.dueDate)
     // A task takes no effort; a promotion carries its own.
-    const effort = parentIdeaId === null && !promotion ? parseOptionalEffort(command.effort) : null
+    const effort = !isTask && !promotion ? parseOptionalEffort(command.effort) : null
 
     await this.getActiveIdeaType(organizationId, command.ideaTypeId)
     await this.ensureActiveBusinessImpact(organizationId, command.businessImpactId)
@@ -647,14 +782,13 @@ export class IdeaService {
     )
 
     // A task has no type fields: its stored default type is not shown, so none can be asked for.
-    const fieldValues =
-      parentIdeaId === null
-        ? await this.fieldValues.resolveAndValidate({
-            organizationId: organizationId,
-            ideaTypeId: command.ideaTypeId,
-            submitted: command.fieldValues ?? [],
-          })
-        : []
+    const fieldValues = !isTask
+      ? await this.fieldValues.resolveAndValidate({
+          organizationId: organizationId,
+          ideaTypeId: command.ideaTypeId,
+          submitted: command.fieldValues ?? [],
+        })
+      : []
 
     // Last step before staging: a refusal above must not burn a number.
     const itemNumber = boardId === null ? null : await this.boards.allocateItemNumber(boardId)
@@ -686,7 +820,10 @@ export class IdeaService {
     if (effort !== null) {
       idea = { ...idea, effort }
     }
-    if (parentIdeaId === null) {
+    if (sprintId !== null) {
+      idea = setIdeaBoardSprint(idea, sprintId, now, authorId)
+    }
+    if (!isTask) {
       const reconcileScope = await this.fieldValues.getReconcileScope(
         organizationId,
         command.ideaTypeId,

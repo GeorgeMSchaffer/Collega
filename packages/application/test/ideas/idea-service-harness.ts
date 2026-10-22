@@ -339,6 +339,11 @@ export function harness(options: {
       nextItemNumbers.set(boardId, next + 1)
       return next
     },
+    async isReferencedByLane(boardId) {
+      return [...boardsById.values()].some(
+        (b) => !b.isArchived && b.swimlanes.some((lane) => lane.referencesBoardId === boardId),
+      )
+    },
     async getBoardReadFacts(boardIds) {
       return new Map(
         boardIds.flatMap((id) => {

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import {
   ApplicationError,
+  ForbiddenError,
   RateLimitedError,
   UnprocessableError,
   ValidationError,
@@ -149,6 +150,9 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       traceId,
     }
     if (exception instanceof ValidationError) {
+      body.errors = exception.failures
+    }
+    if (exception instanceof ForbiddenError && exception.failures) {
       body.errors = exception.failures
     }
     if (exception instanceof RateLimitedError) {
