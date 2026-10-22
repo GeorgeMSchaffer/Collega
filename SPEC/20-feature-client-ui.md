@@ -164,7 +164,7 @@ selected board.
   the **idea type written as text** (never a colour-only dot), assigned-user personas, and the upvote
   control with its count. Business Impact, tags, submission age and comment count are shown in the
   drawer and may be shown on the card where space allows.
-- **Drag:** a dedicated drag handle starts card movement; interactive controls never start a drag.
+- **Drag:** a pointer drag anywhere on the card moves it, under the same rule as its arrows; a press that does not travel stays a click, so the title, upvote and arrows keep working. A card held by a reference lock or a blocker does not drag, and its lock icon says why. The grip icon is only the cue. *Changed 2026-10-22 (owner): the whole card drags, because people grab the body, not a handle; this said a dedicated handle starts card movement and interactive controls never start a drag.*
 - **Open:** clicking the card title opens the **drawer** in view mode (drawer since 2026-09-27; it was
   the docked inspector — see "List and detail pattern" below) — the same surface reached from the
   Ideas list.
@@ -198,7 +198,7 @@ Text input above the board filters cards by title, tag, or assignee (client-side
 Combinable with filter chips.
 
 ### Drag-and-Drop: Moving an Idea
-1. User drags a card by its dedicated handle to another column on desktop.
+1. User drags a card (anywhere on it) to another column on desktop. *Changed 2026-10-22: this said by its dedicated handle.*
 2. Optimistic UI moves the card immediately.
 3. Calls `POST /api/v1/ideas/{ideaId}/status` with the target status ID. The idea's status is set to the target swimlane's `Status`.
 4. On failure: card reverts, error toast shown.
@@ -214,7 +214,7 @@ Combinable with filter chips.
 7. Keyboard and touch users move ideas with the drawer's status selector, or with ← → on a focused card; touch drag is deferred.
 
 ### DnD Technology
-HTML5 drag-and-drop (desktop only) with a dedicated handle and visible drop targets. Touch/mobile drag
+HTML5 drag-and-drop (desktop only) on the whole card and visible drop targets (a dedicated handle until 2026-10-22). Touch/mobile drag
 is deferred; the mobile view scrolls and status movement stays available through Idea Detail.
 
 ### Acceptance Criteria
@@ -223,7 +223,7 @@ is deferred; the mobile view scrolls and status movement stays available through
 - No user-facing UI displays Workflow or Workflows terminology
 - Columns reflect the selected board's statuses in `SortOrder` order, at a fixed width in a scrolling rail
 - Filter chips and title/tag/assignee search work across all columns (client-side)
-- Card drag starts only from the dedicated handle, sets the idea status to the target swimlane's status, and reverts on failure with a toast
+- Card drag starts anywhere on the card (handle-only until 2026-10-22), a click still opens it, and it sets the idea status to the target swimlane's status, and reverts on failure with a toast
 - Column drag (SiteAdmin/OrgAdmin only) saves immediately on drop; reverts on failure
 - Clicking a card title opens the drawer in view mode over the board (URL gains `?idea={ideaId}`)
 - The drawer provides Edit / Cancel / Save, Move in Board, and authorized soft-delete actions

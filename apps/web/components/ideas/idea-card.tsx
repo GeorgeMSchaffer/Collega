@@ -11,7 +11,7 @@ const CARD_DRAG_TYPE = 'application/x-collega-idea'
 
 /**
  * What Board References adds to a card, decided by the board from the card's facts and its lanes
- * (`lib/board-work.ts`). `lockText` set means the card waits on open tasks: it has no drag handle
+ * (`lib/board-work.ts`). `lockText` set means the card waits on open tasks: it does not drag
  * and its arrows are refused with that text. `blockedText` set means a task still in its board's
  * first lane with an open blocker: dashed, dimmed, and held there the same way.
  */
@@ -51,10 +51,11 @@ export const PLAIN_CARD: CardWork = {
  * (comp U screens 2 and 3), the effort bar when the idea has an effort, the item key with the
  * rollup, then the first tag beside the upvote and move controls.
  *
- * **The card itself never drags; its handle does.** The handle shows under the arrows' own rule
- * (`canMove`), and the drag image is the whole card so it reads as the card being carried. A
- * draggable card would swallow clicks on the title, the upvote and the arrows. A card held by the
- * lock or a blocker has no handle: a lock stands in its place and says why.
+ * **The whole card drags** (owner, 2026-10-22: people grab the body, not a handle), under the
+ * arrows' own rule (`canMove`). A press that does not travel is still a click, so the title, the
+ * upvote and the arrows keep working; once a drag starts the browser sends no click. The grip is
+ * only the cue. A card held by the lock or a blocker does not drag: a lock stands in the grip's
+ * place and says why.
  *
  * **The title is the card's keyboard focus target.** With it focused, ← → move the card one lane;
  * the arrows act only there, so the card's other controls keep their own keys.
@@ -93,12 +94,27 @@ export function IdeaCard({
   onKeyMove?: ((statusId: string) => void) | undefined
 }) {
   const held = work.lockText ?? work.blockedTip
+  const draggable = canMove && !held
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: dragging is the pointer path; ← → on the title is the keyboard one
     <div
       data-idea-card
       aria-current={selected ? 'true' : undefined}
+      draggable={draggable}
+      onDragStart={
+        draggable
+          ? (event: DragEvent<HTMLDivElement>) => {
+              event.dataTransfer.setDragImage(event.currentTarget, 16, 16)
+              event.dataTransfer.effectAllowed = 'move'
+              event.dataTransfer.setData(CARD_DRAG_TYPE, idea.id)
+              onDragStart?.()
+            }
+          : undefined
+      }
+      onDragEnd={draggable ? () => onDragEnd?.() : undefined}
       className={cn(
         'flex flex-col gap-2 rounded-[10px] border bg-card p-2.5 text-foreground hover:border-primary',
+        draggable && 'cursor-grab active:cursor-grabbing',
         selected && 'outline-2 -outline-offset-1 outline-primary',
         dragging && 'opacity-50',
         work.blockedText && 'border-dashed opacity-70',
@@ -114,21 +130,11 @@ export function IdeaCard({
           >
             <Icon name="lock" className="size-3.5" />
           </span>
-        ) : canMove ? (
+        ) : draggable ? (
           <span
-            role="img"
-            aria-label={`Drag ${idea.title} to another lane`}
+            aria-hidden="true"
             title="Drag to another lane"
-            draggable
-            onDragStart={(event: DragEvent<HTMLSpanElement>) => {
-              const card = event.currentTarget.closest('[data-idea-card]')
-              if (card) event.dataTransfer.setDragImage(card, 16, 16)
-              event.dataTransfer.effectAllowed = 'move'
-              event.dataTransfer.setData(CARD_DRAG_TYPE, idea.id)
-              onDragStart?.()
-            }}
-            onDragEnd={() => onDragEnd?.()}
-            className="-ml-1 mt-px inline-flex size-5 shrink-0 cursor-grab items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-accent-foreground active:cursor-grabbing"
+            className="-ml-1 mt-px inline-flex size-5 shrink-0 items-center justify-center rounded text-muted-foreground"
           >
             <Icon name="grip" className="size-4" />
           </span>
