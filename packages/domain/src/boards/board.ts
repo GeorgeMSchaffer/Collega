@@ -78,6 +78,23 @@ export type Board = Auditable & {
   readonly ideaFeaturesEnabled: boolean
   /** The number the next item on this board takes. Never written back from a stale copy. */
   readonly nextItemNumber: number
+  /** The idea types the board takes; empty takes every active type (rule 15). */
+  readonly allowedIdeaTypeIds: readonly string[]
+}
+
+/**
+ * Whether the board takes ideas of `ideaTypeId` (SPEC/20-feature-boards-and-statuses.md rule 15).
+ * The list applies only while Idea features are on, and an empty list takes every type.
+ */
+export function boardTakesIdeaType(
+  board: {
+    readonly ideaFeaturesEnabled: boolean
+    readonly allowedIdeaTypeIds?: readonly string[] | undefined
+  },
+  ideaTypeId: string,
+): boolean {
+  const allowed = board.allowedIdeaTypeIds ?? []
+  return !board.ideaFeaturesEnabled || allowed.length === 0 || allowed.includes(ideaTypeId)
 }
 
 /**
@@ -170,6 +187,8 @@ export function createBoard(params: {
   readonly keyPrefix?: string | null | undefined
   readonly sprintsEnabled?: boolean | undefined
   readonly ideaFeaturesEnabled?: boolean | undefined
+  /** Absent or empty: every type. The Application layer has already checked the ids. */
+  readonly allowedIdeaTypeIds?: readonly string[] | undefined
   readonly nowUtc: Date
   readonly actorUserId: string | null
 }): Board {
@@ -194,6 +213,7 @@ export function createBoard(params: {
     sprintsEnabled: params.sprintsEnabled ?? false,
     ideaFeaturesEnabled: params.ideaFeaturesEnabled ?? true,
     nextItemNumber: 1,
+    allowedIdeaTypeIds: params.allowedIdeaTypeIds ?? [],
     ...markCreated(params.nowUtc, params.actorUserId),
   }
 }
@@ -276,6 +296,21 @@ export function reorderBoardSwimlanes(
   }
 
   return markUpdated({ ...board, swimlanes }, nowUtc, actorUserId)
+}
+
+/**
+ * Replaces the idea types the board takes (rule 15). Refused on an archived board, like every
+ * other setting. Ideas already on the board are not touched. The Application layer has already
+ * checked the ids against the organization's idea types and put them in their sort order.
+ */
+export function setAllowedIdeaTypes(
+  board: Board,
+  ideaTypeIds: readonly string[],
+  nowUtc: Date,
+  actorUserId: string | null,
+): Board {
+  requireNotArchived(board)
+  return markUpdated({ ...board, allowedIdeaTypeIds: [...ideaTypeIds] }, nowUtc, actorUserId)
 }
 
 function requireNotArchived(board: Board): void {

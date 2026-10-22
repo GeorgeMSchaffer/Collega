@@ -80,6 +80,18 @@ model board_swimlanes {
   @@index([references_board_id], map: "ix_board_swimlanes_references_board_id")
 }
 
+/// The idea types a board takes (SPEC/contracts/boards.md "Allowed idea types"). No rows means every
+/// active type, which is every board until someone narrows it, so nothing was backfilled.
+model board_idea_types {
+  board_id     String     @db.Uuid
+  idea_type_id String     @db.Uuid
+  boards       boards     @relation(fields: [board_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_board_idea_types_boards_board_id")
+  idea_types   idea_types @relation(fields: [idea_type_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "FK_board_idea_types_idea_types_idea_type_id")
+
+  @@id([board_id, idea_type_id], map: "PK_board_idea_types")
+  @@index([idea_type_id], map: "ix_board_idea_types_idea_type_id")
+}
+
 model boards {
   id                       String            @id(map: "PK_boards") @db.Uuid
   organization_id          String            @db.Uuid
@@ -98,6 +110,7 @@ model boards {
   next_item_number         Int               @default(1)
   board_swimlanes          board_swimlanes[] @relation("swimlane_board")
   referencing_swimlanes    board_swimlanes[] @relation("swimlane_reference")
+  board_idea_types         board_idea_types[]
   sprints                  sprints[]
   organizations            organizations     @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_boards_organizations_organization_id")
 
@@ -303,6 +316,7 @@ model idea_types {
   updated_by_user_id String?            @db.Uuid
   idea_type_fields   idea_type_fields[]
   idea_type_fieldsets idea_type_fieldsets[]
+  board_idea_types   board_idea_types[]
   organizations      organizations      @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_idea_types_organizations_organization_id")
   ideas              ideas[]
 

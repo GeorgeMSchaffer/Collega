@@ -314,6 +314,9 @@ export type BoardContext = {
   readonly keyPrefix: string | null
   /** Off hides idea types, type fields and upvotes on the board's items (Board References). */
   readonly ideaFeaturesEnabled: boolean
+  /** The idea types the board takes, applied only while `ideaFeaturesEnabled` (boards rule 15).
+   * Absent or empty takes every type. */
+  readonly allowedIdeaTypeIds?: readonly string[] | undefined
   readonly swimlanes: readonly SwimlaneInfo[]
 }
 

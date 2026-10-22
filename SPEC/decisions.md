@@ -163,6 +163,7 @@ only**: a type still never chooses a board.
   `idea_type_id`, primary key on the pair, cascade on board delete).
 
 - **Details** (owner, same day): the board read carries a server-computed `canSetAllowedIdeaTypes`; a change is audited as `BoardUpdated` with `allowedIdeaTypeIds` in its metadata, not a new event; a CSV row of a disallowed type is refused on its own and the rest import.
+- **Later the same day** (owner): the admin-only reassign-type route is limited too, with no override; and an archived type drops out of the list, so a list holding only archived types counts as empty and the board takes every type.
 
 Contracts: `contracts/boards.md` "Allowed idea types" and the create, update and pull errors in
 `contracts/ideas.md` and `contracts/boards.md`. Rule 15 of `20-feature-boards-and-statuses.md`.

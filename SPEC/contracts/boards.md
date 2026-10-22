@@ -152,7 +152,7 @@ Update board name or selected statuses.
 `SPEC/decisions.md` "A board can limit which idea types it takes"; `20-feature-boards-and-statuses.md` rule 15. The read flag, the audit shape and the import rule were confirmed by the owner 2026-10-22.
 
 - **Reads.** `GET /api/v1/boards/{boardId}` gains:
-  - `allowedIdeaTypeIds` — an array of idea type ids, in idea type sort order; `[]` means every active type is allowed.
+  - `allowedIdeaTypeIds` — an array of idea type ids, in idea type sort order; `[]` means every active type is allowed. An archived type is left out, so a list of only archived types reads `[]` (decided 2026-10-22).
   - `canSetAllowedIdeaTypes` — boolean, for the caller: true for an Org Admin, or for the board's creator while an active User or Org Admin; false otherwise and on an archived board.
 - **Create.** `POST …/boards` accepts optional `allowedIdeaTypeIds` (absent, `null` or `[]`: all types), checked as below.
 - **`PUT /api/v1/boards/{boardId}/allowed-idea-types`**
@@ -163,6 +163,7 @@ Update board name or selected statuses.
   - **Rules:** accepted while Idea features are off (the list is stored, not applied). Ideas on the board are not touched. Audited as `BoardUpdated` (decided 2026-10-22), its metadata gaining `allowedIdeaTypeIds` with the new list; no separate event. No notification.
 - **Where it is enforced** (only while the board's Idea features are on and its list is non-empty):
   - `POST /api/v1/boards/{boardId}/ideas` and `PUT /api/v1/ideas/{ideaId}` (when `ideaTypeId` changes on an idea that is on a board): `400` keyed `ideaTypeId`, `This board doesn't take '{type name}' ideas.` An edit that keeps a no-longer-allowed type is accepted.
+  - `PUT /api/v1/organizations/{organizationId}/ideas/{ideaId}/idea-type` (the admin reassign, decided 2026-10-22): the same `400` keyed `ideaTypeId`, checked after the active-type check; reassigning to the current type is still a no-op.
   - `pullItemIds` on create and update: `400` keyed `pullItemIds`, `'{title}' is a {type name} idea, and this board doesn't take those.` Nothing is saved, as for every pull refusal.
   - `POST /api/v1/boards/{boardId}/ideas/import`: a row of a disallowed type is refused with the importer's per-row error, `This board doesn't take '{type name}' ideas.`; the other rows import.
   - Auto-created tasks are never checked, so a hand-off into an `autoCreateTask` lane is never refused for its type.

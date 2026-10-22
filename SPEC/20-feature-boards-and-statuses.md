@@ -78,8 +78,8 @@ Organizations can manage idea boards using configurable status swimlanes.
     - Each moved idea records a status-change audit entry, as a move on the board does.
 15. **A board can limit which idea types it takes** (added 2026-10-22, `SPEC/decisions.md` "A board can limit which idea types it takes"; contract in `contracts/boards.md` "Allowed idea types").
     - An Org Admin, or the board's creator while an active User or Org Admin of its organization, picks the allowed types. A Site Admin only through View As.
-    - No types selected means every active type is allowed. That is the default, and every existing board starts that way.
-    - The limit applies to creating an idea on the board, changing an idea's type while it is there, and moving or pulling an idea onto it. Ideas already on the board when the list narrows stay, with their type.
+    - No types selected means every active type is allowed. That is the default, and every existing board starts that way. An archived type drops out of the list, so a list of only archived types also allows every type.
+    - The limit applies to creating an idea on the board, changing an idea's type while it is there (the admin reassign included), and moving or pulling an idea onto it. Ideas already on the board when the list narrows stay, with their type.
     - The idea form on the board offers only the allowed types. An idea already on the board whose type is no longer allowed shows that type, marked *Not allowed on this board*, until it is changed.
     - While the board's Idea features are off, the setting is hidden and not applied.
 
