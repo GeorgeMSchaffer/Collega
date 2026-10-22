@@ -76,11 +76,9 @@ const load = async (role: Role = 'OrgAdmin') => {
 
 beforeEach(() => {
   mocks.work = board('b-work')
-  mocks.getBoardIdeaList
-    .mockReset()
-    .mockResolvedValue({
-      ideas: [{ id: '1', sprint: { id: 's-1', name: 'Sprint 7' } }, { id: '2' }],
-    })
+  mocks.getBoardIdeaList.mockReset().mockResolvedValue({
+    ideas: [{ id: '1', sprint: { id: 's-1', name: 'Sprint 7' } }, { id: '2' }],
+  })
   mocks.getBacklog.mockReset().mockResolvedValue({ ideas: TASKS, totalCount: 42 })
   mocks.getBoardSprints.mockReset().mockResolvedValue([
     { id: 's-done', name: 'Sprint 6', state: 'Completed' },
