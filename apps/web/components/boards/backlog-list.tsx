@@ -151,7 +151,7 @@ export function BacklogList({
         <span className="ml-auto">Sorted by: newest</span>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border bg-card">
+      <div className="relative overflow-x-auto rounded-lg border bg-card">
         <table className="min-w-[720px]">
           <caption className="sr-only">Tasks on {boardName} waiting for a sprint</caption>
           <thead>
