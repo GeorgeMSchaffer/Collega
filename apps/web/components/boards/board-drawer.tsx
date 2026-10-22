@@ -31,7 +31,6 @@ export type BoardFormData = {
   laneFlags?: Readonly<Record<string, LaneFlags>> | undefined
   /** Live ideas per lane of the board being edited, for the confirm step a lane removal needs. */
   laneIdeaCounts?: Readonly<Record<string, number>> | undefined
-  keyPrefix?: string | null
   ideaFeaturesEnabled?: boolean
   /** The boards a lane may reference, and which boards reference this one. */
   references?: ReferenceContext | undefined
@@ -169,7 +168,6 @@ export function BoardDrawer({
           swimlaneIds={form.swimlaneIds}
           laneFlags={form.laneFlags}
           laneIdeaCounts={form.laneIdeaCounts}
-          keyPrefix={form.keyPrefix}
           ideaFeaturesEnabled={form.ideaFeaturesEnabled}
           references={form.references}
           refusals={outcome.formKey === formKey ? outcome : undefined}

@@ -16,7 +16,6 @@ import {
 import Link from 'next/link'
 import { type FormEvent, useActionState, useState, useTransition } from 'react'
 import { IdeaMovesGuard } from '@/components/settings/idea-moves-guard'
-import { KeyPrefixField } from '@/components/settings/key-prefix-field'
 import { type PullSetup, PullStep } from '@/components/settings/pull-step'
 import { NO_FLAGS, SwimlanePicker } from '@/components/settings/swimlane-picker'
 import { PULL_ITEM_CAP } from '@/lib/limits'
@@ -51,8 +50,6 @@ export function BoardForm({
   swimlaneIds,
   laneFlags,
   laneIdeaCounts,
-  keyPrefix = null,
-  nextItemNumber = 1,
   ideaFeaturesEnabled = true,
   references,
   statuses,
@@ -70,8 +67,6 @@ export function BoardForm({
   laneFlags?: Readonly<Record<string, LaneFlags>> | undefined
   /** Live ideas per lane of the board being edited, keyed by status id. */
   laneIdeaCounts?: Readonly<Record<string, number>> | undefined
-  keyPrefix?: string | null | undefined
-  nextItemNumber?: number | undefined
   ideaFeaturesEnabled?: boolean | undefined
   /** The boards a lane may reference; absent leaves the References controls out. */
   references?: ReferenceContext | undefined
@@ -106,8 +101,6 @@ export function BoardForm({
               swimlaneIds={swimlaneIds}
               laneFlags={laneFlags}
               laneIdeaCounts={laneIdeaCounts}
-              keyPrefix={keyPrefix}
-              nextItemNumber={nextItemNumber}
               ideaFeaturesEnabled={ideaFeaturesEnabled}
               references={references}
               refusals={state}
@@ -209,8 +202,6 @@ export function BoardFields({
   swimlaneIds,
   laneFlags,
   laneIdeaCounts = {},
-  keyPrefix = null,
-  nextItemNumber = 1,
   ideaFeaturesEnabled = true,
   references,
   refusals,
@@ -227,9 +218,7 @@ export function BoardFields({
   laneFlags?: Readonly<Record<string, LaneFlags>> | undefined
   /** Live ideas per lane of the board being edited; absent on create, where nothing is removed. */
   laneIdeaCounts?: Readonly<Record<string, number>> | undefined
-  /** The prefix as stored (`null` for none) and the idea-features switch as stored. */
-  keyPrefix?: string | null | undefined
-  nextItemNumber?: number | undefined
+  /** The idea-features switch as stored. */
   ideaFeaturesEnabled?: boolean | undefined
   /** The boards a lane may reference; absent leaves the References controls out. */
   references?: ReferenceContext | undefined
@@ -296,12 +285,6 @@ export function BoardFields({
           rows={3}
         />
       </Field>
-
-      <KeyPrefixField
-        saved={keyPrefix}
-        nextItemNumber={nextItemNumber}
-        refusal={refusals?.keyPrefix}
-      />
 
       <div className="mb-4">
         <Switch

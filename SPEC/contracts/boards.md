@@ -215,7 +215,7 @@ Persist swimlane reorder immediately after drag-and-drop.
 *Specified in `SPEC/20-feature-board-references.md`. Not built until Plan 2. Existing routes keep their shapes; the fields below are added.*
 
 - **Board item fields (added):**
-  - `keyPrefix` string or `null`, 2 to 10 characters `A-Z0-9`, upper-cased on store; unique per organization among boards that have one.
+  - `keyPrefix` string or `null`, 2 to 10 characters `A-Z0-9`, upper-cased on store; unique per organization among boards that have one. On create, an omitted `keyPrefix` is derived from the name: the initials, or the first two letters for a one-word name, with a number appended on a clash (`CI`, `CI2`). The board form no longer asks for it (2026-10-21).
   - `sprintsEnabled` boolean, default `false`.
   - `ideaFeaturesEnabled` boolean, default `true`; default `false` for a board when it is first named as a reference target.
 - **Lane item fields (added) on every lane in a board read and write.** The lane-save routes that carry `isFinal` and `referencesBoardId` are `PUT /api/v1/boards/{boardId}`, `POST /api/v1/organizations/{organizationId}/boards` and `POST /api/v1/boards/{boardId}/swimlanes/reorder`:

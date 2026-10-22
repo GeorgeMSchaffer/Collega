@@ -11,6 +11,7 @@ import {
   BoardInvariantError,
   boardTakesIdeaType,
   createBoard,
+  deriveKeyPrefix,
   disableIdeaFeatures,
   MIN_SWIMLANES,
   reorderBoardSwimlanes,
@@ -189,6 +190,7 @@ export class BoardService {
           )
 
     const now = this.clock.now()
+    const organizationBoards = await this.boards.listByOrganization(organizationId)
     const board = runDomain(createBoard, {
       id: randomUUID(),
       organizationId,
@@ -196,14 +198,19 @@ export class BoardService {
       description: command.description ?? null,
       allowUserStatusUpdate: command.allowUserStatusUpdate,
       orderedLanes,
-      keyPrefix: command.keyPrefix,
+      keyPrefix:
+        command.keyPrefix === undefined
+          ? deriveKeyPrefix(
+              command.name,
+              organizationBoards.flatMap((other) => (other.keyPrefix ? [other.keyPrefix] : [])),
+            )
+          : command.keyPrefix,
       sprintsEnabled: command.sprintsEnabled,
       ideaFeaturesEnabled: command.ideaFeaturesEnabled,
       allowedIdeaTypeIds,
       nowUtc: now,
       actorUserId: this.currentUser.userId,
     })
-    const organizationBoards = await this.boards.listByOrganization(organizationId)
     ensureKeyPrefixFree(board, organizationBoards)
     const newTargets = planReferences(board, organizationBoards)
     const pull = await this.planPull(
