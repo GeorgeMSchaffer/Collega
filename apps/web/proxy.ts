@@ -62,8 +62,10 @@ export function proxy(request: NextRequest): NextResponse {
 
 export const config = {
   // Without a matcher this runs on static assets too, and a redirect would then break the CSS on
-  // the very sign-in page it was redirecting to.
+  // the very sign-in page it was redirecting to. `robots.txt` and `sitemap.xml` are for crawlers,
+  // which never hold a session, so redirecting them would hide both (`SPEC/20-feature-analytics.md`
+  // requirement 5).
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|robots\\.txt$|sitemap\\.xml$|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 }
