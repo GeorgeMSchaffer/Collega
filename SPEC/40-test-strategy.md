@@ -133,7 +133,7 @@ Coverage required before this feature merges. The provider is never called from 
 - New Idea button: verify the New Idea button appears in the board header for all roles except ReadOnly; verify it navigates to Idea Detail in create mode with the left-most status pre-selected.
 - Card drag-and-drop: verify the whole card starts a drag (a dedicated handle until 2026-10-22), a click on its title still opens it, a held card does not drag, optimistic column move is applied immediately, `MoveIdeaStatusAsync` is called with the correct target status ID, and the card reverts with an error toast on API failure.
 - Detail status movement: verify status selection immediately updates the idea's status, reflected in the matching swimlane on return to the board; keyboard and touch users can use the selector without drag.
-- Upvote action: verify inactive/active icon states, immediate count updates, and rollback on failure; verify the control does not open detail or start drag.
+- Upvote action: verify inactive/active icon states, immediate count updates, and rollback on failure; verify a click on the control does not open detail or move the card.
 - Comment action: verify the count is correct and activation opens detail, scrolls to comments, and focuses the composer or comments heading fallback.
 - Soft delete: verify only authorized admins see Delete, confirmation is required, success closes detail and removes the card, and failure leaves the idea visible with an error.
 - Description editing: verify author and in-scope admins can edit while other roles see a read-only description.
