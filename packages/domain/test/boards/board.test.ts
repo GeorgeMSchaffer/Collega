@@ -8,6 +8,7 @@ import {
   type Board,
   BoardInvariantError,
   createBoard,
+  deriveKeyPrefix,
   updateBoard,
 } from '../../src/boards/index.js'
 
@@ -106,5 +107,26 @@ describe('updateBoard description', () => {
     const overLimit = 'd'.repeat(BOARD_DESCRIPTION_MAX_LENGTH + 1)
 
     expect(invariantFieldOf(() => update(create('Old.'), overLimit))).toBe('description')
+  })
+})
+
+describe('deriveKeyPrefix', () => {
+  it('takes the initials of the name', () => {
+    expect(deriveKeyPrefix('Continuous Improvement', [])).toBe('CI')
+  })
+
+  it('uses the first two letters when the name has one word', () => {
+    expect(deriveKeyPrefix('Ideas', [])).toBe('ID')
+  })
+
+  it('numbers a clash rather than reusing the prefix', () => {
+    expect(deriveKeyPrefix('Continuous Improvement', ['CI'])).toBe('CI2')
+    expect(deriveKeyPrefix('Continuous Improvement', ['CI', 'CI2'])).toBe('CI3')
+  })
+
+  it('caps the prefix at ten characters, including the number', () => {
+    const long = 'A B C D E F G H I J K L'
+    expect(deriveKeyPrefix(long, [])).toBe('ABCDEFGHIJ')
+    expect(deriveKeyPrefix(long, ['ABCDEFGHIJ'])).toBe('ABCDEFGHI2')
   })
 })

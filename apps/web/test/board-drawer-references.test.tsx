@@ -3,10 +3,8 @@ import type { ReactNode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { BoardFormData, BoardView } from '@/components/boards/board-drawer'
 import { BoardsScreen } from '@/components/boards/boards-screen'
-import { KeyPrefixField } from '@/components/settings/key-prefix-field'
 import { boardAdminDenial, boardCreateDenial, type Role } from '@/lib/roles'
 import { createBoardInPlace, saveBoardInPlace } from '@/lib/server/board-actions'
-import { KEY_PREFIX_RULE } from '@/lib/server/rule-messages'
 import { SessionProvider } from '@/lib/session-client'
 import type { BoardOverview, CurrentUser, LaneFlags, ReferenceContext } from '@/lib/types'
 
@@ -33,137 +31,6 @@ beforeEach(() => {
   search.params = new URLSearchParams()
   save.mockReset().mockResolvedValue({ error: null, savedId: 'b-1' })
   create.mockReset().mockResolvedValue({ error: null, savedId: 'b-new' })
-})
-
-describe('KeyPrefixField', () => {
-  const input = () => screen.getByRole('textbox', { name: /Key prefix/ }) as HTMLInputElement
-
-  it('upper-cases what is typed', () => {
-    render(<KeyPrefixField saved={null} />)
-    fireEvent.change(input(), { target: { value: 'impl' } })
-    expect(input().value).toBe('IMPL')
-  })
-
-  it('posts as keyPrefix and caps the length at ten', () => {
-    render(<KeyPrefixField saved="IMPL" />)
-    expect(input().name).toBe('keyPrefix')
-    expect(input().value).toBe('IMPL')
-    expect(input().maxLength).toBe(10)
-  })
-
-  it('is labelled optional on a board with no prefix, and plain once it has one', () => {
-    const { unmount } = render(<KeyPrefixField saved={null} />)
-    expect(screen.getByText('Key prefix (optional)')).toBeTruthy()
-    unmount()
-    render(<KeyPrefixField saved="IMPL" />)
-    expect(screen.getByText('Key prefix')).toBeTruthy()
-  })
-
-  it.each(['A', '!!', 'AB CD', 'A-B'])('shows the rule message on blur for %j', (value) => {
-    render(<KeyPrefixField saved={null} />)
-    fireEvent.change(input(), { target: { value } })
-    expect(screen.queryByText(KEY_PREFIX_RULE)).toBeNull()
-    fireEvent.blur(input())
-    expect(screen.getByText(KEY_PREFIX_RULE)).toBeTruthy()
-    expect(input().getAttribute('aria-invalid')).toBe('true')
-  })
-
-  it.each(['AB', 'A1', 'IMPL', 'ABCDEFGHIJ', '12'])('accepts %j without a message', (value) => {
-    render(<KeyPrefixField saved={null} />)
-    fireEvent.change(input(), { target: { value } })
-    fireEvent.blur(input())
-    expect(screen.queryByText(KEY_PREFIX_RULE)).toBeNull()
-  })
-
-  it('treats an empty field as no prefix, not an error', () => {
-    render(<KeyPrefixField saved="IMPL" />)
-    fireEvent.change(input(), { target: { value: '' } })
-    fireEvent.blur(input())
-    expect(screen.queryByText(KEY_PREFIX_RULE)).toBeNull()
-  })
-
-  it('clears the rule message once the value is valid again', () => {
-    render(<KeyPrefixField saved={null} />)
-    fireEvent.change(input(), { target: { value: 'A' } })
-    fireEvent.blur(input())
-    fireEvent.change(input(), { target: { value: 'AB' } })
-    expect(screen.queryByText(KEY_PREFIX_RULE)).toBeNull()
-  })
-
-  it('shows a 409 refusal’s message on the field, and drops it when the person types', () => {
-    render(
-      <KeyPrefixField
-        saved={null}
-        refusal={{ message: 'IMPL is already used by another board.', locked: false }}
-      />,
-    )
-    expect(screen.getByText('IMPL is already used by another board.')).toBeTruthy()
-    expect(input().readOnly).toBe(false)
-    fireEvent.change(input(), { target: { value: 'IMP2' } })
-    expect(screen.queryByText('IMPL is already used by another board.')).toBeNull()
-  })
-
-  it('shows a fresh refusal after an earlier one was answered by typing', () => {
-    const first = { message: 'IMPL is already used by another board.', locked: false }
-    const { rerender } = render(<KeyPrefixField saved={null} refusal={first} />)
-    fireEvent.change(input(), { target: { value: 'IMP2' } })
-    rerender(
-      <KeyPrefixField
-        saved={null}
-        refusal={{ message: 'IMP2 is already used by another board.', locked: false }}
-      />,
-    )
-    expect(screen.getByText('IMP2 is already used by another board.')).toBeTruthy()
-  })
-
-  describe('locked by a 422 keyPrefixLocked', () => {
-    const locked = {
-      message: 'Keys have been issued on this board, so the prefix can’t change.',
-      locked: true,
-    }
-
-    it('turns read-only, with the reason and what the keys look like', () => {
-      render(<KeyPrefixField saved="IMPL" refusal={locked} />)
-      expect(input().readOnly).toBe(true)
-      expect(
-        screen.getByText(
-          /Locked\. Keys have been issued on this board, so the prefix can’t change\. Items on this board are keyed IMPL-1, IMPL-2 … and never renumbered\./,
-        ),
-      ).toBeTruthy()
-    })
-
-    it('shows the prefix as saved, not what was typed before the refusal', () => {
-      const { rerender } = render(<KeyPrefixField saved="IMPL" />)
-      fireEvent.change(input(), { target: { value: 'NEW' } })
-      rerender(<KeyPrefixField saved="IMPL" refusal={locked} />)
-      expect(input().value).toBe('IMPL')
-    })
-
-    it('shows no rule error even if what was typed is not a valid prefix', () => {
-      const { rerender } = render(<KeyPrefixField saved="IMPL" />)
-      fireEvent.change(input(), { target: { value: '!' } })
-      fireEvent.blur(input())
-      rerender(<KeyPrefixField saved="IMPL" refusal={locked} />)
-      expect(screen.queryByText(KEY_PREFIX_RULE)).toBeNull()
-      expect(input().getAttribute('aria-invalid')).not.toBe('true')
-    })
-
-    it('still posts the saved value, so a re-save sends the prefix unchanged', () => {
-      const { container } = render(
-        <form>
-          <KeyPrefixField saved="IMPL" refusal={locked} />
-        </form>,
-      )
-      const data = new FormData(container.querySelector('form') as HTMLFormElement)
-      expect(data.get('keyPrefix')).toBe('IMPL')
-    })
-
-    it('has no key example when the saved prefix is empty', () => {
-      render(<KeyPrefixField saved={null} refusal={locked} />)
-      expect(screen.queryByText(/never renumbered/)).toBeNull()
-      expect(input().value).toBe('')
-    })
-  })
 })
 
 const NONE: LaneFlags = { isFinal: false, referencesBoardId: null, autoCreateTask: false }
@@ -328,7 +195,7 @@ describe('the Boards drawer in edit mode', () => {
     expect(d.queryByRole('switch')).toBeNull()
   })
 
-  it('saves what was set: flags, key prefix and idea features reach the action', async () => {
+  it('saves what was set: flags and idea features reach the action', async () => {
     search.params = new URLSearchParams('board=b-1&mode=edit')
     screenAs('OrgAdmin', { form: FORM })
     const d = within(dialog())
@@ -337,40 +204,16 @@ describe('the Boards drawer in edit mode', () => {
       within(d.getByRole('group', { name: 'Kind of Done' })).getByRole('radio', { name: 'Final' }),
     )
     fireEvent.click(d.getByRole('switch', { name: 'Idea features' }))
-    fireEvent.change(d.getByRole('textbox', { name: /Key prefix/ }), { target: { value: 'disc2' } })
     fireEvent.click(d.getByRole('button', { name: 'Save changes' }))
     await waitFor(() => expect(save).toHaveBeenCalledTimes(1))
     const data = save.mock.calls[0]?.[1] as FormData
-    expect(data.get('keyPrefix')).toBe('DISC2')
+    expect(data.has('keyPrefix')).toBe(false)
     expect(data.get('ideaFeaturesEnabled')).toBe('false')
     expect(data.get('boardId')).toBe('b-1')
     expect(JSON.parse(String(data.get('laneFlags')))).toMatchObject({
       's-new': { referencesBoardId: 'b-impl', autoCreateTask: true },
       's-done': { isFinal: true },
     })
-  })
-
-  it('turns a keyPrefixLocked refusal into the locked field with no banner', async () => {
-    search.params = new URLSearchParams('board=b-1&mode=edit')
-    save.mockResolvedValue({
-      error: null,
-      savedId: null,
-      keyPrefix: {
-        message: 'Keys have been issued on this board, so the prefix can’t change.',
-        locked: true,
-      },
-    })
-    screenAs('OrgAdmin', { form: FORM })
-    const d = within(dialog())
-    fireEvent.change(d.getByRole('textbox', { name: /Key prefix/ }), { target: { value: 'NEW' } })
-    fireEvent.click(d.getByRole('button', { name: 'Save changes' }))
-    const field = (await waitFor(() => {
-      const el = d.getByRole('textbox', { name: /Key prefix/ }) as HTMLInputElement
-      expect(el.readOnly).toBe(true)
-      return el
-    })) as HTMLInputElement
-    expect(field.value).toBe('DISC')
-    expect(d.queryByRole('alert')).toBeNull()
   })
 
   it('shows a lane refusal on its lane and nothing in the banner', async () => {
@@ -415,7 +258,7 @@ describe('the Boards drawer in edit mode', () => {
     fireEvent.click(d.getByRole('button', { name: 'Create board' }))
     await waitFor(() => expect(create).toHaveBeenCalledTimes(1))
     const data = create.mock.calls[0]?.[1] as FormData
-    expect(data.get('keyPrefix')).toBe('')
+    expect(data.has('keyPrefix')).toBe(false)
     expect(data.has('boardId')).toBe(false)
   })
 })

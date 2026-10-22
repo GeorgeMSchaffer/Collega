@@ -169,7 +169,6 @@ export function BoardDrawer({
           swimlaneIds={form.swimlaneIds}
           laneFlags={form.laneFlags}
           laneIdeaCounts={form.laneIdeaCounts}
-          keyPrefix={form.keyPrefix}
           ideaFeaturesEnabled={form.ideaFeaturesEnabled}
           references={form.references}
           refusals={outcome.formKey === formKey ? outcome : undefined}

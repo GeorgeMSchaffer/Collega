@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-21 | Board key prefixes are derived, not typed | Current | Full below |
 | 2026-10-21 | Analytics runs without a consent banner | Current | Full below |
 | 2026-10-21 | Production runs with `COLLEGA_ALLOW_DEMO_SEED` set | active | full below |
 | 2026-10-20 | Idea assistant v2: enablement gate passed; the v1 default prompt stays | active | full below |
@@ -139,6 +140,10 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-10-21 — Board key prefixes are derived, not typed
+
+The board form no longer asks for a key prefix. A new board's prefix is derived from its name (initials, numbered on a clash, `deriveKeyPrefix` in `packages/domain/src/boards/board.ts`), so people can't mistype or collide one. The API still accepts an explicit prefix and the change rule (`422 keyPrefixLocked`) still holds, so existing boards are unchanged. Revisit if people need to choose a key.
 
 ## 2026-10-21 — Analytics runs without a consent banner
 
