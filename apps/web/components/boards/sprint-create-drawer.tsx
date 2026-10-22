@@ -21,6 +21,7 @@ export function SprintCreateDrawer({
   boardId,
   boardName,
   tasks,
+  total,
   initialIds,
   members,
   onCreated,
@@ -30,6 +31,8 @@ export function SprintCreateDrawer({
   boardId: string
   boardName: string
   tasks: readonly Idea[]
+  /** The Backlog's full count, which exceeds `tasks` when the API's page cap cut it. */
+  total: number
   initialIds: readonly string[]
   members: MemberOption[]
   onCreated: (taskCount: number) => void
@@ -82,6 +85,7 @@ export function SprintCreateDrawer({
         >
           <SprintTaskPicker
             tasks={tasks}
+            total={total}
             selected={selected}
             onChange={(next) => {
               setTaskError(null)

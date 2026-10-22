@@ -3,7 +3,7 @@
 import { Button, EmptyState, Select } from '@collega/design-system'
 import type { Route } from 'next'
 import Link from 'next/link'
-import { useMemo, useState, useTransition } from 'react'
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { ParentChip } from '@/components/ideas/idea-badges'
 import { People, TagList } from '@/components/ideas/idea-chips'
 import { ListToolbar, MultiSelectFilter } from '@/components/list'
@@ -55,6 +55,11 @@ export function BacklogList({
   const [target, setTarget] = useState('')
   const [barError, setBarError] = useState<string | null>(null)
   const [notice, setNotice] = useState('')
+  // A finished write clears the control that was pressed, so focus goes to the confirmation.
+  const noticeRef = useRef<HTMLParagraphElement>(null)
+  useEffect(() => {
+    if (notice) noticeRef.current?.focus()
+  }, [notice])
   const [adding, startAdding] = useTransition()
   const open = useMemo(
     () =>
@@ -107,21 +112,35 @@ export function BacklogList({
     })
   }, [rows, query, parents, assignees, tags])
 
+  const confirmation = notice ? (
+    <p
+      ref={noticeRef}
+      role="status"
+      tabIndex={-1}
+      className="m-0 text-sm text-muted-foreground focus:outline-none "
+    >
+      {notice}
+    </p>
+  ) : null
+
   if (rows.length === 0) {
     return (
-      <EmptyState
-        heading="Nothing waiting for a sprint"
-        action={
-          newTaskHref ? (
-            <Link href={newTaskHref as Route} className="text-sm font-medium text-primary">
-              + New task
-            </Link>
-          ) : undefined
-        }
-      >
-        Every task on {boardName} is in a sprint or finished. Add a task here, or from an
-        idea&rsquo;s drawer once the idea reaches this board.
-      </EmptyState>
+      <div className="flex min-w-0 flex-col gap-3">
+        {confirmation}
+        <EmptyState
+          heading="Nothing waiting for a sprint"
+          action={
+            newTaskHref ? (
+              <Link href={newTaskHref as Route} className="text-sm font-medium text-primary">
+                + New task
+              </Link>
+            ) : undefined
+          }
+        >
+          Every task on {boardName} is in a sprint or finished. Add a task here, or from an
+          idea&rsquo;s drawer once the idea reaches this board.
+        </EmptyState>
+      </div>
     )
   }
 
@@ -174,6 +193,8 @@ export function BacklogList({
         <MultiSelectFilter label="Tag" options={tagOptions} selected={tags} onChange={setTags} />
       </ListToolbar>
 
+      {confirmation}
+
       <div className="flex min-h-8 flex-wrap items-center gap-3 text-sm text-muted-foreground">
         <span role="status">
           {filtered
@@ -181,7 +202,6 @@ export function BacklogList({
             : `${rows.length} ${rows.length === 1 ? 'task' : 'tasks'}`}
           {total > rows.length ? ` (first ${rows.length} of ${total}, newest first)` : null}
           {canSelect && selected.size > 0 ? ` · ${selected.size} selected` : null}
-          {notice ? ` · ${notice}` : null}
         </span>
         {canSelect && selected.size > 0 ? (
           <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
@@ -366,6 +386,7 @@ export function BacklogList({
           boardId={boardId}
           boardName={boardName}
           tasks={rows}
+          total={total}
           initialIds={creating ?? NONE}
           members={members}
           onCreated={(count) => {

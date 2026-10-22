@@ -18,11 +18,13 @@ const STANDALONE = 'none'
  */
 export function SprintTaskPicker({
   tasks,
+  total,
   selected,
   onChange,
   error,
 }: {
   tasks: readonly Idea[]
+  total: number
   selected: ReadonlySet<string>
   onChange: (next: ReadonlySet<string>) => void
   error: string | null
@@ -131,6 +133,7 @@ export function SprintTaskPicker({
                         className="rounded-sm bg-warning/12 px-1.5 text-xs font-semibold text-warning"
                       >
                         {badge}
+                        <span className="sr-only"> ({blockedTooltip(task)})</span>
                       </span>
                     ) : null}
                     {task.parentIdeaId ? (
@@ -156,6 +159,11 @@ export function SprintTaskPicker({
           {selected.size > 0 ? (
             <span>
               from {ideaCount} {ideaCount === 1 ? 'idea' : 'ideas'}
+            </span>
+          ) : null}
+          {total > tasks.length ? (
+            <span>
+              Showing first {tasks.length} of {total}
             </span>
           ) : null}
           <span>
