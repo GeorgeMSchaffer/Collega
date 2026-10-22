@@ -93,7 +93,9 @@ describe('createBoardSprint', () => {
 
   it('sends an expired session to sign-in', async () => {
     post.mockRejectedValue(new ApiError(401, '/boards/b-1/sprints', 'unauthorized'))
-    await expect(createBoardSprint('b-1', input, [])).rejects.toThrow('NEXT_REDIRECT /login?expired=1')
+    await expect(createBoardSprint('b-1', input, [])).rejects.toThrow(
+      'NEXT_REDIRECT /login?expired=1',
+    )
   })
 
   it('rethrows what is not a refusal', async () => {
@@ -132,7 +134,9 @@ describe('addTasksToSprint', () => {
 
   it('falls back to another keyed message, such as a completed sprint', async () => {
     put.mockRejectedValue(
-      new ApiError(400, 'p', 'validation', { sprintId: 'A completed sprint cannot take new issues.' }),
+      new ApiError(400, 'p', 'validation', {
+        sprintId: 'A completed sprint cannot take new issues.',
+      }),
     )
     expect(await addTasksToSprint('b-1', 's-1', ['i-3'])).toEqual({
       error: 'A completed sprint cannot take new issues.',

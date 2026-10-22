@@ -35,7 +35,8 @@ function drawer(initialIds: readonly string[] = [], open = true) {
 }
 
 const field = (name: RegExp) => screen.getByLabelText(name) as HTMLInputElement
-const footer = () => screen.getAllByRole('button').find((b) => /^Create sprint|^Creating/.test(b.textContent ?? ''))
+const footer = () =>
+  screen.getAllByRole('button').find((b) => /^Create sprint|^Creating/.test(b.textContent ?? ''))
 const fill = () => {
   fireEvent.change(field(/^Name/), { target: { value: '  Sprint 9 ' } })
   fireEvent.change(field(/^Start/), { target: { value: '2026-11-02' } })
@@ -74,8 +75,12 @@ describe('SprintCreateDrawer footer', () => {
   it('starts from the tasks the Backlog had ticked', () => {
     render(drawer(['1', '4']))
     expect(footer()?.textContent).toBe('Create sprint with 2 tasks')
-    expect((screen.getByRole('checkbox', { name: /Standalone chore/ }) as HTMLInputElement).checked).toBe(true)
-    expect((screen.getByRole('checkbox', { name: /Seven alpha/ }) as HTMLInputElement).checked).toBe(false)
+    expect(
+      (screen.getByRole('checkbox', { name: /Standalone chore/ }) as HTMLInputElement).checked,
+    ).toBe(true)
+    expect(
+      (screen.getByRole('checkbox', { name: /Seven alpha/ }) as HTMLInputElement).checked,
+    ).toBe(false)
   })
 
   it('starts again from the Backlog’s selection each time it opens', () => {
@@ -84,8 +89,12 @@ describe('SprintCreateDrawer footer', () => {
     rerender(drawer(['1'], false))
     rerender(drawer(['4'], true))
     expect(footer()?.textContent).toBe('Create sprint with 1 task')
-    expect((screen.getByRole('checkbox', { name: /Eight alpha/ }) as HTMLInputElement).checked).toBe(true)
-    expect((screen.getByRole('checkbox', { name: /Seven alpha/ }) as HTMLInputElement).checked).toBe(false)
+    expect(
+      (screen.getByRole('checkbox', { name: /Eight alpha/ }) as HTMLInputElement).checked,
+    ).toBe(true)
+    expect(
+      (screen.getByRole('checkbox', { name: /Seven alpha/ }) as HTMLInputElement).checked,
+    ).toBe(false)
   })
 })
 
@@ -98,7 +107,13 @@ describe('SprintCreateDrawer request', () => {
     expect(create).toHaveBeenCalledTimes(1)
     expect(create).toHaveBeenCalledWith(
       'b-1',
-      { name: 'Sprint 9', goal: '', startDate: '2026-11-02', endDate: '2026-11-13', ownerUserId: '' },
+      {
+        name: 'Sprint 9',
+        goal: '',
+        startDate: '2026-11-02',
+        endDate: '2026-11-13',
+        ownerUserId: '',
+      },
       expect.any(Array),
     )
     expect([...(create.mock.calls[0]?.[2] ?? [])].sort()).toEqual(['2', '4'])

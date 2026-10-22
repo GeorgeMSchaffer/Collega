@@ -28,6 +28,9 @@ beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn()
 })
 
+const ids = (fn: ReturnType<typeof vi.fn>): string[] => [
+  ...((fn.mock.calls[0]?.[0] as Set<string> | undefined) ?? []),
+]
 const rows = () => screen.queryAllByRole('checkbox').map((box) => box.closest('label')?.textContent)
 const parent = () => screen.getByLabelText('Parent idea') as HTMLSelectElement
 const selectAll = () => screen.getByRole('button', { name: /^Select all/ }) as HTMLButtonElement
@@ -116,7 +119,7 @@ describe('SprintTaskPicker select all of a parent', () => {
     expect(selectAll().disabled).toBe(false)
     expect(selectAll().textContent).toBe('Select all IDEA-7 tasks')
     fireEvent.click(selectAll())
-    expect([...(onChange.mock.calls[0]?.[0] as Set<string>)].sort()).toEqual(['2', '3', '4'])
+    expect(ids(onChange).sort()).toEqual(['2', '3', '4'])
   })
 
   it('ticks the parent’s tasks even those the search hides', () => {
@@ -126,7 +129,7 @@ describe('SprintTaskPicker select all of a parent', () => {
       target: { value: 'alpha' },
     })
     fireEvent.click(selectAll())
-    expect([...(onChange.mock.calls[0]?.[0] as Set<string>)].sort()).toEqual(['2', '3'])
+    expect(ids(onChange).sort()).toEqual(['2', '3'])
   })
 })
 
@@ -134,21 +137,21 @@ describe('SprintTaskPicker selection', () => {
   it('toggles a task on and off through onChange', () => {
     const { onChange, view } = picker()
     fireEvent.click(screen.getByRole('checkbox', { name: /Seven alpha/ }))
-    expect([...(onChange.mock.calls[0]?.[0] as Set<string>)]).toEqual(['2'])
+    expect(ids(onChange)).toEqual(['2'])
     view.unmount()
     const again = picker({ selected: ['2'] })
     fireEvent.click(screen.getByRole('checkbox', { name: /Seven alpha/ }))
-    expect([...(again.onChange.mock.calls[0]?.[0] as Set<string>)]).toEqual([])
+    expect(ids(again.onChange)).toEqual([])
   })
 
   it('shows a ticked task as checked', () => {
     picker({ selected: ['4'] })
-    expect((screen.getByRole('checkbox', { name: /Eight alpha/ }) as HTMLInputElement).checked).toBe(
-      true,
-    )
-    expect((screen.getByRole('checkbox', { name: /Seven alpha/ }) as HTMLInputElement).checked).toBe(
-      false,
-    )
+    expect(
+      (screen.getByRole('checkbox', { name: /Eight alpha/ }) as HTMLInputElement).checked,
+    ).toBe(true)
+    expect(
+      (screen.getByRole('checkbox', { name: /Seven alpha/ }) as HTMLInputElement).checked,
+    ).toBe(false)
   })
 
   it('shows the blocker on a blocked task and still lets it be picked', () => {
@@ -156,7 +159,7 @@ describe('SprintTaskPicker selection', () => {
     const row = screen.getByRole('checkbox', { name: /Seven beta/ }).closest('label') as HTMLElement
     expect(within(row).getByText('blocked by W-9')).toBeTruthy()
     fireEvent.click(screen.getByRole('checkbox', { name: /Seven beta/ }))
-    expect([...(onChange.mock.calls[0]?.[0] as Set<string>)]).toEqual(['3'])
+    expect(ids(onChange)).toEqual(['3'])
   })
 
   it('shows no blocker chip when the blocker is already done', () => {

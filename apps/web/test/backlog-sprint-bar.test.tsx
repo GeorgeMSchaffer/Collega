@@ -51,7 +51,8 @@ function list(over: Partial<Parameters<typeof BacklogList>[0]> = {}) {
     />,
   )
 }
-const pick = (key: string) => fireEvent.click(screen.getByRole('checkbox', { name: `Select ${key}` }))
+const pick = (key: string) =>
+  fireEvent.click(screen.getByRole('checkbox', { name: `Select ${key}` }))
 const bar = () => screen.queryByRole('region', { name: 'Selected tasks' })
 const barButton = (name: string | RegExp) =>
   within(bar() as HTMLElement).getByRole('button', { name })
@@ -101,7 +102,9 @@ describe('Backlog selection bar sprint choice', () => {
     list({ sprints: [DONE] })
     pick('W-1')
     expect(sprintSelect()).toBeNull()
-    expect(within(bar() as HTMLElement).queryByRole('button', { name: /^Add to Sprint/ })).toBeNull()
+    expect(
+      within(bar() as HTMLElement).queryByRole('button', { name: /^Add to Sprint/ }),
+    ).toBeNull()
     expect(barButton('Add to new sprint…')).toBeTruthy()
   })
 
@@ -155,9 +158,13 @@ describe('Backlog selection bar adding to a sprint', () => {
     list()
     pick('W-3')
     await click(barButton(/^Add to Sprint 8/))
-    expect((await screen.findByRole('alert')).textContent).toBe('W-3: that task is on another board.')
+    expect((await screen.findByRole('alert')).textContent).toBe(
+      'W-3: that task is on another board.',
+    )
     expect(bar()).not.toBeNull()
-    expect((screen.getByRole('checkbox', { name: 'Select W-3' }) as HTMLInputElement).checked).toBe(true)
+    expect((screen.getByRole('checkbox', { name: 'Select W-3' }) as HTMLInputElement).checked).toBe(
+      true,
+    )
     expect(screen.queryByText(/^.*Added \d/)).toBeNull()
   })
 })
