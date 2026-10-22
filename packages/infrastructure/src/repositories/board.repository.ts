@@ -43,10 +43,15 @@ type BoardRowWithSwimlanes = BoardRow & {
   board_idea_types: { idea_type_id: string; idea_types: { name: string; sort_order: number } }[]
 }
 
-/** What every board read loads: its lanes, and its allowed idea types with their sort keys. */
+/**
+ * What every board read loads: its lanes, and its allowed idea types with their sort keys. An
+ * archived type is left out, so a list holding only archived types reads as empty and the board
+ * takes every type (boards rule 15, decided 2026-10-22).
+ */
 const BOARD_INCLUDE = {
   board_swimlanes: true,
   board_idea_types: {
+    where: { idea_types: { is_deleted: false } },
     select: { idea_type_id: true, idea_types: { select: { name: true, sort_order: true } } },
   },
 } as const
