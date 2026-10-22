@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { IdeaCard, PLAIN_CARD } from '@/components/ideas/idea-card'
 import { IdeaWorkspace } from '@/components/ideas/idea-workspace'
 import type { Role } from '@/lib/roles'
 import { moveIdea } from '@/lib/server/idea-actions'
@@ -7,7 +8,7 @@ import { SessionProvider } from '@/lib/session-client'
 import type { CurrentUser, Idea, Status } from '@/lib/types'
 
 /**
- * Moving a card between lanes: by dragging its grip (slice 142) and by pressing ← → on its focused
+ * Moving a card between lanes: by dragging the card (slice 142; the whole card since 2026-10-22) and by pressing ← → on its focused
  * title (slice 146). Both go through the same optimistic `moveCard` and the same `moveIdea`
  * action, so one rule decides what a move may do. The server action and the router are the
  * boundary and are replaced.
@@ -103,7 +104,7 @@ const laneOf = (id: string) => {
   const node = title(id)
   return LANES.find((l) => within(lane(l.name)).queryByText(`Idea ${id}`) === node)?.name ?? null
 }
-const grip = (id: string) => screen.queryByRole('img', { name: `Drag Idea ${id} to another lane` })
+const card = (id: string) => title(id)?.closest<HTMLElement>('[data-idea-card]') ?? null
 
 function dataTransfer() {
   return { setData: vi.fn(), setDragImage: vi.fn(), effectAllowed: '' }
@@ -111,10 +112,10 @@ function dataTransfer() {
 
 async function drag(id: string, ontoLane: string) {
   const transfer = dataTransfer()
-  const handle = grip(id)
-  if (!handle) throw new Error('no grip')
+  const node = card(id)
+  if (!node) throw new Error('no card')
   await act(async () => {
-    fireEvent.dragStart(handle, { dataTransfer: transfer })
+    fireEvent.dragStart(node, { dataTransfer: transfer })
   })
   await act(async () => {
     fireEvent.dragOver(lane(ontoLane), { dataTransfer: transfer })
@@ -190,7 +191,7 @@ describe('dragging a card between lanes', () => {
     renderBoard()
     const transfer = dataTransfer()
     await act(async () => {
-      fireEvent.dragStart(grip('a') as HTMLElement, { dataTransfer: transfer })
+      fireEvent.dragStart(card('a') as HTMLElement, { dataTransfer: transfer })
     })
     let notCancelled = false
     await act(async () => {
@@ -207,7 +208,7 @@ describe('dragging a card between lanes', () => {
     renderBoard()
     const transfer = dataTransfer()
     await act(async () => {
-      fireEvent.dragStart(grip('a') as HTMLElement, { dataTransfer: transfer })
+      fireEvent.dragStart(card('a') as HTMLElement, { dataTransfer: transfer })
     })
     let notCancelled = true
     await act(async () => {
@@ -216,9 +217,21 @@ describe('dragging a card between lanes', () => {
     expect(notCancelled).toBe(false) // preventDefault was called: the lane accepts the drop
   })
 
-  it('shows no grip where the role may not move cards', () => {
+  it('makes the whole card draggable, carrying the card as the drag image', async () => {
+    renderBoard()
+    const node = card('a') as HTMLElement
+    expect(node.getAttribute('draggable')).toBe('true')
+    const transfer = dataTransfer()
+    await act(async () => {
+      fireEvent.dragStart(node, { dataTransfer: transfer })
+    })
+    expect(transfer.setDragImage).toHaveBeenCalledWith(node, 16, 16)
+    expect(transfer.setData).toHaveBeenCalledWith('application/x-collega-idea', 'a')
+  })
+
+  it('does not make a card draggable where the role may not move cards', () => {
     renderBoard({ canMove: false })
-    expect(grip('a')).toBeNull()
+    expect(card('a')?.getAttribute('draggable')).toBe('false')
   })
 
   it('clears a refusal once the next move succeeds', async () => {
@@ -317,5 +330,44 @@ describe('moving a focused card with the arrow keys', () => {
     renderBoard({ canMove: false })
     await key('a', 'ArrowRight')
     expect(move).not.toHaveBeenCalled()
+  })
+})
+
+describe('a draggable card', () => {
+  function renderCard(work = PLAIN_CARD, onOpen = vi.fn()) {
+    render(
+      <SessionProvider user={user('OrgAdmin')}>
+        <IdeaCard
+          idea={idea('a', 'new')}
+          boardId="board-1"
+          previousStatusId={null}
+          nextStatusId="review"
+          canMove
+          upvoteDenial={null}
+          work={work}
+          selected={false}
+          onOpen={onOpen}
+        />
+      </SessionProvider>,
+    )
+    return onOpen
+  }
+
+  it('still opens on a click of its title', () => {
+    const onOpen = renderCard()
+    fireEvent.click(title('a') as HTMLButtonElement)
+    expect(onOpen).toHaveBeenCalledWith(title('a'))
+  })
+
+  it('does not drag while the reference lock holds it, and the lock says why', () => {
+    renderCard({ ...PLAIN_CARD, lockText: 'Waiting on 2 open tasks' })
+    expect(card('a')?.getAttribute('draggable')).toBe('false')
+    expect(screen.getByRole('img', { name: 'Waiting on 2 open tasks' })).not.toBeNull()
+  })
+
+  it('does not drag while a blocker holds it', () => {
+    renderCard({ ...PLAIN_CARD, blockedText: 'Blocked', blockedTip: 'Blocked by IDEA-2' })
+    expect(card('a')?.getAttribute('draggable')).toBe('false')
+    expect(screen.getByRole('img', { name: 'Blocked by IDEA-2' })).not.toBeNull()
   })
 })

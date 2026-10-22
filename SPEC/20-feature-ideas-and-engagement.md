@@ -25,7 +25,7 @@ Users can create, discuss, organize, and support ideas within their organization
 | Option appearance | Business Impact options have an admin-editable chip color. ~~Idea Type options have a label and sort order only.~~ *Superseded 2026-09-29 for Idea Type — see `SPEC/decisions.md` 2026-09-29 "Spec contradictions resolved": Idea Type options carry an editable color and icon (Organization-Managed Idea Fields rule 9).* |
 | Description authorization | The idea author, an in-scope Org Admin, or Site Admin may edit the description. **The same rule covers Problem, Proposed solutions and Impact rationale** (added 2026-09-27, user decision). |
 | Idea deletion | Only an in-scope Org Admin or Site Admin may soft-delete an idea, after confirmation. Restore is deferred. |
-| Card movement | Desktop cards use a dedicated drag handle; keyboard and touch users use the status selector in Idea Detail. |
+| Card movement | Desktop cards drag from anywhere on the card; keyboard and touch users use the status selector in Idea Detail. *Changed 2026-10-22 (owner, `SPEC/decisions.md`): the whole card drags; this said a dedicated handle.* |
 | Comment shortcut | The card comment action opens Idea Detail, scrolls comments into view and focuses the composer; if commenting is unavailable, focus moves to the comments heading. |
 | Assignment cardinality | Optional; zero to five distinct assignees. Existing valid singular assignments migrate into the new collection. |
 | Assignment scope and authorization | Assignees must be active users in the idea's organization when selected. The idea author, an in-scope Org Admin, or Site Admin can change assignments. Inactive historical assignees stay visible but cannot be newly selected. |
@@ -412,7 +412,7 @@ When built, it must address:
 - [ ] Comment entry shows a live character counter and inline overflow validation
 - [ ] When enabled by board configuration, Users can update the status of any idea on that board
 - [ ] A successful status change immediately moves the card to the corresponding swimlane without closing Idea Detail
-- [ ] Desktop drag-and-drop uses a dedicated handle and reverts the card on API failure
+- [ ] Desktop drag-and-drop starts anywhere on the card (a dedicated handle until 2026-10-22) and reverts the card on API failure
 - [ ] Keyboard and touch users can move an idea through the Idea Detail status selector
 - [ ] Only the idea author or an in-scope admin can edit the description, Problem, Proposed solutions and Impact rationale
 - [ ] Only an in-scope Org Admin or Site Admin sees and can confirm the Idea Detail soft-delete action

@@ -26,6 +26,7 @@ import type {
   Issue,
   IssueTask,
   MemberOption,
+  MentionCandidate,
   Outcome,
   Sprint,
   SprintState,
@@ -41,6 +42,7 @@ export type {
   IssueTask,
   IssueTaskState,
   MemberOption,
+  MentionCandidate,
   Outcome,
   Sprint,
   SprintState,
@@ -229,6 +231,22 @@ export async function getMemberOptions(): Promise<MemberOption[]> {
     apiPath`/organizations/${scope}/members`,
   )
   return members.map(toMemberOption).sort((a, b) => a.name.localeCompare(b.name))
+}
+
+/**
+ * The same members, with the address the comment composer sends for an @mention. The organization
+ * is passed in because the caller is a route handler, which has no render scope to read it from.
+ */
+export async function getMentionCandidates(organizationId: string): Promise<MentionCandidate[]> {
+  failIfRequested('getMentionCandidates')
+
+  const members = await apiGet<readonly WireMember[]>(
+    'getMentionCandidates',
+    apiPath`/organizations/${organizationId}/members`,
+  )
+  return members
+    .map((member) => ({ ...toMemberOption(member), email: member.email }))
+    .sort((a, b) => a.name.localeCompare(b.name))
 }
 
 /**

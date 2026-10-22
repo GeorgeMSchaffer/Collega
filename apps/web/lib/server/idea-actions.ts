@@ -240,20 +240,25 @@ export async function toggleUpvote(_previous: ActionState, form: FormData): Prom
 }
 
 /**
- * Post a comment on an idea.
+ * Post a comment on an idea, with the people the composer's @ picker chose as `mentionEmails`.
  *
- * No `mentionEmails`. The API resolves each address against the idea's organization and **rejects**
- * one it cannot place (`SPEC/30-Contracts.md`, corrected 2026-09-06); the composer offers no way to
- * pick a person, so sending the field could only ever turn typed prose into a 400.
+ * The API resolves each address against the idea's organization and **rejects** one it cannot
+ * place (`SPEC/contracts/comments.md`, corrected 2026-09-06) — a member removed since the picker
+ * read the list, say — with a 400 keyed on `mentionEmails`, which shows beside the composer.
  */
 export async function addComment(_previous: ActionState, form: FormData): Promise<ActionState> {
   const boardId = String(form.get('boardId') ?? '')
   const ideaId = String(form.get('ideaId') ?? '')
+  const mentionEmails = form.getAll('mentionEmails').map(String)
 
   try {
-    await apiPost(apiPath`/ideas/${ideaId}/comments`, { body: String(form.get('body') ?? '') })
+    await apiPost(apiPath`/ideas/${ideaId}/comments`, {
+      body: String(form.get('body') ?? ''),
+      ...(mentionEmails.length > 0 ? { mentionEmails } : {}),
+    })
   } catch (error) {
-    return { error: refusal(error) }
+    const mention = error instanceof ApiError ? error.errors.mentionEmails : undefined
+    return { error: mention ?? refusal(error) }
   }
 
   revalidateIdeaScreens(boardId)
