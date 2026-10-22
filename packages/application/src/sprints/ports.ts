@@ -47,6 +47,8 @@ export type SprintBoard = {
   readonly organizationId: string
   readonly sprintsEnabled: boolean
   readonly isArchived: boolean
+  /** The board's item-key prefix, when it has one; names items in refusals. */
+  readonly keyPrefix?: string | null
   /** Statuses of the board's final lanes: an item in one of them is done. */
   readonly finalStatusIds: readonly string[]
 }

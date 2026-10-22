@@ -532,6 +532,7 @@ export class PrismaBoardRepository
     readonly organizationId: string
     readonly sprintsEnabled: boolean
     readonly isArchived: boolean
+    readonly keyPrefix: string | null
     readonly finalStatusIds: readonly string[]
   } | null> {
     const board = await this.getById(boardId)
@@ -543,6 +544,7 @@ export class PrismaBoardRepository
       organizationId: board.organizationId,
       sprintsEnabled: board.sprintsEnabled,
       isArchived: board.isArchived,
+      keyPrefix: board.keyPrefix,
       finalStatusIds: board.swimlanes.filter((lane) => lane.isFinal).map((lane) => lane.statusId),
     }
   }

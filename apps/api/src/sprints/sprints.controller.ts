@@ -150,6 +150,10 @@ export class SprintsController {
     @Param('boardId', UuidParamPipe) boardId: string,
     @Body() body: AssignmentBody,
   ): Promise<void> {
+    // `sprintId` is required, null included: an omitted key must not read as "return to backlog".
+    if (body.sprintId === undefined) {
+      throw new RequestValidationError({ sprintId: [`${displayName('sprintId')} is required.`] })
+    }
     await this.ideas.assignBoardSprints(boardId, {
       ideaIds: guidList('ideaIds', body.ideaIds) ?? [],
       sprintId: optionalGuid(body.sprintId),

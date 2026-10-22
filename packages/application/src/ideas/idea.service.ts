@@ -1854,7 +1854,7 @@ export class IdeaService {
       if (original.boardId !== board.boardId) {
         throw new UnprocessableError(
           'sprintItemOnOtherBoard',
-          'A sprint holds items from its own board only.',
+          `${await this.describeItem(original)}: a sprint holds items from its own board only.`,
         )
       }
 
@@ -1863,10 +1863,28 @@ export class IdeaService {
       const withSprint = sprintChanged
         ? setIdeaBoardSprint(original, sprintId, now, actorId)
         : original
-      const moved =
-        command.statusId === null
-          ? null
-          : await this.stageStatusMove(withSprint, board, command.statusId, null, now, actorId)
+      let moved: Awaited<ReturnType<typeof this.stageStatusMove>> = null
+      if (command.statusId !== null) {
+        try {
+          moved = await this.stageStatusMove(
+            withSprint,
+            board,
+            command.statusId,
+            null,
+            now,
+            actorId,
+          )
+        } catch (error) {
+          // The refusal is the status move's own; the item that caused it is named.
+          if (error instanceof UnprocessableError) {
+            throw new UnprocessableError(
+              error.code,
+              `${itemLabel(board.keyPrefix ?? undefined, original)}: ${error.message}`,
+            )
+          }
+          throw error
+        }
+      }
       if (moved === null && sprintChanged) {
         await this.ideaRepository.update(withSprint)
       }
@@ -1894,6 +1912,15 @@ export class IdeaService {
     for (const write of afterCommit) {
       await write()
     }
+  }
+
+  /** An item as a refusal names it: its key (DL-12) when its board has a prefix, else its title. */
+  private async describeItem(idea: Idea): Promise<string> {
+    const prefix =
+      idea.boardId === null
+        ? undefined
+        : (await this.boards.getKeyPrefixes([idea.boardId])).get(idea.boardId)
+    return itemLabel(prefix, idea)
   }
 
   /**
@@ -3258,6 +3285,10 @@ export class IdeaService {
  */
 function boardRefusesIdeaType(typeName: string): string {
   return `This board doesn't take '${typeName}' ideas.`
+}
+
+function itemLabel(keyPrefix: string | undefined, idea: Idea): string {
+  return itemKey(keyPrefix, idea.itemNumber) ?? `'${idea.title}'`
 }
 
 function ensureBoardNotArchived(board: BoardContext): void {

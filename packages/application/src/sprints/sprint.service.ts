@@ -217,16 +217,19 @@ export class SprintService {
         ideaIds: ['Every item must be an existing item of this organization.'],
       })
     }
-    if (items.some((idea) => idea.boardId !== board.id)) {
+    const otherBoard = items.find((idea) => idea.boardId !== board.id)
+    if (otherBoard) {
+      const own = otherBoard.boardId ? await this.boards.getSprintBoard(otherBoard.boardId) : null
       throw new UnprocessableError(
         'sprintItemOnOtherBoard',
-        'A sprint holds items from its own board only.',
+        `${itemLabel(own?.keyPrefix, otherBoard)}: a sprint holds items from its own board only.`,
       )
     }
-    if (items.some((idea) => idea.sprintId !== null)) {
+    const assigned = items.find((idea) => idea.sprintId !== null)
+    if (assigned) {
       throw new UnprocessableError(
         'sprintItemAlreadyAssigned',
-        'An item already in a sprint cannot be put in a new one.',
+        `${itemLabel(board.keyPrefix, assigned)}: an item already in a sprint cannot be put in a new one.`,
       )
     }
     return items
@@ -493,6 +496,13 @@ export class SprintService {
       metadataJson: metadata === null ? null : JSON.stringify(metadata),
     })
   }
+}
+
+/** An item as a refusal names it: its key (DL-12) when its board has a prefix, else its title. */
+function itemLabel(keyPrefix: string | null | undefined, idea: Idea): string {
+  return keyPrefix && idea.itemNumber !== null
+    ? `${keyPrefix}-${idea.itemNumber}`
+    : `'${idea.title}'`
 }
 
 function idOf(entity: { readonly id: string }): string {
