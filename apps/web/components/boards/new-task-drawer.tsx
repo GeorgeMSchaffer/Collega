@@ -40,6 +40,8 @@ export function NewTaskDrawer({
   const [formKey, setFormKey] = useState(0)
   // After "Save and add another" the next task starts in the Title; opening the drawer lands on its heading.
   const [again, setAgain] = useState(false)
+  // Spoken after "Save and add another", when the form clearing is the only other sign it saved.
+  const [added, setAdded] = useState('')
 
   function close() {
     const next = new URLSearchParams(params)
@@ -48,10 +50,14 @@ export function NewTaskDrawer({
     router.replace(`${pathname}${query ? `?${query}` : ''}` as Route, { scroll: false })
     setFormKey((key) => key + 1)
     setAgain(false)
+    setAdded('')
   }
 
   return (
     <Drawer open={open} onClose={close} eyebrow={`New task · ${boardName}`} title="Add a task">
+      <p role="status" className="sr-only">
+        {added}
+      </p>
       <NewTaskForm
         key={formKey}
         boardId={boardId}
@@ -60,7 +66,8 @@ export function NewTaskDrawer({
         tags={tags}
         onDone={close}
         focusTitle={again}
-        onAnother={() => {
+        onAnother={(title) => {
+          setAdded(`Task added: ${title}`)
           setFormKey((key) => key + 1)
           setAgain(true)
         }}
@@ -83,7 +90,7 @@ function NewTaskForm({
   members: MemberOption[]
   tags: TagRef[]
   onDone: () => void
-  onAnother: () => void
+  onAnother: (title: string) => void
   focusTitle: boolean
 }) {
   const id = useId()
@@ -120,7 +127,7 @@ function NewTaskForm({
         parentIdeaId: parentId || null,
       })
       if (result.error) setError(result.error)
-      else if (another) onAnother()
+      else if (another) onAnother(title.trim())
       else onDone()
     })
   }

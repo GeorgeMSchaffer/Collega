@@ -1,6 +1,7 @@
 'use client'
 
 import { Button, EmptyState } from '@collega/design-system'
+import type { Route } from 'next'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { ParentChip } from '@/components/ideas/idea-badges'
@@ -91,7 +92,7 @@ export function BacklogList({
         heading="Nothing waiting for a sprint"
         action={
           newTaskHref ? (
-            <Link href={newTaskHref as never} className="text-sm font-medium text-primary">
+            <Link href={newTaskHref as Route} className="text-sm font-medium text-primary">
               + New task
             </Link>
           ) : undefined
@@ -139,7 +140,9 @@ export function BacklogList({
 
       <div className="flex min-h-8 flex-wrap items-center gap-3 text-sm text-muted-foreground">
         <span role="status">
-          {filtered ? `${shown.length} of ${rows.length} tasks` : `${rows.length} tasks`}
+          {filtered
+            ? `${shown.length} of ${rows.length} tasks`
+            : `${rows.length} ${rows.length === 1 ? 'task' : 'tasks'}`}
           {total > rows.length ? ` (first ${rows.length} of ${total}, newest first)` : null}
           {canSelect && selected.size > 0 ? ` · ${selected.size} selected` : null}
         </span>
@@ -222,7 +225,7 @@ export function BacklogList({
                   <td className="px-3.5">
                     <Link
                       href={
-                        `/boards/${encodeURIComponent(boardId)}?tab=board&idea=${encodeURIComponent(row.id)}` as never
+                        `/boards/${encodeURIComponent(boardId)}?tab=board&idea=${encodeURIComponent(row.id)}` as Route
                       }
                       className="font-medium text-foreground hover:underline"
                     >

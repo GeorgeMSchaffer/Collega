@@ -1,4 +1,5 @@
 import { Alert, buttonVariants, EmptyState } from '@collega/design-system'
+import type { Route } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { BoardViewed } from '@/components/analytics/board-viewed'
@@ -183,7 +184,7 @@ export default async function BoardPage({
                 <AddIdeaButton />
               )
             ) : tab === 'backlog' && newTaskHref ? (
-              <Link href={newTaskHref as never} className={buttonVariants()}>
+              <Link href={newTaskHref as Route} className={buttonVariants()}>
                 + New task
               </Link>
             ) : undefined
