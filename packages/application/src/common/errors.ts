@@ -93,8 +93,16 @@ export class UnprocessableError extends ApplicationError {
 
   readonly code: string
 
-  constructor(code: string, message: string = code) {
+  /** Field name -> messages, when the refusal is about one item of the request (`ideaIds`). */
+  readonly failures: Readonly<Record<string, readonly string[]>> | undefined
+
+  constructor(
+    code: string,
+    message: string = code,
+    failures?: Readonly<Record<string, readonly string[]>>,
+  ) {
     super(message)
     this.code = code
+    this.failures = failures
   }
 }

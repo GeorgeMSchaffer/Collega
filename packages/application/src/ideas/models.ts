@@ -126,6 +126,13 @@ export type AssignIssueToSprintCommand = {
   readonly sprintId: string | null
 }
 
+/** `PUT /boards/{boardId}/sprint-assignments`. `statusId` is a lane drop; it needs a `sprintId`. */
+export type AssignBoardSprintCommand = {
+  readonly ideaIds: readonly string[]
+  readonly sprintId: string | null
+  readonly statusId: string | null
+}
+
 /** The sprint board and the delivery backlog. Omit `sprintId` for the backlog (`SprintId is
  * null`); pass one to read that sprint's Issues. */
 export type DeliveryListQuery = {

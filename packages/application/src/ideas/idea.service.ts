@@ -61,6 +61,7 @@ import type { IdeaMetricValuesPort } from '../metric-types/ports.js'
 import { randomTagColor } from '../tags/random-color.js'
 import type {
   AddIssueCommand,
+  AssignBoardSprintCommand,
   AssignIssueToSprintCommand,
   AutoCreateTaskParent,
   BlockedByDto,
@@ -146,6 +147,8 @@ const MAX_TAG_NAME_LENGTH = 100
  * `IdeaService.MaxExportRows`) - well above any plausible board, but the endpoint is reachable by
  * any member including Read Only, so an unbounded export is a cheap way to pressure the host. */
 const MAX_EXPORT_ROWS = 10_000
+/** Items one bulk sprint assignment may carry (contracts/sprints.md). */
+const MAX_SPRINT_ASSIGNMENT_ITEMS = 200
 
 /**
  * Idea use cases (SPEC/20-feature-ideas-and-engagement.md, SPEC/30-Contracts.md "Idea
@@ -1448,7 +1451,7 @@ export class IdeaService {
     ensureNotDirectSiteAdmin(this.currentUser)
     const forceReason = readForceReason(command.forceReason, this.requireAuthenticatedRole())
 
-    let idea = await this.ideaRepository.getById(ideaId, false)
+    const idea = await this.ideaRepository.getById(ideaId, false)
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
@@ -1474,13 +1477,43 @@ export class IdeaService {
     this.ensureCanMoveIdea()
     ensureBoardNotArchived(board)
 
-    if (idea.statusId === command.statusId) {
+    const staged = await this.stageStatusMove(
+      idea,
+      board,
+      command.statusId,
+      forceReason,
+      this.clock.now(),
+      this.requireAuthenticatedUserId(),
+    )
+    if (staged === null) {
       return
+    }
+    await this.unitOfWork.saveChanges()
+    await staged.finish()
+  }
+
+  /**
+   * The one status-move path: the lane rules (effort entry, blockers, the reference-lane lock),
+   * then the move staged, with the lane's auto-created task beside it. The caller commits;
+   * `finish` writes the audit entries and notifies followers after that commit. `null` when the
+   * item is already in the status, with nothing staged. Callers have checked the status is a lane
+   * of `board` and that the board takes changes.
+   */
+  private async stageStatusMove(
+    idea: Idea,
+    board: BoardContext,
+    statusId: string,
+    forceReason: string | null,
+    now: Date,
+    actorId: string,
+  ): Promise<{ readonly idea: Idea; readonly finish: () => Promise<void> } | null> {
+    if (idea.statusId === statusId) {
+      return null
     }
 
     // The Effort entry rule: a reference lane is where an item gets worked as tasks, which needs
     // an estimate (Board References Ruling 6).
-    const targetLane = board.swimlanes.find((lane) => lane.statusId === command.statusId)
+    const targetLane = board.swimlanes.find((lane) => lane.statusId === statusId)
     if (targetLane?.referencesBoardId && idea.effort === null) {
       throw new UnprocessableError(
         'effortRequiredForReferenceLane',
@@ -1497,41 +1530,49 @@ export class IdeaService {
       `'${idea.title}' is waiting on {n} open tasks, so it cannot be moved.`,
     )
 
-    const now = this.clock.now()
-    const actorId = this.requireAuthenticatedUserId()
     const previousStatusId = idea.statusId
 
-    idea = changeIdeaStatus(idea, command.statusId, now, actorId)
-    await this.ideaRepository.update(idea)
+    const moved = changeIdeaStatus(idea, statusId, now, actorId)
+    await this.ideaRepository.update(moved)
     // The hand-off: one task on the referenced board, staged beside the move so one commit takes
     // both, and a refused or failed task leaves the move uncommitted.
     const finishTask =
       targetLane?.autoCreateTask &&
       !(
         targetLane.referencesBoardId &&
-        (await this.ideaRepository.hasTaskOnBoard(idea.id, targetLane.referencesBoardId))
+        (await this.ideaRepository.hasTaskOnBoard(moved.id, targetLane.referencesBoardId))
       )
-        ? await this.stageBoardTask(idea, targetLane.referencesBoardId, autoTaskCommand(idea), true)
+        ? await this.stageBoardTask(
+            moved,
+            targetLane.referencesBoardId,
+            autoTaskCommand(moved),
+            true,
+          )
         : null
-    await this.unitOfWork.saveChanges()
-    await finishTask?.()
 
-    await this.auditIdea(
-      'IdeaStatusChanged',
-      idea,
-      actorId,
-      `Idea '${idea.title}' moved to a new status.`,
-      now,
-      { fromStatusId: previousStatusId, toStatusId: command.statusId },
-    )
-    await this.auditMovedPastOpenTasks(idea, actorId, now, openTasks, forceReason)
+    return {
+      idea: moved,
+      finish: async () => {
+        await finishTask?.()
 
-    // Notify the idea's followers of the move (SPEC/20-feature-notifications.md trigger #4), naming
-    // the lane as it is called now (SPEC/20-feature-idea-following.md rule 37).
-    const statusInfo = await this.boards.getStatusInfo(idea.organizationId)
-    await this.notifyIdeaFollowers('IdeaStatusChanged', idea, actorId, {
-      statusName: statusInfo.get(command.statusId)?.name ?? null,
-    })
+        await this.auditIdea(
+          'IdeaStatusChanged',
+          moved,
+          actorId,
+          `Idea '${moved.title}' moved to a new status.`,
+          now,
+          { fromStatusId: previousStatusId, toStatusId: statusId },
+        )
+        await this.auditMovedPastOpenTasks(moved, actorId, now, openTasks, forceReason)
+
+        // Notify the idea's followers of the move (SPEC/20-feature-notifications.md trigger #4),
+        // naming the lane as it is called now (SPEC/20-feature-idea-following.md rule 37).
+        const statusInfo = await this.boards.getStatusInfo(moved.organizationId)
+        await this.notifyIdeaFollowers('IdeaStatusChanged', moved, actorId, {
+          statusName: statusInfo.get(statusId)?.name ?? null,
+        })
+      },
+    }
   }
 
   // Delivery (Issues-and-Delivery Slice 1) -----------------------------------------------------
@@ -1739,6 +1780,149 @@ export class IdeaService {
       now,
       { fromSprintId: previousSprintId, toSprintId: sprintId },
     )
+  }
+
+  /**
+   * Bulk sprint planning on a work board: add, move or return to the backlog, optionally with the
+   * lane drop's status. Admin only, all or nothing - every item is checked and staged first and
+   * one commit takes them all, so a refused item leaves nothing written. A status move is
+   * `stageStatusMove`, the same path as `changeStatus`. An item already where it is told to be
+   * writes nothing.
+   */
+  async assignBoardSprints(boardId: string, command: AssignBoardSprintCommand): Promise<void> {
+    ensureNotDirectSiteAdmin(this.currentUser)
+    this.requireAuthenticatedRole()
+
+    const board = await this.boards.getBoardContext(boardId)
+    if (!board) {
+      throw new NotFoundError('Board not found.')
+    }
+    this.ensureOrganizationScope(board.organizationId)
+    if (!this.isOrgAdminOf(board.organizationId)) {
+      throw new ForbiddenError('You are not allowed to assign issues to a sprint.')
+    }
+    ensureBoardNotArchived(board)
+
+    const ideaIds = command.ideaIds
+    if (ideaIds.length === 0 || ideaIds.length > MAX_SPRINT_ASSIGNMENT_ITEMS) {
+      throw new ValidationError('One or more fields are invalid.', {
+        ideaIds: [`Choose between 1 and ${MAX_SPRINT_ASSIGNMENT_ITEMS} items.`],
+      })
+    }
+    if (new Set(ideaIds).size !== ideaIds.length) {
+      throw new ValidationError('One or more fields are invalid.', {
+        ideaIds: ['Each item can be listed once.'],
+      })
+    }
+    if (command.statusId !== null && command.sprintId === null) {
+      throw new ValidationError('One or more fields are invalid.', {
+        statusId: ['A status can only be set while putting items in a sprint.'],
+      })
+    }
+
+    const sprint = await this.resolveAssignableSprintSummary(board.organizationId, command.sprintId)
+    if (sprint && sprint.boardId !== board.boardId) {
+      throw new ValidationError('One or more fields are invalid.', {
+        sprintId: ['Sprint must be a sprint of this board.'],
+      })
+    }
+    if (command.statusId !== null && !hasSwimlaneForStatus(board, command.statusId)) {
+      throw new ValidationError('One or more fields are invalid.', {
+        statusId: ['Status must be an active swimlane on the board.'],
+      })
+    }
+
+    const found = new Map(
+      (await this.ideaRepository.listByIds(ideaIds)).map((idea) => [idea.id, idea]),
+    )
+    const ideas = ideaIds.map((id) => found.get(id))
+    if (ideas.some((idea) => idea === undefined || idea.organizationId !== board.organizationId)) {
+      throw new ValidationError('One or more fields are invalid.', {
+        ideaIds: ['Every item must be an existing item of this organization.'],
+      })
+    }
+
+    const now = this.clock.now()
+    const actorId = this.requireAuthenticatedUserId()
+    const sprintId = sprint?.id ?? null
+    const afterCommit: Array<() => Promise<void>> = []
+
+    for (const original of ideas) {
+      if (original === undefined) {
+        continue
+      }
+      if (original.boardId !== board.boardId) {
+        throw itemRefusal(
+          'sprintItemOnOtherBoard',
+          await this.describeItem(original),
+          'a sprint holds items from its own board only.',
+        )
+      }
+
+      const previousSprintId = original.sprintId
+      const sprintChanged = previousSprintId !== sprintId
+      const withSprint = sprintChanged
+        ? setIdeaBoardSprint(original, sprintId, now, actorId)
+        : original
+      let moved: Awaited<ReturnType<typeof this.stageStatusMove>> = null
+      if (command.statusId !== null) {
+        try {
+          moved = await this.stageStatusMove(
+            withSprint,
+            board,
+            command.statusId,
+            null,
+            now,
+            actorId,
+          )
+        } catch (error) {
+          // The refusal is the status move's own; the item that caused it is named.
+          if (error instanceof UnprocessableError) {
+            throw itemRefusal(
+              error.code,
+              itemLabel(board.keyPrefix ?? undefined, original),
+              error.message,
+            )
+          }
+          throw error
+        }
+      }
+      if (moved === null && sprintChanged) {
+        await this.ideaRepository.update(withSprint)
+      }
+
+      if (sprintChanged) {
+        afterCommit.push(() =>
+          this.auditIdea(
+            'IssueSprintAssignmentChanged',
+            withSprint,
+            actorId,
+            sprintId
+              ? `Issue '${withSprint.title}' assigned to a sprint.`
+              : `Issue '${withSprint.title}' returned to the delivery backlog.`,
+            now,
+            { fromSprintId: previousSprintId, toSprintId: sprintId },
+          ),
+        )
+      }
+      if (moved !== null) {
+        afterCommit.push(moved.finish)
+      }
+    }
+
+    await this.unitOfWork.saveChanges()
+    for (const write of afterCommit) {
+      await write()
+    }
+  }
+
+  /** An item as a refusal names it: its key (DL-12) when its board has a prefix, else its title. */
+  private async describeItem(idea: Idea): Promise<string> {
+    const prefix =
+      idea.boardId === null
+        ? undefined
+        : (await this.boards.getKeyPrefixes([idea.boardId])).get(idea.boardId)
+    return itemLabel(prefix, idea)
   }
 
   /**
@@ -3103,6 +3287,16 @@ export class IdeaService {
  */
 function boardRefusesIdeaType(typeName: string): string {
   return `This board doesn't take '${typeName}' ideas.`
+}
+
+/** A 422 about one item: the code, and the item's key leading the message on `ideaIds`. */
+function itemRefusal(code: string, label: string, reason: string): UnprocessableError {
+  const message = `${label}: ${reason}`
+  return new UnprocessableError(code, message, { ideaIds: [message] })
+}
+
+function itemLabel(keyPrefix: string | undefined, idea: Idea): string {
+  return itemKey(keyPrefix, idea.itemNumber) ?? `'${idea.title}'`
 }
 
 function ensureBoardNotArchived(board: BoardContext): void {

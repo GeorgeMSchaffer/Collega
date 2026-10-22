@@ -33,7 +33,12 @@ import {
   UnprocessableError,
   ValidationError,
 } from '../common/index.js'
-import type { CreateSprintCommand, SprintItem, UpdateSprintCommand } from './models.js'
+import type {
+  CreateBoardSprintCommand,
+  CreateSprintCommand,
+  SprintItem,
+  UpdateSprintCommand,
+} from './models.js'
 import type {
   SprintBoard,
   SprintBoardsPort,
@@ -44,6 +49,9 @@ import type {
 } from './ports.js'
 
 const NO_ISSUES: SprintIssueCounts = { issueCount: 0, doneCount: 0, ideaCount: 0 }
+
+/** Tasks one sprint create may carry (contracts/sprints.md). */
+const MAX_SPRINT_CREATE_ITEMS = 200
 
 export class SprintService {
   constructor(
@@ -114,7 +122,7 @@ export class SprintService {
     return toItem(sprint, NO_ISSUES, await this.ownerName(sprint.ownerUserId))
   }
 
-  async createForBoard(boardId: string, command: CreateSprintCommand): Promise<SprintItem> {
+  async createForBoard(boardId: string, command: CreateBoardSprintCommand): Promise<SprintItem> {
     const board = await this.requireBoard(boardId)
     this.ensureAdminScope(board.organizationId)
     if (board.isArchived) {
@@ -139,8 +147,17 @@ export class SprintService {
       nowUtc: now,
       actorUserId: this.currentUser.userId,
     })
+    // Every item is checked before anything is staged, and the sprint and its assignments share
+    // one commit: a refused item leaves no sprint behind.
+    const items = await this.resolveNewSprintItems(board, command.ideaIds ?? [])
+    const assigned = items.map((idea) =>
+      setIdeaBoardSprint(idea, sprint.id, now, this.currentUser.userId),
+    )
 
     await this.sprints.add(sprint)
+    for (const idea of assigned) {
+      await this.issues.update(idea)
+    }
     await this.unitOfWork.saveChanges()
 
     await this.audit('SprintCreated', sprint, `Sprint '${sprint.name}' created.`, now, {
@@ -149,8 +166,75 @@ export class SprintService {
       endDate: sprint.endDate,
       boardId: board.id,
     })
+    for (const idea of assigned) {
+      await this.auditEvents.write({
+        eventType: 'IssueSprintAssignmentChanged',
+        entityType: 'Idea',
+        message: `Issue '${idea.title}' assigned to a sprint.`,
+        occurredAtUtc: now,
+        organizationId: idea.organizationId,
+        attribution: attributeAudit(this.currentUser, this.currentUser.userId),
+        entityId: idea.id,
+        metadataJson: JSON.stringify({ fromSprintId: null, toSprintId: sprint.id }),
+      })
+    }
 
-    return toItem(sprint, NO_ISSUES, await this.ownerName(sprint.ownerUserId))
+    const final = new Set(board.finalStatusIds)
+    const counts: SprintIssueCounts = {
+      issueCount: assigned.length,
+      doneCount: assigned.filter((idea) => final.has(idea.statusId)).length,
+      ideaCount: new Set(assigned.flatMap((idea) => (idea.parentIdeaId ? [idea.parentIdeaId] : [])))
+        .size,
+    }
+    return toItem(sprint, counts, await this.ownerName(sprint.ownerUserId))
+  }
+
+  /** The items a new board sprint starts with: live, of this board, and in no sprint yet. */
+  private async resolveNewSprintItems(
+    board: SprintBoard,
+    ideaIds: readonly string[],
+  ): Promise<readonly Idea[]> {
+    if (ideaIds.length === 0) {
+      return []
+    }
+    if (ideaIds.length > MAX_SPRINT_CREATE_ITEMS) {
+      throw new ValidationError('One or more fields are invalid.', {
+        ideaIds: [`Choose at most ${MAX_SPRINT_CREATE_ITEMS} items.`],
+      })
+    }
+    if (new Set(ideaIds).size !== ideaIds.length) {
+      throw new ValidationError('One or more fields are invalid.', {
+        ideaIds: ['Each item can be listed once.'],
+      })
+    }
+    const found = new Map((await this.issues.listByIds(ideaIds)).map((idea) => [idea.id, idea]))
+    const items = ideaIds.flatMap((id) => {
+      const idea = found.get(id)
+      return idea && idea.organizationId === board.organizationId ? [idea] : []
+    })
+    if (items.length !== ideaIds.length) {
+      throw new ValidationError('One or more fields are invalid.', {
+        ideaIds: ['Every item must be an existing item of this organization.'],
+      })
+    }
+    const otherBoard = items.find((idea) => idea.boardId !== board.id)
+    if (otherBoard) {
+      const own = otherBoard.boardId ? await this.boards.getSprintBoard(otherBoard.boardId) : null
+      throw itemRefusal(
+        'sprintItemOnOtherBoard',
+        itemLabel(own?.keyPrefix, otherBoard),
+        'a sprint holds items from its own board only.',
+      )
+    }
+    const assigned = items.find((idea) => idea.sprintId !== null)
+    if (assigned) {
+      throw itemRefusal(
+        'sprintItemAlreadyAssigned',
+        itemLabel(board.keyPrefix, assigned),
+        'an item already in a sprint cannot be put in a new one.',
+      )
+    }
+    return items
   }
 
   async update(
@@ -414,6 +498,19 @@ export class SprintService {
       metadataJson: metadata === null ? null : JSON.stringify(metadata),
     })
   }
+}
+
+/** An item as a refusal names it: its key (DL-12) when its board has a prefix, else its title. */
+function itemLabel(keyPrefix: string | null | undefined, idea: Idea): string {
+  return keyPrefix && idea.itemNumber !== null
+    ? `${keyPrefix}-${idea.itemNumber}`
+    : `'${idea.title}'`
+}
+
+/** A 422 about one item: the code, and the item's key leading the message on `ideaIds`. */
+function itemRefusal(code: string, label: string, reason: string): UnprocessableError {
+  const message = `${label}: ${reason}`
+  return new UnprocessableError(code, message, { ideaIds: [message] })
 }
 
 function idOf(entity: { readonly id: string }): string {
