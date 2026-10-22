@@ -222,6 +222,7 @@ What survives cutover is `SPEC/` and `tools/golden`.
 - Feature branches: `feature/<NNN>-<short-description>`.
 - Flow: feature branch → `dev` → `main`. Report the merge commit hash.
 - Commit at logical checkpoints — a finished feature or slice.
+- Open a pull request as ready for review once its work is finished and its checks pass; use a draft only while it is still in progress or waiting on a decision. (Owner, 2026-10-22.)
 
 ## Multi-Agent Worktree Workflow
 
