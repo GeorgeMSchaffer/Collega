@@ -94,7 +94,13 @@ export function boardTakesIdeaType(
   ideaTypeId: string,
 ): boolean {
   const allowed = board.allowedIdeaTypeIds ?? []
-  return !board.ideaFeaturesEnabled || allowed.length === 0 || allowed.includes(ideaTypeId)
+  // Lowercased: a GUID from the request keeps the caller's case, and PostgreSQL matches either.
+  const id = ideaTypeId.toLowerCase()
+  return (
+    !board.ideaFeaturesEnabled ||
+    allowed.length === 0 ||
+    allowed.some((allowedId) => allowedId.toLowerCase() === id)
+  )
 }
 
 /**
