@@ -805,6 +805,9 @@ export type IssueTask = {
 /** An active member of the organization, for the sprint owner and task assignee pickers. */
 export type MemberOption = { id: string; name: string }
 
+/** A member a comment can @mention: the API resolves a mention by email address. */
+export type MentionCandidate = MemberOption & { email: string }
+
 /**
  * A named, dated theme that Issues are grouped under — a lens over the delivery set, not a
  * container that owns it (`SPEC/20-feature-issues-and-delivery.md` Slice 2).
