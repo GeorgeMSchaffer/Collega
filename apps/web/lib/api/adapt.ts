@@ -540,6 +540,9 @@ export function toIdea(wire: WireIdeaListItem): Idea {
     hasUpvoted: wire.hasUpvoted,
     effort: EFFORTS.find((candidate) => candidate === wire.effort) ?? null,
     ...toItemLinks(wire),
+    ...(wire.sprint !== undefined && {
+      sprint: wire.sprint ? { id: wire.sprint.sprintId, name: wire.sprint.name } : null,
+    }),
   }
 }
 
