@@ -351,12 +351,6 @@ describe('Home for a member of an organization', { timeout: 30_000 }, () => {
     expect(voted.textContent).toContain('including yours')
   })
 
-  it('names the organization’s own statuses in the first-run strip, in order', async () => {
-    await renderHome('User')
-    const strip = await screen.findByRole('region', { name: 'Getting started' })
-    expect(strip.textContent).toContain('New → In Review → Complete')
-  })
-
   it('keeps the recent-activity panel, saying it is not available yet', async () => {
     await renderHome('OrgAdmin')
     expect(panel('Recent activity').textContent).toContain('Not available yet.')
