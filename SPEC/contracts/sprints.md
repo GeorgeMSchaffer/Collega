@@ -149,7 +149,7 @@ The Board References work board draws a sprint header (name, dates, state, tasks
 
 ## Backlog and sprint planning (proposed 2026-10-22)
 
-*Specified in `SPEC/20-feature-task-backlog-and-sprint-planning.md` (decided 2026-10-22, `SPEC/decisions.md` "Tasks get a Backlog and sprints are planned from it"). The contract text is written for owner review and is **not built**. Everything here is for a board sprint (`boardId` set); org-wide sprints are untouched.*
+*Specified in `SPEC/20-feature-task-backlog-and-sprint-planning.md` (decided 2026-10-22, `SPEC/decisions.md` "Tasks get a Backlog and sprints are planned from it"). The contract text is written for owner review. **`ideaIds` on create and `PUT /boards/{boardId}/sprint-assignments` are built in slice 324** (QA in 325). Everything here is for a board sprint (`boardId` set); org-wide sprints are untouched.*
 
 **What already exists and is reused unchanged:** the board backlog and a sprint's cards (`GET /api/v1/boards/{boardId}/ideas?sprintId=none|{sprintId}`), the `sprint` object on every board idea item, a single assignment (`PUT /api/v1/ideas/{ideaId}/sprint`, `contracts/delivery.md`), `ideaCount`, and per-board sprint list and create. The sections below add only what those cannot do.
 

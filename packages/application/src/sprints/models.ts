@@ -11,6 +11,11 @@ export type CreateSprintCommand = {
   readonly ownerUserId: string | null
 }
 
+/** A board sprint created with its tasks in one commit (`ideaIds`, at most 200). */
+export type CreateBoardSprintCommand = CreateSprintCommand & {
+  readonly ideaIds?: readonly string[] | undefined
+}
+
 export type UpdateSprintCommand = CreateSprintCommand
 
 // Results ----------------------------------------------------------------------------------

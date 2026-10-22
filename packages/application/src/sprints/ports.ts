@@ -29,6 +29,9 @@ export interface SprintRepository {
 export interface SprintIssuesPort {
   listBySprint(sprintId: string): Promise<readonly Idea[]>
 
+  /** The live items among `ideaIds`, in no particular order. */
+  listByIds(ideaIds: readonly string[]): Promise<readonly Idea[]>
+
   /** `issueCount`/`doneCount` per sprint, in one query - the sprint list renders both for every
    * row, and a per-row count would be the N+1 the delivery reads were written to avoid. A board
    * sprint counts an item done when it sits in a final lane of its own board; a sprint with no

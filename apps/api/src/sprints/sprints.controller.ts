@@ -14,16 +14,31 @@ import {
   UseGuards,
 } from '@nestjs/common'
 import { AuthGuard } from '../auth/auth.guard.js'
-import { RequestValidationError } from '../common/errors/request-validation.error.js'
-import { optional, optionalGuid } from '../common/request-values.js'
+import { displayName, RequestValidationError } from '../common/errors/request-validation.error.js'
+import { guidOrEmpty, optional, optionalGuid } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
 type SprintBody = {
+  ideaIds?: unknown
   name?: unknown
   goal?: unknown
   startDate?: unknown
   endDate?: unknown
   ownerUserId?: unknown
+}
+
+type AssignmentBody = { ideaIds?: unknown; sprintId?: unknown; statusId?: unknown }
+
+/** A body array of GUIDs: absent is `null`, a non-array is refused, a non-GUID element becomes the
+ * empty GUID so it names no item (the application's keyed 400) instead of reaching a `uuid` column. */
+function guidList(field: string, value: unknown): readonly string[] | null {
+  if (value === undefined || value === null) {
+    return null
+  }
+  if (!Array.isArray(value)) {
+    throw new RequestValidationError({ [field]: [`${displayName(field)} is invalid.`] })
+  }
+  return value.map(guidOrEmpty)
 }
 
 /** One sprint with the Issues assigned to it - see `getById` for why the two are composed here. */
@@ -121,7 +136,25 @@ export class SprintsController {
     @Param('boardId', UuidParamPipe) boardId: string,
     @Body() body: SprintBody,
   ): Promise<SprintItem> {
-    return this.sprints.createForBoard(boardId, toCommand(body))
+    const ideaIds = guidList('ideaIds', body.ideaIds)
+    return this.sprints.createForBoard(boardId, {
+      ...toCommand(body),
+      ...(ideaIds === null ? {} : { ideaIds }),
+    })
+  }
+
+  /** Bulk add, move or return to the backlog; `statusId` is a lane drop. All or nothing. */
+  @Put('boards/:boardId/sprint-assignments')
+  @HttpCode(204)
+  async assign(
+    @Param('boardId', UuidParamPipe) boardId: string,
+    @Body() body: AssignmentBody,
+  ): Promise<void> {
+    await this.ideas.assignBoardSprints(boardId, {
+      ideaIds: guidList('ideaIds', body.ideaIds) ?? [],
+      sprintId: optionalGuid(body.sprintId),
+      statusId: optionalGuid(body.statusId),
+    })
   }
 
   @Post('organizations/:organizationId/sprints')
