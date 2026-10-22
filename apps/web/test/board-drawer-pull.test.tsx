@@ -75,7 +75,6 @@ function drawer(pull: PullSetup | undefined, over: Partial<BoardFormData> = {}) 
     boardId: null,
     name: '',
     description: '',
-    userStatusMoves: true,
     swimlaneIds: ['s-new', 's-done'],
     statuses: STATUSES,
     ...(pull ? { pull } : {}),

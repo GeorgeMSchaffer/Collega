@@ -32,13 +32,13 @@ beforeEach(() => {
 })
 
 describe('quickAddBoard', () => {
-  it('posts the board with an empty description, user moves off and the two lanes in order', async () => {
+  it('posts the board with an empty description, user moves on and the two lanes in order', async () => {
     post.mockResolvedValue({ boardId: 'b-9' })
     await quickAddBoard('Assembly', ['st-1', 'st-2'])
     expect(post).toHaveBeenCalledExactlyOnceWith('/organizations/org-1/boards', {
       name: 'Assembly',
       description: '',
-      allowUserStatusUpdate: false,
+      allowUserStatusUpdate: true,
       swimlanes: [
         { statusId: 'st-1', order: 0 },
         { statusId: 'st-2', order: 1 },

@@ -84,7 +84,6 @@ const FORM: BoardFormData = {
   boardId: 'b-1',
   name: 'Discovery',
   description: '',
-  userStatusMoves: false,
   swimlaneIds: ['s-new', 's-done'],
   laneFlags: { 's-new': { ...NONE, referencesBoardId: 'b-impl' } },
   laneIdeaCounts: {},

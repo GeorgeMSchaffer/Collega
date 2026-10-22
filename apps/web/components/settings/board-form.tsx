@@ -46,7 +46,6 @@ export function BoardForm({
   boardId,
   defaultName = '',
   defaultDescription = '',
-  userStatusMoves,
   swimlaneIds,
   laneFlags,
   laneIdeaCounts,
@@ -61,7 +60,6 @@ export function BoardForm({
   boardId: string | null
   defaultName?: string
   defaultDescription?: string
-  userStatusMoves: boolean
   swimlaneIds: string[]
   /** The board's lane flags as loaded, keyed by status id, sent back on save so they survive. */
   laneFlags?: Readonly<Record<string, LaneFlags>> | undefined
@@ -97,7 +95,6 @@ export function BoardForm({
               boardId={boardId}
               defaultName={defaultName}
               defaultDescription={defaultDescription}
-              userStatusMoves={userStatusMoves}
               swimlaneIds={swimlaneIds}
               laneFlags={laneFlags}
               laneIdeaCounts={laneIdeaCounts}
@@ -198,7 +195,6 @@ export function BoardFields({
   boardId,
   defaultName = '',
   defaultDescription = '',
-  userStatusMoves,
   swimlaneIds,
   laneFlags,
   laneIdeaCounts = {},
@@ -212,7 +208,6 @@ export function BoardFields({
   boardId: string | null
   defaultName?: string
   defaultDescription?: string
-  userStatusMoves: boolean
   swimlaneIds: string[]
   /** Posted as one hidden field so a save returns each lane's flags; absent on create. */
   laneFlags?: Readonly<Record<string, LaneFlags>> | undefined
@@ -298,25 +293,6 @@ export function BoardFields({
           {references && references.referencedBy.length > 0 && !ideaFeatures
             ? 'Off, because this board is the target of a reference. Cards here show title, description, assignees, tags, sprint and blockers. An Org Admin can turn it on.'
             : 'Upvotes, idea types and their fields, and AI assist. On for ordinary boards.'}
-        </p>
-      </div>
-
-      <div className="mb-4">
-        <span className="flex items-start gap-2">
-          <input
-            type="checkbox"
-            id="user-moves"
-            name="userStatusMoves"
-            defaultChecked={userStatusMoves}
-            className="mt-0.5"
-          />
-          <label htmlFor="user-moves" className="text-sm font-medium">
-            Let Users move ideas between statuses on this board
-          </label>
-        </span>
-        <p className="m-0 mt-1 max-w-prose text-xs text-muted-foreground">
-          With this off, only administrators can change an idea&rsquo;s status here. Read Only
-          accounts can never move anything, on any board.
         </p>
       </div>
 

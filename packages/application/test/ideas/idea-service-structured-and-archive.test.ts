@@ -267,8 +267,8 @@ describe('IdeaService answers a role refusal with 403 even on an archived board'
       (h) => h.service.promote('idea-1', { effort: 'Medium', sprintId: null, note: null }),
     ],
     [
-      'a User moving on a board that does not opt users in',
-      () => member(ORG_A, AUTHOR),
+      'Read Only moving',
+      () => readOnly(ORG_A),
       (h) => h.service.changeStatus('idea-1', { statusId: STATUS_2 }),
     ],
   ]

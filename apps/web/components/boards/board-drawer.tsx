@@ -25,7 +25,6 @@ export type BoardFormData = {
   boardId: string | null
   name: string
   description: string
-  userStatusMoves: boolean
   swimlaneIds: string[]
   /** The board's lane flags as loaded, sent back on save so the save does not clear them. */
   laneFlags?: Readonly<Record<string, LaneFlags>> | undefined
@@ -164,7 +163,6 @@ export function BoardDrawer({
           boardId={form.boardId}
           defaultName={form.name}
           defaultDescription={form.description}
-          userStatusMoves={form.userStatusMoves}
           swimlaneIds={form.swimlaneIds}
           laneFlags={form.laneFlags}
           laneIdeaCounts={form.laneIdeaCounts}
@@ -250,7 +248,6 @@ function BoardFacts({
     ['Lanes', board.laneCount],
     ['Created', board.createdOn],
     ['By', board.createdBy ?? '—'],
-    ['User status moves', board.userStatusMoves ? 'Allowed' : 'Admins only'],
     ['Key prefix', board.keyPrefix ?? '—'],
     ['Idea features', board.ideaFeaturesEnabled ? 'On' : 'Off'],
     ['Status', board.archivedOn ? `Archived ${board.archivedOn}` : statusLabel(board)],

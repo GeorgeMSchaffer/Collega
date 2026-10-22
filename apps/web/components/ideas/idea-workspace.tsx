@@ -80,7 +80,7 @@ type BoardContext = {
    */
   referenceBoards?: Readonly<Record<string, { name: string; label: string }>>
   isArchived: boolean
-  /** The role and the board's `allowUserStatusUpdate`, decided by the page. */
+  /** The role and the board's archived state, decided by the page. */
   canMove: boolean
   /** Whether the lane headers carry move left / right: an Org Admin's, hidden for other roles. */
   canReorder: boolean
