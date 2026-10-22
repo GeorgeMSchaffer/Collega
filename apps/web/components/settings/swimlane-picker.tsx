@@ -109,7 +109,12 @@ export function SwimlanePicker({
       onFlags?.(statusId, { referencesBoardId: null, autoCreateTask: false })
       if (was.autoCreateTask) setAutoOff((current) => new Set(current).add(statusId))
     } else {
-      onFlags?.(statusId, { referencesBoardId })
+      // A reference lane auto-creates by default (2026-10-22); switching between boards keeps the
+      // person's choice.
+      onFlags?.(statusId, {
+        referencesBoardId,
+        ...(was.referencesBoardId === null ? { autoCreateTask: true } : {}),
+      })
       setAutoOff((current) => {
         const next = new Set(current)
         next.delete(statusId)
@@ -286,7 +291,14 @@ export function SwimlanePicker({
                 </div>
 
                 <div className="min-w-48 flex-1">
+                  <label
+                    htmlFor={`swimlane-select-${status.id}`}
+                    className="mb-1 block text-xs text-muted-foreground"
+                  >
+                    References board
+                  </label>
                   <Select
+                    id={`swimlane-select-${status.id}`}
                     aria-label={`References board for ${status.name}`}
                     value={lane.referencesBoardId ?? ''}
                     disabled={selectWhy !== null || isTarget}
