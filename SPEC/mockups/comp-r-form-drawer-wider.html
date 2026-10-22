@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="en" data-proto-theme="graphite">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Comp R: Backlog "Add issue", approach A (Drawer) (2026-10-15). Throwaway review comp for SPEC/20-feature-issues-and-delivery.md
+     "Backlog: add and edit". Theme tokens copied from comp-r-board-pull-in.html (same palette), Graphite by default.
+     Type scale: 0.9rem floor, each step x1.125. Self-contained; sample data inlined; nothing saves. -->
+<title>Form drawer width: Collega Backlog Add Issue Comp A</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&family=Figtree:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Sans:wght@400;500;600;700&family=Lexend:wght@500;600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=Schibsted+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root,:root[data-proto-theme="portico"]{--suggest:#3B6E51;--suggest-tint:#E3EEE7;color-scheme:light;
+--bg:#F1F5F5;--ink:#16292E;--ink2:#2C4247;--muted:#56696D;--line:#DDE6E7;--line2:#C6D3D5;--card:#FFFFFF;--soft:#E8EFF0;--rowh:#F6FAFA;--thead:#F7FAFA;--facts:#F6FAFA;
+--pri:#1F6A80;--pri-h:#185769;--pri-t:#1B5F73;--pri-tint:#E1EEF1;--pri-ink:#FFFFFF;--vote:#F2B28A;--vote-ink:#16292E;
+--hot:#B64A34;--hot-t:#963B28;--hot-tint:#F6E1DB;--ok-t:#3B6E51;--ok-tint:#E3EEE7;--warn-t:#8E4A1F;--warn-tint:#FCEBDF;
+--side:#FFFFFF;--side-ink:#2C4247;--side-line:#DDE6E7;--side-hover:#EEF4F4;--side-on:#E1EEF1;--side-on-ink:#16292E;--bar:#16292E;--bar-ink:#E3EEF0;
+--tag:#E1EEF1;--tag-ink:#1B5566;--av1:#1F6A80;--av1i:#FFFFFF;--av2:#F2B28A;--av2i:#16292E;--av3:#7A5AA6;--av3i:#FFFFFF;--av4:#4F8A6A;--av4i:#FFFFFF;
+--shadow:22 41 46;--r:14px;--rs:10px;--display:"Outfit",ui-sans-serif,system-ui,sans-serif;--body:"Figtree",ui-sans-serif,system-ui,sans-serif;--mono:"DM Mono",ui-monospace,monospace;--h-weight:600}
+:root[data-proto-theme="sera"]{--suggest:#2E6E4C;--suggest-tint:#E1EFE7;--bg:#F3F4F7;--ink:#1C2236;--ink2:#343B52;--muted:#5C6378;--line:#E2E4EC;--line2:#CCD0DC;--soft:#ECEEF3;--rowh:#F7F8FB;--thead:#F7F8FB;--facts:#F5F6FA;
+--pri:#3450A8;--pri-h:#2A4290;--pri-t:#2E4799;--pri-tint:#E6EAF6;--vote:#E3B04B;--vote-ink:#1C2236;--hot:#B8553F;--hot-t:#94402D;--hot-tint:#F6E3DE;--ok-t:#2E6E4C;--ok-tint:#E1EFE7;--warn-t:#83590C;--warn-tint:#FAF0DA;
+--side:#1F2540;--side-ink:#CDD1E3;--side-line:#2D3454;--side-hover:#272E4D;--side-on:#2E3760;--side-on-ink:#FFFFFF;--bar:#0F1426;--bar-ink:#E6E9F5;--tag:#ECEEF3;--tag-ink:#343B52;
+--av1:#3450A8;--av1i:#FFFFFF;--av2:#E3B04B;--av2i:#1C2236;--av3:#B8553F;--av3i:#FFFFFF;--av4:#3E8A62;--av4i:#FFFFFF;--shadow:28 34 54;--r:16px;--display:"Bricolage Grotesque",ui-sans-serif,sans-serif;--body:"DM Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="lagoon"]{--suggest:#2F5F9E;--suggest-tint:#E3ECF8;--bg:#F3F4EF;--ink:#13302B;--ink2:#2A4640;--muted:#5A6B66;--line:#E1E5DF;--line2:#CBD3CB;--soft:#EAEFEA;--rowh:#F7F9F5;--thead:#F7F9F5;--facts:#F5F8F3;
+--pri:#0E6B5C;--pri-h:#0A5649;--pri-t:#0C6154;--pri-tint:#DCEFEA;--vote:#F08A6C;--vote-ink:#13302B;--hot:#C2412D;--hot-t:#9E3322;--hot-tint:#F9E1DA;--ok-t:#2F6B3F;--ok-tint:#E2F0E4;--warn-t:#7A5410;--warn-tint:#F8EDD3;
+--side:#FFFFFF;--side-ink:#2A4640;--side-line:#E1E5DF;--side-hover:#EFF3EE;--side-on:#DCEFEA;--side-on-ink:#13302B;--bar:#0F2A25;--bar-ink:#E2F0EC;--tag:#DCEFEA;--tag-ink:#0C5549;
+--av1:#0E6B5C;--av1i:#FFFFFF;--av2:#F08A6C;--av2i:#13302B;--av3:#3D6FB6;--av3i:#FFFFFF;--av4:#8C6A1F;--av4i:#FFFFFF;--shadow:19 48 43;--r:16px;--rs:12px;--display:"Lexend",ui-sans-serif,sans-serif;--body:"Nunito Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:600}
+:root[data-proto-theme="terrazzo"]{--suggest:#3F6B2E;--suggest-tint:#E6F2DF;--bg:#F5F6F8;--ink:#1E2733;--ink2:#36414F;--muted:#5E6978;--line:#E3E6EB;--line2:#CDD2DA;--soft:#EDF0F3;--rowh:#F8F9FB;--thead:#F8F9FB;--facts:#F6F7F9;
+--pri:#3D5A80;--pri-h:#324B6B;--pri-t:#35507A;--pri-tint:#E4EAF2;--vote:#F4C7C3;--vote-ink:#1E2733;--hot:#B84A4A;--hot-t:#963636;--hot-tint:#F7E2E2;--ok-t:#3F6B2E;--ok-tint:#E6F2DF;--warn-t:#7F5A12;--warn-tint:#F7EDD6;
+--side:#FFFFFF;--side-ink:#36414F;--side-line:#E3E6EB;--side-hover:#F1F3F6;--side-on:#E4EAF2;--side-on-ink:#1E2733;--bar:#1E2733;--bar-ink:#E8ECF2;--tag:#F4E4E1;--tag-ink:#7A3B34;
+--av1:#3D5A80;--av1i:#FFFFFF;--av2:#F4C7C3;--av2i:#1E2733;--av3:#4E7A40;--av3i:#FFFFFF;--av4:#7A5AA6;--av4i:#FFFFFF;--shadow:30 39 51;--r:8px;--rs:6px;--display:"Schibsted Grotesk",ui-sans-serif,sans-serif;--body:"Public Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="graphite"]{color-scheme:dark;--metric:#5CC8E0;--suggest:#5CC8E0;--suggest-tint:#0F1D21;--suggest-line:#2E6A78;
+--bg:#0F1113;--ink:#E6E8EA;--ink2:#C4CAD0;--muted:#9BA3AB;--line:#22272C;--line2:#2C3238;--card:#16191C;--soft:#1C2024;--rowh:#1A1E22;--thead:#121518;--facts:#1A1E22;--field:#0F1113;
+--pri:#F5A524;--pri-h:#FFC35C;--pri-t:#F5A524;--pri-tint:#2A2418;--pri-ink:#16120A;--vote:#2A2418;--vote-ink:#F3E3C3;--me:#2A2418;--me-ink:#F3E3C3;
+--hot:#E5484D;--hot-t:#FF8A8E;--hot-tint:#2E1719;--ok-t:#58C781;--ok-tint:#13241A;--warn-t:#F5B456;--warn-tint:#2A2418;
+--side:#121518;--side-ink:#AEB5BC;--side-line:#22272C;--side-hover:#1A1E22;--side-on:#1C2024;--side-on-ink:#E6E8EA;--bar:#0B0D0F;--bar-ink:#AEB5BC;--tag:#1C2024;--tag-ink:#C4CAD0;
+--av1:#2A2418;--av1i:#F5A524;--av2:#153038;--av2i:#5CC8E0;--av3:#262B30;--av3i:#C4CAD0;--av4:#1C2A20;--av4i:#58C781;--shadow:0 0 0;--r:8px;--rs:6px;
+--display:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;--h-weight:600}
+:root{--metric:var(--pri);--field:var(--card);--suggest-line:var(--suggest);--me:var(--pri);--me-ink:var(--pri-ink);
+--t0:.9rem;--t1:1.013rem;--t2:1.139rem;--t3:1.281rem;--t4:1.442rem}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:var(--t1)/1.5 var(--body);min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.i{width:16px;height:16px;flex:none}
+h1,h2,h3{text-wrap:balance}
+
+/* review chrome */
+.proto{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:8px 16px;background:var(--bar);color:var(--bar-ink);font-size:var(--t0);position:sticky;top:0;z-index:40}
+.proto b{font-family:var(--display);font-weight:600}
+.seg,.segw{display:flex;flex-wrap:wrap;align-items:center;gap:6px;flex:1;border:0;margin:0;padding:0;min-width:0}
+.seg legend,.segw legend{float:left;margin-right:8px;padding:0;font-weight:600}
+.seg button,.segw button{border:1px solid color-mix(in srgb,var(--bar-ink) 30%,transparent);background:transparent;color:var(--bar-ink);border-radius:999px;padding:2px 10px;cursor:pointer;font-size:var(--t0);min-height:28px}
+.seg button:hover,.segw button:hover{background:color-mix(in srgb,var(--bar-ink) 15%,transparent)}
+.seg button[aria-pressed="true"],.segw button[aria-pressed="true"]{background:var(--bar-ink);color:var(--bar);border-color:var(--bar-ink);font-weight:600}
+.themepick{display:inline-flex;align-items:center;gap:6px}
+.themepick select{border:1px solid color-mix(in srgb,var(--bar-ink) 40%,transparent);border-radius:999px;padding:3px 10px;background:var(--bar);color:var(--bar-ink);font-size:var(--t0)}
+
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 56px;display:flex;flex-direction:column;gap:20px}
+.intro h1{margin:0;font:var(--h-weight) var(--t4)/1.2 var(--display);letter-spacing:-.02em}
+.intro p{margin:6px 0 0;color:var(--ink2);max-width:80ch;font-size:var(--t0)}
+.statename{margin:0;font:500 var(--t0) var(--mono);color:var(--muted)}
+
+/* the app frame: desk shell with the drawer pinned inside it */
+.app{position:relative;border:1px solid var(--line2);border-radius:var(--r);background:var(--bg);overflow:hidden;height:min(860px,calc(100vh - 150px));min-height:640px;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--line);background:var(--side);font-size:var(--t0);color:var(--muted)}
+.topbar b{color:var(--ink);font-weight:500}
+.page{flex:1;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.ph{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-start;justify-content:space-between}
+.ph h2{margin:0;font:var(--h-weight) var(--t4)/1.2 var(--display);letter-spacing:-.01em}
+.ph p{margin:4px 0 0;color:var(--ink2);font-size:var(--t0);max-width:62ch}
+.addwrap{display:flex;flex-direction:column;align-items:flex-end;gap:4px;max-width:260px}
+.addwrap .why{margin:0;font-size:var(--t0);color:var(--muted);text-align:right}
+.addwrap .why[hidden]{display:none}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:600;font-size:var(--t0);min-height:36px;padding:0 14px;border-radius:var(--rs);border:1px solid var(--line2);background:var(--card);color:var(--ink);cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--pri)}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}.btn.pri:hover{background:var(--pri-h)}
+.btn[aria-disabled="true"]{background:var(--soft);color:var(--muted);border:1px dashed var(--line2);cursor:not-allowed}
+.btn[aria-disabled="true"]:hover{border-color:var(--line2);background:var(--soft)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--pri-t)}
+.btn.ghost:hover{background:var(--soft);border-color:transparent}
+.btn.sm{min-height:32px;padding:0 10px}
+.iconbtn{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer}
+.iconbtn:hover{background:var(--soft);color:var(--ink)}
+
+.box{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:auto;min-width:0}
+table{border-collapse:collapse;width:100%;font-size:var(--t0)}
+th{font:500 var(--t0) var(--body);color:var(--muted);text-align:left;padding:9px 14px;background:var(--thead);border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px 14px;border-top:1px solid var(--line);vertical-align:middle}
+tbody tr:first-child td{border-top:0}
+td.ttl{font-weight:600;font-size:var(--t1)}
+td .key{display:block;font:500 var(--t0) var(--mono);color:var(--muted)}
+td.num,th.num{text-align:right}
+td.act{text-align:right;white-space:nowrap}
+tr.new{background:var(--ok-tint);box-shadow:inset 3px 0 0 var(--ok-t)}
+.newtag{display:inline-block;margin-left:8px;font-size:var(--t0);font-weight:600;color:var(--ok-t)}
+.dstat{display:inline-flex;align-items:center;gap:6px}
+.dstat .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.effbar{display:inline-flex;gap:2px;vertical-align:middle;margin-right:6px}
+.effbar i{width:10px;height:4px;border-radius:1px;background:var(--line2);display:block}
+.effbar.e1 i:nth-child(1),.effbar.e2 i:nth-child(-n+2),.effbar.e3 i{background:var(--metric)}
+.av{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;font-size:var(--t0);font-weight:600;background:var(--av1);color:var(--av1i)}
+.av.b{background:var(--av2);color:var(--av2i)}.av.n{background:transparent;border:1px dashed var(--line2);color:var(--muted)}
+
+/* scrim + drawer */
+.scrim{position:absolute;inset:0;background:rgb(var(--shadow)/.55);z-index:5}
+.scrim[hidden],.drawer[hidden]{display:none}
+.drawer{position:absolute;top:0;right:0;bottom:0;width:min(100%,var(--dw,520px));z-index:6;transition:width .15s;background:var(--card);border-left:1px solid var(--line2);box-shadow:-12px 0 32px rgb(var(--shadow)/.3);display:flex;flex-direction:column;min-width:0}
+.dhead{display:flex;align-items:flex-start;gap:8px;padding:16px 20px 12px;border-bottom:1px solid var(--line)}
+.dhead .eb{font:500 var(--t0) var(--mono);color:var(--muted);margin:0}
+.dhead h3{margin:2px 0 0;font:var(--h-weight) var(--t3)/1.25 var(--display)}
+.dhead .x{margin-left:auto}
+.dform{display:flex;flex-direction:column;flex:1;min-height:0}
+.dbody{flex:1;overflow:auto;padding:16px 20px;display:flex;flex-direction:column;gap:22px;min-width:0}
+.dfoot{display:flex;flex-direction:column;gap:8px;padding:12px 20px;border-top:1px solid var(--line);background:var(--thead)}
+.dfoot .acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.dfoot .sum{margin:0;font-size:var(--t0);color:var(--hot-t);font-weight:600;display:flex;gap:6px;align-items:center}
+.dfoot .sum[hidden]{display:none}
+.sect{display:flex;flex-direction:column;gap:17px;border:0;margin:0;padding:0;min-width:0}
+.sect[hidden]{display:none}
+.sect>h4{margin:0;font:600 var(--t2)/1.3 var(--display);padding-bottom:6px;border-bottom:1px solid var(--line)}
+.sect>p{margin:-8px 0 0;font-size:var(--t0);color:var(--muted)}
+
+.field{display:flex;flex-direction:column;gap:6px;min-width:0;border:0;margin:0;padding:0}
+.field>label,.field>legend{font-weight:600;font-size:var(--t0);color:var(--ink2);padding:0}
+.req{color:var(--hot-t);font-weight:600}
+.opt{color:var(--muted);font-weight:400}
+.field input:not([type=radio]):not([type=checkbox]),.field select,.field textarea{border:1px solid var(--line2);border-radius:var(--rs);min-height:38px;padding:7px 10px;font-size:var(--t1);line-height:1.45;width:100%;background:var(--field);color:var(--ink)}
+.field textarea{min-height:76px;resize:vertical}
+.field .help{color:var(--muted);font-size:var(--t0)}
+.field .err{display:none;gap:6px;align-items:flex-start;color:var(--hot-t);font-size:var(--t0);font-weight:600}
+.field.bad .err{display:flex}
+.field.bad input,.field.bad select,.field.bad textarea{border-color:var(--hot)}
+.field.bad .effgroup{box-shadow:0 0 0 1px var(--hot)}
+.err svg{margin-top:3px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:17px 14px}
+@media (max-width:560px){.row2{grid-template-columns:1fr}}
+::placeholder{color:var(--muted);opacity:1}
+
+/* effort: three radio cards, the bar plus the word, so the word carries the meaning */
+.effgroup{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-radius:var(--rs)}
+.effopt{position:relative}
+.effopt input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer;width:100%;height:100%}
+.effopt label{display:flex;flex-direction:column;gap:4px;align-items:flex-start;padding:9px 12px;border:1px solid var(--line2);border-radius:var(--rs);background:var(--field);font-size:var(--t1);font-weight:600;color:var(--ink);cursor:pointer;min-height:64px}
+.effopt label .effbar{margin:0}
+.effopt label small{font-weight:400;font-size:var(--t0);color:var(--muted)}
+.effopt input:checked+label{border-color:var(--pri);background:var(--pri-tint)}
+.effopt input:focus-visible+label{outline:2px solid var(--pri);outline-offset:2px}
+.effopt input:disabled,.effopt input:disabled+label{cursor:not-allowed}
+@media (max-width:480px){.effgroup{grid-template-columns:1fr}.effopt label{flex-direction:row;align-items:center;min-height:46px}.effopt label small{margin-left:auto}}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);background:var(--soft);color:var(--ink2);border-radius:999px;padding:3px 12px;min-height:34px;font-size:var(--t0);cursor:pointer}
+.chips button[aria-pressed="true"]{background:var(--pri-tint);border-color:var(--pri);color:var(--ink);font-weight:600}
+.chips button[aria-pressed="true"]::before{content:"\2713"}
+.sols{display:flex;flex-direction:column;gap:10px}
+.cfields{display:flex;flex-direction:column;gap:17px}
+
+.spin{width:14px;height:14px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none;border-right-color:currentColor;opacity:.6}}
+.dbody[aria-busy="true"]{opacity:.65}
+
+.toast{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 18px;border-radius:999px;font-weight:600;z-index:10;font-size:var(--t0);display:flex;gap:8px;align-items:center;max-width:calc(100% - 32px)}
+.toast[hidden]{display:none}
+
+.notes{border:1px solid var(--line);border-left:4px solid var(--pri);background:var(--card);border-radius:var(--rs);padding:14px 18px}
+.notes h2{margin:0 0 8px;font:var(--h-weight) var(--t2)/1.3 var(--display)}
+.notes ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:var(--t0);color:var(--ink2);max-width:100ch}
+.notes b{color:var(--ink)}
+
+@media (max-width:700px){
+ .page{padding:14px}
+ .hide-s{display:none}
+ .topbar{padding:10px 14px}
+ .addwrap{align-items:stretch;max-width:none;width:100%}.addwrap .why{text-align:left}
+ .addwrap .btn{width:100%}
+ .app{height:auto;min-height:760px}
+ .drawer{width:100%}
+ .dhead,.dbody,.dfoot{padding-left:14px;padding-right:14px}
+}
+</style>
+
+<header class="proto">
+  <b>Comp R / Form drawer width</b>
+  <fieldset class="segw"><legend>Drawer width</legend>
+    <button type="button" data-w="520px" aria-pressed="true">Today 520px</button>
+    <button type="button" data-w="50vw" aria-pressed="false">50% of screen</button>
+  </fieldset>
+  <fieldset class="seg"><legend>Comp states</legend>
+    <button type="button" data-s="1" aria-pressed="true">1 List</button>
+    <button type="button" data-s="2" aria-pressed="false">2 Empty</button>
+    <button type="button" data-s="3" aria-pressed="false">3 Errors</button>
+    <button type="button" data-s="4" aria-pressed="false">4 Saving</button>
+    <button type="button" data-s="5" aria-pressed="false">5 Success</button>
+    <button type="button" data-s="6" aria-pressed="false">6 Read Only</button>
+    <button type="button" data-s="7" aria-pressed="false">7 Edit</button>
+  </fieldset>
+  <label class="themepick">Theme
+    <select id="theme"><optgroup label="Light"><option value="terrazzo">Terrazzo</option><option value="portico">Portico</option><option value="sera">Piazza Sera</option><option value="lagoon">Lagoon</option></optgroup><optgroup label="Dark"><option value="graphite">Graphite</option></optgroup></select></label>
+</header>
+
+<main class="wrap">
+  <div class="intro">
+    <h1>Add an issue straight to the Backlog</h1>
+    <p>Approach A: an Add issue button in the page header opens the same right-side drawer the Issue drawer uses, in create mode. Sample Acme Robotics data; nothing saves. Use the state bar above, or walk it live: press Add issue, submit empty, then fill it in.</p>
+    <p class="statename" id="statename" aria-live="polite"></p>
+  </div>
+
+  <div class="app" id="app">
+    <div class="topbar"><span>Delivery / <b>Backlog</b></span></div>
+    <div class="page" id="page">
+      <div class="ph">
+        <div>
+          <h2>Backlog</h2>
+          <p>Issues that are committed but not yet in a sprint, most upvoted first. Assigning a sprint moves the row; it is still the same idea, still carrying its history.</p>
+        </div>
+        <div class="addwrap">
+          <button type="button" class="btn pri" id="addbtn" aria-describedby="addwhy">
+            <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add issue</button>
+          <p class="why" id="addwhy" hidden>Read Only members cannot add issues.</p>
+        </div>
+      </div>
+      <div class="box">
+        <table>
+          <caption class="vh">Backlog issues, most upvoted first</caption>
+          <thead><tr>
+            <th scope="col">Issue</th><th scope="col">Effort</th><th scope="col" class="hide-s">Status</th><th scope="col" class="hide-s">Assignee</th><th scope="col" class="num">Votes</th><th scope="col"><span class="vh">Actions</span></th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="scrim" id="scrim" hidden></div>
+    <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dtitle" hidden>
+      <div class="dhead">
+        <div><p class="eb" id="deb"></p><h3 id="dtitle"></h3></div>
+        <button type="button" class="iconbtn x" id="dclose" aria-label="Close drawer"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <form class="dform" id="form" novalidate>
+        <div class="dbody" id="dbody">
+          <div class="field" id="f-title">
+            <label for="title">Title <span class="req" aria-hidden="true">*</span><span class="vh">(required)</span></label>
+            <input id="title" name="title" type="text" maxlength="120" autocomplete="off" aria-describedby="title-err">
+            <span class="err" id="title-err"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg>Enter a title.</span>
+          </div>
+
+          <fieldset class="sect" id="sec-delivery">
+            <h4>Delivery</h4>
+            <p>Where this issue sits in the plan. Board and status are not asked here.</p>
+            <fieldset class="field" id="f-effort">
+              <legend>Effort <span class="req" aria-hidden="true">*</span><span class="vh">(required)</span></legend>
+              <div class="effgroup" role="radiogroup" aria-describedby="effort-err" id="effgroup">
+                <div class="effopt"><input type="radio" name="effort" id="e-low" value="Low"><label for="e-low"><span class="effbar e1" aria-hidden="true"><i></i><i></i><i></i></span>Low <small>a day or two</small></label></div>
+                <div class="effopt"><input type="radio" name="effort" id="e-med" value="Medium"><label for="e-med"><span class="effbar e2" aria-hidden="true"><i></i><i></i><i></i></span>Medium <small>about a week</small></label></div>
+                <div class="effopt"><input type="radio" name="effort" id="e-high" value="High"><label for="e-high"><span class="effbar e3" aria-hidden="true"><i></i><i></i><i></i></span>High <small>a sprint or more</small></label></div>
+              </div>
+              <span class="err" id="effort-err"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg>Choose an effort.</span>
+            </fieldset>
+            <div class="field" id="f-sprint">
+              <label for="sprint">Sprint <span class="opt">(optional)</span></label>
+              <select id="sprint" name="sprint" aria-describedby="sprint-help">
+                <option>Backlog</option><option>Sprint 14 (active)</option><option>Sprint 15 (planned)</option>
+              </select>
+              <span class="help" id="sprint-help">Defaults to Backlog. Completed sprints are not listed.</span>
+            </div>
+          </fieldset>
+
+          <fieldset class="sect" id="sec-idea">
+            <h4>Idea details</h4>
+            <div class="field">
+              <label for="itype">Idea type</label>
+              <select id="itype" name="itype"><option>Process improvement</option><option>Feature request</option><option>Bug</option></select>
+            </div>
+            <div class="cfields" id="cfields" aria-live="polite"></div>
+            <div class="field">
+              <label for="impact">Business impact <span class="opt">(optional)</span></label>
+              <select id="impact" name="impact"><option value="">Not set</option><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select>
+            </div>
+            <div class="field"><label for="problem">Problem <span class="opt">(optional)</span></label><textarea id="problem" name="problem"></textarea></div>
+            <fieldset class="field">
+              <legend>Proposed solutions <span class="opt">(up to 5)</span></legend>
+              <div class="sols" id="sols"></div>
+              <div><button type="button" class="btn ghost sm" id="addsol"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add a solution</button></div>
+            </fieldset>
+            <div class="field"><label for="rationale">Impact rationale <span class="opt">(optional)</span></label><textarea id="rationale" name="rationale"></textarea></div>
+            <div class="field"><label for="summary">Summary <span class="opt">(optional)</span></label><textarea id="summary" name="summary"></textarea></div>
+            <fieldset class="field"><legend>Tags <span class="opt">(optional)</span></legend>
+              <div class="chips" id="tags"><button type="button" aria-pressed="false">Reporting</button><button type="button" aria-pressed="false">Handoffs</button><button type="button" aria-pressed="false">Customer</button><button type="button" aria-pressed="false">Quick win</button></div></fieldset>
+            <fieldset class="field"><legend>Assignees <span class="opt">(optional)</span></legend>
+              <div class="chips" id="people"><button type="button" aria-pressed="false">Maya Collaborator</button><button type="button" aria-pressed="false">Noah Contributor</button><button type="button" aria-pressed="false">Priya Admin</button></div></fieldset>
+          </fieldset>
+        </div>
+        <div class="dfoot">
+          <p class="sum" id="sum" role="alert" hidden><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg><span id="sumtxt"></span></p>
+          <div class="acts">
+            <button type="button" class="btn" id="cancel">Cancel</button>
+            <button type="submit" class="btn pri" id="submit">Add issue</button>
+          </div>
+        </div>
+      </form>
+    </aside>
+    <div class="toast" id="toast" role="status" hidden>
+      <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span id="toasttxt"></span></div>
+  </div>
+
+  <section class="notes" aria-labelledby="nh">
+    <h2 id="nh">Notes for the reviewer</h2>
+    <ol>
+      <li><b>Drawer width.</b> This comp compares 520px (the widest the form drawer gets today: <code>--drawer</code> is <code>clamp(380px, 28vw, 520px)</code>) with half the screen width (<code>width: 50vw</code>). Originally 520px, the widest the existing list-and-detail drawer gets, so the form borrows its chrome (scrim, header, close, pinned footer). Full width at 390px. The list stays visible behind the scrim, so the new row is seen in place after save.</li>
+      <li><b>Where Effort sits.</b> Directly under Title, in a short Delivery group, not at the foot of the long idea form. It is the one required field besides Title, so required fields sit together and an error never hides below the fold. Alternative: end of the form, next to the Add button.</li>
+      <li><b>One scroll or sectioned.</b> One scrolling body with two headed groups (Delivery, Idea details) and a pinned footer. Not tabs or steps: the form is long but linear and nothing has to be reached out of order.</li>
+      <li><b>Effort control.</b> Three radio cards with the app's effort bar plus the word and a rough size hint, so colour never carries the meaning. Native radios: arrow keys and one tab stop. The size hints are placeholder copy, to be confirmed.</li>
+      <li><b>Where the new row lands.</b> The list is ordered by votes, so a new issue (0 votes) lands at the bottom, highlighted and scrolled into view, with the toast. Picking a sprint other than Backlog means no row appears here; the toast names the sprint instead ("Issue added to Sprint 14").</li>
+      <li><b>Read Only.</b> The button stays visible but disabled (aria-disabled, so it can still take focus and be read) with the reason as visible text beside it, linked by aria-describedby. Row Edit actions are removed rather than disabled.</li>
+      <li><b>Edit mode.</b> Same drawer and fields minus the Delivery group (Effort, Sprint), and no Board or Status. Footer button reads Save changes. Effort remains editable where it is today.</li>
+      <li><b>Errors.</b> Messages sit directly under the failing control, tied to it with aria-describedby and aria-invalid; a one-line summary in the footer announces the count. Focus moves to the first invalid field.</li>
+    </ol>
+  </section>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const NAMES = ['', '1 Backlog list with the Add issue button', '2 Drawer open and empty, Effort unchosen', '3 Validation errors, Title and Effort missing', '4 Saving', '5 Success, new row highlighted, toast', '6 Read Only, button disabled with the reason', '7 Edit mode'];
+const EFF = { Low: 1, Medium: 2, High: 3 };
+const ROWS = [
+  { key: 'BKL-31', title: 'Standardize the intake checklist', effort: 'Low', who: 'MC', votes: 14 },
+  { key: 'BKL-28', title: 'Automate weekly reporting', effort: 'Medium', who: 'NC', votes: 11 },
+  { key: 'BKL-24', title: 'Validate the customer feedback loop', effort: 'Low', who: null, votes: 9 },
+  { key: 'BKL-19', title: 'Reduce manual handoffs', effort: 'High', who: null, votes: 7 }
+];
+const SAMPLE = { title: 'Add proactive alerts for stalled handoffs', effort: 'Medium', sprint: 'Backlog' };
+const CF = {
+  'Process improvement': [['Affected team', 'text', 'e.g. Customer success'], ['Hours saved per week', 'number', 'e.g. 6']],
+  'Feature request': [['Requesting customer', 'text', 'e.g. Northwind']],
+  'Bug': []
+};
+let state = 1, opener = null, newRow = null, mode = 'create', editRow = null, timer = null, sols = [''];
+
+document.querySelectorAll('[data-w]').forEach((b) => b.addEventListener('click', () => {
+  document.documentElement.style.setProperty('--dw', b.dataset.w)
+  document.querySelectorAll('[data-w]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)))
+}))
+const form = $('form'), drawer = $('drawer'), scrim = $('scrim');
+
+function renderRows() {
+  const list = newRow ? [...ROWS, newRow] : ROWS;
+  const ro = state === 6;
+  $('rows').innerHTML = list.map((r) => `<tr${r === newRow ? ' class="new" id="newrow"' : ''}>
+    <td class="ttl">${esc(r.title)}${r === newRow ? '<span class="newtag">Added</span>' : ''}<span class="key">${r.key}</span></td>
+    <td><span class="effbar e${EFF[r.effort]}" aria-hidden="true"><i></i><i></i><i></i></span>${r.effort}</td>
+    <td class="hide-s"><span class="dstat"><span class="dot" aria-hidden="true"></span>Pending</span></td>
+    <td class="hide-s">${r.who ? `<span class="av${r.who === 'NC' ? ' b' : ''}" title="${r.who === 'NC' ? 'Noah Contributor' : 'Maya Collaborator'}">${r.who}</span>` : '<span class="av n" title="Unassigned">&ndash;</span>'}</td>
+    <td class="num">${r.votes}</td>
+    <td class="act">${ro ? '' : `<button type="button" class="btn ghost sm" data-edit="${r.key}" aria-label="Edit ${esc(r.title)}">Edit</button>`}</td></tr>`).join('');
+}
+
+function renderSols() {
+  $('sols').innerHTML = sols.map((v, i) => `<input type="text" data-sol="${i}" aria-label="Proposed solution ${i + 1}" value="${esc(v)}" ${state === 4 ? 'disabled' : ''} style="border:1px solid var(--line2);border-radius:var(--rs);min-height:38px;padding:7px 10px;font-size:var(--t1);width:100%;background:var(--field);color:var(--ink)">`).join('');
+  $('addsol').hidden = sols.length >= 5;
+}
+function renderCF() {
+  $('cfields').innerHTML = CF[$('itype').value].map(([l, t, p], i) => `<div class="field"><label for="cf${i}">${l} <span class="opt">(optional)</span></label><input id="cf${i}" type="${t}" placeholder="${p}" ${state === 4 ? 'disabled' : ''}></div>`).join('');
+}
+
+function resetForm() {
+  form.reset();
+  document.querySelectorAll('.chips button').forEach((b) => b.setAttribute('aria-pressed', 'false'));
+  sols = ['']; renderSols(); renderCF(); clearErrors();
+}
+function fill(v) {
+  $('title').value = v.title;
+  if (v.effort) form.querySelector(`input[name=effort][value=${v.effort}]`).checked = true;
+  if (v.sprint) $('sprint').value = v.sprint;
+  $('problem').value = 'Handoffs between intake and delivery stall without anyone noticing until a customer asks.';
+  sols = ['Alert the owner after 2 idle days', 'Weekly digest of stalled items']; renderSols();
+  $('rationale').value = 'Stalled handoffs are the main source of late replies.';
+  $('summary').value = 'Notify owners when a handoff sits idle.';
+  $('impact').value = 'High';
+  [...$('tags').children][1].setAttribute('aria-pressed', 'true');
+  [...$('people').children][0].setAttribute('aria-pressed', 'true');
+  renderCF(); const c = $('cf0'); if (c) c.value = 'Customer success';
+}
+
+function clearErrors() {
+  ['f-title', 'f-effort'].forEach((id) => $(id).classList.remove('bad'));
+  $('title').removeAttribute('aria-invalid'); $('effgroup').removeAttribute('aria-invalid'); $('sum').hidden = true;
+}
+function validate(live) {
+  clearErrors();
+  const bad = [];
+  if (!$('title').value.trim()) { bad.push('Title'); $('f-title').classList.add('bad'); $('title').setAttribute('aria-invalid', 'true'); }
+  if (mode === 'create' && !form.querySelector('input[name=effort]:checked')) { bad.push('Effort'); $('f-effort').classList.add('bad'); $('effgroup').setAttribute('aria-invalid', 'true'); }
+  if (bad.length) {
+    $('sum').hidden = false;
+    $('sumtxt').textContent = `${bad.length} ${bad.length > 1 ? 'fields need' : 'field needs'} attention: ${bad.join(' and ')}.`;
+    if (live) (bad[0] === 'Title' ? $('title') : form.querySelector('input[name=effort]')).focus();
+  }
+  return bad.length === 0;
+}
+
+function setBusy(b) {
+  form.querySelectorAll('input,select,textarea,.chips button,#addsol,#cancel,#dclose').forEach((el) => { el.disabled = b; });
+  $('dbody').setAttribute('aria-busy', b ? 'true' : 'false');
+  const s = $('submit'); s.setAttribute('aria-disabled', b ? 'true' : 'false');
+  s.innerHTML = b ? `<span class="spin" aria-hidden="true"></span>${mode === 'create' ? 'Adding issue&hellip;' : 'Saving&hellip;'}` : (mode === 'create' ? 'Add issue' : 'Save changes');
+}
+
+function toast(txt) { $('toasttxt').textContent = txt; $('toast').hidden = !txt; }
+function setMode(m) {
+  mode = m;
+  const c = m === 'create';
+  $('sec-delivery').hidden = !c;
+  $('sec-delivery').disabled = !c;
+  $('deb').textContent = c ? 'New issue · Backlog' : `${editRow.key} · Edit issue`;
+  $('dtitle').textContent = c ? 'Add issue' : 'Edit issue';
+  $('submit').textContent = c ? 'Add issue' : 'Save changes';
+}
+
+// n: state; opts.keep keeps typed values; opts.live is a real user action (moves focus)
+function apply(n, opts = {}) {
+  clearTimeout(timer);
+  state = n;
+  const open = [2, 3, 4, 7].includes(n);
+  document.querySelectorAll('.seg button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.s === n)));
+  $('statename').textContent = 'State ' + NAMES[n];
+  const ro = n === 6;
+  $('addbtn').setAttribute('aria-disabled', String(ro)); $('addwhy').hidden = !ro;
+  newRow = null;
+  if (open) {
+    setMode(n === 7 || (n === 4 && opts.keep && mode === 'edit') ? 'edit' : 'create');
+    if (n === 7) editRow = editRow || ROWS[0];
+    if (!opts.keep) {
+      resetForm();
+      if (n === 4) fill(SAMPLE);
+      if (n === 7) { fill({ title: editRow.title }); }
+    }
+    setBusy(false);
+    if (n === 3 && !opts.keep) validate(false);
+    if (n === 3 && opts.keep) validate(opts.live);
+    if (n === 4) setBusy(true);
+  }
+  if (n === 5) {
+    const t = opts.keep ? $('title').value.trim() : SAMPLE.title;
+    const sp = opts.keep ? $('sprint').value : SAMPLE.sprint;
+    const ef = opts.keep && form.querySelector('input[name=effort]:checked') ? form.querySelector('input[name=effort]:checked').value : SAMPLE.effort;
+    const spName = sp.replace(/\s*\(.*\)/, '');
+    if (spName === 'Backlog') newRow = { key: 'BKL-32', title: t, effort: ef, who: null, votes: 0 };
+    toast(spName === 'Backlog' ? 'Issue added' : `Issue added to ${spName}`);
+  } else if (!opts.keepToast) toast('');
+  drawer.hidden = scrim.hidden = !open;
+  renderRows();
+  if (newRow) $('newrow').scrollIntoView({ block: 'nearest' });
+  if (open && opts.live && n !== 3) $('title').focus();
+  if (!open && opts.live && opener && document.contains(opener)) opener.focus();
+}
+
+document.querySelector('.seg').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (b) { opener = null; if (+b.dataset.s !== 7) editRow = null; apply(+b.dataset.s); }
+});
+$('addbtn').addEventListener('click', () => { if ($('addbtn').getAttribute('aria-disabled') === 'true') return; opener = $('addbtn'); apply(2, { live: true }); });
+$('rows').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-edit]'); if (!b) return;
+  opener = b; editRow = ROWS.find((r) => r.key === b.dataset.edit); apply(7, { live: true });
+});
+const close = () => { if (state === 4) return; apply(1, { live: true }); };
+$('dclose').addEventListener('click', close); $('cancel').addEventListener('click', close); scrim.addEventListener('click', close);
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (state === 4) return;
+  if (!validate(true)) { state = 3; document.querySelectorAll('.seg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.s === '3'))); $('statename').textContent = 'State ' + NAMES[3]; return; }
+  if (mode === 'edit') {
+    apply(4, { keep: true }); state = 4;
+    timer = setTimeout(() => { apply(1, { live: true }); toast('Changes saved'); }, 900);
+    return;
+  }
+  apply(4, { keep: true });
+  timer = setTimeout(() => apply(5, { keep: true, live: true }), 900);
+});
+
+// clear a field's error as soon as it is fixed
+$('title').addEventListener('input', () => { if ($('title').value.trim()) { $('f-title').classList.remove('bad'); $('title').removeAttribute('aria-invalid'); } });
+$('effgroup').addEventListener('change', () => { $('f-effort').classList.remove('bad'); $('effgroup').removeAttribute('aria-invalid'); });
+$('itype').addEventListener('change', renderCF);
+$('addsol').addEventListener('click', () => { sols = [...document.querySelectorAll('[data-sol]')].map((i) => i.value); sols.push(''); renderSols(); document.querySelector(`[data-sol="${sols.length - 1}"]`).focus(); });
+$('sols').addEventListener('input', (e) => { if (e.target.dataset.sol) sols[+e.target.dataset.sol] = e.target.value; });
+document.querySelectorAll('.chips').forEach((c) => c.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')); }));
+
+// Escape closes; Tab stays inside the open drawer
+document.addEventListener('keydown', (e) => {
+  if (drawer.hidden) return;
+  if (e.key === 'Escape') { close(); return; }
+  if (e.key !== 'Tab') return;
+  const f = [...drawer.querySelectorAll('button,input,select,textarea')].filter((el) => !el.disabled && !el.closest('[hidden]') && el.offsetParent !== null && !(el.type === 'radio' && !el.checked && form.querySelector('input[name=effort]:checked')));
+  if (!f.length) return;
+  const first = f[0], last = f[f.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+});
+
+const pt = $('theme');
+function setTheme(k) { document.documentElement.dataset.protoTheme = k; pt.value = k; try { localStorage.setItem('collega-theme', k); } catch (e) {} }
+let saved = 'graphite'; try { saved = localStorage.getItem('collega-theme') || 'graphite'; } catch (e) {}
+setTheme(saved); pt.addEventListener('change', () => setTheme(pt.value));
+
+resetForm(); apply(1);
+</script>
