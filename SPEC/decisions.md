@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-22 | The legacy Sprint board lists only cards with a delivery status | active | full below |
 | 2026-10-22 | A card on a referenced board is a task on read; a 403 can carry a field key | active | full below |
 | 2026-10-22 | Tasks get a Backlog and sprints are planned from it (five surfaces) | active | full below |
 | 2026-10-22 | The whole idea card drags between lanes | active | full below |
@@ -145,6 +146,10 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-10-22 — The legacy Sprint board lists only cards with a delivery status
+
+`/delivery/sprint` threw on a sprint holding a work-board task: `GET /delivery?sprintId=` returns a board sprint's items in any phase (`contracts/delivery.md` "A board sprint"), and a task has no delivery status or effort. **Rule:** the web reader `getIssuesInSprint` drops cards whose `deliveryStatus` is `null` before adapting them; tasks are shown on their board's Sprints tab and planning page. The API keeps returning them (pinned by the board-sprint QA tests, and the sprint's `issueCount` counts tasks by design), and `toIssue` keeps throwing for a real Issue missing a status or effort. The Backlog and issue-page readers cannot leak: they read Delivery-phase items only.
 
 ## 2026-10-22 — A card on a referenced board is a task on read; a 403 can carry a field key
 
