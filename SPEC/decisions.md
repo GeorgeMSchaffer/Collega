@@ -162,6 +162,8 @@ only**: a type still never chooses a board.
 - **Schema.** The S0.2 freeze is amended a twelfth time: `board_idea_types` (`board_id`,
   `idea_type_id`, primary key on the pair, cascade on board delete).
 
+- **Details** (owner, same day): the board read carries a server-computed `canSetAllowedIdeaTypes`; a change is audited as `BoardUpdated` with `allowedIdeaTypeIds` in its metadata, not a new event; a CSV row of a disallowed type is refused on its own and the rest import.
+
 Contracts: `contracts/boards.md` "Allowed idea types" and the create, update and pull errors in
 `contracts/ideas.md` and `contracts/boards.md`. Rule 15 of `20-feature-boards-and-statuses.md`.
 

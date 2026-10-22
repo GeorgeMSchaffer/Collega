@@ -149,22 +149,22 @@ Update board name or selected statuses.
 
 ### Allowed idea types (added 2026-10-22, slice 318)
 
-`SPEC/decisions.md` "A board can limit which idea types it takes"; `20-feature-boards-and-statuses.md` rule 15. Lines marked **(owner to review)** are the assistant's defaults.
+`SPEC/decisions.md` "A board can limit which idea types it takes"; `20-feature-boards-and-statuses.md` rule 15. The read flag, the audit shape and the import rule were confirmed by the owner 2026-10-22.
 
 - **Reads.** `GET /api/v1/boards/{boardId}` gains:
   - `allowedIdeaTypeIds` — an array of idea type ids, in idea type sort order; `[]` means every active type is allowed.
-  - `canSetAllowedIdeaTypes` — boolean, for the caller: true for an Org Admin, or for the board's creator while an active User or Org Admin; false otherwise and on an archived board. **(owner to review)**
+  - `canSetAllowedIdeaTypes` — boolean, for the caller: true for an Org Admin, or for the board's creator while an active User or Org Admin; false otherwise and on an archived board.
 - **Create.** `POST …/boards` accepts optional `allowedIdeaTypeIds` (absent, `null` or `[]`: all types), checked as below.
 - **`PUT /api/v1/boards/{boardId}/allowed-idea-types`**
   - **Roles:** an Org Admin of the board's organization, or the board's creator while an active User or Org Admin there; a Site Admin through View As, acting as the target. Anyone else `403`; Read Only `403`.
   - **Request:** `{ "ideaTypeIds": [ … ] }` — replaces the whole list; `[]` allows every type.
   - **Response:** `200` with the board detail shape.
   - **Errors:** `404` for a board the caller cannot read; `409` for an archived board; `400` keyed `ideaTypeIds`, title `One or more fields are invalid.`: not an array of GUIDs (`Idea type ids must be an array of ids.`), the same id twice (`An idea type can be named only once.`), an id that is not an active idea type of the organization (`Idea type '{id}' was not found.`).
-  - **Rules:** accepted while Idea features are off (the list is stored, not applied). Ideas on the board are not touched. Audit `BoardAllowedIdeaTypesChanged` with metadata `{ ideaTypeIds }`. No notification. **(owner to review)**
+  - **Rules:** accepted while Idea features are off (the list is stored, not applied). Ideas on the board are not touched. Audited as `BoardUpdated` (decided 2026-10-22), its metadata gaining `allowedIdeaTypeIds` with the new list; no separate event. No notification.
 - **Where it is enforced** (only while the board's Idea features are on and its list is non-empty):
   - `POST /api/v1/boards/{boardId}/ideas` and `PUT /api/v1/ideas/{ideaId}` (when `ideaTypeId` changes on an idea that is on a board): `400` keyed `ideaTypeId`, `This board doesn't take '{type name}' ideas.` An edit that keeps a no-longer-allowed type is accepted.
   - `pullItemIds` on create and update: `400` keyed `pullItemIds`, `'{title}' is a {type name} idea, and this board doesn't take those.` Nothing is saved, as for every pull refusal.
-  - `POST /api/v1/boards/{boardId}/ideas/import`: a row of a disallowed type is refused with the importer's per-row error, `This board doesn't take '{type name}' ideas.` **(owner to review)**
+  - `POST /api/v1/boards/{boardId}/ideas/import`: a row of a disallowed type is refused with the importer's per-row error, `This board doesn't take '{type name}' ideas.`; the other rows import.
   - Auto-created tasks are never checked, so a hand-off into an `autoCreateTask` lane is never refused for its type.
 
 ### `GET /api/v1/organizations/{organizationId}/boards/pull-candidates`
