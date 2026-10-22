@@ -90,6 +90,9 @@ export default async function BoardPage({
   const showTabs = tabs.length > 1
   const canAddTask = isWork && authorDenial === null
   const canPlan = user.role === 'OrgAdmin' && board.sprintsEnabled && !board.isArchived
+  // The Backlog side panel (TB-7) sits beside the lanes of a work board with sprints on, for any
+  // role that may write; the lanes refuse a drop from anyone who may not plan.
+  const hasPanel = tab === 'board' && isWork && board.sprintsEnabled && authorDenial === null
 
   const state = readListState(query, BOARD_LIST)
   const listQuery = toIdeaListQuery(state)
@@ -124,7 +127,7 @@ export default async function BoardPage({
 
   // The Backlog tab reads the whole backlog; the other tabs only need its count for the badge.
   const [backlog, parentChoices, members, sprints] = await Promise.all([
-    isWork ? getBacklog(board.id, tab === 'backlog' ? undefined : 1) : null,
+    isWork ? getBacklog(board.id, tab === 'backlog' || hasPanel ? undefined : 1) : null,
     tab === 'backlog' && canAddTask ? getTaskParentChoices(board.id) : [],
     tab === 'backlog' && (canAddTask || canPlan) ? getMemberOptions() : [],
     board.sprintsEnabled ? getBoardSprints(board.id) : [],
@@ -230,6 +233,11 @@ export default async function BoardPage({
               canReorder: user.role === 'OrgAdmin',
             }}
             drawer={drawer}
+            backlog={
+              hasPanel && backlog
+                ? { rows: backlog.ideas, total: backlog.totalCount, sprints }
+                : null
+            }
           />
         ) : null}
         {tab === 'backlog' && backlog ? (

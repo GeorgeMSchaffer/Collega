@@ -66,14 +66,22 @@ export async function createBoardSprint(
   return { ok: true }
 }
 
-/** `PUT /boards/{boardId}/sprint-assignments`: add tasks to a sprint, status left as it is. */
+/**
+ * `PUT /boards/{boardId}/sprint-assignments`: add tasks to a sprint. With a `statusId` (a lane
+ * drop) the same write moves them to that lane; without one (the Add button) status is left alone.
+ */
 export async function moveTasksToSprint(
   boardId: string,
   sprintId: string,
   ideaIds: readonly string[],
+  statusId?: string,
 ): Promise<ActionState> {
   try {
-    await apiPut(apiPath`/boards/${boardId}/sprint-assignments`, { ideaIds, sprintId })
+    await apiPut(apiPath`/boards/${boardId}/sprint-assignments`, {
+      ideaIds,
+      sprintId,
+      ...(statusId ? { statusId } : {}),
+    })
   } catch (error) {
     const { error: message, errors } = refusal(error)
     return { error: message ?? errors.ideaIds ?? Object.values(errors)[0] ?? null }

@@ -33,6 +33,7 @@ export function BacklogList({
   newTaskHref,
   sprints = [],
   members = [],
+  panel,
 }: {
   boardId: string
   boardName: string
@@ -45,6 +46,13 @@ export function BacklogList({
   /** The board's sprints; Completed ones cannot take tasks and are left out of the bar. */
   sprints?: readonly Sprint[]
   members?: MemberOption[]
+  /**
+   * Set when the list is the board's side panel (TB-7) rather than the Backlog tab: compact rows
+   * instead of a table, each with an Add button, and a row drags onto a lane. `canAdd` is the
+   * sprint-planning role; a reader who may not still sees the rows and drags one to be told why a
+   * lane refuses it.
+   */
+  panel?: { canAdd: boolean; onDragStart: (row: Idea) => void; onDragEnd: () => void }
 }) {
   const [query, setQuery] = useState('')
   const [parents, setParents] = useState<string[]>([])
@@ -148,9 +156,8 @@ export function BacklogList({
   const allShown = shown.length > 0 && visibleSelected === shown.length
   const filtered = shown.length !== rows.length
 
-  function addToSprint() {
+  function addToSprint(ids: readonly string[]) {
     if (!chosen) return
-    const ids = [...selected]
     setBarError(null)
     startAdding(async () => {
       const result = await moveTasksToSprint(boardId, chosen.id, ids)
@@ -220,7 +227,7 @@ export function BacklogList({
             + New sprint…
           </Button>
         ) : null}
-        <span className="ml-auto">Sorted by: newest</span>
+        {panel ? null : <span className="ml-auto">Sorted by: newest</span>}
       </div>
 
       {canSelect && selected.size > 0 ? (
@@ -245,7 +252,12 @@ export function BacklogList({
               </Select>
             ) : null}
             {chosen ? (
-              <Button size="sm" variant="outline" disabled={adding} onClick={addToSprint}>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={adding}
+                onClick={() => addToSprint([...selected])}
+              >
                 {adding ? 'Adding…' : `Add to ${chosen.name} (${chosen.state})`}
               </Button>
             ) : null}
@@ -268,116 +280,209 @@ export function BacklogList({
         </section>
       ) : null}
 
-      <div className="relative overflow-x-auto rounded-lg border bg-card">
-        <table className="min-w-[720px]">
-          <caption className="sr-only">Tasks on {boardName} waiting for a sprint</caption>
-          <thead>
-            <tr>
-              {canSelect ? (
-                <th scope="col" className="w-px px-3.5">
-                  <input
-                    type="checkbox"
-                    aria-label="Select all shown tasks"
-                    checked={allShown}
-                    onChange={() => {
-                      const next = new Set(selected)
-                      for (const row of shown) {
-                        if (allShown) next.delete(row.id)
-                        else next.add(row.id)
-                      }
-                      setSelected(next)
-                    }}
-                  />
-                </th>
-              ) : null}
-              <th scope="col" className="px-3.5">
-                Key
-              </th>
-              <th scope="col" className="px-3.5">
-                Task
-              </th>
-              <th scope="col" className="px-3.5">
-                Parent idea
-              </th>
-              <th scope="col" className="px-3.5">
-                Status
-              </th>
-              <th scope="col" className="px-3.5">
-                Assignee
-              </th>
-              <th scope="col" className="hidden px-3.5 min-[1100px]:table-cell">
-                Tags
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {shown.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={canSelect ? 7 : 6}
-                  className="py-6 text-center text-sm text-muted-foreground"
+      {panel ? (
+        <>
+          {panel.canAdd && open.length > 1 ? (
+            <Select
+              aria-label="Sprint to add to"
+              value={chosen?.id ?? ''}
+              onChange={(event) => setTarget(event.target.value)}
+            >
+              {open.map((sprint) => (
+                <option key={sprint.id} value={sprint.id}>
+                  {sprint.name} ({sprint.state})
+                </option>
+              ))}
+            </Select>
+          ) : null}
+          {barError ? (
+            <p role="alert" className="m-0 text-xs font-semibold text-destructive">
+              {barError}
+            </p>
+          ) : null}
+          {shown.length === 0 ? (
+            <p className="m-0 py-4 text-center text-sm text-muted-foreground">
+              No task matches these filters.
+            </p>
+          ) : (
+            <ul
+              aria-label={`Tasks on ${boardName} waiting for a sprint`}
+              className="m-0 flex list-none flex-col gap-2 p-0"
+            >
+              {shown.map((row) => (
+                <li
+                  key={row.id}
+                  data-row-key={row.id}
+                  draggable
+                  onDragStart={(event) => {
+                    event.dataTransfer.effectAllowed = 'move'
+                    event.dataTransfer.setData('text/plain', row.id)
+                    panel.onDragStart(row)
+                  }}
+                  onDragEnd={panel.onDragEnd}
+                  className="flex cursor-grab items-start gap-2 rounded-lg border bg-card p-2.5 active:cursor-grabbing"
                 >
-                  No task matches these filters.
-                </td>
-              </tr>
-            ) : (
-              shown.map((row) => (
-                <tr key={row.id} data-row-key={row.id}>
-                  {canSelect ? (
-                    <td className="px-3.5">
-                      <input
-                        type="checkbox"
-                        aria-label={`Select ${row.itemKey ?? row.title}`}
-                        checked={selected.has(row.id)}
-                        onChange={() => toggle(row.id)}
-                      />
-                    </td>
-                  ) : null}
-                  <td className="px-3.5 font-mono text-xs whitespace-nowrap">
-                    {row.itemKey ?? '—'}
-                  </td>
-                  <td className="px-3.5">
-                    <Link
-                      href={
-                        `/boards/${encodeURIComponent(boardId)}?tab=board&idea=${encodeURIComponent(row.id)}` as Route
-                      }
-                      className="font-medium text-foreground hover:underline"
-                    >
-                      {row.title}
-                    </Link>
-                  </td>
-                  <td className="px-3.5">
-                    <span className="inline-flex flex-wrap items-center gap-1.5">
+                  <div className="flex min-w-0 flex-1 flex-col gap-1">
+                    <span className="inline-flex flex-wrap items-center gap-1.5 text-xs">
+                      <span className="font-mono">{row.itemKey ?? '—'}</span>
                       {row.parentIdeaId ? (
                         <ParentChip itemKey={row.parentItemKey ?? null} />
                       ) : (
-                        <span className="rounded border px-1.5 text-xs text-muted-foreground">
+                        <span className="rounded border px-1.5 text-muted-foreground">
                           standalone
                         </span>
                       )}
                       {isBlockedHere(row, lanes) ? (
                         <span
                           title={blockedTooltip(row)}
-                          className="rounded-sm bg-warning/12 px-1.5 text-xs font-semibold text-warning"
+                          className="rounded-sm bg-warning/12 px-1.5 font-semibold text-warning"
                         >
                           {blockedBadge(row)}
                         </span>
                       ) : null}
                     </span>
-                  </td>
-                  <td className="px-3.5 whitespace-nowrap">{row.statusName}</td>
-                  <td className="px-3.5">
-                    <People people={row.assignees} />
-                  </td>
-                  <td className="hidden px-3.5 min-[1100px]:table-cell">
-                    <TagList tags={row.tags} max={2} />
+                    <Link
+                      href={
+                        `/boards/${encodeURIComponent(boardId)}?tab=board&idea=${encodeURIComponent(row.id)}` as Route
+                      }
+                      draggable={false}
+                      className="text-sm font-medium text-foreground hover:underline"
+                    >
+                      {row.title}
+                    </Link>
+                    <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                      {row.statusName}
+                      <People people={row.assignees} />
+                    </span>
+                  </div>
+                  {panel.canAdd && chosen ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={adding}
+                      aria-label={`Add ${row.itemKey ?? row.title} to ${chosen.name}`}
+                      onClick={() => addToSprint([row.id])}
+                    >
+                      Add
+                    </Button>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      ) : (
+        <div className="relative overflow-x-auto rounded-lg border bg-card">
+          <table className="min-w-[720px]">
+            <caption className="sr-only">Tasks on {boardName} waiting for a sprint</caption>
+            <thead>
+              <tr>
+                {canSelect ? (
+                  <th scope="col" className="w-px px-3.5">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all shown tasks"
+                      checked={allShown}
+                      onChange={() => {
+                        const next = new Set(selected)
+                        for (const row of shown) {
+                          if (allShown) next.delete(row.id)
+                          else next.add(row.id)
+                        }
+                        setSelected(next)
+                      }}
+                    />
+                  </th>
+                ) : null}
+                <th scope="col" className="px-3.5">
+                  Key
+                </th>
+                <th scope="col" className="px-3.5">
+                  Task
+                </th>
+                <th scope="col" className="px-3.5">
+                  Parent idea
+                </th>
+                <th scope="col" className="px-3.5">
+                  Status
+                </th>
+                <th scope="col" className="px-3.5">
+                  Assignee
+                </th>
+                <th scope="col" className="hidden px-3.5 min-[1100px]:table-cell">
+                  Tags
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {shown.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={canSelect ? 7 : 6}
+                    className="py-6 text-center text-sm text-muted-foreground"
+                  >
+                    No task matches these filters.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ) : (
+                shown.map((row) => (
+                  <tr key={row.id} data-row-key={row.id}>
+                    {canSelect ? (
+                      <td className="px-3.5">
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${row.itemKey ?? row.title}`}
+                          checked={selected.has(row.id)}
+                          onChange={() => toggle(row.id)}
+                        />
+                      </td>
+                    ) : null}
+                    <td className="px-3.5 font-mono text-xs whitespace-nowrap">
+                      {row.itemKey ?? '—'}
+                    </td>
+                    <td className="px-3.5">
+                      <Link
+                        href={
+                          `/boards/${encodeURIComponent(boardId)}?tab=board&idea=${encodeURIComponent(row.id)}` as Route
+                        }
+                        className="font-medium text-foreground hover:underline"
+                      >
+                        {row.title}
+                      </Link>
+                    </td>
+                    <td className="px-3.5">
+                      <span className="inline-flex flex-wrap items-center gap-1.5">
+                        {row.parentIdeaId ? (
+                          <ParentChip itemKey={row.parentItemKey ?? null} />
+                        ) : (
+                          <span className="rounded border px-1.5 text-xs text-muted-foreground">
+                            standalone
+                          </span>
+                        )}
+                        {isBlockedHere(row, lanes) ? (
+                          <span
+                            title={blockedTooltip(row)}
+                            className="rounded-sm bg-warning/12 px-1.5 text-xs font-semibold text-warning"
+                          >
+                            {blockedBadge(row)}
+                          </span>
+                        ) : null}
+                      </span>
+                    </td>
+                    <td className="px-3.5 whitespace-nowrap">{row.statusName}</td>
+                    <td className="px-3.5">
+                      <People people={row.assignees} />
+                    </td>
+                    <td className="hidden px-3.5 min-[1100px]:table-cell">
+                      <TagList tags={row.tags} max={2} />
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {canSelect ? (
         <SprintCreateDrawer
