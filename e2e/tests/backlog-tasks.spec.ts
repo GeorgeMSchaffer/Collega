@@ -27,11 +27,11 @@ async function openBacklog(page: Page): Promise<void> {
   await board.click()
   await expect(page).toHaveURL(/\/boards\/[0-9a-f-]+/i, { timeout: 30_000 })
   // A work board opens on its Backlog.
-  await expect(page.getByRole('link', { name: /^Backlog/ })).toHaveAttribute(
-    'aria-current',
-    'page',
-    { timeout: 30_000 },
-  )
+  await expect(
+    page
+      .getByRole('navigation', { name: 'Board sections' })
+      .getByRole('link', { name: /^Backlog/ }),
+  ).toHaveAttribute('aria-current', 'page', { timeout: 30_000 })
 }
 
 test.describe('an org admin adds tasks to a work board', () => {
@@ -42,7 +42,11 @@ test.describe('an org admin adds tasks to a work board', () => {
 
     await signIn(page, ADMIN, DEMO_PASSWORD)
     await openBacklog(page)
-    await expect(page.getByRole('link', { name: 'Sprints' })).toBeVisible()
+    await expect(
+      page
+        .getByRole('navigation', { name: 'Board sections' })
+        .getByRole('link', { name: 'Sprints' }),
+    ).toBeVisible()
 
     // Standalone, with "Save and add another": the drawer stays open on an empty Title.
     await page.getByRole('link', { name: '+ New task' }).first().click()
@@ -70,9 +74,9 @@ test.describe('an org admin adds tasks to a work board', () => {
     const standaloneRow = page.getByRole('row').filter({ hasText: standalone })
     const parentedRow = page.getByRole('row').filter({ hasText: parented })
     await expect(standaloneRow).toBeVisible({ timeout: 30_000 })
-    await expect(standaloneRow.getByText('standalone')).toBeVisible()
+    await expect(standaloneRow.getByText('standalone', { exact: true })).toBeVisible()
     await expect(parentedRow).toBeVisible()
-    await expect(parentedRow.getByText('standalone')).toHaveCount(0)
+    await expect(parentedRow.getByText('standalone', { exact: true })).toHaveCount(0)
     if (parentKey && choices[1]?.includes(' · ')) {
       await expect(parentedRow.getByText(parentKey)).toBeVisible()
     }
