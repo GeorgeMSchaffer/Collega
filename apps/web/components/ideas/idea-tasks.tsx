@@ -333,7 +333,7 @@ function TaskTick({
     <button
       type="button"
       aria-pressed={task.isFinal}
-      aria-label={task.isFinal ? `Reopen ${task.title}` : `Mark ${task.title} done`}
+      aria-label={`${task.title} done`}
       aria-describedby={errorId}
       disabled={pending}
       onClick={() => toggle(target.id)}

@@ -148,7 +148,7 @@ describe('TasksSection: rows', () => {
 describe('TasksSection: ticking a task', () => {
   it('checks an open task into the first final lane of its board', async () => {
     render(<TasksSection parent={PARENT} tasks={tasksOf([task('1')])} />)
-    const tick = screen.getByRole('button', { name: 'Mark Task 1 done' })
+    const tick = screen.getByRole('button', { name: 'Task 1 done' })
     expect(tick.getAttribute('aria-pressed')).toBe('false')
 
     fireEvent.click(tick)
@@ -162,7 +162,7 @@ describe('TasksSection: ticking a task', () => {
 
   it('unchecks a done task into the last lane that is not final', async () => {
     render(<TasksSection parent={PARENT} tasks={tasksOf([done('1')])} />)
-    const tick = screen.getByRole('button', { name: 'Reopen Task 1' })
+    const tick = screen.getByRole('button', { name: 'Task 1 done' })
     expect(tick.getAttribute('aria-pressed')).toBe('true')
 
     fireEvent.click(tick)
@@ -178,14 +178,14 @@ describe('TasksSection: ticking a task', () => {
     const blockedBy = [{ ideaId: 'x', itemKey: 'IMPL-9', isFinal: false }]
     render(<TasksSection parent={PARENT} tasks={tasksOf([task('1', { blockedBy }), task('2')])} />)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Mark Task 1 done' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Task 1 done' }))
 
     const alert = await screen.findByRole('alert')
     expect(alert.textContent).toBe('IMPL-1 is blocked by IMPL-9.')
     expect(alert.closest('li')?.textContent).toContain('Task 1')
     const form = move.mock.calls[0]?.[1] as FormData
     expect(form.get('blockers')).toBe('1')
-    const tick = await screen.findByRole('button', { name: 'Mark Task 1 done' })
+    const tick = await screen.findByRole('button', { name: 'Task 1 done' })
     expect(tick.getAttribute('aria-pressed')).toBe('false')
     expect(tick.getAttribute('aria-describedby')).toBe(alert.id)
     await waitFor(() => expect((tick as HTMLButtonElement).disabled).toBe(false))
@@ -194,7 +194,7 @@ describe('TasksSection: ticking a task', () => {
   it('keeps the read-only circle for a reader who may not move', () => {
     render(<TasksSection parent={PARENT} tasks={tasksOf([task('1')], { canMove: false })} />)
 
-    expect(screen.queryByRole('button', { name: /Mark Task 1 done/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Task 1 done/ })).toBeNull()
     expect(screen.getByRole('img', { name: 'Open' })).toBeTruthy()
   })
 })
