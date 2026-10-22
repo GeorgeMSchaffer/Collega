@@ -1217,7 +1217,7 @@ function SolutionsField({
             // A box for room to write, but each solution stays one line: the API refuses a line
             // break inside one, since the CSV export puts one solution per line of a cell.
             onKeyDown={(event) => {
-              if (event.key === 'Enter') event.preventDefault()
+              if (event.key === 'Enter' && !event.nativeEvent.isComposing) event.preventDefault()
             }}
             onChange={(event) => {
               const value = event.target.value.replace(/\r?\n|\r/g, ' ')
