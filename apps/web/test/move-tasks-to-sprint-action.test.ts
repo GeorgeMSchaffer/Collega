@@ -33,11 +33,25 @@ describe('moveTasksToSprint', () => {
     expect(put).toHaveBeenCalledExactlyOnceWith(PATH, { ideaIds: ['i-1', 'i-2'], sprintId: 's-9' })
   })
 
-  it('always sends a sprintId and never a statusId', async () => {
+  it('sends a sprintId and no statusId when no lane is named (the Add button)', async () => {
     await moveTasksToSprint('b-1', 's-9', ['i-1'])
     const body = put.mock.calls[0]?.[1] as Record<string, unknown>
     expect(body.sprintId).toBe('s-9')
     expect(body).not.toHaveProperty('statusId')
+  })
+
+  it('adds the lane’s statusId to the same single write when given one (a lane drop)', async () => {
+    await moveTasksToSprint('b-1', 's-9', ['i-1'], 'l-2')
+    expect(put).toHaveBeenCalledExactlyOnceWith(PATH, {
+      ideaIds: ['i-1'],
+      sprintId: 's-9',
+      statusId: 'l-2',
+    })
+  })
+
+  it('omits an empty statusId rather than sending it', async () => {
+    await moveTasksToSprint('b-1', 's-9', ['i-1'], '')
+    expect(put.mock.calls[0]?.[1]).not.toHaveProperty('statusId')
   })
 
   it('escapes the board id in the path', async () => {
