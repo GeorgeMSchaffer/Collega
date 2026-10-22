@@ -593,6 +593,31 @@ describe.skipIf(!DATABASE_URL)('Board References comp U backend, against a live 
       expect(await eventsOf(id, 'IdeaStatusChanged')).toHaveLength(3)
     })
 
+    it('on a status move: the card’s rollup counts the one task, on the board and the detail', async () => {
+      const { parentBoard } = await boardPair()
+      const id = await newIdea({ boardId: parentBoard, statusId: S_NEW, title: 'Rolled up' })
+
+      await services().ideaService.changeStatus(id, { statusId: S_AUTO })
+
+      expect(await liveTasksOf(id)).toHaveLength(1)
+      expect((await services().ideaService.getById(id)).taskCounts).toEqual({ total: 1, done: 0 })
+      const board = await services().ideaService.listByBoard(parentBoard, {
+        page: null,
+        pageSize: null,
+        search: null,
+        statusIds: [],
+        tags: [],
+        priorities: [],
+        dueBefore: null,
+        sortBy: null,
+        sortDirection: null,
+      })
+      expect(board.items.find((item) => item.ideaId === id)?.taskCounts).toEqual({
+        total: 1,
+        done: 0,
+      })
+    })
+
     it('on a status move: a finished task still counts, so a return creates nothing', async () => {
       const { parentBoard } = await boardPair()
       const id = await newIdea({ boardId: parentBoard, statusId: S_NEW })
