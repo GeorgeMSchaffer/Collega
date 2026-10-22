@@ -108,7 +108,7 @@ Four capabilities the comp argues (a fifth, Effort, shipped in slices 297-301 an
 
 *Parked 2026-08-27 from `mockups/comp-h-loop.html`. Proposal item #3.*
 
-**Audited 2026-10-21 against what shipped.** Email-based mentions on ideas and comments, an in-app Inbox (one order, no filter, mark read and read all, an unread count) and an activity panel on Home already exist. What remains of the idea: @mention autocomplete in the comment composer, the Inbox's tabbed filters (mentions / assigned / replies / archived) with a "why" line on each item, a "Waiting on you" panel, unread markers in threads, snooze as well as archive, a full org activity feed, and a per-event-type preferences screen.
+**Audited 2026-10-21 against what shipped.** Email-based mentions on ideas and comments, an in-app Inbox (one order, no filter, mark read and read all, an unread count) and an activity panel on Home already exist. What remains of the idea (@mention autocomplete in the comment composer shipped 2026-10-22): the Inbox's tabbed filters (mentions / assigned / replies / archived) with a "why" line on each item, a "Waiting on you" panel, unread markers in threads, snooze as well as archive, a full org activity feed, and a per-event-type preferences screen.
 
 The comp's argument for building these together still holds: *"a notification with nothing to notify about is empty, and an activity feed nobody is addressed by is noise."*
 
