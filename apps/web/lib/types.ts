@@ -654,7 +654,7 @@ export type IdeaTasks = {
   inLane: boolean
   /** The lane after the reference lane, for the completion prompt; null at the board's end. */
   nextLane: { id: string; name: string } | null
-  /** Role, archived board and `allowUserStatusUpdate` already folded in. */
+  /** Role and archived board already folded in. */
   canMove: boolean
   /** Null when the reader may not add or remove tasks (hidden, not disabled). */
   adding: { members: MemberOption[]; tags: TagRef[] } | null

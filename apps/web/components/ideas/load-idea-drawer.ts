@@ -63,7 +63,7 @@ async function readTasks(idea: IdeaDetail, boardId: string): Promise<IdeaTasks |
     referenceLane: { id: lane.id, name: lane.name },
     inLane: index === at,
     nextLane: next ? { id: next.id, name: next.name } : null,
-    canMove: mayWrite && (board.allowUserStatusUpdate || user.role === 'OrgAdmin'),
+    canMove: mayWrite,
     adding: options ? { members: options.members, tags: options.tags } : null,
   }
 }

@@ -53,7 +53,6 @@ function renderFields(over: Props = {}) {
     <BoardFields
       boardId="b-own"
       defaultName="Discovery"
-      userStatusMoves={false}
       swimlaneIds={['s-new', 's-review', 's-done']}
       references={CONTEXT}
       statuses={STATUSES}

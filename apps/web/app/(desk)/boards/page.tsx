@@ -52,7 +52,6 @@ async function formFor(
       boardId: null,
       name: '',
       description: '',
-      userStatusMoves: true,
       // The first lanes of the catalog, because the API refuses a board with fewer than two and a
       // form that opens below its own floor cannot be submitted until the person works out why.
       swimlaneIds: statuses.slice(0, SWIMLANE_FLOOR).map((status) => status.id),
@@ -77,7 +76,6 @@ async function formFor(
     boardId: board.id,
     name: board.name,
     description: board.description ?? '',
-    userStatusMoves: board.allowUserStatusUpdate,
     swimlaneIds: board.lanes.map((lane) => lane.id),
     laneFlags: laneFlagsOf(board.lanes),
     laneIdeaCounts: Object.fromEntries(listed.lanes.map((lane) => [lane.id, lane.ideaCount])),

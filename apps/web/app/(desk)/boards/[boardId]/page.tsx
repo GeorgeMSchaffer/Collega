@@ -50,13 +50,9 @@ export default async function BoardPage({
   const roleDenial = writeDenial(user.role)
   const authorDenial = roleDenial ?? (board.isArchived ? ARCHIVED : null)
 
-  // Two gates: the role decides whether this account writes at all, and `allowUserStatusUpdate` is
-  // the board's own setting for whether a plain User may move a card. An archived board moves none.
-  const moveDenial =
-    authorDenial ??
-    (board.allowUserStatusUpdate || user.role === 'OrgAdmin'
-      ? null
-      : 'This board only lets administrators move cards')
+  // Whoever may write may move a card; the board's stored `allowUserStatusUpdate` is no longer
+  // consulted (SPEC/decisions.md 2026-10-22). An archived board moves none.
+  const moveDenial = authorDenial
 
   const state = readListState(query, BOARD_LIST)
   const listQuery = toIdeaListQuery(state)

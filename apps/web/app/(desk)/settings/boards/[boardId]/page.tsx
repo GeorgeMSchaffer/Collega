@@ -43,7 +43,6 @@ export default async function EditBoardPage({ params }: { params: Promise<{ boar
         boardId={board.id}
         defaultName={board.name}
         defaultDescription={board.description ?? ''}
-        userStatusMoves={board.allowUserStatusUpdate}
         swimlaneIds={board.lanes.map((lane) => lane.id)}
         laneFlags={Object.fromEntries(
           board.lanes.map(({ id, isFinal, referencesBoardId, autoCreateTask }) => [

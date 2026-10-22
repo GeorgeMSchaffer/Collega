@@ -30,7 +30,6 @@ function renderBoard(lanes: Status[], laneIdeaCounts: Record<string, number>) {
       <BoardFields
         boardId="board-1"
         defaultName="Acme Board"
-        userStatusMoves={false}
         swimlaneIds={lanes.map((lane) => lane.id)}
         laneIdeaCounts={laneIdeaCounts}
         statuses={STATUSES}

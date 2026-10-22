@@ -1,4 +1,4 @@
-import { Badge, buttonVariants, EmptyState } from '@collega/design-system'
+import { buttonVariants, EmptyState } from '@collega/design-system'
 import Link from 'next/link'
 import { GatedAction } from '@/components/common/gated-action'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
@@ -67,7 +67,6 @@ export default async function SettingsBoardsPage() {
             <tr className="border-b bg-muted/40">
               <Th>Board</Th>
               <Th className="w-32">Swimlanes</Th>
-              <Th className="w-44">User status moves</Th>
               <Th className="w-24">
                 <span className="sr-only">Actions</span>
               </Th>
@@ -80,13 +79,6 @@ export default async function SettingsBoardsPage() {
                   <b className="font-medium">{board.name}</b>
                 </td>
                 <td className="px-4 py-2.5 tabular-nums">{board.laneCount}</td>
-                <td className="px-4 py-2.5">
-                  {board.userStatusMoves ? (
-                    <Badge variant="success">Allowed</Badge>
-                  ) : (
-                    <Badge variant="outline">Admins only</Badge>
-                  )}
-                </td>
                 <td className="px-4 py-2.5 text-right">
                   <Link
                     href={`/settings/boards/${board.id}`}
