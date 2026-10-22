@@ -126,3 +126,77 @@ test.describe('a user who is not an admin', () => {
     await expect(page.getByRole('button', { name: /Add to new sprint/ })).toHaveCount(0)
   })
 })
+
+test.describe('an org admin plans a sprint on its page', () => {
+  // One test, so one sign-in: the login limiter counts every extra one (see `AGENTS.md`).
+  test('creates a planned sprint, adds a task, removes it, then starts the sprint', async ({
+    page,
+  }) => {
+    const stamp = Date.now()
+    const [spare, inline] = [`e2e spare ${stamp}`, `e2e inline ${stamp}`]
+    const name = `E2E planning ${stamp}`
+    await signIn(page, ADMIN, DEMO_PASSWORD)
+    await openBacklog(page)
+    await addTasks(page, [spare])
+
+    // Sprints tab: create an empty Planned sprint.
+    await page
+      .getByRole('navigation', { name: 'Board sections' })
+      .getByRole('link', { name: /^Sprints/ })
+      .click()
+    await page.getByRole('button', { name: '+ New sprint' }).click()
+    const drawer = page.getByRole('complementary', { name: 'Create a sprint' })
+    await expect(drawer).toBeVisible({ timeout: 30_000 })
+    await drawer.getByLabel(/^Name/).fill(name)
+    await drawer.getByLabel(/^Start/).fill('2032-01-05')
+    await drawer.getByLabel(/^End/).fill('2032-01-16')
+    await drawer.getByRole('button', { name: 'Create sprint', exact: true }).click()
+    await expect(page.getByText('Sprint created with 0 tasks.')).toBeVisible({ timeout: 30_000 })
+
+    const entry = page.getByRole('link', { name: new RegExp(name) })
+    await expect(entry).toContainText('Planned')
+    await expect(entry).toContainText('0 tasks')
+    const waiting = page.getByRole('status').filter({ hasText: 'waiting in the Backlog' })
+    await expect(waiting).toContainText(/\d+ tasks? waiting/)
+    const before = Number((await waiting.innerText()).match(/\d+/)?.[0])
+
+    // Planning page: add the spare task from the Backlog column.
+    await entry.click()
+    const backlog = page.getByRole('region', { name: 'Backlog' })
+    const inSprint = page.getByRole('region', { name: 'In this sprint' })
+    await expect(inSprint).toBeVisible({ timeout: 30_000 })
+    await backlog.getByLabel('Search the Backlog').fill(spare)
+    await backlog.getByRole('button', { name: new RegExp(`^Add .* to ${name}$`) }).click()
+    await expect(inSprint.getByText(spare)).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText('1 task in this sprint')).toBeVisible()
+    await expect(backlog.getByText(spare)).toHaveCount(0)
+
+    // Remove it: it goes back to the Backlog and the count drops.
+    await inSprint.getByRole('button', { name: new RegExp(`^Remove .* from ${name}$`) }).click()
+    await expect(page.getByText('0 tasks in this sprint')).toBeVisible({ timeout: 30_000 })
+    await expect(inSprint.getByText(spare)).toHaveCount(0)
+    await expect(backlog.getByText(spare)).toBeVisible()
+
+    // The inline line creates a task straight into the sprint.
+    await inSprint.getByLabel('New task title').fill(inline)
+    await inSprint.getByRole('button', { name: 'Add task' }).click()
+    await expect(inSprint.getByText(inline)).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText('1 task in this sprint')).toBeVisible()
+
+    // Start it.
+    await page.getByRole('button', { name: 'Start sprint' }).click()
+    await page
+      .getByRole('alertdialog', { name: 'Start this sprint?' })
+      .getByRole('button', { name: 'Start sprint' })
+      .click()
+    await expect(page.getByText(`${name} started.`)).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByRole('button', { name: 'Start sprint' })).toHaveCount(0)
+
+    // Back on the list: the sprint is Active with its task, and the Backlog count is as it was.
+    await page.goto(page.url().replace(/\/sprints\/.*$/, '?tab=sprints'))
+    const started = page.getByRole('link', { name: new RegExp(name) })
+    await expect(started).toContainText('Active', { timeout: 30_000 })
+    await expect(started).toContainText('1 task')
+    expect(Number((await waiting.innerText()).match(/\d+/)?.[0])).toBe(before)
+  })
+})
