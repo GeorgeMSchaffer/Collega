@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en" data-proto-theme="graphite">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Comp W: where tasks are managed, and how a sprint picks its tasks (2026-10-22). A throwaway review comp for
+     SPEC/20-feature-board-references.md (tasks and per-board sprints). Graphite only, comp R/U look. Self-contained;
+     nothing saves. Sample Acme Robotics data. Strings marked COPY PROPOSED are not decided. Not a reference until approved. -->
+<title>Collega Tasks and Sprint Planning Comp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{color-scheme:dark;--bg:#0F1113;--ink:#E6E8EA;--ink2:#C4CAD0;--muted:#9BA3AB;--line:#22272C;--line2:#2C3238;--card:#16191C;--soft:#1C2024;--rowh:#1A1E22;--thead:#121518;--field:#0F1113;
+--pri:#F5A524;--pri-h:#FFC35C;--pri-tint:#2A2418;--pri-ink:#16120A;--metric:#5CC8E0;--metric-tint:#0F1D21;--hot:#E5484D;--hot-t:#FF8A8E;--hot-tint:#2E1719;--ok:#58C781;--ok-tint:#13241A;--warn:#F5B456;
+--side:#121518;--side-ink:#AEB5BC;--side-on:#1C2024;--bar:#0B0D0F;--r:8px;--rs:6px;--body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;
+--t0:.9rem;--t1:1.013rem;--t2:1.139rem;--t3:1.281rem}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:var(--t0)/1.5 var(--body)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+h1,h2,h3{margin:0;text-wrap:balance}[hidden]{display:none!important}
+.proto{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:8px 16px;background:var(--bar);color:var(--side-ink);position:sticky;top:0;z-index:5}
+.proto b{color:var(--ink)}
+.proto button{border:1px solid var(--line2);background:transparent;border-radius:999px;padding:2px 12px;min-height:30px;cursor:pointer;color:var(--side-ink)}
+.proto button[aria-pressed=true]{background:var(--ink);color:var(--bar);font-weight:700}
+.wrap{max-width:1240px;margin:0 auto;padding:20px 16px 60px}
+.lede{max-width:78ch;color:var(--ink2)}
+.lede h1{font-size:var(--t3);margin-bottom:6px}
+.rec{border:1px solid var(--metric);background:var(--metric-tint);border-radius:var(--r);padding:10px 14px;margin:14px 0;max-width:78ch}
+.rec b{color:var(--metric)}
+.frame{margin:22px 0}
+.frame>h2{font-size:var(--t1);margin-bottom:8px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.fl{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--pri);color:var(--pri-ink);font-weight:700;font-size:.8rem}
+.prop{font-size:.8rem;color:var(--warn);border:1px solid var(--warn);border-radius:999px;padding:0 8px;font-weight:500}
+.note{color:var(--muted);max-width:78ch;margin:6px 0 0}
+.note b{color:var(--ink2)}
+/* app mock */
+.app.tall{min-height:680px}
+.app{display:grid;grid-template-columns:200px 1fr;border:1px solid var(--line2);border-radius:var(--r);overflow:hidden;background:var(--bg);position:relative;min-height:420px}
+.side{background:var(--side);border-right:1px solid var(--line);padding:12px 8px;font-size:var(--t0)}
+.side .g{color:var(--muted);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;padding:10px 8px 4px}
+.side a{display:flex;justify-content:space-between;gap:6px;padding:5px 8px;border-radius:var(--rs);color:var(--side-ink);text-decoration:none}
+.side a.on{background:var(--side-on);color:var(--ink)}
+.side a small{color:var(--muted)}
+.new{outline:1px dashed var(--pri);outline-offset:1px;position:relative}
+.new::after{content:"NEW";position:absolute;right:-2px;top:-9px;background:var(--pri);color:var(--pri-ink);font-size:.65rem;font-weight:700;border-radius:4px;padding:0 4px}
+.main{min-width:0;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);color:var(--muted)}
+.top b{color:var(--ink);font-weight:600}
+.sp{flex:1}
+.head{padding:14px 16px 0}
+.head h2{font-size:var(--t2)}
+.tabs{display:flex;gap:2px;margin-top:10px;border-bottom:1px solid var(--line)}
+.tabs span{padding:7px 14px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs span.on{color:var(--ink);border-color:var(--pri);font-weight:600}
+.tabs span i{font-style:normal;background:var(--soft);border-radius:999px;padding:0 7px;margin-left:5px;font-size:.8rem;color:var(--ink2)}
+.body{padding:14px 16px;flex:1;min-width:0}
+.btn{border:1px solid var(--line2);background:var(--soft);border-radius:var(--rs);padding:4px 12px;min-height:32px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn.pri{background:var(--pri);color:var(--pri-ink);border-color:var(--pri);font-weight:600}
+.btn.ghost{background:transparent}
+.btn.sm{min-height:28px;padding:2px 9px;font-size:.85rem}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.in{background:var(--field);border:1px solid var(--line2);border-radius:var(--rs);padding:4px 10px;min-height:32px;color:var(--muted);min-width:180px}
+.chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line2);border-radius:999px;padding:0 9px;font-size:.82rem;color:var(--ink2);background:var(--soft);white-space:nowrap}
+.chip.par{font-family:var(--mono);font-size:.76rem}
+.chip.on{border-color:var(--pri);color:var(--pri);background:var(--pri-tint)}
+.chip.sp{border-color:var(--metric);color:var(--metric)}
+.chip.blk{border-color:var(--hot);color:var(--hot-t);background:var(--hot-tint)}
+.chip.ok{border-color:var(--ok);color:var(--ok);background:var(--ok-tint)}
+table{width:100%;border-collapse:collapse}
+th{background:var(--thead);text-align:left;font-weight:500;color:var(--muted);font-size:.82rem;padding:6px 10px;border-bottom:1px solid var(--line)}
+td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr.sel td{background:var(--pri-tint)}
+tr.dim td{opacity:.5}
+td.k{font-family:var(--mono);font-size:.82rem;color:var(--muted);white-space:nowrap}
+.cb{width:16px;height:16px;border:1.5px solid var(--line2);border-radius:4px;display:inline-grid;place-items:center;font-size:11px;line-height:1;vertical-align:middle}
+.cb.on{background:var(--pri);border-color:var(--pri);color:var(--pri-ink);font-weight:700}
+.av{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#153038;color:var(--metric);font-size:.7rem;font-weight:600}
+.empty{border:1px dashed var(--line2);border-radius:var(--r);padding:30px 16px;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--ink);margin-bottom:4px}
+.selbar{display:flex;gap:10px;align-items:center;background:var(--pri-tint);border:1px solid var(--pri);border-radius:var(--rs);padding:6px 12px;margin-bottom:10px}
+/* drawer overlay */
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;justify-content:flex-end}
+.drawer{width:min(50%,560px);background:var(--card);border-left:1px solid var(--line2);display:flex;flex-direction:column;min-width:0}
+.drawer.wide{width:min(72%,760px)}
+.dh{display:flex;align-items:flex-start;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.dh .eb{font-size:.78rem;letter-spacing:.06em;color:var(--muted)}
+.dh h3{font-size:var(--t2)}
+.db{padding:14px 16px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:12px}
+.df{display:flex;gap:8px;justify-content:flex-end;align-items:center;padding:10px 16px;border-top:1px solid var(--line)}
+.f label{display:block;color:var(--ink2);font-weight:500;margin-bottom:3px}
+.f .in{display:block;color:var(--ink)}
+.f small{color:var(--muted);display:block;margin-top:2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sec{border:1px solid var(--line2);border-radius:var(--r);overflow:hidden}
+.sec>.sh{display:flex;gap:8px;align-items:center;padding:8px 10px;background:var(--thead);border-bottom:1px solid var(--line)}
+.sec>.sh b{font-weight:600}
+.pick{max-height:260px;overflow:auto}
+.pick .it{display:grid;grid-template-columns:20px 74px 1fr auto;gap:8px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line)}
+.pick .it.sel{background:var(--pri-tint)}
+.pick .it .k{font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+.sum{display:flex;gap:14px;flex-wrap:wrap;color:var(--ink2)}
+.sum b{color:var(--ink)}
+/* split planning */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.col{border:1px solid var(--line2);border-radius:var(--r);overflow:hidden;background:var(--card)}
+.col>.sh{padding:8px 10px;background:var(--thead);border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center}
+.col .it{display:grid;grid-template-columns:70px 1fr auto;gap:8px;padding:7px 10px;border-bottom:1px solid var(--line);align-items:center}
+.col .it .k{font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+.col .it.drag{outline:1px dashed var(--pri);background:var(--pri-tint)}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:10px}
+.cmp>div{border:1px solid var(--line2);border-radius:var(--r);padding:10px 12px;background:var(--card)}
+.cmp h3{font-size:var(--t1);margin-bottom:4px}
+.cmp ul{margin:6px 0 0;padding-left:18px;color:var(--ink2)}
+.cmp .win{border-color:var(--metric)}
+@media (max-width:760px){.app{grid-template-columns:1fr}.side{display:none}.split,.row2{grid-template-columns:1fr}.drawer,.drawer.wide{width:100%}}
+</style>
+<body>
+<div class="proto" role="toolbar" aria-label="Screens">
+  <b>Comp W</b><span>Tasks and sprint planning &middot; Graphite</span>
+  <button type="button" data-go="v1" aria-pressed="true">1 Where tasks live</button>
+  <button type="button" data-go="v2" aria-pressed="false">2 Add a task</button>
+  <button type="button" data-go="v3" aria-pressed="false">3 Create a sprint</button>
+  <button type="button" data-go="v4" aria-pressed="false">4 Plan an existing sprint</button>
+  <button type="button" data-go="v5" aria-pressed="false">5 Edge cases</button>
+</div>
+
+<div class="wrap">
+<div class="lede">
+  <h1>Tasks need a home, and a sprint should be filled from it</h1>
+  <p>Under Board References a task is a card on a work board (for example Implementation). Today a task is born only inside its parent idea's drawer, a sprint is created from a bare form, and nothing links the two: a sprint cannot be filled from the tasks still waiting. This comp proposes one new surface and one new step.</p>
+</div>
+<div class="rec"><b>Recommendation.</b> Give every work board a <b>Backlog</b> tab (the home for tasks nobody has scheduled) and a <b>Sprints</b> tab, beside the existing <b>Board</b>. Creating a sprint ends with a <b>picker of unassigned tasks</b>. The same picker serves "Add tasks" on an existing sprint. Reasons and the alternatives I weighed are on screen 1, frame C.</div>
+
+<!-- ============ 1 ============ -->
+<section id="v1">
+  <div class="frame"><h2><span class="fl">A</span>A work board with three tabs</h2>
+    <div class="app">
+      <aside class="side">
+        <div class="g">Workspace</div><a>Home</a><a>Inbox <small>3</small></a><a class="on">Boards <small>6</small></a><a>Ideas <small>41</small></a>
+        <div class="g">Boards</div><a>Continuous Improvement</a><a class="on">Implementation</a>
+        <div class="g">Delivery</div><a>Roadmap</a>
+      </aside>
+      <div class="main">
+        <div class="top">Boards / <b>Implementation</b><span class="sp"></span><button class="btn pri sm" type="button">+ New task</button></div>
+        <div class="head"><h2>Implementation <span class="chip par">IMPL</span></h2>
+          <div class="tabs"><span>Board</span><span class="on new">Backlog <i>9</i></span><span class="new">Sprints <i>3</i></span></div></div>
+        <div class="body">
+          <div class="bar"><span class="in">Search tasks</span><span class="chip">Parent idea &#9662;</span><span class="chip">Assignee &#9662;</span><span class="chip">Tag &#9662;</span><span class="sp"></span><span class="chip">Sorted by: newest</span></div>
+          <table>
+            <thead><tr><th style="width:26px"></th><th>Key</th><th>Task</th><th>Parent idea</th><th>Status</th><th>Assignee</th></tr></thead>
+            <tbody>
+              <tr><td><span class="cb"></span></td><td class="k">IMPL-52</td><td>Draft onboarding checklist</td><td><span class="chip par">&#8627; CI-19</span></td><td>Pending</td><td><span class="av">AK</span></td></tr>
+              <tr><td><span class="cb"></span></td><td class="k">IMPL-51</td><td>Interview three new hires</td><td><span class="chip par">&#8627; CI-19</span></td><td>Pending</td><td><span class="av">MR</span></td></tr>
+              <tr><td><span class="cb"></span></td><td class="k">IMPL-49</td><td>Measure time to first shipment</td><td><span class="chip par">&#8627; CI-31</span></td><td>Pending</td><td>&mdash;</td></tr>
+              <tr><td><span class="cb"></span></td><td class="k">IMPL-47</td><td>Replace the weekly report script</td><td><span class="chip par">&#8627; CI-22</span> <span class="chip blk">Blocked</span></td><td>Pending</td><td><span class="av">JT</span></td></tr>
+              <tr><td><span class="cb"></span></td><td class="k">IMPL-44</td><td>Order spare gripper heads</td><td><span class="chip">standalone</span></td><td>Pending</td><td>&mdash;</td></tr>
+            </tbody>
+          </table>
+          <p class="note"><b>Backlog</b> = tasks on this board with no sprint (<code>sprintId=none</code>, a read the contract already has). Standalone cards, which the spec allows, finally have a place too.</p>
+        </div>
+      </div>
+    </div>
+    <p class="note">The tabs sit on the board page, so a board with sprints off shows <b>Board | Backlog</b> only. <b>Sprints</b> appears when an Org Admin switches sprints on for the board (existing <code>boards.sprints_enabled</code>).</p>
+  </div>
+
+  <div class="frame"><h2><span class="fl">B</span>What the Backlog tab does not replace</h2>
+    <p class="note">The parent's drawer keeps its Tasks section and "+ Add task" (a task made there is a task of that idea). The Backlog tab is the cross-idea view and the place to add a task that belongs to <b>no</b> idea or to <b>several ideas' worth</b> of planning at once. Both routes make the same card.</p>
+  </div>
+
+  <div class="frame"><h2><span class="fl">C</span>Where else tasks could live <span class="prop">decision for the owner</span></h2>
+    <div class="cmp">
+      <div class="win"><h3>1 &middot; Backlog tab per work board (recommended)</h3>
+        <ul><li>Matches the model: a task is a card on a board, sprints are per board.</li><li>The picker for a sprint is just this list, filtered.</li><li>Board and Backlog stay one click apart.</li></ul>
+        <p class="note"><b>Cost:</b> to see all tasks across boards you visit each board.</p></div>
+      <div><h3>2 &middot; A global "Tasks" item in the sidebar</h3>
+        <ul><li>One list across every work board, good for "my tasks".</li><li>Sprints are per board, so the sprint picker still needs a board filter.</li></ul>
+        <p class="note"><b>Cost:</b> a second place for the same cards; I would add it later as "My tasks" on Home, not now.</p></div>
+      <div><h3>3 &middot; Keep tasks only inside the parent drawer</h3>
+        <ul><li>Today's behaviour.</li></ul>
+        <p class="note"><b>Cost:</b> no standalone or bulk planning; this is the gap you named.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section id="v2" hidden>
+  <div class="frame"><h2><span class="fl">A</span>+ New task, from the Backlog tab</h2>
+    <div class="app tall">
+      <aside class="side"><div class="g">Boards</div><a>Continuous Improvement</a><a class="on">Implementation</a></aside>
+      <div class="main">
+        <div class="top">Boards / <b>Implementation</b></div>
+        <div class="head"><h2>Implementation</h2><div class="tabs"><span>Board</span><span class="on">Backlog <i>9</i></span><span>Sprints <i>3</i></span></div></div>
+        <div class="body"><table><thead><tr><th>Key</th><th>Task</th><th>Parent idea</th></tr></thead><tbody><tr><td class="k">IMPL-52</td><td>Draft onboarding checklist</td><td><span class="chip par">&#8627; CI-19</span></td></tr><tr><td class="k">IMPL-51</td><td>Interview three new hires</td><td><span class="chip par">&#8627; CI-19</span></td></tr></tbody></table></div>
+      </div>
+      <div class="scrim"><div class="drawer">
+        <div class="dh"><div><div class="eb">NEW TASK &middot; IMPLEMENTATION</div><h3>Add a task</h3></div><span class="sp" style="flex:1"></span><button class="btn ghost sm" type="button">Close</button></div>
+        <div class="db">
+          <div class="f"><label>Title</label><span class="in">Pilot the checklist with one team</span></div>
+          <div class="f"><label>Parent idea <span class="chip">optional</span></label><span class="in">&#8627; CI-19 &middot; Cut onboarding time &nbsp;&#9662;</span>
+            <small>Lists ideas sitting in a lane that references Implementation. Leave empty for a standalone task. <span class="prop">COPY PROPOSED</span></small></div>
+          <div class="f"><label>Description</label><span class="in" style="min-height:64px">&nbsp;</span></div>
+          <div class="row2"><div class="f"><label>Assignees</label><span class="in">Pick people &#9662;</span></div><div class="f"><label>Tags</label><span class="in">Pick tags &#9662;</span></div></div>
+          <div class="f"><label>Sprint</label><span class="in">None (stays in the backlog) &#9662;</span><small>Planned and Active sprints of this board.</small></div>
+        </div>
+        <div class="df"><button class="btn ghost" type="button">Cancel</button><button class="btn" type="button">Save and add another</button><button class="btn pri" type="button">Add task</button></div>
+      </div></div>
+    </div>
+    <p class="note">One form, same fields as the task fields the spec already lists (title, description, assignees, tags) plus <b>Parent idea</b> and <b>Sprint</b>. A parent that is not in a reference lane is not offered, so the existing rule (<i>a parent must sit in a status that references the child's board</i>) holds. <b>Open:</b> may a User create a standalone task, or is that an Org Admin act? I assumed any member who may write.</p>
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section id="v3" hidden>
+  <div class="frame"><h2><span class="fl">A</span>Create a sprint, with its tasks</h2>
+    <div class="app tall">
+      <aside class="side"><div class="g">Boards</div><a class="on">Implementation</a></aside>
+      <div class="main">
+        <div class="top">Boards / <b>Implementation</b></div>
+        <div class="head"><h2>Implementation</h2><div class="tabs"><span>Board</span><span>Backlog <i>9</i></span><span class="on">Sprints <i>3</i></span></div></div>
+        <div class="body"><p class="note">Sprints list</p></div>
+      </div>
+      <div class="scrim"><div class="drawer wide">
+        <div class="dh"><div><div class="eb">NEW SPRINT &middot; IMPLEMENTATION</div><h3>Create a sprint</h3></div><span style="flex:1"></span><button class="btn ghost sm" type="button">Close</button></div>
+        <div class="db">
+          <div class="row2"><div class="f"><label>Name *</label><span class="in">Sprint 15</span></div><div class="f"><label>Owner</label><span class="in">Avery Kim &#9662;</span></div></div>
+          <div class="row2"><div class="f"><label>Start *</label><span class="in">2026-11-02</span></div><div class="f"><label>End *</label><span class="in">2026-11-13</span></div></div>
+          <div class="f"><label>Goal</label><span class="in">Onboarding checklist piloted with one team</span></div>
+          <div class="sec">
+            <div class="sh"><b>Tasks</b><span class="chip">Unassigned only</span><span class="sp" style="flex:1"></span><span class="in" style="min-width:140px">Search</span><span class="chip">Parent idea &#9662;</span></div>
+            <div class="pick">
+              <div class="it sel"><span class="cb on">&#10003;</span><span class="k">IMPL-52</span><span>Draft onboarding checklist</span><span class="chip par">&#8627; CI-19</span></div>
+              <div class="it sel"><span class="cb on">&#10003;</span><span class="k">IMPL-51</span><span>Interview three new hires</span><span class="chip par">&#8627; CI-19</span></div>
+              <div class="it"><span class="cb"></span><span class="k">IMPL-49</span><span>Measure time to first shipment</span><span class="chip par">&#8627; CI-31</span></div>
+              <div class="it"><span class="cb"></span><span class="k">IMPL-47</span><span>Replace the weekly report script <span class="chip blk">Blocked by IMPL-45</span></span><span class="chip par">&#8627; CI-22</span></div>
+              <div class="it"><span class="cb"></span><span class="k">IMPL-44</span><span>Order spare gripper heads</span><span class="chip">standalone</span></div>
+            </div>
+            <div class="sh" style="border-top:1px solid var(--line);border-bottom:0"><span class="sum"><span><b>2</b> selected</span><span>from <b>1</b> idea</span><span>2 of 9 unassigned tasks</span></span><span style="flex:1"></span><button class="btn ghost sm" type="button">Select all CI-19 tasks</button></div>
+          </div>
+          <p class="note" style="margin:0">Tasks already in a sprint are not listed. Picking none is fine: the sprint starts empty and tasks can be added later. <span class="prop">COPY PROPOSED</span></p>
+        </div>
+        <div class="df"><button class="btn ghost" type="button">Cancel</button><button class="btn pri" type="button">Create sprint with 2 tasks</button></div>
+      </div></div>
+    </div>
+    <p class="note"><b>Rules the picker applies</b> (all from the existing contracts, no new rule): only this board's tasks (<code>sprintItemOnOtherBoard</code>); only <code>sprintId=none</code>; a blocked task can be picked, with its blocker shown, because the blocker may be in this sprint too. Create is atomic: the sprint and its task assignments save together, or neither does.</p>
+  </div>
+
+  <div class="frame"><h2><span class="fl">B</span>A shortcut from the Backlog</h2>
+    <div class="app" style="min-height:0">
+      <div class="main"><div class="body">
+        <div class="selbar"><b>2 selected</b><span class="sp" style="flex:1"></span><button class="btn sm" type="button">Add to Sprint 14 (Active) &#9662;</button><button class="btn pri sm" type="button">Add to new sprint&hellip;</button><button class="btn ghost sm" type="button">Clear</button></div>
+        <table><tbody><tr class="sel"><td style="width:26px"><span class="cb on">&#10003;</span></td><td class="k">IMPL-52</td><td>Draft onboarding checklist</td></tr><tr class="sel"><td><span class="cb on">&#10003;</span></td><td class="k">IMPL-51</td><td>Interview three new hires</td></tr><tr><td><span class="cb"></span></td><td class="k">IMPL-49</td><td>Measure time to first shipment</td></tr></tbody></table>
+      </div></div>
+    </div>
+    <p class="note">Tick tasks in the Backlog, then <b>Add to new sprint&hellip;</b> opens frame A with those tasks already ticked. The picker and the Backlog are the same list from two directions.</p>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section id="v4" hidden>
+  <div class="frame"><h2><span class="fl">A</span>Plan a Planned sprint: backlog on the left, sprint on the right <span class="prop">alternative to the drawer picker</span></h2>
+    <div class="app">
+      <aside class="side"><div class="g">Boards</div><a class="on">Implementation</a></aside>
+      <div class="main">
+        <div class="top">Boards / Implementation / Sprints / <b>Sprint 15</b><span class="sp" style="flex:1"></span><span class="chip">Planned</span><button class="btn pri sm" type="button">Start sprint</button></div>
+        <div class="body">
+          <div class="bar"><b>Sprint 15</b><span class="chip">2026-11-02 &rarr; 2026-11-13</span><span class="sum"><span><b>4</b> tasks</span><span><b>2</b> ideas</span></span></div>
+          <div class="split">
+            <div class="col"><div class="sh"><b>Backlog</b><span class="chip">7 unassigned</span><span style="flex:1"></span><span class="in" style="min-width:110px">Search</span></div>
+              <div class="it"><span class="k">IMPL-49</span><span>Measure time to first shipment</span><button class="btn sm" type="button">Add &rarr;</button></div>
+              <div class="it drag"><span class="k">IMPL-47</span><span>Replace the weekly report script</span><button class="btn sm" type="button">Add &rarr;</button></div>
+              <div class="it"><span class="k">IMPL-44</span><span>Order spare gripper heads</span><button class="btn sm" type="button">Add &rarr;</button></div>
+            </div>
+            <div class="col"><div class="sh"><b>Sprint 15</b><span class="chip sp">4 tasks</span></div>
+              <div class="it"><span class="k">IMPL-52</span><span>Draft onboarding checklist</span><button class="btn ghost sm" type="button">&times; Remove</button></div>
+              <div class="it"><span class="k">IMPL-51</span><span>Interview three new hires</span><button class="btn ghost sm" type="button">&times; Remove</button></div>
+              <div class="it"><span class="k">IMPL-46</span><span>Set up pilot team calendar</span><button class="btn ghost sm" type="button">&times; Remove</button></div>
+              <div class="it"><span class="k">IMPL-45</span><span>Pick the pilot team</span><button class="btn ghost sm" type="button">&times; Remove</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="note">For a sprint that already exists (Planned, or Active when a late task arrives). <b>Add</b> and <b>Remove</b> buttons are the keyboard- and touch-safe path; dragging between columns is an enhancement, not the only way. Removing returns the task to the Backlog, the same result as completing a sprint with it unfinished.</p>
+  </div>
+
+  <div class="frame"><h2><span class="fl">B</span>Picker or split view?</h2>
+    <div class="cmp">
+      <div class="win"><h3>Use the drawer picker for create, the split view for planning</h3><ul><li>Create is a quick act: name, dates, tick tasks, done.</li><li>Planning a sprint is a longer act: you compare backlog and sprint side by side and see counts change.</li><li>Both read the same two lists, so the build is one list component and two layouts.</li></ul></div>
+      <div><h3>Only the drawer picker</h3><ul><li>Smallest build.</li><li>You cannot see what you have already put in the sprint while choosing more, beyond a count.</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section id="v5" hidden>
+  <div class="frame"><h2><span class="fl">A</span>Empty backlog</h2>
+    <div class="empty"><b>Nothing waiting for a sprint</b>Every task on Implementation is in a sprint or finished. Add a task here, or from an idea's drawer once the idea reaches Implementation. <br><br><button class="btn pri" type="button">+ New task</button></div>
+  </div>
+  <div class="frame"><h2><span class="fl">B</span>Create-sprint picker with nothing to pick</h2>
+    <div class="sec"><div class="sh"><b>Tasks</b></div><div class="empty" style="border:0"><b>No unassigned tasks</b>You can still create the sprint and add tasks later.</div></div>
+  </div>
+  <div class="frame"><h2><span class="fl">C</span>Board with sprints off</h2>
+    <div class="tabs"><span>Board</span><span class="on">Backlog <i>9</i></span></div>
+    <p class="note">No Sprints tab and no "Add to sprint". The Backlog is then just the board's task list, which is still the missing home for tasks. An Org Admin turns sprints on in the board's settings.</p>
+  </div>
+  <div class="frame"><h2><span class="fl">D</span>Role behaviour <span class="prop">COPY PROPOSED</span></h2>
+    <table><thead><tr><th>Role</th><th>Backlog tab</th><th>+ New task</th><th>Create sprint / add tasks to sprint</th></tr></thead><tbody>
+      <tr><td>Org Admin</td><td>sees</td><td>yes</td><td>yes</td></tr>
+      <tr><td>User</td><td>sees</td><td>yes (assumed)</td><td>no &mdash; hidden, per the sprint contract (management is admin-only)</td></tr>
+      <tr><td>Read Only</td><td>sees</td><td>hidden</td><td>hidden</td></tr>
+      <tr><td>Site Admin</td><td colspan="3">only through View As, as everywhere</td></tr></tbody></table>
+    <p class="note"><b>Open:</b> the sprint contract makes sprint management admin-only. If Users should plan their own board's sprint, that is a contract change for you to decide.</p>
+  </div>
+  <div class="frame"><h2><span class="fl">E</span>Questions this comp leaves open</h2>
+    <ol class="note" style="color:var(--ink2)">
+      <li>May a User add a standalone task, or only an Org Admin? (Screen 2)</li>
+      <li>May a User add tasks to a sprint, or only an Org Admin? (Frame D)</li>
+      <li>Should the Backlog also show tasks in a Completed sprint that were returned unfinished? (I assume yes: they are unassigned again.)</li>
+      <li>Do you want a cross-board "My tasks" later? (Screen 1, frame C, option 2)</li>
+    </ol>
+  </div>
+</section>
+</div>
+
+<script>
+(function(){
+  var btns=document.querySelectorAll('.proto button');
+  function go(id){
+    document.querySelectorAll('section').forEach(function(s){s.hidden=s.id!==id});
+    btns.forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.go===id))});
+    try{history.replaceState(null,'','#'+id)}catch(e){}
+  }
+  btns.forEach(function(b){b.addEventListener('click',function(){go(b.dataset.go)})});
+  var h=location.hash.slice(1); if(/^v[1-5]$/.test(h)) go(h);
+})();
+</script>
+</body>
+</html>

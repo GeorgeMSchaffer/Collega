@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-22 | Tasks get a Backlog and sprints are planned from it (five surfaces) | active | full below |
 | 2026-10-22 | The whole idea card drags between lanes | active | full below |
 | 2026-10-22 | Users always move ideas between statuses | active | full below |
 | 2026-10-22 | A board can limit which idea types it takes | active | full below |
@@ -143,6 +144,26 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-10-22 — Tasks get a Backlog and sprints are planned from it (five surfaces)
+
+> Extends `SPEC/20-feature-board-references.md` (tasks, per-board sprints); changes none of its rules. Spec: `SPEC/20-feature-task-backlog-and-sprint-planning.md`. Comps: `SPEC/mockups/comp-w-tasks-and-sprint-planning.html`, `comp-w-alternates-tasks-and-sprint-planning.html` (review comps; the spec governs).
+
+**Decided by the owner.** Tasks have no home outside their parent idea's drawer, and a sprint cannot be filled from waiting tasks. Build **all five** approaches, as slices over one pair of lists (unassigned tasks, a sprint's tasks):
+
+1. A **Backlog tab** per work board (default) with "+ New task" and an "Add to sprint" bulk bar; the same list is a **collapsible panel** beside the lanes (a toggle, not a second build).
+2. The **create-sprint** drawer ends with a picker of the board's unassigned tasks; creating with tasks is atomic.
+3. A **sprint planning page** (backlog beside the sprint).
+4. A **Tasks page** across work boards, with "Move to sprint" for one board's selection.
+5. A **Schedule…** step in the parent idea's Tasks section.
+
+Rules settled with it:
+- **A lane drop sets status.** Dropping a backlog task on a lane puts it in the Active sprint and sets its status to that lane, through the board's own move, so blockers and lane rules still apply and a refusal leaves it in the backlog. The **Add** button adds to the sprint and leaves status alone. With no Active sprint a panel drop is refused.
+- **Roles.** Users add tasks (standalone or parented); only Org Admins create sprints and assign tasks to them (`contracts/sprints.md` is unchanged). Read Only sees, no controls.
+
+**Why.** A task is a card on a board but only reachable through its parent, so standalone and cross-idea tasks cannot be managed; and sprint creation, which the person experiences as "plan the next two weeks", had no step for choosing the work. One list serving five entry points avoids five models.
+
+**Build needs** (not specified in a contract yet): sprint on board idea items, a board-task sprint assignment route, `taskIds` on sprint create, and a cross-board task read for the Tasks page only.
 
 ## 2026-10-22 — The whole idea card drags between lanes
 

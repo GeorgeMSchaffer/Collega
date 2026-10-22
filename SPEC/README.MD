@@ -19,6 +19,7 @@ Canonical product and delivery specifications. This file is the index; the numbe
 | `20-feature-user-login.md` | Login and session behavior | MVP |
 | `20-feature-organizations-and-users.md` | Orgs, users, invite codes, CSV import | MVP |
 | `20-feature-boards-and-statuses.md` | Boards, statuses, swimlanes | MVP |
+| `20-feature-task-backlog-and-sprint-planning.md` | Task Backlog, sprint task picker, planning page, Tasks page; extends Board References | Approved 2026-10-22; unbuilt |
 | `20-feature-ideas-and-engagement.md` | Idea CRUD, tags, mentions, comments, upvotes | MVP |
 | `20-feature-notifications.md` | Notification events; recipients are followers since 2026-10-01 | MVP |
 | `20-feature-idea-following.md` | Following an idea, and the in-app notification inbox | Specified 2026-10-01 (slice 149); open questions answered 2026-10-01 |

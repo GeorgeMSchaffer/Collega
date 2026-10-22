@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en" data-proto-theme="graphite">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Comp W alternates: where tasks are managed, and how a sprint picks its tasks (2026-10-22). A throwaway review comp for
+     SPEC/20-feature-board-references.md (tasks and per-board sprints). Graphite only, comp R/U look. Self-contained;
+     nothing saves. Sample Acme Robotics data. Strings marked COPY PROPOSED are not decided. Not a reference until approved. -->
+<title>Collega Tasks and Sprint Planning Alternates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{color-scheme:dark;--bg:#0F1113;--ink:#E6E8EA;--ink2:#C4CAD0;--muted:#9BA3AB;--line:#22272C;--line2:#2C3238;--card:#16191C;--soft:#1C2024;--rowh:#1A1E22;--thead:#121518;--field:#0F1113;
+--pri:#F5A524;--pri-h:#FFC35C;--pri-tint:#2A2418;--pri-ink:#16120A;--metric:#5CC8E0;--metric-tint:#0F1D21;--hot:#E5484D;--hot-t:#FF8A8E;--hot-tint:#2E1719;--ok:#58C781;--ok-tint:#13241A;--warn:#F5B456;
+--side:#121518;--side-ink:#AEB5BC;--side-on:#1C2024;--bar:#0B0D0F;--r:8px;--rs:6px;--body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;
+--t0:.9rem;--t1:1.013rem;--t2:1.139rem;--t3:1.281rem}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:var(--t0)/1.5 var(--body)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+h1,h2,h3{margin:0;text-wrap:balance}[hidden]{display:none!important}
+.proto{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:8px 16px;background:var(--bar);color:var(--side-ink);position:sticky;top:0;z-index:5}
+.proto b{color:var(--ink)}
+.proto button{border:1px solid var(--line2);background:transparent;border-radius:999px;padding:2px 12px;min-height:30px;cursor:pointer;color:var(--side-ink)}
+.proto button[aria-pressed=true]{background:var(--ink);color:var(--bar);font-weight:700}
+.wrap{max-width:1240px;margin:0 auto;padding:20px 16px 60px}
+.lede{max-width:78ch;color:var(--ink2)}
+.lede h1{font-size:var(--t3);margin-bottom:6px}
+.rec{border:1px solid var(--metric);background:var(--metric-tint);border-radius:var(--r);padding:10px 14px;margin:14px 0;max-width:78ch}
+.rec b{color:var(--metric)}
+.frame{margin:22px 0}
+.frame>h2{font-size:var(--t1);margin-bottom:8px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.fl{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--pri);color:var(--pri-ink);font-weight:700;font-size:.8rem}
+.prop{font-size:.8rem;color:var(--warn);border:1px solid var(--warn);border-radius:999px;padding:0 8px;font-weight:500}
+.note{color:var(--muted);max-width:78ch;margin:6px 0 0}
+.note b{color:var(--ink2)}
+/* app mock */
+.app.tall{min-height:680px}
+.app{display:grid;grid-template-columns:200px 1fr;border:1px solid var(--line2);border-radius:var(--r);overflow:hidden;background:var(--bg);position:relative;min-height:420px}
+.side{background:var(--side);border-right:1px solid var(--line);padding:12px 8px;font-size:var(--t0)}
+.side .g{color:var(--muted);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;padding:10px 8px 4px}
+.side a{display:flex;justify-content:space-between;gap:6px;padding:5px 8px;border-radius:var(--rs);color:var(--side-ink);text-decoration:none}
+.side a.on{background:var(--side-on);color:var(--ink)}
+.side a small{color:var(--muted)}
+.new{outline:1px dashed var(--pri);outline-offset:1px;position:relative}
+.new::after{content:"NEW";position:absolute;right:-2px;top:-9px;background:var(--pri);color:var(--pri-ink);font-size:.65rem;font-weight:700;border-radius:4px;padding:0 4px}
+.main{min-width:0;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);color:var(--muted)}
+.top b{color:var(--ink);font-weight:600}
+.sp{flex:1}
+.head{padding:14px 16px 0}
+.head h2{font-size:var(--t2)}
+.tabs{display:flex;gap:2px;margin-top:10px;border-bottom:1px solid var(--line)}
+.tabs span{padding:7px 14px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs span.on{color:var(--ink);border-color:var(--pri);font-weight:600}
+.tabs span i{font-style:normal;background:var(--soft);border-radius:999px;padding:0 7px;margin-left:5px;font-size:.8rem;color:var(--ink2)}
+.body{padding:14px 16px;flex:1;min-width:0}
+.btn{border:1px solid var(--line2);background:var(--soft);border-radius:var(--rs);padding:4px 12px;min-height:32px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn.pri{background:var(--pri);color:var(--pri-ink);border-color:var(--pri);font-weight:600}
+.btn.ghost{background:transparent}
+.btn.sm{min-height:28px;padding:2px 9px;font-size:.85rem}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.in{background:var(--field);border:1px solid var(--line2);border-radius:var(--rs);padding:4px 10px;min-height:32px;color:var(--muted);min-width:180px}
+.chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line2);border-radius:999px;padding:0 9px;font-size:.82rem;color:var(--ink2);background:var(--soft);white-space:nowrap}
+.chip.par{font-family:var(--mono);font-size:.76rem}
+.chip.on{border-color:var(--pri);color:var(--pri);background:var(--pri-tint)}
+.chip.sp{border-color:var(--metric);color:var(--metric)}
+.chip.blk{border-color:var(--hot);color:var(--hot-t);background:var(--hot-tint)}
+.chip.ok{border-color:var(--ok);color:var(--ok);background:var(--ok-tint)}
+table{width:100%;border-collapse:collapse}
+th{background:var(--thead);text-align:left;font-weight:500;color:var(--muted);font-size:.82rem;padding:6px 10px;border-bottom:1px solid var(--line)}
+td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr.sel td{background:var(--pri-tint)}
+tr.dim td{opacity:.5}
+td.k{font-family:var(--mono);font-size:.82rem;color:var(--muted);white-space:nowrap}
+.cb{width:16px;height:16px;border:1.5px solid var(--line2);border-radius:4px;display:inline-grid;place-items:center;font-size:11px;line-height:1;vertical-align:middle}
+.cb.on{background:var(--pri);border-color:var(--pri);color:var(--pri-ink);font-weight:700}
+.av{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#153038;color:var(--metric);font-size:.7rem;font-weight:600}
+.empty{border:1px dashed var(--line2);border-radius:var(--r);padding:30px 16px;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--ink);margin-bottom:4px}
+.selbar{display:flex;gap:10px;align-items:center;background:var(--pri-tint);border:1px solid var(--pri);border-radius:var(--rs);padding:6px 12px;margin-bottom:10px}
+/* drawer overlay */
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;justify-content:flex-end}
+.drawer{width:min(50%,560px);background:var(--card);border-left:1px solid var(--line2);display:flex;flex-direction:column;min-width:0}
+.drawer.wide{width:min(72%,760px)}
+.dh{display:flex;align-items:flex-start;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.dh .eb{font-size:.78rem;letter-spacing:.06em;color:var(--muted)}
+.dh h3{font-size:var(--t2)}
+.db{padding:14px 16px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:12px}
+.df{display:flex;gap:8px;justify-content:flex-end;align-items:center;padding:10px 16px;border-top:1px solid var(--line)}
+.f label{display:block;color:var(--ink2);font-weight:500;margin-bottom:3px}
+.f .in{display:block;color:var(--ink)}
+.f small{color:var(--muted);display:block;margin-top:2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sec{border:1px solid var(--line2);border-radius:var(--r);overflow:hidden}
+.sec>.sh{display:flex;gap:8px;align-items:center;padding:8px 10px;background:var(--thead);border-bottom:1px solid var(--line)}
+.sec>.sh b{font-weight:600}
+.pick{max-height:260px;overflow:auto}
+.pick .it{display:grid;grid-template-columns:20px 74px 1fr auto;gap:8px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line)}
+.pick .it.sel{background:var(--pri-tint)}
+.pick .it .k{font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+.sum{display:flex;gap:14px;flex-wrap:wrap;color:var(--ink2)}
+.sum b{color:var(--ink)}
+/* split planning */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.col{border:1px solid var(--line2);border-radius:var(--r);overflow:hidden;background:var(--card)}
+.col>.sh{padding:8px 10px;background:var(--thead);border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center}
+.col .it{display:grid;grid-template-columns:70px 1fr auto;gap:8px;padding:7px 10px;border-bottom:1px solid var(--line);align-items:center}
+.col .it .k{font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+.col .it.drag{outline:1px dashed var(--pri);background:var(--pri-tint)}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:10px}
+.cmp>div{border:1px solid var(--line2);border-radius:var(--r);padding:10px 12px;background:var(--card)}
+.cmp h3{font-size:var(--t1);margin-bottom:4px}
+.cmp ul{margin:6px 0 0;padding-left:18px;color:var(--ink2)}
+.cmp .win{border-color:var(--metric)}
+@media (max-width:760px){.app{grid-template-columns:1fr}.side{display:none}.split,.row2{grid-template-columns:1fr}.drawer,.drawer.wide{width:100%}}
+
+.dock{display:grid;grid-template-columns:240px 1fr;gap:0;border:1px solid var(--line2);border-radius:var(--r);overflow:hidden;background:var(--card)}
+.dock>.l{border-right:1px solid var(--line);background:var(--thead);min-width:0}
+.dock .it{display:grid;grid-template-columns:1fr auto;gap:6px;padding:7px 10px;border-bottom:1px solid var(--line);align-items:center}
+.dock .it small{font-family:var(--mono);color:var(--muted);display:block}
+.dock .it.drag{outline:1px dashed var(--pri);background:var(--pri-tint)}
+.lanes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px}
+.lane{background:var(--bg);border:1px solid var(--line);border-radius:var(--rs);padding:6px;min-height:120px}
+.lane h4{margin:0 0 6px;font-size:.82rem;color:var(--muted);font-weight:500;display:flex;justify-content:space-between}
+.card{background:var(--card);border:1px solid var(--line2);border-radius:var(--rs);padding:6px 8px;margin-bottom:6px;font-size:.88rem}
+.card small{font-family:var(--mono);color:var(--muted);display:block}
+.qa{display:flex;gap:6px;padding:6px 10px;border-top:1px dashed var(--line2);color:var(--muted)}
+.qa .in{flex:1;min-height:28px}
+.vs{width:100%}
+.vs td:first-child,.vs th:first-child{white-space:nowrap;color:var(--ink2);font-weight:500}
+.good{color:var(--ok)}.bad{color:var(--hot-t)}
+@media (max-width:760px){.dock{grid-template-columns:1fr}.lanes{grid-template-columns:1fr 1fr}}
+</style>
+<body>
+<div class="proto" role="toolbar" aria-label="Screens">
+  <b>Comp W alternates</b><span>Graphite</span>
+  <button type="button" data-go="v0" aria-pressed="true">Compare</button>
+  <button type="button" data-go="v1" aria-pressed="false">B Sprint-first</button>
+  <button type="button" data-go="v2" aria-pressed="false">C Tasks page</button>
+  <button type="button" data-go="v3" aria-pressed="false">D Board with backlog panel</button>
+  <button type="button" data-go="v4" aria-pressed="false">E Idea-first</button>
+</div>
+<div class="wrap">
+<div class="lede"><h1>Four other ways to give tasks a home and fill a sprint</h1>
+<p>Comp W (call it <b>A</b>) is a Backlog tab per board plus a picker in the create-sprint drawer. These alternates keep the same data rules (a task is a card on a work board; a sprint holds one board's tasks; the picker lists unassigned tasks) and change <b>where the work starts</b>: the sprint, a global list, the board itself, or the parent idea. Sample data is Acme Robotics. Nothing saves. Strings marked COPY PROPOSED are not decided.</p></div>
+
+<section id="v0">
+  <div class="frame"><h2><span class="fl">&#8801;</span>Side by side</h2>
+  <table class="vs"><thead><tr><th></th><th>A &middot; Backlog tab (comp W)</th><th>B &middot; Sprint-first</th><th>C &middot; Tasks page</th><th>D &middot; Backlog panel on the board</th><th>E &middot; Idea-first</th></tr></thead><tbody>
+  <tr><td>Starts from</td><td>the board's task list</td><td>the sprint</td><td>one list of every task</td><td>the board you already use</td><td>the idea that needs work</td></tr>
+  <tr><td>Where "+ New task" lives</td><td>Backlog tab</td><td>inside the planning page</td><td>Tasks page header</td><td>inline row under the backlog</td><td>idea drawer, "Schedule" step</td></tr>
+  <tr><td>Filling a sprint</td><td>drawer picker, or tick then "Add to sprint"</td><td>planning page, backlog beside the sprint</td><td>bulk "Move to sprint"</td><td>drag or Add from the panel</td><td>"Schedule tasks" picks a sprint per task</td></tr>
+  <tr><td>New nav item</td><td class="good">none (tabs)</td><td>none (Sprints tab)</td><td class="bad">one (Tasks)</td><td class="good">none</td><td class="good">none</td></tr>
+  <tr><td>Cross-board view</td><td class="bad">no</td><td class="bad">no</td><td class="good">yes</td><td class="bad">no</td><td class="good">per idea</td></tr>
+  <tr><td>Standalone tasks</td><td class="good">first-class</td><td class="good">yes</td><td class="good">yes</td><td class="good">yes</td><td class="bad">weak (no idea)</td></tr>
+  <tr><td>Extra build</td><td>1 tab, 1 picker</td><td>1 planning page</td><td>1 page, filters, bulk bar</td><td>a collapsible panel, drag</td><td>reuses parent drawer</td></tr>
+  <tr><td>Best for</td><td>everyday use, small teams</td><td>teams that plan on a rhythm</td><td>people with tasks on several boards</td><td>people who live on the board</td><td>idea owners chasing delivery</td></tr>
+  </tbody></table>
+  <p class="note"><b>My read:</b> A and D combine well (D is A's Backlog tab rendered as a panel instead of a tab). B is the strongest answer to "pick tasks when creating a sprint" if sprints are a weekly ritual. C is worth adding later as "My tasks" rather than building first. E is a good complement for idea owners but cannot be the only home, because it leaves standalone tasks out.</p></div>
+</section>
+
+<!-- B -->
+<section id="v1" hidden>
+  <div class="frame"><h2><span class="fl">B</span>Sprint-first: the sprint is the workspace <span class="prop">COPY PROPOSED</span></h2>
+    <div class="app tall">
+      <aside class="side"><div class="g">Boards</div><a class="on">Implementation</a><div class="g">Implementation</div><a>Board</a><a class="on new">Sprints</a></aside>
+      <div class="main">
+        <div class="top">Implementation / Sprints / <b>Plan Sprint 15</b><span style="flex:1"></span><span class="chip">Planned</span><button class="btn sm" type="button">Save draft</button><button class="btn pri sm" type="button">Start sprint</button></div>
+        <div class="body">
+          <div class="bar"><span class="in" style="color:var(--ink);min-width:140px">Sprint 15</span><span class="in" style="color:var(--ink)">2026-11-02 &rarr; 2026-11-13</span><span class="in" style="color:var(--ink);flex:1">Goal: onboarding checklist piloted with one team</span></div>
+          <div class="split">
+            <div class="col"><div class="sh"><b>Backlog</b><span class="chip">7</span><span style="flex:1"></span><span class="chip">Parent idea &#9662;</span></div>
+              <div class="it"><span class="k">IMPL-49</span><span>Measure time to first shipment</span><button class="btn sm" type="button">Add &rarr;</button></div>
+              <div class="it"><span class="k">IMPL-47</span><span>Replace weekly report script</span><button class="btn sm" type="button">Add &rarr;</button></div>
+              <div class="it"><span class="k">IMPL-44</span><span>Order spare gripper heads</span><button class="btn sm" type="button">Add &rarr;</button></div>
+              <div class="qa"><span class="in">+ New task, press Enter to add to the backlog</span></div></div>
+            <div class="col"><div class="sh"><b>In this sprint</b><span class="chip sp">4 tasks</span><span class="chip">2 ideas</span></div>
+              <div class="it"><span class="k">IMPL-52</span><span>Draft onboarding checklist <span class="chip par">&#8627; CI-19</span></span><button class="btn ghost sm" type="button">&times;</button></div>
+              <div class="it"><span class="k">IMPL-51</span><span>Interview three new hires <span class="chip par">&#8627; CI-19</span></span><button class="btn ghost sm" type="button">&times;</button></div>
+              <div class="it"><span class="k">IMPL-46</span><span>Pilot team calendar <span class="chip par">&#8627; CI-31</span></span><button class="btn ghost sm" type="button">&times;</button></div>
+              <div class="it"><span class="k">IMPL-45</span><span>Pick the pilot team <span class="chip par">&#8627; CI-31</span></span><button class="btn ghost sm" type="button">&times;</button></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="note"><b>Idea:</b> "New sprint" creates a draft and lands here, so there is no separate create drawer; the sprint's name and dates are a header on the planning page. Tasks are born in the backlog column with one inline line. <b>Trade-off:</b> the backlog is only reachable from a sprint, so "what is waiting?" costs a click into a sprint; fix by showing "7 waiting" on the Sprints list.</p>
+  </div>
+  <div class="frame"><h2><span class="fl">B2</span>Sprints list: the entry point</h2>
+    <table><thead><tr><th>Sprint</th><th>Window</th><th>State</th><th>Tasks</th><th></th></tr></thead><tbody>
+      <tr><td><b>Sprint 14</b></td><td>Oct 19 &rarr; Oct 30</td><td><span class="chip ok">Active</span></td><td>12 (5 done)</td><td><button class="btn sm" type="button">Open</button></td></tr>
+      <tr><td><b>Sprint 15</b></td><td>Nov 2 &rarr; Nov 13</td><td><span class="chip">Planned</span></td><td>4</td><td><button class="btn sm" type="button">Plan</button></td></tr></tbody></table>
+    <div class="bar" style="margin-top:10px"><button class="btn pri" type="button">+ New sprint</button><span class="chip sp">7 tasks waiting for a sprint</span></div>
+  </div>
+</section>
+
+<!-- C -->
+<section id="v2" hidden>
+  <div class="frame"><h2><span class="fl">C</span>A Tasks page across all work boards <span class="prop">COPY PROPOSED</span></h2>
+    <div class="app tall">
+      <aside class="side"><div class="g">Workspace</div><a>Home</a><a>Inbox</a><a>Boards</a><a>Ideas</a><a class="on new">Tasks <small>14</small></a><div class="g">Delivery</div><a>Roadmap</a></aside>
+      <div class="main">
+        <div class="top"><b>Tasks</b><span style="flex:1"></span><button class="btn pri sm" type="button">+ New task</button></div>
+        <div class="head"><div class="tabs"><span class="on">Backlog <i>9</i></span><span>My tasks <i>5</i></span><span>In sprint <i>12</i></span><span>All</span></div></div>
+        <div class="body">
+          <div class="selbar"><b>3 selected</b><span style="flex:1"></span><span class="chip">Board: Implementation</span><button class="btn pri sm" type="button">Move to sprint &#9662;</button><button class="btn ghost sm" type="button">Clear</button></div>
+          <table><thead><tr><th style="width:26px"></th><th>Key</th><th>Task</th><th>Board</th><th>Parent</th><th>Sprint</th></tr></thead><tbody>
+            <tr class="sel"><td><span class="cb on">&#10003;</span></td><td class="k">IMPL-52</td><td>Draft onboarding checklist</td><td>Implementation</td><td><span class="chip par">&#8627; CI-19</span></td><td>&mdash;</td></tr>
+            <tr class="sel"><td><span class="cb on">&#10003;</span></td><td class="k">IMPL-51</td><td>Interview three new hires</td><td>Implementation</td><td><span class="chip par">&#8627; CI-19</span></td><td>&mdash;</td></tr>
+            <tr class="sel"><td><span class="cb on">&#10003;</span></td><td class="k">IMPL-49</td><td>Measure time to first shipment</td><td>Implementation</td><td><span class="chip par">&#8627; CI-31</span></td><td>&mdash;</td></tr>
+            <tr class="dim"><td><span class="cb"></span></td><td class="k">OPS-12</td><td>Renew the badge printer lease</td><td>Operations</td><td><span class="chip">standalone</span></td><td>&mdash;</td></tr>
+          </tbody></table>
+          <p class="note">"Move to sprint" lists Planned and Active sprints of the <b>one board</b> the selection belongs to; ticking tasks from two boards disables it with "Pick tasks from one board". Create-sprint stays a plain form; the sprint is filled from here or from the sprint page.</p>
+        </div>
+      </div>
+    </div>
+    <p class="note"><b>Idea:</b> one list for the whole organization, with saved tabs. <b>Trade-off:</b> a second place to see the same cards as the boards, and the sprint link is indirect (bulk action, not a picker in the create step). Strongest for people who own tasks on several boards.</p>
+  </div>
+</section>
+
+<!-- D -->
+<section id="v3" hidden>
+  <div class="frame"><h2><span class="fl">D</span>The board with a collapsible Backlog panel <span class="prop">COPY PROPOSED</span></h2>
+    <div class="app tall">
+      <aside class="side"><div class="g">Boards</div><a class="on">Implementation</a></aside>
+      <div class="main">
+        <div class="top">Boards / <b>Implementation</b><span style="flex:1"></span><button class="btn sm" type="button">Backlog &#9662; hide</button><button class="btn pri sm" type="button">+ New sprint</button></div>
+        <div class="body" style="padding:0">
+          <div class="bar" style="padding:10px 16px 0"><span class="chip sp">Sprint 14 &middot; Active &middot; 5 of 12 done &middot; 4 days left</span><span class="chip on">Sprint | Backlog</span></div>
+          <div class="dock">
+            <div class="l">
+              <div class="sh" style="display:flex;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line)"><b>Backlog</b><span class="chip">7</span></div>
+              <div class="it"><span>Measure time to first shipment<small>IMPL-49</small></span><span class="chip par">CI-31</span></div>
+              <div class="it drag"><span>Replace weekly report script<small>IMPL-47</small></span><span class="chip par">CI-22</span></div>
+              <div class="it"><span>Order spare gripper heads<small>IMPL-44</small></span><span class="chip">&mdash;</span></div>
+              <div class="qa"><span class="in">+ Add a task</span></div>
+            </div>
+            <div class="lanes">
+              <div class="lane"><h4>Pending <span>3</span></h4><div class="card"><small>IMPL-52</small>Draft onboarding checklist</div><div class="card"><small>IMPL-51</small>Interview three new hires</div></div>
+              <div class="lane"><h4>In progress <span>4</span></h4><div class="card"><small>IMPL-46</small>Pilot team calendar</div></div>
+              <div class="lane"><h4>Review <span>1</span></h4></div>
+              <div class="lane"><h4>Done <span>5</span></h4><div class="card"><small>IMPL-40</small>Kickoff notes</div></div>
+            </div>
+          </div>
+          <p class="note" style="padding:0 16px 14px"><b>Drop</b> a backlog row on a lane to put it in the active sprint <b>and set its status to that lane</b> (decided 2026-10-22); <b>Add</b> adds it to the sprint and leaves status alone. Blocked or locked moves are refused and the task stays in the backlog. <b>New sprint</b> opens the comp W drawer with its picker. The panel is the Backlog tab, always one glance away.</p>
+        </div>
+      </div>
+    </div>
+    <p class="note"><b>Idea:</b> no new page and no tab to remember: the backlog sits beside the board people already use, like a tray. <b>Trade-off:</b> cramped on a narrow screen (it becomes a bottom sheet on mobile); adding a task straight into a lane is a second path to explain; and a drop changes status as well as sprint, so the Add button is the schedule-only path (status unchanged).</p>
+  </div>
+</section>
+
+<!-- E -->
+<section id="v4" hidden>
+  <div class="frame"><h2><span class="fl">E</span>Idea-first: schedule tasks from the idea <span class="prop">COPY PROPOSED</span></h2>
+    <div class="app tall">
+      <aside class="side"><div class="g">Boards</div><a class="on">Continuous Improvement</a><a>Implementation</a></aside>
+      <div class="main"><div class="top">Boards / Continuous Improvement</div><div class="body"><p class="note">Board behind the drawer</p></div></div>
+      <div class="scrim"><div class="drawer wide">
+        <div class="dh"><div><div class="eb">CI-19 &middot; CONTINUOUS IMPROVEMENT</div><h3>Cut onboarding time</h3></div><span style="flex:1"></span><button class="btn ghost sm" type="button">Close</button></div>
+        <div class="db">
+          <div class="sec"><div class="sh"><b>Tasks</b><span class="chip">3 of 5 not scheduled</span><span style="flex:1"></span><button class="btn sm" type="button">+ Add task</button><button class="btn pri sm" type="button">Schedule&hellip;</button></div>
+            <div class="pick">
+              <div class="it sel"><span class="cb on">&#10003;</span><span class="k">IMPL-52</span><span>Draft onboarding checklist</span><span class="chip">No sprint</span></div>
+              <div class="it sel"><span class="cb on">&#10003;</span><span class="k">IMPL-51</span><span>Interview three new hires</span><span class="chip">No sprint</span></div>
+              <div class="it"><span class="cb"></span><span class="k">IMPL-50</span><span>Pilot with one team</span><span class="chip">No sprint</span></div>
+              <div class="it"><span class="cb"></span><span class="k">IMPL-48</span><span>Write the guide</span><span class="chip sp">Sprint 14</span></div>
+              <div class="it"><span class="cb"></span><span class="k">IMPL-47</span><span>Review with HR</span><span class="chip ok">Done</span></div>
+            </div></div>
+          <div class="sec"><div class="sh"><b>Schedule 2 tasks</b></div>
+            <div class="db" style="gap:8px"><div class="f"><label>Sprint</label><span class="in">Sprint 15 &middot; Nov 2 &rarr; Nov 13 (Planned) &nbsp;&#9662;</span><small>or <u>Create a new sprint&hellip;</u>, which opens the comp W drawer with these two ticked.</small></div></div>
+            <div class="df"><button class="btn ghost" type="button">Cancel</button><button class="btn pri" type="button">Add 2 tasks to Sprint 15</button></div></div>
+        </div>
+      </div></div>
+    </div>
+    <p class="note"><b>Idea:</b> the owner of an idea decides when its tasks run, from the Tasks section they already use, so the question "which of my idea's tasks are not scheduled yet?" has a direct answer. <b>Trade-off:</b> it covers only tasks that have a parent. A standalone task still needs one of A to D, so E is an addition, not a home. The picker row also shows the lock rule: "Waiting on N tasks" stays unchanged.</p>
+  </div>
+</section>
+</div>
+<script>
+(function(){
+  var btns=document.querySelectorAll('.proto button');
+  function go(id){document.querySelectorAll('section').forEach(function(s){s.hidden=s.id!==id});btns.forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.go===id))})}
+  btns.forEach(function(b){b.addEventListener('click',function(){go(b.dataset.go)})});
+})();
+</script>
+</body>
+</html>
