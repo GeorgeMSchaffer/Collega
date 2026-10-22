@@ -146,6 +146,22 @@ export function getBacklog(
   })
 }
 
+/** A work board's cards in one sprint (`sprintId`), at the API's page maximum, oldest first. */
+export function getSprintTasks(boardId: string, sprintId: string): Promise<IdeaPage> {
+  return getBoardIdeaList(boardId, {
+    search: '',
+    boardIds: [],
+    statusIds: [],
+    priorities: [],
+    tags: [],
+    sortBy: 'createdAt',
+    sortDirection: 'asc',
+    page: 1,
+    pageSize: API_MAX_PAGE_SIZE,
+    sprintId,
+  })
+}
+
 /** An idea a new task can hang under: it sits in a lane that references the work board. */
 export type TaskParentChoice = { id: string; itemKey: string | null; title: string }
 
