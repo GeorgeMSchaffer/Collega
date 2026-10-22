@@ -605,12 +605,21 @@ export class PrismaBoardRepository
     )
   }
 
+  /** `ideas.BoardsPort.isReferencedByLane`. */
+  async isReferencedByLane(boardId: string): Promise<boolean> {
+    const referencing = await this.prisma.board_swimlanes.count({
+      where: { references_board_id: boardId, boards: { is_archived: false } },
+    })
+    return referencing > 0
+  }
+
   /** `ideas.BoardsPort.getBoardReadFacts`. */
   async getBoardReadFacts(boardIds: readonly string[]): Promise<
     ReadonlyMap<
       string,
       {
         readonly ideaFeaturesEnabled: boolean
+        readonly isWorkBoard: boolean
         readonly referencedBoardByStatusId: ReadonlyMap<string, string>
       }
     >
@@ -626,11 +635,17 @@ export class PrismaBoardRepository
         board_swimlanes: { select: { status_id: true, references_board_id: true } },
       },
     })
+    const referencing = await this.prisma.board_swimlanes.findMany({
+      where: { references_board_id: { in: [...boardIds] }, boards: { is_archived: false } },
+      select: { references_board_id: true },
+    })
+    const workBoardIds = new Set(referencing.map((lane) => lane.references_board_id))
     return new Map(
       rows.map((row) => [
         row.id,
         {
           ideaFeaturesEnabled: row.idea_features_enabled,
+          isWorkBoard: workBoardIds.has(row.id),
           referencedBoardByStatusId: new Map(
             row.board_swimlanes.flatMap((lane) =>
               lane.references_board_id ? [[lane.status_id, lane.references_board_id] as const] : [],

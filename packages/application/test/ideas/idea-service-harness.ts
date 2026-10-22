@@ -339,6 +339,11 @@ export function harness(options: {
       nextItemNumbers.set(boardId, next + 1)
       return next
     },
+    async isReferencedByLane(boardId) {
+      return [...boardsById.values()].some(
+        (b) => !b.isArchived && b.swimlanes.some((lane) => lane.referencesBoardId === boardId),
+      )
+    },
     async getBoardReadFacts(boardIds) {
       return new Map(
         boardIds.flatMap((id) => {
@@ -349,6 +354,9 @@ export function harness(options: {
                   id,
                   {
                     ideaFeaturesEnabled: found.ideaFeaturesEnabled,
+                    isWorkBoard: [...boardsById.values()].some(
+                      (b) => !b.isArchived && b.swimlanes.some((l) => l.referencesBoardId === id),
+                    ),
                     referencedBoardByStatusId: new Map(
                       found.swimlanes.flatMap((lane) =>
                         lane.referencesBoardId

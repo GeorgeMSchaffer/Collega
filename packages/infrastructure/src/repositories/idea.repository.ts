@@ -49,6 +49,10 @@ type IdeaRowFull = IdeaRow & {
   idea_field_values: FieldValueRow[]
 }
 
+/** An item that is not a task: no parent, and not on a board that a live board's lane references. A
+ * task's stored priority is a stand-in that no read shows, so it must not filter, sort or match. */
+const NOT_A_TASK_SQL = Prisma.sql`(i.parent_idea_id IS NULL AND NOT EXISTS (SELECT 1 FROM board_swimlanes ref_lane JOIN boards ref_board ON ref_board.id = ref_lane.board_id WHERE ref_lane.references_board_id = i.board_id AND ref_board.is_archived = FALSE))`
+
 const IDEA_INCLUDE = {
   idea_assignees: true,
   idea_mentions: true,
@@ -389,11 +393,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
     if (filter.dueBefore) {
       conditions.push(Prisma.sql`i.due_date < ${filter.dueBefore}::date`)
     }
-    if (filter.sprintId) {
-      conditions.push(Prisma.sql`i.sprint_id = ${filter.sprintId}::uuid`)
-    } else if (filter.noSprint) {
-      conditions.push(Prisma.sql`i.sprint_id IS NULL`)
-    }
+    conditions.push(...this.sprintAndFinalConditions(filter))
     if (filter.search) {
       conditions.push(this.searchCondition(filter, false))
     }
@@ -419,7 +419,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       case 'updatedat':
         return Prisma.sql`i.updated_at_utc`
       case 'priority':
-        return Prisma.sql`CASE WHEN i.parent_idea_id IS NULL THEN i.priority END`
+        return Prisma.sql`CASE WHEN ${NOT_A_TASK_SQL} THEN i.priority END`
       case 'duedate':
         return Prisma.sql`i.due_date`
       case 'upvotecount':
@@ -471,6 +471,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
         Prisma.sql`(i.author_user_id = ${filter.associatedUserId}::uuid OR EXISTS (SELECT 1 FROM idea_assignees ia2 WHERE ia2.idea_id = i.id AND ia2.user_id = ${filter.associatedUserId}::uuid))`,
       )
     }
+    conditions.push(...this.sprintAndFinalConditions(filter))
     for (const fieldFilter of filter.fieldFilters) {
       const fragment = this.fieldFilterFragment(fieldFilter)
       if (fragment) {
@@ -510,7 +511,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       case 'board':
         return Prisma.sql`b.name`
       case 'priority':
-        return Prisma.sql`CASE WHEN i.parent_idea_id IS NULL THEN i.priority END`
+        return Prisma.sql`CASE WHEN ${NOT_A_TASK_SQL} THEN i.priority END`
       case 'upvotecount':
         return UPVOTE_COUNT_SQL
       case 'tags':
@@ -518,6 +519,26 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       default:
         return Prisma.sql`i.created_at_utc`
     }
+  }
+
+  /** `sprintId` (a sprint, or none) and `hideFinal` (not in a final lane of the item's own board). */
+  private sprintAndFinalConditions(filter: {
+    readonly sprintId?: string | null | undefined
+    readonly noSprint?: boolean | undefined
+    readonly hideFinal?: boolean | undefined
+  }): Prisma.Sql[] {
+    const conditions: Prisma.Sql[] = []
+    if (filter.sprintId) {
+      conditions.push(Prisma.sql`i.sprint_id = ${filter.sprintId}::uuid`)
+    } else if (filter.noSprint) {
+      conditions.push(Prisma.sql`i.sprint_id IS NULL`)
+    }
+    if (filter.hideFinal) {
+      conditions.push(
+        Prisma.sql`NOT EXISTS (SELECT 1 FROM board_swimlanes fl WHERE fl.board_id = i.board_id AND fl.status_id = i.status_id AND fl.is_final = TRUE)`,
+      )
+    }
+    return conditions
   }
 
   /** The repeatable filters both lists share: any-of within one, AND across them. */
@@ -532,7 +553,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
     }
     if (filter.priorities.length > 0) {
       conditions.push(
-        Prisma.sql`(i.parent_idea_id IS NULL AND i.priority IN (${Prisma.join(filter.priorities.map((p) => Prisma.sql`${p}::"Priority"`))}))`,
+        Prisma.sql`(${NOT_A_TASK_SQL} AND i.priority IN (${Prisma.join(filter.priorities.map((p) => Prisma.sql`${p}::"Priority"`))}))`,
       )
     }
     if (filter.tags.length > 0) {
@@ -562,7 +583,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
     const clauses: Prisma.Sql[] = [
       Prisma.sql`i.title ILIKE ${term}`,
       Prisma.sql`i.problem ILIKE ${term}`,
-      Prisma.sql`(i.parent_idea_id IS NULL AND i.priority::text ILIKE ${term})`,
+      Prisma.sql`(${NOT_A_TASK_SQL} AND i.priority::text ILIKE ${term})`,
       Prisma.sql`(au.first_name ILIKE ${term} OR au.last_name ILIKE ${term} OR (au.first_name || ' ' || au.last_name) ILIKE ${term})`,
       Prisma.sql`EXISTS (SELECT 1 FROM idea_assignees ia3 JOIN users u3 ON u3.id = ia3.user_id WHERE ia3.idea_id = i.id AND (u3.first_name ILIKE ${term} OR u3.last_name ILIKE ${term} OR (u3.first_name || ' ' || u3.last_name) ILIKE ${term}))`,
       Prisma.sql`s.name ILIKE ${term}`,

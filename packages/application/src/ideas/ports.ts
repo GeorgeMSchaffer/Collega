@@ -38,6 +38,8 @@ export type IdeaListFilter = {
   readonly sprintId?: string | null | undefined
   /** Only items in no sprint. */
   readonly noSprint?: boolean | undefined
+  /** Leaves out items sitting in a final lane of the board. */
+  readonly hideFinal?: boolean | undefined
   /**
    * `Discovery` for every ideation-board read (spec "Board & idea-list phase filtering"): a
    * promoted item leaves the board without losing its row or its ideation status. `null` means
@@ -77,6 +79,11 @@ export type OrganizationIdeaListFilter = {
   readonly priorities: readonly Priority[]
   readonly tags: readonly string[]
   readonly associatedUserId: string | null
+  readonly sprintId?: string | null | undefined
+  /** Only items in no sprint. */
+  readonly noSprint?: boolean | undefined
+  /** Leaves out items sitting in a final lane of their own board. */
+  readonly hideFinal?: boolean | undefined
   /** Set only when `search` parses as an ISO `yyyy-MM-dd` date: additionally matches ideas
    * created on that (UTC) calendar day. */
   readonly searchCreatedOnDate: string | null
@@ -323,6 +330,8 @@ export type BoardContext = {
 /** What a read needs to know about an item's board, for the whole page in one call. */
 export type BoardReadFacts = {
   readonly ideaFeaturesEnabled: boolean
+  /** A lane of a live (not archived) board references this board: its cards are tasks. */
+  readonly isWorkBoard: boolean
   /** Lane status id -> the board that lane references, for the lanes that reference one. */
   readonly referencedBoardByStatusId: ReadonlyMap<string, string>
 }
@@ -355,6 +364,9 @@ export interface BoardsPort {
 
   /** Key prefix per board id, for the whole list in one read. A board with no prefix is absent. */
   getKeyPrefixes(boardIds: readonly string[]): Promise<ReadonlyMap<string, string>>
+
+  /** True when a lane of a live (not archived) board references the board: a work board. */
+  isReferencedByLane(boardId: string): Promise<boolean>
 
   /** Read facts per board id, for the whole list in one read. Unknown boards are absent. */
   getBoardReadFacts(boardIds: readonly string[]): Promise<ReadonlyMap<string, BoardReadFacts>>

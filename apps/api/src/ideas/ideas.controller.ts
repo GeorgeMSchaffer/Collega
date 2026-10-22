@@ -47,6 +47,7 @@ import {
   optional,
   optionalGuid,
   optionalInt,
+  queryBool,
   queryList,
   stringList,
 } from '../common/request-values.js'
@@ -81,6 +82,9 @@ type CreateIdeaBody = {
 
 /** `POST /organizations/{organizationId}/issues`: the create shape plus the promotion's fields. */
 type AddIssueBody = CreateIdeaBody & { sprintId?: unknown }
+
+/** `POST /boards/{boardId}/tasks`: a task's four fields plus an optional parent and sprint. */
+type BoardCardBody = CreateIdeaBody & { parentIdeaId?: unknown; sprintId?: unknown }
 
 /** `PUT /ideas/{ideaId}` - `UpdateIdeaRequest`: the create shape minus `statusId`. */
 type UpdateIdeaBody = Omit<CreateIdeaBody, 'statusId'> & { effort?: unknown }
@@ -293,6 +297,7 @@ export class IdeasController {
       priorities: queryList(query.priority),
       dueBefore: optional(query.dueBefore),
       ...sprintFilter(query.sprintId),
+      hideFinal: queryBool(query.hideFinal),
       sortBy: optional(query.sortBy),
       sortDirection: optional(query.sortDirection),
     })
@@ -318,6 +323,8 @@ export class IdeasController {
       tags: queryList(query.tag),
       phase: optional(query.phase),
       user: optionalGuid(query.user),
+      ...sprintFilter(query.sprintId),
+      hideFinal: queryBool(query.hideFinal),
     })
   }
 
@@ -334,6 +341,23 @@ export class IdeasController {
       // `Guid?` here, not `Guid`: omitting it means "the board's left-most swimlane", which is not
       // the same request as naming a status that does not exist.
       statusId: optionalGuid(body.statusId),
+    })
+  }
+
+  /** A task from the work board itself: with `parentIdeaId` the parent's `board-tasks` create,
+   * without it a standalone card. */
+  @Post('boards/:boardId/tasks')
+  @HttpCode(201)
+  async createBoardCard(
+    @Param('boardId', UuidParamPipe) boardId: string,
+    @Body() body: BoardCardBody,
+  ): Promise<CreateIdeaResult> {
+    validateFields(taskBodyRules(body))
+
+    return this.ideas.createTaskOnBoard(boardId, {
+      ...taskFields(body),
+      parentIdeaId: optionalGuid(body.parentIdeaId),
+      sprintId: optionalGuid(body.sprintId),
     })
   }
 

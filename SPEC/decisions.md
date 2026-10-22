@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-22 | A card on a referenced board is a task on read; a 403 can carry a field key | active | full below |
 | 2026-10-22 | Tasks get a Backlog and sprints are planned from it (five surfaces) | active | full below |
 | 2026-10-22 | The whole idea card drags between lanes | active | full below |
 | 2026-10-22 | Users always move ideas between statuses | active | full below |
@@ -144,6 +145,12 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-10-22 — A card on a referenced board is a task on read; a 403 can carry a field key
+
+**Decided by the owner (the first part), slice 322.** `POST /boards/{boardId}/tasks` without a parent makes a standalone card. It is stored as an ordinary item row, so it keeps the stand-in priority, type, business impact and problem text that a task never shows. **Rule:** a card on a board that a non-archived board's lane references (the same test as `boardIsNotAWorkBoard`) is a task on read, parent or not. Priority, type, business impact, problem, solutions, impact rationale, effort and metrics are hidden on the list and detail reads, and the card is edited as a task. No schema change. The CSV export still writes the stored values for such a card; to be revisited if it matters.
+
+**Keyed 403.** A refusal that is about one field of the request (a non-admin sending `sprintId`) is a `403` whose problem body also carries `errors: { sprintId: [...] }`. In code, `ForbiddenError` takes optional `failures`, and the problem-details filter renders them as `errors`. No other 403 changes.
 
 ## 2026-10-22 — Tasks get a Backlog and sprints are planned from it (five surfaces)
 

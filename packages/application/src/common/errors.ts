@@ -16,6 +16,14 @@ export abstract class ApplicationError extends Error {
 /** The caller is authenticated but not allowed to do this. Maps to 403. */
 export class ForbiddenError extends ApplicationError {
   readonly kind = 'forbidden' as const
+
+  /** Field name -> messages, when the refusal is about one field of the request (`sprintId`). */
+  readonly failures: Readonly<Record<string, readonly string[]>> | undefined
+
+  constructor(message: string, failures?: Readonly<Record<string, readonly string[]>>) {
+    super(message)
+    this.failures = failures
+  }
 }
 
 /** The caller is not authenticated, or the credential is no longer valid. Maps to 401. */
