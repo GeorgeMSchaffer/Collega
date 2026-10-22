@@ -1153,9 +1153,17 @@ export class IdeaService {
     const idea = await this.ideaRepository.getById(ideaId, false)
     return (
       idea !== null &&
-      idea.parentIdeaId !== null &&
+      (await this.isTaskItem(idea)) &&
       (this.currentUser.role === Role.SiteAdmin ||
         this.currentUser.organizationId === idea.organizationId)
+    )
+  }
+
+  /** A task is a card with a parent, or any card on a board that a lane references. */
+  private async isTaskItem(idea: Idea): Promise<boolean> {
+    return (
+      idea.parentIdeaId !== null ||
+      (idea.boardId !== null && (await this.boards.isReferencedByLane(idea.boardId)))
     )
   }
 
@@ -1174,7 +1182,7 @@ export class IdeaService {
       throw new NotFoundError('Idea not found.')
     }
     this.ensureOrganizationScope(idea.organizationId)
-    if (idea.parentIdeaId === null) {
+    if (!(await this.isTaskItem(idea))) {
       // Only if it stopped being a task since the route asked.
       throw new ConflictError('This item is no longer a task.')
     }
@@ -2210,6 +2218,7 @@ export class IdeaService {
     return ideas.map((idea) => {
       const sprint = idea.sprintId ? sprintsById.get(idea.sprintId) : undefined
       const hidden = references.hidesIdeaFeatures(idea)
+      const task = references.isTaskCard(idea)
       return {
         ideaId: idea.id,
         boardId: idea.boardId,
@@ -2219,7 +2228,7 @@ export class IdeaService {
         taskCounts: references.taskCountsOf(idea),
         blockedBy: blockedBy.get(idea.id) ?? [],
         title: idea.title,
-        priority: idea.parentIdeaId === null ? idea.priority : null,
+        priority: task ? null : idea.priority,
         ideaTypeId: hidden ? null : idea.ideaTypeId,
         ideaTypeName: hidden ? null : this.ideaTypeName(ideaTypeLookup, idea.ideaTypeId),
         ideaTypeColorHex: hidden ? null : this.ideaTypeColorHex(ideaTypeLookup, idea.ideaTypeId),
@@ -2385,6 +2394,7 @@ export class IdeaService {
 
     const references = await this.referenceContextFor([idea])
     const hidden = references.hidesIdeaFeatures(idea)
+    const task = references.isTaskCard(idea)
 
     const fieldValues: readonly IdeaFieldValueDto[] = hidden
       ? []
@@ -2435,7 +2445,7 @@ export class IdeaService {
     // A direct Site Admin is refused metric reads and sees values only through View As
     // (SPEC/contracts/metric-types.md), so the detail answers `[]` rather than refusing.
     const metrics =
-      idea.parentIdeaId === null && this.metricValues && this.currentUser.role !== Role.SiteAdmin
+      !task && this.metricValues && this.currentUser.role !== Role.SiteAdmin
         ? await this.metricValues.listByIdea(idea.id)
         : []
 
@@ -2449,11 +2459,11 @@ export class IdeaService {
       taskCounts: references.taskCountsOf(idea),
       blockedBy,
       title: idea.title,
-      problem: idea.parentIdeaId === null ? idea.problem : null,
-      proposedSolutions: idea.parentIdeaId === null ? idea.proposedSolutions : [],
-      impactRationale: idea.parentIdeaId === null ? idea.impactRationale : null,
+      problem: task ? null : idea.problem,
+      proposedSolutions: task ? [] : idea.proposedSolutions,
+      impactRationale: task ? null : idea.impactRationale,
       description: idea.description,
-      priority: idea.parentIdeaId === null ? idea.priority : null,
+      priority: task ? null : idea.priority,
       ideaTypeId: hidden ? null : idea.ideaTypeId,
       ideaTypeName: hidden ? null : this.ideaTypeName(ideaTypeLookup, idea.ideaTypeId),
       ideaTypeColorHex: hidden ? null : (ideaTypeForFields?.colorHex ?? null),
@@ -2466,7 +2476,7 @@ export class IdeaService {
         ? null
         : this.businessImpactColor(businessImpactLookup, idea.businessImpactId),
       dueDate: idea.dueDate,
-      effort: idea.parentIdeaId === null ? idea.effort : null,
+      effort: task ? null : idea.effort,
       assignees: this.projectAssignees(idea, userLookup),
       statusId: idea.statusId,
       statusName: this.statusName(statusInfo, idea.statusId),
@@ -2523,6 +2533,7 @@ export class IdeaService {
    */
   private async referenceContextFor(ideas: readonly Idea[]): Promise<{
     hidesIdeaFeatures(idea: Idea): boolean
+    isTaskCard(idea: Idea): boolean
     taskCountsOf(idea: Idea): TaskCounts | null
   }> {
     const boardIds = [...new Set(ideas.flatMap((i) => (i.boardId === null ? [] : [i.boardId])))]
@@ -2531,14 +2542,19 @@ export class IdeaService {
     const isParentLane = (idea: Idea): boolean =>
       idea.boardId !== null &&
       facts.get(idea.boardId)?.referencedBoardByStatusId.has(idea.statusId) === true
+    // A task has a parent, or sits on a board that a lane references (a standalone card).
+    const isTaskCard = (idea: Idea): boolean =>
+      idea.parentIdeaId !== null ||
+      (idea.boardId !== null && facts.get(idea.boardId)?.isWorkBoard === true)
     const parentIds = ideas.filter(isParentLane).map((i) => i.id)
     const counts =
       parentIds.length === 0
         ? new Map()
         : await this.ideaRepository.countChildrenByParentIds(parentIds)
     return {
+      isTaskCard,
       hidesIdeaFeatures: (idea) =>
-        idea.parentIdeaId !== null ||
+        isTaskCard(idea) ||
         (idea.boardId !== null && facts.get(idea.boardId)?.ideaFeaturesEnabled === false),
       taskCountsOf: (idea) =>
         isParentLane(idea) ? (counts.get(idea.id) ?? { total: 0, done: 0 }) : null,

@@ -354,6 +354,9 @@ export function harness(options: {
                   id,
                   {
                     ideaFeaturesEnabled: found.ideaFeaturesEnabled,
+                    isWorkBoard: [...boardsById.values()].some(
+                      (b) => !b.isArchived && b.swimlanes.some((l) => l.referencesBoardId === id),
+                    ),
                     referencedBoardByStatusId: new Map(
                       found.swimlanes.flatMap((lane) =>
                         lane.referencesBoardId

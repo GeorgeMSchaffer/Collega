@@ -330,6 +330,8 @@ export type BoardContext = {
 /** What a read needs to know about an item's board, for the whole page in one call. */
 export type BoardReadFacts = {
   readonly ideaFeaturesEnabled: boolean
+  /** A lane of a live (not archived) board references this board: its cards are tasks. */
+  readonly isWorkBoard: boolean
   /** Lane status id -> the board that lane references, for the lanes that reference one. */
   readonly referencedBoardByStatusId: ReadonlyMap<string, string>
 }
