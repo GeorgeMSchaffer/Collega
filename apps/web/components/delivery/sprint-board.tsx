@@ -26,7 +26,12 @@ import { useDrawerUrl } from '@/components/ideas/use-drawer-url'
 import { ConfirmDialog, Drawer } from '@/components/list'
 import { DELIVERY_STATUSES } from '@/lib/display'
 import { mayWorkOnIssue } from '@/lib/roles'
-import { completeSprint, setDeliveryStatus, startSprint } from '@/lib/server/delivery-actions'
+import {
+  completeSprint,
+  createSprint,
+  setDeliveryStatus,
+  startSprint,
+} from '@/lib/server/delivery-actions'
 import { useCurrentUser } from '@/lib/session-client'
 import type { Issue, MemberOption, Sprint } from '@/lib/types'
 import { IssueDrawer } from './issue-drawer'
@@ -454,7 +459,7 @@ export function SprintBoard({
           {planning ? (
             <SprintForm
               formId={planFormId}
-              organizationId={organizationId}
+              save={(input) => createSprint(organizationId, input)}
               members={members}
               onPendingChange={setCreating}
               onCreated={() => {

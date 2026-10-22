@@ -1,24 +1,27 @@
 'use client'
 
-import { Button, EmptyState } from '@collega/design-system'
+import { Button, EmptyState, Select } from '@collega/design-system'
 import type { Route } from 'next'
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { ParentChip } from '@/components/ideas/idea-badges'
 import { People, TagList } from '@/components/ideas/idea-chips'
 import { ListToolbar, MultiSelectFilter } from '@/components/list'
 import { blockedBadge, blockedTooltip, isBlockedHere, type WorkLane } from '@/lib/board-work'
-import type { Idea } from '@/lib/types'
+import { moveTasksToSprint } from '@/lib/server/sprint-planning-actions'
+import type { Idea, MemberOption, Sprint } from '@/lib/types'
+import { SprintCreateDrawer } from './sprint-create-drawer'
 
 const STANDALONE = 'none'
+const NONE: readonly string[] = []
 
 /**
  * A work board's Backlog (comp W screens 1 and 5): the board's live tasks and standalone cards in no
  * sprint, as the API listed them. Search, parent, assignee and tag filter the rows that arrived (up
  * to the API's page maximum); the count says so when the board holds more than it was sent.
  *
- * `canSelect` is the sprint-planning role on a board with sprints on: the checkboxes exist for the
- * bulk bar a later slice adds, so a reader who could never use them does not get them.
+ * `canSelect` is the sprint-planning role on a board with sprints on: the checkboxes, the bulk bar
+ * ("Add to <sprint>", "Add to new sprint…") and the create-sprint drawer exist for that role only.
  */
 export function BacklogList({
   boardId,
@@ -28,6 +31,8 @@ export function BacklogList({
   lanes,
   canSelect,
   newTaskHref,
+  sprints = [],
+  members = [],
 }: {
   boardId: string
   boardName: string
@@ -37,12 +42,33 @@ export function BacklogList({
   canSelect: boolean
   /** The "+ New task" link, or `null` for a reader who may not add one. */
   newTaskHref: string | null
+  /** The board's sprints; Completed ones cannot take tasks and are left out of the bar. */
+  sprints?: readonly Sprint[]
+  members?: MemberOption[]
 }) {
   const [query, setQuery] = useState('')
   const [parents, setParents] = useState<string[]>([])
   const [assignees, setAssignees] = useState<string[]>([])
   const [tags, setTags] = useState<string[]>([])
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set())
+  const [creating, setCreating] = useState<readonly string[] | null>(null)
+  const [target, setTarget] = useState('')
+  const [barError, setBarError] = useState<string | null>(null)
+  const [notice, setNotice] = useState('')
+  // A finished write clears the control that was pressed, so focus goes to the confirmation.
+  const noticeRef = useRef<HTMLParagraphElement>(null)
+  useEffect(() => {
+    if (notice) noticeRef.current?.focus()
+  }, [notice])
+  const [adding, startAdding] = useTransition()
+  const open = useMemo(
+    () =>
+      sprints
+        .filter((sprint) => sprint.state !== 'Completed')
+        .sort((a, b) => Number(b.state === 'Active') - Number(a.state === 'Active')),
+    [sprints],
+  )
+  const chosen = open.find((sprint) => sprint.id === target) ?? open[0]
 
   const parentOptions = useMemo(() => {
     const seen = new Map<string, string>()
@@ -86,27 +112,56 @@ export function BacklogList({
     })
   }, [rows, query, parents, assignees, tags])
 
+  const confirmation = notice ? (
+    <p
+      ref={noticeRef}
+      role="status"
+      tabIndex={-1}
+      className="m-0 text-sm text-muted-foreground focus:outline-none "
+    >
+      {notice}
+    </p>
+  ) : null
+
   if (rows.length === 0) {
     return (
-      <EmptyState
-        heading="Nothing waiting for a sprint"
-        action={
-          newTaskHref ? (
-            <Link href={newTaskHref as Route} className="text-sm font-medium text-primary">
-              + New task
-            </Link>
-          ) : undefined
-        }
-      >
-        Every task on {boardName} is in a sprint or finished. Add a task here, or from an
-        idea&rsquo;s drawer once the idea reaches this board.
-      </EmptyState>
+      <div className="flex min-w-0 flex-col gap-3">
+        {confirmation}
+        <EmptyState
+          heading="Nothing waiting for a sprint"
+          action={
+            newTaskHref ? (
+              <Link href={newTaskHref as Route} className="text-sm font-medium text-primary">
+                + New task
+              </Link>
+            ) : undefined
+          }
+        >
+          Every task on {boardName} is in a sprint or finished. Add a task here, or from an
+          idea&rsquo;s drawer once the idea reaches this board.
+        </EmptyState>
+      </div>
     )
   }
 
   const visibleSelected = shown.filter((row) => selected.has(row.id)).length
   const allShown = shown.length > 0 && visibleSelected === shown.length
   const filtered = shown.length !== rows.length
+
+  function addToSprint() {
+    if (!chosen) return
+    const ids = [...selected]
+    setBarError(null)
+    startAdding(async () => {
+      const result = await moveTasksToSprint(boardId, chosen.id, ids)
+      if (result.error) {
+        setBarError(result.error)
+        return
+      }
+      setSelected(new Set())
+      setNotice(`Added ${ids.length} ${ids.length === 1 ? 'task' : 'tasks'} to ${chosen.name}.`)
+    })
+  }
 
   function toggle(id: string) {
     const next = new Set(selected)
@@ -138,6 +193,8 @@ export function BacklogList({
         <MultiSelectFilter label="Tag" options={tagOptions} selected={tags} onChange={setTags} />
       </ListToolbar>
 
+      {confirmation}
+
       <div className="flex min-h-8 flex-wrap items-center gap-3 text-sm text-muted-foreground">
         <span role="status">
           {filtered
@@ -151,8 +208,65 @@ export function BacklogList({
             Clear selection
           </Button>
         ) : null}
+        {canSelect ? (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setNotice('')
+              setCreating([...selected])
+            }}
+          >
+            + New sprint…
+          </Button>
+        ) : null}
         <span className="ml-auto">Sorted by: newest</span>
       </div>
+
+      {canSelect && selected.size > 0 ? (
+        <section
+          aria-label="Selected tasks"
+          className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2 text-sm"
+        >
+          <b>{selected.size} selected</b>
+          <span className="ml-auto flex flex-wrap items-center gap-2">
+            {open.length > 1 ? (
+              <Select
+                aria-label="Sprint to add to"
+                value={chosen?.id ?? ''}
+                className="w-48"
+                onChange={(event) => setTarget(event.target.value)}
+              >
+                {open.map((sprint) => (
+                  <option key={sprint.id} value={sprint.id}>
+                    {sprint.name} ({sprint.state})
+                  </option>
+                ))}
+              </Select>
+            ) : null}
+            {chosen ? (
+              <Button size="sm" variant="outline" disabled={adding} onClick={addToSprint}>
+                {adding ? 'Adding…' : `Add to ${chosen.name} (${chosen.state})`}
+              </Button>
+            ) : null}
+            <Button
+              size="sm"
+              disabled={adding}
+              onClick={() => {
+                setNotice('')
+                setCreating([...selected])
+              }}
+            >
+              Add to new sprint…
+            </Button>
+          </span>
+          {barError ? (
+            <p role="alert" className="m-0 basis-full text-xs font-semibold text-destructive">
+              {barError}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       <div className="relative overflow-x-auto rounded-lg border bg-card">
         <table className="min-w-[720px]">
@@ -264,6 +378,24 @@ export function BacklogList({
           </tbody>
         </table>
       </div>
+
+      {canSelect ? (
+        <SprintCreateDrawer
+          open={creating !== null}
+          onClose={() => setCreating(null)}
+          boardId={boardId}
+          boardName={boardName}
+          tasks={rows}
+          total={total}
+          initialIds={creating ?? NONE}
+          members={members}
+          onCreated={(count) => {
+            setCreating(null)
+            setSelected(new Set())
+            setNotice(`Sprint created with ${count} ${count === 1 ? 'task' : 'tasks'}.`)
+          }}
+        />
+      ) : null}
     </div>
   )
 }

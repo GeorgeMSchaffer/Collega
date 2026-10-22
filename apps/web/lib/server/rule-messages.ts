@@ -27,6 +27,9 @@ const RULE_MESSAGES: Readonly<Record<string, string>> = {
   blockerIsSelf: 'A card can’t be blocked by itself.',
   blockerOnOtherBoard: 'A blocker has to be a card on the same board.',
   dependencyCycle: 'That would make a loop: the card is already waiting on this one.',
+  sprintItemOnOtherBoard: 'A sprint holds tasks from its own board only.',
+  sprintItemAlreadyAssigned: 'A task already in a sprint can’t be put in a new one.',
+  sprintsNotEnabled: 'Sprints are switched off on this board.',
   effortRequiredInReferenceLane:
     'Effort can be changed but not cleared while the idea is in a lane that references a board.',
 }

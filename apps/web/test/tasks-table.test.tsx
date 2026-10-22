@@ -10,7 +10,7 @@ import type { Idea } from '@/lib/types'
  * gets controls. The server action is the boundary.
  */
 const move = vi.hoisted(() => vi.fn())
-vi.mock('@/lib/server/task-actions', () => ({ moveTasksToSprint: move }))
+vi.mock('@/lib/server/sprint-planning-actions', () => ({ moveTasksToSprint: move }))
 
 const BOARDS: WorkBoard[] = [
   { id: 'b-1', name: 'Engineering', sprintsEnabled: true },

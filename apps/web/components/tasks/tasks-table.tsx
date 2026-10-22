@@ -7,7 +7,7 @@ import { useId, useState, useTransition } from 'react'
 import { ParentChip } from '@/components/ideas/idea-badges'
 import { People, TagList } from '@/components/ideas/idea-chips'
 import type { OpenSprint, WorkBoard } from '@/lib/data/tasks'
-import { moveTasksToSprint } from '@/lib/server/task-actions'
+import { moveTasksToSprint } from '@/lib/server/sprint-planning-actions'
 import { moveToSprintState } from '@/lib/task-planning'
 import type { Idea } from '@/lib/types'
 

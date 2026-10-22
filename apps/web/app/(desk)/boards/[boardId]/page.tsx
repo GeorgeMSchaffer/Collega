@@ -126,7 +126,7 @@ export default async function BoardPage({
   const [backlog, parentChoices, members, sprints] = await Promise.all([
     isWork ? getBacklog(board.id, tab === 'backlog' ? undefined : 1) : null,
     tab === 'backlog' && canAddTask ? getTaskParentChoices(board.id) : [],
-    tab === 'backlog' && canAddTask ? getMemberOptions() : [],
+    tab === 'backlog' && (canAddTask || canPlan) ? getMemberOptions() : [],
     board.sprintsEnabled ? getBoardSprints(board.id) : [],
   ])
   const newTaskHref = canAddTask
@@ -242,6 +242,8 @@ export default async function BoardPage({
               lanes={board.lanes}
               canSelect={canPlan}
               newTaskHref={newTaskHref}
+              sprints={sprints}
+              members={members}
             />
             {canAddTask ? (
               <NewTaskDrawer

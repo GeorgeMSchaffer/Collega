@@ -1,27 +1,33 @@
 'use client'
 
 import { Alert, Field, FieldRow, Input, Select, Textarea } from '@collega/design-system'
-import { type FormEvent, useEffect, useId, useState, useTransition } from 'react'
-import { createSprint, type SprintInput } from '@/lib/server/delivery-actions'
+import { type FormEvent, type ReactNode, useEffect, useId, useState, useTransition } from 'react'
+import type { CreateSprintResult, SprintInput } from '@/lib/server/delivery-actions'
 import type { MemberOption } from '@/lib/types'
 
 const EMPTY: SprintInput = { name: '', goal: '', startDate: '', endDate: '', ownerUserId: '' }
 
 /**
  * *Add New Sprint* (`20-feature-issues-and-delivery.md` "Sprint board (comp R)"): name, goal, the
- * two dates side by side and an optional owner, on `POST /sprints`. The checks here are for
- * feedback only; the API's own refusals land beside the same fields.
+ * two dates side by side and an optional owner. `save` is the write, so the same form serves the
+ * organization's sprints and a work board's; `children` follow the owner (the board's task picker).
+ * The checks here are for feedback only; the API's own refusals land beside the same fields.
  */
 export function SprintForm({
   formId,
-  organizationId,
+  save,
   members,
   onCreated,
   onPendingChange,
+  onRefused,
+  children,
 }: {
   formId: string
-  organizationId: string
+  save: (input: SprintInput) => Promise<CreateSprintResult>
   members: MemberOption[]
+  /** Told of the API's keyed refusals, for fields this form does not own (`ideaIds`). */
+  onRefused?: (errors: Readonly<Record<string, string>>) => void
+  children?: ReactNode
   onCreated: () => void
   onPendingChange: (pending: boolean) => void
 }) {
@@ -49,13 +55,14 @@ export function SprintForm({
     if (Object.keys(local).length > 0) return
 
     startTransition(async () => {
-      const result = await createSprint(organizationId, { ...draft, name: draft.name.trim() })
+      const result = await save({ ...draft, name: draft.name.trim() })
       if (result.ok) {
         onCreated()
         return
       }
       setErrors(result.errors)
       setError(result.error)
+      onRefused?.(result.errors)
     })
   }
 
@@ -130,6 +137,7 @@ export function SprintForm({
           ))}
         </Select>
       </Field>
+      {children}
     </form>
   )
 }

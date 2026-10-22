@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError, apiPut } from '@/lib/api/client'
-import { moveTasksToSprint } from '@/lib/server/task-actions'
+import { moveTasksToSprint } from '@/lib/server/sprint-planning-actions'
 
 /**
  * `moveTasksToSprint`: one `PUT /boards/{id}/sprint-assignments` with `ideaIds` and a required
@@ -72,9 +72,7 @@ describe('moveTasksToSprint', () => {
     )
   })
 
-  // DEFECT (reported with slice 335): `RULE_MESSAGES` has no entry for `sprintItemOnOtherBoard`, so a
-  // 422 reaches the Alert as the bare key. `it.fails` flips red once a sentence is added; then drop it.
-  it.fails('puts a 422 rule refusal in words rather than the raw key', async () => {
+  it('puts a 422 rule refusal in words rather than the raw key', async () => {
     put.mockRejectedValue(new ApiError(422, PATH, 'sprintItemOnOtherBoard'))
     const result = await moveTasksToSprint('b-1', 's-9', ['i-1'])
     expect(result.error).toBeTruthy()
