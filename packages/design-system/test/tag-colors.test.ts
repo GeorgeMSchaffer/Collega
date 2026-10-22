@@ -87,9 +87,11 @@ describe('tagChipColors', () => {
           for (const b of levels) {
             const color = `#${hex(r)}${hex(g)}${hex(b)}`.toUpperCase()
             const chip = tagChipColors(color, theme)
-            if (chip.ratio < TEXT_CONTRAST_MIN) failures.push(`${color} in ${theme}: ${chip.ratio}`)
-            if (start - chip.textShare > 4 * 5) failures.push(`${color} in ${theme}: steps`)
-            if (contrastRatio(ink, chip.ground) < TEXT_CONTRAST_MIN)
+            // Negated so a NaN fails, as the per-colour `expect` it replaced did.
+            if (!(chip.ratio >= TEXT_CONTRAST_MIN))
+              failures.push(`${color} in ${theme}: ${chip.ratio}`)
+            if (!(start - chip.textShare <= 4 * 5)) failures.push(`${color} in ${theme}: steps`)
+            if (!(contrastRatio(ink, chip.ground) >= TEXT_CONTRAST_MIN))
               failures.push(`ink on ${color} in ${theme}`)
           }
     }
