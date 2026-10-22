@@ -88,6 +88,11 @@ Three screens, drawn in `comp-s-board-reference.html`: (1) Statuses page with th
 - **Move back:** moving an idea back into an auto-create lane creates no second task while it already has one on the referenced board.
 - **Sprints:** the work board's sprint header and chips are in this UI round. `contracts/sprints.md` "Sprints per board" is planned, not built, and the chips, the header counts and putting a task in a sprint need reads and routes no contract has yet; the gaps are recorded in the decision for the tracker.
 
+**Decided 2026-10-22** (owner): the idea form offers no way to close a task, so the parent drawer's Tasks section does.
+
+- **Task checkbox:** each task row's status circle is a checkbox for a reader who may move the parent (the same permission as the completion prompt; anyone else sees the read-only circle). Checking moves the task to the referenced board's first Final lane; unchecking moves it to the last non-Final lane in board order, since no lane history is kept. A board with no Final lane, or none that is not Final, keeps the read-only circle.
+- It is the board's own status move, so every server rule applies (blockers, the reference lock, permissions). A refusal shows on the row and the tick stays as it was; the control is disabled while the move is pending, and the section refreshes from the server afterwards.
+
 ## Out of scope
 
 Automatic parent moves, story points or velocity, per-task dates (dates live on sprints), nested references more than two levels deep in the UI (the model allows chaining; the UI does not promise it), reporting beyond Outcome rollups, email delivery.
