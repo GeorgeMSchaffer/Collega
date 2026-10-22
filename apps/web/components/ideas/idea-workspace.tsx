@@ -1,6 +1,6 @@
 'use client'
 
-import { Alert, Button, EffortBar, TagChip } from '@collega/design-system'
+import { Alert, Button, cn, EffortBar, TagChip } from '@collega/design-system'
 import {
   useCallback,
   useEffect,
@@ -11,6 +11,7 @@ import {
   useState,
   useTransition,
 } from 'react'
+import { BacklogList } from '@/components/boards/backlog-list'
 import {
   type Column,
   ConfirmDialog,
@@ -49,6 +50,7 @@ import {
 } from '@/lib/roles'
 import { reorderLanes } from '@/lib/server/board-actions'
 import { deleteIdea, detachIdea, moveIdea } from '@/lib/server/idea-actions'
+import { moveTasksToSprint } from '@/lib/server/sprint-planning-actions'
 import { useCurrentUser } from '@/lib/session-client'
 import type {
   BoardRef,
@@ -57,6 +59,7 @@ import type {
   IdeaDetail,
   IdeaFormOptions,
   IdeaTasks,
+  Sprint,
   Status,
   TagRef,
 } from '@/lib/types'
@@ -85,6 +88,12 @@ type BoardContext = {
   /** Whether the lane headers carry move left / right: an Org Admin's, hidden for other roles. */
   canReorder: boolean
 }
+
+/** The Backlog side panel (TB-7), handed over by a work board's page that has sprints switched on. */
+type BacklogPanel = { rows: Idea[]; total: number; sprints: Sprint[] }
+
+const PLAN_DENIAL = 'Only an Org Admin can put a task in a sprint.'
+const NO_ACTIVE_SPRINT = 'No active sprint.'
 
 type Removing = { id: string; title: string; boardId: string | null }
 
@@ -136,6 +145,7 @@ export function IdeaWorkspace({
   board,
   drawer,
   issueIds = [],
+  backlog = null,
 }: {
   rows: Idea[]
   total: number
@@ -158,6 +168,8 @@ export function IdeaWorkspace({
   }
   /** Which of `rows` are Issues, which the list items do not say. */
   issueIds?: readonly string[]
+  /** The Backlog panel's tasks and the board's sprints; null where the board has no panel. */
+  backlog?: BacklogPanel | null
 }) {
   const user = useCurrentUser()
   const config = board ? BOARD_LIST : IDEAS_LIST
@@ -218,6 +230,31 @@ export function IdeaWorkspace({
   // The card being dragged by its handle, and the lane it is over; both null outside a drag.
   const [draggingCard, setDraggingCard] = useState<{ id: string; statusId: string } | null>(null)
   const [overCardLane, setOverCardLane] = useState<string | null>(null)
+  // The Backlog panel: whether it is open, and the task being dragged from it onto a lane.
+  const [panelOpen, setPanelOpen] = useState(false)
+  const [draggingTask, setDraggingTask] = useState<Idea | null>(null)
+  const activeSprint = backlog?.sprints.find((sprint) => sprint.state === 'Active') ?? null
+  const canPlan = user.role === 'OrgAdmin'
+
+  // Why a lane will not take the task being dragged from the panel, or null. The server decides
+  // for real (blockers and all, inside the one write); this only says so before the drop.
+  const taskRefusal = (task: Idea, laneId: string): string | null =>
+    !canPlan ? PLAN_DENIAL : !activeSprint ? NO_ACTIVE_SPRINT : moveRefusal(task, lanes, laneId)
+
+  // A lane drop: the Active sprint and the lane's status in one write. Nothing moves until the
+  // server agrees, so a refusal leaves the task in the backlog and says why.
+  const dropTask = (task: Idea, to: WorkLane) => {
+    if (!board || !activeSprint) return
+    setMoveError(null)
+    setCardNews('')
+    startCardMove(async () => {
+      const result = await moveTasksToSprint(board.id, activeSprint.id, [task.id], to.id)
+      setMoveError(result.error)
+      if (!result.error) {
+        setCardNews(`${task.title} added to ${activeSprint.name} and moved to ${to.name}`)
+      }
+    })
+  }
 
   // The same `moveIdea` the card's arrows submit, so one rule decides what a move may do.
   const moveCard = (
@@ -694,112 +731,182 @@ export function IdeaWorkspace({
               switch to List to page through all of them.
             </p>
           ) : null}
-          <div
-            aria-busy={reordering || undefined}
-            className="grid gap-2.5 overflow-x-auto pb-3"
-            style={{ gridTemplateColumns: `repeat(${lanes.length}, minmax(200px, 1fr))` }}
-          >
-            {lanes.map((status, index) => (
-              <Lane
-                key={status.id}
-                status={status}
-                boardId={board.id}
-                ideas={laneRows.filter((idea) => idea.statusId === status.id)}
-                previousStatusId={lanes[index - 1]?.id ?? null}
-                nextStatusId={lanes[index + 1]?.id ?? null}
-                canMove={board.canMove}
-                upvoteDenial={engagement}
-                selectedId={selectedId}
-                onOpen={view}
-                onKeyMove={board.canMove ? keyMoveCard : undefined}
-                referenceLabel={
-                  status.referencesBoardId
-                    ? (board.referenceBoards?.[status.referencesBoardId]?.label ?? null)
-                    : null
-                }
-                cardWork={(idea) => workFor(idea, index)}
-                cardDrag={
-                  board.canMove
-                    ? ({
-                        active: draggingCard !== null,
-                        draggingId: draggingCard?.id ?? null,
-                        over: draggingCard !== null && overCardLane === status.id,
-                        refusal: (() => {
-                          const dragged = draggingCard
-                            ? laneRows.find((row) => row.id === draggingCard.id)
-                            : undefined
-                          return dragged ? moveRefusal(dragged, lanes, status.id) : null
-                        })(),
-                        onDragStart: (ideaId) => {
-                          const idea = laneRows.find((row) => row.id === ideaId)
-                          if (idea) setDraggingCard({ id: ideaId, statusId: idea.statusId })
-                        },
-                        onDragEnd: () => {
-                          setDraggingCard(null)
-                          setOverCardLane(null)
-                        },
-                        // A drop on the card's own lane does nothing, so it is not offered; nor is
-                        // one a rule would refuse (the lane says why while the drag is under way).
-                        onDragOver: () => {
-                          if (draggingCard === null || draggingCard.statusId === status.id) {
-                            return false
-                          }
-                          const dragged = laneRows.find((row) => row.id === draggingCard.id)
-                          if (dragged && moveRefusal(dragged, lanes, status.id)) return false
-                          setOverCardLane(status.id)
-                          return true
-                        },
-                        onDragLeave: () =>
-                          setOverCardLane((current) => (current === status.id ? null : current)),
-                        onDrop: () => {
-                          const dragged = draggingCard
-                          setDraggingCard(null)
-                          setOverCardLane(null)
-                          const idea = dragged
-                            ? laneRows.find((row) => row.id === dragged.id)
-                            : null
-                          if (
-                            dragged &&
-                            dragged.statusId !== status.id &&
-                            !(idea && moveRefusal(idea, lanes, status.id))
-                          ) {
-                            moveCard(dragged.id, board.id, status)
-                          }
-                        },
-                      } satisfies CardDrag)
-                    : null
-                }
-                reorder={
-                  board.canReorder
-                    ? ({
-                        denialId: board.isArchived ? 'why-reorder-lanes' : null,
-                        pending: reordering,
-                        onMove: (delta) => moveLane(index, index + delta),
-                        dragging: draggingLane === status.id,
-                        over: draggingLane !== null && overLane === status.id,
-                        onDragStart: () => setDraggingLane(status.id),
-                        onDragEnd: () => {
-                          setDraggingLane(null)
-                          setOverLane(null)
-                        },
-                        onDragOver: () => {
-                          if (draggingLane === null) return false
-                          setOverLane(status.id)
-                          return true
-                        },
-                        onDragLeave: () =>
-                          setOverLane((current) => (current === status.id ? null : current)),
-                        onDrop: () => {
-                          const from = lanes.findIndex((lane) => lane.id === draggingLane)
-                          setDraggingLane(null)
-                          setOverLane(null)
-                          if (from >= 0) moveLane(from, index)
-                        },
-                      } satisfies LaneReorder)
-                    : null
-                }
-              />
-            ))}
+          {backlog ? (
+            <div>
+              <Button
+                size="sm"
+                variant="outline"
+                aria-expanded={panelOpen}
+                aria-controls="backlog-panel"
+                onClick={() => setPanelOpen((open) => !open)}
+              >
+                {panelOpen ? 'Hide' : 'Show'} backlog ({backlog.total})
+              </Button>
+            </div>
+          ) : null}
+          <div className="flex items-start gap-3">
+            {backlog && panelOpen ? (
+              <aside
+                id="backlog-panel"
+                aria-label="Backlog"
+                className={cn(
+                  'fixed inset-x-0 bottom-0 z-30 flex max-h-[70vh] flex-col gap-3 overflow-y-auto rounded-t-2xl border bg-background p-4 shadow-xl',
+                  'md:static md:z-auto md:max-h-none md:w-80 md:shrink-0 md:rounded-xl md:bg-card md:shadow-none',
+                )}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="m-0 text-sm font-semibold">Backlog</h2>
+                  <Button size="sm" variant="outline" onClick={() => setPanelOpen(false)}>
+                    Close
+                  </Button>
+                </div>
+                <p className="m-0 text-xs text-muted-foreground">
+                  {canPlan
+                    ? activeSprint
+                      ? `Drag a task onto a lane to put it in ${activeSprint.name} and move it there, or use Add.`
+                      : `${NO_ACTIVE_SPRINT} Start a sprint to drop tasks onto lanes; Add still works.`
+                    : PLAN_DENIAL}
+                </p>
+                <BacklogList
+                  boardId={board.id}
+                  boardName={board.name}
+                  rows={backlog.rows}
+                  total={backlog.total}
+                  lanes={lanes}
+                  canSelect={false}
+                  newTaskHref={null}
+                  sprints={backlog.sprints}
+                  panel={{
+                    canAdd: canPlan,
+                    onDragStart: setDraggingTask,
+                    onDragEnd: () => {
+                      setDraggingTask(null)
+                      setOverCardLane(null)
+                    },
+                  }}
+                />
+              </aside>
+            ) : null}
+            <div
+              aria-busy={reordering || undefined}
+              className="grid min-w-0 flex-1 gap-2.5 overflow-x-auto pb-3"
+              style={{ gridTemplateColumns: `repeat(${lanes.length}, minmax(200px, 1fr))` }}
+            >
+              {lanes.map((status, index) => (
+                <Lane
+                  key={status.id}
+                  status={status}
+                  boardId={board.id}
+                  ideas={laneRows.filter((idea) => idea.statusId === status.id)}
+                  previousStatusId={lanes[index - 1]?.id ?? null}
+                  nextStatusId={lanes[index + 1]?.id ?? null}
+                  canMove={board.canMove}
+                  upvoteDenial={engagement}
+                  selectedId={selectedId}
+                  onOpen={view}
+                  onKeyMove={board.canMove ? keyMoveCard : undefined}
+                  referenceLabel={
+                    status.referencesBoardId
+                      ? (board.referenceBoards?.[status.referencesBoardId]?.label ?? null)
+                      : null
+                  }
+                  cardWork={(idea) => workFor(idea, index)}
+                  cardDrag={
+                    board.canMove
+                      ? ({
+                          active: draggingCard !== null || draggingTask !== null,
+                          draggingId: draggingCard?.id ?? null,
+                          over: draggingCard !== null && overCardLane === status.id,
+                          refusal: (() => {
+                            if (draggingTask) return taskRefusal(draggingTask, status.id)
+                            const dragged = draggingCard
+                              ? laneRows.find((row) => row.id === draggingCard.id)
+                              : undefined
+                            return dragged ? moveRefusal(dragged, lanes, status.id) : null
+                          })(),
+                          onDragStart: (ideaId) => {
+                            const idea = laneRows.find((row) => row.id === ideaId)
+                            if (idea) setDraggingCard({ id: ideaId, statusId: idea.statusId })
+                          },
+                          onDragEnd: () => {
+                            setDraggingCard(null)
+                            setOverCardLane(null)
+                          },
+                          // A drop on the card's own lane does nothing, so it is not offered; nor is
+                          // one a rule would refuse (the lane says why while the drag is under way).
+                          onDragOver: () => {
+                            if (draggingTask) {
+                              if (taskRefusal(draggingTask, status.id)) return false
+                              setOverCardLane(status.id)
+                              return true
+                            }
+                            if (draggingCard === null || draggingCard.statusId === status.id) {
+                              return false
+                            }
+                            const dragged = laneRows.find((row) => row.id === draggingCard.id)
+                            if (dragged && moveRefusal(dragged, lanes, status.id)) return false
+                            setOverCardLane(status.id)
+                            return true
+                          },
+                          onDragLeave: () =>
+                            setOverCardLane((current) => (current === status.id ? null : current)),
+                          onDrop: () => {
+                            if (draggingTask) {
+                              const task = draggingTask
+                              setDraggingTask(null)
+                              setOverCardLane(null)
+                              if (!taskRefusal(task, status.id)) dropTask(task, status)
+                              return
+                            }
+                            const dragged = draggingCard
+                            setDraggingCard(null)
+                            setOverCardLane(null)
+                            const idea = dragged
+                              ? laneRows.find((row) => row.id === dragged.id)
+                              : null
+                            if (
+                              dragged &&
+                              dragged.statusId !== status.id &&
+                              !(idea && moveRefusal(idea, lanes, status.id))
+                            ) {
+                              moveCard(dragged.id, board.id, status)
+                            }
+                          },
+                        } satisfies CardDrag)
+                      : null
+                  }
+                  reorder={
+                    board.canReorder
+                      ? ({
+                          denialId: board.isArchived ? 'why-reorder-lanes' : null,
+                          pending: reordering,
+                          onMove: (delta) => moveLane(index, index + delta),
+                          dragging: draggingLane === status.id,
+                          over: draggingLane !== null && overLane === status.id,
+                          onDragStart: () => setDraggingLane(status.id),
+                          onDragEnd: () => {
+                            setDraggingLane(null)
+                            setOverLane(null)
+                          },
+                          onDragOver: () => {
+                            if (draggingLane === null) return false
+                            setOverLane(status.id)
+                            return true
+                          },
+                          onDragLeave: () =>
+                            setOverLane((current) => (current === status.id ? null : current)),
+                          onDrop: () => {
+                            const from = lanes.findIndex((lane) => lane.id === draggingLane)
+                            setDraggingLane(null)
+                            setOverLane(null)
+                            if (from >= 0) moveLane(from, index)
+                          },
+                        } satisfies LaneReorder)
+                      : null
+                  }
+                />
+              ))}
+            </div>
           </div>
         </>
       ) : (
