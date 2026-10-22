@@ -354,6 +354,33 @@ export async function addBoardTask(
 }
 
 /**
+ * Add a task from a work board's own Backlog (`POST /boards/{id}/tasks`). With a parent it is the
+ * parent's task; without one, a standalone card. The parent's board shows the new task's count too.
+ */
+export async function addBacklogTask(
+  boardId: string,
+  input: BoardTaskInput & { parentIdeaId: string | null },
+): Promise<ActionState> {
+  try {
+    await apiPost(apiPath`/boards/${boardId}/tasks`, {
+      title: input.title,
+      description: input.description,
+      assigneeUserIds: input.assigneeUserIds,
+      tagNames: input.tagNames,
+      ...(input.parentIdeaId ? { parentIdeaId: input.parentIdeaId } : {}),
+    })
+  } catch (error) {
+    return { error: refusal(error) }
+  }
+
+  revalidateIdeaScreens(boardId)
+  // A parent's rollup ("1 of 4 tasks") sits on its own board's card.
+  revalidatePath('/boards/[boardId]', 'page')
+  revalidatePath('/inbox')
+  return { error: null }
+}
+
+/**
  * Replace an item's blocker set (`PUT /ideas/{id}/blocked-by`). The set is always complete, so the
  * caller sends the whole list with its one change. Every layout is re-read because a parent's drawer
  * on another board lists this item's blockers too.
