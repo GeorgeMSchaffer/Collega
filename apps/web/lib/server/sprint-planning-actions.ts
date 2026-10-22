@@ -12,7 +12,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { ApiError, apiPath, apiPost, apiPut } from '../api/client'
-import type { CreateSprintResult, SprintInput } from './delivery-actions'
+import { type CreateSprintResult, type SprintInput, startSprint } from './delivery-actions'
 import type { ActionState } from './idea-actions'
 import { ruleMessage } from './rule-messages'
 
@@ -67,12 +67,13 @@ export async function createBoardSprint(
 }
 
 /**
- * `PUT /boards/{boardId}/sprint-assignments`: add tasks to a sprint. With a `statusId` (a lane
+ * `PUT /boards/{boardId}/sprint-assignments`: add tasks to a sprint, or with a `null` `sprintId`
+ * return them to the Backlog. With a `statusId` (a lane
  * drop) the same write moves them to that lane; without one (the Add button) status is left alone.
  */
 export async function moveTasksToSprint(
   boardId: string,
-  sprintId: string,
+  sprintId: string | null,
   ideaIds: readonly string[],
   statusId?: string,
 ): Promise<ActionState> {
@@ -88,4 +89,31 @@ export async function moveTasksToSprint(
   }
   revalidateBoard(boardId)
   return { error: null }
+}
+
+/** `POST /boards/{boardId}/tasks` with a `sprintId`: the planning page's inline new-task line. */
+export async function addSprintTask(
+  boardId: string,
+  sprintId: string,
+  title: string,
+): Promise<ActionState> {
+  try {
+    await apiPost(apiPath`/boards/${boardId}/tasks`, { title, sprintId })
+  } catch (error) {
+    const { error: message, errors } = refusal(error)
+    return { error: message ?? Object.values(errors)[0] ?? null }
+  }
+  revalidateBoard(boardId)
+  return { error: null }
+}
+
+/** The existing start-sprint call, plus the board pages that show the sprint's state and counts. */
+export async function startBoardSprint(
+  boardId: string,
+  organizationId: string,
+  sprintId: string,
+): Promise<ActionState> {
+  const result = await startSprint(organizationId, sprintId)
+  if (!result.error) revalidateBoard(boardId)
+  return result
 }

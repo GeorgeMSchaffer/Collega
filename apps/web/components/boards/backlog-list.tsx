@@ -215,18 +215,6 @@ export function BacklogList({
             Clear selection
           </Button>
         ) : null}
-        {canSelect ? (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setNotice('')
-              setCreating([...selected])
-            }}
-          >
-            + New sprint…
-          </Button>
-        ) : null}
         {panel ? null : <span className="ml-auto">Sorted by: newest</span>}
       </div>
 

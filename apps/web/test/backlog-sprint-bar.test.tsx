@@ -206,10 +206,9 @@ describe('Backlog "Add to new sprint…"', () => {
     ).toHaveLength(2)
   })
 
-  it('opens the drawer empty from the toolbar’s "+ New sprint…" with nothing ticked', async () => {
+  it('has no toolbar "+ New sprint…"; the Sprints tab owns creation', () => {
     list()
-    await click(screen.getByRole('button', { name: '+ New sprint…' }))
-    expect(screen.getByRole('button', { name: 'Create sprint' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: '+ New sprint…' })).toBeNull()
   })
 
   it('creates the sprint with the ticked ids, then closes, clears selection and says so', async () => {
@@ -251,7 +250,8 @@ describe('Backlog "Add to new sprint…"', () => {
   it('offers the picker the Backlog rows as sent, whatever filter is active', async () => {
     list()
     fireEvent.change(screen.getByLabelText('Search tasks'), { target: { value: 'chore' } })
-    await click(screen.getByRole('button', { name: '+ New sprint…' }))
+    pick('W-2')
+    await click(barButton('Add to new sprint…'))
     const dialog = screen.getByRole('complementary', { name: 'Create a sprint' })
     expect(within(dialog).getAllByRole('checkbox')).toHaveLength(TASKS.length)
   })

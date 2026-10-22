@@ -1,4 +1,4 @@
-import { Alert, buttonVariants, EmptyState } from '@collega/design-system'
+import { Alert, buttonVariants } from '@collega/design-system'
 import type { Route } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -6,6 +6,7 @@ import { BoardViewed } from '@/components/analytics/board-viewed'
 import { BacklogList } from '@/components/boards/backlog-list'
 import { type BoardTab, BoardTabs } from '@/components/boards/board-tabs'
 import { NewTaskDrawer } from '@/components/boards/new-task-drawer'
+import { SprintsTab } from '@/components/boards/sprints-tab'
 import { GatedAction } from '@/components/common/gated-action'
 import { PageHeader } from '@/components/common/page-header'
 import { AddIdeaButton } from '@/components/ideas/add-idea-button'
@@ -127,9 +128,16 @@ export default async function BoardPage({
 
   // The Backlog tab reads the whole backlog; the other tabs only need its count for the badge.
   const [backlog, parentChoices, members, sprints] = await Promise.all([
-    isWork ? getBacklog(board.id, tab === 'backlog' || hasPanel ? undefined : 1) : null,
+    isWork
+      ? getBacklog(
+          board.id,
+          tab === 'backlog' || hasPanel || (tab === 'sprints' && canPlan) ? undefined : 1,
+        )
+      : null,
     tab === 'backlog' && canAddTask ? getTaskParentChoices(board.id) : [],
-    tab === 'backlog' && (canAddTask || canPlan) ? getMemberOptions() : [],
+    (tab === 'backlog' && (canAddTask || canPlan)) || (tab === 'sprints' && canPlan)
+      ? getMemberOptions()
+      : [],
     board.sprintsEnabled ? getBoardSprints(board.id) : [],
   ])
   const newTaskHref = canAddTask
@@ -265,12 +273,15 @@ export default async function BoardPage({
           </>
         ) : null}
         {tab === 'sprints' ? (
-          <EmptyState heading="Sprint planning comes next">
-            {sprints.length === 0
-              ? 'This board has no sprints yet.'
-              : `${sprints.length} sprint${sprints.length === 1 ? '' : 's'} on this board.`}{' '}
-            The sprint list and planning page arrive in a later slice.
-          </EmptyState>
+          <SprintsTab
+            boardId={board.id}
+            boardName={board.name}
+            sprints={sprints}
+            waiting={backlog?.totalCount ?? 0}
+            backlog={canPlan ? (backlog?.ideas ?? []) : []}
+            members={members}
+            canPlan={canPlan}
+          />
         ) : null}
       </main>
     </>
