@@ -2,7 +2,7 @@
  * Commits everything a use case has changed, as one transaction.
  *
  * A port so the application layer can express a transaction boundary without knowing what
- * implements it — Wave C1 owns the Prisma-backed version. Ported from the .NET
+ * implements it — Wave C1 owns the Prisma-backed version. Ported from the original
  * `IUnitOfWork.SaveChangesAsync`, which is the whole of that interface: deliberately narrow,
  * because a service that can begin, nest and roll back transactions ends up encoding
  * persistence strategy in the layer that is supposed to be free of it.

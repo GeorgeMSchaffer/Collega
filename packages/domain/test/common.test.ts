@@ -22,7 +22,7 @@ describe('markCreated', () => {
 
     const result = markCreated(nowUtc, 'user-1')
 
-    // getTime() equality, not toBeCloseTo/a tolerance window: the .NET original assigned
+    // getTime() equality, not toBeCloseTo/a tolerance window: the original assigned
     // both columns from one DateTime read, and the golden corpus records them equal, not
     // merely near each other.
     expect(result.createdAtUtc.getTime()).toBe(nowUtc.getTime())

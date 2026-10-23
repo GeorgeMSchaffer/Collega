@@ -5,7 +5,7 @@
  * directly - a service that does cannot be tested for anything time-dependent, and every
  * entity transition here already takes an explicit timestamp.
  *
- * The .NET original is `IClock.UtcNow`. Always UTC; the database columns are `timestamptz`.
+ * The original is `IClock.UtcNow`. Always UTC; the database columns are `timestamptz`.
  */
 export interface Clock {
   now(): Date

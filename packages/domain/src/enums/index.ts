@@ -2,11 +2,11 @@
 //
 // Hand-written rather than re-exported from the generated Prisma client, because
 // packages/domain imports nothing - that is the layer rule biome.json enforces. The
-// integers are the values the .NET columns held; seven enums were stored as the member
+// integers are the values the original columns held; seven enums were stored as the member
 // name and two as an int, and F3's transform needs both facts.
 //
 // The last five - IdeaPhase, EffortLevel, DeliveryStatus, SprintState, IssueTaskState - have
-// no .NET ancestor at all: Issues-and-Delivery was never built there, so there is no legacy
+// no the original ancestor at all: Issues-and-Delivery was never built there, so there is no legacy
 // column and nothing for F3 to transform. SPEC/20-feature-issues-and-delivery.md numbers
 // their members because it is written in the C# idiom; those numbers are recorded beside each
 // member as declaration order, but the stored value is the member NAME, like every other enum
@@ -34,7 +34,7 @@ export enum Priority {
   Critical = 'Critical',
 }
 
-/** Stored as int in the .NET schema, numbered from 1. F3 maps 1..7 in this order. */
+/** Stored as int in the original schema, numbered from 1. F3 maps 1..7 in this order. */
 export enum FieldType {
   Text = 'Text',
   Number = 'Number',
@@ -45,7 +45,7 @@ export enum FieldType {
   Url = 'Url',
 }
 
-/** Stored as int in the .NET schema: AllActiveFields = 0, Curated = 1. */
+/** Stored as int in the original schema: AllActiveFields = 0, Curated = 1. */
 export enum IdeaTypeFieldMode {
   AllActiveFields = 'AllActiveFields',
   Curated = 'Curated',
@@ -60,7 +60,7 @@ export enum ImpersonationEndReason {
 }
 
 /**
- * The last three are Issues-and-Delivery Slice 1 and have no .NET ancestor either. They are the
+ * The last three are Issues-and-Delivery Slice 1 and have no the original ancestor either. They are the
  * only notification-carrying events the feature has: promotion, a delivery-status move, and being
  * given a task. Every other delivery mutation audits without notifying - a checklist ticked a
  * dozen times a day must not page the room.

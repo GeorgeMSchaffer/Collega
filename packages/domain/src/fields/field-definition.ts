@@ -14,7 +14,7 @@ export const FIELD_NAME_MAX_LENGTH = 100
 export const FIELD_DESCRIPTION_MAX_LENGTH = 500
 export const FIELD_OPTION_LABEL_MAX_LENGTH = 200
 
-/** Persisted `idea_field_values.value` cap (mirrors the .NET `IdeaFieldValue.ValueMaxLength`).
+/** Persisted `idea_field_values.value` cap (mirrors the original `IdeaFieldValue.ValueMaxLength`).
  * Owned here because the merged Ideas partition's `Idea.fieldValues` (`@collega/domain/ideas`)
  * models a bare `{fieldDefinitionId, value}` record with no length invariant of its own - value
  * validation is entirely this feature's responsibility, run before `Idea.replaceFieldValues` ever
@@ -24,7 +24,7 @@ export const FIELD_VALUE_MAX_LENGTH = 4000
 /**
  * Raised when a caller asks this module to put a `FieldDefinition` into an invalid state. Carries
  * only a message, not a per-property field key, and that is DELIBERATE - do not "fix" it into
- * per-property keys like `IdeaDomainError`/`BoardInvariantError` use. The .NET
+ * per-property keys like `IdeaDomainError`/`BoardInvariantError` use. The original
  * `FieldDefinitionService` bucketed every one of these under one fixed `"fieldDefinition"`
  * `ValidationAppException` key regardless of which invariant fired (its shared `AsValidation`
  * helper), and this is a verified, corpus-pinned quirk of that code, not an oversight this port
@@ -51,7 +51,7 @@ export type FieldDefinitionOption = {
 
 /**
  * Caller-supplied option state passed to `setFieldDefinitionOptions`. `id` is always present -
- * unlike the .NET `FieldOptionInput.Id` (nullable, with a null Id creating a new option via the
+ * unlike the original `FieldOptionInput.Id` (nullable, with a null Id creating a new option via the
  * entity's ambient `Guid.NewGuid()`), ids are never generated in the domain here (SPEC/
  * decisions.md 2026-09-06). The Application layer generates a fresh `randomUUID()` for a "new"
  * option before calling in; an id that matches an existing option reuses it (preserving identity

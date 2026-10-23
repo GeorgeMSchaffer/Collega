@@ -346,7 +346,7 @@ function ensureReorderCoversActive(
 /**
  * Wraps a domain transition so a `StatusInvariantError` (a plain-Error invariant violation -
  * packages/domain imports nothing, so it cannot throw the kernel's `ValidationError` itself)
- * surfaces as a proper field-level 400, mirroring how .NET let `Status`'s `ArgumentException`
+ * surfaces as a proper field-level 400, mirroring how the original let `Status`'s `ArgumentException`
  * reach the API only through a `ValidationAppException` raised in the service, never directly
  * (SPEC/decisions.md 2026-09-06 "Wave B conventions"; B3's `runDomain` is the reference).
  */

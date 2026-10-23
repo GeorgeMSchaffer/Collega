@@ -1,6 +1,6 @@
 // Validates and normalizes User-Defined Field values submitted for an idea against the fields
 // resolved for its idea type (SPEC/20-feature-idea-type-fields.md "Value scoping"). Mirrors the
-// .NET `FieldValueValidator.Validate` (there `internal` - exported here because Wave C's
+// the original `FieldValueValidator.Validate` (there `internal` - exported here because Wave C's
 // `IdeaFieldValuesPort` adapter, which composes this with `resolveEffectiveFields`, lives in
 // packages/infrastructure, which may depend on packages/application per the layer table).
 //
@@ -11,7 +11,7 @@
 // no entry here at all, and it is the merged Ideas partition's `Idea.replaceFieldValues` -
 // clearing any in-scope field this function omitted - that actually clears it. This is the
 // field-value contract settled with Wave C: `FieldValueInput.value` is always a non-empty string
-// (never null), so "clear" is expressed by omission, exactly matching the .NET `Validate`, whose
+// (never null), so "clear" is expressed by omission, exactly matching the original `Validate`, whose
 // `continue` on a blank value adds nothing to the result list.
 
 import { FieldType } from '@collega/domain/enums'
@@ -161,7 +161,7 @@ function normalizeFieldValue(
 
     case FieldType.Number: {
       // Deliberately strict: a sign and a single decimal point only. Group separators are
-      // rejected so "1,5" is not silently coerced under invariant parsing (mirrors the .NET
+      // rejected so "1,5" is not silently coerced under invariant parsing (mirrors the original
       // NumberStyles.AllowLeadingSign | AllowDecimalPoint).
       const normalized = parseStrictDecimal(value)
       if (normalized === null) {
@@ -256,7 +256,7 @@ function isHttpUrl(value: string): boolean {
 
 /**
  * Parses a plain decimal literal (optional leading sign, digits, optional single decimal point)
- * and re-renders it the way .NET's `decimal.ToString(CultureInfo.InvariantCulture)` would after
+ * and re-renders it the way the original's `decimal.ToString(CultureInfo.InvariantCulture)` would after
  * `decimal.TryParse` with no arithmetic in between: leading zeros in the integer part and a `+`
  * sign are dropped, but the fractional digit count (the decimal's "scale") is preserved exactly
  * as submitted. Returns null when `value` is not a valid decimal literal.

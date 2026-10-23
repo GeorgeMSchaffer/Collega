@@ -11,7 +11,7 @@ import type { NotificationEventRepository, NotificationRecipientsPort } from './
 
 /**
  * `NotificationWriter` backed by `NotificationEventRepository`. Self-notification suppression and
- * the domain factory call live here (Application), not in the persistence port - .NET's
+ * the domain factory call live here (Application), not in the persistence port - the original's
  * `EfNotificationEventWriter` did both in Infrastructure, but this conversion keeps business
  * rules out of that layer (SPEC/50-typescript-migration.md section 3).
  */

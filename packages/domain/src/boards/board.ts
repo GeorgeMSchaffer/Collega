@@ -104,7 +104,7 @@ export function boardTakesIdeaType(
 }
 
 /**
- * The max-length half restores the `[MaxLengthField]` request attribute the .NET contracts
+ * The max-length half restores the `[MaxLengthField]` request attribute the original contracts
  * carried (`CreateBoardRequest` / `UpdateBoardRequest`) - `BOARD_NAME_MAX_LENGTH` was ported but
  * the check was not, so an over-long name reached a `VarChar(150)` column and Postgres's `22001`
  * surfaced as a 500 instead of the field-keyed 400 the contract requires. Same shape as

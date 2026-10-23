@@ -8,7 +8,7 @@
 // an enum added to the schema without a domain counterpart - or a member renamed on one
 // side only - fails here first.
 //
-// Nine of these came from the .NET domain at S0.2; five (IdeaPhase, EffortLevel,
+// Nine of these came from the original domain at S0.2; five (IdeaPhase, EffortLevel,
 // DeliveryStatus, SprintState, IssueTaskState) were added by Issues-and-Delivery Slice 1
 // under the schema amendment recorded in SPEC/decisions.md 2026-09-11.
 

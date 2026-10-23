@@ -19,7 +19,7 @@ import type {
 /**
  * A quarter of the idle window (SPEC/typescript-conversion-map/findings/07-nest-ambient-identity.md
  * §5): small enough that expiry stays accurate to within a few minutes, large enough that a burst
- * of parallel requests in one session writes `lastSeenAtUtc` at most once. Mirrors .NET's
+ * of parallel requests in one session writes `lastSeenAtUtc` at most once. Mirrors the original's
  * `TokenAuthenticationService.IdleRefreshInterval`.
  */
 const IDLE_REFRESH_INTERVAL_MS = IMPERSONATION_IDLE_TIMEOUT_MS / 4
@@ -31,7 +31,7 @@ const IDLE_REFRESH_INTERVAL_MS = IMPERSONATION_IDLE_TIMEOUT_MS / 4
  * out specifically because `IImpersonationSessionRepository` and `ImpersonationSession` belong to
  * this isolated slice rather than to `TokenAuthenticationService`'s own package.
  *
- * A direct port of .NET's `TokenAuthenticationService.ResolveImpersonationAsync`: the same five
+ * A direct port of the original's `TokenAuthenticationService.ResolveImpersonationAsync`: the same five
  * checks, in the same order (absolute expiry, idle expiry, target still Active, target's
  * organization not archived, and the real user still satisfying the rule 8 matrix), and the same
  * throttled idle-refresh write.

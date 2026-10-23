@@ -47,7 +47,7 @@ export interface ImageProcessor {
    * image, or not one of the supported formats.
    */
   /**
-   * Asynchronous, unlike the .NET `IImageProcessor` it ports. That is forced rather than
+   * Asynchronous, unlike the original `IImageProcessor` it ports. That is forced rather than
    * chosen: ImageSharp offered a synchronous API and `sharp` does not, so a synchronous
    * signature here cannot be implemented at all. The result is unchanged.
    */

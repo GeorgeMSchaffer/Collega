@@ -218,7 +218,7 @@ export class FieldDefinitionService {
 
   /**
    * Replaces every active definition's display order atomically - every `save` below is staged
-   * and committed with a single `unitOfWork.saveChanges()` after the loop, mirroring the .NET's
+   * and committed with a single `unitOfWork.saveChanges()` after the loop, mirroring the original's
    * single post-loop `SaveChangesAsync` (SPEC/decisions.md 2026-09-06 "Wave B conventions").
    */
   async reorder(organizationId: string, command: ReorderFieldDefinitionsCommand): Promise<void> {
@@ -424,11 +424,11 @@ function parseFieldType(fieldType: string): FieldType {
 
 /**
  * Wraps a domain transition so a `FieldDefinitionDomainError` surfaces as a `ValidationError`
- * bucketed under the fixed `fieldDefinition` key - mirroring the .NET `FieldDefinitionService`'s
+ * bucketed under the fixed `fieldDefinition` key - mirroring the original `FieldDefinitionService`'s
  * shared `AsValidation` helper exactly, INCLUDING the fact that it does not key by the specific
  * property that failed. This is a deliberate departure from `IdeaDomainError`/
  * `BoardInvariantError`'s per-field keying (the `runDomain` reference elsewhere in Wave B): every
- * `FieldDefinitionService` call site in the .NET used one shared `AsValidation` that always threw
+ * `FieldDefinitionService` call site in the original used one shared `AsValidation` that always threw
  * `ValidationAppException("fieldDefinition", new[] { ex.Message })` regardless of which invariant
  * fired, and the corpus records whatever that produced.
  */

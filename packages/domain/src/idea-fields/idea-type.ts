@@ -30,7 +30,7 @@ const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/
  * Application layer can translate it into a field-keyed `ValidationError` instead of letting a
  * bare `Error` become a 500 (SPEC/decisions.md 2026-09-06 "Wave B conventions"). In practice every
  * one of these is a defensive backstop: `IdeaTypeService` validates name/color/selection itself
- * before calling in, exactly mirroring how the .NET `IdeaFieldService` never wrapped these calls -
+ * before calling in, exactly mirroring how the original `IdeaFieldService` never wrapped these calls -
  * its own `ArgumentException`s were never meant to be reached.
  */
 export class IdeaTypeDomainError extends Error {

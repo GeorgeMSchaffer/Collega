@@ -143,7 +143,7 @@ import {
  * note). */
 const MAX_TAG_NAME_LENGTH = 100
 
-/** Upper bound on rows a single board CSV export will materialise (mirrors .NET's
+/** Upper bound on rows a single board CSV export will materialise (mirrors the original's
  * `IdeaService.MaxExportRows`) - well above any plausible board, but the endpoint is reachable by
  * any member including Read Only, so an unbounded export is a cheap way to pressure the host. */
 const MAX_EXPORT_ROWS = 10_000
@@ -1987,7 +1987,7 @@ export class IdeaService {
     }
 
     // Deletion is restricted to Site Admin or an in-scope Org Admin (rule #16 / "Permissions").
-    // Deliberately no separate `ensureOrganizationScope` call here - matches .NET, where
+    // Deliberately no separate `ensureOrganizationScope` call here - matches the original, where
     // `canAdministerIdeaContent`'s own org check is what a cross-org Org Admin fails.
     if (!this.canAdministerIdeaContent(idea, null, true)) {
       throw new ForbiddenError('You are not allowed to delete ideas.')
@@ -2957,7 +2957,7 @@ export class IdeaService {
     return tags.map((t) => t.id)
   }
 
-  /** Resolves raw @-mention email strings to same-organization active user ids. Mirrors .NET's
+  /** Resolves raw @-mention email strings to same-organization active user ids. Mirrors the original's
    * `MentionResolver`, kept local since Ideas is the only owner of `IdeaMention`. */
   private async resolveMentions(
     organizationId: string,
@@ -3542,7 +3542,7 @@ function flattenValidationErrors(error: ValidationError): string {
 /**
  * Wraps a domain transition so an `IdeaDomainError` (a plain-Error invariant violation - packages/
  * domain imports nothing, so it cannot throw the kernel's `ValidationError` itself) surfaces as a
- * proper field-level 400, mirroring how .NET let `Idea`'s `ArgumentException` reach the API.
+ * proper field-level 400, mirroring how the original let `Idea`'s `ArgumentException` reach the API.
  *
  * Takes `fn` and its arguments separately, rather than a `() => T` thunk, so a narrowed `let`
  * (e.g. `idea` after a `null` guard) is read as a plain argument expression instead of inside a

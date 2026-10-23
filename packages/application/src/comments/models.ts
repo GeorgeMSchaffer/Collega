@@ -8,7 +8,7 @@ import type { IdeaAssigneeDto } from '../ideas/models.js'
 /**
  * `mentionEmails` is additive beyond SPEC/30-Contracts.md's body-only comment request shape, so
  * comments honor "Comments" #5's requirement of the same email-based mention behavior as ideas -
- * mirrors .NET's `CreateCommentCommand` (flagged there as a contract gap for the same reason).
+ * mirrors the original's `CreateCommentCommand` (flagged there as a contract gap for the same reason).
  */
 export type CreateCommentCommand = {
   readonly body: string

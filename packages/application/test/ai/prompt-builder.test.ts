@@ -12,7 +12,7 @@ import { buildSystemPrompt, fence, fenceAll } from '../../src/ai/prompt-builder.
  * That gap mattered more than an untested function usually does. `SPEC/20-feature-ai-idea-assist.md`
  * calls `inScope` a security control; requirement 37c records that the three interactive probes are
  * a low-powered instrument that returned 3-of-3 refused even with the scope sentence deleted; and
- * the corpus-scale evaluation runner was deleted with the .NET stack in slice F6, so
+ * the corpus-scale evaluation runner was deleted with the original stack in slice F6, so
  * `tools/prompt-eval` holds the cases and nothing runs them. A change to `fence()` therefore shipped
  * with **no signal whatsoever**.
  *

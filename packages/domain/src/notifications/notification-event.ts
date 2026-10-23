@@ -47,7 +47,7 @@ export type CreateNotificationEventProps = {
  * The canonical idea link persisted on every notification event.
  *
  * `/ideas/{ideaId}` per SPEC/20-feature-notifications.md "Canonical Idea Link" (current), which
- * explicitly supersedes both the earlier board-scoped route and the .NET code's
+ * explicitly supersedes both the earlier board-scoped route and the original code's
  * `/ideas/{ideaId}/edit` (a still-earlier interim route the C# comment never caught up to). No
  * read/query endpoint exposes this field in MVP, so no golden-corpus fixture observes it either
  * way; the spec is followed as the more current, canonical source.

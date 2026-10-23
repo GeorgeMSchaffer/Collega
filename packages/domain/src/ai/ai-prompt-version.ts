@@ -14,8 +14,7 @@ import { AiDomainError } from './errors.js'
 // `updatedAtUtc`/`updatedByUserId`: nothing ever updates a row after it is written.
 //
 // What this type does NOT control: the `<organization_data>` block and its escaping are
-// assembled in the application layer (see `../../application/ai/prompt-builder.ts`, ported from
-// .NET's `Collega.Infrastructure.Ai.IdeaAssistPromptBuilder`). No stored body can reintroduce the
+// assembled in the application layer (see `../../application/ai/prompt-builder.ts`). No stored body can reintroduce the
 // fence-closing defect the Sprint 7 review found - it CAN delete the prose telling the model to
 // distrust that block, which is why publishing offers safety probes (rule 37).
 

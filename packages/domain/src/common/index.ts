@@ -23,7 +23,7 @@ export type Auditable = {
 
 /**
  * Stamps a newly created entity. Both timestamps are the same instant, deliberately - the
- * .NET `MarkCreated` did the same, and the golden corpus records the equality.
+ * the original `MarkCreated` did the same, and the golden corpus records the equality.
  *
  * `actorUserId` is the ACTING user, which during a View As session is the impersonated one.
  * That is rule 15 and it is the opposite of audit attribution's rule 14: content created

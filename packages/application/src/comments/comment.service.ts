@@ -317,7 +317,7 @@ export class CommentService {
   }
 
   /**
-   * Resolves raw @-mention email strings to same-organization active user ids. Mirrors .NET's
+   * Resolves raw @-mention email strings to same-organization active user ids. Mirrors the original's
    * `MentionResolver`, kept local since Comments does not depend on Users' `UserRepository` (see
    * ports.ts) - the identical logic is duplicated in Ideas' own `idea.service.ts` for the same
    * reason.
@@ -407,7 +407,7 @@ function toPersonDto(user: UserSummary): IdeaAssigneeDto {
 /**
  * Wraps a domain transition so a `CommentDomainError` (a plain-Error invariant violation -
  * packages/domain imports nothing, so it cannot throw the kernel's `ValidationError` itself)
- * surfaces as a proper field-level 400, mirroring how .NET's request-DTO validation attributes
+ * surfaces as a proper field-level 400, mirroring how the original's request-DTO validation attributes
  * (`CreateCommentRequest.Body`) turned a blank/oversized body into this same shape before the
  * domain was ever reached (ideas/idea.service.ts's `runDomain` is the reference for this pattern).
  */

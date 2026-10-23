@@ -651,7 +651,7 @@ export function sanitizeDraft(
 
 /**
  * JavaScript strings are UTF-16 code units, same as C#, so the surrogate-pair boundary check
- * ported from .NET applies unchanged: cutting between a surrogate pair produces an invalid
+ * ported from the original applies unchanged: cutting between a surrogate pair produces an invalid
  * string, and a lone surrogate would fail validation on the create form the user is about to
  * submit.
  */
