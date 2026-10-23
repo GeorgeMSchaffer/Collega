@@ -41,7 +41,7 @@ export class ConfigError extends Error {
  * Loads `.env` into `process.env`, if it is there.
  *
  * `.env` is the single source for these values in local development - there is deliberately
- * no second home for a credential, because the original stack kept the Anthropic key under three
+ * no second home for a credential, because the pre-migration stack kept the Anthropic key under three
  * names at once and two of them were read by nothing.
  *
  * Existing environment variables WIN over the file: that is what lets CI and Vercel, which

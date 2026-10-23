@@ -30,7 +30,7 @@ type ProbeAiPromptBody = { body?: string }
  * every method, and that second check is the load-bearing one: it reads the EFFECTIVE role, so it
  * also refuses a Site Admin who is currently acting as someone else - which the guard alone would
  * let through, since during a session the acting role is the target's. The guard exists because the
- * golden corpus records the framework 403 envelope here (`aiassist.prompt.get.orgadmin`), not the
+ * golden corpus records the framework-level (RFC 9110) 403 envelope here (`aiassist.prompt.get.orgadmin`), not the
  * Application one.
  *
  * `@UseGuards(AuthGuard, RolesGuard)` in that order: `RolesGuard` reads the identity `AuthGuard`
@@ -57,7 +57,7 @@ export class AiPromptController {
    *
    * The placeholder requirement - both `{{ORGANIZATION_CATALOG}}` and `{{SCOPE_STATEMENT}}` must be
    * present - is enforced on the entity so every write path shares one rule; the checks here only
-   * catch the cheap cases before a round trip, exactly as the original DTO's attributes did.
+   * catch the cheap cases before a round trip, exactly as the pre-migration DTO's attributes did.
    */
   @Put()
   async publish(@Body() body: PublishAiPromptBody): Promise<AiPromptSettings> {
@@ -87,7 +87,7 @@ export class AiPromptController {
    * history stays append-only and the restore is itself visible in it.
    *
    * `@HttpCode(200)` because Nest answers `POST` with `201` by default and the contract says `200`;
-   * `IntParamPipe` because `{version:int}` was a route-MATCHING constraint in the original, so a
+   * `IntParamPipe` because `{version:int}` was a route-MATCHING constraint in the pre-migration API, so a
    * non-integer segment was a 404 there and must stay one here.
    */
   @Post('versions/:version/restore')

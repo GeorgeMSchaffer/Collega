@@ -1317,8 +1317,8 @@ function validateAndOrderSwimlanes(
 /**
  * Wraps a domain transition so a `BoardInvariantError` (a plain-Error invariant violation -
  * packages/domain imports nothing, so it cannot throw the kernel's `ValidationError` itself)
- * surfaces as a proper field-level 400, mirroring how the original let `Board`'s `ArgumentException`
- * reach the API only through a `ValidationAppException` raised in the service, never directly
+ * surfaces as a proper field-level 400, mirroring how the pre-migration API let `Board`'s argument exceptions
+ * reach the API only through a validation error raised in the service, never directly
  * (SPEC/decisions.md 2026-09-06 "Wave B conventions"; B3's `runDomain` is the reference).
  *
  * Takes `fn` and its arguments separately, rather than a `() => T` thunk, so a narrowed `let`
@@ -1432,7 +1432,7 @@ function buildSwimlaneDetails(
  * board names, so a name tie is possible; the golden capture's collision note found endpoints
  * elsewhere breaking such ties on generated id, which disagrees between two databases seeded
  * from the same data (SPEC/50-typescript-migration.md). Creation time is stable and meaningful
- * even though the original list only ordered by name.
+ * even though the pre-migration API only ordered the list by name.
  */
 function compareBoardsForListing(a: Board, b: Board): number {
   const byName = compareStrings(a.name, b.name)

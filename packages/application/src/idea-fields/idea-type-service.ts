@@ -3,8 +3,8 @@
 // (idea forms need the option catalog); create/update/reorder/delete/field-selection/appearance
 // are Site Admin (any org) or in-scope Org Admin only.
 //
-// The original combined this with Business Impact administration in one `IdeaFieldService` partial
-// class, sharing authorization/ordering/uniqueness helpers. Split here because Business Impact
+// The pre-migration API combined this with Business Impact administration in one service,
+// sharing authorization/ordering/uniqueness helpers. Split here because Business Impact
 // now lives in its own partition folder (`packages/application/src/business-impacts`) - the two
 // only ever shared boilerplate, never state, so each service carries its own copy, matching how
 // Boards and Statuses independently duplicate the identical `ensureReadScope`/`ensureAdminScope`
@@ -512,8 +512,8 @@ function nextSortOrder(existing: readonly number[]): number {
  *
  * UNREACHABLE BY CONSTRUCTION for every call site above, not a sign a precondition is missing:
  * name/color/selection are all validated in this service before the domain ever sees them,
- * exactly mirroring how the original `IdeaFieldService` never wrapped these calls - its domain's own
- * `ArgumentException`s were defensive backstops that would have 500'd had they fired. This wrapper
+ * exactly mirroring how the pre-migration API never wrapped these calls - its domain's own
+ * argument exceptions were defensive backstops that would have 500'd had they fired. This wrapper
  * is kept purely so a future change that removes one of those pre-checks fails safe (a 400)
  * instead of silently regressing to a 500.
  */

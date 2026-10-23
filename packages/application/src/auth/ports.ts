@@ -47,8 +47,8 @@ export interface ImageProcessor {
    * image, or not one of the supported formats.
    */
   /**
-   * Asynchronous, unlike the original `IImageProcessor` it ports. That is forced rather than
-   * chosen: ImageSharp offered a synchronous API and `sharp` does not, so a synchronous
+   * Asynchronous, unlike the pre-migration image processor it ports. That is forced rather than
+   * chosen: the pre-migration image library offered a synchronous API and `sharp` does not, so a synchronous
    * signature here cannot be implemented at all. The result is unchanged.
    */
   tryCreatePngThumbnail(input: Uint8Array, maxDimension: number): Promise<Uint8Array | null>
@@ -58,8 +58,8 @@ export interface ImageProcessor {
  * Resolves an active View As session for the real user behind a validated token, if any.
  *
  * This is the extension point that keeps View As/impersonation isolated in its own slice
- * (SPEC/50-typescript-migration.md Wave B7, `SPEC/20-feature-view-as.md` rule 3): the C# original
- * (`TokenAuthenticationService`) reaches directly into `IImpersonationSessionRepository` and the
+ * (SPEC/50-typescript-migration.md Wave B7, `SPEC/20-feature-view-as.md` rule 3): the pre-migration API's
+ * token authentication reached directly into the impersonation session repository and the
  * `ImpersonationSession` domain entity, both of which belong to the isolated View As slice, not
  * this one. Returning `null` means "no session, authenticate as the real user" - see the slice
  * report for the reasoning.

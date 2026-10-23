@@ -63,7 +63,7 @@ const CONCRETE_ADAPTERS: Provider[] = [
     inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
   },
   {
-    // Commits outside the unit-of-work buffer, matching the original - see
+    // Commits outside the unit-of-work buffer, matching the pre-migration API - see
     // packages/infrastructure/src/persistence/unit-of-work.ts's header. No `uow` argument.
     provide: PrismaAuditEventWriter,
     useFactory: (prisma: PrismaClient) => new PrismaAuditEventWriter(prisma),
@@ -239,7 +239,7 @@ const CONCRETE_ADAPTERS: Provider[] = [
     provide: JwtAccessTokenService,
     useFactory: (config: Config) =>
       new JwtAccessTokenService({
-        // A random per-process fallback, exactly like the original's Auth:TokenSigningKey - fine for one
+        // A random per-process fallback, exactly like the pre-migration API's token signing key - fine for one
         // local instance, wrong for more than one. See ../config/fragments/auth.ts.
         signingKey: config.auth.tokenSigningKey ?? randomBytes(32).toString('base64'),
         lifetimeSeconds: config.auth.accessTokenLifetimeSeconds,

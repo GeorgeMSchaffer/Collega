@@ -92,7 +92,7 @@ export function createComment(props: CreateCommentProps): Comment {
   }
 }
 
-/** Replaces the body and mention set together, matching the original's `Comment.Edit` (a single
+/** Replaces the body and mention set together, matching the pre-migration API's comment edit (a single
  * combined transition rather than separate ones - unlike Ideas, which needed body/mentions/tags
  * to vary independently). */
 export function editComment(

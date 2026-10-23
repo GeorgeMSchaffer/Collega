@@ -46,7 +46,7 @@ const VALIDATION_TITLE = 'One or more fields are invalid.'
 /**
  * Wraps a domain transition so a `UserDomainError` (a plain-Error invariant violation - packages/
  * domain imports nothing, so it cannot throw the kernel's `ValidationError` itself) surfaces as a
- * proper field-level 400, mirroring how the original's request-DTO validation attributes turned a blank
+ * proper field-level 400, mirroring how the pre-migration API's request validation rules turned a blank
  * First/Last Name into the same shape before the domain was ever reached (ideas/idea.service.ts's
  * `runDomain` is the reference for this pattern).
  */
@@ -253,7 +253,7 @@ export class UserService {
         })
         created++
       } catch (error) {
-        // Mirrors the C# `catch (AppException ex)`: a business-rule rejection is reported per
+        // Mirrors the pre-migration API's handling: a business-rule rejection is reported per
         // row, but anything else is a real bug and must propagate rather than being swallowed.
         if (!(error instanceof ApplicationError)) {
           throw error

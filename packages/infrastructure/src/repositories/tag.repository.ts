@@ -4,11 +4,11 @@
 // `getOrCreate` OWNS ITS OWN COMMIT AND RETRY - a deliberate exception to this package's usual
 // command-buffer discipline (see `persistence/unit-of-work.ts`'s header for the full design and
 // why this is the one carve-out). It does NOT take a `PrismaUnitOfWork` and does not enqueue
-// anything: every write below is awaited directly, mirroring the original `EfTagRepository`, whose own
-// doc comment says `GetOrCreateAsync` "deliberately owns its own SaveChanges and a retry (rather
-// than deferring to IUnitOfWork) so it can catch the unique-index violation raised when two
+// anything: every write below is awaited directly, mirroring the pre-migration API's tag repository, which
+// deliberately owned its own save and a retry (rather
+// than deferring to the unit of work) so it could catch the unique-index violation raised when two
 // requests create the same normalized tag concurrently and converge both on the single persisted
-// row" (SPEC/20-feature-ideas-and-engagement.md "Tags" #7: "If concurrent saves attempt to create
+// row (SPEC/20-feature-ideas-and-engagement.md "Tags" #7: "If concurrent saves attempt to create
 // the same normalized tag, the system merges them into a single tag."). Tags are independent,
 // reusable entities - nothing else in the same request depends on a tag row NOT yet existing - so
 // committing one ahead of whatever idea/comment referenced it is safe, unlike every other write in
@@ -216,7 +216,7 @@ export class PrismaTagRepository implements TagRepository, IdeasTagsPort, AiTags
         organization_id: organizationId,
         normalized_name: { startsWith: normalizedPrefix },
       },
-      // `normalized_name`, not `name` - `EfTagRepository.SearchByPrefixAsync` ordered by the
+      // `normalized_name`, not `name` - the pre-migration API's prefix search ordered by the
       // normalized column and projected the display one. The two differ whenever casing does:
       // `normalized_name` is lowercased, so it sorts case-insensitively where `name` would let
       // the collation decide, and `"UX"` sorts after `"triage"` under a C collation but before

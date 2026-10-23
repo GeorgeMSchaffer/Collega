@@ -1,4 +1,4 @@
-// Clock is the TS replacement for the original's IClock.UtcNow: a port so tests can pin time instead
+// Clock is the TS replacement for the pre-migration API's clock: a port so tests can pin time instead
 // of reaching for `new Date()` ambiently. There is barely any logic here, but the one
 // thing worth pinning is that systemClock actually delegates to the real clock rather
 // than returning a fixed or memoized value - a bug that unit tests elsewhere would never

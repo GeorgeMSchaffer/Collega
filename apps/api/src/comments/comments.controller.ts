@@ -31,12 +31,12 @@ type UpdateCommentBody = CreateCommentBody
 
 /**
  * `CommentListQuery.sortDirection` is typed `'asc' | 'desc'`, not a raw string, so the coercion
- * the original did inside `SortDirection.Normalize` has to happen here instead of in the repository.
+ * the pre-migration API did while normalising the direction has to happen here instead of in the repository.
  *
- * Trimmed and case-insensitive, matching `SortDirection.IsDescending`'s
- * `StringComparison.OrdinalIgnoreCase` - `?sortDirection=DESC` was descending there and must stay
+ * Trimmed and case-insensitive, matching the pre-migration API's
+ * case-insensitive comparison - `?sortDirection=DESC` was descending there and must stay
  * descending here. Everything that is not "desc" is ascending, which is why an unrecognised value
- * is `'asc'` rather than an error: `Normalize` never rejected one.
+ * is `'asc'` rather than an error: the pre-migration API never rejected one.
  */
 function sortDirection(value: unknown): SortDirection | null {
   const text = optional(value)
@@ -47,9 +47,9 @@ function sortDirection(value: unknown): SortDirection | null {
 }
 
 /**
- * The `[RequiredField]` / `[MaxLengthField(2000)]` pair that `CreateCommentRequest` and
+ * The required-field and max-length (2000) rules that `CreateCommentRequest` and
  * `UpdateCommentRequest` both carry on `Body`, and the only attributes either declares -
- * `MentionEmails` is a bare `List<string>?`.
+ * `MentionEmails` is a bare optional list of strings.
  *
  * **Not redundant with the domain's identical pair** (`packages/domain/src/comments/comment.ts`'s
  * `normalizeBody`), for the reason `ideas.controller.ts` gives about titles: only this one
@@ -60,7 +60,7 @@ function sortDirection(value: unknown): SortDirection | null {
  *
  * The domain's copy still has to stay - that one is the invariant - but it is UNREACHABLE through
  * these two routes: this check runs first and is the stricter of the pair, since
- * `MaxLengthAttribute` measured the raw body where `Comment.SetBody` measured the trimmed one.
+ * the pre-migration max-length rule measured the raw body where `Comment`'s body setter measured the trimmed one.
  */
 function commentBodyRules(body: CreateCommentBody): Record<string, FieldRules> {
   return { body: { value: body.body, required: true, maxLength: BODY_MAX_LENGTH } }
@@ -71,7 +71,7 @@ function commentBodyRules(body: CreateCommentBody): Record<string, FieldRules> {
  *
  * **No controller prefix, deliberately.** The five routes span two roots - `ideas/{ideaId}/
  * comments` for the list and create, `comments/{commentId}` for the edit and delete - because the
- * the original controller declared each path in full rather than sharing one, and the corpus pins all
+ * the pre-migration controller declared each path in full rather than sharing one, and the corpus pins all
  * five. Any `@Controller(prefix)` would move at least two of them.
  *
  * Authorization lives entirely in `CommentService`: that every member including Read Only may

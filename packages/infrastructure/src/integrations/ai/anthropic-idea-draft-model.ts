@@ -21,7 +21,7 @@ import { Priority } from '@collega/domain/enums'
 import { buildIdeaDraftResponseSchema } from './idea-draft-schema.js'
 
 /** Generous relative to a one-question answer because it must also cover thinking - the response
- * itself is schema-constrained and small. Matches the original's `AnthropicIdeaDraftModel.MaxTokens`. */
+ * itself is schema-constrained and small. Same cap as the pre-migration API. */
 const MAX_TOKENS = 8_000
 
 /** The SDK's own default, stated so `ANTHROPIC_BASE_URL` cannot redirect the key elsewhere. */
@@ -35,7 +35,7 @@ const ANTHROPIC_API_URL = 'https://api.anthropic.com'
  *
  * `model` and `effort` are decided settings (rules 28a-28e: `claude-sonnet-5` at `low`), not
  * user-configurable - but they still arrive as configuration here, matching `AiUsageLimits`
- * upstream and the original's `AnthropicIdeaDraftModel(AiUsageLimits, AiCredentials, ...)`.
+ * upstream and the pre-migration API's constructor arguments.
  */
 export type AnthropicIdeaDraftModelConfig = {
   readonly apiKey: string | undefined
@@ -59,7 +59,7 @@ type IdeaDraftSchemaResponse = {
  * type ever leaks into Application or Domain.
  *
  * The client is constructor-injected, never a module-level singleton or a default instance built
- * lazily on first use: SPEC/50-typescript-migration.md ticket 10 replaced the original integration
+ * lazily on first use: SPEC/50-typescript-migration.md ticket 10 replaced the pre-migration integration
  * suite after it made a live, billed Anthropic call whose only symptom was one test taking five
  * seconds instead of one. A test constructs this class with a fake `Anthropic` client (or none at
  * all, to exercise the unconfigured path) and nothing here can reach a real provider by accident.
@@ -289,7 +289,7 @@ function parsePriority(value: string | null | undefined): Priority | null {
 /** Maps the configured effort string onto the SDK's literal union, defaulting to `low` for
  * anything unrecognized - silently spending more than configured because a value was misspelled
  * is the wrong failure direction for what is, per rule 28e, the largest single cost lever
- * available. Mirrors the original's `AnthropicIdeaDraftModel.ResolveEffort`. */
+ * available. Same as the pre-migration API's effort resolution. */
 function resolveEffort(configured: string): 'low' | 'medium' | 'high' | 'max' {
   switch (configured.trim().toLowerCase()) {
     case 'medium':

@@ -92,7 +92,7 @@ function requireNonBlank(value: string, field: string, message: string): void {
 }
 
 /**
- * Restores the `[MaxLengthField]` request attributes the original contracts carried
+ * Restores the max-length rules the pre-migration contracts carried
  * (`CreateOrganizationRequest` / `UpdateOrganizationRequest`) - the constants above were ported
  * but the checks were not, so an over-long value reached a `VarChar(N)` column and Postgres's
  * `22001` surfaced as a 500 instead of the field-keyed 400 the contract requires. Same shape as

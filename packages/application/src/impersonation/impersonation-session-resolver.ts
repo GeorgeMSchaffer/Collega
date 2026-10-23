@@ -19,8 +19,7 @@ import type {
 /**
  * A quarter of the idle window (SPEC/typescript-conversion-map/findings/07-nest-ambient-identity.md
  * §5): small enough that expiry stays accurate to within a few minutes, large enough that a burst
- * of parallel requests in one session writes `lastSeenAtUtc` at most once. Mirrors the original's
- * `TokenAuthenticationService.IdleRefreshInterval`.
+ * of parallel requests in one session writes `lastSeenAtUtc` at most once. Same interval as the pre-migration API.
  */
 const IDLE_REFRESH_INTERVAL_MS = IMPERSONATION_IDLE_TIMEOUT_MS / 4
 
@@ -28,10 +27,10 @@ const IDLE_REFRESH_INTERVAL_MS = IMPERSONATION_IDLE_TIMEOUT_MS / 4
  * Resolves the live View As session for a real user, if any, into the `AuthenticatedPrincipal`
  * every downstream check reads (SPEC/20-feature-view-as.md rule 4). This is the concrete
  * implementation of `ImpersonationResolver` (`../auth/ports.js`) - the extension point B1 carved
- * out specifically because `IImpersonationSessionRepository` and `ImpersonationSession` belong to
- * this isolated slice rather than to `TokenAuthenticationService`'s own package.
+ * out specifically because the impersonation session repository and `ImpersonationSession` belong to
+ * this isolated slice rather than to the token authentication service's own package.
  *
- * A direct port of the original's `TokenAuthenticationService.ResolveImpersonationAsync`: the same five
+ * A direct port of the pre-migration API's impersonation resolution: the same five
  * checks, in the same order (absolute expiry, idle expiry, target still Active, target's
  * organization not archived, and the real user still satisfying the rule 8 matrix), and the same
  * throttled idle-refresh write.

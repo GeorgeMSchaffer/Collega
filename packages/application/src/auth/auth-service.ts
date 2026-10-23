@@ -52,7 +52,7 @@ const VALIDATION_TITLE = 'One or more fields are invalid.'
 /**
  * Wraps a domain transition so a `UserDomainError` (a plain-Error invariant violation - packages/
  * domain imports nothing, so it cannot throw the kernel's `ValidationError` itself) surfaces as a
- * proper field-level 400, mirroring how the original's request-DTO validation attributes turned a blank
+ * proper field-level 400, mirroring how the pre-migration API's request validation rules turned a blank
  * First/Last Name into the same shape before the domain was ever reached (ideas/idea.service.ts's
  * `runDomain` is the reference for this pattern; users/user-service.ts carries the same helper for
  * the same reason - each file that calls into a User domain transition needs its own).

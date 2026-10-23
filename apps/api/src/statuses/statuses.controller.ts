@@ -39,11 +39,11 @@ type ReorderStatusesBody = { orderedStatusIds?: readonly string[] | null }
  * The attribute set `CreateStatusRequest` and `UpdateStatusRequest` share - identical field for
  * field. `sortOrder` carries none.
  *
- * `color` is `[MaxLengthField]` with no `[RequiredField]`, and it is `string?` in the original,
- * so an absent or null value passed: `MaxLengthAttribute.IsValid(null)` returns true, and
+ * `color` has a max-length rule and no required rule, and it is optional in the pre-migration API,
+ * so an absent or null value passed: the max-length rule accepts null, and
  * `validateFields` reaches the same answer by judging a non-string as `''`.
  *
- * `hexColor` is the one rule here with no the original counterpart, and the length limit is why it is
+ * `hexColor` is the one rule here with no pre-migration counterpart, and the length limit is why it is
  * needed: twenty characters is enough for a working CSS `url()`, which the design system renders
  * into a `style` attribute. See `HEX_COLOR` in `request-validation.error.ts`.
  */
@@ -55,14 +55,14 @@ function statusBodyRules(body: CreateStatusBody): Record<string, FieldRules> {
 }
 
 /**
- * `[RequiredField]` on `ReorderStatusesRequest.OrderedStatusIds`, which is a `List<Guid>`
- * initialised to `new()`.
+ * The required rule on `ReorderStatusesRequest.OrderedStatusIds`, which is a list defaulting
+ * to empty.
  *
  * Written out rather than routed through `validateFields` because the rule genuinely differs on a
- * collection: `RequiredAttribute` fails on NULL ONLY. An omitted key left the initialiser in
+ * collection: the required rule fails on NULL ONLY. An omitted key left the default in
  * place, so `{}` arrived as an EMPTY LIST that passed validation and was refused later by the
  * service - the Application envelope, with a different message. `{"orderedStatusIds": null}`
- * overwrote the initialiser and failed here instead. `validateFields` judges a non-string as
+ * overwrote the default and failed here instead. `validateFields` judges a non-string as
  * `''` and cannot tell those two apart.
  */
 function requireOrderedStatusIds(body: ReorderStatusesBody): readonly string[] {
@@ -75,7 +75,7 @@ function requireOrderedStatusIds(body: ReorderStatusesBody): readonly string[] {
     return []
   }
   // A non-string member cannot match an active status id, so the service's coverage check
-  // refuses the request - which is what a non-Guid member did in the original too, one binding
+  // refuses the request - which is what a non-Guid member did in the pre-migration API too, one binding
   // envelope earlier.
   return body.orderedStatusIds.map((id: unknown) => (typeof id === 'string' ? id : ''))
 }
@@ -140,7 +140,7 @@ export class StatusesController {
     })
   }
 
-  /** Replaces the complete active-status order atomically; answers 204, like the original action. */
+  /** Replaces the complete active-status order atomically; answers 204, like the pre-migration action. */
   @Post('organizations/:organizationId/statuses/reorder')
   @HttpCode(204)
   async reorder(

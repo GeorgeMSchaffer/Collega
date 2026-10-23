@@ -3,8 +3,8 @@
 // is available to every member of the organization, because the sprint board and the delivery
 // backlog are read by everyone including Read Only.
 //
-// Named `SprintService`, not `ISprintService` + an implementation: the spec is written in the C#
-// idiom and this repository does not put an interface in front of a single implementation
+// Named `SprintService`, not `ISprintService` + an implementation: the spec is written with an interface per service
+// and this repository does not put an interface in front of a single implementation
 // (CLAUDE.md).
 
 import { randomUUID } from 'node:crypto'

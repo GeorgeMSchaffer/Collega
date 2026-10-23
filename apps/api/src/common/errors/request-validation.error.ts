@@ -5,8 +5,8 @@
  * **Why this is not the kernel's `ValidationError`.** It renders differently, and the golden
  * corpus is unambiguous about it. Of the eight recorded `400`s, six carry **no `traceId`** and a
  * `content-type` **with** `; charset=utf-8`; the other two carry a `traceId` and no charset. The
- * split is not arbitrary - it is exactly whether the framework rejected the request during model binding
- * (`[Required]`, before the action) or an Application service threw after being entered:
+ * split is not arbitrary - it is exactly whether the pre-migration API (the API this one replaced) rejected the
+ * request during model binding (a required-field rule, before the action) or an Application service threw after being entered:
  *
  * | Recorded fixture | Rejected by | `traceId` | charset |
  * |---|---|---|---|
@@ -41,8 +41,8 @@ export class RequestValidationError extends Error {
  * `"Target User Id is required."`, which is why the split happens on a lowercase-or-digit followed
  * by an uppercase and not on every capital: `userId` must become `User Id`, never `User I d`.
  *
- * This mirrors `SpacedDisplayNameMetadataProvider` in the original, which fed the framework's
- * `DisplayName` and therefore every message any request DTO produced.
+ * This reproduces the pre-migration API, which spaced every field name this way, so every message
+ * any request body produced carried the spaced form.
  */
 export function displayName(field: string): string {
   const spaced = field.replace(/(?<=[a-z0-9])(?=[A-Z])/g, ' ')
@@ -50,8 +50,8 @@ export function displayName(field: string): string {
 }
 
 /**
- * `EmailAddressAttribute.IsValid` in full: exactly one `@`, neither first nor last character.
- * Deliberately not a stricter pattern - a rule the original API accepted and this one rejects is as
+ * The email rule in full: exactly one `@`, neither first nor last character.
+ * Deliberately not a stricter pattern - a rule the pre-migration API accepted and this one rejects is as
  * much a divergence as the other way round.
  */
 function isEmailAddress(value: string): boolean {
@@ -87,55 +87,55 @@ export type FieldRules = {
   readonly maxLength?: number
   readonly email?: boolean
   /**
-   * `#RRGGBB` only. The one rule here that is NOT a transcription of an original attribute -
-   * the original contracts length-checked these columns and never format-checked them, which is the
+   * `#RRGGBB` only. The one rule here that is NOT a transcription of a pre-migration rule -
+   * The pre-migration contracts length-checked these columns and never format-checked them, which is the
    * defect it closes. An absent or blank value passes: the status catalog's colour is optional
    * and defaults downstream, so emptiness is `required`'s question, not this one's.
    */
   readonly hexColor?: boolean
   /**
-   * The fixed allow-list a `[AllowedValues]` property carries - the transcript entry's `role` is
+   * The fixed allow-list an allowed-values property carries - the transcript entry's `role` is
    * the only one in the API. Comparison is ordinal and case-SENSITIVE, which is inherited rather
-   * than chosen - the declarative attribute this transcribes compared that way. Nothing in the
+   * than chosen - the pre-migration rule this transcribes compared that way. Nothing in the
    * corpus records a rejection here, so `test/request-validation.test.ts` is what pins it.
    *
    * An absent or blank value passes, matching that attribute's own "absence is a separate concern
-   * owned by RequiredFieldAttribute" short-circuit on null - pair it with `required` when both
-   * apply, exactly as the original property does.
+   * owned by the required rule" short-circuit on null - pair it with `required` when both
+   * apply, exactly as the pre-migration property did.
    */
   readonly allowedValues?: readonly string[]
   /**
    * The name the MESSAGE uses, when it is not derivable from the key. Needed only for a NESTED
-   * property, where the two genuinely part company: the framework keyed the failure by the whole path
-   * (`Options[0].Label`, camelCased segment by segment to `options[0].label`) but built the message
-   * from the display name, which was filled from the property's own name alone - so the entry reads `"Label is required."`, not
+   * property, where the two genuinely part company: the pre-migration API keyed the failure by the whole
+   * path (`Options[0].Label`, camelCased segment by segment to `options[0].label`) but built the
+   * message from the property's own name alone - so the entry reads `"Label is required."`, not
    * `"Options[0].label is required."`.
    */
   readonly displayName?: string
 }
 
 /**
- * Validates a request body against the attribute set its the original contract declared, collecting every
- * failure rather than stopping at the first - which is what the framework's ModelState did, and it
- * matters within a field as well as across them: a `RegisterRequest` with no `email` at all failed
- * `[RequiredField]` and `[EmailFormat]` both, and reported two messages under the one key.
+ * Validates a request body against the rule set its pre-migration contract declared, collecting every
+ * failure rather than stopping at the first - which is what the pre-migration API did, and it
+ * matters within a field as well as across them: a register request with no `email` at all failed
+ * the required and email-format rules both, and reported two messages under the one key.
  *
  * The required/max-length/email templates cover the D1 contracts; `allowedValues` was added for
- * D6, the one `[AllowedValues]` property in the API. All six templates are recorded in
+ * D6, the one allowed-values property in the API. All six templates are recorded in
  * `SPEC/30-Contracts.md` "Validation Message Conventions", which is now their canonical source; the
  * corpus records the required variant only, so the other two are pinned by the spec alone.
  *
- * An OMITTED field is judged as `''`, not skipped, because that is what it was in the original:
- * every string property on those DTOs is initialised to `string.Empty`, and System.Text.Json
- * leaves the initialiser alone for a key that is not in the JSON. So `{}` reached validation as an
- * empty string and failed `[EmailFormat]` as well as `[RequiredField]`.
+ * An OMITTED field is judged as `''`, not skipped, because that is what it was in the pre-migration API:
+ * every string property on those request bodies defaulted to the empty string, and a key that was
+ * not in the JSON left that default alone. So `{}` reached validation as an
+ * empty string and failed the email-format rule as well as the required rule.
  *
- * An EXPLICIT `null` is not the same thing and is the one case that has to branch. System.Text.Json
- * writes the `null` over the initialiser, and `EmailAddressAttribute.IsValid(null)` returns TRUE -
- * so `{"email": null}` failed `[RequiredField]` only, one message where `{}` gave two.
+ * An EXPLICIT `null` is not the same thing and is the one case that has to branch. The pre-migration API
+ * wrote the `null` over the default, and its email rule accepted null -
+ * so `{"email": null}` failed the required rule only, one message where `{}` gave two.
  *
- * A JSON value that is neither (`{"email": 123}`) had no faithful answer to reproduce: System.Text
- * .Json threw a `JsonException` during binding, which is a different envelope entirely. It is read
+ * A JSON value that is neither (`{"email": 123}`) had no faithful answer to reproduce: the
+ * pre-migration API threw a JSON binding error, which is a different envelope entirely. It is read
  * as omitted, since body types are compile-time only and there is no `ValidationPipe` - without
  * that the first `.trim()` would be a `TypeError` and a 500 on an anonymous endpoint.
  */
@@ -149,7 +149,7 @@ export function validateFields(fields: Readonly<Record<string, FieldRules>>): vo
     if (rules.required === true && value.trim() === '') {
       messages.push(`${shown} is required.`)
     }
-    // Untrimmed, as `MaxLengthAttribute` measured it - the domain trims first, which is a
+    // Untrimmed, as the pre-migration max-length rule measured it - the domain trims first, which is a
     // different (and looser) rule, so the two checks are not interchangeable.
     if (rules.maxLength !== undefined && value.length > rules.maxLength) {
       messages.push(`${shown} must be ${rules.maxLength} characters or fewer.`)
@@ -177,7 +177,7 @@ export function validateFields(fields: Readonly<Record<string, FieldRules>>): vo
   }
 }
 
-/** `validateFields` for the common case of a body whose fields carry `[RequiredField]` and nothing else. */
+/** `validateFields` for the common case of a body whose fields carry the required rule and nothing else. */
 export function requirePresent(fields: Readonly<Record<string, unknown>>): void {
   validateFields(
     Object.fromEntries(

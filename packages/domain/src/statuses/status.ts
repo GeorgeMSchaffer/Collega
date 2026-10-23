@@ -50,7 +50,7 @@ export type Status = Auditable & {
  * `label` is both the field key (lowercased) and the message's spaced display name
  * (SPEC/30-Contracts.md "Validation Message Conventions").
  *
- * The max-length half restores the `[MaxLengthField]` request attributes the original contracts
+ * The max-length half restores the max-length rules the pre-migration contracts
  * carried (`CreateStatusRequest` / `UpdateStatusRequest`) - the constants above were ported but
  * the checks were not, so an over-long value reached a `VarChar(N)` column and Postgres's `22001`
  * surfaced as a 500 instead of the field-keyed 400 the contract requires. Same shape as

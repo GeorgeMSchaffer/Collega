@@ -1,7 +1,7 @@
 /**
  * Fields every persisted entity carries, and the two transitions that set them.
  *
- * Expressed as a type plus pure functions rather than the C# abstract base class, because
+ * Expressed as a type plus pure functions rather than an abstract base class, because
  * the Wave B partitions independently settled on immutable data with transition functions -
  * a base class buys nothing when every operation already takes an explicit `nowUtc` and
  * actor.
@@ -10,7 +10,7 @@
  * Unlike time, an id needs no port to be testable - a caller can simply supply one - so
  * there is nothing here to inject. Every Wave B partition should do it the same way.
  *
- * Ids are NOT generated here. The C# `EntityBase` defaulted `Id = Guid.NewGuid()` ambiently;
+ * Ids are NOT generated here. The pre-migration API's entity base defaulted the id ambiently;
  * generating them in the application layer instead keeps domain free of hidden randomness,
  * which is what makes these functions trivially testable.
  */
@@ -23,7 +23,7 @@ export type Auditable = {
 
 /**
  * Stamps a newly created entity. Both timestamps are the same instant, deliberately - the
- * the original `MarkCreated` did the same, and the golden corpus records the equality.
+ * pre-migration API did the same, and the golden corpus records the equality.
  *
  * `actorUserId` is the ACTING user, which during a View As session is the impersonated one.
  * That is rule 15 and it is the opposite of audit attribution's rule 14: content created

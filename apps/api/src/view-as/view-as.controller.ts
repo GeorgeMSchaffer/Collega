@@ -27,7 +27,7 @@ type StartViewAsBody = { targetUserId?: string }
  * envelope (`https://collega.dev/problems/forbidden`, with a `traceId` and no charset), not the
  * framework one a role guard produces.
  *
- * Deliberately NOT on the mandatory-password-rotation allowlist, mirroring the original controller: an
+ * Deliberately NOT on the mandatory-password-rotation allowlist, mirroring the pre-migration controller: an
  * administrator who still owes a rotation is refused by `AuthGuard` before reaching these, so they
  * cannot use impersonation to work around their own gate.
  */
@@ -48,14 +48,14 @@ export class ViewAsController {
    *
    * `guidOrEmpty` rather than a 404-on-malformed pipe: the house coercion
    * (`common/request-values.ts`) binds a non-GUID body value to the empty GUID, which resolves
-   * against no user and answers `404`. the original answered `400` there, from a System.Text.Json binding
+   * against no user and answers `404`. The pre-migration API answered `400` there, from a JSON binding
    * failure whose wording no fixture records - the same known divergence that file documents for
    * every other `Guid?` body property.
    */
   @Post()
   @HttpCode(200)
   async start(@Body() body: StartViewAsBody): Promise<ViewAsSessionResult> {
-    // `[RequiredField]` on a NULLABLE `Guid` does bite, unlike the non-nullable case `guidOrEmpty`
+    // The required rule on a NULLABLE `Guid` does bite, unlike the non-nullable case `guidOrEmpty`
     // describes, and `auth.viewas.start.missing-target` records its exact wording - "Target User Id
     // is required." - in the model-binding envelope this produces.
     requirePresent({ targetUserId: body.targetUserId })

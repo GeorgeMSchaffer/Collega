@@ -19,8 +19,8 @@ type UpdateUserBody = {
  *
  * The org-scoped list, create and CSV import are deliberately **not** here - they live under
  * `/organizations/{organizationId}/users` on the organizations controller, because they are
- * scoped by the organization in the route rather than by the user in it. The original controller
- * says so in its own header and the contracts document agrees; splitting them differently would
+ * scoped by the organization in the route rather than by the user in it. The contracts document says
+ * so, as did the pre-migration controller; splitting them differently would
  * change the routes the corpus recorded.
  *
  * Every method is authorized inside the Application services against the acting user, so this

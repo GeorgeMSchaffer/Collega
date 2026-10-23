@@ -1,5 +1,5 @@
-// AuditEventInput mirrors the original AuditEvent.Create's parameter list, minus validation -
-// Create threw on blank eventType/entityType/message, which the type system can't express and
+// AuditEventInput mirrors the pre-migration API's audit-event factory parameter list, minus validation -
+// the factory threw on blank eventType/entityType/message, which the type system can't express and
 // Wave C's writer is expected to enforce instead.
 //
 // The property under test here is entirely compile-time: `attribution` being the branded

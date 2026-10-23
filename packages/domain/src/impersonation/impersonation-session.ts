@@ -11,7 +11,7 @@ import { ImpersonationDomainError } from './errors.js'
 // acted as whom and for how long, and deleting it would destroy exactly the accountability the
 // feature exists to provide.
 //
-// Expressed as an immutable type plus pure transition functions rather than the C# entity class,
+// Expressed as an immutable type plus pure transition functions rather than an entity class,
 // per the Wave B house style (SPEC/decisions.md 2026-09-06) - every transition already takes an
 // explicit `nowUtc`, so a class with private setters buys nothing.
 

@@ -1,5 +1,5 @@
 // Same reasoning as uuid-param.pipe.test.ts: the STATUS is the point. `{version:int}` was a route-
-// matching constraint in the original, so a segment it could not bind matched no endpoint at all.
+// matching constraint in the pre-migration API, so a segment it could not bind matched no endpoint at all.
 // Nest's ParseIntPipe throws 400, which would be a visible divergence on the one route that has an
 // integer parameter - so this asserts the exception type rather than merely that something threw.
 

@@ -62,19 +62,19 @@ const BASE64_PAYLOAD = /^[A-Za-z0-9+/]*={0,2}$/
  *
  * `Buffer.from(s, 'base64')` never throws - it discards characters outside the alphabet and
  * returns whatever is left, so a truthy result proves nothing on its own. The rules reproduced
- * here are `Convert.FromBase64String`'s, which the original handler let throw:
+ * here are the pre-migration API's, whose strict decoder threw on anything else:
  *
  * - **whitespace anywhere is ignored**, so a line-wrapped payload or a trailing newline decodes
- *   rather than failing. Its decoder skips characters `<= ' '` and nothing else, which is why the
+ *   rather than failing. The pre-migration decoder skipped characters `<= ' '` and nothing else, which is why the
  *   strip below keeps only characters ABOVE `' '` rather than using `\s`, which is wider: JS `\s`
- *   also covers NBSP, U+2028 and U+FEFF, all of which `Convert.FromBase64String` threw on;
+ *   also covers NBSP, U+2028 and U+FEFF, all of which the pre-migration decoder threw on;
  * - the whitespace-stripped length must be a **multiple of four**, so padding is mandatory and
  *   over-padding is rejected.
  *
  * Those two plus `BASE64_PAYLOAD` are exhaustive: anchoring `=` to the end also rules out interior
  * and excess padding, and the alphabet rules out base64url. There is deliberately NO re-encode
- * comparison on top - it would be STRICTER than the original, rejecting a payload whose final unused bits
- * are non-zero (`AB==`), which `Convert.FromBase64String` accepted and decoded to the same bytes
+ * comparison on top - it would be STRICTER than the pre-migration API, rejecting a payload whose final unused bits
+ * are non-zero (`AB==`), which the pre-migration decoder accepted and decoded to the same bytes
  * Node does.
  */
 function decodeBase64Image(value: unknown): Buffer | null {
@@ -103,7 +103,7 @@ function decodeBase64Image(value: unknown): Buffer | null {
 /**
  * The login response, minus the token.
  *
- * The original API returned `accessToken` in this body and the corpus records it on one fixture.
+ * The pre-migration API returned `accessToken` in this body and the corpus records it on one fixture.
  * Decision `08` moved the session into an httpOnly cookie, and returning the token as well would
  * hand it back to JavaScript and defeat the point - so the field is gone and
  * `SPEC/30-Contracts.md` now says so. Everything else is unchanged, including `expiresInSeconds`,
@@ -146,8 +146,8 @@ export class AuthenticationController {
   ): Promise<LoginResponse> {
     // A missing field is a 400 with field-level errors, NOT a 401 - the corpus distinguishes
     // them, and collapsing the two would tell an attacker that a malformed probe and a wrong
-    // password are the same thing. This is the model-binding validation the original got from
-    // `[Required]` on the request record; Nest has no equivalent without a validation pipe, so
+    // password are the same thing. This is the model-binding validation the pre-migration API did before the action;
+    // Nest has no equivalent without a validation pipe, so
     // the check is explicit and the messages match what the corpus recorded.
     requirePresent({ email: body.email, password: body.password })
 
@@ -207,7 +207,7 @@ export class AuthenticationController {
 
   /**
    * Not allowlisted mid-rotation, deliberately: only `GET /auth/me` and `change-password` carry
-   * that opt-in on the original controller, so editing a profile while a forced change is pending is
+   * that opt-in in the pre-migration API, so editing a profile while a forced change is pending is
    * a 403 here as it was there.
    */
   @Put('me')
@@ -226,17 +226,17 @@ export class AuthenticationController {
 
   /**
    * The body carries the raw image file as Base64, and a full data URL is accepted as well -
-   * clients built on `FileReader.readAsDataURL` send one without thinking about it, and the original
-   * handler took both. What comes back is not what went in: the Application layer re-encodes
+   * clients built on `FileReader.readAsDataURL` send one without thinking about it, and the pre-migration API
+   * took both. What comes back is not what went in: the Application layer re-encodes
    * through the image processor, so the response's `portraitDataUrl` is the normalised PNG.
    */
   @Put('me/portrait')
   @UseGuards(AuthGuard)
   async updatePortrait(@Body() body: UpdatePortraitBody): Promise<CurrentUserSummary> {
-    // `UpdatePortraitRequest` carries `[RequiredField]`, and model validation ran BEFORE the
-    // action - so `TryDecodeBase64` never saw a missing or blank value, and this message was
+    // The pre-migration API validated the required field BEFORE the
+    // action - so its decoder never saw a missing or blank value, and this message was
     // reachable only for a string that was present and corrupt. Ordering the two checks the other
-    // way round answers "could not be read." where the original answered "is required."
+    // way round answers "could not be read." where the pre-migration API answered "is required."
     requirePresent({ imageBase64: body.imageBase64 })
 
     const imageBytes = decodeBase64Image(body.imageBase64)
@@ -302,7 +302,7 @@ export class AuthenticationController {
   @UseGuards(AuthRateLimitGuard, AuthGuard)
   @AllowWhilePasswordChangeRequired()
   async changePassword(@Body() body: ChangePasswordBody): Promise<void> {
-    // Both fields carry `[RequiredField]` on `ChangePasswordRequest`, so a missing one never
+    // Both fields were required in the pre-migration API, so a missing one never
     // reached the service. Without this an absent `currentPassword` is answered 401 "Current
     // password is incorrect." and, worse, writes an `AuthPasswordChangeFailed` audit event for a
     // request that was never a password attempt.

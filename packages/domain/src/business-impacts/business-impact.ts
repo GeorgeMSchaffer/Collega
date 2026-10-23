@@ -19,7 +19,7 @@ export const MINIMUM_ACTIVE_BUSINESS_IMPACTS_PER_ORGANIZATION = 1
  * Raised when a caller asks this module to put a `BusinessImpact` into an invalid state. Carries
  * the field the violation belongs to, mirroring `IdeaTypeDomainError`. In practice every one of
  * these is a defensive backstop: `BusinessImpactService` validates name/color itself before
- * calling in, mirroring how the original `IdeaFieldService` never wrapped these calls.
+ * calling in, mirroring how the pre-migration API never wrapped these calls.
  */
 export class BusinessImpactDomainError extends Error {
   readonly field: string

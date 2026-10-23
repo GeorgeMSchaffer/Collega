@@ -138,8 +138,8 @@ export class StatusService {
   /**
    * Replaces the complete active-status order atomically; the list must name every active
    * status exactly once. Atomic because every `save` below is staged and committed with a
-   * single `unitOfWork.saveChanges()` after the loop - matching the C#, which loops over the
-   * statuses mutating tracked entities and calls `SaveChangesAsync` once, after the loop. A
+   * single `unitOfWork.saveChanges()` after the loop - matching the pre-migration API, which looped over the
+   * statuses and saved once, after the loop. A
    * per-iteration commit would leave a partially reordered catalog if a later status failed to
    * save (SPEC/decisions.md 2026-09-06 "Wave B conventions").
    */
@@ -346,8 +346,8 @@ function ensureReorderCoversActive(
 /**
  * Wraps a domain transition so a `StatusInvariantError` (a plain-Error invariant violation -
  * packages/domain imports nothing, so it cannot throw the kernel's `ValidationError` itself)
- * surfaces as a proper field-level 400, mirroring how the original let `Status`'s `ArgumentException`
- * reach the API only through a `ValidationAppException` raised in the service, never directly
+ * surfaces as a proper field-level 400, mirroring how the pre-migration API let `Status`'s argument exceptions
+ * reach the API only through a validation error raised in the service, never directly
  * (SPEC/decisions.md 2026-09-06 "Wave B conventions"; B3's `runDomain` is the reference).
  */
 function runDomain<Args extends readonly unknown[], T>(fn: (...args: Args) => T, ...args: Args): T {

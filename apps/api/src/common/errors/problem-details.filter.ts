@@ -32,16 +32,16 @@ import { RequestValidationError } from './request-validation.error.js'
  * | wrong password | `https://collega.dev/problems/*` | `content-type` has NO charset;
  * | `Cache-Control: no-cache,no-store` / `Pragma: no-cache` / `Expires: -1` are present |
  *
- * That second row's headers are not decorative choices made here - they reproduce what the framework's
- * own `UseExceptionHandler` middleware does automatically the moment something is thrown and
- * caught (clearing response caching headers), which is why the original's two paths differ identically.
+ * That second row's headers are not decorative choices made here - they reproduce what the pre-migration
+ * API's exception-handling middleware did automatically the moment something was thrown and
+ * caught (clearing response caching headers), which is why its two paths differed the same way.
  * A Nest `HttpException` thrown deliberately by a guard never passed through anything like that,
  * so it keeps the plainer, framework-default shape instead.
  *
  * **There is a THIRD shape, and this file used to deny it.** The advice here was that a request-DTO
  * validation failure should throw the kernel `ValidationError` to get the identical `400`. Replaying
  * the corpus against a live host proved otherwise: six of the eight recorded `400`s carry no
- * `traceId` and DO carry `; charset=utf-8`, because the framework rejected them during model binding,
+ * `traceId` and DO carry `; charset=utf-8`, because the pre-migration API rejected them during model binding,
  * before the action was entered - while the two thrown by Application code carry a `traceId` and no
  * charset. Same `type`, same `title`, different envelope. `RequestValidationError` is that first
  * case; see its own file for the fixture-by-fixture split.
@@ -104,7 +104,7 @@ export class ProblemDetailsFilter implements ExceptionFilter {
 
   /**
    * A request rejected on its own shape, before any Application code ran. No `traceId`, and no
-   * cache-clearing headers - nothing was thrown through the framework's exception middleware, so nothing
+   * cache-clearing headers - nothing was thrown through the exception-handling path, so nothing
    * cleared them. The body is sent as a STRING on purpose: Express then appends `; charset=utf-8`
    * to the content type, which is exactly what the recorded fixtures carry, and is the mirror image
    * of the Buffer trick `sendKernel` needs to avoid it.
@@ -170,7 +170,7 @@ export class ProblemDetailsFilter implements ExceptionFilter {
       // Sent as a Buffer, not a string, and that is load-bearing rather than stylistic. Express's
       // `res.send` rewrites an already-set Content-Type to append `; charset=utf-8` whenever the
       // body is a string - so setting the header above was silently undone, and every kernel error
-      // in the corpus came back with a charset the original handler never sent. A Buffer body skips
+      // in the corpus came back with a charset the pre-migration API never sent. A Buffer body skips
       // that rewrite. Caught by the golden replay on its first run against a live Nest host.
       .setHeader('Content-Type', 'application/problem+json')
       .setHeader('Cache-Control', 'no-cache,no-store')
@@ -200,7 +200,7 @@ export class ProblemDetailsFilter implements ExceptionFilter {
 
     response
       .status(status)
-      // WITH charset: matches the default the framework problem-details writer used for a framework-
+      // WITH charset: matches the default charset the pre-migration API used for a framework-
       // level rejection (a guard throwing before any Application code runs), never the explicit
       // no-charset call AppExceptionHandler makes for a thrown Application exception.
       .setHeader('Content-Type', 'application/problem+json; charset=utf-8')
@@ -257,7 +257,7 @@ const KERNEL_TITLE: Readonly<Record<string, string>> = {
 
 /** RFC 9110 URIs for a framework-level rejection. 401 and 403 are the two the corpus records this
  * way; 404 is here for a request that matched no route - a non-GUID id segment, which `UuidParamPipe`
- * turns into the same 404 the framework's routing produced, and which would otherwise render with the
+ * turns into the same 404 the pre-migration API's routing produced, and which would otherwise render with the
  * generic type and a `NotFound` title. Any other framework `HttpException` falls back to a generic
  * `collega.dev/problems/error` type in `sendFramework` above.
  *

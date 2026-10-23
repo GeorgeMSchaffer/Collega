@@ -1,5 +1,5 @@
 /**
- * Formula injection (CWE-1236) guard, ported from the original's `Csv.StripFormulaGuard`. Spreadsheet
+ * Formula injection (CWE-1236) guard, ported from the pre-migration API's CSV helper. Spreadsheet
  * applications evaluate a cell whose text begins with `=`, `+`, `-`, `@`, tab, or CR as a formula
  * when the file is opened, so an export prefixes a guard apostrophe on such cells - re-importing
  * that file must strip the same guard back off, or the apostrophe becomes permanent stored data.
@@ -13,7 +13,7 @@ const FORMULA_GUARD = "'"
 /** True when `value`, after skipping any leading guard apostrophes, starts with a character a
  * spreadsheet would treat as a formula trigger. Guarding by depth (rather than only checking the
  * very first character) is what makes {@link stripFormulaGuard} an exact inverse of the export
- * side's guard at every level - see the original for the `''=1+1` case this handles. */
+ * side's guard at every level - the `''=1+1` case is why. */
 function needsFormulaGuard(value: string): boolean {
   let i = 0
   while (i < value.length && value[i] === FORMULA_GUARD) {

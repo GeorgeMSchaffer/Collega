@@ -21,8 +21,8 @@ import { ROLES_KEY } from './roles.decorator.js'
  * framework-level rejection before any Application code runs, the same kind `AuthGuard`
  * produces for a missing/invalid credential (`problem-details.filter.ts`'s RFC-9110 branch).
  * Contrast `AuthGuard`'s mandatory-password-change check, which throws the KERNEL's
- * `ForbiddenError` because the original's own equivalent (`PasswordChangeRequiredFilter`) throws
- * `ForbiddenAppException` - two different 403 shapes for two different reasons, not a
+ * `ForbiddenError` because the pre-migration API's own equivalent threw its
+ * Application-layer forbidden exception - two different 403 shapes for two different reasons, not a
  * inconsistency.
  */
 @Injectable()

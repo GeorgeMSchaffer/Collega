@@ -8,7 +8,7 @@ import { RolesGuard } from './roles.guard.js'
  * Exports `AuthGuard` and `RolesGuard` for any feature module to apply with
  * `@UseGuards(AuthGuard, RolesGuard)` (order matters - `RolesGuard` reads identity `AuthGuard`
  * resolves) plus `@Roles(...)` / `@AllowWhilePasswordChangeRequired()`, the Nest equivalents of
- * `[Authorize(Roles = ...)]` and `AllowWhilePasswordChangeRequiredAttribute`. Nothing else lives
+ * the pre-migration API's role-restricted and password-change-allowlist attributes. Nothing else lives
  * here: login/register/change-password/View As are feature controllers (D1/D7), not host wiring.
  *
  * `AuthRateLimitGuard` is exported alongside them and applied FIRST where it is used, so an

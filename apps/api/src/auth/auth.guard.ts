@@ -21,16 +21,16 @@ import { SESSION_COOKIE_NAME } from './session-cookie.js'
  * without any authorization code knowing impersonation exists - and reading a credential
  * anywhere else silently opts that code out of impersonation.
  *
- * A feature controller applies this the way the original applies an authorization attribute: `@UseGuards(AuthGuard)`
+ * A feature controller applies this the way the pre-migration API applied its authorization attribute: `@UseGuards(AuthGuard)`
  * on the routes that need it. It is deliberately NOT a global `APP_GUARD` - `GET /api/v1/health`
  * (SPEC/30-Contracts.md) must answer even when the database is down, which means it must not
- * resolve identity at all, exactly like the original's `HealthController` injects nothing.
+ * resolve identity at all, exactly like the pre-migration API's health route, which injected nothing.
  *
  * A missing or invalid cookie throws Nest's own `UnauthorizedException`, not the kernel's
  * `UnauthorizedError` - see `problem-details.filter.ts` for why that distinction is the whole
  * mechanism behind the corpus's two different 401 envelope shapes (a guard rejecting a request
- * before any Application code runs is the SAME kind of rejection the framework's `[Authorize]`
- * produces; `UnauthorizedError` is reserved for a use case that authenticated fine and then
+ * before any Application code runs is the SAME kind of rejection the pre-migration API's authorization
+ * layer produced; `UnauthorizedError` is reserved for a use case that authenticated fine and then
  * explicitly refused the request).
  *
  * Resolution is one call, not four: `TokenAuthenticationService.authenticate` (already ported,
@@ -43,12 +43,12 @@ import { SESSION_COOKIE_NAME } from './session-cookie.js'
  * read time, which is what makes `ensureNotDirectSiteAdmin` correct without a special case.
  *
  * Also enforces the mandatory first-login password change (SPEC/30-Contracts.md; auth
- * requirement #31), porting the original's `PasswordChangeRequiredFilter`. That filter throws
- * `ForbiddenAppException` - the Application-layer kernel exception, NOT a framework rejection -
+ * requirement #31), porting the pre-migration API's password-change filter. That filter threw
+ * the Application-layer kernel exception, NOT a framework rejection -
  * so this gate throws the kernel's `ForbiddenError` too, which `problem-details.filter.ts` maps
  * to the `collega.dev/problems/forbidden` shape. Deliberately NOT `ForbiddenException`: that
  * would produce the wrong one of the two 403 envelopes the golden corpus distinguishes. The
- * allowlist is opt-in via `@AllowWhilePasswordChangeRequired()`, mirroring the original's attribute for
+ * allowlist is opt-in via `@AllowWhilePasswordChangeRequired()`, mirroring the pre-migration API's opt-in attribute for
  * the same reason - a new endpoint is closed by default.
  */
 @Injectable()

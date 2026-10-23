@@ -41,8 +41,8 @@ type ReorderBusinessImpactsBody = { orderedBusinessImpactIds?: unknown }
  * The attribute set `CreateBusinessImpactRequest` and `UpdateBusinessImpactRequest` share -
  * identical field for field. `SortOrder` is a bare `int?` and carries none.
  *
- * `Color` is `[RequiredField]` here where the status catalog's is optional: an impact chip has no
- * neutral fallback, so the original contract made the color mandatory.
+ * `Color` is required here where the status catalog's is optional: an impact chip has no
+ * neutral fallback, so the pre-migration contract made the color mandatory.
  *
  * The `#RRGGBB` shape was described as the domain's rule and was not actually anyone's -
  * `normalizeColor` only rejects a blank string - so twenty characters of anything, a working CSS
@@ -63,9 +63,9 @@ function businessImpactBodyRules(body: CreateBusinessImpactBody): Record<string,
 }
 
 /**
- * `[RequiredField]` on `ReorderBusinessImpactsRequest.OrderedBusinessImpactIds`, a `List<Guid>`
- * initialised to `new()` - the same two-envelope split `statuses.controller.ts` documents at
- * length for `requireOrderedStatusIds`: `RequiredAttribute` fails on NULL ONLY, so `{}` arrived as
+ * The required rule on `ReorderBusinessImpactsRequest.OrderedBusinessImpactIds`, a list
+ * defaulting to empty - the same two-envelope split `statuses.controller.ts` documents at
+ * length for `requireOrderedStatusIds`: the required rule fails on NULL ONLY, so `{}` arrived as
  * an empty list the service refused (Application envelope) while an explicit `null` failed here
  * (model-binding envelope).
  */
@@ -133,7 +133,7 @@ export class BusinessImpactsController {
     })
   }
 
-  /** Replaces the complete active-option order atomically; answers 204, like the original action. */
+  /** Replaces the complete active-option order atomically; answers 204, like the pre-migration action. */
   @Post('organizations/:organizationId/business-impacts/reorder')
   @HttpCode(204)
   async reorder(

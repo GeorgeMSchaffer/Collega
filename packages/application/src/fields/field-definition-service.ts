@@ -218,8 +218,8 @@ export class FieldDefinitionService {
 
   /**
    * Replaces every active definition's display order atomically - every `save` below is staged
-   * and committed with a single `unitOfWork.saveChanges()` after the loop, mirroring the original's
-   * single post-loop `SaveChangesAsync` (SPEC/decisions.md 2026-09-06 "Wave B conventions").
+   * and committed with a single `unitOfWork.saveChanges()` after the loop, mirroring the pre-migration API's
+   * single post-loop save (SPEC/decisions.md 2026-09-06 "Wave B conventions").
    */
   async reorder(organizationId: string, command: ReorderFieldDefinitionsCommand): Promise<void> {
     this.ensureAdminScope(organizationId)
@@ -424,12 +424,12 @@ function parseFieldType(fieldType: string): FieldType {
 
 /**
  * Wraps a domain transition so a `FieldDefinitionDomainError` surfaces as a `ValidationError`
- * bucketed under the fixed `fieldDefinition` key - mirroring the original `FieldDefinitionService`'s
- * shared `AsValidation` helper exactly, INCLUDING the fact that it does not key by the specific
+ * bucketed under the fixed `fieldDefinition` key - mirroring the pre-migration API's
+ * shared validation helper exactly, INCLUDING the fact that it does not key by the specific
  * property that failed. This is a deliberate departure from `IdeaDomainError`/
  * `BoardInvariantError`'s per-field keying (the `runDomain` reference elsewhere in Wave B): every
- * `FieldDefinitionService` call site in the original used one shared `AsValidation` that always threw
- * `ValidationAppException("fieldDefinition", new[] { ex.Message })` regardless of which invariant
+ * field-definition call site in the pre-migration API used one shared helper that always threw
+ * a validation error keyed `fieldDefinition` with the exception message, regardless of which invariant
  * fired, and the corpus records whatever that produced.
  */
 function runDomain<Args extends readonly unknown[], T>(fn: (...args: Args) => T, ...args: Args): T {

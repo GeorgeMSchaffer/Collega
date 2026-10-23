@@ -3,7 +3,7 @@
  *
  * The read half is already ported and lives in `packages/infrastructure/src/integrations/csv/`
  * (`parseCsvRecords` + `stripFormulaGuard`). The write half has no home there: nothing in
- * Infrastructure produces a CSV, and the original was an API-layer helper for exactly that
+ * Infrastructure produces a CSV, and the pre-migration API likewise kept this in an API-layer helper for exactly that
  * reason - `IIdeaService` hands back headers and rows, and the controller serialises them.
  *
  * The guard logic below therefore mirrors `formula-guard.ts`'s, duplicated rather than imported:

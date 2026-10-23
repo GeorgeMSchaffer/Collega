@@ -45,8 +45,8 @@ export class ConflictError extends ApplicationError {
  * The account is locked after too many failed sign-in attempts. Maps to 429.
  *
  * Deliberately distinct from RateLimitedError even though both are 429: one is about an
- * account's own failed attempts and the other about a caller's request volume, and the original
- * side kept them apart. The golden corpus records whatever body each produced, so collapsing
+ * account's own failed attempts and the other about a caller's request volume, and the pre-migration API
+ * kept them apart. The golden corpus records whatever body each produced, so collapsing
  * them into one type would show up as a replay diff.
  */
 export class LockedOutError extends ApplicationError {

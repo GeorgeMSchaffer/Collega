@@ -31,7 +31,7 @@ export function seedTagColor(normalizedName: string): string {
  * mentions and upvotes. Two organizations x two boards x eleven ideas is the definition of done's
  * 44.
  *
- * The distribution rules are ported from the original seeder rather than reinvented, because
+ * The distribution rules are ported from the pre-migration seeder rather than reinvented, because
  * `apps/web`'s fixtures were written against them and `SPEC/40-test-strategy.md` names the
  * 3/2/2/1/3 spread. Two of them look arbitrary and are not:
  *

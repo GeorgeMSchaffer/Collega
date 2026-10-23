@@ -7,7 +7,7 @@ const PRIORITY_NAMES: readonly string[] = Object.values(Priority)
 
 /**
  * Builds the response JSON Schema PER REQUEST from the retrieval result (SPEC/20-feature-ai-idea-
- * assist.md rules 15-18), ported from the original's `IdeaDraftSchema`.
+ * assist.md rules 15-18), ported from the pre-migration API's schema builder.
  *
  * This is the containment mechanism. Because `ideaTypeId` and `businessImpactId` are closed
  * enums of this organization's real, active option ids, an invalid or cross-org classification is

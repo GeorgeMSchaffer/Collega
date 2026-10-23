@@ -220,8 +220,8 @@ export interface IdeaFollowersPort {
 //
 // Upvotes is this same partition's sibling feature (packages/application/src/upvotes), but idea
 // list/detail projection needs read-only upvote data, and the toggle mutation belongs solely to
-// the upvotes feature. This is the narrow read-only slice of the original's `IIdeaUpvoteRepository` that
-// `IdeaService` itself used - `GetAsync`/`AddAsync`/`Remove` (the toggle's own concerns) are not
+// the upvotes feature. This is the narrow read-only slice of the pre-migration API's upvote repository that
+// `IdeaService` itself used - get/add/remove (the toggle's own concerns) are not
 // part of it. Kept here rather than imported from '../upvotes/index.js' so this feature
 // folder stays independently reachable per the subpath-export convention; Wave C can satisfy both
 // with the same concrete repository.
@@ -407,7 +407,7 @@ export interface UsersPort {
   listByIds(userIds: readonly string[]): Promise<readonly UserSummary[]>
 
   /** Global lookup by normalized (trimmed, lowercased) email, for mention resolution. The caller
-   * still checks organization/role/status - mirrors the original's `MentionResolver`. */
+   * still checks organization/role/status - as the pre-migration API's mention resolution did. */
   findByNormalizedEmail(normalizedEmail: string): Promise<UserSummary | null>
 }
 
@@ -449,7 +449,7 @@ export type IdeaCommentSummary = {
 
 export interface CommentsPort {
   /** Full chronological (ascending) comment list for one idea - the idea detail embeds every
-   * comment, matching the original's unpaged (page-size-max) fetch. */
+   * comment, matching the pre-migration API's unpaged (page-size-max) fetch. */
   listByIdea(ideaId: string): Promise<readonly IdeaCommentSummary[]>
 
   countByIdea(ideaId: string): Promise<number>

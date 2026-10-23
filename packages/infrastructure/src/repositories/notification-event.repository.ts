@@ -3,14 +3,14 @@
 // id generation, recipient resolution, the inbox window) lives in Application, not here.
 //
 // COMMITS IMMEDIATELY, like `audit-event.repository.ts` and `tag.repository.ts`'s `getOrCreate` -
-// NOT through `PrismaUnitOfWork`. This mirrors the original `EfNotificationEventWriter.WriteAsync`,
-// which calls `AddAsync` then its own `SaveChangesAsync` rather than relying on the caller's
+// NOT through `PrismaUnitOfWork`. This mirrors the pre-migration API's notification writer,
+// which added the row and then saved it itself rather than relying on the caller's
 // later commit. Staging into the buffer instead is what silently discarded every notification
 // event: `PrismaUnitOfWork.saveChanges()` clears the buffer, and every calling service stages its
 // notifications AFTER the `saveChanges()` that accompanies the mutation, so nothing ever flushed
 // them (`grep -rn "saveChanges" apps/` finds no request-end flush either). Committing here makes
 // the call order irrelevant, which is the same argument the audit writer's header makes - and it
-// is what the original did. Do not "fix" this back into the unit of work.
+// is what the pre-migration API did. Do not "fix" this back into the unit of work.
 //
 // The inbox's two writes commit immediately too: each is one statement, and `markRead` must
 // report whether the row was the caller's, which a staged write cannot.
