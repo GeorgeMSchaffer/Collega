@@ -155,7 +155,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 **Rule.** *Can edit a task* is the app's existing task-edit rule (`canAdministerIdeaContent`; "Only the author or an Org Admin can edit this task"): the task's author or an Org Admin of its organization. Read Only never; a Site Admin acting directly never. Whoever can edit a task may put it in a Planned or Active sprint of its board or return it to the backlog: Schedule… in the idea drawer, Add and Remove on the planning page and the Backlog bar, the Tasks page's "Move to sprint", `sprintId` on `POST /boards/{boardId}/tasks` (the creator is the author, so any non-Read-Only member), and `PUT /boards/{boardId}/sprint-assignments`. A bulk request is all or nothing: one task the caller may not edit gives `403` keyed `ideaIds`.
 
-**Unchanged, Org Admin only:** creating a sprint (with or without `ideaIds`), editing, deleting, Start and Complete, "+ New sprint", and the create-sprint picker. The single `PUT /ideas/{ideaId}/sprint` for Delivery-phase issues is untouched and stays admin-only.
+**Unchanged, Org Admin only:** creating a sprint (with or without `ideaIds`), editing, deleting, Start and Complete, "+ New sprint", and the create-sprint picker. The single `PUT /ideas/{ideaId}/sprint` is untouched and stays admin-only for every item, board tasks in any phase included (`contracts/delivery.md`).
 
 **Lane drop.** Needs both rights: edit on the task (it schedules) and the status-move right, which every Org Admin and User has and Read Only never (2026-10-22 "Users always move ideas between statuses", unchanged). Blockers and lane rules apply as before.
 
@@ -166,7 +166,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 Slices 322 to 337 built the five comp W surfaces. Where the build departs from the comp, the build is the intent until the owner says otherwise:
 
 - **Board panel:** comp W has no panel screen; the Backlog panel (side column at md and up, bottom sheet below) is a builder design. Without an Active sprint the lanes refuse a drop ("No active sprint.") and the Add button targets a chosen open sprint.
-- **Scheduling by non-admins:** built Org Admin only (including the inline new-task line's `sprintId`, and "Schedule…" in the idea drawer); widened the same day to anyone who may edit the task, see "Anyone who can edit a task may schedule it into a sprint" below. Creating, starting and completing a sprint stay Org Admin only. A User could add tasks from the Backlog "+ New task" without a sprint; with the widening they may also pick a sprint there.
+- **Sprint controls are Org Admin only,** including the inline new-task line on the planning page (a `sprintId` on task create needs an admin) and "Schedule…" in the idea drawer (TB-9 names no role; read with TB-10). A User can add tasks only from the Backlog "+ New task", which sends no sprint. *Superseded by the entry above ("Anyone who can edit a task may schedule it into a sprint"): scheduling is open to task editors; creating, starting and completing a sprint stay Org Admin only.*
 - **Completed sprints** are reachable read-only from the Sprints list and take no changes; Active sprints have no Complete button here.
 - **Drag between the planning page's columns** (an enhancement in the comp) is not built; Add and Remove buttons only. **Blocked chip** (comp 1C) is not built.
 - **Read Only** sees no panel and no toggle on the board; the Backlog tab still lists for them without controls.
