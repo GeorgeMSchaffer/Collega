@@ -1,6 +1,6 @@
 # Feature: Task Backlog and Sprint Planning
 
-> **Status: APPROVED by the owner 2026-10-22 (`SPEC/decisions.md` "Tasks get a Backlog and sprints are planned from it"). Nothing is built; contract gaps below are unspecified.** Extends `SPEC/20-feature-board-references.md` (tasks, per-board sprints); changes none of its rules. 
+> **Status: APPROVED by the owner 2026-10-22 (`SPEC/decisions.md` "Tasks get a Backlog and sprints are planned from it"). Built in Sprint 17 (slices 322 to 337). Scheduling by task editors (TB-4, TB-5, TB-7, TB-9, TB-10) was widened later the same day (`SPEC/decisions.md` "Anyone who can edit a task may schedule it") and is not built yet.** Extends `SPEC/20-feature-board-references.md` (tasks, per-board sprints); changes none of its rules. 
 > **Comps (approved by the 2026-10-22 decision; the spec governs where they differ):** `SPEC/mockups/comp-w-tasks-and-sprint-planning.html` (A) and `comp-w-alternates-tasks-and-sprint-planning.html` (B to E).
 
 ## Problem
@@ -33,15 +33,20 @@ Story points, velocity, capacity limits, drag as the only path, automatic schedu
 - **TB-2 New task from the backlog.** Title required; optional parent idea, description, assignees, tags, sprint. Parent choices are ideas sitting in a lane that references this board; none chosen makes a standalone card. Same card and audit as a task made from the parent drawer.
   *Oracle:* a parent outside a reference lane is not offered and the server refuses it with the existing error.
 - **TB-3 Sprint holds one board's tasks.** Picker and every assignment list only that board's tasks; another board's is refused `sprintItemOnOtherBoard`. A blocked task may be picked; its blockers are shown.
-- **TB-4 Create sprint with tasks is atomic.** Creating a sprint with `taskIds` saves the sprint and all assignments, or none. Picking nothing is allowed.
+- **TB-4 Create sprint with tasks is atomic.** Creating a sprint with `taskIds` saves the sprint and all assignments, or none. Picking nothing is allowed. Creating a sprint is an Org Admin act (TB-10), so only an Org Admin sees this picker.
   *Oracle:* one invalid id fails the whole create and leaves no sprint.
-- **TB-5 Add and remove.** Tasks can be added to a Planned or Active sprint of their board, singly or in bulk, and removed back to the backlog. Removal is the same state as completing the sprint with the task unfinished.
+- **TB-5 Add and remove.** Tasks can be added to a Planned or Active sprint of their board, singly or in bulk, and removed back to the backlog, by anyone who may edit each task (TB-10). Removal is the same state as completing the sprint with the task unfinished.
 - **TB-6 Sprints off.** A board with `sprints_enabled` false shows Board and Backlog only; no sprint controls.
-- **TB-7 Panel (D).** The panel and the tab render the same list and the same actions. **Dropping a panel task on a lane puts it in the Active sprint and sets its status to that lane** (owner, 2026-10-22). The drop is the board's own status move, so every existing rule applies and a refusal leaves the task in the backlog: blockers (`taskBlocked`), the lane rules for a task. The **Add** button, which has no lane, adds to the sprint and leaves status unchanged. With no Active sprint, lanes refuse a panel drop ("No active sprint").
+- **TB-7 Panel (D).** The panel and the tab render the same list and the same actions. **Dropping a panel task on a lane puts it in the Active sprint and sets its status to that lane** (owner, 2026-10-22). The drop is the board's own status move, so every existing rule applies and a refusal leaves the task in the backlog: blockers (`taskBlocked`), the lane rules for a task. The **Add** button, which has no lane, adds to the sprint and leaves status unchanged. With no Active sprint, lanes refuse a panel drop ("No active sprint"). A lane drop needs both permissions: the right to edit the task (it schedules) and the board's status-move right, which every Org Admin and User has and Read Only never (`SPEC/decisions.md` 2026-10-22 "Users always move ideas between statuses", unchanged); lacking either refuses the whole drop.
   *Oracle:* drop on "In progress" gives sprint = Active and status = In progress in one write; a blocked task dropped past its first lane is refused and stays unscheduled.
 - **TB-8 Tasks page (C).** Lists tasks across the work boards the viewer can read. "Move to sprint" is enabled only when the selection is from one board.
-- **TB-9 Schedule from the idea (E).** The Tasks section shows each task's sprint and offers "Schedule…" for the unscheduled ones, choosing an existing sprint or opening the TB-4 create flow with those tasks ticked.
-- **TB-10 Roles.** Org Admin: everything. User: sees every surface, may add a standalone or parented task (as in the parent drawer today); sprint creation and assignment stay admin-only, per `contracts/sprints.md`. Read Only: sees, no controls. Site Admin: View As only.
+- **TB-9 Schedule from the idea (E).** The Tasks section shows each task's sprint and offers "Schedule…" for the unscheduled ones the viewer may edit, choosing an existing Planned or Active sprint of the task's board; an Org Admin may instead open the TB-4 create flow with those tasks ticked (a User is not offered it, since creating a sprint is admin-only).
+- **TB-10 Roles.** *May edit a task* means the app's existing task-edit rule (`canAdministerIdeaContent` in `packages/application`, "Only the author or an Org Admin can edit this task"): the task's author, or an Org Admin of its organization. Read Only never; a Site Admin acting directly never (View As acts as the target).
+  - **Anyone who may edit a task may schedule it** into a Planned or Active sprint of its board, or return it to the backlog: Schedule… in the idea drawer, Add and Remove on the planning page and the Backlog bar, the Tasks page's "Move to sprint", a `sprintId` on a new task, `PUT /boards/{boardId}/sprint-assignments`. A new task's author is its creator, so any User may create a task straight into a sprint.
+  - **Org Admin only, unchanged:** creating a sprint (including with tasks, TB-4), editing it, Start, Complete and delete, and the Sprints tab's "+ New sprint".
+  - **Lane drop:** needs edit rights on the task and the status-move right above; a User may drop a task they author, and may not drop one they cannot edit.
+  - User also adds a standalone or parented task. Read Only: sees, no controls. Site Admin: View As only.
+  - Bulk requests are all or nothing: one task the caller may not edit refuses the whole request (`403`).
 
 ## Contract gaps (written 2026-10-22, owner to review; not built)
 
@@ -67,4 +72,4 @@ Gate for each: `pnpm check`; Playwright path for the new surface; browser check 
 
 ## Open questions for the owner
 
-None. Confirmed 2026-10-22: a lane drop sets status, Add leaves it alone, no Active sprint refuses the drop; Users add tasks and only Org Admins plan sprints; the tab is the default and the panel a toggle. Slice order is the owner's to change.
+None. Confirmed 2026-10-22: a lane drop sets status, Add leaves it alone, no Active sprint refuses the drop; Users add tasks, and anyone who may edit a task schedules it while only Org Admins create, start and complete sprints (widened later that day, TB-10); the tab is the default and the panel a toggle. Slice order is the owner's to change.

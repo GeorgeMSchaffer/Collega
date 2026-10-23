@@ -10,7 +10,7 @@ Added 2026-09-11, Issues and Delivery Slice 1.
 
 Section-wide rules:
 - A Sprint is an organization-scoped, soft-deletable, time-boxed container. **Flat** — it is never nested under a Slice 2 Outcome, and an Issue belongs to zero or one Sprint through a nullable `sprintId` on the idea, with no join entity.
-- **Management is admin-only; reading is open to every member of the organization** including `Read Only`, because the sprint board and backlog are ticked for every role in the feature's Permissions table. A direct Site Admin is refused every mutation and allowed every read.
+- **Management is admin-only (creating, editing, starting, completing, deleting a sprint); reading is open to every member of the organization** including `Read Only`, because the sprint board and backlog are ticked for every role in the feature's Permissions table. A direct Site Admin is refused every mutation and allowed every read. **Exception (2026-10-22):** putting a board's tasks in and out of its sprints is open to whoever may edit each task, see "Backlog and sprint planning" below.
 - Sprint names are **not** unique: "Sprint 12" may legitimately recur across years.
 
 Sprint item shape (returned by list, create, update, and embedded in the detail read):
@@ -147,7 +147,7 @@ The Board References work board draws a sprint header (name, dates, state, tasks
 - **Cards in a sprint** are read with `GET /api/v1/boards/{boardId}/ideas?sprintId={sprintId}` (see `contracts/ideas.md`; that list is Discovery-phase only, so a legacy Delivery-phase item in a board sprint is counted in `issueCount` but appears only in the sprint detail read, and tasks are unaffected); the **backlog** is `sprintId=none` on the same route. No new route.
 - **Putting a task in a sprint** is `PUT /api/v1/ideas/{ideaId}/sprint` (`contracts/delivery.md`), which accepts any item of the sprint's board.
 
-## Backlog and sprint planning (proposed 2026-10-22)
+## Backlog and sprint planning (proposed 2026-10-22; scheduling roles widened the same day)
 
 *Specified in `SPEC/20-feature-task-backlog-and-sprint-planning.md` (decided 2026-10-22, `SPEC/decisions.md` "Tasks get a Backlog and sprints are planned from it"). The contract text is written for owner review. **`ideaIds` on create and `PUT /boards/{boardId}/sprint-assignments` are built in slice 324** (QA in 325). Everything here is for a board sprint (`boardId` set); org-wide sprints are untouched.*
 
@@ -166,7 +166,7 @@ Create a board sprint with its tasks in one commit (the create-sprint picker, TB
 ### `PUT /api/v1/boards/{boardId}/sprint-assignments`
 Add tasks to a sprint of this board, move them between sprints, or return them to the backlog, in bulk and atomically. Also the lane drop (TB-7), which sets status as well.
 
-- **Roles:** in-scope admin. A direct Site Admin is refused. (Planning stays admin-only, decided 2026-10-22.)
+- **Roles (changed 2026-10-22, owner-approved exception to "contracts are read, not edited"):** any member who may edit **every** item named: its author or an in-scope Org Admin (the task-edit rule; Read Only never). A direct Site Admin is refused. Creating, starting and completing a sprint stay Org Admin only (below).
 - **Request:** body
   - `ideaIds` required array of GUIDs, 1 to 200, distinct
   - `sprintId` required GUID **or `null`**; `null` returns the items to the board backlog. A GUID must be a non-`Completed` sprint of **this board**.
@@ -174,14 +174,16 @@ Add tasks to a sprint of this board, move them between sprints, or return them t
 - **Response:** `204 No Content`
 - **Errors:**
   - `400` keyed `ideaIds` (empty, over 200, duplicate, an id that names no live item); keyed `sprintId` (not a sprint of this board, or `"A completed sprint cannot take new issues."`); keyed `statusId` (not a lane of this board, or sent with a `null` `sprintId`)
-  - `401`; `403` caller is not an in-scope admin, or is a Site Admin acting directly; `404` the board does not exist or is outside caller scope
+  - `401`; `403` caller is Read Only, is a Site Admin acting directly, or may not edit one or more of the items: keyed `ideaIds`, the message starting with the first such item's key (`Only the author or an Org Admin can schedule {itemKey}.`), the whole request refused; `404` the board does not exist or is outside caller scope
   - `422` `sprintItemOnOtherBoard`; `422` `taskBlocked` (an item with open blockers moved past its first lane); any other refusal the status move gives
 - **Rules:**
   - all or nothing: one refused item rolls back the whole request, and the error names the item's key
   - an item already in the target sprint, or already in the target status, is a no-op for that part: no audit event
   - writes `IssueSprintAssignmentChanged` per item whose sprint changed, and the status move's own event per item whose status changed; no notification
-  - assigning does not touch status unless `statusId` is sent (the **Add** button sends none; a lane drop sends the lane)
-  - the single `PUT /api/v1/ideas/{ideaId}/sprint` stays for callers with one item
+  - assigning does not touch status unless `statusId` is sent (the **Add** button sends none; a lane drop sends the lane); a `statusId` also needs the status-move right (every Org Admin and User, never Read Only), checked as `POST /api/v1/ideas/{ideaId}/status` does
+  - the edit check runs before any item is staged, so a refused request writes nothing and notifies no one
+  - the single `PUT /api/v1/ideas/{ideaId}/sprint` stays for callers with one item and is **unchanged: in-scope admin only** (`contracts/delivery.md`); the web uses this bulk route, with one id, for every non-admin scheduling control
+  - **Stay Org Admin only (decided 2026-10-22):** `POST /boards/{boardId}/sprints` (including `ideaIds`), `PUT` and `DELETE` on a sprint, `POST .../start` and `POST .../complete`
 
 ## Open implementation notes for the backend slice
 
