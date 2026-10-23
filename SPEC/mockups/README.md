@@ -141,3 +141,13 @@ budget needs policy decided before it is implementable. Loop only totals 4 slice
 
 Browser-verified: driven in Chrome, all seven toggles, both Decline variants, the momentum re-sort, and the edge case where
 disabling Triage while viewing it falls back to the board rather than a blank page.
+
+## Comps S1–S3 — public marketing site (2026-10-22, awaiting review)
+
+`site/` holds three standalone throwaway comps for the public site at `collega-ai.com` (the app moves to `app.collega-ai.com`). Each has the same content (product, how it works, beta call-out) and the same three forms (Create workspace, Beta request, Contact us) with validation and a success state; none submits anywhere. Each form carries a visible "Spec later" note — the backend is unspecified (`SPEC/ideas-inbox.md`, "Public marketing site").
+
+- `site/comp-s1-terrazzo-editorial.html` — warm paper, serif type, numbered chapters like a short essay; announcement bar + beta band; all forms inline.
+- `site/comp-s2-graphite-product.html` — dark, mirrors the app; the product is the hero, a tabbed feature viewer, bento grid; Sign up (two steps) and Contact as dialogs, Beta inline.
+- `site/comp-s3-audience-journey.html` — audience toggle (ideas / process / delivery), a five-stop journey, FAQ; one slide-over drawer with Sign up / Beta / Contact tabs, plus a sticky beta ribbon.
+
+The app screens in the comps are drawn in HTML from the running app (Boards, a board's lanes, Ideas, Home, Sprint board, Roadmap) rather than embedded screenshots, so they do not go stale. Outcomes and the Roadmap are described as coming, as they are unbuilt.
