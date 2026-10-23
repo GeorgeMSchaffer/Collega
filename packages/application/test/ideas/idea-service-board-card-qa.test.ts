@@ -292,55 +292,20 @@ describe('createTaskOnBoard: who may create', () => {
   )
 })
 
-describe('createTaskOnBoard: sprintId needs an admin', () => {
-  it('lets an Org Admin put the card in a sprint of this board', async () => {
-    const h = harness({
-      currentUser: orgAdmin(),
-      boards: BOARDS,
-      sprints: [sprintOf(BOARD_B)],
-    })
-
-    await h.service.createTaskOnBoard(BOARD_B, { ...CARD, sprintId: 'sprint-1' })
-
-    expect(h.added[0]?.sprintId).toBe('sprint-1')
-  })
-
+describe('createTaskOnBoard: sprintId', () => {
   it.each([
+    ['an Org Admin', orgAdmin()],
     ['a User', member()],
     [
       'a User seen through View As',
       impersonating({ targetUserId: 'user-1', targetRole: Role.User, targetOrganizationId: ORG_A }),
     ],
-  ])('refuses %s with 403 keyed sprintId and creates nothing', async (_label, currentUser) => {
+  ])('lets %s put the card in a sprint of this board', async (_label, currentUser) => {
     const h = harness({ currentUser, boards: BOARDS, sprints: [sprintOf(BOARD_B)] })
 
-    const error = await failure(
-      h.service.createTaskOnBoard(BOARD_B, { ...CARD, sprintId: 'sprint-1' }),
-    )
+    await h.service.createTaskOnBoard(BOARD_B, { ...CARD, sprintId: 'sprint-1' })
 
-    expect(error).toBeInstanceOf(ForbiddenError)
-    expect(Object.keys((error as ForbiddenError).failures ?? {})).toEqual(['sprintId'])
-    expect(h.added).toHaveLength(0)
-  })
-
-  it('refuses a User with a parent too, before looking at the parent', async () => {
-    const h = harness({
-      currentUser: member(),
-      boards: BOARDS,
-      sprints: [sprintOf(BOARD_B)],
-      ideas: [idea({ statusId: STATUS_2 })],
-    })
-
-    const error = await failure(
-      h.service.createTaskOnBoard(BOARD_B, {
-        ...CARD,
-        parentIdeaId: 'idea-1',
-        sprintId: 'sprint-1',
-      }),
-    )
-
-    expect(Object.keys((error as ForbiddenError).failures ?? {})).toEqual(['sprintId'])
-    expect(h.added).toHaveLength(0)
+    expect(h.added[0]?.sprintId).toBe('sprint-1')
   })
 
   it('lets a User create without a sprintId, and treats a blank one as none', async () => {

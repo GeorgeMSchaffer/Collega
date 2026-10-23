@@ -3,7 +3,12 @@
 // IdeaService; failures are rendered through ProblemDetailsFilter so the status, rule code and
 // field key are what a client sees. The rules themselves are pinned in the application suite.
 
-import { ForbiddenError, NotFoundError, UnprocessableError } from '@collega/application/common'
+import {
+  ForbiddenError,
+  NotFoundError,
+  UnprocessableError,
+  ValidationError,
+} from '@collega/application/common'
 import type { CreateBoardCardCommand, IdeaService } from '@collega/application/ideas'
 import type { UpvoteService } from '@collega/application/upvotes'
 import { RequestMethod } from '@nestjs/common'
@@ -142,9 +147,9 @@ describe('POST /boards/:boardId/tasks body', () => {
 })
 
 describe('POST /boards/:boardId/tasks refusals', () => {
-  it('renders a sprintId refusal as 403 with the errors keyed sprintId', async () => {
-    const refusal = new ForbiddenError('You are not allowed to assign tasks to a sprint.', {
-      sprintId: ['Only an Org Admin can put a task in a sprint.'],
+  it('renders a bad sprintId as 400 with the errors keyed sprintId', async () => {
+    const refusal = new ValidationError('One or more fields are invalid.', {
+      sprintId: ['Sprint must be a sprint of this board.'],
     })
     const { controller } = controllerOver(refusal)
 
@@ -153,7 +158,7 @@ describe('POST /boards/:boardId/tasks refusals', () => {
       URL,
     )
 
-    expect(rendered.status).toBe(403)
+    expect(rendered.status).toBe(400)
     expect(Object.keys(rendered.body.errors as object)).toEqual(['sprintId'])
   })
 

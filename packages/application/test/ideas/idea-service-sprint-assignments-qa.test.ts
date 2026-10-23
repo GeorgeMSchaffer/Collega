@@ -102,8 +102,40 @@ describe('assignBoardSprints: who may plan', () => {
     ])
   })
 
+  it('lets a User schedule the items they authored', async () => {
+    const h = make([item('a', { authorUserId: 'user-1' })], { currentUser: member() })
+
+    await h.service.assignBoardSprints(BOARD_A, {
+      ideaIds: ['a'],
+      sprintId: SPRINT,
+      statusId: null,
+    })
+
+    expect(h.saved.map((i) => [i.id, i.sprintId])).toEqual([['a', SPRINT]])
+  })
+
+  it('refuses the whole request, keyed ideaIds, when a User did not author every item', async () => {
+    const h = make([item('a', { authorUserId: 'user-1' }), item('b', { authorUserId: 'other' })], {
+      currentUser: member(),
+    })
+
+    const error = await failure(
+      h.service.assignBoardSprints(BOARD_A, {
+        ideaIds: ['a', 'b'],
+        sprintId: SPRINT,
+        statusId: null,
+      }),
+    )
+
+    expect(error).toBeInstanceOf(ForbiddenError)
+    const failures = (error as ForbiddenError).failures ?? {}
+    expect(Object.keys(failures)).toEqual(['ideaIds'])
+    expect(failures.ideaIds?.[0]).toMatch(/^Only the author or an Org Admin can schedule /)
+    expect(h.saved).toHaveLength(0)
+    expectNothingCommitted(h)
+  })
+
   it.each([
-    ['a User', member()],
     ['a Read Only user', readOnly()],
     ['a Site Admin acting directly', siteAdmin()],
   ])('refuses %s with Forbidden and writes nothing', async (_label, currentUser) => {
