@@ -119,7 +119,7 @@ The type↔field association, in the same file. **Per-type required-ness and ord
 - `displayOrder` — order within **this** type
 - `isRequired` — required **within** this type (overrides the field definition's global default)
 
-*Corrected 2026-09-29 (slice 124): this section carried C# declarations from the deleted .NET domain (`Collega.Domain.IdeaFields`, `AuditableEntityBase`, `EntityBase`); the fields, limits and enum values are unchanged. The mode was an `int` there (`AllActiveFields = 0`, `Curated = 1`) and is a PostgreSQL enum of the same names now.*
+*The mode is a PostgreSQL enum (`AllActiveFields`, `Curated`).*
 
 - Unique on `(ideaTypeId, fieldDefinitionId)` — a field appears at most once per type.
 - `displayOrder` is per-type; the same field can sit in different positions on different types.

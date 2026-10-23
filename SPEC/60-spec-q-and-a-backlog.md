@@ -58,7 +58,7 @@ Resolved: this was an omission in the overview, not a scope change. Self-registr
 
 ### 6. Seed Site Admin credential configuration keys were unnamed
 No spec named the actual configuration key(s) for the "environment-provided initial credential" used to seed the global Site Admin.
-Resolved: use standard ASP.NET Core configuration keys `SiteAdmin__Email` and `SiteAdmin__Password` (settable via environment variables, `dotnet user-secrets`, or a Kubernetes secret), consistent with the existing `ConnectionStrings__DefaultConnection` convention in `SPEC/50-kubernetes-deployment.md`. Startup must fail fast if either key is missing. Recorded in `SPEC/20-feature-auth.md`, `SPEC/50-technical-implementation-plan.md`, and `SPEC/50-kubernetes-deployment.md`.
+Resolved: environment variables `SITE_ADMIN_EMAIL` and `SITE_ADMIN_PASSWORD`. Startup must fail fast if a required key is missing. Recorded in `SPEC/20-feature-auth.md`.
 
 ## Decision Log (2026-08-06): Comp C Pivot Propagation and Related Spec Drift
 

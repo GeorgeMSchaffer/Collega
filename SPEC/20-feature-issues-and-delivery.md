@@ -150,7 +150,7 @@ Invariants:
 - `DeliveryStatus`: `Pending`, `Scoping`, `Development`, `Review`, `Complete`
 - `SprintState`: `Planned`, `Active`, `Completed`
 
-Stored as their names; the .NET stack's integer values (in the order listed, from 0) are history.
+Stored as their names.
 
 ### New entity: `Sprint` (auditable)
 
@@ -552,7 +552,7 @@ A Site Admin tick on a **mutating** row is exercised through View As, never dire
 ## Migration Strategy
 
 **EF migration `AddDeliveryAndSprints`:**
-- `ideas` gains: `phase` (int, NOT NULL, default `0`/Discovery — existing rows backfill to Discovery), `effort` (int, null), `delivery_status` (int, null), `sprint_id` (guid, null, FK → `sprints`, `ON DELETE` restricted; unassignment is handled in the app layer), `promoted_at_utc` (timestamptz, null — `DateTime` with `Kind = Utc`, per the Npgsql mapping in `SPEC/50-postgres-migration.md`), `promoted_by_user_id` (guid, null), `upvote_count_at_promotion` (int, null).
+- `ideas` gains: `phase` (int, NOT NULL, default `0`/Discovery — existing rows backfill to Discovery), `effort` (int, null), `delivery_status` (int, null), `sprint_id` (guid, null, FK → `sprints`, `ON DELETE` restricted; unassignment is handled in the app layer), `promoted_at_utc` (timestamptz, null — UTC), `promoted_by_user_id` (guid, null), `upvote_count_at_promotion` (int, null).
 - New table `sprints` (snake_case, per Infrastructure convention) with `organization_id`, `name`, `goal`, `start_date`, `end_date`, `owner_user_id`, `state`, `is_deleted`, and audit columns.
 - Indexes: `(organization_id, phase)` on `ideas` (board/backlog filtering); `sprint_id` on `ideas`; `(organization_id, state)` on `sprints`.
 - New table `issue_tasks` (snake_case) with `idea_id` (FK → `ideas`, `ON DELETE CASCADE` — a checklist has no meaning without its Issue; the one place in this feature where cascade is correct), `title`, `assignee_user_id`, `state`, `sort_order`, `completed_at_utc`, `completed_by_user_id`, and audit columns. Index `(idea_id, sort_order)`.

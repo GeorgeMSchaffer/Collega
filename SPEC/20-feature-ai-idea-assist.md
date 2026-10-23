@@ -10,7 +10,7 @@
 > - **Decisions:** 2026-09-13 "The AI integration is rescoped and respecified after the current batch";
 >   2026-09-27 "The idea assistant is rescoped as a co-author, and ideas gain structured fields"
 
-**Status:** Post-MVP. Scheduled as **Sprint 7** (`SPEC/sprints/sprint-07-ai-idea-assist.md`), after the Postgres migration (Sprint 5) and View As (Sprint 6), before Azure deployment (Sprint 8). Design decisions locked 2026-08-11 by user interview; `Anthropic` NuGet package approved by the user the same day.
+**Status:** Post-MVP. Scheduled as **Sprint 7** (`SPEC/sprints/sprint-07-ai-idea-assist.md`), after the Postgres migration (Sprint 5) and View As (Sprint 6). Design decisions locked 2026-08-11 by user interview; the Anthropic SDK approved by the user the same day.
 
 > **Superseded for new work by `20-feature-ai-idea-assist-v2.md` (2026-09-27)**, the rescope the next
 > paragraph scheduled. Everything below still describes what is built and live and stays
@@ -25,7 +25,7 @@
 
 ## Overview
 
-The Blazor client's brainstorm modal (`IdeaBrainstormModal`, deleted with that client in F6) fronted idea creation on the Ideas list with a ChatGPT-style chat. It was **scripted**: three canned assistant nudges cycle, and the user's messages are handed to `IdeaCreateModal.InitialDescription` as a seed description. This feature replaces the nudges with a model-backed conversation that also **maps the user's answers onto Idea form fields**, confined to idea drafting for this organization.
+The earlier brainstorm modal fronted idea creation on the Ideas list with a ChatGPT-style chat. It was **scripted**: three canned assistant nudges cycle, and the user's messages are handed to the create form as a seed description. This feature replaces the nudges with a model-backed conversation that also **maps the user's answers onto Idea form fields**, confined to idea drafting for this organization.
 
 Two mechanisms, two jobs; conflating them is the failure mode this spec prevents:
 
@@ -51,7 +51,7 @@ Locked from the comp round, `SPEC/mockups/comp-c-review-11-ai-assist-{a-handoff,
 |---|---|---|
 | **D-SURFACE** | Where does drafting happen? | **Direction C — "Draft Strip".** One 720px surface at a time (chat modal → create modal), `CreateModalShell` unchanged, plus a slim **read-only** strip between transcript and composer showing what is classified so far. Rejected: A (no strip; the user learns nothing until the handoff) and B (two-pane editable sheet; needs new chrome and per-field suggested-vs-edited state, and has no narrow-viewport answer). |
 | **D-SUGGEST** | How is a suggested value marked? | **Teal**, never the indigo accent: indigo already means "active/selected" in Comp C and a suggestion is neither. On the form: a `Suggested` chip beside the label, a tinted field, a 3px left border. On the strip: the same teal as pills. |
-| **D-SCOPEUI** | Where does an Org Admin edit the scope statement? | **A dedicated Settings page**, not the Organization detail drawer, because the Blazor client's Settings page that held the drawer was Site-Admin-only, so the drawer was unreachable for the Org Admin who owns this setting (rule 6). |
+| **D-SCOPEUI** | Where does an Org Admin edit the scope statement? | **A dedicated Settings page**, not the Organization detail drawer, because the earlier Settings page that held the drawer was Site-Admin-only, so the drawer was unreachable for the Org Admin who owns this setting (rule 6). |
 | **D-REFUSED** | What does the user see when a turn is refused? | **Ghost-then-drop.** The message renders greyed and struck through for one beat with the redirect note beneath, then disappears. Rejected: never rendering it — cleaner, but typed input vanishes unacknowledged and reads as a bug. |
 
 ---
@@ -126,7 +126,7 @@ The scripted chat collects prose only. What kind of idea it is, who it affects a
 25. Everything retrieved is **untrusted data**, not instructions. Idea text, tag names and (in v2) uploaded documents are user-authored and may carry injection attempts, so retrieved content is fenced in the prompt and explicitly labeled as data the assistant must not follow instructions from.
 26. Requests are rate limited per user and per organization. The limits are configuration, not hard-coded.
 
-    26a. *Mechanism.* A sliding window counted from rule 28c's usage records, not a separate counter: they already carry organization, actor and timestamp, are written for every turn, and so count correctly across instances once a deployment scales past one. Settings: `rateLimitWindowSeconds`, `perUserCallsPerWindow`, `perOrganizationCallsPerWindow` in `DEFAULT_AI_USAGE_LIMITS` (`packages/application/src/ai/models.ts`; the .NET stack read them as `Ai:RateLimit:*` configuration); non-positive disables, matching the budget convention.
+    26a. *Mechanism.* A sliding window counted from rule 28c's usage records, not a separate counter: they already carry organization, actor and timestamp, are written for every turn, and so count correctly across instances once a deployment scales past one. Settings: `rateLimitWindowSeconds`, `perUserCallsPerWindow`, `perOrganizationCallsPerWindow` in `DEFAULT_AI_USAGE_LIMITS` (`packages/application/src/ai/models.ts`); non-positive disables, matching the budget convention.
 
     26b. *The per-user allowance follows the real administrator, not the impersonated user.* Otherwise a Site Admin could reset their quota by moving between View As targets, which would make the per-user limit decorative for exactly the account that needs it least.
 

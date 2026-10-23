@@ -67,14 +67,6 @@ One package at a time: `pnpm --filter @collega/api test`. Database, from
 `packages/infrastructure`: `pnpm --filter @collega/infrastructure db:migrate` then `db:seed`
 (a drop/migrate/seed cycle takes about four seconds).
 
-### There is no .NET here any more
-
-`src/Collega.*`, `tests/`, `Collega.sln` and `global.json` were deleted in slice **F6** on
-2026-09-13. `pnpm check` is the only build and `pnpm dev` runs the only application. A reference
-anywhere in this repository to a `dotnet` command, a `.csproj`, or a path under `src/Collega.*` is
-stale — report it rather than following it. See
-[The stack that was replaced](#the-stack-that-was-replaced).
-
 ## Architecture
 
 Dependencies flow inward. Business rules live in domain and application — **never** in controllers
@@ -182,40 +174,23 @@ comps stop being a reference.
 If a page or flow's layout isn't settled, produce a throwaway HTML comp in `SPEC/mockups/` for
 review before writing production React against an undecided design.
 
-## The stack that was replaced
+## Data artefacts
 
-The .NET 8 / ASP.NET Core / Blazor WebAssembly / EF Core application was **deleted** in slice **F6**
-on 2026-09-13 (`SPEC/decisions.md` 2026-09-06 froze it; 2026-09-13 removed it). There is nothing to
-read there and nothing to fix there.
+Two artefacts are **data, not patterns**:
 
-Narrative comments explaining *why* a behaviour is what it is ("ASP.NET answered 400 here, so this
-does too") are deliberate and stay: the behaviour was inherited, the golden corpus still pins it,
-and `SPEC/30-Contracts.md` is the authority. A **path** into the deleted tree is not — that is a
-dangling pointer and should be reported.
+- `tools/golden` — 447 cases across all 81 endpoints × 4 roles, recorded 2026-09-03. It is a fixed
+  record, frozen alongside `inventory.json`; it cannot be re-recorded.
+- `tools/prompt-eval` — the AI-assist evaluation corpus, its TypeScript runner and the v1 baseline
+  (committed 2026-09-30) that prompt changes are measured against. `SPEC/decisions.md` 2026-09-13
+  schedules the rescope.
 
-Two artefacts survive as **data, not patterns**:
+The corpus is a **regression detector, not the specification**: shipping for feedback outranks
+fidelity to an app that was never finished, so a difference is a question with three answers — fix
+it, accept and record it, or deliberately do better — not automatically a defect
+(`SPEC/decisions.md` 2026-09-11). `SPEC/30-Contracts.md` is the authority.
 
-- `tools/golden` — 447 cases across all 81 endpoints × 4 roles, recorded 2026-09-03. It cannot be
-  re-recorded against its original, so it is a fixed record now, frozen alongside `inventory.json`
-  (the endpoint list used to be parsed from the controllers that F6 deleted).
-- `tools/prompt-eval` — the AI-assist evaluation corpus. Its batch runner was .NET and went with the
-  rest; Sprint 12 replaced it with a TypeScript runner, and the v1 baseline it measures prompt
-  changes against was committed on 2026-09-30. `SPEC/decisions.md` 2026-09-13 schedules the rescope.
-
-The .NET test suite was **discarded**, not ported (ticket `10`). The database left the keep list on
-2026-09-09: the seed rebuilds it from committed code in about four seconds.
-
-**F6 was not chained to "once F1 replays clean"** — that chain was cut on 2026-09-11
-(`SPEC/decisions.md`), along with the replay's status as a gate. The corpus is a **regression
-detector, not the specification**: shipping for feedback outranks fidelity to an app that was never
-finished, so a difference is a question with three answers — fix it, accept and record it, or
-deliberately do better — not automatically a defect. Read that entry before treating a corpus
-difference as work.
-
-**The database is not on the list.** It was, while it held the only copy of the demo data. The seed
-modules now rebuild it from committed code in seconds, so nothing about cutover needs to preserve
-it: plan F3 and F4 on the basis that the target is seeded fresh and there is no data to migrate.
-What survives cutover is `SPEC/` and `tools/golden`.
+The database is seeded fresh from committed code in about four seconds; there is no data to
+migrate. What must be kept is `SPEC/` and `tools/golden`.
 
 ## Session, Branch, and Source Control
 

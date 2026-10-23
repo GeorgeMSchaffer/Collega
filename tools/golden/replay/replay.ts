@@ -1,9 +1,6 @@
 // A3 — replay the corpus against a target stack and diff.
 //
-// Written now, against .NET, as a self-check: a replay of a fresh capture must
-// come back clean, or the harness is measuring itself rather than the stack.
-// In Wave F the same command is pointed at Nest and its failure list is the
-// remaining work (SPEC/50-typescript-migration.md, F1).
+// The failure list is the remaining work.
 
 import { ACCEPTED_DIFFS, type AcceptedCase, classify, staleEntries } from '../src/accepted.ts'
 import { type Fixture, groupByScenario, normalizeExchange } from '../src/corpus.ts'
