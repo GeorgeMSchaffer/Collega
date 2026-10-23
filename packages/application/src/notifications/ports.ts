@@ -2,8 +2,8 @@ import type { NotificationEventType, UserStatus } from '@collega/domain/enums'
 import type { NotificationEvent } from '@collega/domain/notifications'
 import type { Page, PageRequest } from '../common/index.js'
 
-/** Pure persistence: one insert per call, no batching in MVP - mirrors .NET's
- * `EfNotificationEventWriter`, minus the business logic that lives in `NotificationService`
+/** Pure persistence: one insert per call, no batching in MVP - mirrors the pre-migration API's
+ * notification writer, minus the business logic that lives in `NotificationService`
  * instead (SPEC/50-typescript-migration.md section 3: Infrastructure holds no business rules). */
 export interface NotificationEventRepository {
   add(event: NotificationEvent): Promise<void>

@@ -10,8 +10,8 @@ const DIRECT_SOURCE = { kind: 'field' } as const
  * The single source of truth for which User-Defined Fields an idea of a given type resolves to,
  * and whether each is required (SPEC/20-feature-idea-type-fields.md "Effective-field
  * resolution"). Consumed by the idea form, the value validator (`validateFieldValues`), and the
- * detail projection so all three agree - this is the densest logic in the .NET Domain layer
- * (`IdeaTypeFieldResolver`), ported as a single pure function rather than a static class since
+ * detail projection so all three agree - this is the densest logic in the pre-migration API's domain layer,
+ * ported as a single pure function rather than a static class since
  * there is no state to hang a class off.
  *
  * Resolves even when `ideaType` itself is soft-deleted - archival of the type does not change an

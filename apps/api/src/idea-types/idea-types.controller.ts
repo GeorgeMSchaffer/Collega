@@ -62,13 +62,13 @@ function ideaTypeBodyRules(body: CreateIdeaTypeBody): Record<string, FieldRules>
 }
 
 /**
- * `[RequiredField]` on `ReorderIdeaTypesRequest.OrderedIdeaTypeIds`, a `List<Guid>` initialised to
- * `new()` - the same two-envelope split `statuses.controller.ts` documents at length for
- * `requireOrderedStatusIds`, and for the same reason: `RequiredAttribute` fails on NULL ONLY.
+ * The required rule on `ReorderIdeaTypesRequest.OrderedIdeaTypeIds`, a list defaulting to
+ * empty - the same two-envelope split `statuses.controller.ts` documents at length for
+ * `requireOrderedStatusIds`, and for the same reason: the required rule fails on NULL ONLY.
  *
- * `{}` left the initialiser in place and arrived as an EMPTY LIST that passed validation, so it
+ * `{}` left the default in place and arrived as an EMPTY LIST that passed validation, so it
  * was refused later by `IdeaTypeService.reorder`'s coverage check (the Application envelope).
- * `{"orderedIdeaTypeIds": null}` overwrote the initialiser and failed here instead (the model-
+ * `{"orderedIdeaTypeIds": null}` overwrote the default and failed here instead (the model-
  * binding envelope). `validateFields` judges a non-string as `''` and cannot tell the two apart.
  */
 function requireOrderedIdeaTypeIds(body: ReorderIdeaTypesBody): readonly string[] {
@@ -81,17 +81,16 @@ function requireOrderedIdeaTypeIds(body: ReorderIdeaTypesBody): readonly string[
     return []
   }
   // A non-GUID member cannot match an active option id, so the coverage check refuses the request
-  // - which is what a non-Guid member did on the .NET side too, one binding envelope earlier.
+  // - which is what a non-Guid member did in the pre-migration API too, one binding envelope earlier.
   return body.orderedIdeaTypeIds.map(guidOrEmpty)
 }
 
 /**
- * `SetIdeaTypeFieldsRequest.Fields` carries NO `[RequiredField]`, and the .NET action itself wrote
- * `request.Fields ?? new List<...>()` - so an omitted key, an explicit `null` and `[]` are all the
+ * `SetIdeaTypeFieldsRequest.Fields` carries NO required rule, and the pre-migration action itself fell back to an empty list - so an omitted key, an explicit `null` and `[]` are all the
  * same request, and all three clear the type back to `AllActiveFields`.
  *
  * Nothing inside an item can be a boundary failure either. `FieldDefinitionId` is a non-nullable
- * `Guid` whose `[RequiredField]` is a no-op (see `guidOrEmpty`); `DisplayOrder` is a bare `int`
+ * `Guid` whose required rule is a no-op (see `guidOrEmpty`); `DisplayOrder` is a bare `int`
  * and `IsRequired` a bare `bool`, both of which bound to their default for an absent key.
  */
 function fieldSelection(body: SetIdeaTypeFieldsBody): readonly IdeaTypeFieldSelectionInput[] {
@@ -139,7 +138,7 @@ export class IdeaTypesController {
   constructor(private readonly ideaTypes: IdeaTypeService) {}
 
   /**
-   * `includeDeleted` is a .NET `bool` rather than `bool?`, so an ABSENT value binds to `false` and
+   * `includeDeleted` is a non-nullable `bool` rather than `bool?`, so an ABSENT value binds to `false` and
    * the list excludes archived options - see `queryBool` for what else that means.
    */
   @Get('organizations/:organizationId/idea-types')
@@ -177,7 +176,7 @@ export class IdeaTypesController {
     })
   }
 
-  /** Replaces the complete active-option order atomically; answers 204, like the .NET action. */
+  /** Replaces the complete active-option order atomically; answers 204, like the pre-migration action. */
   @Post('organizations/:organizationId/idea-types/reorder')
   @HttpCode(204)
   async reorder(
@@ -207,9 +206,9 @@ export class IdeaTypesController {
   }
 
   /**
-   * Sets or clears the badge appearance. Both properties are `string?` with `[MaxLengthField]` and
-   * no `[RequiredField]`, so an absent or null value passes the boundary and clears that half of
-   * the badge - `MaxLengthAttribute.IsValid(null)` returns true, and `validateFields` reaches the
+   * Sets or clears the badge appearance. Both properties are optional strings with a max-length rule and
+   * no required rule, so an absent or null value passes the boundary and clears that half of
+   * the badge - the max-length rule accepts null, and `validateFields` reaches the
    * same answer by judging a non-string as `''`. The `#RRGGBB` shape is the domain's rule, not
    * this one's, and produces the Application envelope.
    *

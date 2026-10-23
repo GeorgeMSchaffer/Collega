@@ -47,7 +47,7 @@ capture twice without a reset and the second run records a *different* product.
 Replay is worse, because the extra rows land in list responses and report as
 diffs the target stack did not cause.
 
-`StartupSeeder` is idempotent and runs on every boot, so a reset is drop, recreate,
+The pre-migration API's startup seeding was idempotent and ran on every boot, so a reset was drop, recreate,
 and start the API — migrations and seed both run on startup:
 
 ```bash
@@ -267,7 +267,7 @@ non-zero while any remain, so a half-written corpus cannot quietly pass for a
 whole one.
 
 **Treat the scaffold's guesses as guesses.** It reads the controller's
-`[Authorize]` attribute, and most of this API's actions carry a bare one — so it
+authorize attribute, and most of this API's actions carried a bare one — so it
 proposes `success` for all four roles. That is often wrong: the role check
 frequently lives in the Application layer instead (`AiPromptService` refuses an
 impersonating Site Admin; `OrgContentMutationGuard` refuses direct org-content

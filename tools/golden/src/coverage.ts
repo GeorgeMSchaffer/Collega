@@ -22,7 +22,7 @@ export type CoverageReport = {
 /** Roles a corpus should exercise for this endpoint: those admitted, plus one that is not. */
 export function expectedRoles(endpoint: Endpoint): (Role | 'anonymous')[] {
   if (endpoint.authorize === 'anonymous') return ['anonymous']
-  // A bare [Authorize] admits every role; a role list admits its own, and the
+  // A bare authorize (no role list) admits every role; a role list admits its own, and the
   // rest are worth recording precisely because their refusal is the contract.
   return [...ROLES, 'anonymous']
 }

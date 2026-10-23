@@ -39,8 +39,8 @@ const ALREADY_VIEWING_AS = 'You are already viewing as another user. Exit that s
  * The database error text for the partial unique index that actually enforces rule 5
  * (non-nestable) - `ux_impersonation_sessions_real_user_id_open`, unique on `real_user_id` WHERE
  * `ended_at_utc IS NULL`. Matched by constraint name in the thrown error's message/cause chain,
- * mirroring .NET's `IsOpenSessionUniqueViolation`, which deliberately avoided a dependency on
- * Npgsql (a driver-specific exception type) from the Application layer. Whatever Wave C's Prisma
+ * mirroring the pre-migration API, which deliberately avoided a dependency on
+ * a driver-specific exception type from the Application layer. Whatever Wave C's Prisma
  * repository throws for a unique-constraint violation, its message is expected to include the
  * constraint name - which Postgres always reports and Prisma passes through, since this index is
  * raw SQL unknown to `schema.prisma`.
@@ -140,8 +140,8 @@ export class ViewAsService {
     // A deliberate cast, not `attributeAudit(this.currentUser, ...)`: this runs BEFORE the
     // session exists, so `currentUser.isImpersonating` is still false here and the helper's
     // rewrite cannot fire regardless of which id is passed - it would fall through to
-    // `(intendedActorUserId, null)`, dropping the target. The pair itself matches .NET's
-    // `ViewAsService.AuditAsync`, which also built it directly rather than through the general
+    // `(intendedActorUserId, null)`, dropping the target. The pair itself matches the pre-migration API's
+    // View As audit, which also built it directly rather than through the general
     // helper.
     const startAttribution = {
       actorUserId: realUser.id,
@@ -390,7 +390,7 @@ function describe(user: ImpersonationUserSummary): string {
  * driver-specific error type from the Application layer - matched on the constraint name, which
  * is stable and named in the raw-SQL migration that re-adds it (introspection drops it silently;
  * see SPEC/typescript-conversion-map/findings/05-prisma-introspection.md). Walks `.cause` the way
- * .NET's original walked `InnerException`, since Wave C's Prisma repository may wrap the
+ * the pre-migration API walked the inner-exception chain, since Wave C's Prisma repository may wrap the
  * underlying driver error.
  */
 function isOpenSessionUniqueViolation(error: unknown): boolean {

@@ -99,15 +99,14 @@ export class PrismaOrganizationRepository
   }
 
   async list(filter: OrganizationListFilter): Promise<OrganizationPage> {
-    // `createdAt` is the OPT-IN and company name the default, matching the switch in
-    // `EfOrganizationRepository`. Both the field and the direction are matched on the trimmed,
-    // lowercased value, as `SortBy?.Trim().ToLowerInvariant()` and `SortDirection.IsDescending`
-    // did - so `?sortBy=CreatedAt&sortDirection=DESC` sorts the way it reads.
+    // `createdAt` is the OPT-IN and company name the default, matching the pre-migration API's
+    // sort switch. Both the field and the direction are matched on the trimmed,
+    // lowercased value, as the pre-migration API did - so `?sortBy=CreatedAt&sortDirection=DESC` sorts the way it reads.
     const sortBy =
       (filter.sortBy ?? '').trim().toLowerCase() === 'createdat' ? 'createdAt' : 'companyName'
     const direction = (filter.sortDirection ?? '').trim().toLowerCase() === 'desc' ? 'desc' : 'asc'
 
-    // Explicit scope, not a global filter (SPEC/decisions.md: the .NET has no EF global query
+    // Explicit scope, not a global filter (SPEC/decisions.md: the pre-migration API used no global query
     // filters). Archived organizations are excluded unless the caller asks for them.
     const where: Prisma.organizationsWhereInput = {
       ...(filter.includeArchived ? {} : { is_archived: false }),
@@ -142,8 +141,8 @@ export class PrismaOrganizationRepository
       page: filter.page.page,
       pageSize: filter.page.pageSize,
       totalCount,
-      // The REQUESTED sort field, not the resolved one: `EfOrganizationRepository` passed
-      // `filter.SortBy` straight into `PagedResult`, so a caller who sent nothing got `null` back
+      // The REQUESTED sort field, not the resolved one: the pre-migration API passed
+      // the requested sort field straight into the page result, so a caller who sent nothing got `null` back
       // rather than the default the query actually used.
       sortBy: filter.sortBy,
       sortDirection: direction,

@@ -25,7 +25,7 @@ import {
 } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
-/** One entry of a request's `swimlanes` array - `SwimlaneRequest` on the .NET side. */
+/** One entry of a request's `swimlanes` array - `SwimlaneRequest` in the pre-migration API. */
 type SwimlaneBody = {
   statusId?: string
   order?: number
@@ -59,14 +59,14 @@ type UpdateBoardBody = CreateBoardBody & { ideaMoves?: readonly IdeaMoveBody[] }
 type ReorderSwimlanesBody = { swimlanes?: readonly SwimlaneBody[] }
 
 /**
- * The `[RequiredField]` / `[MaxLengthField]` pair that `CreateBoardRequest` and
+ * The required-field and max-length rules pair that `CreateBoardRequest` and
  * `UpdateBoardRequest` share - identical field for field, and the only attributes either DTO
  * carries (`allowUserStatusUpdate` and `swimlanes` have none).
  *
  * The domain enforces the same length (`packages/domain/src/boards/board.ts`) and must keep doing
  * so: that check is the invariant, this one is the contract. They are not interchangeable - only
  * this one produces the model-binding envelope a DTO attribute produced, and the domain's judges
- * the trimmed value where `MaxLengthAttribute` judged the raw one.
+ * the trimmed value where the pre-migration max-length rule judged the raw one.
  */
 function boardBodyRules(body: CreateBoardBody): Record<string, FieldRules> {
   return {
@@ -88,14 +88,14 @@ function toDescription(description: unknown): string | null | undefined {
 }
 
 /**
- * `BoardsController.ToSwimlaneInputs` in full, including its `?? new List<SwimlaneRequest>()`:
+ * The pre-migration swimlane conversion in full, including its empty-list fallback:
  * an absent list is an empty one, which the Application layer then refuses for falling under the
  * two-swimlane minimum.
  *
  * Takes `unknown` because the body type is compile-time only and there is no `ValidationPipe` -
  * `{"swimlanes": "x"}` would otherwise reach `.map` and answer 500. A non-array is read as
  * absent, and a member with no `statusId` becomes `''`, which fails the Application layer's
- * status-subset check exactly as .NET's `Guid.Empty` default did.
+ * status-subset check exactly as the pre-migration API's empty-GUID default did.
  */
 function toSwimlaneInputs(swimlanes: unknown): readonly SwimlaneInput[] {
   if (!Array.isArray(swimlanes)) {
@@ -103,7 +103,7 @@ function toSwimlaneInputs(swimlanes: unknown): readonly SwimlaneInput[] {
   }
   return swimlanes.map((entry: SwimlaneBody | null | undefined) => ({
     statusId: typeof entry?.statusId === 'string' ? entry.statusId : '',
-    // `int`, not `int?`, on the .NET record - an absent order bound to 0 rather than failing.
+    // `int`, not `int?`, on the pre-migration record - an absent order bound to 0 rather than failing.
     order: typeof entry?.order === 'number' ? entry.order : 0,
     isFinal: entry?.isFinal === true,
     referencesBoardId:
@@ -177,7 +177,7 @@ function toIdeaTypeIds(field: string, value: unknown, absentMeansAll: boolean): 
 /**
  * Board configuration (SPEC/30-Contracts.md "Board Contracts").
  *
- * `@Controller()` carries no prefix on purpose. The .NET controller declared a full path on every
+ * `@Controller()` carries no prefix on purpose. The pre-migration controller declared a full path on every
  * action rather than a `[Route]` prefix, so list and create hang off `organizations/{id}/boards`
  * while detail, update and reorder hang off `boards/{id}` - two different nouns from one class.
  * The golden corpus pins both, so a prefix here would move five routes.
@@ -232,7 +232,7 @@ export class BoardsController {
     return this.boards.create(organizationId, {
       name: body.name ?? '',
       description: toDescription(body.description),
-      // A .NET `bool` (not `bool?`): an absent value bound to false.
+      // A non-nullable `bool` (not `bool?`): an absent value bound to false.
       allowUserStatusUpdate: body.allowUserStatusUpdate === true,
       swimlanes: toSwimlaneInputs(body.swimlanes),
       keyPrefix: toKeyPrefix(body.keyPrefix),

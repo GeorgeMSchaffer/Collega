@@ -1,11 +1,11 @@
-// markCreated/markUpdated are the TS replacement for the original AuditableEntityBase's
-// protected MarkCreated/MarkUpdated.
-// Two behaviours of the original are easy to lose in the immutable-function rewrite and
+// markCreated/markUpdated are the TS replacement for the pre-migration API's auditable entity
+// base transitions.
+// Two behaviours of the pre-migration API are easy to lose in the immutable-function rewrite and
 // both are replay-diff sensitive against the golden corpus, so they get dedicated tests
 // rather than folding into a single "happy path" case:
-//   - MarkCreated set CreatedAtUtc and UpdatedAtUtc from the SAME DateTime read, so a
+//   - Creation set createdAtUtc and updatedAtUtc from the SAME clock read, so a
 //     created row always has the two columns equal to the instant, not merely close.
-//   - MarkUpdated touched only UpdatedAtUtc/UpdatedByUserId and left the created fields
+//   - An update touched only updatedAtUtc/updatedByUserId and left the created fields
 //     alone - a test that only checked the two changed fields would pass against an
 //     implementation that quietly dropped every other field on the entity.
 
@@ -22,8 +22,8 @@ describe('markCreated', () => {
 
     const result = markCreated(nowUtc, 'user-1')
 
-    // getTime() equality, not toBeCloseTo/a tolerance window: the .NET original assigned
-    // both columns from one DateTime read, and the golden corpus records them equal, not
+    // getTime() equality, not toBeCloseTo/a tolerance window: the pre-migration API assigned
+    // both columns from one clock read, and the golden corpus records them equal, not
     // merely near each other.
     expect(result.createdAtUtc.getTime()).toBe(nowUtc.getTime())
     expect(result.updatedAtUtc.getTime()).toBe(nowUtc.getTime())

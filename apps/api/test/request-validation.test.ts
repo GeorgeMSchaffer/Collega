@@ -2,7 +2,7 @@
 // (`SPEC/30-Contracts.md` "Validation Message Conventions", resolved 2026-08-07) that has already
 // been got wrong once - it shipped producing "FirstName is required." where the corpus records
 // "First Name is required.". These tests pin the wording and, just as importantly, the
-// ACCUMULATION behaviour: ASP.NET's ModelState collected every failure across every attribute, so
+// ACCUMULATION behaviour: the pre-migration API collected every failure across every rule, so
 // a refactor to sequential early-return checks must break loudly here rather than quietly halve
 // the errors an existing client renders.
 //
@@ -69,8 +69,8 @@ describe('displayName - camelCase key, spaced Title Case message', () => {
 
 describe('validateFields - accumulation', () => {
   it('reports BOTH the required and the email failure for one omitted field, under one key', () => {
-    // This is the property the ModelState port was designed for: .NET evaluated every attribute
-    // on a property independently, so an absent `email` failed [RequiredField] AND [EmailFormat]
+    // This is the property this port was designed for: the pre-migration API evaluated every rule
+    // on a property independently, so an absent `email` failed the required AND email-format rules
     // and returned two messages. A rewrite to `if (missing) return` would drop the second.
     const failures = failuresOf(() =>
       validateFields({ email: { value: undefined, required: true, email: true } }),
@@ -79,10 +79,10 @@ describe('validateFields - accumulation', () => {
   })
 
   it('reports the required failure ALONE for an explicit null, where an omitted key reports two', () => {
-    // The one place omitted and null legitimately differ. System.Text.Json leaves the
-    // `= string.Empty` initialiser alone for a key that is not in the JSON, so `{}` reached
-    // [EmailFormat] as "" and failed it; an explicit null overwrote the initialiser, and
-    // EmailAddressAttribute.IsValid(null) returns true, so `{"email": null}` failed [RequiredField]
+    // The one place omitted and null legitimately differ. The pre-migration API left the
+    // empty-string default alone for a key that is not in the JSON, so `{}` reached
+    // the email-format rule as "" and failed it; an explicit null overwrote the default, and
+    // its email rule accepted null, so `{"email": null}` failed the required rule
     // only. Collapsing the two - in either direction - changes what a client renders.
     const explicitNull = failuresOf(() =>
       validateFields({ email: { value: null, required: true, email: true } }),
@@ -183,8 +183,8 @@ describe('validateFields - max length', () => {
 })
 
 describe('validateFields - email format', () => {
-  // EmailAddressAttribute.IsValid, reproduced exactly: one '@', neither first nor last character.
-  // Deliberately not stricter - accepting less than the .NET API accepted is as much a divergence
+  // The pre-migration email rule, reproduced exactly: one '@', neither first nor last character.
+  // Deliberately not stricter - accepting less than the pre-migration API accepted is as much a divergence
   // as accepting more.
   const accepted = ['a@b', 'ada@example.test', 'a b@c d', 'a@b.', '.@b']
   const rejected = ['@b', 'a@', 'a@b@c', 'ab', '@', '']

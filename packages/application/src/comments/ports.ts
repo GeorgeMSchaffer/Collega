@@ -27,7 +27,7 @@ export interface CommentRepository {
   add(comment: Comment): Promise<void>
 
   /** Persists an edited comment - the domain function returns a new immutable value rather than
-   * mutating in place, so update is its own call (unlike .NET's EF change tracking). */
+   * mutating in place, so update is its own call (unlike an ORM's change tracking). */
   update(comment: Comment): Promise<void>
 
   remove(comment: Comment): Promise<void>
@@ -60,7 +60,7 @@ export type IdeaSummary = {
 }
 
 export interface IdeaLookupPort {
-  /** Excludes soft-deleted ideas, mirroring `IIdeaRepository.GetByIdAsync(includeDeleted: false)`. */
+  /** Excludes soft-deleted ideas, matching the pre-migration API's lookup. */
   getById(ideaId: string): Promise<IdeaSummary | null>
 }
 
@@ -73,7 +73,7 @@ export interface IdeaFollowersPort {
 // Users (cross-partition, B1) -------------------------------------------------------------------
 //
 // Mention resolution and comment-author personas only - kept local rather than depending on Users'
-// `UserRepository`, matching how Ideas kept its own copy of the identical .NET `MentionResolver`
+// `UserRepository`, matching how Ideas kept its own copy of the identical mention-resolution
 // logic local rather than importing it from here.
 
 export type UserSummary = {
@@ -91,6 +91,6 @@ export interface UsersPort {
   listByIds(userIds: readonly string[]): Promise<readonly UserSummary[]>
 
   /** Global lookup by normalized (trimmed, lowercased) email, for mention resolution. The caller
-   * still checks organization/role/status - mirrors .NET's `MentionResolver`. */
+   * still checks organization/role/status - as the pre-migration API's mention resolution did. */
   findByNormalizedEmail(normalizedEmail: string): Promise<UserSummary | null>
 }

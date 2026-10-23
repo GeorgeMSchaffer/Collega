@@ -2,7 +2,7 @@
 // Listing is available to any member of the organization (idea forms need the option catalog);
 // create/update/reorder/delete are Site Admin (any org) or in-scope Org Admin only.
 //
-// The .NET combined this with Idea Type administration in one `IdeaFieldService` partial class,
+// The pre-migration API combined this with Idea Type administration in one service,
 // sharing authorization/ordering/uniqueness helpers. Split here because Business Impact now lives
 // in its own partition folder - see `../idea-fields/idea-type-service.ts` for the same note.
 

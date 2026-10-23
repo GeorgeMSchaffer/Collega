@@ -120,7 +120,7 @@ export interface AiUsageRepository {
 // The AI cost-control gate ------------------------------------------------------------------------
 //
 // Declared as a port - not just consumed as the concrete `AiUsageService` class - for the same
-// reason `IIdeaDraftModel` is a port in .NET: `AiPromptService` and `IdeaAssistService` must be
+// reason the idea-draft model is a port: `AiPromptService` and `IdeaAssistService` must be
 // unit-testable with a fake budget/rate-limit/meter, never a real one, and `AiUsageService` uses
 // `#private` fields, which TypeScript's structural typing would otherwise force a test double to
 // literally extend rather than merely resemble.

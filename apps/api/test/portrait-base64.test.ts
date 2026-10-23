@@ -1,4 +1,4 @@
-// `decodeBase64Image` reproduces `Convert.FromBase64String`'s semantics, which are subtle enough
+// `decodeBase64Image` reproduces the pre-migration API's strict base64 decoding, whose semantics are subtle enough
 // that they were got wrong once already: whitespace anywhere is ignored, but the whitespace-free
 // length must be a multiple of four, so padding is mandatory and over-padding is fatal. The golden
 // corpus records exactly one portrait upload - a well-formed one - so every rejection branch here
@@ -9,8 +9,8 @@
 // actually describes. An accepted payload reaches `AuthService.updatePortrait` as bytes; a
 // rejected one is a RequestValidationError keyed on `imageBase64` and the service is never called.
 //
-// A rejection is one of two faults, and which one matters: `[RequiredField]` on
-// `UpdatePortraitRequest.ImageBase64` ran during model binding, so a blank or absent upload was
+// A rejection is one of two faults, and which one matters: the pre-migration API
+// validated the required `imageBase64` during model binding, so a blank or absent upload was
 // "is required." and only a present-but-corrupt one was "could not be read." They are pinned in
 // separate tables below, plus one test whose only job is that the two never converge.
 
@@ -67,9 +67,9 @@ function controllerRecordingBytes() {
 }
 
 /**
- * The two distinct faults, which the endpoint must keep apart. `UpdatePortraitRequest` carries
- * `[RequiredField]` on `ImageBase64` and ASP.NET ran model validation before the action, so
- * `TryDecodeBase64` never saw a blank value and could only ever produce the second of these.
+ * The two distinct faults, which the endpoint must keep apart. The pre-migration API validated
+ * the required `imageBase64` before the action, so
+ * its decoder never saw a blank value and could only ever produce the second of these.
  */
 const REQUIRED = 'Image Base64 is required.'
 const UNREADABLE = 'The uploaded image could not be read.'
@@ -147,8 +147,8 @@ describe('PUT /auth/me/portrait - accepted payloads', () => {
     await acceptedBytes(`${FIXTURE_PAYLOAD}\n`)
   })
 
-  it('ignores every character Convert.FromBase64String skipped, and nothing else', async () => {
-    // Its decoder skips characters <= ' ', which is space, tab, CR, LF, FF and VT - not the wider
+  it('ignores every character the pre-migration decoder skipped, and nothing else', async () => {
+    // The pre-migration decoder skipped characters <= ' ', which is space, tab, CR, LF, FF and VT - not the wider
     // set JS \s covers. The rejection half of this rule is in the rejected-payload table below.
     const bare = await acceptedBytes(FIXTURE_PAYLOAD)
     const padded = await acceptedBytes(` ${FIXTURE_PAYLOAD}\t\r\n\f\v `)
@@ -156,8 +156,8 @@ describe('PUT /auth/me/portrait - accepted payloads', () => {
     await acceptedBytes(`data:image/png;base64,${wrap(FIXTURE_PAYLOAD, 24)}\n`)
   })
 
-  it('accepts a payload whose final unused bits are non-zero, as Convert.FromBase64String did', async () => {
-    // "aGVsbG9=" and "aGVsbG8=" differ only in bits the decoder shifts out, and .NET validated
+  it('accepts a payload whose final unused bits are non-zero, as the pre-migration decoder did', async () => {
+    // "aGVsbG9=" and "aGVsbG8=" differ only in bits the decoder shifts out, and the pre-migration API validated
     // neither - it returned the same five bytes for both. A re-encode-and-compare check on top of
     // the length and alphabet rules would reject the first, which is stricter than the API being
     // ported; this fails if one is ever reintroduced.
@@ -172,7 +172,7 @@ describe('PUT /auth/me/portrait - accepted payloads', () => {
 })
 
 describe('PUT /auth/me/portrait - present but unreadable', () => {
-  // Convert.FromBase64String throws on every one of these, and the .NET handler let it through as
+  // The pre-migration decoder threw on every one of these, and the API answered
   // a 400 keyed on imageBase64. Buffer.from(s, 'base64') would silently succeed on most of them,
   // discarding what it cannot read - which is why the length and alphabet checks exist at all.
   const unreadable: ReadonlyArray<readonly [string, string]> = [
@@ -184,8 +184,8 @@ describe('PUT /auth/me/portrait - present but unreadable', () => {
     ['interior padding that is still a multiple of four', 'aGV=bG8='],
     ['base64url alphabet', 'a-VsbG8='],
     // Written as escapes: these are exactly the characters that look like whitespace to JS \s
-    // and are not whitespace to .NET, so a literal here would be invisible in review.
-    ['a non-breaking space, which Convert.FromBase64String did not skip', 'aGVs\u00a0bG8='],
+    // and were not whitespace to the pre-migration decoder, so a literal here would be invisible in review.
+    ['a non-breaking space, which the pre-migration decoder did not skip', 'aGVs\u00a0bG8='],
     ['a line separator, likewise', 'aGVs\u2028bG8='],
     ['a byte order mark, likewise', 'aGVsbG8=\ufeff'],
     ['a data URL with no payload after the comma', 'data:image/png;base64,'],
@@ -199,8 +199,8 @@ describe('PUT /auth/me/portrait - present but unreadable', () => {
 })
 
 describe('PUT /auth/me/portrait - blank or absent', () => {
-  // [RequiredField] on UpdatePortraitRequest.ImageBase64 ran during model binding, ahead of the
-  // action, so .NET answered "is required." here and never reached the decoder at all.
+  // The pre-migration API validated the required imageBase64 during model binding, ahead of the
+  // action, so it answered "is required." here and never reached the decoder at all.
   const blank: ReadonlyArray<readonly [string, unknown]> = [
     ['an omitted field', undefined],
     ['an empty string', ''],
