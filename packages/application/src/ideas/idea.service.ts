@@ -1822,6 +1822,16 @@ export class IdeaService {
     const afterCommit: Array<() => Promise<void>> = []
 
     for (const idea of ideas) {
+      if (idea !== undefined && idea.boardId !== board.boardId) {
+        throw itemRefusal(
+          'sprintItemOnOtherBoard',
+          await this.describeItem(idea),
+          'a sprint holds items from its own board only.',
+        )
+      }
+    }
+
+    for (const idea of ideas) {
       if (idea !== undefined && !this.canAdministerIdeaContent(idea, actorId)) {
         const message = `Only the author or an Org Admin can schedule ${itemLabel(board.keyPrefix ?? undefined, idea)}.`
         throw new ForbiddenError(message, { ideaIds: [message] })
@@ -1848,14 +1858,6 @@ export class IdeaService {
       if (original === undefined) {
         continue
       }
-      if (original.boardId !== board.boardId) {
-        throw itemRefusal(
-          'sprintItemOnOtherBoard',
-          await this.describeItem(original),
-          'a sprint holds items from its own board only.',
-        )
-      }
-
       const previousSprintId = original.sprintId
       const sprintChanged = previousSprintId !== sprintId
       const withSprint = sprintChanged

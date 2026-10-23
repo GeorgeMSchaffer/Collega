@@ -346,6 +346,25 @@ describe('createTaskOnBoard: sprintId', () => {
     }
     expect(h.added).toHaveLength(0)
   })
+
+  it('refuses a User a Completed sprint and a sprint of another board, 400 keyed sprintId', async () => {
+    const h = harness({
+      currentUser: member(),
+      boards: BOARDS,
+      sprints: [
+        sprintOf(BOARD_B, SprintState.Completed, 'done-sprint'),
+        sprintOf(BOARD_A, SprintState.Planned, 'other-board-sprint'),
+      ],
+    })
+
+    for (const sprintId of ['done-sprint', 'other-board-sprint']) {
+      const error = await failure(h.service.createTaskOnBoard(BOARD_B, { ...CARD, sprintId }))
+      expect(error).toBeInstanceOf(ValidationError)
+      expect(Object.keys((error as ValidationError).failures)).toEqual(['sprintId'])
+    }
+    expect(h.added).toHaveLength(0)
+    expect(h.audit.events).toHaveLength(0)
+  })
 })
 
 describe('createTaskOnBoard: with a parent it is board-tasks', () => {
