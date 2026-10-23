@@ -20,7 +20,7 @@ import {
  * environment-configured Site Admin - is only seeded when `SITE_ADMIN_EMAIL` and
  * `SITE_ADMIN_PASSWORD` are both set, because inventing a credential for it would be worse than
  * leaving it absent. The definition of done's "10 users" therefore means "with the Site Admin
- * configured", which is how the .NET seeder behaved too.
+ * configured", which is how the original seeder behaved too.
  *
  * Passwords are hashed with the same `Pbkdf2PasswordHasher` the application verifies against, so
  * these accounts really can sign in. Hashing is deliberately done once per run rather than per

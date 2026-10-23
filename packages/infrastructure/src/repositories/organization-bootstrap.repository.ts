@@ -4,7 +4,7 @@
 // left to wait on. This is pure orchestration: `organization-defaults.ts` (Application) already
 // owns the policy of what the defaults ARE, and `createStatus`/`createBoard`/`createIdeaType`/
 // `createBusinessImpact` (Domain) already own their construction invariants. This class only
-// wires the two together and stages the writes - exactly mirroring the .NET
+// wires the two together and stages the writes - exactly mirroring the original
 // `OrganizationBootstrapService`, which does the same four `AddRangeAsync`/`AddAsync` calls with
 // no commit of its own (the caller's `SaveChangesAsync` covers it).
 //
@@ -64,7 +64,7 @@ export class OrganizationBootstrapRepository implements OrganizationBootstrapPor
     await this.statuses.addMany(statuses)
 
     // The default board opens with every default status as a swimlane, in catalog order -
-    // mirrors the .NET `OrganizationBootstrapService`.
+    // mirrors the original `OrganizationBootstrapService`.
     const board = createBoard({
       id: randomUUID(),
       organizationId,

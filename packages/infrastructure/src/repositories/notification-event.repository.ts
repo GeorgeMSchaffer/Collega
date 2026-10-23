@@ -3,7 +3,7 @@
 // id generation, recipient resolution, the inbox window) lives in Application, not here.
 //
 // COMMITS IMMEDIATELY, like `audit-event.repository.ts` and `tag.repository.ts`'s `getOrCreate` -
-// NOT through `PrismaUnitOfWork`. This mirrors the .NET `EfNotificationEventWriter.WriteAsync`,
+// NOT through `PrismaUnitOfWork`. This mirrors the original `EfNotificationEventWriter.WriteAsync`,
 // which calls `AddAsync` then its own `SaveChangesAsync` rather than relying on the caller's
 // later commit. Staging into the buffer instead is what silently discarded every notification
 // event: `PrismaUnitOfWork.saveChanges()` clears the buffer, and every calling service stages its

@@ -8,7 +8,7 @@ const ITERATIONS = 100_000
 const DIGEST = 'sha256'
 
 /**
- * PBKDF2 (RFC 2898) password hashing via Node's `node:crypto` - ports .NET's
+ * PBKDF2 (RFC 2898) password hashing via Node's `node:crypto` - ports the original's
  * `Pbkdf2PasswordHasher` byte-for-byte, including its stored format
  * (`PBKDF2.{iterations}.{saltBase64}.{hashBase64}`), so an iteration-count upgrade later doesn't
  * invalidate existing hashes.

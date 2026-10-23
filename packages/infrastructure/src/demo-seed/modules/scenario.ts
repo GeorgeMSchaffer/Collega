@@ -22,7 +22,7 @@ import { PINECONE_LABS } from './vertical/pinecone-labs.js'
  * (`dropdb`, `db:migrate`, `db:seed` - under four seconds), which is the sanctioned path anyway
  * per `SPEC/decisions.md` 2026-09-09.
  *
- * One deliberate change from the .NET seeder: **every id here is derived, not random.** That
+ * One deliberate change from the original seeder: **every id here is derived, not random.** That
  * seeder created GUIDs and made each step idempotent by re-querying on a natural key, which works
  * but leaves two seeded databases disagreeing about every id - so a golden fixture recorded
  * against one cannot be replayed against the other. Deriving ids from stable names makes the seed

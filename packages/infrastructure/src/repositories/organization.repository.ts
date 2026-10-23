@@ -107,7 +107,7 @@ export class PrismaOrganizationRepository
       (filter.sortBy ?? '').trim().toLowerCase() === 'createdat' ? 'createdAt' : 'companyName'
     const direction = (filter.sortDirection ?? '').trim().toLowerCase() === 'desc' ? 'desc' : 'asc'
 
-    // Explicit scope, not a global filter (SPEC/decisions.md: the .NET has no EF global query
+    // Explicit scope, not a global filter (SPEC/decisions.md: the original has no EF global query
     // filters). Archived organizations are excluded unless the caller asks for them.
     const where: Prisma.organizationsWhereInput = {
       ...(filter.includeArchived ? {} : { is_archived: false }),

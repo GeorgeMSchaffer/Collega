@@ -1,7 +1,7 @@
 // The demo seed, from the command line. Owned by Foundation (S0.2); feature slices contribute
 // modules under src/demo-seed/modules and edit nothing here.
 //
-// The target is the standard demo seed the .NET stack produces, and Sprint 9's definition of done
+// The target is the standard demo seed the original stack produces, and Sprint 9's definition of done
 // requires it to exist in the new stack: 2 organizations, 10 users, 4 boards, 44 ideas. Ten users
 // is 2 orgs x 4 accounts - one Org Admin, two User, one Read Only - plus the configured Site Admin
 // and the Development-only convenience Site Admin. Three vertical organizations sit on top of those.

@@ -5,7 +5,7 @@
 //
 // `SPEC/20-feature-auth.md` requirement 8 says a Site Admin is created on first run from
 // SITE_ADMIN_EMAIL / SITE_ADMIN_PASSWORD, and requirement 9 says it must change that credential on
-// first login. The .NET host did that in `StartupSeeder` at boot; `apps/api` reads both variables
+// first login. The original host did that in `StartupSeeder` at boot; `apps/api` reads both variables
 // and never acts on them, so a production database created by `prisma migrate deploy` has zero
 // users and a login screen nobody can pass. On serverless, boot is the wrong place to put it back -
 // "first run" happens on every cold start - so it runs once per deploy instead, from the API

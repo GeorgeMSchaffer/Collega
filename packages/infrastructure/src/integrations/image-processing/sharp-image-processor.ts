@@ -1,11 +1,11 @@
 import type { ImageProcessor } from '@collega/application/auth'
 import sharp from 'sharp'
 
-/** Raster formats the portrait pipeline accepts - matches .NET's `ImageSharpImageProcessor`. */
+/** Raster formats the portrait pipeline accepts - matches the original's `ImageSharpImageProcessor`. */
 const SUPPORTED_FORMATS = new Set(['gif', 'jpeg', 'png'])
 
 /**
- * Sharp-backed portrait thumbnail pipeline, replacing .NET's ImageSharp-based
+ * Sharp-backed portrait thumbnail pipeline, replacing the original's ImageSharp-based
  * `ImageSharpImageProcessor`. `sharp` decodes through libvips, a real image codec, which is the
  * security check this exists for: a payload that isn't a genuine GIF/JPEG/PNG (a renamed text
  * file, an executable, a truncated/forged header) fails to decode rather than being trusted by
@@ -13,7 +13,7 @@ const SUPPORTED_FORMATS = new Set(['gif', 'jpeg', 'png'])
  * preserved, never upscaled) and re-encoded as a fresh PNG, so no original file bytes are
  * persisted verbatim.
  *
- * Moving off ImageSharp removes a real constraint, not just a rewrite for its own sake: the .NET
+ * Moving off ImageSharp removes a real constraint, not just a rewrite for its own sake: the original
  * side was pinned to ImageSharp 3.1.x specifically because 4.x requires a paid licence key, and
  * 3.1.x's own licence is free only below a revenue threshold (SPEC/decisions.md). `sharp` is
  * Apache-2.0/MIT-licensed with no such ceiling.

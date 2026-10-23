@@ -8,7 +8,7 @@ import { stripFormulaGuard } from './formula-guard.js'
 import { parseCsvRecords } from './parse-csv-records.js'
 
 /**
- * Parses an uploaded idea-import CSV into {@link IdeaImportRow} values (ports .NET's
+ * Parses an uploaded idea-import CSV into {@link IdeaImportRow} values (ports the original's
  * `CsvIdeaImportParser`). Columns are located by header name (case-insensitive) so order is
  * flexible; every cell is exposed keyed by its lowercased header, including any per-UDF-field
  * columns the caller resolves downstream. A missing/empty file, or a header missing a required

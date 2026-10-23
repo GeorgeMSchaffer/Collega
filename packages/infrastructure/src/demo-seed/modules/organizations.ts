@@ -36,7 +36,7 @@ export const organizationsSeed: SeedModule = {
           id: organizationId,
           title: scenario.title,
           description: scenario.description,
-          // Derived, not random: the .NET seeder appended random hex, which is fine for a real
+          // Derived, not random: the original seeder appended random hex, which is fine for a real
           // organization and wrong for a fixture that has to be reproducible.
           invite_code:
             `${scenario.slug}-${seedId('invite', scenario.slug).slice(0, 8)}`.toUpperCase(),

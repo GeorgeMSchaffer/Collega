@@ -4,7 +4,7 @@
 // `getOrCreate` OWNS ITS OWN COMMIT AND RETRY - a deliberate exception to this package's usual
 // command-buffer discipline (see `persistence/unit-of-work.ts`'s header for the full design and
 // why this is the one carve-out). It does NOT take a `PrismaUnitOfWork` and does not enqueue
-// anything: every write below is awaited directly, mirroring the .NET `EfTagRepository`, whose own
+// anything: every write below is awaited directly, mirroring the original `EfTagRepository`, whose own
 // doc comment says `GetOrCreateAsync` "deliberately owns its own SaveChanges and a retry (rather
 // than deferring to IUnitOfWork) so it can catch the unique-index violation raised when two
 // requests create the same normalized tag concurrently and converge both on the single persisted

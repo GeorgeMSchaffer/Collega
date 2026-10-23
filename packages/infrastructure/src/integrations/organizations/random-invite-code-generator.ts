@@ -2,7 +2,7 @@ import { randomInt } from 'node:crypto'
 import type { InviteCodeGenerator } from '@collega/application/organizations'
 
 // Excludes ambiguous characters (0/O, 1/I) so a code read off a screen is easy to type - matches
-// .NET's `InviteCodeGenerator`.
+// the original's `InviteCodeGenerator`.
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 const CODE_LENGTH = 10
 

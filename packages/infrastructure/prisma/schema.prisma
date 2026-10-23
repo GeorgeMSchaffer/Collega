@@ -672,16 +672,16 @@ model users {
 }
 
 // ---------------------------------------------------------------------------
-// Enums promoted from the .NET domain (ticket 06, decided 2026-09-04).
+// Enums promoted from the original domain (ticket 06, decided 2026-09-04).
 //
 // Seven of these were stored as varchar holding the C# member name verbatim, so they
 // port 1:1. Two - FieldType and IdeaTypeFieldMode - were stored as int, and their
 // meaning lived only in C#: nothing in the schema recorded it. The integer each member
 // had is written beside it below, because F3's transform needs exactly that mapping and
-// there is no other surviving record of it once the .NET solution is deleted.
+// there is no other surviving record of it once the original solution is deleted.
 //
 // Five more were added by Issues-and-Delivery Slice 1 (decisions.md 2026-09-11) and have no
-// .NET ancestor: DeliveryStatus, EffortLevel, IdeaPhase, IssueTaskState, SprintState. No
+// the original ancestor: DeliveryStatus, EffortLevel, IdeaPhase, IssueTaskState, SprintState. No
 // legacy column holds them, so F3 has nothing to transform. The integers beside their members
 // are the spec's declaration order, recorded for traceability only - the stored value is the
 // member name, as it is for every enum here.
