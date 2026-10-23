@@ -66,13 +66,11 @@ const NAV_SHAPE: { label: string; items: NavShapeItem[] }[] = [
       { href: INBOX_HREF, label: 'Inbox', icon: 'inbox' },
       { href: '/boards', label: 'Boards', icon: 'boards', countKey: 'boards' },
       { href: '/ideas', label: 'Ideas', icon: 'ideas', countKey: 'ideas' },
-      { href: '/tasks', label: 'Tasks', icon: 'tasks' },
     ],
   },
   {
-    label: 'Delivery',
+    label: 'Plan',
     items: [
-      { href: '/delivery/sprint', label: 'Sprint board', icon: 'sprint', slice: 'E6' },
       {
         href: '/delivery/backlog',
         label: 'Backlog',
@@ -80,6 +78,13 @@ const NAV_SHAPE: { label: string; items: NavShapeItem[] }[] = [
         countKey: 'backlog',
         slice: 'E6',
       },
+    ],
+  },
+  {
+    label: 'Delivery',
+    items: [
+      { href: '/delivery/sprint', label: 'Sprint board', icon: 'sprint', slice: 'E6' },
+      { href: '/tasks', label: 'Tasks', icon: 'tasks' },
       { href: '/delivery/roadmap', label: 'Roadmap', icon: 'roadmap', slice: 'E6' },
     ],
   },
