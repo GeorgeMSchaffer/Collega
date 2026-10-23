@@ -10,7 +10,10 @@ import type { IdeaDetail, IdeaFormOptions, MemberOption } from '@/lib/types'
  * change the idea's content, and its refusals render beside it. The server action is the boundary.
  */
 const saveIdea = vi.hoisted(() => vi.fn())
-vi.mock('@/lib/server/idea-actions', () => ({ saveIdea }))
+vi.mock('@/lib/server/idea-actions', () => ({
+  boardAllowedIdeaTypeIds: async () => [],
+  saveIdea,
+}))
 
 const MEMBERS: MemberOption[] = ['Ada', 'Ben', 'Cy', 'Dee', 'Eli', 'Fay'].map((name) => ({
   id: `u-${name.toLowerCase()}`,

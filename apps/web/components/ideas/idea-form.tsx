@@ -26,7 +26,7 @@ import { Icon } from '@/components/list/icons'
 import type { AssistDraft } from '@/lib/assist-turn'
 import { DESCRIPTION_MAX_LENGTH, TITLE_MAX_LENGTH } from '@/lib/limits'
 import { addIssue } from '@/lib/server/delivery-actions'
-import { saveIdea } from '@/lib/server/idea-actions'
+import { boardAllowedIdeaTypeIds, saveIdea } from '@/lib/server/idea-actions'
 import type {
   BoardRef,
   Effort,
@@ -234,6 +234,32 @@ export function IdeaForm({
   }, [])
 
   const editing = idea !== null
+  // The types the chosen board takes; empty is every type. Asked of the API when a board is picked,
+  // because the board list does not carry it. An edit keeps its type, which is never offered anew.
+  const [allowedTypeIds, setAllowedTypeIds] = useState<readonly string[]>([])
+  const pickedBoardId = draft.boardId
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refetch only when the board changes
+  useEffect(() => {
+    if (editing) return
+    let current = true
+    boardAllowedIdeaTypeIds(pickedBoardId).then((ids) => {
+      if (!current) return
+      setAllowedTypeIds(ids)
+      // A type the new board does not take cannot stay selected; fall to the first it does.
+      setDraft((d) =>
+        ids.length === 0 || ids.includes(d.ideaTypeId)
+          ? d
+          : { ...d, ideaTypeId: options.ideaTypes.find((t) => ids.includes(t.id))?.id ?? '' },
+      )
+    })
+    return () => {
+      current = false
+    }
+  }, [pickedBoardId, editing])
+  const offeredTypes =
+    editing || allowedTypeIds.length === 0
+      ? options.ideaTypes
+      : options.ideaTypes.filter((t) => allowedTypeIds.includes(t.id))
   // A task takes task fields only, so it never carries Effort; an Issue add has its own field.
   const showEffort = !addingIssue && idea?.parentIdeaId == null
   const type = options.ideaTypes.find((t) => t.id === draft.ideaTypeId)
@@ -702,7 +728,7 @@ export function IdeaForm({
             aria-invalid={errors.ideaTypeId ? true : undefined}
           >
             <option value="">Choose…</option>
-            {options.ideaTypes.map((ideaType) => (
+            {offeredTypes.map((ideaType) => (
               <option key={ideaType.id} value={ideaType.id}>
                 {ideaType.name}
               </option>

@@ -14,6 +14,7 @@ import { stubDialogMethods } from './support/dialog'
 const mocks = vi.hoisted(() => ({ refresh: vi.fn() }))
 
 vi.mock('@/lib/server/idea-actions', () => ({
+  boardAllowedIdeaTypeIds: async () => [],
   addBoardTask: vi.fn(),
   moveIdea: vi.fn(),
   removeBoardTask: vi.fn(),

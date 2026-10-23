@@ -21,6 +21,7 @@ vi.mock('@/lib/api/client', async (original) => ({
   apiGet: vi.fn(),
 }))
 vi.mock('@/lib/server/idea-actions', () => ({
+  boardAllowedIdeaTypeIds: async () => [],
   addComment: vi.fn(),
   setFollowing: vi.fn(),
   toggleUpvote: vi.fn(),

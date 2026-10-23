@@ -11,7 +11,10 @@ import type { IdeaFormOptions } from '@/lib/types'
  * `tagNames` refusals render beside the field. The server action is the boundary.
  */
 const saveIdea = vi.hoisted(() => vi.fn())
-vi.mock('@/lib/server/idea-actions', () => ({ saveIdea }))
+vi.mock('@/lib/server/idea-actions', () => ({
+  boardAllowedIdeaTypeIds: async () => [],
+  saveIdea,
+}))
 
 const OPTIONS: IdeaFormOptions = {
   ideaTypes: [{ id: 'type-ci', name: 'Continuous Improvement', fields: [] }],

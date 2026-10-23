@@ -14,7 +14,14 @@ import {
   type FieldRefusals,
   saveBoardInPlace,
 } from '@/lib/server/board-actions'
-import type { BoardOverview, LaneFlags, PullCandidate, ReferenceContext, Status } from '@/lib/types'
+import type {
+  AllowedIdeaTypesSetup,
+  BoardOverview,
+  LaneFlags,
+  PullCandidate,
+  ReferenceContext,
+  Status,
+} from '@/lib/types'
 import { LaneLegend, LaneStrip, statusLabel, TopTags } from './board-parts'
 
 export type DrawerMode = 'view' | 'edit' | 'create'
@@ -31,6 +38,8 @@ export type BoardFormData = {
   /** Live ideas per lane of the board being edited, for the confirm step a lane removal needs. */
   laneIdeaCounts?: Readonly<Record<string, number>> | undefined
   ideaFeaturesEnabled?: boolean
+  /** The idea types on offer and the ticked ones; absent when the caller may not set them. */
+  allowedIdeaTypes?: AllowedIdeaTypesSetup | undefined
   /** The boards a lane may reference, and which boards reference this one. */
   references?: ReferenceContext | undefined
   statuses: Status[]
@@ -167,6 +176,7 @@ export function BoardDrawer({
           laneFlags={form.laneFlags}
           laneIdeaCounts={form.laneIdeaCounts}
           ideaFeaturesEnabled={form.ideaFeaturesEnabled}
+          allowedIdeaTypes={form.allowedIdeaTypes}
           references={form.references}
           refusals={outcome.formKey === formKey ? outcome : undefined}
           statuses={form.statuses}
