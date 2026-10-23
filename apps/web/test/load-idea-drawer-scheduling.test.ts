@@ -170,6 +170,11 @@ describe('loadIdeaDrawer: scheduling', () => {
     expect(mocks.getBacklog).not.toHaveBeenCalled()
   })
 
+  it('is null for a Site Admin acting directly', async () => {
+    expect((await load('SiteAdmin'))?.scheduling).toBeNull()
+    expect(mocks.getBacklog).not.toHaveBeenCalled()
+  })
+
   it('is null on an archived work board', async () => {
     mocks.work = board('b-work', { isArchived: true })
 
