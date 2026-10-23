@@ -166,7 +166,7 @@ export function TasksSection({ parent, tasks }: { parent: Parent; tasks: IdeaTas
                 }
                 scheduleOff={
                   plan && !plan.canCreate && plan.sprints.length === 0
-                    ? 'This board has no Planned or Active sprint to schedule into.'
+                    ? 'No open sprint. An Org Admin creates one.'
                     : undefined
                 }
               />

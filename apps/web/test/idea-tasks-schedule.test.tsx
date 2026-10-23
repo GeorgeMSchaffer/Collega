@@ -167,9 +167,7 @@ describe('TasksSection: Schedule… for a User', () => {
 
     const button = scheduleButton('W-2')
     expect(button.getAttribute('aria-disabled')).toBe('true')
-    expect(button.getAttribute('title')).toBe(
-      'This board has no Planned or Active sprint to schedule into.',
-    )
+    expect(button.getAttribute('title')).toBe('No open sprint. An Org Admin creates one.')
   })
 
   it('offers the open sprints but not "Create a new sprint…"', () => {
