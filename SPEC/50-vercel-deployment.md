@@ -18,10 +18,7 @@ one builds, where migrations run, the environment matrix, how the first administ
 exist, the preview topology, and the rollback posture.
 
 **Target, decided 2026-09-03 (`SPEC/decisions.md`, conversion ticket `02`):** Vercel for both
-applications, Prisma Postgres for the database. `SPEC/50-azure-deployment.md`,
-`SPEC/50-azure-api-cicd.md` and `SPEC/50-kubernetes-deployment.md` describe the **frozen .NET
-stack** and are not build instructions for anything shipping — Sprint 8 was cancelled and that
-stack is never deployed.
+applications, Prisma Postgres for the database.
 
 > **What is in the repository and what is not.** Everything below that lives in files —
 > `apps/*/vercel.json`, `apps/api/server.js`, the migration and bootstrap steps — is committed and
@@ -415,7 +412,7 @@ COLLEGA_API_URL = https://collega-api-git-dev-<team-slug>.vercel.app/api/v1   (P
 - The demo seed throws when `NODE_ENV=production` (`packages/infrastructure/prisma/seed/index.ts`),
   so a production database created by `migrate deploy` has **zero users** and a login screen nobody
   can pass. `apps/api` reads `SITE_ADMIN_EMAIL` and `SITE_ADMIN_PASSWORD` and **refuses to boot
-  without them, but never acts on them** — the account was only ever created by the .NET `StartupSeeder` and, in the new stack, by
+  without them, but never acts on them** — the account is created only by
   the demo seed's tenth user.
 - `SPEC/20-feature-auth.md` requirement 8 says the Site Admin is created on first run and
   requirement 9 says it must change that credential on first login. On serverless, boot is the wrong
@@ -596,8 +593,8 @@ pnpm --filter @collega/infrastructure db:bootstrap-organization
 ## 10. Rollback posture
 
 **Code rolls back; the database does not, and there is no older stack behind either.**
-`SPEC/50-typescript-migration.md` §7 settled the last part: the .NET stack was never deployed, so there is
-nothing to fall back to, and after F6 there is no .NET code either. What follows is that statement made
+`SPEC/50-typescript-migration.md` §7 settled the last part: no earlier stack was ever deployed, so there is
+nothing to fall back to. What follows is that statement made
 operational, and it matches `SPEC/50-cutover-runbook.md` §3.
 
 - **Code rolls back instantly and by itself.** Vercel keeps every deployment; Instant Rollback

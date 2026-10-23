@@ -210,7 +210,7 @@ describe('PUT boards/:boardId/sprint-assignments refusals as a client sees them'
   })
 
   it.each([
-    ['a non-admin or direct Site Admin as 403', new ForbiddenError('No.'), 403],
+    ['a refused caller or item as 403', new ForbiddenError('No.'), 403],
     ['an unknown board or other organization as 404', new NotFoundError('Board not found.'), 404],
   ])('renders %s', async (_l, refusal, status) => {
     const { controller } = controllerOver(refusal)

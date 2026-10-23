@@ -35,9 +35,6 @@ const API_PORT = process.env.COLLEGA_E2E_API_PORT?.trim() || '3001'
  * Collega browser E2E. Drives the whole application - `apps/web` on :3000 against `apps/api` on
  * :3001 - both started by Playwright, so `pnpm test:e2e` needs nothing running beforehand.
  *
- * The suite this replaces drove the retired client at :5098 against the retired API at :5103,
- * and its seven specs were retired with it (see e2e/README.md).
- *
  * **The API is here because the screens need it.** `/boards`, `/boards/[boardId]`, `/ideas` and
  * `/ideas/[ideaId]` stopped reading `lib/mock.ts` during Wave D - they `fetch` `apps/api` - and with
  * no API running they fail *at render*, so a spec written over any of them failed however carefully

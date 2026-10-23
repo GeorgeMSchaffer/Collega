@@ -27,6 +27,7 @@ import {
   getTagRefs,
   getTaskParentChoices,
 } from '@/lib/data'
+import { schedulerFor } from '@/lib/roles'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { boardAdminDenial, currentUser, writeDenial } from '@/lib/session'
 
@@ -90,7 +91,9 @@ export default async function BoardPage({
       : 'backlog'
   const showTabs = tabs.length > 1
   const canAddTask = isWork && authorDenial === null
-  const canPlan = user.role === 'OrgAdmin' && board.sprintsEnabled && !board.isArchived
+  // Scheduling (TB-10): anyone who may edit a task, per task; creating sprints stays an Org Admin's.
+  const scheduler = board.sprintsEnabled && !board.isArchived ? schedulerFor(user) : null
+  const canPlan = scheduler?.isAdmin === true
   // The Backlog side panel (TB-7) sits beside the lanes of a work board with sprints on, for any
   // role that may write; the lanes refuse a drop from anyone who may not plan.
   const hasPanel = tab === 'board' && isWork && board.sprintsEnabled && authorDenial === null
@@ -256,7 +259,7 @@ export default async function BoardPage({
               rows={backlog.ideas}
               total={backlog.totalCount}
               lanes={board.lanes}
-              canSelect={canPlan}
+              scheduler={scheduler}
               newTaskHref={newTaskHref}
               sprints={sprints}
               members={members}

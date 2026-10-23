@@ -8,7 +8,10 @@ import type { IdeaFormOptions } from '@/lib/types'
  * *No board* choice, preselected from a board's page and empty from the Ideas list; archived boards
  * are not offered; an edit has no field at all.
  */
-vi.mock('@/lib/server/idea-actions', () => ({ saveIdea: vi.fn() }))
+vi.mock('@/lib/server/idea-actions', () => ({
+  boardAllowedIdeaTypeIds: async () => [],
+  saveIdea: vi.fn(),
+}))
 vi.mock('@/lib/server/delivery-actions', () => ({ addIssue: vi.fn() }))
 
 const OPTIONS: IdeaFormOptions = {

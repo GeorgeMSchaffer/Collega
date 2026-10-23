@@ -1,13 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { loadIdeaDrawer } from '@/components/ideas/load-idea-drawer'
 import type { Role } from '@/lib/roles'
+import { currentUser } from '@/lib/session'
 import { actAs } from './support/acting-role'
 import { TASKS } from './support/backlog-fixtures'
 
 /**
  * What the idea drawer's Tasks section is handed for "Schedule…" (slice 336, TB-9): each task's
- * sprint read from the work board's card list, and `scheduling` only for an Org Admin on a
- * sprints-on, non-archived work board. The data seam is the boundary.
+ * sprint read from the work board's card list, and `scheduling` for a reader who may schedule on a
+ * sprints-on, non-archived work board (the Backlog only for an Org Admin). The data seam is the boundary.
  */
 const mocks = vi.hoisted(() => ({
   work: {} as Record<string, unknown>,
@@ -140,6 +141,7 @@ describe('loadIdeaDrawer: scheduling', () => {
         { id: 's-1', name: 'Sprint 7', state: 'Active' },
         { id: 's-2', name: 'Sprint 8', state: 'Planned' },
       ],
+      canCreate: true,
       backlog: TASKS,
       backlogTotal: 42,
       members: [{ id: 'u-ada', name: 'Ada Lovelace' }],
@@ -147,8 +149,24 @@ describe('loadIdeaDrawer: scheduling', () => {
     expect(mocks.getBacklog).toHaveBeenCalledWith('b-work')
   })
 
-  it.each<Role>(['User', 'ReadOnly'])('is null for a %s', async (role) => {
-    expect((await load(role))?.scheduling).toBeNull()
+  it('gives a User the open sprints but no Backlog, and marks only the tasks they authored', async () => {
+    actAs('User')
+    mocks.getBoardIdeaList.mockResolvedValue({
+      ideas: [
+        { id: '1', authorUserId: currentUser().userId },
+        { id: '2', authorUserId: 'someone' },
+      ],
+    })
+    const tasks = await load('User')
+
+    expect(tasks?.scheduling).toMatchObject({ canCreate: false, backlog: [], backlogTotal: 0 })
+    expect(tasks?.scheduling?.sprints).toHaveLength(2)
+    expect(tasks?.tasks.map((t) => t.mayEdit)).toEqual([true, false, undefined])
+    expect(mocks.getBacklog).not.toHaveBeenCalled()
+  })
+
+  it('is null for a Read Only reader', async () => {
+    expect((await load('ReadOnly'))?.scheduling).toBeNull()
     expect(mocks.getBacklog).not.toHaveBeenCalled()
   })
 

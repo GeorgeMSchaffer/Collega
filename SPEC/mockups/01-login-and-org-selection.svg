@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1024" viewBox="0 0 1440 1024" role="img" aria-labelledby="title desc">
   <title id="title">Collega login mockup</title>
-  <desc id="desc">A Fluent UI styled sign-in screen.</desc>
+  <desc id="desc">A sign-in screen.</desc>
   <rect width="1440" height="1024" fill="#f5f5f5"/>
   <rect x="0" y="0" width="1440" height="88" fill="#0f6cbd"/>
   <rect x="0" y="0" width="150" height="88" fill="#0b5cab"/>

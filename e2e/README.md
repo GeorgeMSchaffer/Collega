@@ -14,11 +14,7 @@ Product flows on the TypeScript stack, 38 tests (slice **F2**, closed 2026-09-29
 creating an organization and a user, the demo path, a multi-step journey, delivery, and tags —
 `tests/*.spec.ts` — plus `tests/auth.setup.ts`, which signs each seeded role in once.
 
-This suite used to drive the retired client at `:5098` against the retired API at `:5103`. That stack was
-deleted (slice F6, 2026-09-13) and its seven specs went with it — they were written against
-FluentUI's shadow roots and a `CollegaE2E` database seeded on API boot, and neither exists in the
-TypeScript stack. Their flow list is kept at the bottom of this file as a record of what they
-covered.
+The flow list at the bottom of this file records what the earlier suite covered.
 
 `tests/harness.spec.ts` asserts only that a route renders server-side and that the route gate
 redirects an anonymous visitor to `/login`. If it ever needs a fixture or a login, it has stopped
@@ -126,7 +122,7 @@ pgrep -f next-server | xargs -r kill -9
 
 ## Flows the retired suite covered
 
-Kept as F2's starting list. These ran green against the retired client; they are a record, not a
+Kept as F2's starting list. They are a record, not a
 specification — where one disagrees with `SPEC/`, the spec wins.
 
 | # | Flow |

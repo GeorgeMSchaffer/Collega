@@ -7,23 +7,25 @@ import { useId, useState, useTransition } from 'react'
 import { ParentChip } from '@/components/ideas/idea-badges'
 import { People, TagList } from '@/components/ideas/idea-chips'
 import type { OpenSprint, WorkBoard } from '@/lib/data/tasks'
+import { type Scheduler, scheduleRefusal } from '@/lib/roles'
 import { moveTasksToSprint } from '@/lib/server/sprint-planning-actions'
-import { moveToSprintState } from '@/lib/task-planning'
+import { type MoveToSprint, moveToSprintState } from '@/lib/task-planning'
 import type { Idea } from '@/lib/types'
 
 const plural = (n: number) => `${n} ${n === 1 ? 'task' : 'tasks'}`
 
 /**
  * The Tasks page's list (TB-8): tasks across the work boards, each row naming its board. For an
- * Org Admin (`canPlan`) the rows carry checkboxes and the bar offers "Move to sprint", which is
- * enabled only while the selection sits on one board; otherwise it stays focusable and says why.
+ * reader who may schedule (`scheduler`) the rows carry checkboxes and the bar offers "Move to sprint", which is
+ * enabled only while the selection sits on one board and holds only tasks the reader may edit;
+ * otherwise it stays focusable and says why.
  */
 export function TasksTable({
   rows,
   total,
   boards,
   sprints,
-  canPlan,
+  scheduler,
   emptyHeading,
   emptyText,
 }: {
@@ -31,10 +33,11 @@ export function TasksTable({
   total: number
   boards: readonly WorkBoard[]
   sprints: Record<string, OpenSprint[]>
-  canPlan: boolean
+  scheduler: Scheduler | null
   emptyHeading: string
   emptyText: string
 }) {
+  const canSelect = scheduler !== null
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set())
   const [sprintId, setSprintId] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -45,11 +48,13 @@ export function TasksTable({
   const boardName = (boardId: string | null) =>
     boards.find((board) => board.id === boardId)?.name ?? '—'
   const chosen = rows.filter((row) => selected.has(row.id))
-  const plan = moveToSprintState(
+  const base = moveToSprintState(
     chosen.flatMap((row) => (row.boardId ? [row.boardId] : [])),
     boards,
     sprints,
   )
+  const refusal = scheduleRefusal(scheduler, chosen)
+  const plan: MoveToSprint = base.enabled && refusal ? { enabled: false, reason: refusal } : base
   const target = plan.enabled
     ? (plan.sprints.find((sprint) => sprint.id === sprintId) ?? plan.sprints[0])
     : undefined
@@ -93,17 +98,17 @@ export function TasksTable({
         <span role="status">
           {plural(rows.length)}
           {total > rows.length ? ` (first ${rows.length} of ${total}, newest first)` : null}
-          {canPlan && selected.size > 0 ? ` · ${selected.size} selected` : null}
+          {canSelect && selected.size > 0 ? ` · ${selected.size} selected` : null}
           {done ? ` · ${done}` : null}
         </span>
-        {canPlan && selected.size > 0 ? (
+        {canSelect && selected.size > 0 ? (
           <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
             Clear selection
           </Button>
         ) : null}
       </div>
 
-      {canPlan ? (
+      {canSelect ? (
         <div className="flex flex-wrap items-center gap-3 rounded-lg border bg-card px-3.5 py-2">
           {plan.enabled ? (
             <>
@@ -150,7 +155,7 @@ export function TasksTable({
           <caption className="sr-only">Tasks across the organization&rsquo;s work boards</caption>
           <thead>
             <tr>
-              {canPlan ? (
+              {canSelect ? (
                 <th scope="col" className="w-px px-3.5">
                   <input
                     type="checkbox"
@@ -192,7 +197,7 @@ export function TasksTable({
           <tbody>
             {rows.map((row) => (
               <tr key={row.id} data-row-key={row.id}>
-                {canPlan ? (
+                {canSelect ? (
                   <td className="px-3.5">
                     <input
                       type="checkbox"

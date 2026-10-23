@@ -4,7 +4,7 @@ import { Topbar } from '@/components/nav/topbar'
 import { TasksTable } from '@/components/tasks/tasks-table'
 import { TasksTabs } from '@/components/tasks/tasks-tabs'
 import { getOpenSprintsByBoard, getTasks, getWorkBoards, type TaskTab } from '@/lib/data'
-import { hasOrgWorkspace } from '@/lib/roles'
+import { hasOrgWorkspace, schedulerFor } from '@/lib/roles'
 import { requireCurrentUser } from '@/lib/server/current-user'
 
 export const metadata = { title: 'Tasks · Collega' }
@@ -69,7 +69,7 @@ export default async function TasksPage({
     getTasks(tab, boards, sprints),
     tab === 'backlog' ? null : getTasks('backlog', boards, sprints, 1),
   ])
-  const canPlan = user.role === 'OrgAdmin'
+  const scheduler = schedulerFor(user)
 
   return (
     <>
@@ -78,9 +78,9 @@ export default async function TasksPage({
         <PageHeader
           title="Tasks"
           description={
-            canPlan
-              ? 'Every task on your work boards. Select tasks from one board to move them into a sprint.'
-              : 'Every task on your work boards. Only administrators plan sprints.'
+            scheduler
+              ? 'Every task on your work boards. Select tasks from one board to move them into a sprint; you can move the ones you can edit.'
+              : 'Every task on your work boards.'
           }
         />
         {boards.length === 0 ? (
@@ -100,7 +100,7 @@ export default async function TasksPage({
               total={page.totalCount}
               boards={boards}
               sprints={sprints}
-              canPlan={canPlan}
+              scheduler={scheduler}
               emptyHeading={EMPTY[tab].heading}
               emptyText={EMPTY[tab].text}
             />

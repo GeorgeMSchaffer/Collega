@@ -78,15 +78,17 @@ describe('the Tasks page', () => {
     expect(screen.getByRole('link', { name: /^Backlog\s*5$/ })).toBeTruthy()
   })
 
-  it('offers planning to an Org Admin only', async () => {
-    await open('OrgAdmin')
-    expect(mocks.tableProps.mock.calls[0]?.[0].canPlan).toBe(true)
+  it.each([
+    ['OrgAdmin', true],
+    ['User', false],
+  ] as const)('offers %s planning of the tasks they may edit', async (role, isAdmin) => {
+    await open(role)
+    expect(mocks.tableProps.mock.calls[0]?.[0].scheduler).toMatchObject({ isAdmin })
   })
 
-  it.each(['User', 'ReadOnly'] as const)('hands %s the list without planning', async (role) => {
-    await open(role)
-    expect(mocks.tableProps.mock.calls[0]?.[0].canPlan).toBe(false)
-    expect(screen.getByText(/Only administrators plan sprints/)).toBeTruthy()
+  it('hands ReadOnly the list without planning', async () => {
+    await open('ReadOnly')
+    expect(mocks.tableProps.mock.calls[0]?.[0].scheduler).toBeNull()
   })
 
   it('explains that there are no work boards instead of an empty table', async () => {

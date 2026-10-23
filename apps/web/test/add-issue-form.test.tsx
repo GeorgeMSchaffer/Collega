@@ -12,7 +12,10 @@ import type { Effort, IdeaFormOptions } from '@/lib/types'
  */
 const saveIdea = vi.hoisted(() => vi.fn())
 const addIssue = vi.hoisted(() => vi.fn())
-vi.mock('@/lib/server/idea-actions', () => ({ saveIdea }))
+vi.mock('@/lib/server/idea-actions', () => ({
+  boardAllowedIdeaTypeIds: async () => [],
+  saveIdea,
+}))
 vi.mock('@/lib/server/delivery-actions', () => ({ addIssue }))
 
 const OPTIONS: IdeaFormOptions = {

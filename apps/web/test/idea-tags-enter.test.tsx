@@ -8,7 +8,10 @@ import type { IdeaFormOptions } from '@/lib/types'
  * taking the highlighted option or, with none highlighted, the first. It never submits the form.
  */
 const saveIdea = vi.hoisted(() => vi.fn())
-vi.mock('@/lib/server/idea-actions', () => ({ saveIdea }))
+vi.mock('@/lib/server/idea-actions', () => ({
+  boardAllowedIdeaTypeIds: async () => [],
+  saveIdea,
+}))
 
 const OPTIONS: IdeaFormOptions = {
   ideaTypes: [{ id: 'type-ci', name: 'Continuous Improvement', fields: [] }],

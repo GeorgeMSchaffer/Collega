@@ -35,7 +35,7 @@ Keep entries short. A symptom, where it happens, and — if you know it — the 
 
 ## TODO
 
-All ten previously open items were promoted into `SPEC/sprints/sprint-07.5-accessibility-and-bug-paydown.md` on 2026-08-25 and deleted from here per the "Promote and delete" rule above — that sprint file is now their only home. They came from a live UI/UX pass against `dev` at `875b223` on 2026-08-16.
+All ten previously open items were promoted into `SPEC/sprints/archive/sprint-07.5-accessibility-and-bug-paydown.md` on 2026-08-25 and deleted from here per the "Promote and delete" rule above — that sprint file is now their only home. They came from a live UI/UX pass against `dev` at `875b223` on 2026-08-16.
 
 From the owner's ad-hoc testing on 2026-10-01, taken one at a time:
 

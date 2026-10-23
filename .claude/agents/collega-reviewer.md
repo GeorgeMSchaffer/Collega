@@ -30,8 +30,7 @@ The branch (or worktree path) to review. Diff it against `dev`: `git diff dev...
    automatically a defect — see `SPEC/decisions.md` 2026-09-11.
 5. **Standards.** Imports (`@collega/<pkg>/<feature>`, `.js` extensions inside a package), SQL
    style, hermetic tests (injected clock, fixed seeds, no network), no new dependencies without
-   approval, no speculative abstractions or error handling, no stale pointers into the deleted
-   .NET tree (`src/Collega.*`, `dotnet`, `.csproj`).
+   approval, no speculative abstractions or error handling.
 6. **Hygiene.** Focused commits; no secrets or temp files; commit messages with no references to
    Claude, agents, or code generation; `SPEC/implementation-agent-tracker.md` updated.
 

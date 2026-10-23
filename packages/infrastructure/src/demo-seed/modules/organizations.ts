@@ -5,8 +5,7 @@ import { DEMO_ORGANIZATIONS, seedId } from './scenario.js'
 
 /**
  * Wave B1's contribution: the demo organizations and the per-organization catalogs every
- * organization is provisioned with (`SPEC/20-feature-boards-and-statuses.md`, and Phase 4 #9 of
- * `SPEC/50-technical-implementation-plan.md` for idea types).
+ * organization is provisioned with (`SPEC/20-feature-boards-and-statuses.md`).
  *
  * Statuses and boards are deliberately NOT here - they are B2's, and live in their own module, so
  * two slices adding to the seed conflict over the module list rather than inside one file.

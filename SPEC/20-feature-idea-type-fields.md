@@ -22,7 +22,7 @@ Today every idea in an organization shows the *same* set of User-Defined Fields 
 - **Direct mapping:** an `IdeaType` owns an ordered selection of the org's existing UDFs, each required-or-optional *for that type*. The field pool stays single and shared — a field mapped onto several types still reports as one field — but each type curates its own subset.
 - **Resolve once:** an idea's type is chosen at creation and (for regular users) never changes, so its field list never has to reconcile.
 - **Reinterprets "template":** this realizes the UDF spec's *"Template Integration — Forward Compatibility"* note, but a "template" here is a **field-visibility selection**, not a default-value/scaffolding injector.
-- **Idea Types already exist:** `IdeaType` is a shipped, org-scoped entity (`Collega.Domain.IdeaFields.IdeaType`), `Idea.IdeaTypeId` is required and backfilled (`AddIdeaClassification`), and there is an `IdeaTypesController`. This feature adds the field mapping, the type badge (color + icon), immutability, and the admin reassign hatch — it does **not** invent the type concept.
+- **Idea Types already exist:** `IdeaType` is a shipped, org-scoped entity, `Idea.IdeaTypeId` is required, and there is an idea-types API. This feature adds the field mapping, the type badge (color + icon), immutability, and the admin reassign hatch — it does **not** invent the type concept.
 
 ---
 
@@ -119,7 +119,7 @@ The type↔field association, in the same file. **Per-type required-ness and ord
 - `displayOrder` — order within **this** type
 - `isRequired` — required **within** this type (overrides the field definition's global default)
 
-*Corrected 2026-09-29 (slice 124): this section carried C# declarations from the deleted .NET domain (`Collega.Domain.IdeaFields`, `AuditableEntityBase`, `EntityBase`); the fields, limits and enum values are unchanged. The mode was an `int` there (`AllActiveFields = 0`, `Curated = 1`) and is a PostgreSQL enum of the same names now.*
+*The mode is a PostgreSQL enum (`AllActiveFields`, `Curated`).*
 
 - Unique on `(ideaTypeId, fieldDefinitionId)` — a field appears at most once per type.
 - `displayOrder` is per-type; the same field can sit in different positions on different types.
@@ -291,14 +291,13 @@ The `SiteAdmin` row said ✅ for the three write columns until 2026-09-29 (`SPEC
 
 ---
 
-## Migration Strategy
+## Schema Changes and Defaults
 
-**EF migration `AddIdeaTypeFields`:**
+**AddIdeaTypeFields:**
 - New table `idea_type_fields` (snake_case): `(idea_type_id, field_definition_id, display_order, is_required)`, unique `(idea_type_id, field_definition_id)`, FK to `idea_types` and `field_definitions`.
 - `idea_types` gains `color_hex` (nullable), `icon` (nullable), `field_mode` (int, default `0 = AllActiveFields`).
 - **No `ideas` change** — `idea_type_id` already exists and is backfilled.
 - **Backward-compat backfill:** existing types default to `field_mode = AllActiveFields`, so every idea resolves to "all active fields" — identical to current behavior. No `idea_type_fields` rows are seeded; admins opt into curation per type.
-- Touches only new/changed tables, so it should merge cleanly against `CollegaDbContextModelSnapshot` unless another in-flight slice adds a migration concurrently.
 
 ---
 
@@ -318,18 +317,3 @@ Per repo working rules, make these canonical edits **before implementation**:
 - **[Product]** Admin reassign is P1. Confirm it isn't needed for MVP launch (immutability alone ships as P0). — non-blocking.
 - ~~**[Design]** Type badge placement on cards vs the priority chip + status dot (chip overload).~~ — decided 2026-09-04: the badge moves to the tag row (see "Type badge placement").
 - **[Eng]** Should the global `FieldDefinition.IsRequired` be dropped eventually or kept as the `AllActiveFields` default? (P2 decides; v1 keeps it.) — non-blocking.
-
----
-
-## Effort Sizing (backend-first; Client is a later wave per repo convention)
-
-| Layer | Work | Estimate |
-|---|---|---|
-| **Domain** | `IdeaTypeField`, `IdeaType` appearance + `FieldMode` + selection methods, **idea-type immutability** (remove from `UpdateContent`), resolution helper | S–M — 1–1.5 days |
-| **Infrastructure / EF** | `IdeaTypeField` config, `idea_types` column adds, `AddIdeaTypeFields` migration (no idea backfill) | S–M — 1 day |
-| **Application** | Type field-selection + appearance ops, resolution algorithm, `FieldValueValidator` signature change, `IdeaService` create/validate/detail wiring, reject type change on update | M — 2–3 days |
-| **Application (P1)** | Admin reassign op + `IdeaTypeReassigned` audit | S — 0.5–1 day |
-| **API** | `idea-types/{id}/fields` + `/appearance` routes, reassign route (P1), contracts | S–M — 1–1.5 days |
-| **Tests** | Resolution (AllActiveFields/Curated/archived), per-type required override, immutability rejection, out-of-set value rejection, appearance, reassign archiving | M — 2 days |
-| **Client (later wave)** | Idea Types editor (color/icon + two-pane field picker), type badge, idea-form resolved fields, read-only type + reassign on detail | M–L — 4–5 days |
-| **Backend total (P0)** | | **~6–8 dev-days** |

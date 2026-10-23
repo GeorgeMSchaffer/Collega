@@ -25,8 +25,7 @@ exists only to measure the two idea-assistant specs — `20-feature-ai-idea-assi
 `40-test-strategy.md` because that file lists what the hermetic suite must cover, and this runner is
 deliberately outside it.
 
-Authority: `SPEC/decisions.md` 2026-09-13 ("The AI integration is rescoped…", "The .NET stack is
-deleted…"), 2026-09-27 ("The idea assistant is rescoped as a co-author" — *Measurement comes
+Authority: `SPEC/decisions.md` 2026-09-13 ("The AI integration is rescoped…"), 2026-09-27 ("The idea assistant is rescoped as a co-author" — *Measurement comes
 first*), 2026-09-28 (order of work, and the runner entry recording what existing text settles);
 `20-feature-ai-idea-assist.md` rules 15–18, 25, 29–30, 37–37c and "Model Configuration";
 `20-feature-ai-idea-assist-v2.md` "Prerequisite: measurement" and its acceptance checklist;
@@ -36,7 +35,7 @@ first*), 2026-09-28 (order of work, and the runner entry recording what existing
 
 ## Purpose
 
-Answer what nothing in the repository can answer since slice F6 deleted the .NET runner:
+Answer what nothing in the repository can answer since slice F6 deleted the original runner:
 **"is this prompt better than that one, across the corpus?"**, treating the scope gate as the
 security control it is.
 
@@ -320,7 +319,7 @@ excluded from every metric denominator below.
 39. **A live run never happens in `pnpm check`.** The package's `test` script is its hermetic
     self-tests — `node:test`, no network, no real clock, no randomness, the adapter built with a
     fake client exactly as `packages/infrastructure` tests it (the adapter's own comment records why:
-    a billed provider call hid in the .NET test suite). The live command is a separate script,
+    a billed provider call hid in a test suite). The live command is a separate script,
     `eval`, which Turbo never runs because `turbo.json` names only `build`, `typecheck` and `test`.
 40. Invocation: `pnpm -C tools/prompt-eval eval [options]` (or `node tools/prompt-eval/src/cli.ts
     [options]`), and `… eval compare|rescore|dump-prompt …`, after `pnpm build`, since the runner

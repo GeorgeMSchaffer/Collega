@@ -4,6 +4,8 @@ import { TasksTable } from '@/components/tasks/tasks-table'
 import type { OpenSprint, WorkBoard } from '@/lib/data/tasks'
 import type { Idea } from '@/lib/types'
 
+const ADMIN = { userId: 'u-admin', isAdmin: true }
+
 /**
  * The Tasks page's list (TB-8, TB-10): selection, the bulk bar and its "Move to sprint" (enabled
  * for one board only, otherwise focusable with the reason), the honesty line, empty states and who
@@ -64,7 +66,7 @@ function table(over: Partial<Parameters<typeof TasksTable>[0]> = {}) {
       total={ROWS.length}
       boards={BOARDS}
       sprints={SPRINTS}
-      canPlan
+      scheduler={ADMIN}
       emptyHeading="Nothing waiting"
       emptyText="All planned."
       {...over}
@@ -237,7 +239,7 @@ describe('selection and Move to sprint', () => {
 
 describe('without planning rights (User, Read Only)', () => {
   it('shows the rows with no checkboxes, no Move to sprint and no selection controls', () => {
-    table({ canPlan: false })
+    table({ scheduler: null })
     expect(screen.getByRole('table')).toBeTruthy()
     expect(screen.queryAllByRole('checkbox')).toHaveLength(0)
     expect(screen.queryByRole('button', { name: 'Move to sprint' })).toBeNull()

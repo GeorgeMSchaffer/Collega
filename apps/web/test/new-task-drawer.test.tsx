@@ -17,7 +17,10 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/boards/b-1',
   useSearchParams: () => nav.params,
 }))
-vi.mock('@/lib/server/idea-actions', () => ({ addBacklogTask: vi.fn() }))
+vi.mock('@/lib/server/idea-actions', () => ({
+  boardAllowedIdeaTypeIds: async () => [],
+  addBacklogTask: vi.fn(),
+}))
 
 const add = vi.mocked(addBacklogTask)
 const PARENTS = [

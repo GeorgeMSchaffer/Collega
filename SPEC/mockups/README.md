@@ -1,6 +1,6 @@
 # UI Mockups
 
-These mockups are static SVG artifacts based on the current Collega specs and shaped around Fluent UI component patterns and usability best practices.
+These mockups are static SVG artifacts based on the current Collega specs and shaped around standard component patterns and usability best practices.
 
 ## Screens
 - `01-login-and-org-selection.svg`: legacy sign-in and organization-selection concept; retain as historical artifact and replace in implementation with globally unique email flow
@@ -40,7 +40,7 @@ It is the reference for `SPEC/20-feature-client-ui.md` "List and detail pattern"
 
 ## Full-App Comps (2026-07-30)
 
-Three interactive HTML comps covering every page (Login, First Login, Home, Admin Hub, Organizations, Users, Statuses, Board, Idea Detail, Change Password). Open in a browser and use the top tab bar to switch screens. Each explores a distinct direction inspired by Jira/Trello best practices while staying implementable with Fluent UI Blazor components.
+Three interactive HTML comps covering every page (Login, First Login, Home, Admin Hub, Organizations, Users, Statuses, Board, Idea Detail, Change Password). Open in a browser and use the top tab bar to switch screens. Each explores a distinct direction inspired by Jira/Trello best practices while staying implementable with standard components.
 
 **Selection (2026-07-30): Comp A "Command Center" is the chosen UI/UX layout for implementation**, restyled to use the typography and color palette from the SVG mockups (01–12): `"Segoe UI", Arial, sans-serif`, slate neutrals (`#0f172a`/`#334155`/`#64748b`), `#f8fafc` background, and `#1d4ed8`/`#1e3a8a` blue accent. See `SPEC/20-feature-client-ui.md` for the full design-direction spec. Comps B and C are retained as explored alternatives.
 
@@ -51,7 +51,7 @@ Three interactive HTML comps covering every page (Login, First Login, Home, Admi
 All three comps demonstrate spec behaviors: globally unique email sign-in (no org picker), lockout after 5 failed attempts, one-time temporary passwords, first-login forced password change with inline complexity checklist, soft-delete status retirement with minimum-lane guardrail, immediate-save reorder cues, compact cards (title, priority, assignee, upvote) with title-click detail, mention highlighting, and comment character-count feedback.
 
 ## Design Intent
-- Fluent UI component language: top app bar, nav, cards, command bars, tables, panels, buttons, badges, and dialogs
+- Component language: top app bar, nav, cards, command bars, tables, panels, buttons, badges, and dialogs
 - Accessibility and usability focus: strong hierarchy, visible labels, predictable actions, readable density, and clear empty-state/help text
 - Role-aware surfaces: admin tools are distinct from day-to-day collaboration views
 - Error prevention cues should include inline mention validation, comment character-count feedback, and guided empty states with primary actions
@@ -82,16 +82,9 @@ All three comps demonstrate spec behaviors: globally unique email sign-in (no or
 - Notifications and Audit (`SPEC/20-feature-notifications.md`)
 	- `07-auth-lockout-and-temp-reset.svg` and `11-idea-detail-editorial-variant.svg` include event-oriented cues that align with deferred delivery and audit-focused MVP behavior.
 
-## Fluent UI Blazor Implementation Notes
-- These artifacts are intended for implementation with Fluent UI Blazor components and services.
-- Keep required provider components in root layout when implementing service-based UI: `FluentToastProvider`, `FluentDialogProvider`, `FluentMessageBarProvider`, `FluentTooltipProvider`, and `FluentKeyCodeProvider`.
-- Use service patterns for dialogs and toasts during implementation rather than toggling dialog visibility directly.
-- Do not add manual script or stylesheet tags for the Fluent library; rely on package-provided assets and initializers.
-
-
 ## Redesign Comps for the TypeScript Conversion (2026-08-30)
 
-**These four comps are for a prospective stack conversion, not for the current Blazor app.** They exist to answer ticket `01` of the wayfinder map at `SPEC/typescript-conversion-map/map.md`, where Comp C "Fluent Editorial" is deliberately **unlocked** so the redesign can be argued on merit. Comp C remains the locked direction for the .NET client; nothing here changes that, and nothing here should be built against until ticket `01` is resolved.
+**These four comps are for a prospective stack conversion, not for the application as it then stood.** They exist to answer ticket `01` of the wayfinder map at `SPEC/typescript-conversion-map/map.md`, where Comp C "Fluent Editorial" is deliberately **unlocked** so the redesign can be argued on merit. Comp C remained the locked direction at the time; nothing here changed that, and nothing here should be built against until ticket `01` is resolved.
 
 All four render identical seed content (Northwind Labs, 4 boards, 6 statuses, the same 12 ideas) across the same core surfaces — board, ideas list, idea detail, statuses admin, login — plus an app shell with board switcher, user menu, a toggleable View As banner, and an AI draft strip. Open in a browser; all interactions are live.
 
@@ -130,7 +123,7 @@ Comps K and N were verified by driving them in a real browser, which caught bugs
 ### A scope comp for Question C (2026-09-01)
 
 `comp-01c-scope.html` — **Scope Desk**. Not a visual direction; that question closed on 2026-09-01 when the user chose to
-**carry Comp C "Fluent Editorial" forward** (Question B) and **rebuild it in Tailwind rather than adopt Fluent UI React**
+**carry Comp C "Fluent Editorial" forward** (Question B) and **rebuild it in Tailwind rather than adopt a third-party component library**
 (Question D). K, L and N are not selected. This comp is drawn in that settled language.
 
 It exists to answer ticket `01`'s **Question C** — which net-new feature concepts go into the conversion plan. The first

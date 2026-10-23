@@ -46,6 +46,9 @@ import {
   followDenial,
   mayDeleteIdeas,
   mayEditIdeaContent,
+  mayScheduleTask,
+  SCHEDULE_DENIAL,
+  schedulerFor,
   writeDenial,
 } from '@/lib/roles'
 import { reorderLanes } from '@/lib/server/board-actions'
@@ -92,7 +95,6 @@ type BoardContext = {
 /** The Backlog side panel (TB-7), handed over by a work board's page that has sprints switched on. */
 type BacklogPanel = { rows: Idea[]; total: number; sprints: Sprint[] }
 
-const PLAN_DENIAL = 'Only an Org Admin can put a task in a sprint.'
 const NO_ACTIVE_SPRINT = 'No active sprint.'
 
 type Removing = { id: string; title: string; boardId: string | null }
@@ -234,12 +236,16 @@ export function IdeaWorkspace({
   const [panelOpen, setPanelOpen] = useState(false)
   const [draggingTask, setDraggingTask] = useState<Idea | null>(null)
   const activeSprint = backlog?.sprints.find((sprint) => sprint.state === 'Active') ?? null
-  const canPlan = user.role === 'OrgAdmin'
+  const scheduler = schedulerFor(user)
 
   // Why a lane will not take the task being dragged from the panel, or null. The server decides
   // for real (blockers and all, inside the one write); this only says so before the drop.
   const taskRefusal = (task: Idea, laneId: string): string | null =>
-    !canPlan ? PLAN_DENIAL : !activeSprint ? NO_ACTIVE_SPRINT : moveRefusal(task, lanes, laneId)
+    !mayScheduleTask(scheduler, task.authorUserId)
+      ? SCHEDULE_DENIAL
+      : !activeSprint
+        ? NO_ACTIVE_SPRINT
+        : moveRefusal(task, lanes, laneId)
 
   // A lane drop: the Active sprint and the lane's status in one write. Nothing moves until the
   // server agrees, so a refusal leaves the task in the backlog and says why.
@@ -761,11 +767,11 @@ export function IdeaWorkspace({
                   </Button>
                 </div>
                 <p className="m-0 text-xs text-muted-foreground">
-                  {canPlan
+                  {scheduler
                     ? activeSprint
-                      ? `Drag a task onto a lane to put it in ${activeSprint.name} and move it there, or use Add.`
+                      ? `Drag a task you can edit onto a lane to put it in ${activeSprint.name} and move it there, or use Add.`
                       : `${NO_ACTIVE_SPRINT} Start a sprint to drop tasks onto lanes; Add still works.`
-                    : PLAN_DENIAL}
+                    : SCHEDULE_DENIAL}
                 </p>
                 <BacklogList
                   boardId={board.id}
@@ -773,11 +779,10 @@ export function IdeaWorkspace({
                   rows={backlog.rows}
                   total={backlog.total}
                   lanes={lanes}
-                  canSelect={false}
+                  scheduler={scheduler}
                   newTaskHref={null}
                   sprints={backlog.sprints}
                   panel={{
-                    canAdd: canPlan,
                     onDragStart: setDraggingTask,
                     onDragEnd: () => {
                       setDraggingTask(null)

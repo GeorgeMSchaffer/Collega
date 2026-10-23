@@ -3,7 +3,13 @@ import { loadPullSetup } from '@/components/boards/load-pull-setup'
 import { BoardRefusal } from '@/components/settings/admin-only'
 import { BoardForm } from '@/components/settings/board-form'
 import { SettingsPage } from '@/components/settings/settings-page'
-import { getBoard, getBoardOverviews, getReferenceContext, getStatuses } from '@/lib/data'
+import {
+  getBoard,
+  getBoardOverviews,
+  getIdeaTypeChoices,
+  getReferenceContext,
+  getStatuses,
+} from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
@@ -54,6 +60,11 @@ export default async function EditBoardPage({ params }: { params: Promise<{ boar
           (overview?.lanes ?? []).map((lane) => [lane.id, lane.ideaCount]),
         )}
         ideaFeaturesEnabled={board.ideaFeaturesEnabled}
+        allowedIdeaTypes={
+          board.canSetAllowedIdeaTypes
+            ? { choices: await getIdeaTypeChoices(), selectedIds: board.allowedIdeaTypeIds }
+            : undefined
+        }
         references={references}
         // A board may hold a lane whose status has since been archived, and the catalog excludes
         // those. Merging them in is what keeps such a lane visible and removable rather than

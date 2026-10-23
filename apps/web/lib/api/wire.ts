@@ -203,6 +203,10 @@ export type WireBoardDetail = {
   sprintsEnabled: boolean
   ideaFeaturesEnabled: boolean
   nextItemNumber: number
+  /** Idea type ids the board takes, in sort order; empty means every type. */
+  allowedIdeaTypeIds: readonly string[]
+  /** Whether this caller may change `allowedIdeaTypeIds`. */
+  canSetAllowedIdeaTypes: boolean
 }
 
 export type WireSwimlane = {

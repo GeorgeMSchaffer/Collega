@@ -81,7 +81,7 @@ describe('sprint planning page not found', () => {
 })
 
 describe('sprint planning page reads and gating', () => {
-  it('gives an Org Admin the Backlog, the sprint’s tasks and canPlan', async () => {
+  it('gives an Org Admin the Backlog, the sprint’s tasks and a scheduler', async () => {
     await open('OrgAdmin')
     expect(mocks.getBacklog).toHaveBeenCalledWith('b-1')
     expect(mocks.getSprintTasks).toHaveBeenCalledWith('b-1', 's-1')
@@ -90,17 +90,24 @@ describe('sprint planning page reads and gating', () => {
       backlog: [{ id: 'k' }],
       backlogTotal: 7,
       inSprint: [{ id: 't' }],
-      canPlan: true,
+      scheduler: { isAdmin: true },
     })
     expect(screen.getByRole('heading', { name: 'Sprint 1' })).toBeTruthy()
   })
 
-  it.each([['User'], ['ReadOnly'], ['SiteAdmin']] as const)(
-    '%s gets the sprint’s tasks, no Backlog read and no canPlan',
+  it('gives a User the Backlog and the sprint’s tasks, as a non-admin scheduler', async () => {
+    await open('User')
+    expect(mocks.getBacklog).toHaveBeenCalledWith('b-1')
+    expect(handed()).toMatchObject({ backlog: [{ id: 'k' }], scheduler: { isAdmin: false } })
+    expect(handed().inSprint).toEqual([{ id: 't' }])
+  })
+
+  it.each([['ReadOnly'], ['SiteAdmin']] as const)(
+    '%s gets the sprint’s tasks, no Backlog read and no scheduler',
     async (role) => {
       await open(role)
       expect(mocks.getBacklog).not.toHaveBeenCalled()
-      expect(handed()).toMatchObject({ backlog: [], backlogTotal: 0, canPlan: false })
+      expect(handed()).toMatchObject({ backlog: [], backlogTotal: 0, scheduler: null })
       expect(handed().inSprint).toEqual([{ id: 't' }])
     },
   )
@@ -116,7 +123,7 @@ describe('sprint planning page reads and gating', () => {
   it('does not let an admin plan on an archived board', async () => {
     mocks.board = { ...mocks.board, isArchived: true }
     await open('OrgAdmin')
-    expect(handed()).toMatchObject({ canPlan: false })
+    expect(handed()).toMatchObject({ scheduler: null })
     expect(mocks.getBacklog).not.toHaveBeenCalled()
   })
 
