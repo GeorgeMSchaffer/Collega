@@ -5,8 +5,7 @@
 >   checks for putting the TypeScript stack on production. Operational only. `SPEC/50-vercel-deployment.md`
 >   explains the reasoning; where it and this runbook differ on a procedure, this runbook and the
 >   code win.
-> - **Key rules:** `pnpm check` is the gate, not the golden replay; there is no data to migrate from
->   .NET — the target is seeded fresh. Code rolls back; the database does not, and there is no
+> - **Key rules:** `pnpm check` is the gate, not the golden replay; there is no data to migrate — the target is seeded fresh. Code rolls back; the database does not, and there is no
 >   older stack behind either.
 > - **Decisions:** 2026-09-29 "How the cutover is run" (this runbook's owner answers); 2026-09-09 "The drifted database is rebuilt, not migrated"; 2026-09-10 "How the two
 >   Vercel projects are configured, and how production gets its first administrator"; 2026-09-11 "The
@@ -25,7 +24,7 @@ prepares the release.
 for web, `collega-api`), `collega-api` production has answered `GET /api/v1/health` with `200`, and
 a real sign-in has succeeded (`SPEC/tracker-history/2026-09-28-rows-part-1.md`, "Deployment
 (Vercel)"). So "cutover" here means **the first release of the finished conversion onto `main`**,
-against a database that holds nothing worth keeping. There is no .NET deployment to switch away
+against a database that holds nothing worth keeping. There is no earlier deployment to switch away
 from and no data transform to run: F3 is not a slice (`SPEC/50-vercel-deployment.md` §10).
 
 ---
@@ -192,7 +191,7 @@ In order. Each step says what proves it worked; stop at the first that does not 
 
 ## 3. Rollback posture
 
-**Code rolls back; the database does not, and there is no older stack behind either.** No .NET
+**Code rolls back; the database does not, and there is no older stack behind either.** No earlier
 deployment exists to fall back to (`SPEC/50-typescript-migration.md` §7).
 
 ### What rolls back

@@ -11,6 +11,7 @@ import { stubDialogMethods } from './support/dialog'
  * the Move / Not yet prompt. The server actions are the boundary.
  */
 vi.mock('@/lib/server/idea-actions', () => ({
+  boardAllowedIdeaTypeIds: async () => [],
   addBoardTask: vi.fn(),
   moveIdea: vi.fn(),
   removeBoardTask: vi.fn(),

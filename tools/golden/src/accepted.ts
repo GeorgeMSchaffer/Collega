@@ -1,7 +1,7 @@
 // Differences from the recorded corpus that someone decided to keep.
 //
 // `SPEC/decisions.md` 2026-09-09 makes the corpus a regression detector rather than the
-// specification: shipping for feedback outranks fidelity to the frozen .NET app, so a diff is a
+// specification: shipping for feedback outranks fidelity to the app the corpus was recorded from, so a diff is a
 // question with three answers — fix it, accept and record it, or deliberately do better. This file
 // is the second answer, and it exists because F1 is the go/no-go gate and "fix until clean" cannot
 // mean zero diffs once some differences are chosen. It has to mean *every diff is fixed or listed

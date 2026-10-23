@@ -398,8 +398,9 @@ export class IdeaService {
   /**
    * `POST /boards/{boardId}/tasks`: a task made from the work board itself. With a parent it is
    * `createBoardTask` for that parent (the board in the path must be the board the parent's lane
-   * references); without, a standalone card in the board's leftmost lane. A sprint needs an
-   * Org Admin and must be a live, non-`Completed` sprint of this board.
+   * references); without, a standalone card in the board's leftmost lane. A sprint must be a live,
+   * non-`Completed` sprint of this board; the creator is the author, so any member who may create
+   * may send one.
    */
   async createTaskOnBoard(
     boardId: string,
@@ -413,11 +414,6 @@ export class IdeaService {
       throw new NotFoundError('Board not found.')
     }
     this.ensureOrganizationScope(board.organizationId)
-    if (trimOrNull(command.sprintId) !== null && !this.isOrgAdminOf(board.organizationId)) {
-      throw new ForbiddenError('You are not allowed to assign tasks to a sprint.', {
-        sprintId: ['Only an Org Admin can put a task in a sprint.'],
-      })
-    }
     if (!(await this.boards.isReferencedByLane(boardId))) {
       throw new UnprocessableError(
         'boardIsNotAWorkBoard',
@@ -441,13 +437,6 @@ export class IdeaService {
       return this.addBoardTask(parent, command, boardId, sprintId)
     }
     return this.addStandaloneCard(board, command, sprintId)
-  }
-
-  private isOrgAdminOf(organizationId: string): boolean {
-    return (
-      this.requireAuthenticatedRole() === Role.OrgAdmin &&
-      this.currentUser.organizationId === organizationId
-    )
   }
 
   /** A task's sprint: a live, non-`Completed` sprint of the task's own board, or `null`. */
@@ -1784,23 +1773,21 @@ export class IdeaService {
 
   /**
    * Bulk sprint planning on a work board: add, move or return to the backlog, optionally with the
-   * lane drop's status. Admin only, all or nothing - every item is checked and staged first and
+   * lane drop's status. Whoever may edit every item (its author or an Org Admin; a status also needs
+   * the status-move right), all or nothing - every item is checked and staged first and
    * one commit takes them all, so a refused item leaves nothing written. A status move is
    * `stageStatusMove`, the same path as `changeStatus`. An item already where it is told to be
    * writes nothing.
    */
   async assignBoardSprints(boardId: string, command: AssignBoardSprintCommand): Promise<void> {
     ensureNotDirectSiteAdmin(this.currentUser)
-    this.requireAuthenticatedRole()
+    this.requireIdeaEditRole()
 
     const board = await this.boards.getBoardContext(boardId)
     if (!board) {
       throw new NotFoundError('Board not found.')
     }
     this.ensureOrganizationScope(board.organizationId)
-    if (!this.isOrgAdminOf(board.organizationId)) {
-      throw new ForbiddenError('You are not allowed to assign issues to a sprint.')
-    }
     ensureBoardNotArchived(board)
 
     const ideaIds = command.ideaIds
@@ -1820,18 +1807,6 @@ export class IdeaService {
       })
     }
 
-    const sprint = await this.resolveAssignableSprintSummary(board.organizationId, command.sprintId)
-    if (sprint && sprint.boardId !== board.boardId) {
-      throw new ValidationError('One or more fields are invalid.', {
-        sprintId: ['Sprint must be a sprint of this board.'],
-      })
-    }
-    if (command.statusId !== null && !hasSwimlaneForStatus(board, command.statusId)) {
-      throw new ValidationError('One or more fields are invalid.', {
-        statusId: ['Status must be an active swimlane on the board.'],
-      })
-    }
-
     const found = new Map(
       (await this.ideaRepository.listByIds(ideaIds)).map((idea) => [idea.id, idea]),
     )
@@ -1844,8 +1819,30 @@ export class IdeaService {
 
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
-    const sprintId = sprint?.id ?? null
     const afterCommit: Array<() => Promise<void>> = []
+
+    for (const idea of ideas) {
+      if (idea !== undefined && !this.canAdministerIdeaContent(idea, actorId)) {
+        const message = `Only the author or an Org Admin can schedule ${itemLabel(board.keyPrefix ?? undefined, idea)}.`
+        throw new ForbiddenError(message, { ideaIds: [message] })
+      }
+    }
+
+    const sprint = await this.resolveAssignableSprintSummary(board.organizationId, command.sprintId)
+    if (sprint && sprint.boardId !== board.boardId) {
+      throw new ValidationError('One or more fields are invalid.', {
+        sprintId: ['Sprint must be a sprint of this board.'],
+      })
+    }
+    if (command.statusId !== null && !hasSwimlaneForStatus(board, command.statusId)) {
+      throw new ValidationError('One or more fields are invalid.', {
+        statusId: ['Status must be an active swimlane on the board.'],
+      })
+    }
+    if (command.statusId !== null) {
+      this.ensureCanMoveIdea()
+    }
+    const sprintId = sprint?.id ?? null
 
     for (const original of ideas) {
       if (original === undefined) {

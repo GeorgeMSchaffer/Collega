@@ -81,7 +81,7 @@ Each event persists a canonical link to the idea, stored in the `NotificationEve
 - No SMTP, email client, or outbound HTTP — purely database writes.
 
 ### Test coverage
-The .NET tests T037–T039 were discarded with that suite (ticket `10`; `SPEC/50-typescript-migration.md` §1). What they asserted still holds and is what coverage checks:
+Tests T037–T039 were discarded (ticket `10`; `SPEC/50-typescript-migration.md` §1). What they asserted still holds and is what coverage checks:
 - the idea and comment paths emit `IdeaMention` / `CommentMention` / `CommentAdded` / `IdeaStatusChanged` events through the writer port, observable with a fake writer;
 - an emitted event's `Link` field equals `/ideas/{ideaId}`;
 - the notification path has no SMTP client and no outbound HTTP client.

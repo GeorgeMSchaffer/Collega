@@ -1,13 +1,13 @@
 # TypeScript Stack Migration — Costed, Sequenced Plan
 
 > **At a glance** (added 2026-09-28; the text below wins where they differ)
-> - **Scope:** the .NET → Next.js + Nest.js + Prisma conversion plan — waves, slices, settled constraints;
+> - **Scope:** the conversion plan to Next.js + Nest.js + Prisma — waves, slices, settled constraints;
 >   "authorized and executing" (Wave A done 2026-09-03, Wave 0 2026-09-06, F6 2026-09-13).
 > - **Key rules:** §1's settled constraints are not re-litigated — big-bang cutover (6), HTTP-only
 >   Next ↔ Nest (11), Vercel + Prisma Postgres (14). §4.1: a slice owns path globs; disjoint ones may run.
 > - §4.2: `schema.prisma` owned by S0.2 then frozen (amend via one slice); §4.3: `30-Contracts.md` read-only.
 > - **Contracts:** none by file; §4.3 treats `SPEC/30-Contracts.md` as a whole as read-only
-> - **Decisions:** 2026-09-04 ".NET development stops; the conversion starts now"; 2026-08-31 "TypeScript
+> - **Decisions:** 2026-09-04 "development of the previous stack stops; the conversion starts now"; 2026-08-31 "TypeScript
 >   conversion: three constraints settled"; 2026-09-11 "The golden replay is not a gate, and never was meant
 >   to be one"; 2026-09-08 "Wave G is cut from the conversion and revisited after cutover"
 
@@ -15,7 +15,7 @@ Status: **authorized and executing.** Written 2026-08-31; became the active spri
 Sprint 8 was cancelled and conversion ticket `08` cleared the last gate on Wave 0. Execution wrapper:
 `SPEC/sprints/sprint-09-typescript-conversion.md`. Supersedes nothing; constrains the conversion effort.
 
-- Converts Collega from .NET 8 / Blazor WASM / EF Core to Next.js + Nest.js + Prisma + Postgres on Vercel,
+- Converts Collega from the previous application stack to Next.js + Nest.js + Prisma + Postgres on Vercel,
   per the stack recorded in `CLAUDE.md`.
 - **Provenance.** Assembles the `wayfinder` map charted 2026-08-30 — its twelve tickets, settled
   constraints and measured baseline; it is the artifact ticket `12` exists to produce. The map now lives beside this file at
@@ -32,18 +32,18 @@ Nine constraints settled with the user during charting (2026-08-30), three more 
 | # | Constraint | Detail |
 |---|---|---|
 | 1 | **Destination is a plan** | Charting produced this document. The build is a separate authorization. |
-| 2 | **Motive: hiring + ecosystem** | Not Blazor frustration. The *whole* stack moves, server included. The cheap client-only option was ruled out. |
-| 3 | ~~**Starts after Sprint 8**~~ **Starts after Sprint 7.5** | Superseded 2026-09-04: Sprint 8 is cancelled and the .NET stack is never deployed, so there is no MVP-on-.NET to ship first. Wave A already ran. |
+| 2 | **Motive: hiring + ecosystem** | Not frustration with the previous client. The *whole* stack moves, server included. The cheap client-only option was ruled out. |
+| 3 | ~~**Starts after Sprint 8**~~ **Starts after Sprint 7.5** | Superseded 2026-09-04: Sprint 8 is cancelled and the previous stack is never deployed, so there is no MVP on it to ship first. Wave A already ran. |
 | 4 | **Estimated in agent-slices** | Worktree-sized units on the existing multi-agent workflow, not developer-weeks. |
 | 5 | **Vitest + Playwright** | Not Cypress. The existing `e2e/` TypeScript Playwright suite is an asset and is kept. |
 | 6 | **Big-bang cutover** | Not a strangler. No shippable intermediate; one cutover. |
 | 7 | **Prisma introspect, then reshape** | `prisma db pull` from the live schema as a starting point, then deliberate changes. Not straight adoption, not greenfield. |
 | 8 | **Turborepo + pnpm workspaces** | `packages/{domain,application,infrastructure}` + `apps/{api,web}`, mirroring current project boundaries. Enforced in the same lint run as everything else — by **Biome `noRestrictedImports` overrides** since 2026-09-06, not `eslint-plugin-boundaries` (`decisions.md`). |
 | 9 | **UI is comp P, on Tailwind + shadcn/ui** | Locked to **comp P** on 2026-08-31 and made canonical 2026-09-03 (`SPEC/decisions.md`). Structure locked, palette open. Built on **Tailwind CSS v4 + shadcn/ui**, used as intended; comp Q (`comp-q-*.html`) is the reference rendering and `build_q.py` carries the component map. |
-| 10 | **Golden contract tests** | Ticket `04`. Record all 81 endpoints against live .NET, replay against Nest. |
+| 10 | **Golden contract tests** | Ticket `04`. Record all 81 endpoints against the previous API, replay against Nest. |
 | 11 | **HTTP-only Next ↔ Nest** | Ticket `09`. No direct `packages/application` imports from Next. |
 | 12 | **Everything ports; View As isolated** | Ticket `03`. Nothing deferred; impersonation gets its own slice. |
-| 13 | **The .NET test suite is discarded** | Ticket `10`, decided 2026-09-03. Behaviour is pinned by the golden corpus at the HTTP surface; each slice writes fresh Vitest coverage for its own layer, by a QA agent rather than by the agent that wrote the code. The accepted gap: 142 Domain + 324 Application unit assertions vanish until slices re-write them, and the corpus cannot see an invariant that never reaches an endpoint. |
+| 13 | **The previous test suite is discarded** | Ticket `10`, decided 2026-09-03. Behaviour is pinned by the golden corpus at the HTTP surface; each slice writes fresh Vitest coverage for its own layer, by a QA agent rather than by the agent that wrote the code. The accepted gap: 142 Domain + 324 Application unit assertions vanish until slices re-write them, and the corpus cannot see an invariant that never reaches an endpoint. |
 | 14 | **Vercel, with Prisma Postgres** | Ticket `02`, decided 2026-09-03. Nest runs as serverless functions: no long-lived in-process state, and every request pays a cold start. AI idea assist is where this bites first — its budget gate and per-organization usage counters must be storage-backed, not process-backed. |
 | 15 | **Net-new scope is Wave G, after F1** | Ticket `01` Question C, decided 2026-09-03. Loop, decision records, commitment strip and Triage Mode are in; momentum, duplicate clustering and vote budget are not. *Superseded 2026-09-29 — see `SPEC/decisions.md` "Spec contradictions resolved", 2026-09-08 "Wave G is cut from the conversion and revisited after cutover" and 2026-09-11 "The golden replay is not a gate, and never was meant to be one": Wave G waits until after cutover, and F1 is not a gate. The scope decision stands.* |
 
@@ -54,7 +54,7 @@ Nine constraints settled with the user during charting (2026-08-30), three more 
   port. That is a ~60,000-line rewrite with its oracle removed. The user was shown this and chose both
   deliberately.
 - **Constraint 10 is what replaces those safety nets** — not optional garnish; Wave A exists solely to buy
-  it before the .NET API is gone.
+  it before the previous API is gone.
 - Why it is not theoretical: Sprint 5's four Postgres defects were invisible to 561 green tests, because the
   InMemory provider saw neither collation, SQL translation, nor DDL. A full rewrite has a much larger
   version of that blind spot.
@@ -68,17 +68,17 @@ measured for the same reason.
 
 | Project | Lines | Units |
 |---|---:|---|
-| `Collega.Domain` | 3,191 | feature-foldered entities, enums, value objects |
-| `Collega.Application` | 8,624 | **30 services** |
-| `Collega.Infrastructure` | 14,401 | **20 DbSets**, EF migrations, integrations |
-| `Collega.API` | 4,108 | **15 controllers**, **81 endpoints** |
-| `Collega.Client` | 13,043 | 21 pages, 14 shared components (C# + Razor + scoped CSS) |
+| Domain | 3,191 | feature-foldered entities, enums, value objects |
+| Application | 8,624 | **30 services** |
+| Infrastructure | 14,401 | **20 entity sets**, migrations, integrations |
+| API | 4,108 | **15 controllers**, **81 endpoints** |
+| Client | 13,043 | 21 pages, 14 shared components |
 | Tests | 16,900 | |
 | **Total** | **~60,300** | **to re-express** |
 
 - Already TypeScript and portable: the `e2e/` Playwright suite (9 specs).
-- Expected output is smaller than input: **~40–45k lines of TypeScript including tests.** TS is terser than
-  C#, and Prisma absorbs most of what EF Core expresses as configuration.
+- Expected output is smaller than input: **~40–45k lines of TypeScript including tests.** TS is terser, and
+  Prisma absorbs most of what the previous ORM expressed as configuration.
 
 ---
 
@@ -180,13 +180,13 @@ Sized to one worktree agent session. `⇉` marks the maximum number that can run
 
 ### Wave A — Golden capture ⇉ 2 · **COMPLETE 2026-09-03**
 
-The only part of this effort that could not wait, and it is done. It ran against the **live .NET API**, so it
+The only part of this effort that could not wait, and it is done. It ran against the **previous API**, so it
 collided with nothing in the TypeScript tree. Its deadline was never Sprint 8's close — it is cutover, which
-deletes the .NET solution and with it any ability to record again.
+deletes the previous solution and with it any ability to record again.
 
 | Slice | Owns | Notes |
 |---|---|---|
-| **A1** Capture harness | `tools/golden/` | **Built 2026-09-03.** Drives the live .NET API and records request/response pairs across all four roles — Site Admin, Org Admin, User, Read Only — because authorization is behaviour, not decoration. Zero-dependency TypeScript on Node's own type stripping; 48 self-tests. `tools/golden/README.md`. |
+| **A1** Capture harness | `tools/golden/` | **Built 2026-09-03.** Drives the previous API and records request/response pairs across all four roles — Site Admin, Org Admin, User, Read Only — because authorization is behaviour, not decoration. Zero-dependency TypeScript on Node's own type stripping; 48 self-tests. `tools/golden/README.md`. |
 | **A2** Golden corpus | `tools/golden/fixtures/` | **Recorded 2026-09-03.** **447 cases over all 81 endpoints** at four roles and anonymous, error paths and validation failures included, replaying 447/447 clean against a fresh seed. This is the oracle. `golden scaffold` generates the full grid of cases; `golden coverage` reports the holes, and `tools/golden/README.md` names the two deliberate ones. |
 | **A3** Replay harness | `tools/golden/replay/` | **Built 2026-09-03.** Replays the corpus against a target base URL and diffs. Written as a self-check against the stack it recorded, pointed at Nest in Wave F. |
 
@@ -196,12 +196,12 @@ across 19 controllers. Slice F6 deleted that source, so the result is committed 
 Coverage is measured against the same list, so a route the corpus never touches shows up as a hole rather
 than as silence.
 
-> ~~**Until Wave F, the .NET stack must stay runnable** even though no development happens on
+> ~~**Until Wave F, the previous stack must stay runnable** even though no development happens on
 > it. A re-capture is only possible while the API still boots, and cutover deletes it. A
 > change that breaks the API's boot path is still a problem — escalate rather than
 > quietly proceeding.~~
 >
-> *Superseded 2026-09-29 — see `SPEC/decisions.md` "Spec contradictions resolved": the .NET stack was deleted in F6 on 2026-09-13, not chained to F1 (2026-09-11 "The golden replay is not a gate, and never was meant to be one"), so there is nothing left to keep runnable and the corpus can no longer be re-recorded.*
+> *Superseded 2026-09-29 — see `SPEC/decisions.md` "Spec contradictions resolved": the previous stack was deleted in F6 on 2026-09-13, not chained to F1 (2026-09-11 "The golden replay is not a gate, and never was meant to be one"), so there is nothing left to keep runnable and the corpus can no longer be re-recorded.*
 
 ### Wave 0 — Foundation ⇉ 1 (strictly serial; blocks everything after it)
 
@@ -243,7 +243,7 @@ Smaller than its 14,401 lines suggest — Prisma absorbs most EF configuration a
 | **C1** Repository adapters | `packages/infrastructure/src/repositories/**` — transaction boundaries, unit of work |
 | **C2** Integrations | `packages/infrastructure/src/integrations/**` — `sharp` for portraits (this **removes the ImageSharp 3.1.x licensing constraint**), `csv-parse` for import, `@nestjs/throttler` for rate limiting, notification delivery |
 
-C2 must preserve the product rule that survived from the .NET side: **user import is direct, idea import
+C2 must preserve the product rule that survived from the previous side: **user import is direct, idea import
 goes through View As.**
 
 ### Wave D — API ⇉ 7
@@ -282,13 +282,13 @@ goes through View As.**
 | **F3** Data migration | The transform, plus an answer to whether it is reversible. *Nothing to transform: the target is seeded fresh (`SPEC/decisions.md` 2026-09-09 "The drifted database is rebuilt, not migrated"), so the rollback question belongs to F4.* |
 | **F4** Cutover runbook | Sequence, rollback posture, the go/no-go checklist — **`SPEC/50-cutover-runbook.md`** (slice 135). **Executed 2026-10-21:** released to `main` (`3cd0770c`, then the build fix `369a856e`); production live. |
 | **F5** Spec reconciliation | Ticket `11` — `SPEC/*.md` updated to describe the shipped stack, including reconciling `20-feature-client-ui.md` against comp P. **Closed 2026-09-29** (slices 119–124 and 134): every served route has a contract except the two demo-seed routes, which await a decision (`05-product-definition.md` §8 item 7), and `05-product-definition.md` §7 is re-derived at `e92ddde` |
-| **F6** Delete the .NET solution | **Done 2026-09-13.** `src/Collega.*`, `tests/`, `Collega.sln`, `global.json`, `.config/dotnet-tools.json`, `tools/Collega.AiPlayground`, `deploy/azure`, `docker/proxy-ca`, `DOTNET.md`, the compose `api` and `web` services, and the launch config — 481 files. Plus a sweep of the stale pointers left behind and a rewritten `README.md`. Two things needed real work rather than deletion: `tools/golden` parsed the controllers for its endpoint inventory, so that is now a committed snapshot; and `tools/Collega.AiPlayground`'s evaluation corpus was moved to `tools/prompt-eval` because it outlives its runner |
+| **F6** Delete the previous solution | **Done 2026-09-13.** 481 files of the previous application, its tooling and deployment config. Plus a sweep of the stale pointers left behind and a rewritten `README.md`. Two things needed real work rather than deletion: `tools/golden` parsed the controllers for its endpoint inventory, so that is now a committed snapshot; and `tools/Collega.AiPlayground`'s evaluation corpus was moved to `tools/prompt-eval` because it outlives its runner |
 
 - F1, F2 and F3 parallelise. F4 needs all three. F5 and F6 land last.
 - **Remaining, 2026-10-01: F4** (the cutover runbook; executed 2026-10-21). F1 closed 2026-10-01 (360 match, 87 accepted, 0 unexplained); F2, F5 and F6 are closed.
 - **F6 is the only slice that may delete `src/` or `tests/`.** They were frozen on 2026-09-06
   (`SPEC/decisions.md`) — no features, no fixes, no tests — but kept on disk because re-recording a golden
-  fixture needs the .NET API to boot, and Waves D and E are precisely where a missing or wrong fixture
+  fixture needs the previous API to boot, and Waves D and E are precisely where a missing or wrong fixture
   surfaces. ~~Once F1 replays clean, that reason is spent and the code goes.~~ *Superseded 2026-09-29 — see `SPEC/decisions.md` "Spec contradictions resolved" and 2026-09-11 "The golden replay is not a gate, and never was meant to be one": that chain was cut, and F6 deleted the code on 2026-09-13 on its own merits.*
 
 ### Wave G — Net-new scope ⇉ 3 · **starts when F1 is green**
@@ -350,7 +350,7 @@ Derivation, stated so it can be argued with rather than trusted:
   tokens per delivered line**, with browser-verified work costing roughly **1.6×**
   inspection-only work.
 - ~40–45k lines of output at that rate is ~4M — but that rate is greenfield single files.
-  A rewrite re-reads the C# it replaces, debugs across package boundaries, and passes a
+  A rewrite re-reads the code it replaces, debugs across package boundaries, and passes a
   review gate per slice. Realistic multiplier **2–4×**.
 - Cross-check on the chosen unit: ~66–82 slices at ~200k per implementation slice is
   13–17M, plus ~5M for review agents.
@@ -370,7 +370,7 @@ that needs current per-model pricing checked rather than guessed.
 | `11` spec reconciliation | Lands as F5; does not gate earlier waves. ~~**The only ticket still open.**~~ *Closed 2026-09-29 with F5.* |
 
 - **Answered 2026-09-03** and no longer open (`SPEC/decisions.md`): `01` Question C — Loop, decision records,
-  commitment strip and Triage Mode are in, as **Wave G**; `10` — the .NET suite is discarded in favour of the
+  commitment strip and Triage Mode are in, as **Wave G**; `10` — the previous suite is discarded in favour of the
   golden corpus plus per-slice Vitest; `02` — Vercel with Prisma Postgres, which makes serverless Nest a
   design constraint rather than a deployment detail.
 - **Answered 2026-09-04: `05`**, by running introspection against a live database rather than reading
@@ -408,9 +408,9 @@ Big-bang was chosen deliberately, so the rollback posture has to be explicit rat
 - **Gate:** ~~F1 green — all 81 endpoints × 4 roles replay against Nest with every diff either
   fixed or recorded in `tools/golden/src/accepted.ts` — plus~~ F2's adapted Playwright suite
   green. *Superseded 2026-09-29 — see `SPEC/decisions.md` "Spec contradictions resolved" and 2026-09-11 "The golden replay is not a gate, and never was meant to be one": F1 is not a gate — a failing or unrunnable replay does not block cutover — and `pnpm check` is.*
-- **Rollback unit is the database, not the .NET deployment.** This bullet originally read "the .NET stack stays
+- **Rollback unit is the database, not the previous deployment.** This bullet originally read "the previous stack stays
   deployable and its database restorable" — that is **dead as of 2026-09-04**, when Sprint 8 was cancelled and
-  the .NET stack was never deployed. There is no .NET deployment to fall back to, and after F6 there is no .NET
+  the previous stack was never deployed. There is no earlier deployment to fall back to, and after F6 there is no previous
   code either. F4 must therefore state the rollback posture in terms of the database alone: what is backed up,
   how it is restored, and for how long.
 - **F3 must state whether the data transform is reversible.** If it is not, that is the real point of no
@@ -420,14 +420,14 @@ Big-bang was chosen deliberately, so the rollback posture has to be explicit rat
 
 ## 8. Not converting
 
-- **The .NET solution itself.** Replaced, not maintained in parallel — that is what big-bang means. **Frozen
+- **The previous solution itself.** Replaced, not maintained in parallel — that is what big-bang means. **Frozen
   2026-09-06** (`SPEC/decisions.md`): its code and every instruction file under `src/` and `tests/` are no
   longer applicable guidance, and nothing may be built, fixed or tested there. It stayed on disk until **F6**
   (2026-09-13) solely as a golden-fixture recorder and as the only runnable reference for existing behaviour;
   both jobs are over.
-- **The 16,900-line C# test suite**, as C#. Its *coverage* is replaced by F1 + F2 + re-derived Vitest tests
+- **The 16,900-line previous test suite**, as is. Its *coverage* is replaced by F1 + F2 + re-derived Vitest tests
   (ticket `10`).
-- **Sprint 7.5.** Implemented on .NET before this starts. **Sprint 8 was cancelled** 2026-09-04 and the .NET
+- **Sprint 7.5.** Implemented on the previous stack before this starts. **Sprint 8 was cancelled** 2026-09-04 and that
   stack is never deployed.
 - **The product's feature set** — with one bounded exception. The conversion itself re-expresses existing
   behaviour; **Wave G** carries the four net-new features decided on 2026-09-03 ~~and starts only once F1 is
@@ -448,12 +448,12 @@ Big-bang was chosen deliberately, so the rollback posture has to be explicit rat
    same day too, as Wave G.
 2. **Schedule Wave A.** Done 2026-09-03 — 447 cases over all 81 endpoints, committed. Its
    deadline was never Sprint 8's close (that sprint is cancelled); it is cutover, which
-   deletes the .NET solution and with it any ability to record again. ~~**Until then the .NET
+   deletes the previous solution and with it any ability to record again. ~~**Until then the previous
    stack must stay runnable**, even though no further development happens on it: a
-   re-capture is only possible while the API still boots.~~ *Superseded 2026-09-29 — see `SPEC/decisions.md` "Spec contradictions resolved": F6 deleted the .NET stack on 2026-09-13.*
+   re-capture is only possible while the API still boots.~~ *Superseded 2026-09-29 — see `SPEC/decisions.md` "Spec contradictions resolved": F6 deleted the previous stack on 2026-09-13.*
 3. **Answer the Outcome ↔ Issue cardinality question** before Wave E6 — answered
    2026-09-02, **single-parent** (`SPEC/decisions.md`). See Wave E6 above.
-4. **Take ticket `10`** — answered 2026-09-03: the .NET suite is discarded in favour of the
+4. **Take ticket `10`** — answered 2026-09-03: the previous suite is discarded in favour of the
    golden corpus plus per-slice Vitest.
 5. **Reconcile `SPEC/20-feature-client-ui.md`** against the comp P lock — done
    2026-09-03.

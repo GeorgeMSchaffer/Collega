@@ -4,7 +4,10 @@ import { IdeaForm } from '@/components/ideas/idea-form'
 import type { IdeaFormOptions } from '@/lib/types'
 
 /** The `initial` prop the quick-add hand-off uses: what it seeds, and that absent it changes nothing. */
-vi.mock('@/lib/server/idea-actions', () => ({ saveIdea: vi.fn() }))
+vi.mock('@/lib/server/idea-actions', () => ({
+  boardAllowedIdeaTypeIds: async () => [],
+  saveIdea: vi.fn(),
+}))
 vi.mock('@/lib/server/delivery-actions', () => ({ addIssue: vi.fn() }))
 
 const OPTIONS: IdeaFormOptions = {

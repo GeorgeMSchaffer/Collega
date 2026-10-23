@@ -150,7 +150,7 @@ Invariants:
 - `DeliveryStatus`: `Pending`, `Scoping`, `Development`, `Review`, `Complete`
 - `SprintState`: `Planned`, `Active`, `Completed`
 
-Stored as their names; the .NET stack's integer values (in the order listed, from 0) are history.
+Stored as their names.
 
 ### New entity: `Sprint` (auditable)
 
@@ -549,20 +549,19 @@ A Site Admin tick on a **mutating** row is exercised through View As, never dire
 
 ---
 
-## Migration Strategy
+## Schema Changes and Defaults
 
-**EF migration `AddDeliveryAndSprints`:**
-- `ideas` gains: `phase` (int, NOT NULL, default `0`/Discovery — existing rows backfill to Discovery), `effort` (int, null), `delivery_status` (int, null), `sprint_id` (guid, null, FK → `sprints`, `ON DELETE` restricted; unassignment is handled in the app layer), `promoted_at_utc` (timestamptz, null — `DateTime` with `Kind = Utc`, per the Npgsql mapping in `SPEC/50-postgres-migration.md`), `promoted_by_user_id` (guid, null), `upvote_count_at_promotion` (int, null).
+**AddDeliveryAndSprints:**
+- `ideas` gains: `phase` (int, NOT NULL, default `0`/Discovery — existing rows backfill to Discovery), `effort` (int, null), `delivery_status` (int, null), `sprint_id` (guid, null, FK → `sprints`, `ON DELETE` restricted; unassignment is handled in the app layer), `promoted_at_utc` (timestamptz, null — UTC), `promoted_by_user_id` (guid, null), `upvote_count_at_promotion` (int, null).
 - New table `sprints` (snake_case, per Infrastructure convention) with `organization_id`, `name`, `goal`, `start_date`, `end_date`, `owner_user_id`, `state`, `is_deleted`, and audit columns.
 - Indexes: `(organization_id, phase)` on `ideas` (board/backlog filtering); `sprint_id` on `ideas`; `(organization_id, state)` on `sprints`.
 - New table `issue_tasks` (snake_case) with `idea_id` (FK → `ideas`, `ON DELETE CASCADE` — a checklist has no meaning without its Issue; the one place in this feature where cascade is correct), `title`, `assignee_user_id`, `state`, `sort_order`, `completed_at_utc`, `completed_by_user_id`, and audit columns. Index `(idea_id, sort_order)`.
 - Every existing idea backfills to `Discovery` and no sprints exist, so ideation boards and idea flows are byte-for-byte unchanged post-migration; delivery surfaces are simply empty. No existing row gains a task.
 
-**EF migration `AddOutcomes` (Slice 2):**
+**AddOutcomes (Slice 2):**
 - New table `outcomes` with `organization_id`, `name`, `description`, `target_start_date`, `target_end_date`, `owner_user_id`, `sort_order`, `is_deleted`, and audit columns. Index `(organization_id, sort_order)`. *Added 2026-09-28:* `color VARCHAR(7) NOT NULL` (comp R). The schema freeze needs its own amendment in `decisions.md` before this migration is written; the 2026-09-28 (fourth) amendment does **not** cover it — Outcomes are a later sprint's (answered 2026-09-28).
 - Plus `ideas.outcome_id` (guid, null, FK → `outcomes`, `ON DELETE SET NULL`) — single-parent, per the 2026-09-02 decision. No join table.
 - `ON DELETE SET NULL` rather than cascade: removing an Outcome must never delete an Issue, only ungroup it. Moving to multi-parent later, should the duplicate-Issue failure mode appear, is a cheap forward migration (copy the FK into the join table, drop the column); the reverse is lossy and needs a human to choose which grouping survives.
-- Touches only new/changed tables, so it should merge cleanly against `CollegaDbContextModelSnapshot` provided no other in-flight slice adds a concurrent migration.
 
 ---
 
@@ -587,18 +586,3 @@ Approving this spec requires these canonical edits *before* implementation (per 
 - **[Product]** On sprint completion, is backlog the right default for unfinished Issues, or carry-over-to-next? *Default: backlog; carry-over is P1.* — non-blocking.
 - **[Eng]** Exactly one `Active` sprint per org (single-team assumption), or several concurrently? *Default: no single-active constraint in this slice.* — non-blocking.
 - **[Product]** Is `ReturnToDiscovery` the right recovery model, or should mis-promotion be prevented by a stronger confirm only? *Default: reversible return, admin-only.* — non-blocking.
-
----
-
-## Effort Sizing (backend-first; Client is a later wave per repo convention)
-
-| Layer | Work | Estimate |
-|---|---|---|
-| **Domain** | `IdeaPhase`/`EffortLevel`/`DeliveryStatus`/`SprintState`/`IssueTaskState` enums, `Idea` delivery facets + invariant methods, `Sprint` entity + lifecycle invariants, `IssueTask` entity + ordering invariants | M — 1.5–2 days |
-| **Infrastructure / EF** | `Sprint` + `IssueTask` config, 7 new `ideas` columns, `sprints` and `issue_tasks` tables, `AddDeliveryAndSprints` migration (Discovery backfill, indexes) | M — 1.5–2 days |
-| **Application** | `SprintService` (CRUD + lifecycle + carry-over), `IssueTaskService` (CRUD + state + dense reorder), idea promotion/return/delivery-status/sprint-assignment ops, board/idea-list phase filtering, delivery query + task rollup, audit + notification wiring | L — 4–5 days |
-| **API** | Promotion/delivery routes (4), sprint routes (7), task routes (6), delivery query, contracts | M — 2.5 days |
-| **Tests** | Promotion (phase flip, required effort, re-promote reject), provenance snapshot, delivery-status transitions, sprint lifecycle + carry-over, phase filtering, return-to-discovery, task CRUD + state stamping + dense ordering + Discovery rejection + retention across return-to-discovery + non-blocking Complete, backward-compat (no-op for un-promoted orgs) | L — 4 days |
-| **Client (later wave)** | Promotion dialog, provenance panel, Sprint board + backlog, sprint admin, task checklist with drag-reorder, rail destination, phase filters | L — 6–8 days |
-| **Slice 1 backend total** | | **~12–14 dev-days** |
-| **Slice 2 — Outcomes & Roadmap** | `Outcome` entity, `OutcomeService`, grouping mutation, derived roadmap query, 8 routes, roadmap grid UI, tests | M–L — **~5–7 dev-days** |

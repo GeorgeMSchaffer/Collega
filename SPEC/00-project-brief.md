@@ -16,10 +16,6 @@ The product is conceptually similar to Trello/Jira:
 - PostgreSQL 16
 - TypeScript on Node.js 24.x; pnpm workspaces + Turborepo
 
-The original stack — ASP.NET Core, Blazor, Fluent UI, EF Core — is **frozen** and no longer
-applicable (`SPEC/decisions.md` 2026-09-06). It is deleted in slice F6; see
-`SPEC/50-typescript-migration.md`.
-
 ## Solution Structure
 - `apps/api` — Nest.js HTTP host; the only thing that talks to the database
 - `apps/web` — Next.js client; reaches the server over HTTP only
@@ -27,9 +23,6 @@ applicable (`SPEC/decisions.md` 2026-09-06). It is deleted in slice F6; see
 - `packages/domain` — entities, enums, value objects, shared contracts
 - `packages/infrastructure` — Prisma persistence and external integrations
 - `packages/design-system` — comp P tokens and primitives
-
-The layering is unchanged from the frozen .NET solution — `Collega.Domain` → `packages/domain`, and
-so on. That is what the conversion preserves; the language and ORM are not.
 
 ## Architecture Rules
 - API depends on Application.
@@ -42,5 +35,4 @@ so on. That is what the conversion preserves; the language and ORM are not.
 - Do not add new packages without approval.
 
 ## Coding Standards
-- Follow official .NET coding guidelines:
-  https://github.com/dotnet/runtime/tree/main/docs/coding-guidelines
+- Follow the Coding Standards in the root `AGENTS.md`.

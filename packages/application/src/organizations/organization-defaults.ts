@@ -34,8 +34,7 @@ export const DEFAULT_STATUSES: readonly DefaultStatus[] = [
 ]
 
 /** Canonical default Idea Types provisioned for every new organization
- * (SPEC/50-technical-implementation-plan.md Phase 4 #9). The first by sort order is the
- * default. */
+ * The first by sort order is the default. */
 export const DEFAULT_IDEA_TYPES: readonly DefaultIdeaType[] = [
   { name: 'Continuous Improvement', sortOrder: 10 },
   { name: 'Process Revision', sortOrder: 20 },

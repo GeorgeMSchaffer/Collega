@@ -145,7 +145,7 @@ The Board References work board draws a sprint header (name, dates, state, tasks
 - **Header mapping:** TASKS is `issueCount` and `doneCount` (every live card in the sprint; on a board sprint done means a final lane), IDEAS is `ideaCount`, the window and `state` come from the item, and days left is derived in the viewer's calendar. The header reads `GET /api/v1/boards/{boardId}/sprints?state=Active`.
 - **No Active sprint:** the header shows no header content and cards show no sprint chip beyond their own `sprint` field. If several sprints are Active, the header reads the first one returned (current behaviour, not a rule).
 - **Cards in a sprint** are read with `GET /api/v1/boards/{boardId}/ideas?sprintId={sprintId}` (see `contracts/ideas.md`; that list is Discovery-phase only, so a legacy Delivery-phase item in a board sprint is counted in `issueCount` but appears only in the sprint detail read, and tasks are unaffected); the **backlog** is `sprintId=none` on the same route. No new route.
-- **Putting a task in a sprint** is `PUT /api/v1/ideas/{ideaId}/sprint` (`contracts/delivery.md`), which accepts any item of the sprint's board.
+- **Putting a task in a sprint** is `PUT /api/v1/ideas/{ideaId}/sprint` (`contracts/delivery.md`), which accepts any item of the sprint's board but is in-scope admin only. A caller who may edit the task without being an admin uses `PUT /api/v1/boards/{boardId}/sprint-assignments` (below).
 
 ## Backlog and sprint planning (proposed 2026-10-22; scheduling roles widened the same day)
 
@@ -167,6 +167,7 @@ Create a board sprint with its tasks in one commit (the create-sprint picker, TB
 Add tasks to a sprint of this board, move them between sprints, or return them to the backlog, in bulk and atomically. Also the lane drop (TB-7), which sets status as well.
 
 - **Roles (changed 2026-10-22, owner-approved exception to "contracts are read, not edited"):** any member who may edit **every** item named: its author or an in-scope Org Admin (the task-edit rule; Read Only never). A direct Site Admin is refused. Creating, starting and completing a sprint stay Org Admin only (below).
+- **Check order (pinned 2026-10-22):** (1) role: Read Only or a direct Site Admin, unkeyed `403`; (2) body validation, `400`; (3) unknown or other-board item ids (`400` / `422` as today); (4) edit rights per item, `403` keyed `ideaIds` for the whole request; (5) sprint rules (`422`, completed sprint, blockers and so on); (6) the status-move right when `statusId` is sent.
 - **Request:** body
   - `ideaIds` required array of GUIDs, 1 to 200, distinct
   - `sprintId` required GUID **or `null`**; `null` returns the items to the board backlog. A GUID must be a non-`Completed` sprint of **this board**.
@@ -174,7 +175,7 @@ Add tasks to a sprint of this board, move them between sprints, or return them t
 - **Response:** `204 No Content`
 - **Errors:**
   - `400` keyed `ideaIds` (empty, over 200, duplicate, an id that names no live item); keyed `sprintId` (not a sprint of this board, or `"A completed sprint cannot take new issues."`); keyed `statusId` (not a lane of this board, or sent with a `null` `sprintId`)
-  - `401`; `403` caller is Read Only, is a Site Admin acting directly, or may not edit one or more of the items: keyed `ideaIds`, the message starting with the first such item's key (`Only the author or an Org Admin can schedule {itemKey}.`), the whole request refused; `404` the board does not exist or is outside caller scope
+  - `401`; `403` caller is Read Only or a Site Admin acting directly (unkeyed); `403` keyed `ideaIds` when a User may not edit one or more of the items, the message starting with the first such item's key (`Only the author or an Org Admin can schedule {itemKey}.`), the whole request refused; `404` the board does not exist or is outside caller scope
   - `422` `sprintItemOnOtherBoard`; `422` `taskBlocked` (an item with open blockers moved past its first lane); any other refusal the status move gives
 - **Rules:**
   - all or nothing: one refused item rolls back the whole request, and the error names the item's key

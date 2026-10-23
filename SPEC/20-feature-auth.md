@@ -29,7 +29,6 @@ Users can securely access the application using organization-scoped accounts.
 8. A seed Site Admin account must be created on first run from an environment-provided initial credential, `SITE_ADMIN_EMAIL` and `SITE_ADMIN_PASSWORD`. At runtime only `SITE_ADMIN_EMAIL` is required, and startup must fail fast if it is missing; the password is needed only by the build-time bootstrap and may be removed after first login.
    - One boot-time validation pass enforces it, and also requires the database URL.
    - Any missing or blank required setting makes the host write a human-readable banner naming every missing key to stderr and exit with a non-zero code (no stack trace), rather than failing later inside the ORM or the seeder.
-   - Stated in ASP.NET configuration-key terms until slice F6; the requirement is unchanged, only the mechanism's name.
 9. The seed Site Admin must be forced to change that initial credential on first login.
 10. In Development only, the startup seed must also create one Org Admin, two User accounts and one Read Only account in each demo organization, each with demo password `Abc123!`. The global Site Admin remains outside all organizations.
     - Why `Abc123!`: it satisfies the password complexity policy in requirement #5. The earlier literal `abc123!` from `SPEC/10-requirements.md` had no uppercase character and was changed rather than exempted (`SPEC/60-spec-q-and-a-backlog.md` decision 16).

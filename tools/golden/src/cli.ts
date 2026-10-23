@@ -190,7 +190,7 @@ const commands: Record<string, (args: Args) => Promise<number>> = {
     const manifest = await writeCorpus(PATHS.fixtures, exchanges, {
       capturedAt: new Date().toISOString(),
       // Provenance only - nothing reads it back. Defaults to 'unknown' rather than to the
-      // recorded corpus's 'dotnet', which a new capture would not be.
+      // recorded corpus's stack, which a new capture would not be.
       stack: args.flags.get('stack') ?? 'unknown',
       baseUrl,
       basePath: args.flags.get('base-path') ?? DEFAULT_BASE_PATH,
