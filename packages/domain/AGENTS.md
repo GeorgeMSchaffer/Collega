@@ -20,7 +20,7 @@ deep file path. Inside the package, relative imports carry the `.js` extension (
 
 - **Immutable data plus pure transition functions, not classes.** `Idea` is a type;
   `createIdea`, `changeIdeaStatus`, `promoteIdeaToIssue` are functions that take the current value
-  and return the next one. This replaced C#'s abstract entity base deliberately — see the comment
+  and return the next one. This deliberately replaced an abstract entity base class — see the comment
   at the top of `src/common/index.ts` before reintroducing a base class.
 - **No ambient time or randomness.** Every operation takes an explicit `nowUtc`. Ids are generated
   by the application layer with `crypto.randomUUID()` and passed in, which is what keeps these
