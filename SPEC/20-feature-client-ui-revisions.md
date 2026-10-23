@@ -1,7 +1,7 @@
 # Feature: Client UI Revisions (Bugs and Tweaks)
 
 > **At a glance** (added 2026-09-28; the text below wins where they differ)
-> - **Scope:** a 2026-07/08 batch of client bug fixes and layout revisions for the Blazor client; its rail,
+> - **Scope:** a 2026-07/08 batch of client bug fixes and layout revisions for the earlier client; its rail,
 >   drawers and Boards page are superseded (D6, 2026-09-27); `20-feature-client-ui.md` is authoritative.
 > - **Key rules:** logout is route-based via `/logout` (D2); the unauthenticated shell shows only Login and
 >   Register (D3); Admin is renamed Settings, `/admin` returns 404; Home is D4's richer dashboard (D1
@@ -30,30 +30,17 @@ interviews on 2026-07-30 and 2026-07-31.
   - For the TypeScript conversion, the 64px icon rail (Rail, below) becomes comp P's fixed left sidebar with grouped nav and a bottom identity block.
   - The List + Drawer pattern (D5) becomes list + **inline create** beside the list + the **docked inspector** for edits — no drawers, no create modal.
   - D2 (route-based logout), D3 (unauthenticated shell) and D4's Home counts carry forward; D4's tile grid is replaced by comp P's Home.
-  - The shipped Blazor client keeps the rail and drawers until cutover.
 
 ## Decision Log Addendum (2026-08-10)
 
 - Decision D5: The admin management entities — Organizations, Users, Statuses, Idea Types, and Custom Fields — adopt the **List + Drawer** pattern canonically, matching the Ideas surface.
   - Replaces the earlier full-page-form (Organizations, Users) and inline-edit-card (Statuses, Idea Types, Custom Fields) patterns under "Admin-Style Pages: List/Form Pattern" below; that section's list-column definitions remain current, its full-page/inline **edit** surface is superseded by the drawer.
   - Each list row's **Details** action opens a right slide-in drawer (read view + Edit toggle → inline form + Save/Cancel footer); **Add New** opens a centered create modal.
-  - The chrome was the Blazor client's shared `DrawerShell` / `CreateModalShell` components, used by Ideas too (deleted with that client in F6).
-  - Current specification: `SPEC/20-feature-client-ui.md` "List and detail pattern (comp R — 2026-09-27)"; the Blazor drawer is recorded under that file's "SUPERSEDED SURFACES — the shipped Blazor client (Comp C, until cutover)". *(This pointed at a section, "Admin entities use the same List + Drawer pattern", that no longer exists.)* Delivered in Sprint 2 (`SPEC/sprints/archive/sprint-02-drawer-pattern-rollout.md`).
+  - Current specification: `SPEC/20-feature-client-ui.md` "List and detail pattern (comp R — 2026-09-27)". Delivered in Sprint 2 (`SPEC/sprints/archive/sprint-02-drawer-pattern-rollout.md`).
 
 - Decision D4: Home dashboard scope is locked to the **richer dashboard** — welcome message, `Boards` / `Your ideas` / `Assigned to you` counts, a "Your boards" tile grid (one tile per accessible board with an open/assigned/last-active summary, plus a "Request a new board" tile), and a "Catching you up" activity feed (recent mentions, upvotes, and status moves).
   - Supersedes Decision D1's simpler MVP version ("Home Page Dashboard" below still describes the superseded D1 scope).
   - Locked via `SPEC/mockups/comp-c-review-06-lockin-v5-final.html` (`Home` screen, superseding the earlier `-v4-combined.html` sign-off) — see `SPEC/implementation-agent-tracker.md` for the full decision trail.
-
-## Bug Fixes
-
-### BUG-1: Errant `else {` on Change Password screen
-- The Change Password page renders a literal `else {` and `else {}` as visible page content.
-- Root cause: the `</AuthGate>` tag closed before the `else` branch; the fix made the Blazor page's conditional valid. (That client was deleted in F6.)
-- Acceptance: no stray code fragments render on `ChangePassword` in any state (initial, validation error, success).
-
-### BUG-2: Placeholder template code removal
-- Remove all Weather/forecast and Counter placeholder functionality left over from the Blazor template: the Weather and Counter pages, related sample data/services, and any nav links to them. (That client was deleted in F6.)
-- Acceptance: no routes, menu items, or code references to Weather or Counter remain; solution builds and tests pass.
 
 ## Layout and Header
 
@@ -74,7 +61,7 @@ Settings icon" and "menu" as "rail":
 - Rail links navigate to list-entry pages: Home (`/`), Boards (`/boards`), Ideas (`/ideas`), Settings (`/settings`).
 
 ### Rail (locked 2026-08-07; superseded for the conversion by Decision D6)
-See `SPEC/20-feature-client-ui.md` "NAVIGATION" for the comp P sidebar that replaces it, and its "SUPERSEDED SURFACES — the shipped Blazor client (Comp C, until cutover)" section for the rail and `SPEC/mockups/comp-c-review-06-lockin-v5-final.html` for the reference implementation (supersedes `-v4-combined.html`).
+See `SPEC/20-feature-client-ui.md` "NAVIGATION" for the comp P sidebar that replaces it, and `SPEC/mockups/comp-c-review-06-lockin-v5-final.html` for the reference implementation (supersedes `-v4-combined.html`).
 
 ### Unauthenticated and Unauthorized Shell
 - Unauthenticated users can access `/login` and `/register`; attempting protected routes redirects them to `/login`.
@@ -157,7 +144,7 @@ Applies to Settings pages for Organizations, Users, and Boards & Statuses.
 > - `Board.IsArchived` (bool)
 > - `Status.Color` (string?, max 20), `Status.SortOrder` (int), `Status.IsDefault` (bool)
 >
-> The EF Core migrations this named belonged to the deleted .NET stack; the schema is now `packages/infrastructure/prisma/schema.prisma`.
+> The schema is now `packages/infrastructure/prisma/schema.prisma`.
 
 ## Boards Page
 

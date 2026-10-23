@@ -52,7 +52,7 @@ const SECRET_FIELDS = new Set([
 /**
  * Fields that change every request without meaning anything.
  *
- * `traceId` is the one that matters: ASP.NET puts it on every problem-details
+ * `traceId` is the one that matters: the recorded API put it on every problem-details
  * body, so it rides on every 400, 401, 403 and 404 in the corpus — which is most
  * of the authorization cases, the ones worth pinning hardest. Its two shapes (a
  * connection id like `0HNOA0E675RIH:00000001`, and a W3C traceparent) match no

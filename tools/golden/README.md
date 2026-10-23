@@ -1,25 +1,12 @@
-# golden — the Wave A capture and replay harness
+# golden — the capture and replay harness
 
-The TypeScript conversion is a big-bang rewrite of ~60,000 lines onto a reshaped
-schema, which removes both safety nets at once: there is no shippable
-intermediate to diff against, and "same data, same answers" stops being true.
-The 811-test .NET suite does not survive the port either. **This harness is what
-replaces them** — `SPEC/50-typescript-migration.md` constraint 10, and slices
-A1/A2/A3 of the Wave A table.
+A recorded corpus of the application's HTTP surface — every endpoint, every role — and a
+harness that replays it against whatever is standing at a base URL and lists the differences.
+It is a regression detector, not the specification (`SPEC/decisions.md` 2026-09-11).
 
-It records what the live .NET API answers, for every endpoint and every role,
-and replays that against whatever is standing there later. Today that is .NET
-itself, as a self-check. In Wave F it is Nest, and the failure list is the
-remaining work.
-
-**Captured 2026-09-03**: 447 cases over all 81 endpoints, replaying clean against
-a freshly seeded .NET instance, and **all 447 stand today**. One of them,
-`profile.register.duplicate.anonymous`, was retired on 2026-09-10 and restored on
-2026-09-11 when the register change it was paying for was reverted
-(`SPEC/decisions.md`) — worth knowing only because a pinned refusal on an anonymous
-auth endpoint is not a reasonable thing to trade for a reworded string. Re-capture only
-if the API changes — and only while it still exists. Once cutover deletes the .NET
-solution the recording cannot be made again, and the conversion has no oracle at all.
+**Captured 2026-09-03**: 447 cases over all 81 endpoints. The corpus is frozen: it was recorded
+from an application that no longer exists, so it cannot be re-captured. Edit `accepted.ts` to
+excuse a difference; do not edit the recorded fixtures.
 
 ## Running it
 
@@ -27,15 +14,12 @@ Node 22.18+ or 24 — the harness is plain TypeScript run through Node's own typ
 stripping, with no build step and no runtime dependencies.
 
 ```bash
-node tools/golden/src/cli.ts inventory          # the 81 endpoints, read from the controllers
+node tools/golden/src/cli.ts inventory          # the frozen list of 81 endpoints
 node tools/golden/src/cli.ts scaffold           # a scenario stub per controller, every endpoint × role
 node tools/golden/src/cli.ts coverage           # what the corpus does and does not pin
 node --test "tools/golden/test/*.test.ts"       # the harness's own tests
 
-# capture (slice A2) — against the live .NET API, on a freshly seeded database
-GOLDEN_PASSWORD='Abc123!' node tools/golden/src/cli.ts capture --base-url http://localhost:5000
-
-# replay (slice A3) — same command, pointed at the target stack
+# replay — against a running, freshly seeded stack
 GOLDEN_PASSWORD='Abc123!' node tools/golden/src/cli.ts replay --base-url http://localhost:3000
 ```
 
@@ -214,8 +198,8 @@ An (entry, case) pair that excuses nothing is printed as **stale** on every run,
 per case rather than per entry, so an entry whose four cases are down to one says
 so instead of looking as alive as the day it was written. It does not fail the
 run; it means the fix landed or the corpus moved, and the case should come off
-the entry. Staleness is relative to the stack just replayed — entries written for
-Nest correctly excuse nothing on a .NET self-replay. Nothing here should outlive
+the entry. Staleness is relative to the stack just replayed — entries whose case now
+passes excuse nothing. Nothing here should outlive
 the reason it was added.
 
 **Reading a failure list, one caveat.** Because labels are minted per scenario,
@@ -307,15 +291,13 @@ unnoticed:
 
 Anything else this report names is a hole, not a decision.
 
-## What "done" looks like for Wave A
+## What "done" looks like
 
 - Every one of the 81 endpoints has at least one case, at every role the
   inventory says can reach it — `coverage --from fixtures` reports the holes.
 - Error paths and validation failures are in there. Authorization is behaviour:
   a 403 that a rewrite turns into a 200 is the single most expensive defect this
   corpus exists to catch.
-- `replay` against the .NET API the corpus was recorded from comes back clean.
-  If it does not, the harness is measuring itself and the fixtures are worthless.
 - The fixtures are committed.
 
 ## What the capture found in the product

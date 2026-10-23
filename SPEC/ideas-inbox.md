@@ -71,7 +71,7 @@ does today, and several of its rules constrain what either of these may do.
 
 *Parked 2026-08-13 after a brainstorm on "should the Site Admin be able to edit the default statuses?" — explored, recommendation was **don't build now**. Captured so the reasoning isn't re-derived.*
 
-**What is actually hardcoded.** Statuses, Idea Types, and Business Impacts are already fully editable per organization (`StatusesAdmin.razor`, `IdeaTypesAdmin.razor`). The only hardcoded thing is the *starting template* — `OrganizationDefaults` in `Collega.Application/Organizations/`, read in one place (`OrganizationBootstrapService`) at organization-creation time, plus the demo seeder. Any change to it affects only organizations that do not exist yet.
+**What is actually hardcoded.** Statuses, Idea Types, and Business Impacts are already fully editable per organization. The only hardcoded thing is the *starting template* — `packages/application/src/organizations/organization-defaults.ts`, read in one place (`packages/infrastructure/src/repositories/organization-bootstrap.repository.ts`) at organization-creation time, plus the demo seed. Any change to it affects only organizations that do not exist yet.
 
 **Three separable features hide under "editable defaults":**
 
@@ -306,3 +306,7 @@ None introduces a new capability; all three restructure chrome around the existi
 
 - **Comp F's structured compose prompts.** *"A free-form 'Description' box produces one-line ideas that nobody can evaluate; three named questions produce something a reviewer can act on."* An optional scaffold, not a gate.
 - **Comp D's answer to the drawer bug.** A docked inspector as a third grid column *"is never covered and never needs `inert`. There is no focus trap to get wrong"* — precisely the class of defect the open `DrawerShell` item in `SPEC/Bug Triage.md` describes. Comp D also demonstrates working fixes for two other open queue items: a native `<button type="submit">` so Enter submits, and `autocomplete="username"`.
+
+## Operational trace for unhandled 500s
+
+An unhandled exception that becomes a 500 leaves no operational trace today; it needs a Nest-on-Vercel logging design (what is logged, where it is read, how request context is attached).

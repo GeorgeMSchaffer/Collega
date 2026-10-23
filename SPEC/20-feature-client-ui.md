@@ -1,6 +1,6 @@
 > **At a glance** (added 2026-09-28; the text below wins where they differ)
 > - **Scope:** the client's navigation, screens, list/detail pattern, controls, palette and themes (comp P
->   structure, comp R list/detail, forms, tags, themes); Blazor surfaces are kept only as superseded.
+>   structure, comp R list/detail, forms, tags, themes).
 > - **Key rules:** denied shows disabled with a reason (row actions hidden); the drawer overlays, never
 >   modal; Site Admin mutates org content only via View As; tag text computed to 4.5:1 in every theme;
 >   no keyboard shortcuts; colour never alone; Graphite (dark) the default, Terrazzo the bare `:root`,
@@ -17,13 +17,9 @@
   (`SPEC/50-typescript-migration.md`, Wave E).
 - Reference: the four generated files `SPEC/mockups/comp-p-{focus-roadmap,auth,admin,delivery}.html`,
   built from `SPEC/mockups/_build/`, at four roles and four states each.
-- **The Blazor client never implemented this direction.** It implemented the superseded Comp C
-  shell (icon rail + right slide-in drawers) and was deleted in slice F6 (2026-09-13); `apps/web` is
-  the client.
-- Surface-neutral rules (what a card shows, how a move is saved, who may do what) bind both clients.
-  Rules that name a surface (sidebar, the drawer (the docked inspector until 2026-09-27), inline
-  create) bind the comp P build; the Blazor equivalent is recorded once, as history, under
-  **Superseded surfaces** at the end.
+- `apps/web` is the client.
+- Surface-neutral rules (what a card shows, how a move is saved, who may do what) apply to every
+  surface. Rules that name a surface (sidebar, the drawer, inline create) bind the comp P build.
 
 ## NAVIGATION
 
@@ -534,15 +530,3 @@ assistant filled (`20-feature-ai-idea-assist-v2.md` Q5). Each theme also carries
 - Frontend error surfaces must show the full underlying error message in Development, and a generic user-safe message in Production.
 - The same UI remains available in both modes; only the content differs by runtime environment.
 - Every list and detail surface has four states — normal, empty, loading (skeletons that hold row height, never a spinner), error (an alert with a safe retry) — and comp P renders all four for every screen.
-
-## SUPERSEDED SURFACES — the shipped Blazor client (Comp C, until cutover)
-
-Kept as history: the Blazor client this describes was deleted in slice F6 (2026-09-13). None of this
-is a target for new work.
-
-- **Shell**: a 64px icon rail (Home, Boards, Ideas, Settings) with a bottom avatar popover holding Profile and Sign Out; no header bar. Reference `comp-c-review-06-lockin-v5-final.html`. Sprint 7.5 records the rail's *Log out* wording and placement drift from that lock.
-- **Detail, edit and create**: a right slide-in drawer (≈620px, `DrawerShell`) over a dim backdrop for ideas (locked 2026-08-10) and for the five admin entities (2026-08-14), with create moved from a centered modal into the same drawer on 2026-08-17. `CreateModalShell` survives only as the brainstorm chat chrome. Sprint 7.5 records that the drawer never takes focus and Escape is dead.
-- **Board cards**: the *Flat* treatment — pale lane background, priority chip, left-border status accent; columns as equal fractions of the width.
-- **Components**: Fluent UI Blazor, whose shadow-DOM submit buttons and text fields are two of Sprint 7.5's three systemic accessibility defects. Icons from Fluent System Icons. Native and Fluent text-like controls at a stable 36px.
-- **Palette in the Blazor client's stylesheet**: still the indigo/warm-neutral Comp C tokens with 6px/4px radii; never migrated to the 2026-08-31 palette.
-- **Home**: the D4 tile grid with an *Activity feed coming soon* placeholder.

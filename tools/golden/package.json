@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Wave A capture and replay harness: records the .NET API's HTTP surface, replays it against Nest.",
+  "description": "Wave A capture and replay harness: replays the recorded HTTP corpus against the running API.",
   "engines": {
     "node": ">=22.18"
   },

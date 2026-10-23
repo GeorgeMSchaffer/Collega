@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
   <title id="title">Collega organizations admin mockup</title>
-  <desc id="desc">A Fluent UI inspired Site Admin organizations screen with command bar, search, filter, list, and create organization panel.</desc>
+  <desc id="desc">A Site Admin organizations screen with command bar, search, filter, list, and create organization panel.</desc>
   <rect width="1600" height="1000" fill="#f3f2f1"/>
   <rect width="1600" height="72" fill="#0f6cbd"/>
   <rect x="0" y="0" width="150" height="72" fill="#0b5cab"/>

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
   <title id="title">Collega user management mockup</title>
-  <desc id="desc">An organization admin user management screen using Fluent UI patterns such as command bar, filter chips, details list, and side panel editing.</desc>
+  <desc id="desc">An organization admin user management screen using patterns such as command bar, filter chips, details list, and side panel editing.</desc>
   <rect width="1600" height="1000" fill="#f3f2f1"/>
   <rect width="1600" height="72" fill="#0f6cbd"/>
   <rect x="0" y="0" width="150" height="72" fill="#0b5cab"/>
