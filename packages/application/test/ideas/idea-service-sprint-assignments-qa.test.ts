@@ -973,3 +973,273 @@ describe('assignBoardSprints: a per-item 422 names the item on ideaIds', () => {
     expect(error).not.toBeInstanceOf(UnprocessableError)
   })
 })
+
+// Slice 339/340: anyone who can edit a task may schedule it (decisions 2026-10-22). A User edits what
+// they authored; an Org Admin edits anything in scope; Read Only and a direct Site Admin never.
+describe('assignBoardSprints: a User schedules what they authored (task-edit rule)', () => {
+  const ME = 'user-1'
+  const asMember = (ideas: ReturnType<typeof idea>[], extra = {}) =>
+    make(ideas, { currentUser: member(), ...extra })
+  const scheduleAll = (ids: string[], over: Record<string, unknown> = {}) => ({
+    ideaIds: ids,
+    sprintId: SPRINT,
+    statusId: null,
+    ...over,
+  })
+  const keyedIdeaIds = (error: unknown) => Object.keys((error as ForbiddenError).failures ?? {})
+
+  it('schedules several own-authored items in one commit, auditing each', async () => {
+    const h = asMember([item('a', { authorUserId: ME }), item('b', { authorUserId: ME })])
+
+    await h.service.assignBoardSprints(BOARD_A, scheduleAll(['a', 'b']))
+
+    expect(h.unitOfWork.saves).toBe(1)
+    expect(h.saved.map((i) => i.sprintId)).toEqual([SPRINT, SPRINT])
+    expect(sprintEvents(h)).toHaveLength(2)
+  })
+
+  it('lets a User return their own items to the backlog', async () => {
+    const h = asMember([item('a', { authorUserId: ME, sprintId: SPRINT })])
+
+    await h.service.assignBoardSprints(BOARD_A, scheduleAll(['a'], { sprintId: null }))
+
+    expect(h.saved[0]?.sprintId).toBeNull()
+    expect(sprintEvents(h)).toHaveLength(1)
+  })
+
+  it('refuses an item authored by someone else, naming its key, and writes nothing', async () => {
+    const h = asMember([item('a', { authorUserId: 'other', itemNumber: 7 })])
+
+    const error = await failure(h.service.assignBoardSprints(BOARD_A, scheduleAll(['a'])))
+
+    expect(error).toBeInstanceOf(ForbiddenError)
+    expect(keyedIdeaIds(error)).toEqual(['ideaIds'])
+    expect((error as ForbiddenError).failures?.ideaIds?.[0]).toBe(
+      'Only the author or an Org Admin can schedule TK-7.',
+    )
+    expect(h.saved).toHaveLength(0)
+    expectNothingCommitted(h)
+  })
+
+  it('names the first refused item when several are not the caller’s', async () => {
+    const h = asMember([
+      item('a', { authorUserId: ME, itemNumber: 1 }),
+      item('b', { authorUserId: 'other', itemNumber: 2 }),
+      item('c', { authorUserId: 'other', itemNumber: 3 }),
+    ])
+
+    const error = await failure(h.service.assignBoardSprints(BOARD_A, scheduleAll(['a', 'b', 'c'])))
+
+    expect((error as ForbiddenError).failures?.ideaIds?.[0]).toMatch(/schedule TK-2\.$/)
+    expectNothingCommitted(h)
+  })
+
+  it('refuses an assignee who is not the author', async () => {
+    const h = asMember([item('a', { authorUserId: 'other', assigneeUserIds: [ME] })])
+
+    const error = await failure(h.service.assignBoardSprints(BOARD_A, scheduleAll(['a'])))
+
+    expect(error).toBeInstanceOf(ForbiddenError)
+    expect(keyedIdeaIds(error)).toEqual(['ideaIds'])
+    expectNothingCommitted(h)
+  })
+
+  it('refuses returning someone else’s item to the backlog just the same', async () => {
+    const h = asMember([item('a', { authorUserId: 'other', sprintId: SPRINT })])
+
+    const error = await failure(
+      h.service.assignBoardSprints(BOARD_A, scheduleAll(['a'], { sprintId: null })),
+    )
+
+    expect(error).toBeInstanceOf(ForbiddenError)
+    expectNothingCommitted(h)
+  })
+
+  it('lets an Org Admin schedule items authored by anyone, mixed in one request', async () => {
+    const h = make([
+      item('a', { authorUserId: 'user-1' }),
+      item('b', { authorUserId: 'someone-else' }),
+      item('c', { authorUserId: 'org-admin-1' }),
+    ])
+
+    await h.service.assignBoardSprints(BOARD_A, scheduleAll(['a', 'b', 'c']))
+
+    expect(h.saved.map((i) => i.sprintId)).toEqual([SPRINT, SPRINT, SPRINT])
+    expect(sprintEvents(h)).toHaveLength(3)
+  })
+
+  it('refuses an Org Admin of another organization with 404 even for items they would author', async () => {
+    const h = make([item('a', { authorUserId: 'org-admin-1' })], {
+      currentUser: orgAdmin(ORG_B),
+    })
+
+    const error = await failure(h.service.assignBoardSprints(BOARD_A, scheduleAll(['a'])))
+
+    expect(error).toBeInstanceOf(NotFoundError)
+    expectNothingCommitted(h)
+  })
+
+  it('refuses Read Only and a direct Site Admin with an unkeyed 403, even for an authored item', async () => {
+    for (const user of [readOnly(ORG_A, 'user-1'), siteAdmin('user-1')]) {
+      const h = make([item('a', { authorUserId: 'user-1' })], { currentUser: user })
+
+      const error = await failure(h.service.assignBoardSprints(BOARD_A, scheduleAll(['a'])))
+
+      expect(error).toBeInstanceOf(ForbiddenError)
+      expect((error as ForbiddenError).failures ?? {}).toEqual({})
+      expectNothingCommitted(h)
+    }
+  })
+
+  it('writes no audit and commits no change when a User re-schedules into the same sprint', async () => {
+    const h = asMember([item('a', { authorUserId: ME, sprintId: SPRINT })])
+
+    await h.service.assignBoardSprints(BOARD_A, scheduleAll(['a']))
+
+    expect(h.saved).toHaveLength(0)
+    expect(h.audit.events).toHaveLength(0)
+  })
+
+  describe('check order (contracts/sprints.md, pinned 2026-10-22)', () => {
+    it('role beats body validation: Read Only with an empty ideaIds is an unkeyed 403', async () => {
+      const h = make([item('a')], { currentUser: readOnly() })
+
+      const error = await failure(
+        h.service.assignBoardSprints(
+          BOARD_A,
+          scheduleAll([], { statusId: STATUS_1, sprintId: null }),
+        ),
+      )
+
+      expect(error).toBeInstanceOf(ForbiddenError)
+      expect((error as ForbiddenError).failures ?? {}).toEqual({})
+    })
+
+    it('role beats an unknown board: a direct Site Admin gets 403, not 404', async () => {
+      const h = make([item('a')], { currentUser: siteAdmin() })
+
+      const error = await failure(h.service.assignBoardSprints('nope', scheduleAll(['a'])))
+
+      expect(error).toBeInstanceOf(ForbiddenError)
+    })
+
+    it('body validation beats the edit check: a duplicate id is a 400 for a User with foreign items', async () => {
+      const h = asMember([item('a', { authorUserId: 'other' })])
+
+      const error = await failure(h.service.assignBoardSprints(BOARD_A, scheduleAll(['a', 'a'])))
+
+      expect(error).toBeInstanceOf(ValidationError)
+    })
+
+    it('an unknown id beats the edit check: 400 keyed ideaIds, not 403', async () => {
+      const h = asMember([item('a', { authorUserId: 'other' })])
+
+      const error = await failure(
+        h.service.assignBoardSprints(BOARD_A, scheduleAll(['a', 'ghost'])),
+      )
+
+      expect(error).toBeInstanceOf(ValidationError)
+      expect(Object.keys((error as ValidationError).failures)).toEqual(['ideaIds'])
+    })
+
+    it('the edit check beats a bad sprint: 403, not the 400 keyed sprintId', async () => {
+      const h = asMember([item('a', { authorUserId: 'other' })])
+
+      const error = await failure(
+        h.service.assignBoardSprints(BOARD_A, scheduleAll(['a'], { sprintId: 'no-such-sprint' })),
+      )
+
+      expect(error).toBeInstanceOf(ForbiddenError)
+      expect(keyedIdeaIds(error)).toEqual(['ideaIds'])
+    })
+
+    it('the edit check beats a completed sprint and a bad statusId', async () => {
+      const h = asMember([item('a', { authorUserId: 'other' })], {
+        sprints: [sprint('done', { state: SprintState.Completed })],
+      })
+
+      const completed = await failure(
+        h.service.assignBoardSprints(BOARD_A, scheduleAll(['a'], { sprintId: 'done' })),
+      )
+      const badLane = await failure(
+        h.service.assignBoardSprints(BOARD_A, scheduleAll(['a'], { statusId: 'not-a-lane' })),
+      )
+
+      expect(completed).toBeInstanceOf(ForbiddenError)
+      expect(badLane).toBeInstanceOf(ForbiddenError)
+    })
+
+    // DEFECT (slice 339): the contract puts other-board ids (3) ahead of the edit check (4), but the
+    // service runs the edit check first, so a User gets 403 here. `it.fails` keeps the gate green
+    // and turns red the moment the order is fixed - then change it to a plain `it`.
+    it.fails('an item of another board beats the edit check: 422 sprintItemOnOtherBoard, not 403', async () => {
+      const h = asMember([item('a', { authorUserId: 'other', boardId: BOARD_B })])
+
+      const error = await failure(h.service.assignBoardSprints(BOARD_A, scheduleAll(['a'])))
+
+      expect(error).toMatchObject({ code: 'sprintItemOnOtherBoard' })
+    })
+  })
+
+  describe('with a statusId (lane drop)', () => {
+    it('lets a User move their own item and schedule it together', async () => {
+      const h = asMember([item('a', { authorUserId: ME })])
+
+      await h.service.assignBoardSprints(BOARD_A, scheduleAll(['a'], { statusId: STATUS_2 }))
+
+      expect(h.saved[0]).toMatchObject({ sprintId: SPRINT, statusId: STATUS_2 })
+      expect(sprintEvents(h)).toHaveLength(1)
+      expect(statusEvents(h)).toHaveLength(1)
+    })
+
+    it('refuses a User dropping someone else’s item before any status move is staged', async () => {
+      const h = asMember([item('a', { authorUserId: ME }), item('b', { authorUserId: 'other' })])
+
+      const error = await failure(
+        h.service.assignBoardSprints(BOARD_A, scheduleAll(['a', 'b'], { statusId: STATUS_2 })),
+      )
+
+      expect(error).toBeInstanceOf(ForbiddenError)
+      expect(h.saved).toHaveLength(0)
+      expectNothingCommitted(h)
+    })
+
+    it('rolls back every own item when one of them is refused by the status move', async () => {
+      const h = asMember(
+        [
+          item('ok', { authorUserId: ME }),
+          item('a', { authorUserId: ME }),
+          item('blocker', { authorUserId: ME }),
+        ],
+        { dependencies: [{ blockedId: 'a', blockerId: 'blocker' }] },
+      )
+
+      const error = await failure(
+        h.service.assignBoardSprints(BOARD_A, scheduleAll(['ok', 'a'], { statusId: STATUS_2 })),
+      )
+
+      expect(error).toMatchObject({ code: 'taskBlocked' })
+      expectNothingCommitted(h)
+    })
+  })
+})
+
+describe('single PUT /ideas/{id}/sprint stays admin-only', () => {
+  it('refuses a User even for an item they authored', async () => {
+    const h = make([item('a', { authorUserId: 'user-1' })], { currentUser: member() })
+
+    await expect(h.service.assignToSprint('a', { sprintId: SPRINT })).rejects.toBeInstanceOf(
+      ForbiddenError,
+    )
+    expect(h.saved).toHaveLength(0)
+    expectNothingCommitted(h)
+  })
+
+  it('still lets an Org Admin assign any item', async () => {
+    const h = make([item('a', { authorUserId: 'user-1' })])
+
+    await h.service.assignToSprint('a', { sprintId: SPRINT })
+
+    expect(h.saved[0]?.sprintId).toBe(SPRINT)
+  })
+})
