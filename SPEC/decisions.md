@@ -158,7 +158,8 @@ Slices 322 to 337 built the five comp W surfaces. Where the build departs from t
 - **Drag between the planning page's columns** (an enhancement in the comp) is not built; Add and Remove buttons only. **Blocked chip** (comp 1C) is not built.
 - **Read Only** sees no panel and no toggle on the board; the Backlog tab still lists for them without controls.
 - **Sprints tab badge** counts non-Completed sprints (the spec does not say).
-- **Open:** whether bulk assignment should notify followers like a single status move (it does today); whether the item-number burn on a refused multi-item drop into an auto-create-task lane is acceptable; CSV export of standalone cards shows stored stand-in values.
+- **Owner answers 2026-10-22:** bulk assignment notifies followers like a single status move (kept); the item-number burn on a refused multi-item drop into an auto-create-task lane is accepted; the Sprints tab badge stays non-Completed sprints; CSV export of standalone cards shows stored stand-in values (no preference, left as is).
+- **Owner wants scheduling to reach beyond Org Admin:** a user who can edit a task (its idea's owner) may schedule it. This **supersedes** the Org Admin only reading above and TB-10; not built yet. It needs the spec, `contracts/sprints.md` (`sprint-assignments`, `sprintId` on task create) and the web gating changed together, as a follow-up slice.
 
 ## 2026-10-22 — The legacy Sprint board lists only cards with a delivery status
 
