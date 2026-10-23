@@ -9,7 +9,10 @@ import type { BoardRef, IdeaDetail, IdeaFormOptions } from '@/lib/types'
  * never on a task.
  */
 const saveIdea = vi.hoisted(() => vi.fn())
-vi.mock('@/lib/server/idea-actions', () => ({ saveIdea }))
+vi.mock('@/lib/server/idea-actions', () => ({
+  boardAllowedIdeaTypeIds: async () => [],
+  saveIdea,
+}))
 vi.mock('@/lib/server/delivery-actions', () => ({ addIssue: vi.fn() }))
 
 const OPTIONS: IdeaFormOptions = {

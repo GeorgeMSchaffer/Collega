@@ -20,7 +20,10 @@ vi.mock('next/navigation', () => ({
 }))
 const addIssue = vi.hoisted(() => vi.fn())
 vi.mock('@/lib/server/delivery-actions', () => ({ addIssue }))
-vi.mock('@/lib/server/idea-actions', () => ({ saveIdea: vi.fn() }))
+vi.mock('@/lib/server/idea-actions', () => ({
+  boardAllowedIdeaTypeIds: async () => [],
+  saveIdea: vi.fn(),
+}))
 
 const OPTIONS: IdeaFormOptions = {
   ideaTypes: [{ id: 'type-1', name: 'Continuous Improvement', fields: [] }],

@@ -9,7 +9,10 @@ import type { IdeaFormOptions } from '@/lib/types'
  * (`lockedFields`), what `apply` marks Suggested and when the mark clears, and where `place`
  * puts the text of a failed turn.
  */
-vi.mock('@/lib/server/idea-actions', () => ({ saveIdea: vi.fn() }))
+vi.mock('@/lib/server/idea-actions', () => ({
+  boardAllowedIdeaTypeIds: async () => [],
+  saveIdea: vi.fn(),
+}))
 vi.mock('@/lib/server/delivery-actions', () => ({ addIssue: vi.fn() }))
 
 const OPTIONS: IdeaFormOptions = {

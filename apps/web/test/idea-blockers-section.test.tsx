@@ -9,7 +9,10 @@ import type { BlockerCandidate, IdeaBlockers, IdeaDetail } from '@/lib/types'
  * disabled with a described reason, the read-only view, and the page when the board read failed.
  * `setBlockers` is the boundary; it replaces the whole set, so each change must send every id.
  */
-vi.mock('@/lib/server/idea-actions', () => ({ setBlockers: vi.fn() }))
+vi.mock('@/lib/server/idea-actions', () => ({
+  boardAllowedIdeaTypeIds: async () => [],
+  setBlockers: vi.fn(),
+}))
 
 const save = vi.mocked(setBlockers)
 

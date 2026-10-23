@@ -16,7 +16,8 @@ import {
 } from '@/lib/server/board-actions'
 import type {
   AllowedIdeaTypesSetup,
-  BoardOverview, LaneFlags,
+  BoardOverview,
+  LaneFlags,
   PullCandidate,
   ReferenceContext,
   Status,

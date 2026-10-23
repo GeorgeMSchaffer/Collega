@@ -9,6 +9,7 @@ import { setFollowing } from '@/lib/server/idea-actions'
  * disabled-with-reason control for a role that may not follow. The server action is the boundary.
  */
 vi.mock('@/lib/server/idea-actions', () => ({
+  boardAllowedIdeaTypeIds: async () => [],
   toggleUpvote: vi.fn(),
   addComment: vi.fn(),
   setFollowing: vi.fn(),

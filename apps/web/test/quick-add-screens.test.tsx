@@ -30,6 +30,7 @@ vi.mock('@/lib/server/board-actions', () => ({
   reorderLanes: vi.fn(),
 }))
 vi.mock('@/lib/server/idea-actions', () => ({
+  boardAllowedIdeaTypeIds: async () => [],
   deleteIdea: vi.fn(),
   detachIdea: vi.fn(),
   saveIdea: vi.fn(),

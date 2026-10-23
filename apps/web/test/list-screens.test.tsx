@@ -21,6 +21,7 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => search.params,
 }))
 vi.mock('@/lib/server/idea-actions', () => ({
+  boardAllowedIdeaTypeIds: async () => [],
   deleteIdea: vi.fn(),
   saveIdea: vi.fn(),
   addComment: vi.fn(),

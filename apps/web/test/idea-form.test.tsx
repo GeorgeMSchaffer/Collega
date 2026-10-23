@@ -8,7 +8,10 @@ import type { IdeaDetail, IdeaFormOptions } from '@/lib/types'
  * the API's field-keyed refusals land. The server action is the boundary and is replaced here.
  */
 const saveIdea = vi.hoisted(() => vi.fn())
-vi.mock('@/lib/server/idea-actions', () => ({ saveIdea }))
+vi.mock('@/lib/server/idea-actions', () => ({
+  boardAllowedIdeaTypeIds: async () => [],
+  saveIdea,
+}))
 
 const OPTIONS: IdeaFormOptions = {
   ideaTypes: [
