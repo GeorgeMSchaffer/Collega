@@ -21,8 +21,11 @@ describe('the Tasks nav entry', () => {
     expect(navItemVisible(tasks(), 'SiteAdmin')).toBe(false)
   })
 
-  it('sits after Ideas in the first group', () => {
-    const labels = navGroupsWith({ boards: 0, ideas: 0, backlog: 0 })[0]?.items.map((i) => i.label)
-    expect(labels?.indexOf('Tasks')).toBe((labels?.indexOf('Ideas') ?? -2) + 1)
+  it('sits in the Delivery group, after the Sprint board', () => {
+    const delivery = navGroupsWith({ boards: 0, ideas: 0, backlog: 0 }).find(
+      (g) => g.label === 'Delivery',
+    )
+    const labels = delivery?.items.map((i) => i.label)
+    expect(labels?.indexOf('Tasks')).toBe((labels?.indexOf('Sprint board') ?? -2) + 1)
   })
 })
