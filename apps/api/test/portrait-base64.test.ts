@@ -147,7 +147,7 @@ describe('PUT /auth/me/portrait - accepted payloads', () => {
     await acceptedBytes(`${FIXTURE_PAYLOAD}\n`)
   })
 
-  it('ignores every character Convert.FromBase64String skipped, and nothing else', async () => {
+  it('ignores every character the pre-migration decoder skipped, and nothing else', async () => {
     // The pre-migration decoder skipped characters <= ' ', which is space, tab, CR, LF, FF and VT - not the wider
     // set JS \s covers. The rejection half of this rule is in the rejected-payload table below.
     const bare = await acceptedBytes(FIXTURE_PAYLOAD)
@@ -156,7 +156,7 @@ describe('PUT /auth/me/portrait - accepted payloads', () => {
     await acceptedBytes(`data:image/png;base64,${wrap(FIXTURE_PAYLOAD, 24)}\n`)
   })
 
-  it('accepts a payload whose final unused bits are non-zero, as Convert.FromBase64String did', async () => {
+  it('accepts a payload whose final unused bits are non-zero, as the pre-migration decoder did', async () => {
     // "aGVsbG9=" and "aGVsbG8=" differ only in bits the decoder shifts out, and the pre-migration API validated
     // neither - it returned the same five bytes for both. A re-encode-and-compare check on top of
     // the length and alphabet rules would reject the first, which is stricter than the API being
@@ -185,7 +185,7 @@ describe('PUT /auth/me/portrait - present but unreadable', () => {
     ['base64url alphabet', 'a-VsbG8='],
     // Written as escapes: these are exactly the characters that look like whitespace to JS \s
     // and were not whitespace to the pre-migration decoder, so a literal here would be invisible in review.
-    ['a non-breaking space, which Convert.FromBase64String did not skip', 'aGVs\u00a0bG8='],
+    ['a non-breaking space, which the pre-migration decoder did not skip', 'aGVs\u00a0bG8='],
     ['a line separator, likewise', 'aGVs\u2028bG8='],
     ['a byte order mark, likewise', 'aGVsbG8=\ufeff'],
     ['a data URL with no payload after the comma', 'data:image/png;base64,'],

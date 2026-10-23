@@ -4,7 +4,7 @@
  *
  * `validateFields` (`errors/request-validation.error.ts`) is the other half of this boundary: it
  * decides whether a request is REFUSED; these mostly decide what an accepted value MEANS.
-
+ *
  * "The pre-migration API" below is the API this one replaced. Its recorded behaviour is the golden
  * corpus in `tools/golden` (a fixed record that cannot be re-recorded) and `SPEC/30-Contracts.md`.
  *
@@ -104,7 +104,7 @@ export function optionalInt32(value: unknown): number | null {
 }
 
 /**
- * A optional string-list BODY property - `tagNames`, `mentionEmails`. Absent and null stay absent so the
+ * An optional string-list BODY property - `tagNames`, `mentionEmails`. Absent and null stay absent so the
  * Application layer can tell "not provided" from "provided empty"; a non-string ELEMENT becomes
  * `''`, which every consumer discards as blank.
  *

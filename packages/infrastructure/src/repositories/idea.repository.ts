@@ -410,7 +410,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
 
   /**
    * `sortBy` for the board list, matched on the trimmed, lowercased value as
-   * `SortBy?.Trim().ToLowerInvariant()` did in `EfIdeaRepository` - so `PRIORITY` and ` dueDate `
+   * the pre-migration API did - so `PRIORITY` and ` dueDate `
    * sort the way they read. `title`, `status` (lane order), `assignedTo` and `tags` were added
    * 2026-09-27; anything unrecognised is createdAt.
    */
