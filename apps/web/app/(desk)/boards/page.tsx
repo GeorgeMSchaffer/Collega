@@ -6,13 +6,14 @@ import {
   type BoardOverview,
   getBoard,
   getBoardOverviews,
+  getIdeaTypeChoices,
   getReferenceContext,
   getStatuses,
   SWIMLANE_FLOOR,
 } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { boardAdminDenial, boardCreateDenial, currentUser } from '@/lib/session'
-import type { BoardLane, LaneFlags } from '@/lib/types'
+import type { AllowedIdeaTypesSetup, BoardLane, LaneFlags } from '@/lib/types'
 
 export const metadata = { title: 'Boards · Collega' }
 
@@ -43,10 +44,11 @@ async function formFor(
   const archivedBoardIds = boards.filter((board) => board.isArchived).map((board) => board.id)
 
   if (requested === 'new') {
-    const [statuses, pull, references] = await Promise.all([
+    const [statuses, pull, references, choices] = await Promise.all([
       getStatuses(),
       loadPullSetup({ isAdmin, archivedBoardIds }),
       getReferenceContext(null),
+      getIdeaTypeChoices(),
     ])
     return {
       boardId: null,
@@ -56,6 +58,8 @@ async function formFor(
       // form that opens below its own floor cannot be submitted until the person works out why.
       swimlaneIds: statuses.slice(0, SWIMLANE_FLOOR).map((status) => status.id),
       ideaFeaturesEnabled: true,
+      // The creator may set it, and a creator is who is on this form.
+      allowedIdeaTypes: { choices, selectedIds: [] },
       references,
       statuses,
       pull,
@@ -72,6 +76,9 @@ async function formFor(
     getReferenceContext(listed.id),
   ])
   if (!board) return null
+  const allowedIdeaTypes: AllowedIdeaTypesSetup | undefined = board.canSetAllowedIdeaTypes
+    ? { choices: await getIdeaTypeChoices(), selectedIds: board.allowedIdeaTypeIds }
+    : undefined
   return {
     boardId: board.id,
     name: board.name,
@@ -80,6 +87,7 @@ async function formFor(
     laneFlags: laneFlagsOf(board.lanes),
     laneIdeaCounts: Object.fromEntries(listed.lanes.map((lane) => [lane.id, lane.ideaCount])),
     ideaFeaturesEnabled: board.ideaFeaturesEnabled,
+    allowedIdeaTypes,
     references,
     // A lane whose status has since been archived is missing from the catalog; merging it in keeps
     // it visible and removable rather than silently dropped on the next save (as Settings does).

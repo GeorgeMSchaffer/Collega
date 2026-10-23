@@ -28,8 +28,16 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { ApiError, apiDelete, apiPath, apiPost, apiPostReturning, apiPut } from '../api/client'
-import type { WireCreatedIdea } from '../api/wire'
+import {
+  ApiError,
+  apiDelete,
+  apiGet,
+  apiPath,
+  apiPost,
+  apiPostReturning,
+  apiPut,
+} from '../api/client'
+import type { WireBoardDetail, WireCreatedIdea } from '../api/wire'
 import { recordEvent } from './analytics'
 import { actingOrganizationId } from './current-user'
 import { type RuleContext, ruleMessage } from './rule-messages'
@@ -108,6 +116,27 @@ function revalidateIdeaScreens(boardId: string): void {
   // An Issue is an idea, and its drawer on the delivery screens votes, comments and edits too.
   revalidatePath('/delivery/sprint')
   revalidatePath('/delivery/backlog')
+}
+
+/**
+ * The idea types a board takes, for the idea form's type list: empty when every type is allowed,
+ * which includes a board whose Idea features are off (the list is stored there, not applied). A
+ * read the form asks for when the person picks a board, so it is a parameter-driven action rather
+ * than a prop the page could not know.
+ */
+export async function boardAllowedIdeaTypeIds(boardId: string): Promise<string[]> {
+  if (!boardId) return []
+  try {
+    const board = await apiGet<WireBoardDetail>(
+      'boardAllowedIdeaTypeIds',
+      apiPath`/boards/${boardId}`,
+    )
+    return board.ideaFeaturesEnabled ? [...board.allowedIdeaTypeIds] : []
+  } catch (error) {
+    // The save names whatever is wrong with the board; the list just stays unrestricted.
+    if (error instanceof ApiError && error.status !== 401) return []
+    throw error
+  }
 }
 
 export async function saveIdea(input: IdeaInput): Promise<SaveIdeaResult> {

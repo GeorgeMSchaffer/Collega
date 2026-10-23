@@ -18,6 +18,7 @@ import type {
   WireBoardDetail,
   WireBoardListItem,
   WireDeliveryCard,
+  WireIdeaType,
   WireIdeaListItem,
   WirePage,
   WirePullCandidate,
@@ -127,6 +128,8 @@ export async function getBoard(id: string): Promise<BoardWithLanes | null> {
       nextItemNumber: board.nextItemNumber,
       sprintsEnabled: board.sprintsEnabled,
       ideaFeaturesEnabled: board.ideaFeaturesEnabled,
+      allowedIdeaTypeIds: [...board.allowedIdeaTypeIds],
+      canSetAllowedIdeaTypes: board.canSetAllowedIdeaTypes,
       // Deleted statuses still hold ideas that have to go somewhere, so their lane stays on the
       // board — hiding it would silently drop cards off a screen that claims to show all of them.
       lanes: [...board.swimlanes].sort((a, b) => a.order - b.order).map(swimlaneToStatus),
@@ -137,6 +140,20 @@ export async function getBoard(id: string): Promise<BoardWithLanes | null> {
     if (isApiStatus(error, 404)) return null
     throw error
   }
+}
+
+/** The organization's active idea types, in sort order, for the board form's allowed-types control. */
+export async function getIdeaTypeChoices(): Promise<{ id: string; name: string }[]> {
+  failIfRequested('getIdeaTypeChoices')
+
+  const scope = organizationScope()
+  if (scope === null) return []
+
+  const types = await apiGet<readonly WireIdeaType[]>(
+    'getIdeaTypeChoices',
+    apiPath`/organizations/${scope}/idea-types`,
+  )
+  return types.map((type) => ({ id: type.ideaTypeId, name: type.name }))
 }
 
 /**

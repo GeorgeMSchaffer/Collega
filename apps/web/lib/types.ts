@@ -356,6 +356,16 @@ export type BoardWithLanes = {
   nextItemNumber: number
   sprintsEnabled: boolean
   ideaFeaturesEnabled: boolean
+  /** Idea type ids the board takes; empty means every type. */
+  allowedIdeaTypeIds: string[]
+  /** Whether the caller may change the allowed idea types. */
+  canSetAllowedIdeaTypes: boolean
+}
+
+/** What the board form's *Allowed idea types* control needs: the types on offer and the ticked ones. */
+export type AllowedIdeaTypesSetup = {
+  choices: { id: string; name: string }[]
+  selectedIds: string[]
 }
 
 /**

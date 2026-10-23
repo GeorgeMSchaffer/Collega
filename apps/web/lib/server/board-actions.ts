@@ -43,6 +43,8 @@ export type BoardFormState = { error: string | null; pullErrors?: string[] } & F
  */
 export type FieldRefusals = {
   keyPrefix?: { message: string; locked: boolean }
+  /** The API's refusal of the allowed idea types, shown beside that control. */
+  allowedIdeaTypes?: string
   laneErrors?: Record<string, string>
 }
 
@@ -79,6 +81,13 @@ function refusedSave(
 ): { error: string | null; pullErrors: string[] } & FieldRefusals {
   if (error instanceof ApiError) {
     const { keyPrefix, ...rest } = error.errors
+    if (error.status === 400 && (error.errors.ideaTypeIds || error.errors.allowedIdeaTypeIds)) {
+      return {
+        error: null,
+        pullErrors: [],
+        allowedIdeaTypes: error.errors.ideaTypeIds ?? error.errors.allowedIdeaTypeIds ?? '',
+      }
+    }
     if (error.status === 400 && (keyPrefix || error.errorLists.pullItemIds)) {
       const pullErrors = [...(error.errorLists.pullItemIds ?? [])]
       const other = Object.entries(rest)
@@ -173,9 +182,11 @@ function boardBody(form: FormData): {
   ideaFeaturesEnabled?: boolean
   swimlanes: ({ statusId: string; order: number } & LaneFlags)[]
   pullItemIds?: string[]
+  allowedIdeaTypeIds?: string[]
 } {
   // Left out when empty, so a save that pulls nothing is the request it was before the step existed.
   const pullItemIds = form.getAll('pullItemIds').map(String)
+  const allowed = form.getAll('allowedIdeaTypeIds').map(String)
   const flags = JSON.parse(String(form.get('laneFlags') ?? '{}')) as Record<
     string,
     Partial<LaneFlags> | undefined
@@ -200,6 +211,10 @@ function boardBody(form: FormData): {
       autoCreateTask: flags[String(statusId)]?.autoCreateTask ?? false,
     })),
     ...(pullItemIds.length > 0 ? { pullItemIds } : {}),
+    // Create only: a save sets the list through its own route (`savePolicy`). Empty means every type.
+    ...(form.has('allowedIdeaTypesShown') && allowed.length > 0
+      ? { allowedIdeaTypeIds: allowed }
+      : {}),
   }
 }
 
@@ -255,7 +270,14 @@ async function save(
   const boardId = String(form.get('boardId') ?? '')
 
   try {
-    await apiPut(apiPath`/boards/${boardId}`, { ...boardBody(form), ideaMoves: ideaMoves(form) })
+    const { allowedIdeaTypeIds: _create, ...body } = boardBody(form)
+    await apiPut(apiPath`/boards/${boardId}`, { ...body, ideaMoves: ideaMoves(form) })
+    // Its own route, and only from a form that showed the control (the caller may set it).
+    if (form.has('allowedIdeaTypesShown')) {
+      await apiPut(apiPath`/boards/${boardId}/allowed-idea-types`, {
+        ideaTypeIds: form.getAll('allowedIdeaTypeIds').map(String),
+      })
+    }
   } catch (error) {
     return refusedSave(error, form)
   }
