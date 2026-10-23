@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-22 | Sprint 17 as built differs from comp W in a few places | active | full below |
 | 2026-10-22 | The legacy Sprint board lists only cards with a delivery status | active | full below |
 | 2026-10-22 | A card on a referenced board is a task on read; a 403 can carry a field key | active | full below |
 | 2026-10-22 | Tasks get a Backlog and sprints are planned from it (five surfaces) | active | full below |
@@ -146,6 +147,18 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-10-22 — Sprint 17 as built differs from comp W in a few places
+
+Slices 322 to 337 built the five comp W surfaces. Where the build departs from the comp, the build is the intent until the owner says otherwise:
+
+- **Board panel:** comp W has no panel screen; the Backlog panel (side column at md and up, bottom sheet below) is a builder design. Without an Active sprint the lanes refuse a drop ("No active sprint.") and the Add button targets a chosen open sprint.
+- **Sprint controls are Org Admin only,** including the inline new-task line on the planning page (a `sprintId` on task create needs an admin) and "Schedule…" in the idea drawer (TB-9 names no role; read with TB-10). A User can add tasks only from the Backlog "+ New task", which sends no sprint.
+- **Completed sprints** are reachable read-only from the Sprints list and take no changes; Active sprints have no Complete button here.
+- **Drag between the planning page's columns** (an enhancement in the comp) is not built; Add and Remove buttons only. **Blocked chip** (comp 1C) is not built.
+- **Read Only** sees no panel and no toggle on the board; the Backlog tab still lists for them without controls.
+- **Sprints tab badge** counts non-Completed sprints (the spec does not say).
+- **Open:** whether bulk assignment should notify followers like a single status move (it does today); whether the item-number burn on a refused multi-item drop into an auto-create-task lane is acceptable; CSV export of standalone cards shows stored stand-in values.
 
 ## 2026-10-22 — The legacy Sprint board lists only cards with a delivery status
 
