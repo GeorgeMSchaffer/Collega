@@ -272,14 +272,22 @@ async function save(
   try {
     const { allowedIdeaTypeIds: _create, ...body } = boardBody(form)
     await apiPut(apiPath`/boards/${boardId}`, { ...body, ideaMoves: ideaMoves(form) })
-    // Its own route, and only from a form that showed the control (the caller may set it).
-    if (form.has('allowedIdeaTypesShown')) {
+  } catch (error) {
+    return refusedSave(error, form)
+  }
+
+  // Its own route, and only from a form that showed the control (the caller may set it). The board
+  // is already written by now, so a refusal here must still refresh what the page shows and say
+  // that only the types failed.
+  let typesRefusal: ReturnType<typeof refusedSave> | null = null
+  if (form.has('allowedIdeaTypesShown')) {
+    try {
       await apiPut(apiPath`/boards/${boardId}/allowed-idea-types`, {
         ideaTypeIds: form.getAll('allowedIdeaTypeIds').map(String),
       })
+    } catch (error) {
+      typesRefusal = refusedSave(error, form)
     }
-  } catch (error) {
-    return refusedSave(error, form)
   }
 
   // The lanes changed, so the board itself is stale as well as the lists. Escaped for the reason
@@ -287,6 +295,16 @@ async function save(
   // which is the right outcome for a write the API refused to believe in.
   revalidatePath(`/boards/${encodeURIComponent(boardId)}`)
   revalidatePath('/', 'layout')
+  if (typesRefusal) {
+    const saved = 'The board was saved, but its allowed idea types were not.'
+    return {
+      ...typesRefusal,
+      error: typesRefusal.error ? `${saved} ${typesRefusal.error}` : null,
+      allowedIdeaTypes: typesRefusal.allowedIdeaTypes
+        ? `${saved} ${typesRefusal.allowedIdeaTypes}`
+        : saved,
+    }
+  }
   return null
 }
 
