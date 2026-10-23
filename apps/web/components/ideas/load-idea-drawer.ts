@@ -11,6 +11,7 @@ import {
   getIssue,
 } from '@/lib/data'
 import { API_MAX_PAGE_SIZE } from '@/lib/limits'
+import { mayScheduleTask, schedulerFor } from '@/lib/roles'
 import { currentUser, writeDenial } from '@/lib/session'
 import type { IdeaBlockers, IdeaDetail, IdeaFormOptions, IdeaTasks } from '@/lib/types'
 import type { DrawerMode } from './idea-drawer'
@@ -59,7 +60,7 @@ async function readTasks(idea: IdeaDetail, boardId: string): Promise<IdeaTasks |
   ])
   if (!referenced) return null
 
-  // TB-9: the board's sprints, shown for every role, and the planning data for an Org Admin. The
+  // TB-9: the board's sprints, shown for every role, and the create-sprint data for an Org Admin. The
   // board list is one page (the API's maximum): a task beyond it shows no sprint rather than a wrong one.
   const planning = referenced.sprintsEnabled
   const [cards, sprints, backlog] = planning
@@ -80,11 +81,21 @@ async function readTasks(idea: IdeaDetail, boardId: string): Promise<IdeaTasks |
       ])
     : [null, [], null]
   const sprintOf = new Map(cards?.ideas.map((card) => [card.id, card.sprint ?? null]))
+  const scheduler = referenced.isArchived ? null : schedulerFor(user)
+  const mayEditOf = new Map(
+    cards?.ideas.map((card) => [card.id, mayScheduleTask(scheduler, card.authorUserId)]),
+  )
 
   const next = board.lanes[index + 1]
   return {
     tasks: tasks.map((task) =>
-      sprintOf.has(task.id) ? { ...task, sprint: sprintOf.get(task.id) ?? null } : task,
+      sprintOf.has(task.id)
+        ? {
+            ...task,
+            sprint: sprintOf.get(task.id) ?? null,
+            mayEdit: mayEditOf.get(task.id) ?? false,
+          }
+        : task,
     ),
     referenced: { id: referenced.id, name: referenced.name, lanes: referenced.lanes },
     referenceLane: { id: lane.id, name: lane.name },
@@ -93,14 +104,15 @@ async function readTasks(idea: IdeaDetail, boardId: string): Promise<IdeaTasks |
     canMove: mayWrite,
     adding: options ? { members: options.members, tags: options.tags } : null,
     scheduling:
-      backlog && options
+      scheduler && planning && mayWrite
         ? {
             sprints: sprints
               .filter((sprint) => sprint.state !== 'Completed')
               .map((sprint) => ({ id: sprint.id, name: sprint.name, state: sprint.state })),
-            backlog: backlog.ideas,
-            backlogTotal: backlog.totalCount,
-            members: options.members,
+            canCreate: backlog !== null && options !== null,
+            backlog: backlog && options ? backlog.ideas : [],
+            backlogTotal: backlog && options ? backlog.totalCount : 0,
+            members: backlog && options ? options.members : [],
           }
         : null,
   }

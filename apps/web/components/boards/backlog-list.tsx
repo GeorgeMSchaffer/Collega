@@ -8,6 +8,7 @@ import { ParentChip } from '@/components/ideas/idea-badges'
 import { People, TagList } from '@/components/ideas/idea-chips'
 import { ListToolbar, MultiSelectFilter } from '@/components/list'
 import { blockedBadge, blockedTooltip, isBlockedHere, type WorkLane } from '@/lib/board-work'
+import { mayScheduleTask, type Scheduler, scheduleRefusal } from '@/lib/roles'
 import { moveTasksToSprint } from '@/lib/server/sprint-planning-actions'
 import type { Idea, MemberOption, Sprint } from '@/lib/types'
 import { SprintCreateDrawer } from './sprint-create-drawer'
@@ -20,8 +21,10 @@ const NONE: readonly string[] = []
  * sprint, as the API listed them. Search, parent, assignee and tag filter the rows that arrived (up
  * to the API's page maximum); the count says so when the board holds more than it was sent.
  *
- * `canSelect` is the sprint-planning role on a board with sprints on: the checkboxes, the bulk bar
- * ("Add to <sprint>", "Add to new sprint…") and the create-sprint drawer exist for that role only.
+ * `scheduler` is set on a board with sprints on for a reader who may schedule (TB-10): the
+ * checkboxes and the bulk bar ("Add to <sprint>") appear, the bar refusing, with the reason, a
+ * selection that holds a task the reader may not edit. "Add to new sprint…" and the create-sprint
+ * drawer are an Org Admin's.
  */
 export function BacklogList({
   boardId,
@@ -29,7 +32,7 @@ export function BacklogList({
   rows,
   total,
   lanes,
-  canSelect,
+  scheduler,
   newTaskHref,
   sprints = [],
   members = [],
@@ -40,7 +43,7 @@ export function BacklogList({
   rows: readonly Idea[]
   total: number
   lanes: readonly WorkLane[]
-  canSelect: boolean
+  scheduler: Scheduler | null
   /** The "+ New task" link, or `null` for a reader who may not add one. */
   newTaskHref: string | null
   /** The board's sprints; Completed ones cannot take tasks and are left out of the bar. */
@@ -48,11 +51,11 @@ export function BacklogList({
   members?: MemberOption[]
   /**
    * Set when the list is the board's side panel (TB-7) rather than the Backlog tab: compact rows
-   * instead of a table, each with an Add button, and a row drags onto a lane. `canAdd` is the
-   * sprint-planning role; a reader who may not still sees the rows and drags one to be told why a
-   * lane refuses it.
+   * instead of a table, each with an Add button, and a row drags onto a lane. Add shows on
+   * the rows the reader may edit; a reader who may not still drags one to be told why a lane
+   * refuses it.
    */
-  panel?: { canAdd: boolean; onDragStart: (row: Idea) => void; onDragEnd: () => void }
+  panel?: { onDragStart: (row: Idea) => void; onDragEnd: () => void }
 }) {
   const [query, setQuery] = useState('')
   const [parents, setParents] = useState<string[]>([])
@@ -76,6 +79,8 @@ export function BacklogList({
         .sort((a, b) => Number(b.state === 'Active') - Number(a.state === 'Active')),
     [sprints],
   )
+  const canSelect = scheduler !== null
+  const isAdmin = scheduler?.isAdmin === true
   const chosen = open.find((sprint) => sprint.id === target) ?? open[0]
 
   const parentOptions = useMemo(() => {
@@ -152,6 +157,8 @@ export function BacklogList({
     )
   }
 
+  const selectedRows = rows.filter((row) => selected.has(row.id))
+  const bulkRefusal = scheduleRefusal(scheduler, selectedRows)
   const visibleSelected = shown.filter((row) => selected.has(row.id)).length
   const allShown = shown.length > 0 && visibleSelected === shown.length
   const filtered = shown.length !== rows.length
@@ -244,22 +251,33 @@ export function BacklogList({
                 size="sm"
                 variant="outline"
                 disabled={adding}
-                onClick={() => addToSprint([...selected])}
+                aria-disabled={bulkRefusal ? 'true' : undefined}
+                aria-describedby={bulkRefusal ? 'bulk-schedule-why' : undefined}
+                onClick={() => {
+                  if (!bulkRefusal) addToSprint([...selected])
+                }}
               >
                 {adding ? 'Adding…' : `Add to ${chosen.name} (${chosen.state})`}
               </Button>
             ) : null}
-            <Button
-              size="sm"
-              disabled={adding}
-              onClick={() => {
-                setNotice('')
-                setCreating([...selected])
-              }}
-            >
-              Add to new sprint…
-            </Button>
+            {isAdmin ? (
+              <Button
+                size="sm"
+                disabled={adding}
+                onClick={() => {
+                  setNotice('')
+                  setCreating([...selected])
+                }}
+              >
+                Add to new sprint…
+              </Button>
+            ) : null}
           </span>
+          {bulkRefusal ? (
+            <p id="bulk-schedule-why" className="m-0 basis-full text-xs text-muted-foreground">
+              {bulkRefusal}
+            </p>
+          ) : null}
           {barError ? (
             <p role="alert" className="m-0 basis-full text-xs font-semibold text-destructive">
               {barError}
@@ -270,7 +288,7 @@ export function BacklogList({
 
       {panel ? (
         <>
-          {panel.canAdd && open.length > 1 ? (
+          {canSelect && open.length > 1 ? (
             <Select
               aria-label="Sprint to add to"
               value={chosen?.id ?? ''}
@@ -343,7 +361,7 @@ export function BacklogList({
                       <People people={row.assignees} />
                     </span>
                   </div>
-                  {panel.canAdd && chosen ? (
+                  {chosen && mayScheduleTask(scheduler, row.authorUserId) ? (
                     <Button
                       size="sm"
                       variant="outline"
@@ -472,7 +490,7 @@ export function BacklogList({
         </div>
       )}
 
-      {canSelect ? (
+      {isAdmin && !panel ? (
         <SprintCreateDrawer
           open={creating !== null}
           onClose={() => setCreating(null)}

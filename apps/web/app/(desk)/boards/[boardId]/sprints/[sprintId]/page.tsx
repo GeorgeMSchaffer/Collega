@@ -4,6 +4,7 @@ import { SprintPlanning } from '@/components/boards/sprint-planning'
 import { PageHeader } from '@/components/common/page-header'
 import { Topbar } from '@/components/nav/topbar'
 import { getBacklog, getBoard, getBoardSprints, getSprintTasks } from '@/lib/data'
+import { schedulerFor } from '@/lib/roles'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
@@ -28,9 +29,9 @@ export default async function SprintPlanningPage({
   if (!sprint) notFound()
 
   const user = currentUser()
-  const canPlan = user.role === 'OrgAdmin' && !board.isArchived
+  const scheduler = board.isArchived ? null : schedulerFor(user)
   const [backlog, tasks] = await Promise.all([
-    canPlan && sprint.state !== 'Completed' ? getBacklog(board.id) : null,
+    scheduler && sprint.state !== 'Completed' ? getBacklog(board.id) : null,
     getSprintTasks(board.id, sprint.id),
   ])
   const sprintsHref = `/boards/${encodeURIComponent(board.id)}?tab=sprints`
@@ -60,7 +61,7 @@ export default async function SprintPlanningPage({
           backlogTotal={backlog?.totalCount ?? 0}
           inSprint={tasks.ideas}
           lanes={board.lanes}
-          canPlan={canPlan}
+          scheduler={scheduler}
         />
       </main>
     </>

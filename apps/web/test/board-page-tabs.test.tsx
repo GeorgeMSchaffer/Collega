@@ -204,20 +204,24 @@ describe('board page role gating', () => {
     expect(mocks.drawerProps.mock.calls.at(-1)?.[0]).toMatchObject({
       parents: [{ id: 'p-1', itemKey: null, title: 'P' }],
     })
-    expect(mocks.backlogProps.mock.calls.at(-1)?.[0]).toMatchObject({ canSelect: true })
+    expect(mocks.backlogProps.mock.calls.at(-1)?.[0]).toMatchObject({
+      scheduler: { isAdmin: true },
+    })
   })
 
   it('Org Admin on a board with sprints off gets no selection', async () => {
     await open('OrgAdmin')
-    expect(mocks.backlogProps.mock.calls.at(-1)?.[0]).toMatchObject({ canSelect: false })
+    expect(mocks.backlogProps.mock.calls.at(-1)?.[0]).toMatchObject({ scheduler: null })
   })
 
-  it('User may add a task but gets no sprint selection', async () => {
+  it('User may add a task and select the tasks they may edit, but not create a sprint', async () => {
     setBoard({ sprintsEnabled: true })
     await open('User')
     expect(newTaskLinks().length).toBeGreaterThan(0)
     expect(screen.getByTestId('new-task-drawer')).toBeTruthy()
-    expect(mocks.backlogProps.mock.calls.at(-1)?.[0]).toMatchObject({ canSelect: false })
+    expect(mocks.backlogProps.mock.calls.at(-1)?.[0]).toMatchObject({
+      scheduler: { isAdmin: false },
+    })
   })
 
   it.each([['ReadOnly'], ['SiteAdmin']] as const)(
@@ -229,7 +233,7 @@ describe('board page role gating', () => {
       expect(newTaskLinks()).toHaveLength(0)
       expect(screen.queryByTestId('new-task-drawer')).toBeNull()
       expect(mocks.backlogProps.mock.calls.at(-1)?.[0]).toMatchObject({
-        canSelect: false,
+        scheduler: null,
         newTaskHref: null,
       })
       expect(mocks.getTaskParentChoices).not.toHaveBeenCalled()
@@ -242,7 +246,7 @@ describe('board page role gating', () => {
     await open('OrgAdmin')
     expect(newTaskLinks()).toHaveLength(0)
     expect(mocks.backlogProps.mock.calls.at(-1)?.[0]).toMatchObject({
-      canSelect: false,
+      scheduler: null,
       newTaskHref: null,
     })
   })
@@ -254,7 +258,7 @@ describe('board page role gating', () => {
     expect(mocks.backlogProps.mock.calls.at(-1)?.[0]).toMatchObject({
       sprints: [{ id: 's-1', state: 'Active' }],
       members: [{ id: 'u', name: 'U' }],
-      canSelect: true,
+      scheduler: { isAdmin: true },
     })
   })
 

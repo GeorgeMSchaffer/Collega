@@ -5,6 +5,8 @@ import { createBoardSprint, moveTasksToSprint } from '@/lib/server/sprint-planni
 import type { Idea, Sprint } from '@/lib/types'
 import { TASKS } from './support/backlog-fixtures'
 
+const ADMIN = { userId: 'u-admin', isAdmin: true }
+
 /**
  * The Backlog's selection bar (TB-5, TB-10, comp W screen 3): who gets it, which sprints it offers,
  * what each button sends, "Add to new sprint…" opening the drawer with the ticked rows, and what is
@@ -42,7 +44,7 @@ const props = (over: Partial<Parameters<typeof BacklogList>[0]> = {}) => (
     rows={TASKS}
     total={TASKS.length}
     lanes={LANES}
-    canSelect
+    scheduler={ADMIN}
     newTaskHref={null}
     sprints={[ACTIVE]}
     members={[{ id: 'u-ada', name: 'Ada Lovelace' }]}
@@ -80,7 +82,7 @@ describe('Backlog selection bar visibility', () => {
   })
 
   it('does not exist for a reader who cannot plan, and offers no way to start a sprint', () => {
-    list({ canSelect: false })
+    list({ scheduler: null })
     expect(screen.queryAllByRole('checkbox')).toHaveLength(0)
     expect(bar()).toBeNull()
     expect(screen.queryByRole('button', { name: /New sprint/ })).toBeNull()

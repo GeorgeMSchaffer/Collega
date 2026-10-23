@@ -10,6 +10,8 @@ import type { Sprint } from '@/lib/types'
 import { TASKS, task } from './support/backlog-fixtures'
 import { stubDialogMethods } from './support/dialog'
 
+const ADMIN = { userId: 'u-admin', isAdmin: true }
+
 /**
  * The sprint planning page body (TB-5, TB-10, comp W screen 4): the two columns, search, what Add,
  * Remove, the inline new-task line and Start sprint each send, and who sees which control. The
@@ -55,7 +57,7 @@ const planning = (over: Partial<Parameters<typeof SprintPlanning>[0]> = {}) =>
       backlogTotal={TASKS.length}
       inSprint={IN_SPRINT}
       lanes={LANES}
-      canPlan
+      scheduler={ADMIN}
       {...over}
     />,
   )
@@ -256,7 +258,7 @@ describe('sprint planning roles and states', () => {
   })
 
   it('a reader who cannot plan sees the sprint’s tasks and no controls at all', () => {
-    planning({ canPlan: false, backlog: [], backlogTotal: 0 })
+    planning({ scheduler: null, backlog: [], backlogTotal: 0 })
     expect(within(sprintCol()).getAllByRole('listitem')).toHaveLength(2)
     expect(screen.queryByRole('region', { name: 'Backlog' })).toBeNull()
     expect(screen.queryByRole('button')).toBeNull()
