@@ -35,7 +35,7 @@ import { DeliveryController } from './delivery.controller.js'
 import { IdeasController } from './ideas.controller.js'
 
 /**
- * D3's idea surface: the eleven routes on `IdeasController`, spanning both services the .NET
+ * D3's idea surface: the eleven routes on `IdeasController`, spanning both services the original
  * controller reached through one interface.
  *
  * **The fifteen `IdeaService` dependencies, and where each comes from.** Fourteen resolve straight
@@ -56,7 +56,7 @@ import { IdeasController } from './ideas.controller.js'
  *
  * `UpvoteService` is separate and takes six: `IdeaUpvoteRepository`, `IdeaLookupPort` (the narrow
  * "does this idea exist and whose org is it" slice of Ideas, aliased onto `IdeaLookupRepository`)
- * and the same four kernel ports. The .NET controller called `_ideaService.ToggleUpvoteAsync`, but
+ * and the same four kernel ports. The original controller called `_ideaService.ToggleUpvoteAsync`, but
  * the conversion moved toggling into its own feature - so the route stays where the corpus
  * recorded it and only the service behind it changed.
  *

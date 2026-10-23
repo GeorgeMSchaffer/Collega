@@ -39,11 +39,11 @@ type ReorderStatusesBody = { orderedStatusIds?: readonly string[] | null }
  * The attribute set `CreateStatusRequest` and `UpdateStatusRequest` share - identical field for
  * field. `sortOrder` carries none.
  *
- * `color` is `[MaxLengthField]` with no `[RequiredField]`, and it is `string?` on the .NET side,
+ * `color` is `[MaxLengthField]` with no `[RequiredField]`, and it is `string?` in the original,
  * so an absent or null value passed: `MaxLengthAttribute.IsValid(null)` returns true, and
  * `validateFields` reaches the same answer by judging a non-string as `''`.
  *
- * `hexColor` is the one rule here with no .NET counterpart, and the length limit is why it is
+ * `hexColor` is the one rule here with no the original counterpart, and the length limit is why it is
  * needed: twenty characters is enough for a working CSS `url()`, which the design system renders
  * into a `style` attribute. See `HEX_COLOR` in `request-validation.error.ts`.
  */
@@ -75,7 +75,7 @@ function requireOrderedStatusIds(body: ReorderStatusesBody): readonly string[] {
     return []
   }
   // A non-string member cannot match an active status id, so the service's coverage check
-  // refuses the request - which is what a non-Guid member did on the .NET side too, one binding
+  // refuses the request - which is what a non-Guid member did in the original too, one binding
   // envelope earlier.
   return body.orderedStatusIds.map((id: unknown) => (typeof id === 'string' ? id : ''))
 }
@@ -97,7 +97,7 @@ export class StatusesController {
   constructor(private readonly statuses: StatusService) {}
 
   /**
-   * `includeDeleted` is a .NET `bool` rather than `bool?`, so an ABSENT value binds to `false`
+   * `includeDeleted` is a non-nullable `bool` rather than `bool?`, so an ABSENT value binds to `false`
    * and the list excludes soft-deleted statuses - see `queryBool` for what else that means.
    *
    * Who may ask is not decided here: the corpus records every role getting the same answer, and
@@ -140,7 +140,7 @@ export class StatusesController {
     })
   }
 
-  /** Replaces the complete active-status order atomically; answers 204, like the .NET action. */
+  /** Replaces the complete active-status order atomically; answers 204, like the original action. */
   @Post('organizations/:organizationId/statuses/reorder')
   @HttpCode(204)
   async reorder(

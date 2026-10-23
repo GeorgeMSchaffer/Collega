@@ -11,7 +11,7 @@ export type AuthConfig = {
   readonly accessTokenLifetimeSeconds: number
 }
 
-const DEFAULT_LIFETIME_MINUTES = 480 // Mirrors .NET's AccessTokenOptions.Lifetime default (8h).
+const DEFAULT_LIFETIME_MINUTES = 480 // Mirrors the original's AccessTokenOptions.Lifetime default (8h).
 
 /**
  * Shortest signing key production accepts. `openssl rand -base64 48` - what

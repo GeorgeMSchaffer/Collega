@@ -62,7 +62,7 @@ const BASE64_PAYLOAD = /^[A-Za-z0-9+/]*={0,2}$/
  *
  * `Buffer.from(s, 'base64')` never throws - it discards characters outside the alphabet and
  * returns whatever is left, so a truthy result proves nothing on its own. The rules reproduced
- * here are `Convert.FromBase64String`'s, which the .NET handler let throw:
+ * here are `Convert.FromBase64String`'s, which the original handler let throw:
  *
  * - **whitespace anywhere is ignored**, so a line-wrapped payload or a trailing newline decodes
  *   rather than failing. Its decoder skips characters `<= ' '` and nothing else, which is why the
@@ -73,7 +73,7 @@ const BASE64_PAYLOAD = /^[A-Za-z0-9+/]*={0,2}$/
  *
  * Those two plus `BASE64_PAYLOAD` are exhaustive: anchoring `=` to the end also rules out interior
  * and excess padding, and the alphabet rules out base64url. There is deliberately NO re-encode
- * comparison on top - it would be STRICTER than .NET, rejecting a payload whose final unused bits
+ * comparison on top - it would be STRICTER than the original, rejecting a payload whose final unused bits
  * are non-zero (`AB==`), which `Convert.FromBase64String` accepted and decoded to the same bytes
  * Node does.
  */
@@ -103,7 +103,7 @@ function decodeBase64Image(value: unknown): Buffer | null {
 /**
  * The login response, minus the token.
  *
- * The .NET API returned `accessToken` in this body and the corpus records it on one fixture.
+ * The original API returned `accessToken` in this body and the corpus records it on one fixture.
  * Decision `08` moved the session into an httpOnly cookie, and returning the token as well would
  * hand it back to JavaScript and defeat the point - so the field is gone and
  * `SPEC/30-Contracts.md` now says so. Everything else is unchanged, including `expiresInSeconds`,
@@ -146,7 +146,7 @@ export class AuthenticationController {
   ): Promise<LoginResponse> {
     // A missing field is a 400 with field-level errors, NOT a 401 - the corpus distinguishes
     // them, and collapsing the two would tell an attacker that a malformed probe and a wrong
-    // password are the same thing. This is the model-binding validation .NET got from
+    // password are the same thing. This is the model-binding validation the original got from
     // `[Required]` on the request record; Nest has no equivalent without a validation pipe, so
     // the check is explicit and the messages match what the corpus recorded.
     requirePresent({ email: body.email, password: body.password })
@@ -207,7 +207,7 @@ export class AuthenticationController {
 
   /**
    * Not allowlisted mid-rotation, deliberately: only `GET /auth/me` and `change-password` carry
-   * that opt-in on the .NET controller, so editing a profile while a forced change is pending is
+   * that opt-in on the original controller, so editing a profile while a forced change is pending is
    * a 403 here as it was there.
    */
   @Put('me')
@@ -226,7 +226,7 @@ export class AuthenticationController {
 
   /**
    * The body carries the raw image file as Base64, and a full data URL is accepted as well -
-   * clients built on `FileReader.readAsDataURL` send one without thinking about it, and the .NET
+   * clients built on `FileReader.readAsDataURL` send one without thinking about it, and the original
    * handler took both. What comes back is not what went in: the Application layer re-encodes
    * through the image processor, so the response's `portraitDataUrl` is the normalised PNG.
    */
@@ -236,7 +236,7 @@ export class AuthenticationController {
     // `UpdatePortraitRequest` carries `[RequiredField]`, and model validation ran BEFORE the
     // action - so `TryDecodeBase64` never saw a missing or blank value, and this message was
     // reachable only for a string that was present and corrupt. Ordering the two checks the other
-    // way round answers "could not be read." where .NET answered "is required."
+    // way round answers "could not be read." where the original answered "is required."
     requirePresent({ imageBase64: body.imageBase64 })
 
     const imageBytes = decodeBase64Image(body.imageBase64)

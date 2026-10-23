@@ -53,7 +53,7 @@ import {
 } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
-/** Hard ceiling on a CSV import body, from .NET's `IdeasController.MaxImportBytes`. */
+/** Hard ceiling on a CSV import body, from the original's `IdeasController.MaxImportBytes`. */
 const MAX_IMPORT_BYTES = 5 * 1024 * 1024
 
 /** Hard ceiling on parsed import rows, applied after the header row is dropped. */
@@ -104,14 +104,14 @@ function guidList(value: unknown): readonly string[] | null {
   return Array.isArray(value) ? value.map(guidOrEmpty) : null
 }
 
-/** `List<IdeaFieldValueRequest>?` -> `IdeaFieldValueWrite[]`, mirroring .NET's `ToFieldValues`. */
+/** `List<IdeaFieldValueRequest>?` -> `IdeaFieldValueWrite[]`, mirroring the original's `ToFieldValues`. */
 function fieldValues(value: unknown): readonly IdeaFieldValueWrite[] | null {
   if (!Array.isArray(value)) {
     return null
   }
   return value.map((entry: IdeaFieldValueBody) => ({
     // `[RequiredField]` on a `Guid` is a no-op - `RequiredAttribute` only rejects null, and a
-    // boxed `Guid.Empty` is not null - so an omitted id was never a 400 on the .NET side either.
+    // boxed `Guid.Empty` is not null - so an omitted id was never a 400 in the original either.
     fieldDefinitionId: guidOrEmpty(entry?.fieldDefinitionId),
     value: typeof entry?.value === 'string' ? entry.value : null,
   }))
@@ -119,7 +119,7 @@ function fieldValues(value: unknown): readonly IdeaFieldValueWrite[] | null {
 
 /**
  * The `[RequiredField]` / `[MaxLengthField]` set `CreateIdeaRequest` and `UpdateIdeaRequest`
- * share - identical field for field on the .NET side, and the ONLY three attributes either
+ * share - identical field for field in the original, and the ONLY three attributes either
  * carries. `IdeaTypeId` and `BusinessImpactId` do carry `[RequiredField]`, but on a
  * non-nullable `Guid` it never fires (see `fieldValues` above); they are validated in the
  * Application layer as "an active option in the organization", which is a 400 of the other kind.
@@ -225,7 +225,7 @@ function boardFilter(value: unknown): { boardIds: readonly string[]; includeNoBo
 /**
  * `fieldFilters[<fieldDefinitionId>]=<value>` (T059), read straight off the query string.
  *
- * .NET did the same by hand rather than model-binding a `Dictionary<Guid, string>`, and its
+ * the original did the same by hand rather than model-binding a `Dictionary<Guid, string>`, and its
  * comment says why: that binder treats EVERY query key as a dictionary entry and 500s trying to
  * parse `page`, `search` and the rest as GUIDs. Keys whose inner text is not a GUID are skipped,
  * exactly as `Guid.TryParse` skipped them; a repeated key joins its values with a comma, which is
@@ -265,7 +265,7 @@ function parseFieldFilters(query: Record<string, unknown>): ReadonlyMap<string, 
  * Idea lifecycle and upvotes (`SPEC/30-Contracts.md` "Idea Contracts" and "Upvote Contracts").
  *
  * **No controller prefix, deliberately.** These thirteen routes span three roots - `boards/...`,
- * `organizations/...` and `ideas/...` - because the .NET controller declared each path in full
+ * `organizations/...` and `ideas/...` - because the original controller declared each path in full
  * rather than sharing one, and the golden corpus pins every one of them. A `@Controller('ideas')`
  * with relative paths would move six of the eleven.
  *
@@ -528,7 +528,7 @@ export class IdeasController {
   }
 
   /**
-   * The one route on this controller that is not `IdeaService`. .NET reached toggling through
+   * The one route on this controller that is not `IdeaService`. the original reached toggling through
    * `IIdeaService`; the conversion gave upvotes their own feature, so the path is unchanged and
    * only the service behind it moved.
    */
@@ -543,11 +543,11 @@ export class IdeasController {
    *
    * Headers are set AFTER the service call, not with `@Header()` decorators, because those run
    * before the handler: a 403 or 404 from `exportBoardIdeas` would then carry a stale
-   * `content-disposition` the .NET response never had. `content-type` is `text/csv` with no
+   * `content-disposition` the original response never had. `content-type` is `text/csv` with no
    * charset, exactly as recorded - Express appends one to a string body, which is why this returns
    * a `StreamableFile` over a Buffer rather than the text.
    *
-   * The leading UTF-8 BOM is .NET's, and it is there so Excel opens accented text correctly. It
+   * The leading UTF-8 BOM is the original's, and it is there so Excel opens accented text correctly. It
    * does not show up in the recorded fixture body because a BOM is consumed by the UTF-8 decode
    * that both the capture and the replay read the response through.
    */
@@ -588,7 +588,7 @@ export class IdeasController {
   ): Promise<IdeaImportResult> {
     const buffer = csvFile?.buffer
     if (buffer === undefined || buffer.length === 0) {
-      // The kernel error, not `RequestValidationError`: .NET threw `ValidationAppException` here
+      // The kernel error, not `RequestValidationError`: the original threw `ValidationAppException` here
       // rather than failing model binding, so this renders with a `traceId` and no charset.
       throw new ValidationError('One or more fields are invalid.', {
         csvFile: ['A CSV file is required.'],

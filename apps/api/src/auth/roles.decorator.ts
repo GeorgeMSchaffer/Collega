@@ -4,11 +4,11 @@ import { SetMetadata } from '@nestjs/common'
 export const ROLES_KEY = 'collega:roles'
 
 /**
- * Marks a handler as restricted to a set of roles - the Nest analogue of .NET's
+ * Marks a handler as restricted to a set of roles - the Nest analogue of the original's
  * `[Authorize(Roles = "SiteAdmin")]`. Pair with `@UseGuards(AuthGuard, RolesGuard)`, AuthGuard
  * first so identity is resolved before RolesGuard reads it.
  *
- * This is a COARSE first gate only, mirroring the .NET controllers that use it
+ * This is a COARSE first gate only, mirroring the original controllers that use it
  * (`AiAssistController`, `IdeaAssistController`): "Role checks live in the use-case, not in this
  * controller - authorization is a use-case concern. The `[Authorize]` attributes here are a
  * coarse first gate only." Fine-grained authorization (org scoping,

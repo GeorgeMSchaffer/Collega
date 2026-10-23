@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, type PipeTransform } from '@nestjs/common'
 
-/** `int` is 32-bit and signed on the .NET side, and the route constraint bound to one. */
+/** `int` is 32-bit and signed in the original, and the route constraint bound to one. */
 const INT32_MIN = -2147483648
 const INT32_MAX = 2147483647
 
@@ -11,7 +11,7 @@ const INTEGER = /^-?\d+$/
  * Restores the `{version:int}` route constraint on
  * `POST /ai-assist/prompt/versions/{version}/restore`, the only integer route parameter in the API.
  *
- * **404, not 400**, for the same reason `uuid-param.pipe.ts` answers 404: on the .NET side `:int`
+ * **404, not 400**, for the same reason `uuid-param.pipe.ts` answers 404: in the original `:int`
  * was part of route MATCHING, so a non-integer segment matched no endpoint and fell through to the
  * framework's own 404 - it never reached model binding and was never a validation failure. Nest's
  * built-in `ParseIntPipe` throws 400, which is why it is not used here.

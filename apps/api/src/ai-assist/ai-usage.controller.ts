@@ -84,8 +84,8 @@ function toResponse(report: AiUsageReport): AiUsageResponse {
  * applies its own default - the current UTC month for `fromUtc`, now for `toUtc`.
  *
  * **A KNOWN DIVERGENCE, deliberate**, and the same one `optionalInt` records at length in
- * `common/request-values.ts`: ASP.NET did not bind an unparseable `DateTime?` to null, it answered
- * a model-binding 400 whose message is ASP.NET's own resource string. No fixture records one, so
+ * `common/request-values.ts`: the framework did not bind an unparseable `DateTime?` to null, it answered
+ * a model-binding 400 whose message is the framework's own resource string. No fixture records one, so
  * implementing the 400 means guessing the wording. Kept local rather than added to
  * `request-values.ts` because these two routes are the only date query parameters in the API.
  */

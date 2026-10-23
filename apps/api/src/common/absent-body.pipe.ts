@@ -12,12 +12,12 @@ import { type ArgumentMetadata, Injectable, type PipeTransform } from '@nestjs/c
  * reintroduce it by forgetting to guard.
  *
  * **A KNOWN DIVERGENCE, and deliberately the smaller one.** `[ApiController]` rejected a body-less
- * request during MODEL BINDING, before the action ran, so the .NET answer was a 400 - not the
+ * request during MODEL BINDING, before the action ran, so the original answer was a 400 - not the
  * `{}`-shaped answer this produces, which is a 400 from the route's own `validateFields` on every
- * route that requires a field and the Application envelope on the rest. Reproducing the .NET answer
- * exactly means reproducing its message, and **the exact .NET text is unverified**: no fixture in
+ * route that requires a field and the Application envelope on the rest. Reproducing the original answer
+ * exactly means reproducing its message, and **the exact the original text is unverified**: no fixture in
  * the corpus sends a body-less request to a body-taking route, so the wording would be invented.
- * Record one against the frozen .NET app first, then tighten this to throw
+ * Record one first, then tighten this to throw
  * `RequestValidationError` with the recorded wording.
  */
 @Injectable()

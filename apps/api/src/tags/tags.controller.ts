@@ -25,7 +25,7 @@ type TagBody = { name?: unknown; color?: unknown }
  * **No controller prefix**, matching the rest of Wave D: the catalog and create hang off
  * `organizations/{id}/tags`, update and delete off `tags/{id}`.
  *
- * `search` is passed through as the empty string when absent, not as `null`: .NET's action did
+ * `search` is passed through as the empty string when absent, not as `null`: the original's action did
  * `search ?? string.Empty`, and `TagService.suggest` then measures the normalized prefix against
  * its 2-character minimum and returns `[]`. That is the recorded behaviour of the bare
  * `GET /organizations/{id}/tags` - a 200 with an empty array, not every tag in the organization.

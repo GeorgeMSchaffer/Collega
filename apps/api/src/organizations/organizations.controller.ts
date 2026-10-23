@@ -55,7 +55,7 @@ import { UuidParamPipe } from '../common/uuid-param.pipe.js'
  * `ideas.controller.ts` applies to the sibling idea import.
  *
  * Same numbers because this is the same upload with a different header row, not a different
- * policy - the idea import got them from .NET's `IdeasController.MaxImportBytes` and this one was
+ * policy - the idea import got them from the original's `IdeasController.MaxImportBytes` and this one was
  * simply never given any. Nest's `FileInterceptor` buffers into the function heap by default and
  * `buffer.toString('utf8')` doubles it, so an unbounded body was a way to exhaust a serverless
  * function's memory with one request.
@@ -96,7 +96,7 @@ type CreateUserBody = {
 
 /**
  * The `[RequiredField]` / `[MaxLengthField]` set that `CreateOrganizationRequest` and
- * `UpdateOrganizationRequest` share - identical field for field on the .NET side.
+ * `UpdateOrganizationRequest` share - identical field for field in the original.
  *
  * The domain enforces the same lengths (`packages/domain/src/organizations/organization.ts`) and
  * must keep doing so: that check is the invariant, this one is the contract. They are not
@@ -142,7 +142,7 @@ function toProfile(body: OrganizationProfileBody): OrganizationProfile {
 
 /**
  * Organizations, plus the user endpoints that are scoped by an organization in the route rather
- * than by a user - list, members, create and CSV import. The .NET controller drew the line the
+ * than by a user - list, members, create and CSV import. The original controller drew the line the
  * same way and the corpus recorded these paths, so moving them onto the users controller would
  * change routes the oracle pins.
  *
@@ -159,7 +159,7 @@ export class OrganizationsController {
   ) {}
 
   /**
-   * `isArchived` is a .NET `bool` rather than `bool?`, so an ABSENT value binds to `false` and the
+   * `isArchived` is a non-nullable `bool` rather than `bool?`, so an ABSENT value binds to `false` and the
    * list excludes archived organizations - see `queryBool` for the divergences that carries.
    */
   @Get()
@@ -233,7 +233,7 @@ export class OrganizationsController {
 
     return this.organizations.setLogo(organizationId, {
       thumbnailDataUri: body.thumbnailDataUri ?? null,
-      // `heightPx` has no [RequiredField] on the .NET request, so an absent value bound to the
+      // `heightPx` has no [RequiredField] on the original request, so an absent value bound to the
       // `int` default rather than failing validation.
       heightPx: typeof body.heightPx === 'number' ? body.heightPx : 0,
     })
@@ -316,9 +316,9 @@ export class OrganizationsController {
   ): Promise<UserImportResult> {
     const buffer = csvFile?.buffer
     if (buffer === undefined || buffer.length === 0) {
-      // The kernel error, not `RequestValidationError`: the .NET handler threw
+      // The kernel error, not `RequestValidationError`: the original handler threw
       // `ValidationAppException` here rather than failing model binding, so this renders with a
-      // `traceId` and no charset. The corpus has no fixture for a missing file, so the .NET
+      // `traceId` and no charset. The corpus has no fixture for a missing file, so the original
       // source is the only evidence of which of the two envelopes it produced.
       throw new ValidationError('One or more fields are invalid.', {
         csvFile: ['A CSV file is required.'],

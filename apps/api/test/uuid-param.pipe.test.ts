@@ -1,4 +1,4 @@
-// The status code is the whole point of this pipe existing. On the .NET side `{id:guid}` was a
+// The status code is the whole point of this pipe existing. On the original side `{id:guid}` was a
 // route-MATCHING constraint, so a non-GUID segment matched no endpoint and fell through to the
 // framework's 404 - it was never a validation failure. Nest's built-in ParseUUIDPipe throws 400,
 // which would be a visible contract divergence on every id route in the API, so this asserts the
@@ -51,7 +51,7 @@ describe('UuidParamPipe', () => {
 
   it('does not care about the UUID version or variant nibbles', () => {
     // Nest's ParseUUIDPipe validates them; Guid.TryParse never did, and Postgres uuid accepts any
-    // hex, so a stricter check here would 404 an id the .NET API served.
+    // hex, so a stricter check here would 404 an id the original API served.
     const id = '00000000-0000-0000-0000-000000000000'
     expect(pipe.transform(id)).toBe(id)
   })

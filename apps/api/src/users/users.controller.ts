@@ -19,7 +19,7 @@ type UpdateUserBody = {
  *
  * The org-scoped list, create and CSV import are deliberately **not** here - they live under
  * `/organizations/{organizationId}/users` on the organizations controller, because they are
- * scoped by the organization in the route rather than by the user in it. The .NET controller
+ * scoped by the organization in the route rather than by the user in it. The original controller
  * says so in its own header and the contracts document agrees; splitting them differently would
  * change the routes the corpus recorded.
  *

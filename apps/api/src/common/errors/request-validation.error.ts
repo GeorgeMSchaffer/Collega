@@ -5,7 +5,7 @@
  * **Why this is not the kernel's `ValidationError`.** It renders differently, and the golden
  * corpus is unambiguous about it. Of the eight recorded `400`s, six carry **no `traceId`** and a
  * `content-type` **with** `; charset=utf-8`; the other two carry a `traceId` and no charset. The
- * split is not arbitrary - it is exactly whether ASP.NET rejected the request during model binding
+ * split is not arbitrary - it is exactly whether the framework rejected the request during model binding
  * (`[Required]`, before the action) or an Application service threw after being entered:
  *
  * | Recorded fixture | Rejected by | `traceId` | charset |
@@ -41,7 +41,7 @@ export class RequestValidationError extends Error {
  * `"Target User Id is required."`, which is why the split happens on a lowercase-or-digit followed
  * by an uppercase and not on every capital: `userId` must become `User Id`, never `User I d`.
  *
- * This mirrors `SpacedDisplayNameMetadataProvider` on the .NET side, which fed ASP.NET's
+ * This mirrors `SpacedDisplayNameMetadataProvider` in the original, which fed the framework's
  * `DisplayName` and therefore every message any request DTO produced.
  */
 export function displayName(field: string): string {
@@ -51,7 +51,7 @@ export function displayName(field: string): string {
 
 /**
  * `EmailAddressAttribute.IsValid` in full: exactly one `@`, neither first nor last character.
- * Deliberately not a stricter pattern - a rule the .NET API accepted and this one rejects is as
+ * Deliberately not a stricter pattern - a rule the original API accepted and this one rejects is as
  * much a divergence as the other way round.
  */
 function isEmailAddress(value: string): boolean {
@@ -87,8 +87,8 @@ export type FieldRules = {
   readonly maxLength?: number
   readonly email?: boolean
   /**
-   * `#RRGGBB` only. The one rule here that is NOT a transcription of a .NET attribute -
-   * the .NET contracts length-checked these columns and never format-checked them, which is the
+   * `#RRGGBB` only. The one rule here that is NOT a transcription of an original attribute -
+   * the original contracts length-checked these columns and never format-checked them, which is the
    * defect it closes. An absent or blank value passes: the status catalog's colour is optional
    * and defaults downstream, so emptiness is `required`'s question, not this one's.
    */
@@ -101,12 +101,12 @@ export type FieldRules = {
    *
    * An absent or blank value passes, matching that attribute's own "absence is a separate concern
    * owned by RequiredFieldAttribute" short-circuit on null - pair it with `required` when both
-   * apply, exactly as the .NET property does.
+   * apply, exactly as the original property does.
    */
   readonly allowedValues?: readonly string[]
   /**
    * The name the MESSAGE uses, when it is not derivable from the key. Needed only for a NESTED
-   * property, where the two genuinely part company: ASP.NET keyed the failure by the whole path
+   * property, where the two genuinely part company: the framework keyed the failure by the whole path
    * (`Options[0].Label`, camelCased segment by segment to `options[0].label`) but built the message
    * from the display name, which was filled from the property's own name alone - so the entry reads `"Label is required."`, not
    * `"Options[0].label is required."`.
@@ -115,8 +115,8 @@ export type FieldRules = {
 }
 
 /**
- * Validates a request body against the attribute set its .NET contract declared, collecting every
- * failure rather than stopping at the first - which is what ASP.NET's ModelState did, and it
+ * Validates a request body against the attribute set its the original contract declared, collecting every
+ * failure rather than stopping at the first - which is what the framework's ModelState did, and it
  * matters within a field as well as across them: a `RegisterRequest` with no `email` at all failed
  * `[RequiredField]` and `[EmailFormat]` both, and reported two messages under the one key.
  *
@@ -125,7 +125,7 @@ export type FieldRules = {
  * `SPEC/30-Contracts.md` "Validation Message Conventions", which is now their canonical source; the
  * corpus records the required variant only, so the other two are pinned by the spec alone.
  *
- * An OMITTED field is judged as `''`, not skipped, because that is what it was on the .NET side:
+ * An OMITTED field is judged as `''`, not skipped, because that is what it was in the original:
  * every string property on those DTOs is initialised to `string.Empty`, and System.Text.Json
  * leaves the initialiser alone for a key that is not in the JSON. So `{}` reached validation as an
  * empty string and failed `[EmailFormat]` as well as `[RequiredField]`.

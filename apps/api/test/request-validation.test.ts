@@ -2,7 +2,7 @@
 // (`SPEC/30-Contracts.md` "Validation Message Conventions", resolved 2026-08-07) that has already
 // been got wrong once - it shipped producing "FirstName is required." where the corpus records
 // "First Name is required.". These tests pin the wording and, just as importantly, the
-// ACCUMULATION behaviour: ASP.NET's ModelState collected every failure across every attribute, so
+// ACCUMULATION behaviour: the framework's ModelState collected every failure across every attribute, so
 // a refactor to sequential early-return checks must break loudly here rather than quietly halve
 // the errors an existing client renders.
 //
@@ -69,7 +69,7 @@ describe('displayName - camelCase key, spaced Title Case message', () => {
 
 describe('validateFields - accumulation', () => {
   it('reports BOTH the required and the email failure for one omitted field, under one key', () => {
-    // This is the property the ModelState port was designed for: .NET evaluated every attribute
+    // This is the property the ModelState port was designed for: the original evaluated every attribute
     // on a property independently, so an absent `email` failed [RequiredField] AND [EmailFormat]
     // and returned two messages. A rewrite to `if (missing) return` would drop the second.
     const failures = failuresOf(() =>
@@ -184,7 +184,7 @@ describe('validateFields - max length', () => {
 
 describe('validateFields - email format', () => {
   // EmailAddressAttribute.IsValid, reproduced exactly: one '@', neither first nor last character.
-  // Deliberately not stricter - accepting less than the .NET API accepted is as much a divergence
+  // Deliberately not stricter - accepting less than the original API accepted is as much a divergence
   // as accepting more.
   const accepted = ['a@b', 'ada@example.test', 'a b@c d', 'a@b.', '.@b']
   const rejected = ['@b', 'a@', 'a@b@c', 'ab', '@', '']

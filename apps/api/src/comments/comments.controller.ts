@@ -31,7 +31,7 @@ type UpdateCommentBody = CreateCommentBody
 
 /**
  * `CommentListQuery.sortDirection` is typed `'asc' | 'desc'`, not a raw string, so the coercion
- * .NET did inside `SortDirection.Normalize` has to happen here instead of in the repository.
+ * the original did inside `SortDirection.Normalize` has to happen here instead of in the repository.
  *
  * Trimmed and case-insensitive, matching `SortDirection.IsDescending`'s
  * `StringComparison.OrdinalIgnoreCase` - `?sortDirection=DESC` was descending there and must stay
@@ -71,7 +71,7 @@ function commentBodyRules(body: CreateCommentBody): Record<string, FieldRules> {
  *
  * **No controller prefix, deliberately.** The five routes span two roots - `ideas/{ideaId}/
  * comments` for the list and create, `comments/{commentId}` for the edit and delete - because the
- * .NET controller declared each path in full rather than sharing one, and the corpus pins all
+ * the original controller declared each path in full rather than sharing one, and the corpus pins all
  * five. Any `@Controller(prefix)` would move at least two of them.
  *
  * Authorization lives entirely in `CommentService`: that every member including Read Only may

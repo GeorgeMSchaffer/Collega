@@ -27,7 +27,7 @@ type StartViewAsBody = { targetUserId?: string }
  * envelope (`https://collega.dev/problems/forbidden`, with a `traceId` and no charset), not the
  * framework one a role guard produces.
  *
- * Deliberately NOT on the mandatory-password-rotation allowlist, mirroring the .NET controller: an
+ * Deliberately NOT on the mandatory-password-rotation allowlist, mirroring the original controller: an
  * administrator who still owes a rotation is refused by `AuthGuard` before reaching these, so they
  * cannot use impersonation to work around their own gate.
  */
@@ -48,7 +48,7 @@ export class ViewAsController {
    *
    * `guidOrEmpty` rather than a 404-on-malformed pipe: the house coercion
    * (`common/request-values.ts`) binds a non-GUID body value to the empty GUID, which resolves
-   * against no user and answers `404`. .NET answered `400` there, from a System.Text.Json binding
+   * against no user and answers `404`. the original answered `400` there, from a System.Text.Json binding
    * failure whose wording no fixture records - the same known divergence that file documents for
    * every other `Guid?` body property.
    */

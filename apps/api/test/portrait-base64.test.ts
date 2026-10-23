@@ -68,7 +68,7 @@ function controllerRecordingBytes() {
 
 /**
  * The two distinct faults, which the endpoint must keep apart. `UpdatePortraitRequest` carries
- * `[RequiredField]` on `ImageBase64` and ASP.NET ran model validation before the action, so
+ * `[RequiredField]` on `ImageBase64` and the framework ran model validation before the action, so
  * `TryDecodeBase64` never saw a blank value and could only ever produce the second of these.
  */
 const REQUIRED = 'Image Base64 is required.'
@@ -157,7 +157,7 @@ describe('PUT /auth/me/portrait - accepted payloads', () => {
   })
 
   it('accepts a payload whose final unused bits are non-zero, as Convert.FromBase64String did', async () => {
-    // "aGVsbG9=" and "aGVsbG8=" differ only in bits the decoder shifts out, and .NET validated
+    // "aGVsbG9=" and "aGVsbG8=" differ only in bits the decoder shifts out, and the original validated
     // neither - it returned the same five bytes for both. A re-encode-and-compare check on top of
     // the length and alphabet rules would reject the first, which is stricter than the API being
     // ported; this fails if one is ever reintroduced.
@@ -172,7 +172,7 @@ describe('PUT /auth/me/portrait - accepted payloads', () => {
 })
 
 describe('PUT /auth/me/portrait - present but unreadable', () => {
-  // Convert.FromBase64String throws on every one of these, and the .NET handler let it through as
+  // Convert.FromBase64String throws on every one of these, and the original handler let it through as
   // a 400 keyed on imageBase64. Buffer.from(s, 'base64') would silently succeed on most of them,
   // discarding what it cannot read - which is why the length and alphabet checks exist at all.
   const unreadable: ReadonlyArray<readonly [string, string]> = [
@@ -184,7 +184,7 @@ describe('PUT /auth/me/portrait - present but unreadable', () => {
     ['interior padding that is still a multiple of four', 'aGV=bG8='],
     ['base64url alphabet', 'a-VsbG8='],
     // Written as escapes: these are exactly the characters that look like whitespace to JS \s
-    // and are not whitespace to .NET, so a literal here would be invisible in review.
+    // and are not whitespace to the original, so a literal here would be invisible in review.
     ['a non-breaking space, which Convert.FromBase64String did not skip', 'aGVs\u00a0bG8='],
     ['a line separator, likewise', 'aGVs\u2028bG8='],
     ['a byte order mark, likewise', 'aGVsbG8=\ufeff'],
@@ -200,7 +200,7 @@ describe('PUT /auth/me/portrait - present but unreadable', () => {
 
 describe('PUT /auth/me/portrait - blank or absent', () => {
   // [RequiredField] on UpdatePortraitRequest.ImageBase64 ran during model binding, ahead of the
-  // action, so .NET answered "is required." here and never reached the decoder at all.
+  // action, so the original answered "is required." here and never reached the decoder at all.
   const blank: ReadonlyArray<readonly [string, unknown]> = [
     ['an omitted field', undefined],
     ['an empty string', ''],

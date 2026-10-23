@@ -74,7 +74,7 @@ const TRANSCRIPT_ROLES = [IDEA_ASSIST_USER_ROLE, IDEA_ASSIST_ASSISTANT_ROLE] as 
  * caller, and duplicating them here would put the same constraint in two places with two
  * different envelopes.
  *
- * An omitted `transcript` reads as empty rather than missing, which is not an oversight: the .NET
+ * An omitted `transcript` reads as empty rather than missing, which is not an oversight: the original
  * property was initialised to `new()` and System.Text.Json leaves an initialiser alone for a key
  * that is not in the JSON, so `[RequiredField]` never fired and the empty list reached the service
  * - which answers "At least one message is required." in the Application envelope. An explicit
@@ -102,7 +102,7 @@ function readTranscript(value: unknown): readonly IdeaAssistTurn[] {
     // rather than throwing on a property read - the same forgiveness `validateFields` gives a
     // mistyped scalar, and for the same reason: a 500 on a malformed body is the worse answer.
     const entry = (typeof item === 'object' && item !== null ? item : {}) as Partial<IdeaAssistTurn>
-    // Keyed by the whole path and named by the property alone - ASP.NET keyed `Transcript[0].Role`
+    // Keyed by the whole path and named by the property alone - the framework keyed `Transcript[0].Role`
     // (camelCased) but built the message from the property's own display name, so the entry reads
     // "Role is required.", never "transcript[0].role is required.".
     rules[`transcript[${index}].role`] = {

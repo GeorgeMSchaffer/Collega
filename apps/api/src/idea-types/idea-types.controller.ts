@@ -81,12 +81,12 @@ function requireOrderedIdeaTypeIds(body: ReorderIdeaTypesBody): readonly string[
     return []
   }
   // A non-GUID member cannot match an active option id, so the coverage check refuses the request
-  // - which is what a non-Guid member did on the .NET side too, one binding envelope earlier.
+  // - which is what a non-Guid member did in the original too, one binding envelope earlier.
   return body.orderedIdeaTypeIds.map(guidOrEmpty)
 }
 
 /**
- * `SetIdeaTypeFieldsRequest.Fields` carries NO `[RequiredField]`, and the .NET action itself wrote
+ * `SetIdeaTypeFieldsRequest.Fields` carries NO `[RequiredField]`, and the original action itself wrote
  * `request.Fields ?? new List<...>()` - so an omitted key, an explicit `null` and `[]` are all the
  * same request, and all three clear the type back to `AllActiveFields`.
  *
@@ -139,7 +139,7 @@ export class IdeaTypesController {
   constructor(private readonly ideaTypes: IdeaTypeService) {}
 
   /**
-   * `includeDeleted` is a .NET `bool` rather than `bool?`, so an ABSENT value binds to `false` and
+   * `includeDeleted` is a non-nullable `bool` rather than `bool?`, so an ABSENT value binds to `false` and
    * the list excludes archived options - see `queryBool` for what else that means.
    */
   @Get('organizations/:organizationId/idea-types')
@@ -177,7 +177,7 @@ export class IdeaTypesController {
     })
   }
 
-  /** Replaces the complete active-option order atomically; answers 204, like the .NET action. */
+  /** Replaces the complete active-option order atomically; answers 204, like the original action. */
   @Post('organizations/:organizationId/idea-types/reorder')
   @HttpCode(204)
   async reorder(

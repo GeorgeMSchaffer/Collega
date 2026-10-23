@@ -26,17 +26,17 @@ export function optional(value: unknown): string | null {
  * A `bool` (not `bool?`) query parameter - `?includeDeleted`, `?isArchived`. Absent binds to
  * `false`, and only the literal `true`, in any casing, flips it.
  *
- * **A KNOWN DIVERGENCE, deliberate**, and wider than "only `true` flips it" suggests. ASP.NET's
+ * **A KNOWN DIVERGENCE, deliberate**, and wider than "only `true` flips it" suggests. the framework's
  * `SimpleTypeModelBinder` ran `bool.Parse`, so anything that was neither `true` nor `false` -
  * `?includeDeleted=1`, `=yes`, or the bare `?includeDeleted=` - was a model-binding **400** there,
  * not a `false`. A REPEATED key is the same story from the other end: Express hands the value over
- * as an array, `String(['true','true'])` is `'true,true'`, and this reads `false` where .NET bound
+ * as an array, `String(['true','true'])` is `'true,true'`, and this reads `false` where the original bound
  * the first value and answered `true`.
  *
  * Not corrected for the reason `optionalInt` below records at length:
- * the 400's message is ASP.NET's own binding resource string, not one of the templates in
+ * the 400's message is the framework's own binding resource string, not one of the templates in
  * `SPEC/30-Contracts.md`, and no fixture in the corpus records one - so implementing it means
- * guessing the wording. Record a fixture against the frozen .NET app first.
+ * guessing the wording. Record a fixture first.
  */
 export function queryBool(value: unknown): boolean {
   return String(value).toLowerCase() === 'true'
@@ -47,17 +47,17 @@ export function queryBool(value: unknown): boolean {
  * for a repeated key, as an array), so this parses rather than type-checks; anything unparseable
  * is `null` and the Application layer applies its own default.
  *
- * **A KNOWN DIVERGENCE, deliberate.** ASP.NET did NOT bind an unparseable `int?` to null: the
+ * **A KNOWN DIVERGENCE, deliberate.** the framework did NOT bind an unparseable `int?` to null: the
  * value-conversion failure landed in ModelState and `[ApiController]` answered 400 through the
  * `InvalidModelStateResponseFactory` that `ProblemDetailsServiceCollectionExtensions` installs
  * (it replaces the factory, it does not suppress the filter). So `?page=abc` was a 400 there and
  * is a defaulted 200 here.
  *
- * Not corrected because the message text cannot be reproduced faithfully: it is ASP.NET's own
+ * Not corrected because the message text cannot be reproduced faithfully: it is the framework's own
  * binding resource string, not one of the templates in `SPEC/30-Contracts.md`, and no fixture in
  * the corpus records one - so implementing the 400 means guessing the wording of the `errors`
  * entry, which is exactly the trap this comment used to be. Record a fixture against the frozen
- * .NET app first, then this becomes a two-line change.
+ * the original app first, then this becomes a two-line change.
  */
 export function optionalInt(value: unknown): number | null {
   if (typeof value !== 'string' || value.trim() === '') {
@@ -67,7 +67,7 @@ export function optionalInt(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
-/** `int` is 32-bit and signed on the .NET side; `Int` is the same column here. */
+/** `int` is 32-bit and signed in the original; `Int` is the same column here. */
 const INT32_MIN = -2147483648
 const INT32_MAX = 2147483647
 
@@ -81,7 +81,7 @@ const INT32_MAX = 2147483647
  *
  * The range and integer checks are not pedantry - both cases were live faults on the status
  * routes, which carry the identical property:
- * - `{"sortOrder": 99999999999}` overflowed Prisma's `Int` and answered **500**. .NET bound
+ * - `{"sortOrder": 99999999999}` overflowed Prisma's `Int` and answered **500**. the original bound
  *   `int?`, failed the conversion, and answered 400.
  * - `{"sortOrder": 1.5}` was accepted, the response ECHOED `1.5`, and the row stored `1` - so the
  *   create response contradicted the very next read. That is a state inconsistency, not only an
@@ -89,9 +89,9 @@ const INT32_MAX = 2147483647
  *
  * **A KNOWN DIVERGENCE, deliberate**, and the same one D1 recorded for `?page=abc`: every value
  * this reads as omitted - `"abc"`, `1.5`, `99999999999` alike - was a System.Text.Json or
- * value-conversion binding failure on the .NET side, which is a different envelope again, not the
+ * value-conversion binding failure in the original, which is a different envelope again, not the
  * model-binding one and not the Application one. No fixture in the corpus records it, so
- * reproducing the 400 means guessing the wording. Record one against the frozen .NET app first.
+ * reproducing the 400 means guessing the wording. Record one first.
  */
 export function optionalInt32(value: unknown): number | null {
   return typeof value === 'number' &&
@@ -115,10 +115,10 @@ export function optionalInt32(value: unknown): number | null {
  * loss, not an infidelity. System.Text.Json could not bind a bare string to `List<string>` either,
  * so the model-binding envelope is the right one.
  *
- * **The exact .NET message text is unverified** - no fixture in the corpus sends a mistyped
+ * **The exact the original message text is unverified** - no fixture in the corpus sends a mistyped
  * `tagNames` or `mentionEmails`, so the wording is this API's own, following the same house
  * convention as the templates in `SPEC/30-Contracts.md` "Validation Message Conventions". Record
- * one against the frozen .NET app and replace it, exactly as `absent-body.pipe.ts` says for the
+ * one and replace it, exactly as `absent-body.pipe.ts` says for the
  * body-less request.
  *
  * `field` keys the `errors` entry AND names the message, so `mentionEmails` reads
@@ -146,7 +146,7 @@ export const EMPTY_GUID = '00000000-0000-0000-0000-000000000000'
 
 /**
  * A non-nullable `Guid` body property. Absent, null, or anything that is not a canonical GUID
- * binds to `default(Guid)` - which is what .NET did for an omitted key.
+ * binds to `default(Guid)` - which is what the original did for an omitted key.
  *
  * `[RequiredField]` on such a property is a NO-OP and never turns any of those into a 400:
  * `RequiredAttribute` rejects null alone, and a boxed `Guid.Empty` is not null. A present-but-
@@ -163,7 +163,7 @@ export function guidOrEmpty(value: unknown): string {
  * A `Guid?` body property or query parameter (`statusId`, `user`, `sprintId`): the value when it is
  * a canonical GUID, `null` when absent or blank, and `EMPTY_GUID` when it is present but not a GUID.
  *
- * That last case is the interesting one. ASP.NET answered 400 - the same unreproducible
+ * That last case is the interesting one. the framework answered 400 - the same unreproducible
  * model-binding message `optionalInt` describes - and passing the raw text on instead is NOT an
  * option here: it reaches a `uuid` column, Prisma raises `P2023`, and the caller gets a **500**.
  * That is precisely the fault D1 shipped and had to fix. `EMPTY_GUID` is the honest middle: the

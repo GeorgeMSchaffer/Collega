@@ -42,7 +42,7 @@ type ReorderBusinessImpactsBody = { orderedBusinessImpactIds?: unknown }
  * identical field for field. `SortOrder` is a bare `int?` and carries none.
  *
  * `Color` is `[RequiredField]` here where the status catalog's is optional: an impact chip has no
- * neutral fallback, so the .NET contract made the color mandatory.
+ * neutral fallback, so the original contract made the color mandatory.
  *
  * The `#RRGGBB` shape was described as the domain's rule and was not actually anyone's -
  * `normalizeColor` only rejects a blank string - so twenty characters of anything, a working CSS
@@ -133,7 +133,7 @@ export class BusinessImpactsController {
     })
   }
 
-  /** Replaces the complete active-option order atomically; answers 204, like the .NET action. */
+  /** Replaces the complete active-option order atomically; answers 204, like the original action. */
   @Post('organizations/:organizationId/business-impacts/reorder')
   @HttpCode(204)
   async reorder(

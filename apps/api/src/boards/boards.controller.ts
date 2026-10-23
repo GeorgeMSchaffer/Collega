@@ -25,7 +25,7 @@ import {
 } from '../common/request-values.js'
 import { UuidParamPipe } from '../common/uuid-param.pipe.js'
 
-/** One entry of a request's `swimlanes` array - `SwimlaneRequest` on the .NET side. */
+/** One entry of a request's `swimlanes` array - `SwimlaneRequest` in the original. */
 type SwimlaneBody = {
   statusId?: string
   order?: number
@@ -95,7 +95,7 @@ function toDescription(description: unknown): string | null | undefined {
  * Takes `unknown` because the body type is compile-time only and there is no `ValidationPipe` -
  * `{"swimlanes": "x"}` would otherwise reach `.map` and answer 500. A non-array is read as
  * absent, and a member with no `statusId` becomes `''`, which fails the Application layer's
- * status-subset check exactly as .NET's `Guid.Empty` default did.
+ * status-subset check exactly as the original's `Guid.Empty` default did.
  */
 function toSwimlaneInputs(swimlanes: unknown): readonly SwimlaneInput[] {
   if (!Array.isArray(swimlanes)) {
@@ -103,7 +103,7 @@ function toSwimlaneInputs(swimlanes: unknown): readonly SwimlaneInput[] {
   }
   return swimlanes.map((entry: SwimlaneBody | null | undefined) => ({
     statusId: typeof entry?.statusId === 'string' ? entry.statusId : '',
-    // `int`, not `int?`, on the .NET record - an absent order bound to 0 rather than failing.
+    // `int`, not `int?`, on the original record - an absent order bound to 0 rather than failing.
     order: typeof entry?.order === 'number' ? entry.order : 0,
     isFinal: entry?.isFinal === true,
     referencesBoardId:
@@ -177,7 +177,7 @@ function toIdeaTypeIds(field: string, value: unknown, absentMeansAll: boolean): 
 /**
  * Board configuration (SPEC/30-Contracts.md "Board Contracts").
  *
- * `@Controller()` carries no prefix on purpose. The .NET controller declared a full path on every
+ * `@Controller()` carries no prefix on purpose. The original controller declared a full path on every
  * action rather than a `[Route]` prefix, so list and create hang off `organizations/{id}/boards`
  * while detail, update and reorder hang off `boards/{id}` - two different nouns from one class.
  * The golden corpus pins both, so a prefix here would move five routes.
@@ -232,7 +232,7 @@ export class BoardsController {
     return this.boards.create(organizationId, {
       name: body.name ?? '',
       description: toDescription(body.description),
-      // A .NET `bool` (not `bool?`): an absent value bound to false.
+      // A non-nullable `bool` (not `bool?`): an absent value bound to false.
       allowUserStatusUpdate: body.allowUserStatusUpdate === true,
       swimlanes: toSwimlaneInputs(body.swimlanes),
       keyPrefix: toKeyPrefix(body.keyPrefix),

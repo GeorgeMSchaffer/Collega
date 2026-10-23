@@ -57,7 +57,7 @@ type ReorderFieldDefinitionsBody = { orderedIds?: unknown }
 /**
  * `Options` on both request records, read as omitted when it is not a JSON array.
  *
- * **A KNOWN DIVERGENCE, and the only one in this slice that makes a request SUCCEED where .NET
+ * **A KNOWN DIVERGENCE, and the only one in this slice that makes a request SUCCEED where the original
  * failed.** `Options` carries no `[RequiredField]` and the property is initialised to `new()`, so
  * System.Text.Json wrote an explicit `null` straight over the initialiser and
  * `FieldDefinitionsController.cs:62` and `:96` then called `request.Options.Select(...)` with no
@@ -74,7 +74,7 @@ function optionBodies(body: CreateFieldDefinitionBody): readonly FieldOptionBody
  * identical field for field, including the nested `FieldOptionRequest` list. `IsRequired` (`bool`)
  * and `DisplayOrder` (`int?`) carry none, and `OptionId` is a `Guid?`.
  *
- * **The nested option key is settled from source, not guessed.** ASP.NET's `ValidationVisitor`
+ * **The nested option key is settled from source, not guessed.** the framework's `ValidationVisitor`
  * keys a nested collection failure by index and then property - `Options[0].Label` - and
  * `ProblemDetailsServiceCollectionExtensions.CreateValidationProblemResult` rewrites every
  * ModelState key through `ToCamelCasePath` (`:66-90`), which splits on `.`, camelCases each
@@ -89,7 +89,7 @@ function fieldDefinitionBodyRules(body: CreateFieldDefinitionBody): Record<strin
     name: { value: body.name, required: true, maxLength: FIELD_NAME_MAX_LENGTH },
     description: { value: body.description, maxLength: FIELD_DESCRIPTION_MAX_LENGTH },
     // `[RequiredField]` only. The allowed-values check is `FieldDefinitionService.parseFieldType`'s,
-    // and it answers with the Application envelope - which is where it answered on the .NET side
+    // and it answers with the Application envelope - which is where it answered in the original
     // too, since `FieldType` is a plain `string` on the contract and carries no `[AllowedValues]`.
     fieldType: { value: body.fieldType, required: true },
   }
@@ -115,7 +115,7 @@ function fieldDefinitionBodyRules(body: CreateFieldDefinitionBody): Record<strin
  * response to say so. Passing the raw text through is not the alternative: it reaches a `uuid`
  * column with no guard between here and Prisma, raises `P2023` and answers 500.
  *
- * **The message wording is ours, not transcribed.** .NET answered 400 here too - System.Text.Json
+ * **The message wording is ours, not transcribed.** the original answered 400 here too - System.Text.Json
  * could not bind `"not-a-guid"` to a `Guid?` - but no fixture in the corpus records one, so there
  * is no recorded text to match. This follows the canonical "invalid format" template in
  * `SPEC/30-Contracts.md` "Validation Message Conventions" (`<FieldName> must be a valid
@@ -159,7 +159,7 @@ function optionCommands(body: CreateFieldDefinitionBody): readonly FieldOptionCo
  * The tail differs from the other two reorders, though, and only because the service does:
  * `FieldDefinitionService.reorder` has no coverage check - unknown ids and repeats are skipped and
  * the omitted actives are appended in their prior order - so `{}` is an accepted no-op renumber
- * there where it is a 400 on the option catalogs. That asymmetry is the .NET's, not this file's.
+ * there where it is a 400 on the option catalogs. That asymmetry is the original's, not this file's.
  */
 function requireOrderedIds(body: ReorderFieldDefinitionsBody): readonly string[] {
   if (body.orderedIds === null) {
@@ -177,7 +177,7 @@ function requireOrderedIds(body: ReorderFieldDefinitionsBody): readonly string[]
  *
  * **`reorder` is declared before `{id}` and must stay there.** Both are `PUT` on a three-segment
  * path, Nest registers handlers in declaration order, and `UuidParamPipe` would 404 the literal
- * `reorder` if `{id}` matched first. The .NET was immune - `{id:guid}` was a route CONSTRAINT, so
+ * `reorder` if `{id}` matched first. The original was immune - `{id:guid}` was a route CONSTRAINT, so
  * `reorder` never matched it whatever the declaration order - which is exactly why the ordering
  * has to be deliberate here.
  *
@@ -191,7 +191,7 @@ export class FieldDefinitionsController {
   constructor(private readonly fieldDefinitions: FieldDefinitionService) {}
 
   /**
-   * `includeDeleted` is a .NET `bool` rather than `bool?`, so an ABSENT value binds to `false`.
+   * `includeDeleted` is a non-nullable `bool` rather than `bool?`, so an ABSENT value binds to `false`.
    * A non-admin asking for it is not refused - the service quietly narrows the answer to the
    * active schema, which is its rule, not this one's.
    */
