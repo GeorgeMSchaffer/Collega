@@ -1169,10 +1169,7 @@ describe('assignBoardSprints: a User schedules what they authored (task-edit rul
       expect(badLane).toBeInstanceOf(ForbiddenError)
     })
 
-    // DEFECT (slice 339): the contract puts other-board ids (3) ahead of the edit check (4), but the
-    // service runs the edit check first, so a User gets 403 here. `it.fails` keeps the gate green
-    // and turns red the moment the order is fixed - then change it to a plain `it`.
-    it.fails('an item of another board beats the edit check: 422 sprintItemOnOtherBoard, not 403', async () => {
+    it('an item of another board beats the edit check: 422 sprintItemOnOtherBoard, not 403', async () => {
       const h = asMember([item('a', { authorUserId: 'other', boardId: BOARD_B })])
 
       const error = await failure(h.service.assignBoardSprints(BOARD_A, scheduleAll(['a'])))
