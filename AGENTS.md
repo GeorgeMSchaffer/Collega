@@ -85,9 +85,6 @@ These boundaries are **enforced, not conventional**: `biome.json`'s `noRestricte
 overrides fail the lint run on a cross-layer import, `tools/boundaries` asserts those lint rules
 still work, and `tools/arch` holds the assertions lint cannot express.
 
-The deleted projects mapped one-to-one onto these — `Collega.Domain` → `packages/domain`, and so
-on. `SPEC/50-typescript-migration.md` §4 has the full mapping.
-
 ## Technology Stack
 
 | | |
