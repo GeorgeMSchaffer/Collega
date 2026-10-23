@@ -7,6 +7,7 @@ import { type FormEvent, useEffect, useMemo, useRef, useState, useTransition } f
 import { ParentChip } from '@/components/ideas/idea-badges'
 import { ConfirmDialog } from '@/components/list'
 import { blockedBadge, blockedTooltip, isBlockedHere, type WorkLane } from '@/lib/board-work'
+import { mayScheduleTask, type Scheduler } from '@/lib/roles'
 import {
   addSprintTask,
   moveTasksToSprint,
@@ -21,7 +22,8 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
  * The sprint planning page (comp W screen 4): the Backlog on the left, "In this sprint" on the
  * right. Add and Remove are buttons, so the page works by keyboard and touch. Remove sends a `null`
  * sprint, which returns the task to the Backlog. A Completed sprint is a record and takes no
- * changes; `canPlan` (admin only, TB-10) switches every control on or off. Counts are the page's
+ * changes; `scheduler` (TB-10) switches the controls on or off: Add and Remove show on the tasks the
+ * reader may edit, Start sprint for an Org Admin only. Counts are the page's
  * fresh read after each write, so they move without a reload.
  */
 export function SprintPlanning({
@@ -32,7 +34,7 @@ export function SprintPlanning({
   backlogTotal,
   inSprint,
   lanes,
-  canPlan,
+  scheduler,
 }: {
   boardId: string
   organizationId: string | null
@@ -41,9 +43,9 @@ export function SprintPlanning({
   backlogTotal: number
   inSprint: readonly Idea[]
   lanes: readonly WorkLane[]
-  canPlan: boolean
+  scheduler: Scheduler | null
 }) {
-  const editable = canPlan && sprint.state !== 'Completed'
+  const editable = scheduler !== null && sprint.state !== 'Completed'
   const [query, setQuery] = useState('')
   const [title, setTitle] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -136,7 +138,7 @@ export function SprintPlanning({
           <span className="text-xs text-muted-foreground">{item.statusName}</span>
         ) : null}
       </div>
-      {editable ? (
+      {editable && mayScheduleTask(scheduler, item.authorUserId) ? (
         side === 'backlog' ? (
           <Button
             size="sm"
@@ -173,7 +175,7 @@ export function SprintPlanning({
           <b className="font-semibold text-foreground">{inSprint.length}</b>{' '}
           {inSprint.length === 1 ? 'task' : 'tasks'} in this sprint
         </span>
-        {canPlan && sprint.state === 'Planned' && organizationId ? (
+        {scheduler?.isAdmin && sprint.state === 'Planned' && organizationId ? (
           <Button
             size="sm"
             className="ml-auto"

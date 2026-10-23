@@ -46,6 +46,7 @@ const task = (id: string, over: Partial<BoardTask> = {}): BoardTask => ({
   assignees: [],
   blockedBy: [],
   autoCreated: false,
+  mayEdit: true,
   ...over,
 })
 
@@ -70,6 +71,7 @@ function tasksOf(
       scheduling === undefined
         ? {
             sprints: SPRINTS,
+            canCreate: true,
             backlog: TASKS,
             backlogTotal: TASKS.length,
             members: [{ id: 'u-ada', name: 'Ada Lovelace' }],
@@ -134,6 +136,51 @@ describe('TasksSection: who is offered Schedule…', () => {
 
     expect(screen.queryByRole('button', { name: /^Schedule/ })).toBeNull()
     expect(screen.getByText('No sprint')).toBeTruthy()
+  })
+})
+
+describe('TasksSection: Schedule… for a User', () => {
+  const user = (sprints: typeof SPRINTS): IdeaTasks['scheduling'] => ({
+    sprints,
+    canCreate: false,
+    backlog: [],
+    backlogTotal: 0,
+    members: [],
+  })
+
+  it('hides it on a task the reader may not edit', () => {
+    render(
+      <TasksSection
+        parent={PARENT}
+        tasks={tasksOf([task('2', { sprint: null, mayEdit: false })], user(SPRINTS))}
+      />,
+    )
+
+    expect(screen.queryByRole('button', { name: /^Schedule/ })).toBeNull()
+  })
+
+  it('disables it with the reason when the board has no open sprint, and offers no create option', () => {
+    render(
+      <TasksSection parent={PARENT} tasks={tasksOf([task('2', { sprint: null })], user([]))} />,
+    )
+
+    const button = scheduleButton('W-2')
+    expect(button.getAttribute('aria-disabled')).toBe('true')
+    expect(button.getAttribute('title')).toBe(
+      'This board has no Planned or Active sprint to schedule into.',
+    )
+  })
+
+  it('offers the open sprints but not "Create a new sprint…"', () => {
+    render(
+      <TasksSection
+        parent={PARENT}
+        tasks={tasksOf([task('2', { sprint: null })], user(SPRINTS))}
+      />,
+    )
+    fireEvent.click(scheduleButton('W-2'))
+
+    expect(screen.queryByRole('option', { name: 'Create a new sprint…' })).toBeNull()
   })
 })
 

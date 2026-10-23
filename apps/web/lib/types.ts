@@ -650,6 +650,11 @@ export type BoardTask = {
    * task was not among the board's first page of cards (the drawer then says nothing about it).
    */
   sprint?: { id: string; name: string } | null | undefined
+  /**
+   * Whether the reader may edit, and so schedule, this task (its author or an Org Admin, TB-10).
+   * Read from the board's card list beside `sprint`; absent when the card was not among them.
+   */
+  mayEdit?: boolean | undefined
 }
 
 /**
@@ -673,11 +678,14 @@ export type IdeaTasks = {
   /** Null when the reader may not add or remove tasks (hidden, not disabled). */
   adding: { members: MemberOption[]; tags: TagRef[] } | null
   /**
-   * "Schedule…" (TB-9): the work board's open sprints and its Backlog, for the create-sprint drawer.
-   * Null unless the reader may plan (an Org Admin) and the board has sprints on; hidden, not disabled.
+   * "Schedule…" (TB-9): the work board's open sprints, and for an Org Admin its Backlog for the
+   * create-sprint drawer. Null unless the reader may schedule (not Read Only) and the board has
+   * sprints on; hidden, not disabled.
    */
   scheduling: {
     sprints: { id: string; name: string; state: SprintState }[]
+    /** An Org Admin may create a sprint from here; `backlog` and `members` are empty otherwise. */
+    canCreate: boolean
     backlog: Idea[]
     backlogTotal: number
     members: MemberOption[]

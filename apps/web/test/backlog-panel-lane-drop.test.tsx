@@ -217,7 +217,7 @@ describe('dropping a backlog task on a lane', () => {
     expect(move).toHaveBeenCalledExactlyOnceWith('b-1', 's-act', ['1'], 'todo')
   })
 
-  it('shows a User the panel and drag handles, but the lane refuses with the reason and no call', async () => {
+  it('shows a User the panel and drag handles, but the lane refuses a task they did not author, with the reason and no call', async () => {
     renderBoard({ role: 'User' })
     openPanel()
     expect(row('1').getAttribute('draggable')).toBe('true')
@@ -226,12 +226,19 @@ describe('dropping a backlog task on a lane', () => {
       fireEvent.dragOver(lane('Doing'), { dataTransfer: dt })
     })
     expect(within(lane('Doing')).getByRole('tooltip').textContent).toBe(
-      'Only an Org Admin can put a task in a sprint.',
+      'Only the task’s author or an Org Admin can put it in a sprint.',
     )
     await act(async () => {
       fireEvent.drop(lane('Doing'), { dataTransfer: dt })
     })
     expect(move).not.toHaveBeenCalled()
+  })
+
+  it('lets a User drop a task they authored', async () => {
+    renderBoard({ role: 'User', tasks: [backlogTask('1', { authorUserId: 'user-User' })] })
+    openPanel()
+    await dragTask('1', 'To do')
+    expect(move).toHaveBeenCalledExactlyOnceWith('b-1', 's-act', ['1'], 'todo')
   })
 
   it('removes the refusal tooltip once the drag ends', async () => {
@@ -287,7 +294,7 @@ describe('Add in the panel', () => {
     expect(row('1')).toBeTruthy()
   })
 
-  it('is not offered to a User', () => {
+  it('is not offered on a task a User did not author', () => {
     renderBoard({ role: 'User' })
     openPanel()
     expect(screen.queryByRole('button', { name: /^Add W-/ })).toBeNull()

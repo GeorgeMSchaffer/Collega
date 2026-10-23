@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest'
 import { BacklogList } from '@/components/boards/backlog-list'
 import { TASKS } from './support/backlog-fixtures'
 
+const ADMIN = { userId: 'u-admin', isAdmin: true }
+
 /** TB-5: "+ New sprint" lives on the Sprints tab; the Backlog toolbar carries no such control. */
 describe('Backlog toolbar', () => {
   it('has no "+ New sprint…" control, for an admin with nothing selected', () => {
@@ -13,7 +15,7 @@ describe('Backlog toolbar', () => {
         rows={TASKS}
         total={TASKS.length}
         lanes={[{ id: 'l-1', name: 'To do', color: '#111111', isFinal: false }]}
-        canSelect
+        scheduler={ADMIN}
         newTaskHref={null}
         sprints={[]}
         members={[]}

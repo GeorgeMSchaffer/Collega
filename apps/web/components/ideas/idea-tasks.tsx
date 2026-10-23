@@ -159,7 +159,16 @@ export function TasksSection({ parent, tasks }: { parent: Parent; tasks: IdeaTas
                 task={task}
                 tasks={tasks}
                 onRemove={tasks.adding ? () => setRemoving(task) : undefined}
-                onSchedule={plan && task.sprint === null ? () => setScheduling(task) : undefined}
+                onSchedule={
+                  plan && task.sprint === null && task.mayEdit
+                    ? () => setScheduling(task)
+                    : undefined
+                }
+                scheduleOff={
+                  plan && !plan.canCreate && plan.sprints.length === 0
+                    ? 'This board has no Planned or Active sprint to schedule into.'
+                    : undefined
+                }
               />
             ))}
           </ul>
@@ -182,6 +191,7 @@ export function TasksSection({ parent, tasks }: { parent: Parent; tasks: IdeaTas
           task={scheduling}
           boardId={tasks.referenced.id}
           sprints={plan.sprints}
+          canCreate={plan.canCreate}
           onClose={() => setScheduling(null)}
           onScheduled={() => {
             setScheduling(null)
@@ -193,7 +203,7 @@ export function TasksSection({ parent, tasks }: { parent: Parent; tasks: IdeaTas
           }}
         />
       ) : null}
-      {plan ? (
+      {plan?.canCreate ? (
         <SprintCreateDrawer
           open={creating !== null}
           onClose={() => setCreating(null)}
@@ -240,11 +250,14 @@ function TaskRow({
   tasks,
   onRemove,
   onSchedule,
+  scheduleOff,
 }: {
   task: BoardTask
   tasks: IdeaTasks
   onRemove: (() => void) | undefined
   onSchedule: (() => void) | undefined
+  /** Why Schedule… is disabled for a reader who cannot create a sprint, or undefined. */
+  scheduleOff?: string | undefined
 }) {
   const lane = tasks.referenced.lanes.find((candidate) => candidate.id === task.statusId)
   const blocked = isBlockedHere(
@@ -308,9 +321,15 @@ function TaskRow({
           {onSchedule ? (
             <button
               type="button"
-              onClick={onSchedule}
+              onClick={scheduleOff ? undefined : onSchedule}
+              aria-disabled={scheduleOff ? 'true' : undefined}
+              title={scheduleOff}
               aria-label={`Schedule ${task.itemKey ?? task.title}`}
-              className="rounded px-1 text-xs font-semibold text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              aria-description={scheduleOff}
+              className={cn(
+                'rounded px-1 text-xs font-semibold text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                scheduleOff && 'cursor-not-allowed opacity-60 hover:no-underline',
+              )}
             >
               Schedule…
             </button>
@@ -629,6 +648,7 @@ function ScheduleDialog({
   task,
   boardId,
   sprints,
+  canCreate,
   onClose,
   onScheduled,
   onCreate,
@@ -636,12 +656,13 @@ function ScheduleDialog({
   task: BoardTask
   boardId: string
   sprints: { id: string; name: string; state: string }[]
+  canCreate: boolean
   onClose: () => void
   onScheduled: () => void
   onCreate: () => void
 }) {
   const id = useId()
-  const [choice, setChoice] = useState(sprints[0]?.id ?? NEW_SPRINT)
+  const [choice, setChoice] = useState(sprints[0]?.id ?? (canCreate ? NEW_SPRINT : ''))
   const [error, setError] = useState<string | null>(null)
   const [pending, start] = useTransition()
   const name = task.itemKey ?? `‘${task.title}’`
@@ -678,7 +699,7 @@ function ScheduleDialog({
             {sprint.name} · {sprint.state}
           </option>
         ))}
-        <option value={NEW_SPRINT}>Create a new sprint…</option>
+        {canCreate ? <option value={NEW_SPRINT}>Create a new sprint…</option> : null}
       </Select>
       {error ? (
         <p role="alert" className="m-0 mt-3 text-xs font-semibold text-destructive">

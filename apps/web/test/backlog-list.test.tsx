@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest'
 import { BacklogList } from '@/components/boards/backlog-list'
 import type { Idea } from '@/lib/types'
 
+const ADMIN = { userId: 'u-admin', isAdmin: true }
+
 /**
  * A work board's Backlog list (TB-1, comp W screens 1 and 5): the rows as sent, the filters that
  * narrow them, the "first N of T" honesty line, the empty state and who gets selection checkboxes.
@@ -58,7 +60,7 @@ function list(over: Partial<Parameters<typeof BacklogList>[0]> = {}) {
       rows={ROWS}
       total={ROWS.length}
       lanes={LANES}
-      canSelect={false}
+      scheduler={null}
       newTaskHref="/boards/b-1?tab=backlog&task=new"
       {...over}
     />,
@@ -184,18 +186,18 @@ describe('BacklogList empty state', () => {
 
 describe('BacklogList selection', () => {
   it('has no checkboxes unless the reader can plan sprints', () => {
-    list({ canSelect: false })
+    list({ scheduler: null })
     expect(screen.queryAllByRole('checkbox')).toHaveLength(0)
   })
 
   it('has a checkbox per row and a select-all when the reader can plan', () => {
-    list({ canSelect: true })
+    list({ scheduler: ADMIN })
     expect(screen.getAllByRole('checkbox')).toHaveLength(ROWS.length + 1)
     expect(screen.getByRole('checkbox', { name: 'Select all shown tasks' })).toBeTruthy()
   })
 
   it('counts the selection, selects all shown only, and clears', async () => {
-    list({ canSelect: true })
+    list({ scheduler: ADMIN })
     fireEvent.click(screen.getByRole('checkbox', { name: 'Select W-1' }))
     expect(screen.getByRole('status').textContent).toContain('1 selected')
 

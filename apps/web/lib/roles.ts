@@ -127,6 +127,38 @@ export function mayEditIdeaContent(role: Role, userId: string, authorUserId: str
 }
 
 /**
+ * Who may put tasks in and out of sprints (TB-10, `SPEC/decisions.md` 2026-10-22): anyone who may
+ * edit the task - its author or an Org Admin. `null` for Read Only and a direct Site Admin, who
+ * never may. A display decision; the API refuses the same writes on its own.
+ */
+export type Scheduler = { userId: string; isAdmin: boolean }
+
+export function schedulerFor(user: { role: Role; userId: string }): Scheduler | null {
+  if (user.role === 'OrgAdmin') return { userId: user.userId, isAdmin: true }
+  if (user.role === 'User') return { userId: user.userId, isAdmin: false }
+  return null
+}
+
+/** Why a task the reader cannot edit stays where it is (the API says the same with a 403). */
+export const SCHEDULE_DENIAL = 'Only the task’s author or an Org Admin can put it in a sprint.'
+
+/** Why a selection cannot be scheduled: the first task in it the reader may not edit, or `null`. */
+export function scheduleRefusal(
+  scheduler: Scheduler | null,
+  tasks: readonly { authorUserId: string | null }[],
+): string | null {
+  return tasks.some((task) => !mayScheduleTask(scheduler, task.authorUserId))
+    ? SCHEDULE_DENIAL
+    : null
+}
+
+/** Whether this scheduler may edit, and so schedule, a task written by `authorUserId`. */
+export function mayScheduleTask(scheduler: Scheduler | null, authorUserId: string | null): boolean {
+  if (!scheduler) return false
+  return scheduler.isAdmin || (authorUserId !== null && authorUserId === scheduler.userId)
+}
+
+/**
  * Whether the reader may change an Issue's delivery status or its tasks: its author, an assignee,
  * or an Org Admin (`20-feature-issues-and-delivery.md` "Permissions"). A Read Only account and a
  * direct Site Admin never may.
