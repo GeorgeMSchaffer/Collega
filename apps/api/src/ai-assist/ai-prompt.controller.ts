@@ -30,7 +30,7 @@ type ProbeAiPromptBody = { body?: string }
  * every method, and that second check is the load-bearing one: it reads the EFFECTIVE role, so it
  * also refuses a Site Admin who is currently acting as someone else - which the guard alone would
  * let through, since during a session the acting role is the target's. The guard exists because the
- * golden corpus records the framework 403 envelope here (`aiassist.prompt.get.orgadmin`), not the
+ * golden corpus records the framework-level (RFC 9110) 403 envelope here (`aiassist.prompt.get.orgadmin`), not the
  * Application one.
  *
  * `@UseGuards(AuthGuard, RolesGuard)` in that order: `RolesGuard` reads the identity `AuthGuard`
@@ -57,7 +57,7 @@ export class AiPromptController {
    *
    * The placeholder requirement - both `{{ORGANIZATION_CATALOG}}` and `{{SCOPE_STATEMENT}}` must be
    * present - is enforced on the entity so every write path shares one rule; the checks here only
-   * catch the cheap cases before a round trip, exactly as the .NET DTO's attributes did.
+   * catch the cheap cases before a round trip, exactly as the pre-migration DTO's attributes did.
    */
   @Put()
   async publish(@Body() body: PublishAiPromptBody): Promise<AiPromptSettings> {
@@ -87,7 +87,7 @@ export class AiPromptController {
    * history stays append-only and the restore is itself visible in it.
    *
    * `@HttpCode(200)` because Nest answers `POST` with `201` by default and the contract says `200`;
-   * `IntParamPipe` because `{version:int}` was a route-MATCHING constraint on the .NET side, so a
+   * `IntParamPipe` because `{version:int}` was a route-MATCHING constraint in the pre-migration API, so a
    * non-integer segment was a 404 there and must stay one here.
    */
   @Post('versions/:version/restore')
@@ -99,7 +99,7 @@ export class AiPromptController {
   /**
    * Returns the deployment to the built-in default by standing every version down.
    *
-   * **Not in `SPEC/30-Contracts.md`.** The route exists on the frozen .NET app and the golden
+   * **Not in `SPEC/30-Contracts.md`.** The route exists in the retired app and the golden
    * corpus records it across all five roles (`aiassist.prompt.reset.*`), so it is ported; the
    * contract's "AI Idea Assist Contracts" section simply never documented it. Reported with the
    * D6/D7 slice rather than resolved here.

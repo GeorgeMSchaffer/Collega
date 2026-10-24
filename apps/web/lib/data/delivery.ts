@@ -145,6 +145,13 @@ export async function getBoardSprints(boardId: string, state?: SprintState): Pro
   }
 }
 
+/**
+ * A board sprint's cards include its work-board tasks and standalone cards (`contracts/delivery.md`
+ * "A board sprint"), which carry no delivery status or effort. They are not Issues and the Sprint
+ * board has no lane for them; they are scheduled and shown on their board's own Sprints tab and
+ * planning page, so they are left out here rather than turned into a throw in `toIssue`, which
+ * stays strict for a real Issue missing its status.
+ */
 export async function getIssuesInSprint(sprintId: string): Promise<Issue[]> {
   failIfRequested('getIssuesInSprint')
 
@@ -155,7 +162,7 @@ export async function getIssuesInSprint(sprintId: string): Promise<Issue[]> {
     'getIssuesInSprint',
     apiPath`/organizations/${scope}/delivery?sprintId=${sprintId}`,
   )
-  return cards.map(toIssue)
+  return cards.filter((card) => card.deliveryStatus !== null).map(toIssue)
 }
 
 /**

@@ -42,6 +42,12 @@ export type CreateBoardTaskCommand = Pick<
   'title' | 'description' | 'assigneeUserIds' | 'tagNames'
 >
 
+/** `POST /boards/{boardId}/tasks`: a task's four fields, an optional parent and an optional sprint. */
+export type CreateBoardCardCommand = CreateBoardTaskCommand & {
+  readonly parentIdeaId: string | null
+  readonly sprintId: string | null
+}
+
 /** `PUT /ideas/{ideaId}` on a task: the same four fields; the idea-only ones are not taken. */
 export type UpdateTaskCommand = CreateBoardTaskCommand
 
@@ -120,6 +126,13 @@ export type AssignIssueToSprintCommand = {
   readonly sprintId: string | null
 }
 
+/** `PUT /boards/{boardId}/sprint-assignments`. `statusId` is a lane drop; it needs a `sprintId`. */
+export type AssignBoardSprintCommand = {
+  readonly ideaIds: readonly string[]
+  readonly sprintId: string | null
+  readonly statusId: string | null
+}
+
 /** The sprint board and the delivery backlog. Omit `sprintId` for the backlog (`SprintId is
  * null`); pass one to read that sprint's Issues. */
 export type DeliveryListQuery = {
@@ -181,6 +194,8 @@ export type IdeaListQuery = {
   readonly sprintId?: string | null | undefined
   /** Only items in no sprint: the board backlog (`sprintId=none`). */
   readonly noSprint?: boolean | undefined
+  /** Leaves out items sitting in a final lane of their board (the Backlog). */
+  readonly hideFinal?: boolean | undefined
   readonly sortBy: string | null
   readonly sortDirection: string | null
 }
@@ -225,6 +240,12 @@ export type OrganizationIdeaListQuery = {
   readonly priorities: readonly string[]
   readonly tags: readonly string[]
   readonly user: string | null
+  /** Only items in this sprint. */
+  readonly sprintId?: string | null | undefined
+  /** Only items in no sprint (`sprintId=none`). */
+  readonly noSprint?: boolean | undefined
+  /** Leaves out items sitting in a final lane of their own board. */
+  readonly hideFinal?: boolean | undefined
   /**
    * `All` (default) / `Ideas` (Discovery only) / `Issues` (Delivery only), so search and
    * provenance span both phases (spec "Board & idea-list phase filtering").

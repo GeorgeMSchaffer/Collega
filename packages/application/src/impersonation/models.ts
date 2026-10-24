@@ -7,8 +7,8 @@ import type { CurrentUserSummary } from '../auth/models.js'
  * `GET /auth/me`.
  *
  * `CurrentUserSummary` (from `../auth/models.js`) is reused rather than redeclared - "same shape
- * `GET /auth/me` returns, so a client can bind both with one type" is the .NET original's own
- * comment for why. `portraitDataUrl` and `viewingAs` are always null on both identities here,
+ * `GET /auth/me` returns, so a client can bind both with one type" was the pre-migration API's own
+ * reason. `portraitDataUrl` and `viewingAs` are always null on both identities here,
  * exactly as the golden corpus records (`auth.viewas.start.json`): View As's own responses never
  * carry a portrait, and neither identity is itself mid-session at the moment this call returns.
  */

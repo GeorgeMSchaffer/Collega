@@ -25,7 +25,7 @@ type AssignIssueToSprintBody = { sprintId?: unknown }
  * raw strings its own `parseEffort`/`parseDeliveryStatus` already judge, field-keyed. Re-checking
  * them in the controller would answer the same 400 twice with two different messages depending on
  * whether the value was blank or merely wrong - see `ideas.controller.ts`'s `ideaBodyRules` for the
- * case where the duplication IS wanted, which is a recorded .NET model-binding envelope these
+ * case where the duplication IS wanted, which is a recorded pre-migration model-binding envelope these
  * routes have no counterpart to.
  *
  * Authorization and org scoping are `IdeaService`'s throughout: who may promote (author or in-scope

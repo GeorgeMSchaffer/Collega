@@ -28,6 +28,11 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-22 | Anyone who can edit a task may schedule it into a sprint | active | full below |
+| 2026-10-22 | Sprint 17 as built differs from comp W in a few places | active | full below |
+| 2026-10-22 | The legacy Sprint board lists only cards with a delivery status | active | full below |
+| 2026-10-22 | A card on a referenced board is a task on read; a 403 can carry a field key | active | full below |
+| 2026-10-22 | Tasks get a Backlog and sprints are planned from it (five surfaces) | active | full below |
 | 2026-10-22 | The whole idea card drags between lanes | active | full below |
 | 2026-10-22 | Users always move ideas between statuses | active | full below |
 | 2026-10-22 | A board can limit which idea types it takes | active | full below |
@@ -143,6 +148,69 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-10-22 — Anyone who can edit a task may schedule it into a sprint
+
+**Decided by the owner (2026-10-22), after Sprint 17 shipped scheduling as Org Admin only.** Supersedes the "sprint creation and assignment stay admin-only" reading of `SPEC/20-feature-task-backlog-and-sprint-planning.md` TB-10 and the Roles line of "Tasks get a Backlog and sprints are planned from it". Reasons: the people doing a task are the ones who know when it fits, and the admin-only gate sent a User who could add a task to an Org Admin to schedule it.
+
+**Rule.** *Can edit a task* is the app's existing task-edit rule (`canAdministerIdeaContent`; "Only the author or an Org Admin can edit this task"): the task's author or an Org Admin of its organization. Read Only never; a Site Admin acting directly never. Whoever can edit a task may put it in a Planned or Active sprint of its board or return it to the backlog: Schedule… in the idea drawer, Add and Remove on the planning page and the Backlog bar, the Tasks page's "Move to sprint", `sprintId` on `POST /boards/{boardId}/tasks` (the creator is the author, so any non-Read-Only member), and `PUT /boards/{boardId}/sprint-assignments`. A bulk request is all or nothing: one task the caller may not edit gives `403` keyed `ideaIds`.
+
+**Unchanged, Org Admin only:** creating a sprint (with or without `ideaIds`), editing, deleting, Start and Complete, "+ New sprint", and the create-sprint picker. The single `PUT /ideas/{ideaId}/sprint` is untouched and stays admin-only for every item, board tasks in any phase included (`contracts/delivery.md`).
+
+**Lane drop.** Needs both rights: edit on the task (it schedules) and the status-move right, which every Org Admin and User has and Read Only never (2026-10-22 "Users always move ideas between statuses", unchanged). Blockers and lane rules apply as before.
+
+**Contracts.** `contracts/sprints.md` and `contracts/ideas.md` were edited as an owner-approved exception to "contracts are read, not edited". Not built when written; the tracker carries the slices.
+
+## 2026-10-22 — Sprint 17 as built differs from comp W in a few places
+
+Slices 322 to 337 built the five comp W surfaces. Where the build departs from the comp, the build is the intent until the owner says otherwise:
+
+- **Board panel:** comp W has no panel screen; the Backlog panel (side column at md and up, bottom sheet below) is a builder design. Without an Active sprint the lanes refuse a drop ("No active sprint.") and the Add button targets a chosen open sprint.
+- **Sprint controls are Org Admin only,** including the inline new-task line on the planning page (a `sprintId` on task create needs an admin) and "Schedule…" in the idea drawer (TB-9 names no role; read with TB-10). A User can add tasks only from the Backlog "+ New task", which sends no sprint. *Superseded by the entry above ("Anyone who can edit a task may schedule it into a sprint"): scheduling is open to task editors; creating, starting and completing a sprint stay Org Admin only.*
+- **Completed sprints** are reachable read-only from the Sprints list and take no changes; Active sprints have no Complete button here.
+- **Drag between the planning page's columns** (an enhancement in the comp) is not built; Add and Remove buttons only. **Blocked chip** (comp 1C) is not built.
+- **Read Only** sees no panel and no toggle on the board; the Backlog tab still lists for them without controls.
+- **Sprints tab badge** counts non-Completed sprints (the spec does not say).
+- **Owner answers 2026-10-22:** bulk assignment notifies followers like a single status move (kept); the item-number burn on a refused multi-item drop into an auto-create-task lane is accepted; the Sprints tab badge stays non-Completed sprints; CSV export of standalone cards shows stored stand-in values (no preference, left as is).
+- **Owner wants scheduling to reach beyond Org Admin:** a user who can edit a task (its idea's owner) may schedule it. This **supersedes** the Org Admin only reading above and TB-10; not built yet. It needs the spec, `contracts/sprints.md` (`sprint-assignments`, `sprintId` on task create) and the web gating changed together, as a follow-up slice.
+
+## 2026-10-22 — The legacy Sprint board lists only cards with a delivery status
+
+`/delivery/sprint` threw on a sprint holding a work-board task: `GET /delivery?sprintId=` returns a board sprint's items in any phase (`contracts/delivery.md` "A board sprint"), and a task has no delivery status or effort. **Rule:** the web reader `getIssuesInSprint` drops cards whose `deliveryStatus` is `null` before adapting them; tasks are shown on their board's Sprints tab and planning page. The API keeps returning them (pinned by the board-sprint QA tests, and the sprint's `issueCount` counts tasks by design), and `toIssue` keeps throwing for a real Issue missing a status or effort. The Backlog and issue-page readers cannot leak: they read Delivery-phase items only.
+
+## 2026-10-22 — A card on a referenced board is a task on read; a 403 can carry a field key
+
+**Decided by the owner (the first part), slice 322.** `POST /boards/{boardId}/tasks` without a parent makes a standalone card. It is stored as an ordinary item row, so it keeps the stand-in priority, type, business impact and problem text that a task never shows. **Rule:** a card on a board that a non-archived board's lane references (the same test as `boardIsNotAWorkBoard`) is a task on read, parent or not. Priority, type, business impact, problem, solutions, impact rationale, effort and metrics are hidden on the list and detail reads, and the card is edited as a task. No schema change. The CSV export still writes the stored values for such a card; to be revisited if it matters.
+
+**Keyed 403.** A refusal that is about one field of the request (a non-admin sending `sprintId`) is a `403` whose problem body also carries `errors: { sprintId: [...] }`. In code, `ForbiddenError` takes optional `failures`, and the problem-details filter renders them as `errors`. No other 403 changes. **Keyed 422 (slice 324).** `UnprocessableError` likewise takes optional `failures`, rendered as `errors` on a 422 only when set (`detail` stays the code); the per-item refusals of bulk sprint assignment and create-with-tasks key `ideaIds` with a message that starts with the item key. Other 422s unchanged.
+
+## 2026-10-22 — Tasks get a Backlog and sprints are planned from it (five surfaces)
+
+> Extends `SPEC/20-feature-board-references.md` (tasks, per-board sprints); changes none of its rules. Spec: `SPEC/20-feature-task-backlog-and-sprint-planning.md`. Comps: `SPEC/mockups/comp-w-tasks-and-sprint-planning.html`, `comp-w-alternates-tasks-and-sprint-planning.html` (review comps; the spec governs).
+
+**Decided by the owner.** Tasks have no home outside their parent idea's drawer, and a sprint cannot be filled from waiting tasks. Build **all five** approaches, as slices over one pair of lists (unassigned tasks, a sprint's tasks):
+
+1. A **Backlog tab** per work board (default) with "+ New task" and an "Add to sprint" bulk bar; the same list is a **collapsible panel** beside the lanes (a toggle, not a second build).
+2. The **create-sprint** drawer ends with a picker of the board's unassigned tasks; creating with tasks is atomic.
+3. A **sprint planning page** (backlog beside the sprint).
+4. A **Tasks page** across work boards, with "Move to sprint" for one board's selection.
+5. A **Schedule…** step in the parent idea's Tasks section.
+
+Rules settled with it:
+- **A lane drop sets status.** Dropping a backlog task on a lane puts it in the Active sprint and sets its status to that lane, through the board's own move, so blockers and lane rules still apply and a refusal leaves it in the backlog. The **Add** button adds to the sprint and leaves status alone. With no Active sprint a panel drop is refused.
+- **Roles.** Users add tasks (standalone or parented); only Org Admins create sprints and assign tasks to them (`contracts/sprints.md` is unchanged). Read Only sees, no controls.
+
+**Why.** A task is a card on a board but only reachable through its parent, so standalone and cross-idea tasks cannot be managed; and sprint creation, which the person experiences as "plan the next two weeks", had no step for choosing the work. One list serving five entry points avoids five models.
+
+**Build needs** (contracts written 2026-10-22, owner to review, in `contracts/sprints.md` and `contracts/ideas.md`): `ideaIds` on board sprint create, `PUT /boards/{boardId}/sprint-assignments` (bulk, atomic, optional `statusId`), `hideFinal` and the org list's `sprintId`, and `POST /boards/{boardId}/tasks`. The sprint field on board items and the single assignment route already existed; no cross-board task route is needed.
+
+**Tasks page choices (slice 334, 2026-10-22, builder's calls for owner review).**
+- Backlog and My tasks hide finished work; In sprint and All show it.
+- In sprint is one request per open sprint, merged; Completed sprints are excluded (the API has no any-sprint filter).
+- "Move to sprint" only; no return to backlog from this page.
+- The first 100 newest rows, no filters or paging.
+- No Blocked chip, unlike comp W screen 1C: the Tasks table does not know each board's first lane.
+- The "Tasks" nav entry follows Ideas, hidden from a Site Admin acting directly.
 
 ## 2026-10-22 — The whole idea card drags between lanes
 

@@ -14,14 +14,11 @@ of done. It deliberately does not restate the plan.
 ## Wave A is already done
 
 **Complete 2026-09-03**: 447 cases over all 81 endpoints at four roles and anonymous,
-recorded from the live .NET API and replaying 447/447 clean. Committed under
+recorded from the previous API and replaying 447/447 clean. Committed under
 `tools/golden/` — it *is* the oracle.
 
-It ran ahead of this sprint deliberately, because it can only be recorded against a live
-.NET API. That deadline has not gone away, it has moved: **cutover deletes the .NET
-solution**, and after that the recording can never be made again. So until Wave F,
-`dotnet run` and `dotnet test` must keep working even though no development happens on
-them — a change that breaks the API's boot path is still a problem.
+It ran ahead of this sprint deliberately, because it could only be recorded against the live
+previous API. That API is gone, so the recording can never be made again.
 
 Re-capture only if the API surface changes, and against a freshly seeded database
 (`tools/golden/README.md` explains why, and how).
@@ -32,8 +29,7 @@ Re-capture only if the API surface changes, and against a freshly seeded databas
 | A2 golden corpus | `tools/golden/fixtures/` — 81 endpoints × 4 roles, error paths included | **Done 2026-09-03** — 447 cases committed, plus `manifest.json` |
 | A3 replay harness | `tools/golden/replay/` | **Done 2026-09-03** |
 
-Wave A carries no remaining risk. Re-capture only if the API surface changes, and only
-while the .NET API still exists — `tools/golden/README.md` names the two deliberate
+Wave A carries no remaining risk. The corpus is frozen — `tools/golden/README.md` names the two deliberate
 coverage gaps and explains why the capture needs a freshly seeded database.
 
 ---
@@ -46,7 +42,7 @@ throughput.
 
 | Wave | What | Max concurrent | Starts when |
 |---|---|---:|---|
-| A | Golden capture | 2 | **Complete 2026-09-03** — ran ahead, against the live .NET API |
+| A | Golden capture | 2 | **Complete 2026-09-03** — ran ahead, against the previous API |
 | 0 | Foundation: monorepo, Prisma schema, kernel | **1 (serial)** | **Complete 2026-09-06** — five slices, not three: S0.1, S0.2, S0.3, plus S0.4 (typed config) and S0.5 (kernel), which the first pass missed |
 | B | Domain + Application, 7 feature partitions | 7 | **Complete — all seven merged 2026-09-06** (`41ea143`, `c29fcc1`, `13ac239`, `238e12a`, `12d9391`, `bcecddc`, `76349df`). This row said "B4-B7 open" until 2026-09-08 |
 | C | Infrastructure: repositories, integrations | 2 | **Complete — C1 `5df98cf`, C2 `f0c6797`, both 2026-09-06** |
@@ -100,7 +96,7 @@ Beyond `SPEC/90-definition-of-done.md`:
 
 - **F1 reviewed, not green** — the replay runs and every difference has an answer: fixed,
   recorded in `tools/golden/src/accepted.ts`, or deliberately better. A case that no longer
-  replays because the TypeScript app is *right* and the .NET recording is stale is an expected
+  replays because the TypeScript app is *right* and the recording is stale is an expected
   outcome, not a defect, and does not hold anything up. **The replay is not a gate**
   (`decisions.md` 2026-09-11, superseding the "all 447 replay clean" wording that stood here):
   it is a regression detector, and the product working outranks fidelity to an app that was
@@ -121,7 +117,7 @@ Beyond `SPEC/90-definition-of-done.md`:
 not gate any wave.
 
 Answered 2026-09-03 (`SPEC/decisions.md`): `01` (comp P on Tailwind + shadcn/ui, and
-Question C — Wave G, **cut 2026-09-08** and revisited after cutover, `SPEC/decisions.md`), `02` (Vercel + Prisma Postgres), `10` (discard the .NET suite).
+Question C — Wave G, **cut 2026-09-08** and revisited after cutover, `SPEC/decisions.md`), `02` (Vercel + Prisma Postgres), `10` (discard the previous test suite).
 
 Answered 2026-09-04, which is what unblocked Wave 0:
 

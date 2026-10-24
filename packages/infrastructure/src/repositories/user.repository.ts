@@ -114,8 +114,7 @@ export class PrismaUserRepository
   }
 
   async listByOrganization(filter: UserListFilter): Promise<UserPage> {
-    // Matched on the trimmed, lowercased value, as `SortBy?.Trim().ToLowerInvariant()` and
-    // `SortDirection.IsDescending` did in `EfUserRepository`.
+    // Matched on the trimmed, lowercased value, as the pre-migration API did.
     const sortKey = (filter.sortBy ?? '').trim().toLowerCase()
     const sortBy =
       sortKey === 'email' ? 'email' : sortKey === 'createdat' ? 'createdAt' : 'lastName'
@@ -160,7 +159,7 @@ export class PrismaUserRepository
       pageSize: filter.page.pageSize,
       totalCount,
       // The REQUESTED sort field, not the resolved one - see the organization repository's note;
-      // `EfUserRepository` echoed `filter.SortBy` the same way.
+      // the pre-migration API echoed the requested sort field the same way.
       sortBy: filter.sortBy,
       sortDirection: direction,
     }

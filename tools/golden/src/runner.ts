@@ -15,7 +15,7 @@ const MULTIPART_BOUNDARY = '----GoldenCaptureBoundary'
 /**
  * How the target stack carries a session.
  *
- * The corpus was recorded against .NET, which returns a bearer token in the login body. Nest
+ * The corpus was recorded against an API that returns a bearer token in the login body. Nest
  * issues an httpOnly cookie instead (`SPEC/decisions.md` 2026-09-04, ticket `08`) - so replaying
  * the same corpus against Nest needs the same steps driven a different way. Neither side is
  * wrong, and the recorded responses are unaffected: authentication is transport.
@@ -27,12 +27,12 @@ export const SESSION_COOKIE_NAME = 'collega_session'
 
 export type RunnerConfig = {
   baseUrl: string
-  /** Route prefix the stack serves under. .NET mounts every controller under /api/v1. */
+  /** Route prefix the stack serves under. The recorded API mounted every controller under /api/v1. */
   basePath: string
   credentials: Record<Role, RoleCredentials>
   /** Fail a step rather than continue once the sequence has diverged. */
   stopOnError: boolean
-  /** Defaults to bearer, so a capture against .NET behaves exactly as it always has. */
+  /** Defaults to bearer, so a capture behaves exactly as it always has. */
   auth?: AuthMode
 }
 

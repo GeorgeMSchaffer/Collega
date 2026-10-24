@@ -45,9 +45,8 @@ function assertRequiredId(field: string, value: string, message: string): string
 }
 
 /**
- * Field name and message text match the .NET request contract
- * (`Collega.API.Contracts.Comments.CreateCommentRequest.Body`, `[RequiredField]` /
- * `[MaxLengthField(2000)]`) rather than the domain's own defensive `ArgumentException` wording -
+ * Field name and message text match the request contract
+ * (`CreateCommentRequest.Body`, required / max length 2000) rather than the domain's own defensive `ArgumentException` wording -
  * that is where the golden corpus's recorded 400 actually originates (SPEC/decisions.md
  * 2026-09-06 "Wave B conventions").
  *
@@ -93,7 +92,7 @@ export function createComment(props: CreateCommentProps): Comment {
   }
 }
 
-/** Replaces the body and mention set together, matching .NET's `Comment.Edit` (a single
+/** Replaces the body and mention set together, matching the pre-migration API's comment edit (a single
  * combined transition rather than separate ones - unlike Ideas, which needed body/mentions/tags
  * to vary independently). */
 export function editComment(

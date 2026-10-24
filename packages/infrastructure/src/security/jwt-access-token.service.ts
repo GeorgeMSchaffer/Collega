@@ -9,7 +9,7 @@ import jsonwebtoken from 'jsonwebtoken'
 /**
  * Configuration for {@link JwtAccessTokenService}, supplied by apps/api's config layer - this
  * class never reads `process.env` itself (SPEC/30-Contracts.md "Access Token Format and Session
- * Revocation"). `signingKey` mirrors .NET's `AccessTokenOptions.SigningKey`: if no stable key is
+ * Revocation"). `signingKey` mirrors the pre-migration API's signing-key option: if no stable key is
  * configured, generating a random one per process start is acceptable for a single instance but
  * invalidates every outstanding token on restart/redeploy and is not shared across instances -
  * that tradeoff belongs to whoever constructs this, not to this class.
@@ -25,9 +25,9 @@ type AccessTokenClaims = {
 }
 
 /**
- * HS256 JWT issuer/validator. Ports .NET's hand-built `JwtAccessTokenService`, swapping the BCL
- * for the `jsonwebtoken` package: the .NET original avoided a JWT library specifically to avoid a
- * new NuGet dependency, a constraint that doesn't carry over here, and `jsonwebtoken`'s
+ * HS256 JWT issuer/validator. Ports the pre-migration API's hand-built JWT service, swapping its built-in
+ * crypto for the `jsonwebtoken` package: the pre-migration API avoided a JWT library specifically to avoid a
+ * new package dependency, a constraint that doesn't carry over here, and `jsonwebtoken`'s
  * synchronous `sign`/`verify` is what lets this class satisfy the port's synchronous signature -
  * `jose`, the other allowed import (see `biome.json`'s `security/**` override), is WebCrypto-based
  * and only exposes an async API.

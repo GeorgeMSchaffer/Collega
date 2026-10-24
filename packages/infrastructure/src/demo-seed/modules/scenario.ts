@@ -22,7 +22,7 @@ import { PINECONE_LABS } from './vertical/pinecone-labs.js'
  * (`dropdb`, `db:migrate`, `db:seed` - under four seconds), which is the sanctioned path anyway
  * per `SPEC/decisions.md` 2026-09-09.
  *
- * One deliberate change from the .NET seeder: **every id here is derived, not random.** That
+ * One deliberate change from the pre-migration seeder: **every id here is derived, not random.** That
  * seeder created GUIDs and made each step idempotent by re-querying on a natural key, which works
  * but leaves two seeded databases disagreeing about every id - so a golden fixture recorded
  * against one cannot be replayed against the other. Deriving ids from stable names makes the seed
@@ -221,8 +221,8 @@ export const DEMO_ACCOUNTS: readonly DemoAccount[] = [
  * Org Admin plus the two Users, in the rotation order every author, assignee, upvote and comment
  * index below is taken modulo. Read Only is excluded: it authors nothing.
  *
- * ORDER IS LOAD-BEARING, and `user2` before `user` is not a typo. `StartupSeeder` read the
- * contributors as `OrderBy(Role == OrgAdmin ? 0 : 1).ThenBy(Email)`, and `user2@...` sorts before
+ * ORDER IS LOAD-BEARING, and `user2` before `user` is not a typo. The pre-migration seeder ordered the
+ * contributors by role (Org Admin first) and then by email, and `user2@...` sorts before
  * `user@...` because `2` precedes `@`. The golden corpus agrees: idea 1's author is `user2@`.
  */
 export const CONTRIBUTOR_LOCAL_PARTS: readonly string[] = ['orgadmin', 'user2', 'user']

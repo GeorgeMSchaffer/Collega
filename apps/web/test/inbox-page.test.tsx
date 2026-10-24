@@ -23,6 +23,7 @@ vi.mock('@/lib/server/inbox-actions', () => ({
   markAllNotificationsRead: vi.fn(),
 }))
 vi.mock('@/lib/server/idea-actions', () => ({
+  boardAllowedIdeaTypeIds: async () => [],
   deleteIdea: vi.fn(),
   saveIdea: vi.fn(),
   addComment: vi.fn(),

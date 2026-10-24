@@ -71,7 +71,7 @@ does today, and several of its rules constrain what either of these may do.
 
 *Parked 2026-08-13 after a brainstorm on "should the Site Admin be able to edit the default statuses?" — explored, recommendation was **don't build now**. Captured so the reasoning isn't re-derived.*
 
-**What is actually hardcoded.** Statuses, Idea Types, and Business Impacts are already fully editable per organization (`StatusesAdmin.razor`, `IdeaTypesAdmin.razor`). The only hardcoded thing is the *starting template* — `OrganizationDefaults` in `Collega.Application/Organizations/`, read in one place (`OrganizationBootstrapService`) at organization-creation time, plus the demo seeder. Any change to it affects only organizations that do not exist yet.
+**What is actually hardcoded.** Statuses, Idea Types, and Business Impacts are already fully editable per organization. The only hardcoded thing is the *starting template* — `packages/application/src/organizations/organization-defaults.ts`, read in one place (`packages/infrastructure/src/repositories/organization-bootstrap.repository.ts`) at organization-creation time, plus the demo seed. Any change to it affects only organizations that do not exist yet.
 
 **Three separable features hide under "editable defaults":**
 
@@ -306,3 +306,30 @@ None introduces a new capability; all three restructure chrome around the existi
 
 - **Comp F's structured compose prompts.** *"A free-form 'Description' box produces one-line ideas that nobody can evaluate; three named questions produce something a reviewer can act on."* An optional scaffold, not a gate.
 - **Comp D's answer to the drawer bug.** A docked inspector as a third grid column *"is never covered and never needs `inert`. There is no focus trap to get wrong"* — precisely the class of defect the open `DrawerShell` item in `SPEC/Bug Triage.md` describes. Comp D also demonstrates working fixes for two other open queue items: a native `<button type="submit">` so Enter submits, and `autocomplete="username"`.
+
+## Operational trace for unhandled 500s
+
+An unhandled exception that becomes a 500 leaves no operational trace today; it needs a Nest-on-Vercel logging design (what is logged, where it is read, how request context is attached).
+
+## Public marketing site at collega-ai.com; the app moves to app.collega-ai.com (needs a spec)
+
+> Raised by the owner 2026-10-22. **Unrefined; comps drawn, nothing specified.** `collega-ai.com` becomes a
+> public information and client sign-up site; the application moves to `app.collega-ai.com`. Three
+> review comps are in `SPEC/mockups/site/` (`comp-s1`, `comp-s2`, `comp-s3`); each carries a Contact us
+> form, a Create-workspace sign-up form and a beta call-out with its own sign-up form.
+>
+> **Backend to spec later (none of it exists):**
+> - **Self-serve sign-up.** Today an organization is created by a Site Admin and users join by invite
+>   code, a direct add or CSV (`20-feature-organizations-and-users.md`, `20-feature-auth.md`). A public
+>   "create your workspace" form creates an organization *and* its first Org Admin, which **changes the
+>   initial user setup flow**: email confirmation, password policy at first contact, abuse and
+>   rate limiting, and what the Site Admin sees of organizations they did not create.
+> - **Beta requests.** A store, an owner notification, and a path from a request to a provisioned organization.
+> - **Contact form.** Delivery to a shared inbox, spam protection, a stored record. (Guaranteed outbound
+>   email delivery is on the deferred list in `AGENTS.md`; confirm how that applies.)
+> - **Hosting and routing.** A marketing app or route group on `collega-ai.com`, the move of the existing
+>   web project to `app.collega-ai.com`, cookie and CORS scope across the two hosts, redirects for
+>   existing links, and `50-vercel-deployment.md`'s domain table (it names `www.collega-ai.com` and
+>   `dev.collega-ai.com` today).
+> - **Open copy and policy decisions the comps mark `[to be decided]`:** beta terms and pricing, contact
+>   address and response time, privacy and terms pages.

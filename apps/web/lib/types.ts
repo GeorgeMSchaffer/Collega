@@ -356,6 +356,16 @@ export type BoardWithLanes = {
   nextItemNumber: number
   sprintsEnabled: boolean
   ideaFeaturesEnabled: boolean
+  /** Idea type ids the board takes; empty means every type. */
+  allowedIdeaTypeIds: string[]
+  /** Whether the caller may change the allowed idea types. */
+  canSetAllowedIdeaTypes: boolean
+}
+
+/** What the board form's *Allowed idea types* control needs: the types on offer and the ticked ones. */
+export type AllowedIdeaTypesSetup = {
+  choices: { id: string; name: string }[]
+  selectedIds: string[]
 }
 
 /**
@@ -497,6 +507,8 @@ export type Idea = {
   taskCounts: { total: number; done: number } | null
   /** Items that must be final before this one leaves its board's first lane. */
   blockedBy: { ideaId: string; itemKey: string | null; isFinal: boolean }[]
+  /** The sprint a list item is in; null (or absent) when it is in none. */
+  sprint?: { id: string; name: string } | null | undefined
 }
 
 /**
@@ -559,6 +571,10 @@ export type IdeaListQuery = {
   scope?: 'assigned' | 'created' | undefined
   /** The organization list only: one phase. Absent is both. */
   phase?: 'Ideas' | 'Issues' | undefined
+  /** `none` for the items in no sprint (the Backlog), or one sprint's id. */
+  sprintId?: string | undefined
+  /** Leave out items sitting in a final lane of their own board. */
+  hideFinal?: boolean | undefined
 }
 
 /**
@@ -639,6 +655,16 @@ export type BoardTask = {
   blockedBy: { ideaId: string; itemKey: string | null; isFinal: boolean }[]
   /** The system made it on entry to an auto-create lane, not a person. */
   autoCreated: boolean
+  /**
+   * The task's sprint on its own board; `null` in none, absent when the board has sprints off or the
+   * task was not among the board's first page of cards (the drawer then says nothing about it).
+   */
+  sprint?: { id: string; name: string } | null | undefined
+  /**
+   * Whether the reader may edit, and so schedule, this task (its author or an Org Admin, TB-10).
+   * Read from the board's card list beside `sprint`; absent when the card was not among them.
+   */
+  mayEdit?: boolean | undefined
 }
 
 /**
@@ -661,6 +687,19 @@ export type IdeaTasks = {
   canMove: boolean
   /** Null when the reader may not add or remove tasks (hidden, not disabled). */
   adding: { members: MemberOption[]; tags: TagRef[] } | null
+  /**
+   * "Schedule…" (TB-9): the work board's open sprints, and for an Org Admin its Backlog for the
+   * create-sprint drawer. Null unless the reader may schedule (not Read Only) and the board has
+   * sprints on; hidden, not disabled.
+   */
+  scheduling: {
+    sprints: { id: string; name: string; state: SprintState }[]
+    /** An Org Admin may create a sprint from here; `backlog` and `members` are empty otherwise. */
+    canCreate: boolean
+    backlog: Idea[]
+    backlogTotal: number
+    members: MemberOption[]
+  } | null
 }
 
 /** A card the Blockers picker offers: on the item's own board, never the item itself. */

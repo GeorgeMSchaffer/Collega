@@ -19,7 +19,7 @@ export type AiConfig = {
  * fragment does. Getting that backwards would make a deployment without AI fail to boot.
  *
  * The name has no prefix or nesting, so the environment variable and the config key are the
- * same string. That is deliberate: the .NET stack reached this same key through three
+ * same string. That is deliberate: the pre-migration stack reached this same key through three
  * different names at once - `Ai:ApiKey`, `CLAUDE_API_KEY` and `ANTHROPIC_API_KEY` - and two
  * of them were read by nothing, which is why the feature was silently dark.
  */

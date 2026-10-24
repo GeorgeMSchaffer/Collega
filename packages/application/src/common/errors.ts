@@ -16,6 +16,14 @@ export abstract class ApplicationError extends Error {
 /** The caller is authenticated but not allowed to do this. Maps to 403. */
 export class ForbiddenError extends ApplicationError {
   readonly kind = 'forbidden' as const
+
+  /** Field name -> messages, when the refusal is about one field of the request (`sprintId`). */
+  readonly failures: Readonly<Record<string, readonly string[]>> | undefined
+
+  constructor(message: string, failures?: Readonly<Record<string, readonly string[]>>) {
+    super(message)
+    this.failures = failures
+  }
 }
 
 /** The caller is not authenticated, or the credential is no longer valid. Maps to 401. */
@@ -37,8 +45,8 @@ export class ConflictError extends ApplicationError {
  * The account is locked after too many failed sign-in attempts. Maps to 429.
  *
  * Deliberately distinct from RateLimitedError even though both are 429: one is about an
- * account's own failed attempts and the other about a caller's request volume, and the .NET
- * side kept them apart. The golden corpus records whatever body each produced, so collapsing
+ * account's own failed attempts and the other about a caller's request volume, and the pre-migration API
+ * kept them apart. The golden corpus records whatever body each produced, so collapsing
  * them into one type would show up as a replay diff.
  */
 export class LockedOutError extends ApplicationError {
@@ -85,8 +93,16 @@ export class UnprocessableError extends ApplicationError {
 
   readonly code: string
 
-  constructor(code: string, message: string = code) {
+  /** Field name -> messages, when the refusal is about one item of the request (`ideaIds`). */
+  readonly failures: Readonly<Record<string, readonly string[]>> | undefined
+
+  constructor(
+    code: string,
+    message: string = code,
+    failures?: Readonly<Record<string, readonly string[]>>,
+  ) {
     super(message)
     this.code = code
+    this.failures = failures
   }
 }

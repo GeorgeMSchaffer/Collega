@@ -19,7 +19,7 @@ export type Fixture = Exchange & {
 export type CorpusManifest = {
   corpusVersion: number
   capturedAt: string
-  /** The stack the corpus was recorded from — .NET now, never overwritten by a Nest replay. */
+  /** The stack the corpus was recorded from — never overwritten by a replay. */
   stack: string
   baseUrl: string
   basePath: string
@@ -119,7 +119,7 @@ export async function readCorpus(dir: string): Promise<Fixture[]> {
   try {
     files = await readdir(dir)
   } catch {
-    throw new Error(`no corpus at ${dir} — run "capture" against the .NET API first`)
+    throw new Error(`no corpus at ${dir} — run "capture" first`)
   }
   const fixtures: Fixture[] = []
   for (const file of files.filter((f) => f.endsWith('.json') && f !== 'manifest.json').sort()) {

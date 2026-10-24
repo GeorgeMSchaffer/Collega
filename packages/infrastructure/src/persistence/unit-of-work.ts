@@ -1,8 +1,8 @@
 // The Prisma-backed `UnitOfWork` (see @collega/application/common). THE central design decision
 // of this slice - see the slice report for the full reasoning. Summary:
 //
-// EF Core's `SaveChangesAsync` is a change-tracked unit of work: services mutate tracked entities
-// and one `SaveChangesAsync` flushes everything as a transaction. Prisma has no change tracker -
+// A change-tracked ORM's save call is a unit of work: services mutate tracked entities
+// and one save flushes everything as a transaction. Prisma has no change tracker -
 // `prisma.x.update()` executes the instant it is awaited. Wave B ported the EF calling
 // convention faithfully (one `saveChanges()` after N repository calls, sometimes after a loop),
 // so this adapter has to make that convention true against a client with no equivalent mechanism.
@@ -66,9 +66,9 @@
 //
 // EXCEPTION: `repositories/tag.repository.ts`'s `getOrCreate` does not use this buffer at all. It
 // takes no `PrismaUnitOfWork`, awaits its writes directly, and retries on a lost race by re-reading
-// and converging on the winner's row - mirroring the .NET `EfTagRepository`, which for the same
-// reason "deliberately owns its own SaveChanges and a retry (rather than deferring to
-// IUnitOfWork)" (see that file's header, and SPEC/20-feature-ideas-and-engagement.md "Tags" #7's
+// and converging on the winner's row - mirroring the pre-migration API, whose tag repository for the same
+// reason deliberately owned its own save and a retry rather than deferring to the
+// unit of work (see that file's header, and SPEC/20-feature-ideas-and-engagement.md "Tags" #7's
 // merge requirement). This is safe specifically because a tag is an independent, reusable entity -
 // nothing else in the same request depends on the tag NOT existing yet, unlike every other write in
 // this package, which the referencing idea/comment/etc. genuinely does. DO NOT generalize this

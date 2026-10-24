@@ -21,7 +21,13 @@ import { NO_FLAGS, SwimlanePicker } from '@/components/settings/swimlane-picker'
 import { PULL_ITEM_CAP } from '@/lib/limits'
 import type { BoardFormState, FieldRefusals } from '@/lib/server/board-actions'
 import { createBoard, saveBoard } from '@/lib/server/board-actions'
-import type { LaneFlags, PullCandidate, ReferenceContext, Status } from '@/lib/types'
+import type {
+  AllowedIdeaTypesSetup,
+  LaneFlags,
+  PullCandidate,
+  ReferenceContext,
+  Status,
+} from '@/lib/types'
 
 const IDLE: BoardFormState = { error: null }
 
@@ -50,6 +56,7 @@ export function BoardForm({
   laneFlags,
   laneIdeaCounts,
   ideaFeaturesEnabled = true,
+  allowedIdeaTypes,
   references,
   statuses,
   submitLabel,
@@ -66,6 +73,8 @@ export function BoardForm({
   /** Live ideas per lane of the board being edited, keyed by status id. */
   laneIdeaCounts?: Readonly<Record<string, number>> | undefined
   ideaFeaturesEnabled?: boolean | undefined
+  /** The idea types on offer and the ticked ones; absent when the caller may not set them. */
+  allowedIdeaTypes?: AllowedIdeaTypesSetup | undefined
   /** The boards a lane may reference; absent leaves the References controls out. */
   references?: ReferenceContext | undefined
   /** Drilled to `SwimlanePicker`, which is a client component and cannot read them itself. */
@@ -99,6 +108,7 @@ export function BoardForm({
               laneFlags={laneFlags}
               laneIdeaCounts={laneIdeaCounts}
               ideaFeaturesEnabled={ideaFeaturesEnabled}
+              allowedIdeaTypes={allowedIdeaTypes}
               references={references}
               refusals={state}
               statuses={statuses}
@@ -199,6 +209,7 @@ export function BoardFields({
   laneFlags,
   laneIdeaCounts = {},
   ideaFeaturesEnabled = true,
+  allowedIdeaTypes,
   references,
   refusals,
   statuses,
@@ -215,6 +226,8 @@ export function BoardFields({
   laneIdeaCounts?: Readonly<Record<string, number>> | undefined
   /** The idea-features switch as stored. */
   ideaFeaturesEnabled?: boolean | undefined
+  /** The idea types on offer and the ticked ones; absent leaves the control out. */
+  allowedIdeaTypes?: AllowedIdeaTypesSetup | undefined
   /** The boards a lane may reference; absent leaves the References controls out. */
   references?: ReferenceContext | undefined
   /** The last save's field refusals: the key prefix and, where it is plain, the lane. */
@@ -236,6 +249,7 @@ export function BoardFields({
   const [ids, setIds] = useState(swimlaneIds)
   const [flags, setFlags] = useState<Record<string, LaneFlags>>({ ...laneFlags })
   const [ideaFeatures, setIdeaFeatures] = useState(ideaFeaturesEnabled)
+  const [allowedIds, setAllowedIds] = useState(allowedIdeaTypes?.selectedIds ?? [])
   // The board's lanes this save would drop that still hold ideas: each needs a lane to move them to.
   const removed = swimlaneIds.flatMap((id) => {
     const ideaCount = laneIdeaCounts[id] ?? 0
@@ -295,6 +309,43 @@ export function BoardFields({
             : 'Upvotes, idea types and their fields, and AI assist. On for ordinary boards.'}
         </p>
       </div>
+
+      {allowedIdeaTypes ? (
+        <fieldset className="mb-4 min-w-0 border-0 p-0" aria-describedby="allowed-types-hint">
+          <legend className="p-0 text-sm font-medium">Allowed idea types</legend>
+          <input type="hidden" name="allowedIdeaTypesShown" value="1" />
+          <p id="allowed-types-hint" className="m-0 mt-1 max-w-prose text-xs text-muted-foreground">
+            Leave all unticked to take every type. Ideas already on the board stay. Applies only
+            while Idea features are on.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-x-5 gap-y-2">
+            {allowedIdeaTypes.choices.map((choice) => (
+              <label key={choice.id} className="flex items-center gap-1.5 text-sm">
+                <input
+                  type="checkbox"
+                  className="size-4"
+                  name="allowedIdeaTypeIds"
+                  value={choice.id}
+                  checked={allowedIds.includes(choice.id)}
+                  onChange={(event) =>
+                    setAllowedIds((current) =>
+                      event.target.checked
+                        ? [...current, choice.id]
+                        : current.filter((id) => id !== choice.id),
+                    )
+                  }
+                />
+                {choice.name}
+              </label>
+            ))}
+          </div>
+          {refusals?.allowedIdeaTypes ? (
+            <p role="alert" className="m-0 mt-1.5 text-xs text-destructive">
+              {refusals.allowedIdeaTypes}
+            </p>
+          ) : null}
+        </fieldset>
+      ) : null}
 
       <div className="mb-3">
         <SectionHeading className="m-0 text-sm font-semibold">Swimlanes</SectionHeading>

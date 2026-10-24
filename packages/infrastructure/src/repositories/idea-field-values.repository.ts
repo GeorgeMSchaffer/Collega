@@ -1,4 +1,4 @@
-// Satisfies `IdeaFieldValuesPort` (ideas/ports.ts) - "the densest logic in the .NET Domain
+// Satisfies `IdeaFieldValuesPort` (ideas/ports.ts) - "the densest logic in the pre-migration API's domain
 // layer", deliberately a single delegated port rather than re-implemented against B5's domain
 // types. This adapter does not re-derive that logic: it loads the rows `resolveEffectiveFields`
 // (`@collega/domain/idea-fields`) and `validateFieldValues` (`@collega/application/fields`) need,

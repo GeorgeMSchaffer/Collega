@@ -8,8 +8,7 @@ import { hasAnyDraftValue } from './models.js'
 
 /**
  * Renders the system prompt for a drafting turn: the assistant's role, the organization's
- * catalog, and the scope statement. Ported from .NET's
- * `Collega.Infrastructure.Ai.IdeaAssistPromptBuilder`.
+ * catalog, and the scope statement.
  *
  * EVERYTHING RETRIEVED IS FENCED AND LABELLED UNTRUSTED (rule 25). Idea-type names, tag names,
  * and member names are authored by users and may contain injection attempts; the assistant is

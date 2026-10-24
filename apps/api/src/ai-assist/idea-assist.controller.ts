@@ -66,19 +66,18 @@ const TRANSCRIPT_ROLES = [IDEA_ASSIST_USER_ROLE, IDEA_ASSIST_ASSISTANT_ROLE] as 
 
 /**
  * Reads the transcript array and transcribes the per-entry attributes
- * `IdeaAssistTurnContract` carries - `[RequiredField]` and `[AllowedValues]` on `role`,
- * `[RequiredField]` and `[MaxLengthField(4000)]` on `text`.
+ * `IdeaAssistTurnContract` carries - the required rule and allowed-values rule on `role`,
+ * the required rule and the max-length rule (4000) on `text`.
  *
  * The entry COUNT, the last-entry-is-user rule and the trimming are `IdeaAssistService`'s, not
  * this function's: they are contract rules the service already owns and re-checks for every
  * caller, and duplicating them here would put the same constraint in two places with two
  * different envelopes.
  *
- * An omitted `transcript` reads as empty rather than missing, which is not an oversight: the .NET
- * property was initialised to `new()` and System.Text.Json leaves an initialiser alone for a key
- * that is not in the JSON, so `[RequiredField]` never fired and the empty list reached the service
+ * An omitted `transcript` reads as empty rather than missing, which is not an oversight: the pre-migration API's
+ * property defaulted to an empty list and a key that was not in the JSON left that default alone, so the required rule never fired and the empty list reached the service
  * - which answers "At least one message is required." in the Application envelope. An explicit
- * `null` DID overwrite the initialiser and fail the attribute, which is the branch below.
+ * `null` DID overwrite the default and fail the required rule, which is the branch below.
  */
 function readTranscript(value: unknown): readonly IdeaAssistTurn[] {
   if (value === undefined) {
@@ -102,8 +101,8 @@ function readTranscript(value: unknown): readonly IdeaAssistTurn[] {
     // rather than throwing on a property read - the same forgiveness `validateFields` gives a
     // mistyped scalar, and for the same reason: a 500 on a malformed body is the worse answer.
     const entry = (typeof item === 'object' && item !== null ? item : {}) as Partial<IdeaAssistTurn>
-    // Keyed by the whole path and named by the property alone - ASP.NET keyed `Transcript[0].Role`
-    // (camelCased) but built the message from the property's own display name, so the entry reads
+    // Keyed by the whole path and named by the property alone - the pre-migration API keyed `Transcript[0].Role`
+    // (camelCased) but built the message from the property's own name, so the entry reads
     // "Role is required.", never "transcript[0].role is required.".
     rules[`transcript[${index}].role`] = {
       value: entry.role,

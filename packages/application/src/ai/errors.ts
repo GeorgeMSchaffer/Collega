@@ -7,9 +7,8 @@ import { ApplicationError } from '../common/index.js'
  * assistant". Maps to `503`, which the client treats as a signal to degrade rather than as an
  * error.
  *
- * Defined LOCALLY rather than in the kernel, mirroring the .NET original
- * (`Collega.Application.Ai.AiAssistUnavailableException`, itself declared inside
- * `IdeaAssistService.cs` rather than the shared `Exceptions` folder). This is the first place in
+ * Defined LOCALLY rather than in the kernel, next to the assist service that raises it rather
+ * than in the shared errors module. This is the first place in
  * the port that needs a 503 "service unavailable, work without it" semantic, and the kernel's
  * `ApplicationError` taxonomy - forbidden / unauthorized / notFound / conflict / lockedOut /
  * rateLimited / validation - has no `kind` for it.

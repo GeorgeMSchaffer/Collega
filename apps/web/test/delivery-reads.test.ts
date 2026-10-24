@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { sprintWindow, toIssue } from '@/lib/api/adapt'
 import { apiGet } from '@/lib/api/client'
 import type { WireDeliveryCard, WireSprint } from '@/lib/api/wire'
-import { getBoardSprint } from '@/lib/data/delivery'
+import { getBoardSprint, getIssuesInSprint } from '@/lib/data/delivery'
 import { mayWorkOnIssue, type Role } from '@/lib/roles'
 import { actAs } from './support/acting-role'
 
@@ -177,4 +177,19 @@ describe('mayWorkOnIssue', () => {
       expect(mayWorkOnIssue(role, userId, issue)).toBe(expected)
     })
   }
+})
+
+describe('the Sprint board’s cards', () => {
+  it('leave out a board sprint’s tasks, which have no delivery status', async () => {
+    vi.mocked(apiGet).mockResolvedValue([
+      card({ ideaId: 'issue' }),
+      card({ ideaId: 'task', effort: null, deliveryStatus: null }),
+    ])
+    expect((await getIssuesInSprint('s1')).map((issue) => issue.id)).toEqual(['issue'])
+  })
+
+  it('still refuses a real Issue with a status but no effort', async () => {
+    vi.mocked(apiGet).mockResolvedValue([card({ effort: null })])
+    await expect(getIssuesInSprint('s1')).rejects.toThrow('no usable effort')
+  })
 })

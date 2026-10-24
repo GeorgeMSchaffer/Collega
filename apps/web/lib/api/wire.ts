@@ -203,6 +203,10 @@ export type WireBoardDetail = {
   sprintsEnabled: boolean
   ideaFeaturesEnabled: boolean
   nextItemNumber: number
+  /** Idea type ids the board takes, in sort order; empty means every type. */
+  allowedIdeaTypeIds: readonly string[]
+  /** Whether this caller may change `allowedIdeaTypeIds`. */
+  canSetAllowedIdeaTypes: boolean
 }
 
 export type WireSwimlane = {
@@ -474,6 +478,8 @@ export type WireIdeaListItem = {
   parentItemKey?: string | null
   taskCounts: WireTaskCounts | null
   blockedBy: readonly WireBlockedBy[]
+  /** The sprint the item is in; absent from a response that predates the field. */
+  sprint?: { sprintId: string; name: string } | null
 }
 
 /** `GET /organizations/{id}/boards/pull-candidates` items. */

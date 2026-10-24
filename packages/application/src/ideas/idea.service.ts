@@ -61,12 +61,14 @@ import type { IdeaMetricValuesPort } from '../metric-types/ports.js'
 import { randomTagColor } from '../tags/random-color.js'
 import type {
   AddIssueCommand,
+  AssignBoardSprintCommand,
   AssignIssueToSprintCommand,
   AutoCreateTaskParent,
   BlockedByDto,
   BoardTaskListItem,
   ChangeDeliveryStatusCommand,
   ChangeIdeaStatusCommand,
+  CreateBoardCardCommand,
   CreateBoardTaskCommand,
   CreateIdeaCommand,
   CreateIdeaResult,
@@ -141,10 +143,11 @@ import {
  * note). */
 const MAX_TAG_NAME_LENGTH = 100
 
-/** Upper bound on rows a single board CSV export will materialise (mirrors .NET's
- * `IdeaService.MaxExportRows`) - well above any plausible board, but the endpoint is reachable by
+/** Upper bound on rows a single board CSV export will materialise (the same cap the pre-migration API applied) - well above any plausible board, but the endpoint is reachable by
  * any member including Read Only, so an unbounded export is a cheap way to pressure the host. */
 const MAX_EXPORT_ROWS = 10_000
+/** Items one bulk sprint assignment may carry (contracts/sprints.md). */
+const MAX_SPRINT_ASSIGNMENT_ITEMS = 200
 
 /**
  * Idea use cases (SPEC/20-feature-ideas-and-engagement.md, SPEC/30-Contracts.md "Idea
@@ -210,6 +213,7 @@ export class IdeaService {
       dueBefore: parseOptionalDate(query.dueBefore),
       sprintId: query.sprintId ?? null,
       noSprint: query.noSprint ?? false,
+      hideFinal: query.hideFinal ?? false,
       // The ideation board is Discovery, always: a promoted item leaves it (no data loss - the row
       // and its ideation status are retained, and it reappears here if it is returned to
       // Discovery). Nothing is promoted until somebody promotes something, so for an organization
@@ -264,6 +268,9 @@ export class IdeaService {
       priorities: parsePriorityFilters(query.priorities),
       tags: normalizeTagFilters(query.tags),
       associatedUserId: trimOrNull(query.user),
+      sprintId: query.sprintId ?? null,
+      noSprint: query.noSprint ?? false,
+      hideFinal: query.hideFinal ?? false,
       searchCreatedOnDate,
       // Defaults to both phases, unlike the board: this list is where somebody looks for an item
       // they cannot find on a board, so hiding promoted ones here would lose them.
@@ -388,6 +395,108 @@ export class IdeaService {
   }
 
   /**
+   * `POST /boards/{boardId}/tasks`: a task made from the work board itself. With a parent it is
+   * `createBoardTask` for that parent (the board in the path must be the board the parent's lane
+   * references); without, a standalone card in the board's leftmost lane. A sprint must be a live,
+   * non-`Completed` sprint of this board; the creator is the author, so any member who may create
+   * may send one.
+   */
+  async createTaskOnBoard(
+    boardId: string,
+    command: CreateBoardCardCommand,
+  ): Promise<CreateIdeaResult> {
+    ensureNotDirectSiteAdmin(this.currentUser)
+    this.requireIdeaEditRole()
+
+    const board = await this.boards.getBoardContext(boardId)
+    if (!board) {
+      throw new NotFoundError('Board not found.')
+    }
+    this.ensureOrganizationScope(board.organizationId)
+    if (!(await this.boards.isReferencedByLane(boardId))) {
+      throw new UnprocessableError(
+        'boardIsNotAWorkBoard',
+        'No lane references this board, so it takes no tasks.',
+      )
+    }
+
+    const parent = command.parentIdeaId
+      ? await this.ideaRepository.getById(command.parentIdeaId, false)
+      : null
+    if (command.parentIdeaId && !parent) {
+      throw new NotFoundError('Idea not found.')
+    }
+    if (parent) {
+      this.ensureOrganizationScope(parent.organizationId)
+      await this.ensureIdeaBoardNotArchived(parent)
+    }
+    const sprintId = await this.resolveTaskSprint(board, command.sprintId)
+
+    if (parent) {
+      return this.addBoardTask(parent, command, boardId, sprintId)
+    }
+    return this.addStandaloneCard(board, command, sprintId)
+  }
+
+  /** A task's sprint: a live, non-`Completed` sprint of the task's own board, or `null`. */
+  private async resolveTaskSprint(
+    board: BoardContext,
+    sprintId: string | null,
+  ): Promise<string | null> {
+    const sprint = await this.resolveAssignableSprintSummary(board.organizationId, sprintId)
+    if (sprint && sprint.boardId !== board.boardId) {
+      throw new ValidationError('One or more fields are invalid.', {
+        sprintId: ['Sprint must be a sprint of this board.'],
+      })
+    }
+    return sprint?.id ?? null
+  }
+
+  /** A card on the work board with no parent: the same stored shape as a task, audited the same. */
+  private async addStandaloneCard(
+    board: BoardContext,
+    command: CreateBoardTaskCommand,
+    sprintId: string | null,
+  ): Promise<CreateIdeaResult> {
+    if (board.isArchived) {
+      throw new UnprocessableError('referencedBoardArchived', 'The board is archived.')
+    }
+    const statusId = leftMostStatusId(board)
+    if (!statusId) {
+      throw new ValidationError('One or more fields are invalid.', {
+        statusId: ['The board has no swimlanes to place the task in.'],
+      })
+    }
+
+    const finishRecord = await this.stageIdeaRecord(
+      board.organizationId,
+      board.boardId,
+      statusId,
+      await this.taskRecordCommand(board.organizationId, command),
+      undefined,
+      null,
+      false,
+      sprintId,
+      true,
+    )
+    await this.unitOfWork.saveChanges()
+
+    const created = await finishRecord()
+    await this.writeAudit({
+      eventType: 'BoardTaskCreated',
+      entityType: 'Idea',
+      entityId: created.ideaId,
+      organizationId: board.organizationId,
+      intendedActorUserId: this.requireAuthenticatedUserId(),
+      message: `Task '${created.title}' created.`,
+      nowUtc: this.clock.now(),
+      metadata: { parentIdeaId: null, boardId: board.boardId },
+    })
+    // Answered as a task is: the stand-in priority and type are not shown.
+    return { ...created, priority: null, ideaTypeId: null, businessImpactId: null }
+  }
+
+  /**
    * The tasks of a parent idea in creation order, for the parent's detail view. Visible to anyone
    * who can read the parent, Read Only included.
    */
@@ -501,13 +610,18 @@ export class IdeaService {
   private async addBoardTask(
     parent: Idea,
     command: CreateBoardTaskCommand,
+    expectedBoardId: string | null = null,
+    sprintId: string | null = null,
   ): Promise<CreateIdeaResult> {
     const parentBoard =
       parent.boardId === null ? null : await this.boards.getBoardContext(parent.boardId)
-    const referencedBoardId =
+    const laneBoardId =
       parentBoard?.swimlanes.find((lane) => lane.statusId === parent.statusId)?.referencesBoardId ??
       null
-    const finish = await this.stageBoardTask(parent, referencedBoardId, command)
+    // A lane that references some other board than the one asked for is no reference lane here.
+    const referencedBoardId =
+      expectedBoardId !== null && laneBoardId !== expectedBoardId ? null : laneBoardId
+    const finish = await this.stageBoardTask(parent, referencedBoardId, command, false, sprintId)
     await this.unitOfWork.saveChanges()
     return finish()
   }
@@ -522,6 +636,7 @@ export class IdeaService {
     referencedBoardId: string | null,
     command: CreateBoardTaskCommand,
     autoCreated = false,
+    sprintId: string | null = null,
   ): Promise<() => Promise<CreateIdeaResult>> {
     if (parent.parentIdeaId !== null) {
       throw new UnprocessableError('parentIsTask', 'A task cannot have tasks of its own.')
@@ -544,47 +659,15 @@ export class IdeaService {
       })
     }
 
-    const ideaTypes = await this.classification.listIdeaTypesByOrganization(
-      parent.organizationId,
-      false,
-    )
-    const defaultType = ideaTypes[0]
-    if (!defaultType) {
-      throw new UnprocessableError('noDefaultIdeaType', 'The organization has no active idea type.')
-    }
-    const impacts = await this.classification.listBusinessImpactsByOrganization(
-      parent.organizationId,
-      false,
-    )
-    const defaultImpact = impacts[0]
-    if (!defaultImpact) {
-      throw new UnprocessableError(
-        'noDefaultBusinessImpact',
-        'The organization has no active business impact.',
-      )
-    }
-
     const finishRecord = await this.stageIdeaRecord(
       parent.organizationId,
       target.boardId,
       statusId,
-      {
-        ...command,
-        // Not taken on a task, but the columns are NOT NULL: the title stands in, and reads do not
-        // show it.
-        problem: command.title,
-        proposedSolutions: [command.title],
-        impactRationale: command.title,
-        priority: 'Medium',
-        dueDate: null,
-        mentionEmails: null,
-        ideaTypeId: defaultType.id,
-        businessImpactId: defaultImpact.id,
-        fieldValues: null,
-      },
+      await this.taskRecordCommand(parent.organizationId, command),
       undefined,
       parent.id,
       autoCreated,
+      sprintId,
     )
 
     return async () => {
@@ -600,6 +683,46 @@ export class IdeaService {
         metadata: { parentIdeaId: parent.id, boardId: target.boardId },
       })
       return created
+    }
+  }
+
+  /**
+   * A task's create fields for `stageIdeaRecord`: the organization's first active idea type and
+   * business impact (NOT NULL columns, never shown) and the title as the stand-in for the rest.
+   */
+  private async taskRecordCommand(
+    organizationId: string,
+    command: CreateBoardTaskCommand,
+  ): Promise<Omit<CreateIdeaCommand, 'statusId'>> {
+    const ideaTypes = await this.classification.listIdeaTypesByOrganization(organizationId, false)
+    const defaultType = ideaTypes[0]
+    if (!defaultType) {
+      throw new UnprocessableError('noDefaultIdeaType', 'The organization has no active idea type.')
+    }
+    const impacts = await this.classification.listBusinessImpactsByOrganization(
+      organizationId,
+      false,
+    )
+    const defaultImpact = impacts[0]
+    if (!defaultImpact) {
+      throw new UnprocessableError(
+        'noDefaultBusinessImpact',
+        'The organization has no active business impact.',
+      )
+    }
+    return {
+      ...command,
+      // Not taken on a task, but the columns are NOT NULL: the title stands in, and reads do not
+      // show it.
+      problem: command.title,
+      proposedSolutions: [command.title],
+      impactRationale: command.title,
+      priority: 'Medium',
+      dueDate: null,
+      mentionEmails: null,
+      ideaTypeId: defaultType.id,
+      businessImpactId: defaultImpact.id,
+      fieldValues: null,
     }
   }
 
@@ -627,13 +750,16 @@ export class IdeaService {
     promotion?: { readonly effort: EffortLevel; readonly sprintId: string | null },
     parentIdeaId: string | null = null,
     autoCreated = false,
+    sprintId: string | null = null,
+    standaloneTask = false,
   ): Promise<() => Promise<CreateIdeaResult>> {
+    const isTask = parentIdeaId !== null || standaloneTask
     const now = this.clock.now()
     const authorId = this.requireAuthenticatedUserId()
     const priority = parsePriority(command.priority)
     const dueDate = parseDueDate(command.dueDate)
     // A task takes no effort; a promotion carries its own.
-    const effort = parentIdeaId === null && !promotion ? parseOptionalEffort(command.effort) : null
+    const effort = !isTask && !promotion ? parseOptionalEffort(command.effort) : null
 
     await this.getActiveIdeaType(organizationId, command.ideaTypeId)
     await this.ensureActiveBusinessImpact(organizationId, command.businessImpactId)
@@ -647,14 +773,13 @@ export class IdeaService {
     )
 
     // A task has no type fields: its stored default type is not shown, so none can be asked for.
-    const fieldValues =
-      parentIdeaId === null
-        ? await this.fieldValues.resolveAndValidate({
-            organizationId: organizationId,
-            ideaTypeId: command.ideaTypeId,
-            submitted: command.fieldValues ?? [],
-          })
-        : []
+    const fieldValues = !isTask
+      ? await this.fieldValues.resolveAndValidate({
+          organizationId: organizationId,
+          ideaTypeId: command.ideaTypeId,
+          submitted: command.fieldValues ?? [],
+        })
+      : []
 
     // Last step before staging: a refusal above must not burn a number.
     const itemNumber = boardId === null ? null : await this.boards.allocateItemNumber(boardId)
@@ -686,7 +811,10 @@ export class IdeaService {
     if (effort !== null) {
       idea = { ...idea, effort }
     }
-    if (parentIdeaId === null) {
+    if (sprintId !== null) {
+      idea = setIdeaBoardSprint(idea, sprintId, now, authorId)
+    }
+    if (!isTask) {
       const reconcileScope = await this.fieldValues.getReconcileScope(
         organizationId,
         command.ideaTypeId,
@@ -1016,9 +1144,17 @@ export class IdeaService {
     const idea = await this.ideaRepository.getById(ideaId, false)
     return (
       idea !== null &&
-      idea.parentIdeaId !== null &&
+      (await this.isTaskItem(idea)) &&
       (this.currentUser.role === Role.SiteAdmin ||
         this.currentUser.organizationId === idea.organizationId)
+    )
+  }
+
+  /** A task is a card with a parent, or any card on a board that a lane references. */
+  private async isTaskItem(idea: Idea): Promise<boolean> {
+    return (
+      idea.parentIdeaId !== null ||
+      (idea.boardId !== null && (await this.boards.isReferencedByLane(idea.boardId)))
     )
   }
 
@@ -1037,7 +1173,7 @@ export class IdeaService {
       throw new NotFoundError('Idea not found.')
     }
     this.ensureOrganizationScope(idea.organizationId)
-    if (idea.parentIdeaId === null) {
+    if (!(await this.isTaskItem(idea))) {
       // Only if it stopped being a task since the route asked.
       throw new ConflictError('This item is no longer a task.')
     }
@@ -1303,7 +1439,7 @@ export class IdeaService {
     ensureNotDirectSiteAdmin(this.currentUser)
     const forceReason = readForceReason(command.forceReason, this.requireAuthenticatedRole())
 
-    let idea = await this.ideaRepository.getById(ideaId, false)
+    const idea = await this.ideaRepository.getById(ideaId, false)
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
@@ -1329,13 +1465,43 @@ export class IdeaService {
     this.ensureCanMoveIdea()
     ensureBoardNotArchived(board)
 
-    if (idea.statusId === command.statusId) {
+    const staged = await this.stageStatusMove(
+      idea,
+      board,
+      command.statusId,
+      forceReason,
+      this.clock.now(),
+      this.requireAuthenticatedUserId(),
+    )
+    if (staged === null) {
       return
+    }
+    await this.unitOfWork.saveChanges()
+    await staged.finish()
+  }
+
+  /**
+   * The one status-move path: the lane rules (effort entry, blockers, the reference-lane lock),
+   * then the move staged, with the lane's auto-created task beside it. The caller commits;
+   * `finish` writes the audit entries and notifies followers after that commit. `null` when the
+   * item is already in the status, with nothing staged. Callers have checked the status is a lane
+   * of `board` and that the board takes changes.
+   */
+  private async stageStatusMove(
+    idea: Idea,
+    board: BoardContext,
+    statusId: string,
+    forceReason: string | null,
+    now: Date,
+    actorId: string,
+  ): Promise<{ readonly idea: Idea; readonly finish: () => Promise<void> } | null> {
+    if (idea.statusId === statusId) {
+      return null
     }
 
     // The Effort entry rule: a reference lane is where an item gets worked as tasks, which needs
     // an estimate (Board References Ruling 6).
-    const targetLane = board.swimlanes.find((lane) => lane.statusId === command.statusId)
+    const targetLane = board.swimlanes.find((lane) => lane.statusId === statusId)
     if (targetLane?.referencesBoardId && idea.effort === null) {
       throw new UnprocessableError(
         'effortRequiredForReferenceLane',
@@ -1352,41 +1518,49 @@ export class IdeaService {
       `'${idea.title}' is waiting on {n} open tasks, so it cannot be moved.`,
     )
 
-    const now = this.clock.now()
-    const actorId = this.requireAuthenticatedUserId()
     const previousStatusId = idea.statusId
 
-    idea = changeIdeaStatus(idea, command.statusId, now, actorId)
-    await this.ideaRepository.update(idea)
+    const moved = changeIdeaStatus(idea, statusId, now, actorId)
+    await this.ideaRepository.update(moved)
     // The hand-off: one task on the referenced board, staged beside the move so one commit takes
     // both, and a refused or failed task leaves the move uncommitted.
     const finishTask =
       targetLane?.autoCreateTask &&
       !(
         targetLane.referencesBoardId &&
-        (await this.ideaRepository.hasTaskOnBoard(idea.id, targetLane.referencesBoardId))
+        (await this.ideaRepository.hasTaskOnBoard(moved.id, targetLane.referencesBoardId))
       )
-        ? await this.stageBoardTask(idea, targetLane.referencesBoardId, autoTaskCommand(idea), true)
+        ? await this.stageBoardTask(
+            moved,
+            targetLane.referencesBoardId,
+            autoTaskCommand(moved),
+            true,
+          )
         : null
-    await this.unitOfWork.saveChanges()
-    await finishTask?.()
 
-    await this.auditIdea(
-      'IdeaStatusChanged',
-      idea,
-      actorId,
-      `Idea '${idea.title}' moved to a new status.`,
-      now,
-      { fromStatusId: previousStatusId, toStatusId: command.statusId },
-    )
-    await this.auditMovedPastOpenTasks(idea, actorId, now, openTasks, forceReason)
+    return {
+      idea: moved,
+      finish: async () => {
+        await finishTask?.()
 
-    // Notify the idea's followers of the move (SPEC/20-feature-notifications.md trigger #4), naming
-    // the lane as it is called now (SPEC/20-feature-idea-following.md rule 37).
-    const statusInfo = await this.boards.getStatusInfo(idea.organizationId)
-    await this.notifyIdeaFollowers('IdeaStatusChanged', idea, actorId, {
-      statusName: statusInfo.get(command.statusId)?.name ?? null,
-    })
+        await this.auditIdea(
+          'IdeaStatusChanged',
+          moved,
+          actorId,
+          `Idea '${moved.title}' moved to a new status.`,
+          now,
+          { fromStatusId: previousStatusId, toStatusId: statusId },
+        )
+        await this.auditMovedPastOpenTasks(moved, actorId, now, openTasks, forceReason)
+
+        // Notify the idea's followers of the move (SPEC/20-feature-notifications.md trigger #4),
+        // naming the lane as it is called now (SPEC/20-feature-idea-following.md rule 37).
+        const statusInfo = await this.boards.getStatusInfo(moved.organizationId)
+        await this.notifyIdeaFollowers('IdeaStatusChanged', moved, actorId, {
+          statusName: statusInfo.get(statusId)?.name ?? null,
+        })
+      },
+    }
   }
 
   // Delivery (Issues-and-Delivery Slice 1) -----------------------------------------------------
@@ -1597,6 +1771,159 @@ export class IdeaService {
   }
 
   /**
+   * Bulk sprint planning on a work board: add, move or return to the backlog, optionally with the
+   * lane drop's status. Whoever may edit every item (its author or an Org Admin; a status also needs
+   * the status-move right), all or nothing - every item is checked and staged first and
+   * one commit takes them all, so a refused item leaves nothing written. A status move is
+   * `stageStatusMove`, the same path as `changeStatus`. An item already where it is told to be
+   * writes nothing.
+   */
+  async assignBoardSprints(boardId: string, command: AssignBoardSprintCommand): Promise<void> {
+    ensureNotDirectSiteAdmin(this.currentUser)
+    this.requireIdeaEditRole()
+
+    const board = await this.boards.getBoardContext(boardId)
+    if (!board) {
+      throw new NotFoundError('Board not found.')
+    }
+    this.ensureOrganizationScope(board.organizationId)
+    ensureBoardNotArchived(board)
+
+    const ideaIds = command.ideaIds
+    if (ideaIds.length === 0 || ideaIds.length > MAX_SPRINT_ASSIGNMENT_ITEMS) {
+      throw new ValidationError('One or more fields are invalid.', {
+        ideaIds: [`Choose between 1 and ${MAX_SPRINT_ASSIGNMENT_ITEMS} items.`],
+      })
+    }
+    if (new Set(ideaIds).size !== ideaIds.length) {
+      throw new ValidationError('One or more fields are invalid.', {
+        ideaIds: ['Each item can be listed once.'],
+      })
+    }
+    if (command.statusId !== null && command.sprintId === null) {
+      throw new ValidationError('One or more fields are invalid.', {
+        statusId: ['A status can only be set while putting items in a sprint.'],
+      })
+    }
+
+    const found = new Map(
+      (await this.ideaRepository.listByIds(ideaIds)).map((idea) => [idea.id, idea]),
+    )
+    const ideas = ideaIds.map((id) => found.get(id))
+    if (ideas.some((idea) => idea === undefined || idea.organizationId !== board.organizationId)) {
+      throw new ValidationError('One or more fields are invalid.', {
+        ideaIds: ['Every item must be an existing item of this organization.'],
+      })
+    }
+
+    const now = this.clock.now()
+    const actorId = this.requireAuthenticatedUserId()
+    const afterCommit: Array<() => Promise<void>> = []
+
+    for (const idea of ideas) {
+      if (idea !== undefined && idea.boardId !== board.boardId) {
+        throw itemRefusal(
+          'sprintItemOnOtherBoard',
+          await this.describeItem(idea),
+          'a sprint holds items from its own board only.',
+        )
+      }
+    }
+
+    for (const idea of ideas) {
+      if (idea !== undefined && !this.canAdministerIdeaContent(idea, actorId)) {
+        const message = `Only the author or an Org Admin can schedule ${itemLabel(board.keyPrefix ?? undefined, idea)}.`
+        throw new ForbiddenError(message, { ideaIds: [message] })
+      }
+    }
+
+    const sprint = await this.resolveAssignableSprintSummary(board.organizationId, command.sprintId)
+    if (sprint && sprint.boardId !== board.boardId) {
+      throw new ValidationError('One or more fields are invalid.', {
+        sprintId: ['Sprint must be a sprint of this board.'],
+      })
+    }
+    if (command.statusId !== null && !hasSwimlaneForStatus(board, command.statusId)) {
+      throw new ValidationError('One or more fields are invalid.', {
+        statusId: ['Status must be an active swimlane on the board.'],
+      })
+    }
+    if (command.statusId !== null) {
+      this.ensureCanMoveIdea()
+    }
+    const sprintId = sprint?.id ?? null
+
+    for (const original of ideas) {
+      if (original === undefined) {
+        continue
+      }
+      const previousSprintId = original.sprintId
+      const sprintChanged = previousSprintId !== sprintId
+      const withSprint = sprintChanged
+        ? setIdeaBoardSprint(original, sprintId, now, actorId)
+        : original
+      let moved: Awaited<ReturnType<typeof this.stageStatusMove>> = null
+      if (command.statusId !== null) {
+        try {
+          moved = await this.stageStatusMove(
+            withSprint,
+            board,
+            command.statusId,
+            null,
+            now,
+            actorId,
+          )
+        } catch (error) {
+          // The refusal is the status move's own; the item that caused it is named.
+          if (error instanceof UnprocessableError) {
+            throw itemRefusal(
+              error.code,
+              itemLabel(board.keyPrefix ?? undefined, original),
+              error.message,
+            )
+          }
+          throw error
+        }
+      }
+      if (moved === null && sprintChanged) {
+        await this.ideaRepository.update(withSprint)
+      }
+
+      if (sprintChanged) {
+        afterCommit.push(() =>
+          this.auditIdea(
+            'IssueSprintAssignmentChanged',
+            withSprint,
+            actorId,
+            sprintId
+              ? `Issue '${withSprint.title}' assigned to a sprint.`
+              : `Issue '${withSprint.title}' returned to the delivery backlog.`,
+            now,
+            { fromSprintId: previousSprintId, toSprintId: sprintId },
+          ),
+        )
+      }
+      if (moved !== null) {
+        afterCommit.push(moved.finish)
+      }
+    }
+
+    await this.unitOfWork.saveChanges()
+    for (const write of afterCommit) {
+      await write()
+    }
+  }
+
+  /** An item as a refusal names it: its key (DL-12) when its board has a prefix, else its title. */
+  private async describeItem(idea: Idea): Promise<string> {
+    const prefix =
+      idea.boardId === null
+        ? undefined
+        : (await this.boards.getKeyPrefixes([idea.boardId])).get(idea.boardId)
+    return itemLabel(prefix, idea)
+  }
+
+  /**
    * The sprint board and the delivery backlog. Readable by every member of the organization,
    * Read Only included - "View Sprint board, backlog, and provenance" is ticked for every role.
    *
@@ -1658,7 +1985,7 @@ export class IdeaService {
     }
 
     // Deletion is restricted to Site Admin or an in-scope Org Admin (rule #16 / "Permissions").
-    // Deliberately no separate `ensureOrganizationScope` call here - matches .NET, where
+    // Deliberately no separate `ensureOrganizationScope` call here - matches the pre-migration API, where
     // `canAdministerIdeaContent`'s own org check is what a cross-org Org Admin fails.
     if (!this.canAdministerIdeaContent(idea, null, true)) {
       throw new ForbiddenError('You are not allowed to delete ideas.')
@@ -2073,6 +2400,7 @@ export class IdeaService {
     return ideas.map((idea) => {
       const sprint = idea.sprintId ? sprintsById.get(idea.sprintId) : undefined
       const hidden = references.hidesIdeaFeatures(idea)
+      const task = references.isTaskCard(idea)
       return {
         ideaId: idea.id,
         boardId: idea.boardId,
@@ -2082,7 +2410,7 @@ export class IdeaService {
         taskCounts: references.taskCountsOf(idea),
         blockedBy: blockedBy.get(idea.id) ?? [],
         title: idea.title,
-        priority: idea.parentIdeaId === null ? idea.priority : null,
+        priority: task ? null : idea.priority,
         ideaTypeId: hidden ? null : idea.ideaTypeId,
         ideaTypeName: hidden ? null : this.ideaTypeName(ideaTypeLookup, idea.ideaTypeId),
         ideaTypeColorHex: hidden ? null : this.ideaTypeColorHex(ideaTypeLookup, idea.ideaTypeId),
@@ -2248,6 +2576,7 @@ export class IdeaService {
 
     const references = await this.referenceContextFor([idea])
     const hidden = references.hidesIdeaFeatures(idea)
+    const task = references.isTaskCard(idea)
 
     const fieldValues: readonly IdeaFieldValueDto[] = hidden
       ? []
@@ -2298,7 +2627,7 @@ export class IdeaService {
     // A direct Site Admin is refused metric reads and sees values only through View As
     // (SPEC/contracts/metric-types.md), so the detail answers `[]` rather than refusing.
     const metrics =
-      idea.parentIdeaId === null && this.metricValues && this.currentUser.role !== Role.SiteAdmin
+      !task && this.metricValues && this.currentUser.role !== Role.SiteAdmin
         ? await this.metricValues.listByIdea(idea.id)
         : []
 
@@ -2312,11 +2641,11 @@ export class IdeaService {
       taskCounts: references.taskCountsOf(idea),
       blockedBy,
       title: idea.title,
-      problem: idea.parentIdeaId === null ? idea.problem : null,
-      proposedSolutions: idea.parentIdeaId === null ? idea.proposedSolutions : [],
-      impactRationale: idea.parentIdeaId === null ? idea.impactRationale : null,
+      problem: task ? null : idea.problem,
+      proposedSolutions: task ? [] : idea.proposedSolutions,
+      impactRationale: task ? null : idea.impactRationale,
       description: idea.description,
-      priority: idea.parentIdeaId === null ? idea.priority : null,
+      priority: task ? null : idea.priority,
       ideaTypeId: hidden ? null : idea.ideaTypeId,
       ideaTypeName: hidden ? null : this.ideaTypeName(ideaTypeLookup, idea.ideaTypeId),
       ideaTypeColorHex: hidden ? null : (ideaTypeForFields?.colorHex ?? null),
@@ -2329,7 +2658,7 @@ export class IdeaService {
         ? null
         : this.businessImpactColor(businessImpactLookup, idea.businessImpactId),
       dueDate: idea.dueDate,
-      effort: idea.parentIdeaId === null ? idea.effort : null,
+      effort: task ? null : idea.effort,
       assignees: this.projectAssignees(idea, userLookup),
       statusId: idea.statusId,
       statusName: this.statusName(statusInfo, idea.statusId),
@@ -2386,6 +2715,7 @@ export class IdeaService {
    */
   private async referenceContextFor(ideas: readonly Idea[]): Promise<{
     hidesIdeaFeatures(idea: Idea): boolean
+    isTaskCard(idea: Idea): boolean
     taskCountsOf(idea: Idea): TaskCounts | null
   }> {
     const boardIds = [...new Set(ideas.flatMap((i) => (i.boardId === null ? [] : [i.boardId])))]
@@ -2394,14 +2724,19 @@ export class IdeaService {
     const isParentLane = (idea: Idea): boolean =>
       idea.boardId !== null &&
       facts.get(idea.boardId)?.referencedBoardByStatusId.has(idea.statusId) === true
+    // A task has a parent, or sits on a board that a lane references (a standalone card).
+    const isTaskCard = (idea: Idea): boolean =>
+      idea.parentIdeaId !== null ||
+      (idea.boardId !== null && facts.get(idea.boardId)?.isWorkBoard === true)
     const parentIds = ideas.filter(isParentLane).map((i) => i.id)
     const counts =
       parentIds.length === 0
         ? new Map()
         : await this.ideaRepository.countChildrenByParentIds(parentIds)
     return {
+      isTaskCard,
       hidesIdeaFeatures: (idea) =>
-        idea.parentIdeaId !== null ||
+        isTaskCard(idea) ||
         (idea.boardId !== null && facts.get(idea.boardId)?.ideaFeaturesEnabled === false),
       taskCountsOf: (idea) =>
         isParentLane(idea) ? (counts.get(idea.id) ?? { total: 0, done: 0 }) : null,
@@ -2620,8 +2955,8 @@ export class IdeaService {
     return tags.map((t) => t.id)
   }
 
-  /** Resolves raw @-mention email strings to same-organization active user ids. Mirrors .NET's
-   * `MentionResolver`, kept local since Ideas is the only owner of `IdeaMention`. */
+  /** Resolves raw @-mention email strings to same-organization active user ids. Same as the pre-migration API's
+   * mention resolution, kept local since Ideas is the only owner of `IdeaMention`. */
   private async resolveMentions(
     organizationId: string,
     mentionEmails: readonly string[] | null,
@@ -2952,6 +3287,16 @@ function boardRefusesIdeaType(typeName: string): string {
   return `This board doesn't take '${typeName}' ideas.`
 }
 
+/** A 422 about one item: the code, and the item's key leading the message on `ideaIds`. */
+function itemRefusal(code: string, label: string, reason: string): UnprocessableError {
+  const message = `${label}: ${reason}`
+  return new UnprocessableError(code, message, { ideaIds: [message] })
+}
+
+function itemLabel(keyPrefix: string | undefined, idea: Idea): string {
+  return itemKey(keyPrefix, idea.itemNumber) ?? `'${idea.title}'`
+}
+
 function ensureBoardNotArchived(board: BoardContext): void {
   if (board.isArchived) {
     throw new ConflictError('This board is archived. Unarchive it before changing its ideas.')
@@ -3195,7 +3540,7 @@ function flattenValidationErrors(error: ValidationError): string {
 /**
  * Wraps a domain transition so an `IdeaDomainError` (a plain-Error invariant violation - packages/
  * domain imports nothing, so it cannot throw the kernel's `ValidationError` itself) surfaces as a
- * proper field-level 400, mirroring how .NET let `Idea`'s `ArgumentException` reach the API.
+ * proper field-level 400, mirroring how the pre-migration API let `Idea`'s argument exceptions reach the API.
  *
  * Takes `fn` and its arguments separately, rather than a `() => T` thunk, so a narrowed `let`
  * (e.g. `idea` after a `null` guard) is read as a plain argument expression instead of inside a

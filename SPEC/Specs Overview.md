@@ -248,8 +248,8 @@ Update canonical `SPEC/*.md` first, then align this overview, implementation, an
 | Mention resolution is same-organization only and unresolved mentions block save | `SPEC/20-feature-ideas-and-engagement.md`, `SPEC/60-spec-q-and-a-backlog.md` | Unit: mention resolution/validation logic. Integration: idea/comment save behavior with mentions. |
 | Upvote toggle, one active upvote per user per idea, owner-only removal | `SPEC/20-feature-ideas-and-engagement.md`, `SPEC/contracts/upvotes.md` | Unit: upvote ownership/toggle behavior. Integration: upvote endpoint role behavior. |
 | Problem-details envelope on all non-2xx responses | `SPEC/30-Contracts.md`, `SPEC/40-test-strategy.md` | Contract: error-envelope assertions. Integration: protected and validation failure response checks. |
-| Notification events persisted in MVP while outbound email remains deferred | `SPEC/20-feature-notifications.md`, `SPEC/contracts/notifications.md`, `SPEC/50-technical-implementation-plan.md` | Unit/Integration: event emission and persistence checks. Release hardening: deferred outbound delivery remains out of scope. |
-| Audit events required for auth, admin, and idea lifecycle actions | `SPEC/20-feature-auth.md`, `SPEC/20-feature-organizations-and-users.md`, `SPEC/20-feature-ideas-and-engagement.md`, `SPEC/50-technical-implementation-plan.md` | Unit/Integration: audit generation for required workflows. |
+| Notification events persisted in MVP while outbound email remains deferred | `SPEC/20-feature-notifications.md`, `SPEC/contracts/notifications.md` | Unit/Integration: event emission and persistence checks. Release hardening: deferred outbound delivery remains out of scope. |
+| Audit events required for auth, admin, and idea lifecycle actions | `SPEC/20-feature-auth.md`, `SPEC/20-feature-organizations-and-users.md`, `SPEC/20-feature-ideas-and-engagement.md` | Unit/Integration: audit generation for required workflows. |
 
 ## Source Index
 - `SPEC/00-project-brief.md`
@@ -265,7 +265,6 @@ Update canonical `SPEC/*.md` first, then align this overview, implementation, an
 - `SPEC/30-Contracts.md`
 - `SPEC/contracts/*.md` (one file per contract area, indexed by `SPEC/30-Contracts.md`)
 - `SPEC/40-test-strategy.md`
-- `SPEC/50-technical-implementation-plan.md`
 - `SPEC/60-spec-q-and-a-backlog.md`
 - `SPEC/archive/70-delivery-backlog.md`
 - `SPEC/archive/80-workstream-roadmap.md`

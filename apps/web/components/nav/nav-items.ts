@@ -14,7 +14,16 @@ import { hasInbox, hasOrgWorkspace, type Role } from '@/lib/roles'
 export type NavItem = {
   href: string
   label: string
-  icon: 'home' | 'inbox' | 'boards' | 'ideas' | 'sprint' | 'backlog' | 'roadmap' | 'settings'
+  icon:
+    | 'home'
+    | 'inbox'
+    | 'boards'
+    | 'ideas'
+    | 'tasks'
+    | 'sprint'
+    | 'backlog'
+    | 'roadmap'
+    | 'settings'
   count?: number
   slice?: string
 }
@@ -27,6 +36,7 @@ export const INBOX_HREF = '/inbox'
 const ORG_WORKSPACE = new Set([
   '/boards',
   '/ideas',
+  '/tasks',
   '/delivery/sprint',
   '/delivery/backlog',
   '/delivery/roadmap',
@@ -59,9 +69,8 @@ const NAV_SHAPE: { label: string; items: NavShapeItem[] }[] = [
     ],
   },
   {
-    label: 'Delivery',
+    label: 'Plan',
     items: [
-      { href: '/delivery/sprint', label: 'Sprint board', icon: 'sprint', slice: 'E6' },
       {
         href: '/delivery/backlog',
         label: 'Backlog',
@@ -69,6 +78,13 @@ const NAV_SHAPE: { label: string; items: NavShapeItem[] }[] = [
         countKey: 'backlog',
         slice: 'E6',
       },
+    ],
+  },
+  {
+    label: 'Delivery',
+    items: [
+      { href: '/delivery/sprint', label: 'Sprint board', icon: 'sprint', slice: 'E6' },
+      { href: '/tasks', label: 'Tasks', icon: 'tasks' },
       { href: '/delivery/roadmap', label: 'Roadmap', icon: 'roadmap', slice: 'E6' },
     ],
   },

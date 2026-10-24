@@ -5,8 +5,7 @@
 // call has nothing else backing it).
 //
 // COMMITS IMMEDIATELY, like `tag.repository.ts`'s `getOrCreate` - NOT through `PrismaUnitOfWork`.
-// This mirrors the .NET `EfAuditEventWriter.WriteAsync`, which calls `AddAsync` then its own
-// `SaveChangesAsync` rather than relying on the caller's later commit. That is also why services
+// This mirrors the pre-migration API's audit writer, which added the row and then saved it itself rather than relying on the caller's later commit. That is also why services
 // disagree on whether they call `auditEvents.write` before or after `unitOfWork.saveChanges()`
 // (idea.service.ts and comment.service.ts call it after; ai-prompt.service.ts and idea-assist.
 // service.ts's `setScopeStatement` call it before) - neither order is a bug, because an audit
@@ -14,7 +13,7 @@
 // port. Keeping that behavior here (rather than "fixing" it into the buffer) is what makes both
 // call orders keep working. A consequence worth naming: unlike the ideas/comments/etc. mutation
 // this accompanies, an audit event can persist even when the surrounding request later fails
-// before its own `saveChanges()` - matching the .NET, which had the same property.
+// before its own `saveChanges()` - matching the pre-migration API, which had the same property.
 
 import { randomUUID } from 'node:crypto'
 import type {

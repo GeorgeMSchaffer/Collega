@@ -153,6 +153,9 @@ function harness(options: {
     async listBySprint(sprintId) {
       return (options.issues ?? []).filter((i) => i.sprintId === sprintId)
     },
+    async listByIds(ids) {
+      return (options.issues ?? []).filter((i) => ids.includes(i.id))
+    },
     async countsBySprintIds(ids) {
       // With `counts` given, a sprint missing from it is absent from the map, as an empty one is.
       return new Map(

@@ -57,11 +57,11 @@ type ReorderFieldDefinitionsBody = { orderedIds?: unknown }
 /**
  * `Options` on both request records, read as omitted when it is not a JSON array.
  *
- * **A KNOWN DIVERGENCE, and the only one in this slice that makes a request SUCCEED where .NET
- * failed.** `Options` carries no `[RequiredField]` and the property is initialised to `new()`, so
- * System.Text.Json wrote an explicit `null` straight over the initialiser and
- * `FieldDefinitionsController.cs:62` and `:96` then called `request.Options.Select(...)` with no
- * `?? new()` guard - unlike `SetFields` at `:87`, which has one. So `{"options": null}`, and a
+ * **A KNOWN DIVERGENCE, and the only one in this slice that makes a request SUCCEED where the pre-migration API
+ * failed.** `Options` carries no required rule and the property defaulted to an empty list, so
+ * the pre-migration API wrote an explicit `null` straight over the default and its create and
+ * update handlers then iterated the options with no null guard - unlike its set-fields handler,
+ * which had one. So `{"options": null}`, and a
  * null ELEMENT, were a **500** there and are a 201 here. Kept: a `Text` field legitimately has no
  * options, and answering 500 to a request that asks for none is not worth reproducing.
  */
@@ -74,23 +74,21 @@ function optionBodies(body: CreateFieldDefinitionBody): readonly FieldOptionBody
  * identical field for field, including the nested `FieldOptionRequest` list. `IsRequired` (`bool`)
  * and `DisplayOrder` (`int?`) carry none, and `OptionId` is a `Guid?`.
  *
- * **The nested option key is settled from source, not guessed.** ASP.NET's `ValidationVisitor`
- * keys a nested collection failure by index and then property - `Options[0].Label` - and
- * `ProblemDetailsServiceCollectionExtensions.CreateValidationProblemResult` rewrites every
- * ModelState key through `ToCamelCasePath` (`:66-90`), which splits on `.`, camelCases each
- * segment's property part and re-attaches the `[n]` suffix. Its own worked example is
- * `"Assignees[0].UserId" -> "assignees[0].userId"`, so `options[0].label` is what the wire
- * carried. The MESSAGE is separate and equally pinned: `SpacedDisplayNameMetadataProvider` fills
- * `DisplayName` from the property's own name alone, hence `"Label is required."` rather than the
+ * **The nested option key is settled from the pre-migration API, not guessed.** It keyed a
+ * nested collection failure by index and then property - `Options[0].Label` - and camelCased
+ * every key on the way out, splitting on `.`, camelCasing each segment's property part and
+ * re-attaching the `[n]` suffix (`"Assignees[0].UserId" -> "assignees[0].userId"`), so
+ * `options[0].label` is what the wire carried. The MESSAGE is separate and equally pinned: it was
+ * built from the property's own name alone, hence `"Label is required."` rather than the
  * path.
  */
 function fieldDefinitionBodyRules(body: CreateFieldDefinitionBody): Record<string, FieldRules> {
   const rules: Record<string, FieldRules> = {
     name: { value: body.name, required: true, maxLength: FIELD_NAME_MAX_LENGTH },
     description: { value: body.description, maxLength: FIELD_DESCRIPTION_MAX_LENGTH },
-    // `[RequiredField]` only. The allowed-values check is `FieldDefinitionService.parseFieldType`'s,
-    // and it answers with the Application envelope - which is where it answered on the .NET side
-    // too, since `FieldType` is a plain `string` on the contract and carries no `[AllowedValues]`.
+    // Required only. The allowed-values check is `FieldDefinitionService.parseFieldType`'s,
+    // and it answers with the Application envelope - which is where it answered in the pre-migration API
+    // too, since `FieldType` is a plain `string` on the contract and carries no allowed-values rule.
     fieldType: { value: body.fieldType, required: true },
   }
   for (const [index, option] of optionBodies(body).entries()) {
@@ -115,18 +113,18 @@ function fieldDefinitionBodyRules(body: CreateFieldDefinitionBody): Record<strin
  * response to say so. Passing the raw text through is not the alternative: it reaches a `uuid`
  * column with no guard between here and Prisma, raises `P2023` and answers 500.
  *
- * **The message wording is ours, not transcribed.** .NET answered 400 here too - System.Text.Json
+ * **The message wording is ours, not transcribed.** The pre-migration API answered 400 here too - it
  * could not bind `"not-a-guid"` to a `Guid?` - but no fixture in the corpus records one, so there
  * is no recorded text to match. This follows the canonical "invalid format" template in
  * `SPEC/30-Contracts.md` "Validation Message Conventions" (`<FieldName> must be a valid
  * <FormatName>.`), with "GUID" as the format name that section's "Shared Data Rules" already uses
  * for identifiers.
  *
- * The KEY was settled from the original's own path-camelCasing rather than invented: it camelCases
+ * The KEY was settled from the pre-migration API's own path-camelCasing rather than invented: it camelCases
  * each segment and re-attaches the `[n]` suffix, so a nested failure keys as
  * `options[0].optionId` - the same shape as the `options[0].label` rule above.
  *
- * Every malformed id is collected rather than only the first, matching what ModelState did across
+ * Every malformed id is collected rather than only the first, matching what the pre-migration API did across
  * a collection.
  */
 function optionCommands(body: CreateFieldDefinitionBody): readonly FieldOptionCommand[] {
@@ -152,14 +150,14 @@ function optionCommands(body: CreateFieldDefinitionBody): readonly FieldOptionCo
 }
 
 /**
- * `[RequiredField]` on `ReorderFieldDefinitionsRequest.OrderedIds`, a `List<Guid>` initialised to
- * `new()` - the same two-envelope split `statuses.controller.ts` documents at length for
- * `requireOrderedStatusIds`: `RequiredAttribute` fails on NULL ONLY.
+ * The required rule on `ReorderFieldDefinitionsRequest.OrderedIds`, a list defaulting to
+ * empty - the same two-envelope split `statuses.controller.ts` documents at length for
+ * `requireOrderedStatusIds`: the required rule fails on NULL ONLY.
  *
  * The tail differs from the other two reorders, though, and only because the service does:
  * `FieldDefinitionService.reorder` has no coverage check - unknown ids and repeats are skipped and
  * the omitted actives are appended in their prior order - so `{}` is an accepted no-op renumber
- * there where it is a 400 on the option catalogs. That asymmetry is the .NET's, not this file's.
+ * there where it is a 400 on the option catalogs. That asymmetry is the pre-migration API's, not this file's.
  */
 function requireOrderedIds(body: ReorderFieldDefinitionsBody): readonly string[] {
   if (body.orderedIds === null) {
@@ -177,7 +175,7 @@ function requireOrderedIds(body: ReorderFieldDefinitionsBody): readonly string[]
  *
  * **`reorder` is declared before `{id}` and must stay there.** Both are `PUT` on a three-segment
  * path, Nest registers handlers in declaration order, and `UuidParamPipe` would 404 the literal
- * `reorder` if `{id}` matched first. The .NET was immune - `{id:guid}` was a route CONSTRAINT, so
+ * `reorder` if `{id}` matched first. The pre-migration API was immune - `{id:guid}` was a route CONSTRAINT, so
  * `reorder` never matched it whatever the declaration order - which is exactly why the ordering
  * has to be deliberate here.
  *
@@ -191,7 +189,7 @@ export class FieldDefinitionsController {
   constructor(private readonly fieldDefinitions: FieldDefinitionService) {}
 
   /**
-   * `includeDeleted` is a .NET `bool` rather than `bool?`, so an ABSENT value binds to `false`.
+   * `includeDeleted` is a non-nullable `bool` rather than `bool?`, so an ABSENT value binds to `false`.
    * A non-admin asking for it is not refused - the service quietly narrows the answer to the
    * active schema, which is its rule, not this one's.
    */

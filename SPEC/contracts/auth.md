@@ -9,8 +9,7 @@ shared data rules). Canonical, and read, not edited, by implementation slices.
 ### Access Token Format and Session Revocation (Resolved 2026-08-07)
 Rewritten 2026-09-29 (`SPEC/decisions.md`, "Spec contradictions resolved"): the session is the
 httpOnly cookie Nest issues (decision 2026-09-04, `08`), not a bearer token the client stores.
-This section said "`accessToken` is a signed JWT"; named the .NET lifetime setting
-`Auth:AccessTokenLifetimeMinutes` (`Auth__AccessTokenLifetimeMinutes`); said the browser enforces
+This section said "`accessToken` is a signed JWT"; named a bearer-token lifetime setting; said the browser enforces
 the idle deadline, without saying it was unbuilt in `apps/web` (slice 129 built it, `components/auth/idle-sign-out.tsx`); and sent expiry to
 `/login?sessionExpired=true`.
 - The session is an **httpOnly cookie named `collega_session`**, set by the API on a successful `POST /api/v1/auth/login` (`Secure`, `SameSite=Lax`, `Path=/`). Its value is a signed JWT (HS256) carrying the user id (`sub`); no response body carries it, no client script reads it, and no client sends an `Authorization` header. The API reads identity from this cookie and nothing else.
@@ -72,8 +71,8 @@ Authenticate a user with globally unique email credentials.
   - `429` too many requests from this caller IP (see "Rate limiting on the authentication surface")
 - **Rules:**
   - **Session transport (decision `08`, 2026-09-04).** The Nest host issues the session as an **httpOnly cookie** named `collega_session`, not as a bearer token in the body: `Secure`, `SameSite=Lax`, `Path=/`. The client never reads it and never sets an `Authorization` header — why: that keeps `apps/web` a pure client. The API sets it only here; `apps/web` deletes it on sign-out and after a password change. View As start and exit do not touch it: impersonation is resolved server-side on every request (`contracts/view-as.md`).
-  - This document said nothing about cookies until 2026-09-08, which is how the frozen .NET API (bearer) and the Nest host (cookie) came to disagree with nothing forcing the question. The body is otherwise unchanged.
-  - The `accessToken` field the .NET API returned is **gone**: issuing it alongside the cookie would hand the token back to JavaScript and defeat the point of `httpOnly`. One golden fixture records that field and will diff against Nest until it is re-recorded — the single known cost of this decision, and cheaper than the alternative.
+  - The body is otherwise unchanged.
+  - The `accessToken` field the login body once returned is **gone**: issuing it alongside the cookie would hand the token back to JavaScript and defeat the point of `httpOnly`. One golden fixture records that field and will diff against Nest until it is re-recorded — the single known cost of this decision, and cheaper than the alternative.
 
 ### `GET /api/v1/auth/me`
 Return the currently authenticated user summary.

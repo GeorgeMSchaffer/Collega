@@ -5,13 +5,10 @@
 Collega is now a **React design system**: `@collega/design-system`, 29 exported components on
 Tailwind CSS v4 + shadcn/ui. The converter runs normally.
 
-This replaces the 2026-08-31 sync entirely. That run recorded `shape: "style-layer-only"` because
-the UI was Blazor WebAssembly — 41 `.razor` components that no bundler can turn into
-`window.<globalName>.*`. The TypeScript conversion (Waves D/E of
-`SPEC/50-typescript-migration.md`) landed since, so that decision no longer applies. **The old
-project (`81cdd465-640b-4c96-bdc8-197bb73cbb59`, "Collega Design System") still holds that Blazor
-CSS layer and is now obsolete** — by user decision this sync targets a fresh project instead. Once
-the new one is live, the old project can be deleted.
+This replaces the 2026-08-31 sync entirely, which recorded `shape: "style-layer-only"` for the old
+UI. **The old project (`81cdd465-640b-4c96-bdc8-197bb73cbb59`, "Collega Design System") holds that
+obsolete CSS layer** — by user decision this sync targets a fresh project instead. Once the new
+one is live, the old project can be deleted.
 
 ## Running it
 
@@ -104,9 +101,6 @@ the applied remedy for `[GRID_OVERFLOW]`, not an outstanding warning.
   tokens, radius). All of them were verified against the built artifacts on 2026-09-08. Re-verify
   after any theme rename — a name that stops resolving makes the design agent write vocabulary
   that silently does nothing.
-- **`src/Collega.*` is deleted at slice F6.** Nothing in this sync depends on it any more (the
-  Geist woff2 there was *not* reused — `.design-sync/fonts/` holds its own copies), so F6 should
-  not disturb the sync.
 
 ## Operational
 

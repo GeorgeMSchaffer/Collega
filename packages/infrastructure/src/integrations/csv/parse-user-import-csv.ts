@@ -6,9 +6,9 @@ const REQUIRED_COLUMNS = ['firstname', 'lastname', 'email']
 
 /**
  * Parses the uploaded user-import CSV into {@link UserImportRow} values (SPEC/30-Contracts.md
- * user import; ports .NET's `CsvUserImportParser`). Columns are located by header name
+ * user import; ports the pre-migration API's user import parser). Columns are located by header name
  * (`firstName`, `lastName`, `email`, optional `role`), so column order is flexible. Upgraded to
- * the same `csv-parse`-backed quoting support as the idea importer rather than the .NET original's
+ * the same `csv-parse`-backed quoting support as the idea importer rather than the pre-migration API's
  * deliberately minimal comma-splitter - one parser for both is simpler to maintain and quoted
  * names/emails are not a behavior anyone relies on being rejected.
  *

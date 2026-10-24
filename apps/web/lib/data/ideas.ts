@@ -30,6 +30,7 @@ import type {
   IdeaListQuery,
   IdeaPage,
 } from '../types'
+import { getBoard, getReferenceContext } from './boards'
 import { failIfRequested } from './latency'
 import { organizationScope } from './scope'
 import { getTagRefs } from './tags'
@@ -57,6 +58,8 @@ function listParams(query: IdeaListQuery): URLSearchParams {
   for (const tag of query.tags) params.append('tag', tag)
   if (query.scope) params.set('scope', query.scope)
   if (query.phase) params.set('phase', query.phase)
+  if (query.sprintId) params.set('sprintId', query.sprintId)
+  if (query.hideFinal) params.set('hideFinal', 'true')
   if (query.sortBy) {
     params.set('sortBy', query.sortBy)
     params.set('sortDirection', query.sortDirection)
@@ -116,6 +119,86 @@ export async function getBoardIdeaList(boardId: string, query: IdeaListQuery): P
         listParams({ ...query, boardIds: [], scope: undefined, phase: undefined }),
       ),
     ),
+  )
+}
+
+/**
+ * A work board's Backlog: its live tasks and standalone cards in no sprint, finished work left out
+ * (`SPEC/20-feature-task-backlog-and-sprint-planning.md` TB-1). Both filters are the API's. Newest
+ * first, at the API's page maximum; `pageSize: 1` is the cheap way to ask only for the count.
+ */
+export function getBacklog(
+  boardId: string,
+  pageSize: number = API_MAX_PAGE_SIZE,
+): Promise<IdeaPage> {
+  return getBoardIdeaList(boardId, {
+    search: '',
+    boardIds: [],
+    statusIds: [],
+    priorities: [],
+    tags: [],
+    sortBy: 'createdAt',
+    sortDirection: 'desc',
+    page: 1,
+    pageSize,
+    sprintId: 'none',
+    hideFinal: true,
+  })
+}
+
+/** A work board's cards in one sprint (`sprintId`), at the API's page maximum, oldest first. */
+export function getSprintTasks(boardId: string, sprintId: string): Promise<IdeaPage> {
+  return getBoardIdeaList(boardId, {
+    search: '',
+    boardIds: [],
+    statusIds: [],
+    priorities: [],
+    tags: [],
+    sortBy: 'createdAt',
+    sortDirection: 'asc',
+    page: 1,
+    pageSize: API_MAX_PAGE_SIZE,
+    sprintId,
+  })
+}
+
+/** An idea a new task can hang under: it sits in a lane that references the work board. */
+export type TaskParentChoice = { id: string; itemKey: string | null; title: string }
+
+/**
+ * The parent choices for "+ New task" on `boardId` (TB-2): ideas sitting in a lane, on any board,
+ * that references this one. The server refuses any other parent with `parentNotInReferenceLane`,
+ * so this list only keeps the form from offering one it would refuse.
+ */
+export async function getTaskParentChoices(boardId: string): Promise<TaskParentChoice[]> {
+  failIfRequested('getTaskParentChoices')
+
+  const { referencedBy } = await getReferenceContext(boardId)
+  const sources = await Promise.all(referencedBy.map((source) => getBoard(source.id)))
+  const pages = await Promise.all(
+    sources.flatMap((source) => {
+      const laneIds = (source?.lanes ?? [])
+        .filter((lane) => lane.referencesBoardId === boardId)
+        .map((lane) => lane.id)
+      return source && laneIds.length > 0
+        ? [
+            getBoardIdeaList(source.id, {
+              search: '',
+              boardIds: [],
+              statusIds: laneIds,
+              priorities: [],
+              tags: [],
+              sortBy: 'title',
+              sortDirection: 'asc',
+              page: 1,
+              pageSize: API_MAX_PAGE_SIZE,
+            }),
+          ]
+        : []
+    }),
+  )
+  return pages.flatMap((page) =>
+    page.ideas.map((idea) => ({ id: idea.id, itemKey: idea.itemKey, title: idea.title })),
   )
 }
 

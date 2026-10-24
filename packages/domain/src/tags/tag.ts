@@ -2,7 +2,7 @@ import type { Auditable } from '../common/index.js'
 import { markCreated, markUpdated } from '../common/index.js'
 import { TagDomainError } from './errors.js'
 
-/** Mirrors .NET's `Tag.NameMaxLength`. Inline creation while tagging an idea checks it first, keyed
+/** Same cap as the pre-migration API's tag name. Inline creation while tagging an idea checks it first, keyed
  * `tagNames` (Ideas' `resolveTags`); `createTag` and `updateTag` enforce it for Settings → Tags. */
 export const NAME_MAX_LENGTH = 100
 
