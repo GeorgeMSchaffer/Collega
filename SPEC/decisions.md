@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-25 | A Sprints page shows every sprint in three columns (Upcoming, Ongoing, Completed) | active | full below |
 | 2026-10-22 | Anyone who can edit a task may schedule it into a sprint | active | full below |
 | 2026-10-22 | Sprint 17 as built differs from comp W in a few places | active | full below |
 | 2026-10-22 | The legacy Sprint board lists only cards with a delivery status | active | full below |
@@ -148,6 +149,24 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-10-25 — A Sprints page shows every sprint in three columns (Upcoming, Ongoing, Completed)
+
+> Comps: `SPEC/mockups/comp-x-all-sprints.html` (options A to D), `comp-x-sprint-columns-states.html` (every state of the chosen one). Not yet specified or built; the feature spec and slices come next.
+
+**Decided by the owner (2026-10-25): option D, three columns.** A new **Sprints** page under Delivery lists every sprint on the organization's work boards, grouped Upcoming (state `Planned`), Ongoing (`Active`) and Completed. There is no archived state; Completed is the end state. "Upcoming" and "Ongoing" are the page's wording only; the states and the API keep their names.
+
+- **Sorting.** Upcoming by start date, soonest first; Ongoing by end date, soonest first; Completed by end date, latest first.
+- **Overdue and Not started.** A sprint past its end date stays Ongoing with an Overdue chip until it is completed; an Upcoming one past its start date shows Not started. Neither state is derived from dates (`contracts/sprints.md`: Start and Complete are explicit). An Org Admin gets **Complete sprint** on the Overdue card and **Start sprint** on the Not started one; the Complete confirmation names the carry-over (unfinished tasks return to the board's Backlog, done ones stay). Everyone else sees the chip only. Both remain Org Admin only, unchanged.
+- **Several Ongoing sprints** are allowed, even on one board (no single-active constraint, `contracts/sprints.md`); the page lists them all.
+- **A Completed card opens its board's Sprints tab**, not a new summary page. Upcoming opens the sprint's planning page and Ongoing the Sprint board.
+- **Paging.** Completed shows the latest 3, then 10 more per "Show more"; the other two columns load whole.
+- **Roles.** Add New Sprint is Org Admin only and shown disabled with its reason for a User and Read Only; Plan reads View for them. A Site Admin acting directly sees "Sprints belong to an organization" (as on Tasks).
+- **Cards keep their state chip** even inside a column that repeats it, so a card reads the same in List and search views.
+
+**Why.** A board's Sprints tab lists that board's sprints in no order and the Sprint board shows one, so nothing showed what was coming or what had finished. Three columns answer "what is next, what is running, what is done" at a glance and read like the boards people already use.
+
+**Open, not decided here:** the List and Timeline views drawn in comp X (options B and C) are not part of this decision; whether the page also offers them is for the spec.
 
 ## 2026-10-22 — Anyone who can edit a task may schedule it into a sprint
 
