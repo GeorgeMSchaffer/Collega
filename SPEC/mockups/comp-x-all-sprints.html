@@ -30,7 +30,7 @@ h1,h2,h3{margin:0;text-wrap:balance}[hidden]{display:none!important}
 .frame{margin:22px 0}
 .frame>h2{font-size:var(--t1);margin-bottom:8px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
 .fl{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--pri);color:var(--pri-ink);font-weight:700;font-size:.8rem}
-.prop{font-size:.8rem;color:var(--warn);border:1px solid var(--warn);border-radius:999px;padding:0 8px;font-weight:500}
+.prop{font-size:.8rem;color:var(--warn);border:1px solid var(--warn);border-radius:999px;padding:2px 10px;font-weight:500}
 .note{color:var(--muted);max-width:78ch;margin:6px 0 0}
 .note b{color:var(--ink2)}
 /* app mock */
@@ -61,7 +61,7 @@ h1,h2,h3{margin:0;text-wrap:balance}[hidden]{display:none!important}
 .btn[disabled]{opacity:.45;cursor:not-allowed}
 .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
 .in{background:var(--field);border:1px solid var(--line2);border-radius:var(--rs);padding:4px 10px;min-height:32px;color:var(--muted);min-width:180px}
-.chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line2);border-radius:999px;padding:0 9px;font-size:.82rem;color:var(--ink2);background:var(--soft);white-space:nowrap}
+.chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line2);border-radius:999px;padding:2px 10px;font-size:.82rem;color:var(--ink2);background:var(--soft);white-space:nowrap}
 .chip.par{font-family:var(--mono);font-size:.76rem}
 .chip.on{border-color:var(--pri);color:var(--pri);background:var(--pri-tint)}
 .chip.sp{border-color:var(--metric);color:var(--metric)}
@@ -133,7 +133,7 @@ td.k{font-family:var(--mono);font-size:.82rem;color:var(--muted);white-space:now
 @media (max-width:760px){.dock{grid-template-columns:1fr}.lanes{grid-template-columns:1fr 1fr}}
 
 .grp{margin:14px 0 6px;display:flex;gap:8px;align-items:center}
-.grp h4{margin:0;font-size:var(--t0);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.grp h3{margin:0;font-size:var(--t0);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .prog{height:6px;border-radius:999px;background:var(--line2);overflow:hidden;min-width:90px}
 .prog i{display:block;height:100%;background:var(--metric)}
 .prog.ok i{background:var(--ok)}
@@ -144,7 +144,7 @@ td.k{font-family:var(--mono);font-size:.82rem;color:var(--muted);white-space:now
 .scard .m{color:var(--muted);font-size:.84rem;display:flex;gap:8px;flex-wrap:wrap}
 .kan{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .kan>div{background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:8px}
-.kan h4{margin:0 0 8px;display:flex;justify-content:space-between;color:var(--ink2);font-weight:600}
+.kan h3{font-size:var(--t0);margin:0 0 8px;display:flex;justify-content:space-between;color:var(--ink2);font-weight:600}
 .tl{border:1px solid var(--line2);border-radius:var(--r);background:var(--card);overflow:hidden}
 .tl .hd,.tl .rw{display:grid;grid-template-columns:150px repeat(8,1fr);align-items:center}
 .tl .hd{background:var(--thead);color:var(--muted);font-size:.8rem;border-bottom:1px solid var(--line)}
@@ -152,7 +152,7 @@ td.k{font-family:var(--mono);font-size:.82rem;color:var(--muted);white-space:now
 .tl .rw{border-bottom:1px solid var(--line);min-height:44px;position:relative}
 .tl .rw>b{padding:6px 10px;font-weight:600}
 .tl .bars{grid-column:2/-1;display:grid;grid-template-columns:repeat(8,1fr);position:relative;height:44px;background:repeating-linear-gradient(90deg,transparent 0 calc(12.5% - 1px),var(--line) calc(12.5% - 1px) 12.5%)}
-.tl .bar2{position:absolute;top:9px;height:26px;border-radius:6px;padding:2px 8px;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid var(--line2);background:var(--soft);color:var(--ink2)}
+.tl .bar2{position:absolute;top:9px;height:26px;border-radius:6px;padding:4px 10px;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid var(--line2);background:var(--soft);color:var(--ink2)}
 .tl .bar2.act{background:var(--metric-tint);border-color:var(--metric);color:var(--metric)}
 .tl .bar2.pl{background:var(--pri-tint);border-color:var(--pri);color:var(--pri)}
 .tl .bar2.cp{opacity:.6}
@@ -203,13 +203,13 @@ td.k{font-family:var(--mono);font-size:.82rem;color:var(--muted);white-space:now
           <div class="tabs"><span>Board</span><span>Backlog<i>7</i></span><span class="on">Sprints<i>3</i></span></div></div>
         <div class="body">
           <div class="bar"><span class="chip sp">7 tasks waiting in the Backlog</span><span class="sp"></span><button class="btn pri" type="button">+ New sprint</button></div>
-          <div class="grp"><h4>Ongoing</h4><span class="chip ok">1</span></div>
+          <div class="grp"><h3>Ongoing</h3><span class="chip ok">1</span></div>
           <div class="scard"><div style="display:flex;gap:8px;align-items:center"><b>Sprint 14</b><span class="chip ok">Ongoing</span><span class="sp"></span><span class="m">ends in 5 days</span></div>
             <div class="m"><span>Oct 19 &rarr; Oct 30</span><span>12 tasks</span><span>5 done</span></div><div class="prog"><i style="width:42%"></i></div></div>
-          <div class="grp"><h4>Upcoming</h4><span class="chip up">2</span></div>
+          <div class="grp"><h3>Upcoming</h3><span class="chip up">2</span></div>
           <div class="scard"><div style="display:flex;gap:8px;align-items:center"><b>Sprint 15</b><span class="chip up">Upcoming</span><span class="sp"></span><button class="btn sm" type="button">Plan</button></div><div class="m"><span>Nov 2 &rarr; Nov 13</span><span>starts in 8 days</span><span>4 tasks</span></div></div>
           <div class="scard"><div style="display:flex;gap:8px;align-items:center"><b>Sprint 16</b><span class="chip up">Upcoming</span><span class="sp"></span><button class="btn sm" type="button">Plan</button></div><div class="m"><span>Nov 16 &rarr; Nov 27</span><span>no tasks yet</span></div></div>
-          <div class="grp"><h4>Completed</h4><span class="chip done">9</span><button class="btn ghost sm" type="button">Show &#9662;</button></div>
+          <div class="grp"><h3>Completed</h3><span class="chip done">9</span><button class="btn ghost sm" type="button">Show &#9662;</button></div>
           <div class="scard fade"><div style="display:flex;gap:8px;align-items:center"><b>Sprint 13</b><span class="chip done">Completed</span></div><div class="m"><span>Oct 5 &rarr; Oct 16</span><span>10 of 11 done</span></div></div>
         </div>
       </div>
@@ -274,14 +274,14 @@ td.k{font-family:var(--mono);font-size:.82rem;color:var(--muted);white-space:now
         <div class="head"><h2>Sprints</h2><div class="tabs"><span>List</span><span>Timeline</span><span class="on">Columns</span></div></div>
         <div class="body">
           <div class="kan">
-            <div><h4>Upcoming <span class="chip up">3</span></h4>
+            <div><h3>Upcoming <span class="chip up">3</span></h3>
               <div class="scard"><b>Sprint 15</b><div class="m"><span>Implementation</span><span>Nov 2 &rarr; Nov 13</span></div><div class="m"><span>4 tasks</span></div></div>
               <div class="scard"><b>Platform 7</b><div class="m"><span>Platform</span><span>Nov 2 &rarr; Nov 13</span></div><div class="m"><span>no tasks yet</span></div></div>
               <div class="scard"><b>Sprint 16</b><div class="m"><span>Implementation</span><span>Nov 16 &rarr; Nov 27</span></div><div class="m"><span>no tasks yet</span></div></div></div>
-            <div><h4>Ongoing <span class="chip ok">2</span></h4>
+            <div><h3>Ongoing <span class="chip ok">2</span></h3>
               <div class="scard"><b>Sprint 14</b><div class="m"><span>Implementation</span><span>ends in 5 days</span></div><div class="prog"><i style="width:42%"></i></div><div class="m"><span>5 of 12 done</span></div></div>
               <div class="scard"><b>Platform 6</b><div class="m"><span>Platform</span><span>ends in 5 days</span></div><div class="prog"><i style="width:67%"></i></div><div class="m"><span>6 of 9 done</span></div></div></div>
-            <div><h4>Completed <span class="chip done">16</span></h4>
+            <div><h3>Completed <span class="chip done">16</span></h3>
               <div class="scard fade"><b>Sprint 13</b><div class="m"><span>Implementation</span><span>Oct 5 &rarr; Oct 16</span></div><div class="m"><span>10 of 11 done</span></div></div>
               <div class="scard fade"><b>Platform 5</b><div class="m"><span>Platform</span><span>Sep 28 &rarr; Oct 9</span></div><div class="m"><span>8 of 8 done</span></div></div>
               <button class="btn ghost sm" type="button">Show 14 more</button></div>
