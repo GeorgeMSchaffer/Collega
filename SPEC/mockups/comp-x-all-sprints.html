@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en" data-proto-theme="graphite">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Comp X: seeing every sprint, upcoming to completed (2026-10-25). Throwaway review comp on comp W's tokens and chrome
+     (Graphite only). Self-contained; nothing saves. Sample Acme Robotics data, today = Oct 25. Strings marked COPY PROPOSED are
+     not decided. "Archived" in the request is drawn as Completed: the product has only Planned, Active and Completed. Not a reference until approved. -->
+<title>Collega All Sprints Alternates</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{color-scheme:dark;--bg:#0F1113;--ink:#E6E8EA;--ink2:#C4CAD0;--muted:#9BA3AB;--line:#22272C;--line2:#2C3238;--card:#16191C;--soft:#1C2024;--rowh:#1A1E22;--thead:#121518;--field:#0F1113;
+--pri:#F5A524;--pri-h:#FFC35C;--pri-tint:#2A2418;--pri-ink:#16120A;--metric:#5CC8E0;--metric-tint:#0F1D21;--hot:#E5484D;--hot-t:#FF8A8E;--hot-tint:#2E1719;--ok:#58C781;--ok-tint:#13241A;--warn:#F5B456;
+--side:#121518;--side-ink:#AEB5BC;--side-on:#1C2024;--bar:#0B0D0F;--r:8px;--rs:6px;--body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;
+--t0:.9rem;--t1:1.013rem;--t2:1.139rem;--t3:1.281rem}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:var(--t0)/1.5 var(--body)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+h1,h2,h3{margin:0;text-wrap:balance}[hidden]{display:none!important}
+.proto{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:8px 16px;background:var(--bar);color:var(--side-ink);position:sticky;top:0;z-index:5}
+.proto b{color:var(--ink)}
+.proto button{border:1px solid var(--line2);background:transparent;border-radius:999px;padding:2px 12px;min-height:30px;cursor:pointer;color:var(--side-ink)}
+.proto button[aria-pressed=true]{background:var(--ink);color:var(--bar);font-weight:700}
+.wrap{max-width:1240px;margin:0 auto;padding:20px 16px 60px}
+.lede{max-width:78ch;color:var(--ink2)}
+.lede h1{font-size:var(--t3);margin-bottom:6px}
+.rec{border:1px solid var(--metric);background:var(--metric-tint);border-radius:var(--r);padding:10px 14px;margin:14px 0;max-width:78ch}
+.rec b{color:var(--metric)}
+.frame{margin:22px 0}
+.frame>h2{font-size:var(--t1);margin-bottom:8px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.fl{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--pri);color:var(--pri-ink);font-weight:700;font-size:.8rem}
+.prop{font-size:.8rem;color:var(--warn);border:1px solid var(--warn);border-radius:999px;padding:0 8px;font-weight:500}
+.note{color:var(--muted);max-width:78ch;margin:6px 0 0}
+.note b{color:var(--ink2)}
+/* app mock */
+.app.tall{min-height:680px}
+.app{display:grid;grid-template-columns:200px 1fr;border:1px solid var(--line2);border-radius:var(--r);overflow:hidden;background:var(--bg);position:relative;min-height:420px}
+.side{background:var(--side);border-right:1px solid var(--line);padding:12px 8px;font-size:var(--t0)}
+.side .g{color:var(--muted);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;padding:10px 8px 4px}
+.side a{display:flex;justify-content:space-between;gap:6px;padding:5px 8px;border-radius:var(--rs);color:var(--side-ink);text-decoration:none}
+.side a.on{background:var(--side-on);color:var(--ink)}
+.side a small{color:var(--muted)}
+.new{outline:1px dashed var(--pri);outline-offset:1px;position:relative}
+.new::after{content:"NEW";position:absolute;right:-2px;top:-9px;background:var(--pri);color:var(--pri-ink);font-size:.65rem;font-weight:700;border-radius:4px;padding:0 4px}
+.main{min-width:0;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);color:var(--muted)}
+.top b{color:var(--ink);font-weight:600}
+.sp{flex:1}
+.head{padding:14px 16px 0}
+.head h2{font-size:var(--t2)}
+.tabs{display:flex;gap:2px;margin-top:10px;border-bottom:1px solid var(--line)}
+.tabs span{padding:7px 14px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs span.on{color:var(--ink);border-color:var(--pri);font-weight:600}
+.tabs span i{font-style:normal;background:var(--soft);border-radius:999px;padding:0 7px;margin-left:5px;font-size:.8rem;color:var(--ink2)}
+.body{padding:14px 16px;flex:1;min-width:0}
+.btn{border:1px solid var(--line2);background:var(--soft);border-radius:var(--rs);padding:4px 12px;min-height:32px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn.pri{background:var(--pri);color:var(--pri-ink);border-color:var(--pri);font-weight:600}
+.btn.ghost{background:transparent}
+.btn.sm{min-height:28px;padding:2px 9px;font-size:.85rem}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.in{background:var(--field);border:1px solid var(--line2);border-radius:var(--rs);padding:4px 10px;min-height:32px;color:var(--muted);min-width:180px}
+.chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line2);border-radius:999px;padding:0 9px;font-size:.82rem;color:var(--ink2);background:var(--soft);white-space:nowrap}
+.chip.par{font-family:var(--mono);font-size:.76rem}
+.chip.on{border-color:var(--pri);color:var(--pri);background:var(--pri-tint)}
+.chip.sp{border-color:var(--metric);color:var(--metric)}
+.chip.blk{border-color:var(--hot);color:var(--hot-t);background:var(--hot-tint)}
+.chip.ok{border-color:var(--ok);color:var(--ok);background:var(--ok-tint)}
+table{width:100%;border-collapse:collapse}
+th{background:var(--thead);text-align:left;font-weight:500;color:var(--muted);font-size:.82rem;padding:6px 10px;border-bottom:1px solid var(--line)}
+td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr.sel td{background:var(--pri-tint)}
+tr.dim td{opacity:.5}
+td.k{font-family:var(--mono);font-size:.82rem;color:var(--muted);white-space:nowrap}
+.cb{width:16px;height:16px;border:1.5px solid var(--line2);border-radius:4px;display:inline-grid;place-items:center;font-size:11px;line-height:1;vertical-align:middle}
+.cb.on{background:var(--pri);border-color:var(--pri);color:var(--pri-ink);font-weight:700}
+.av{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#153038;color:var(--metric);font-size:.7rem;font-weight:600}
+.empty{border:1px dashed var(--line2);border-radius:var(--r);padding:30px 16px;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--ink);margin-bottom:4px}
+.selbar{display:flex;gap:10px;align-items:center;background:var(--pri-tint);border:1px solid var(--pri);border-radius:var(--rs);padding:6px 12px;margin-bottom:10px}
+/* drawer overlay */
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;justify-content:flex-end}
+.drawer{width:min(50%,560px);background:var(--card);border-left:1px solid var(--line2);display:flex;flex-direction:column;min-width:0}
+.drawer.wide{width:min(72%,760px)}
+.dh{display:flex;align-items:flex-start;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.dh .eb{font-size:.78rem;letter-spacing:.06em;color:var(--muted)}
+.dh h3{font-size:var(--t2)}
+.db{padding:14px 16px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:12px}
+.df{display:flex;gap:8px;justify-content:flex-end;align-items:center;padding:10px 16px;border-top:1px solid var(--line)}
+.f label{display:block;color:var(--ink2);font-weight:500;margin-bottom:3px}
+.f .in{display:block;color:var(--ink)}
+.f small{color:var(--muted);display:block;margin-top:2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sec{border:1px solid var(--line2);border-radius:var(--r);overflow:hidden}
+.sec>.sh{display:flex;gap:8px;align-items:center;padding:8px 10px;background:var(--thead);border-bottom:1px solid var(--line)}
+.sec>.sh b{font-weight:600}
+.pick{max-height:260px;overflow:auto}
+.pick .it{display:grid;grid-template-columns:20px 74px 1fr auto;gap:8px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line)}
+.pick .it.sel{background:var(--pri-tint)}
+.pick .it .k{font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+.sum{display:flex;gap:14px;flex-wrap:wrap;color:var(--ink2)}
+.sum b{color:var(--ink)}
+/* split planning */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.col{border:1px solid var(--line2);border-radius:var(--r);overflow:hidden;background:var(--card)}
+.col>.sh{padding:8px 10px;background:var(--thead);border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center}
+.col .it{display:grid;grid-template-columns:70px 1fr auto;gap:8px;padding:7px 10px;border-bottom:1px solid var(--line);align-items:center}
+.col .it .k{font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+.col .it.drag{outline:1px dashed var(--pri);background:var(--pri-tint)}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:10px}
+.cmp>div{border:1px solid var(--line2);border-radius:var(--r);padding:10px 12px;background:var(--card)}
+.cmp h3{font-size:var(--t1);margin-bottom:4px}
+.cmp ul{margin:6px 0 0;padding-left:18px;color:var(--ink2)}
+.cmp .win{border-color:var(--metric)}
+@media (max-width:760px){.app{grid-template-columns:1fr}.side{display:none}.split,.row2{grid-template-columns:1fr}.drawer,.drawer.wide{width:100%}}
+
+.dock{display:grid;grid-template-columns:240px 1fr;gap:0;border:1px solid var(--line2);border-radius:var(--r);overflow:hidden;background:var(--card)}
+.dock>.l{border-right:1px solid var(--line);background:var(--thead);min-width:0}
+.dock .it{display:grid;grid-template-columns:1fr auto;gap:6px;padding:7px 10px;border-bottom:1px solid var(--line);align-items:center}
+.dock .it small{font-family:var(--mono);color:var(--muted);display:block}
+.dock .it.drag{outline:1px dashed var(--pri);background:var(--pri-tint)}
+.lanes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px}
+.lane{background:var(--bg);border:1px solid var(--line);border-radius:var(--rs);padding:6px;min-height:120px}
+.lane h4{margin:0 0 6px;font-size:.82rem;color:var(--muted);font-weight:500;display:flex;justify-content:space-between}
+.card{background:var(--card);border:1px solid var(--line2);border-radius:var(--rs);padding:6px 8px;margin-bottom:6px;font-size:.88rem}
+.card small{font-family:var(--mono);color:var(--muted);display:block}
+.qa{display:flex;gap:6px;padding:6px 10px;border-top:1px dashed var(--line2);color:var(--muted)}
+.qa .in{flex:1;min-height:28px}
+.vs{width:100%}
+.vs td:first-child,.vs th:first-child{white-space:nowrap;color:var(--ink2);font-weight:500}
+.good{color:var(--ok)}.bad{color:var(--hot-t)}
+@media (max-width:760px){.dock{grid-template-columns:1fr}.lanes{grid-template-columns:1fr 1fr}}
+
+.grp{margin:14px 0 6px;display:flex;gap:8px;align-items:center}
+.grp h4{margin:0;font-size:var(--t0);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.prog{height:6px;border-radius:999px;background:var(--line2);overflow:hidden;min-width:90px}
+.prog i{display:block;height:100%;background:var(--metric)}
+.prog.ok i{background:var(--ok)}
+.chip.up{border-color:var(--warn);color:var(--warn)}
+.chip.done{color:var(--muted)}
+.scard{background:var(--card);border:1px solid var(--line2);border-radius:var(--r);padding:10px 12px;margin-bottom:8px;display:flex;flex-direction:column;gap:6px}
+.scard.fade{opacity:.7}
+.scard .m{color:var(--muted);font-size:.84rem;display:flex;gap:8px;flex-wrap:wrap}
+.kan{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.kan>div{background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:8px}
+.kan h4{margin:0 0 8px;display:flex;justify-content:space-between;color:var(--ink2);font-weight:600}
+.tl{border:1px solid var(--line2);border-radius:var(--r);background:var(--card);overflow:hidden}
+.tl .hd,.tl .rw{display:grid;grid-template-columns:150px repeat(8,1fr);align-items:center}
+.tl .hd{background:var(--thead);color:var(--muted);font-size:.8rem;border-bottom:1px solid var(--line)}
+.tl .hd span,.tl .rw>span{padding:6px 8px}
+.tl .rw{border-bottom:1px solid var(--line);min-height:44px;position:relative}
+.tl .rw>b{padding:6px 10px;font-weight:600}
+.tl .bars{grid-column:2/-1;display:grid;grid-template-columns:repeat(8,1fr);position:relative;height:44px;background:repeating-linear-gradient(90deg,transparent 0 calc(12.5% - 1px),var(--line) calc(12.5% - 1px) 12.5%)}
+.tl .bar2{position:absolute;top:9px;height:26px;border-radius:6px;padding:2px 8px;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:1px solid var(--line2);background:var(--soft);color:var(--ink2)}
+.tl .bar2.act{background:var(--metric-tint);border-color:var(--metric);color:var(--metric)}
+.tl .bar2.pl{background:var(--pri-tint);border-color:var(--pri);color:var(--pri)}
+.tl .bar2.cp{opacity:.6}
+.tl .today{position:absolute;top:0;bottom:0;width:2px;background:var(--hot);z-index:1}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:var(--rs);overflow:hidden}
+.seg span{padding:3px 12px;color:var(--muted);border-right:1px solid var(--line2);cursor:pointer;min-height:30px;display:inline-flex;align-items:center;gap:6px}
+.seg span:last-child{border-right:0}
+.seg span.on{background:var(--soft);color:var(--ink);font-weight:600}
+.seg span i{font-style:normal;color:var(--muted);font-size:.8rem}
+@media (max-width:760px){.kan{grid-template-columns:1fr}.tl .hd,.tl .rw{grid-template-columns:90px repeat(8,1fr)}}
+</style>
+<body>
+<div class="proto" role="toolbar" aria-label="Screens">
+  <b>Comp X</b><span>Graphite</span>
+  <button type="button" data-go="v0" aria-pressed="true">Compare</button>
+  <button type="button" data-go="v1" aria-pressed="false">A Grouped by state</button>
+  <button type="button" data-go="v2" aria-pressed="false">B One table, filters</button>
+  <button type="button" data-go="v3" aria-pressed="false">C Timeline</button>
+  <button type="button" data-go="v4" aria-pressed="false">D Three columns</button>
+</div>
+<div class="wrap">
+<div class="lede"><h1>Four ways to see every sprint: upcoming, ongoing, completed</h1>
+<p>Today a board's Sprints tab lists that board's sprints with no order or grouping, and the Sprint board shows only the one active sprint. Nothing shows what is coming. These four comps keep the data rules (a sprint belongs to one board; states are Planned, Active, Completed) and differ in where the view lives and how it is grouped. Planned is worded <b>Upcoming</b> and Active <b>Ongoing</b> <span class="prop">COPY PROPOSED</span>.</p>
+<div class="rec"><b>Archived:</b> there is no archived sprint. Completed is the end state, so every comp shows <b>Completed</b> where you said archived. A real Archive (hide old sprints) would be a new decision.</div></div>
+
+<section id="v0">
+  <div class="frame"><h2><span class="fl">&#8801;</span>Side by side</h2>
+  <table class="vs"><thead><tr><th></th><th>A &middot; Grouped by state</th><th>B &middot; One table, filters</th><th>C &middot; Timeline</th><th>D &middot; Three columns</th></tr></thead><tbody>
+  <tr><td>Lives at</td><td>each board's Sprints tab</td><td>new Sprints page (Delivery)</td><td>new Sprints page, view toggle</td><td>new Sprints page, view toggle</td></tr>
+  <tr><td>Cross-board</td><td class="bad">no</td><td class="good">yes</td><td class="good">yes, one row per board</td><td class="good">yes</td></tr>
+  <tr><td>Answers "what is next?"</td><td class="good">Upcoming group first</td><td class="good">Upcoming filter, sorted by start</td><td class="good">best: dates and overlaps visible</td><td class="good">Upcoming column</td></tr>
+  <tr><td>History</td><td>Completed group, collapsed</td><td>Completed filter, paged</td><td class="bad">only the visible weeks</td><td>Completed column, latest few</td></tr>
+  <tr><td>Scales to many sprints</td><td>yes, groups collapse</td><td class="good">best: sort, search, page</td><td class="bad">needs a window</td><td class="bad">columns grow long</td></tr>
+  <tr><td>Extra build</td><td>re-group one list</td><td>1 page, filter chips</td><td>1 view, date math</td><td>1 view, card</td></tr>
+  <tr><td>Best for</td><td>a team on one board</td><td>admins planning across boards</td><td>spotting clashes and gaps</td><td>a quick glance</td></tr>
+  </tbody></table>
+  <p class="note"><b>My read:</b> B as the page everyone lands on, with C and D as optional view toggles later, and A as a cheap first step because it needs no new page. Whichever is chosen, the Sprint board should gain an "All sprints" link and a switcher so a past or upcoming sprint opens there too.</p>
+  </div>
+</section>
+
+<section id="v1" hidden>
+  <div class="frame"><h2><span class="fl">A</span>The board's Sprints tab, grouped by state <span class="prop">COPY PROPOSED</span></h2>
+    <div class="app tall">
+      <aside class="side"><div class="g">Workspace</div><a>Home</a><a>Boards</a><a>Ideas</a><div class="g">Delivery</div><a>Sprint board</a><a>Tasks</a><a class="">Sprints</a><a>Roadmap</a></aside>
+      <div class="main">
+        <div class="top">Boards / <b>Implementation</b></div>
+        <div class="head"><h2>Implementation</h2>
+          <div class="tabs"><span>Board</span><span>Backlog<i>7</i></span><span class="on">Sprints<i>3</i></span></div></div>
+        <div class="body">
+          <div class="bar"><span class="chip sp">7 tasks waiting in the Backlog</span><span class="sp"></span><button class="btn pri" type="button">+ New sprint</button></div>
+          <div class="grp"><h4>Ongoing</h4><span class="chip ok">1</span></div>
+          <div class="scard"><div style="display:flex;gap:8px;align-items:center"><b>Sprint 14</b><span class="chip ok">Ongoing</span><span class="sp"></span><span class="m">ends in 5 days</span></div>
+            <div class="m"><span>Oct 19 &rarr; Oct 30</span><span>12 tasks</span><span>5 done</span></div><div class="prog"><i style="width:42%"></i></div></div>
+          <div class="grp"><h4>Upcoming</h4><span class="chip up">2</span></div>
+          <div class="scard"><div style="display:flex;gap:8px;align-items:center"><b>Sprint 15</b><span class="chip up">Upcoming</span><span class="sp"></span><button class="btn sm" type="button">Plan</button></div><div class="m"><span>Nov 2 &rarr; Nov 13</span><span>starts in 8 days</span><span>4 tasks</span></div></div>
+          <div class="scard"><div style="display:flex;gap:8px;align-items:center"><b>Sprint 16</b><span class="chip up">Upcoming</span><span class="sp"></span><button class="btn sm" type="button">Plan</button></div><div class="m"><span>Nov 16 &rarr; Nov 27</span><span>no tasks yet</span></div></div>
+          <div class="grp"><h4>Completed</h4><span class="chip done">9</span><button class="btn ghost sm" type="button">Show &#9662;</button></div>
+          <div class="scard fade"><div style="display:flex;gap:8px;align-items:center"><b>Sprint 13</b><span class="chip done">Completed</span></div><div class="m"><span>Oct 5 &rarr; Oct 16</span><span>10 of 11 done</span></div></div>
+        </div>
+      </div>
+    </div>
+    <p class="note"><b>Idea:</b> the smallest change. Same tab, but sorted into Ongoing, Upcoming, Completed (collapsed, latest first), with a relative date ("starts in 8 days") on each. No new page, but no cross-board view either.</p>
+  </div>
+</section>
+
+<section id="v2" hidden>
+  <div class="frame"><h2><span class="fl">B</span>A Sprints page: one table, state filter <span class="prop">COPY PROPOSED</span></h2>
+    <div class="app tall">
+      <aside class="side"><div class="g">Workspace</div><a>Home</a><a>Boards</a><a>Ideas</a><div class="g">Delivery</div><a>Sprint board</a><a>Tasks</a><a class="on new">Sprints</a><a>Roadmap</a></aside>
+      <div class="main">
+        <div class="top">Delivery / <b>Sprints</b></div>
+        <div class="head"><h2>Sprints</h2><p class="note" style="margin:2px 0 0">Every sprint on your work boards, from upcoming to completed.</p></div>
+        <div class="body">
+          <div class="bar"><div class="seg" role="tablist"><span class="on">All <i>21</i></span><span class="">Upcoming <i>3</i></span><span class="">Ongoing <i>2</i></span><span class="">Completed <i>16</i></span></div><span class="in">Search sprints</span><span class="chip">Board &#9662;</span><span class="sp"></span><button class="btn pri" type="button">Add New Sprint</button></div>
+          <table id="stab"><thead><tr><th>Sprint</th><th>Board</th><th>Window</th><th>State</th><th>Tasks</th><th></th></tr></thead><tbody><tr data-s="Ongoing"><td><b>Sprint 14</b></td><td>Implementation</td><td>Oct 19 &rarr; Oct 30</td><td><span class="chip ok">Ongoing</span></td><td>12 <span class="prog " style="display:inline-block;width:70px;vertical-align:middle;margin-left:6px"><i style="width:41%"></i></span> <small style="color:var(--muted)">5 done</small></td><td><button class="btn sm" type="button">Open</button></td></tr><tr data-s="Ongoing"><td><b>Platform 6</b></td><td>Platform</td><td>Oct 12 &rarr; Oct 30</td><td><span class="chip ok">Ongoing</span></td><td>9 <span class="prog " style="display:inline-block;width:70px;vertical-align:middle;margin-left:6px"><i style="width:66%"></i></span> <small style="color:var(--muted)">6 done</small></td><td><button class="btn sm" type="button">Open</button></td></tr><tr data-s="Upcoming"><td><b>Sprint 15</b></td><td>Implementation</td><td>Nov 2 &rarr; Nov 13</td><td><span class="chip up">Upcoming</span></td><td>4 <span class="prog " style="display:inline-block;width:70px;vertical-align:middle;margin-left:6px"><i style="width:0%"></i></span> <small style="color:var(--muted)">0 done</small></td><td><button class="btn sm" type="button">Plan</button></td></tr><tr data-s="Upcoming"><td><b>Platform 7</b></td><td>Platform</td><td>Nov 2 &rarr; Nov 13</td><td><span class="chip up">Upcoming</span></td><td>0 <span class="prog " style="display:inline-block;width:70px;vertical-align:middle;margin-left:6px"><i style="width:0%"></i></span> <small style="color:var(--muted)">0 done</small></td><td><button class="btn sm" type="button">Plan</button></td></tr><tr data-s="Upcoming"><td><b>Sprint 16</b></td><td>Implementation</td><td>Nov 16 &rarr; Nov 27</td><td><span class="chip up">Upcoming</span></td><td>0 <span class="prog " style="display:inline-block;width:70px;vertical-align:middle;margin-left:6px"><i style="width:0%"></i></span> <small style="color:var(--muted)">0 done</small></td><td><button class="btn sm" type="button">Plan</button></td></tr><tr data-s="Completed"><td><b>Sprint 13</b></td><td>Implementation</td><td>Oct 5 &rarr; Oct 16</td><td><span class="chip done">Completed</span></td><td>11 <span class="prog ok" style="display:inline-block;width:70px;vertical-align:middle;margin-left:6px"><i style="width:90%"></i></span> <small style="color:var(--muted)">10 done</small></td><td><button class="btn sm" type="button">Open</button></td></tr><tr data-s="Completed"><td><b>Platform 5</b></td><td>Platform</td><td>Sep 28 &rarr; Oct 9</td><td><span class="chip done">Completed</span></td><td>8 <span class="prog ok" style="display:inline-block;width:70px;vertical-align:middle;margin-left:6px"><i style="width:100%"></i></span> <small style="color:var(--muted)">8 done</small></td><td><button class="btn sm" type="button">Open</button></td></tr><tr data-s="Completed"><td><b>Sprint 12</b></td><td>Implementation</td><td>Sep 21 &rarr; Oct 2</td><td><span class="chip done">Completed</span></td><td>10 <span class="prog ok" style="display:inline-block;width:70px;vertical-align:middle;margin-left:6px"><i style="width:70%"></i></span> <small style="color:var(--muted)">7 done</small></td><td><button class="btn sm" type="button">Open</button></td></tr></tbody></table>
+          <p class="note">Sorted by start date, upcoming first. The chips above the table filter these rows.</p>
+        </div>
+      </div>
+    </div>
+    <p class="note"><b>Idea:</b> follows the list-page convention (header action, filter, search, table). "Add New Sprint" asks for a board first, like Add New Task. Completed rows are muted and page after 20.</p>
+  </div>
+</section>
+
+<section id="v3" hidden>
+  <div class="frame"><h2><span class="fl">C</span>Timeline: sprints on a calendar, a row per board <span class="prop">COPY PROPOSED</span></h2>
+    <div class="app tall">
+      <aside class="side"><div class="g">Workspace</div><a>Home</a><a>Boards</a><a>Ideas</a><div class="g">Delivery</div><a>Sprint board</a><a>Tasks</a><a class="on new">Sprints</a><a>Roadmap</a></aside>
+      <div class="main">
+        <div class="top">Delivery / <b>Sprints</b></div>
+        <div class="head"><h2>Sprints</h2><div class="tabs"><span>List</span><span class="on">Timeline</span><span>Columns</span></div></div>
+        <div class="body">
+          <div class="bar"><span class="btn sm">&lsaquo;</span><b>Oct 5 &ndash; Nov 29</b><span class="btn sm">&rsaquo;</span><span class="btn sm">Today</span><span class="sp"></span><button class="btn pri" type="button">Add New Sprint</button></div>
+          <div class="tl">
+            <div class="hd"><span></span><span>Oct 5</span><span>Oct 12</span><span>Oct 19</span><span>Oct 26</span><span>Nov 2</span><span>Nov 9</span><span>Nov 16</span><span>Nov 23</span></div>
+            <div class="rw"><b>Implementation</b><div class="bars"><span class="today" style="left:calc(37.5% + 12.5%*0.0 + 0px);left:36%"></span>
+              <span class="bar2 cp" style="left:0;width:25%">Sprint 13 &middot; done</span>
+              <span class="bar2 act" style="left:25%;width:25%">Sprint 14 &middot; 5/12</span>
+              <span class="bar2 pl" style="left:50%;width:25%">Sprint 15 &middot; 4 tasks</span>
+              <span class="bar2 pl" style="left:75%;width:25%">Sprint 16 &middot; empty</span></div></div>
+            <div class="rw"><b>Platform</b><div class="bars"><span class="today" style="left:36%"></span>
+              <span class="bar2 cp" style="left:0;width:12%">Plat 5</span>
+              <span class="bar2 act" style="left:12.5%;width:37.5%">Platform 6 &middot; 6/9</span>
+              <span class="bar2 pl" style="left:50%;width:25%">Platform 7 &middot; empty</span></div></div>
+          </div>
+          <p class="note">Red line is today. Ongoing in blue, upcoming in amber, completed muted. A gap or overlap on a board's row is visible at once.</p>
+        </div>
+      </div>
+    </div>
+    <p class="note"><b>Idea:</b> best for planning a rhythm: a bar that starts before the last one ends, or a week with no sprint, jumps out. Weak for history, so older sprints stay on the List.</p>
+  </div>
+</section>
+
+<section id="v4" hidden>
+  <div class="frame"><h2><span class="fl">D</span>Three columns: Upcoming, Ongoing, Completed <span class="prop">COPY PROPOSED</span></h2>
+    <div class="app tall">
+      <aside class="side"><div class="g">Workspace</div><a>Home</a><a>Boards</a><a>Ideas</a><div class="g">Delivery</div><a>Sprint board</a><a>Tasks</a><a class="on new">Sprints</a><a>Roadmap</a></aside>
+      <div class="main">
+        <div class="top">Delivery / <b>Sprints</b></div>
+        <div class="head"><h2>Sprints</h2><div class="tabs"><span>List</span><span>Timeline</span><span class="on">Columns</span></div></div>
+        <div class="body">
+          <div class="kan">
+            <div><h4>Upcoming <span class="chip up">3</span></h4>
+              <div class="scard"><b>Sprint 15</b><div class="m"><span>Implementation</span><span>Nov 2 &rarr; Nov 13</span></div><div class="m"><span>4 tasks</span></div></div>
+              <div class="scard"><b>Platform 7</b><div class="m"><span>Platform</span><span>Nov 2 &rarr; Nov 13</span></div><div class="m"><span>no tasks yet</span></div></div>
+              <div class="scard"><b>Sprint 16</b><div class="m"><span>Implementation</span><span>Nov 16 &rarr; Nov 27</span></div><div class="m"><span>no tasks yet</span></div></div></div>
+            <div><h4>Ongoing <span class="chip ok">2</span></h4>
+              <div class="scard"><b>Sprint 14</b><div class="m"><span>Implementation</span><span>ends in 5 days</span></div><div class="prog"><i style="width:42%"></i></div><div class="m"><span>5 of 12 done</span></div></div>
+              <div class="scard"><b>Platform 6</b><div class="m"><span>Platform</span><span>ends in 5 days</span></div><div class="prog"><i style="width:67%"></i></div><div class="m"><span>6 of 9 done</span></div></div></div>
+            <div><h4>Completed <span class="chip done">16</span></h4>
+              <div class="scard fade"><b>Sprint 13</b><div class="m"><span>Implementation</span><span>Oct 5 &rarr; Oct 16</span></div><div class="m"><span>10 of 11 done</span></div></div>
+              <div class="scard fade"><b>Platform 5</b><div class="m"><span>Platform</span><span>Sep 28 &rarr; Oct 9</span></div><div class="m"><span>8 of 8 done</span></div></div>
+              <button class="btn ghost sm" type="button">Show 14 more</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="note"><b>Idea:</b> reads like the boards the team already knows. Read-only (sprints move by dates, not by drag). Good for a glance, weaker than the table once there are many sprints.</p>
+  </div>
+</section>
+</div>
+<script>
+const secs=[...document.querySelectorAll('section')];
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>{
+  secs.forEach(s=>s.hidden=s.id!==b.dataset.go);
+  document.querySelectorAll('[data-go]').forEach(x=>x.setAttribute('aria-pressed',x===b));
+}));
+document.querySelectorAll('#v2 .seg span').forEach(c=>c.addEventListener('click',()=>{
+  document.querySelectorAll('#v2 .seg span').forEach(x=>x.classList.toggle('on',x===c));
+  const w=c.firstChild.textContent.trim();
+  document.querySelectorAll('#stab tbody tr').forEach(r=>r.hidden=!(w==='All'||r.dataset.s===w));
+}));
+</script>
