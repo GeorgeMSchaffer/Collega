@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Comp S3 · Audience-led, journey</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f7f6; --navy:#0e2a3c; --navy2:#16384e; --ink:#0e2a3c; --muted:#4d6573; --line:#d3e0dd;
+  --teal:#0f9d8a; --teal-d:#0b7a6b; --coral:#ff6b4a; --coral-d:#e4502f; --card:#fff; --sun:#ffd166;
+  --head:'Space Grotesk',system-ui,sans-serif; --body:'DM Sans',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 var(--body);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--coral);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+.review{background:#06151f;color:#bcd0d8;font:12px/1.4 ui-monospace,monospace;padding:8px 22px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.review b{color:var(--sun)}
+
+header{position:sticky;top:0;z-index:40;background:rgba(243,247,246,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;gap:22px;height:66px}
+.logo{font:700 22px var(--head);text-decoration:none;display:flex;align-items:center;gap:10px;letter-spacing:-.02em}
+.logo svg{width:30px;height:30px}
+header nav{display:flex;gap:6px;margin-left:10px}
+header nav a{padding:10px 12px;border-radius:99px;text-decoration:none;color:var(--muted);font-size:15px;font-weight:500}
+header nav a:hover{background:#e2ecea;color:var(--ink)}
+.sp{flex:1}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 22px;border-radius:12px;border:2px solid var(--navy);background:#fff;color:var(--navy);font:600 15px var(--body);text-decoration:none;cursor:pointer;transition:transform .15s,background .2s,box-shadow .2s;box-shadow:3px 3px 0 var(--navy)}
+.btn:hover{background:#eef6f4;box-shadow:5px 5px 0 var(--navy);transform:translate(-1px,-1px)}
+.btn:active{transform:none;box-shadow:1px 1px 0 var(--navy)}
+.btn.pri{background:var(--coral);color:#fff}
+.btn.pri:hover{background:var(--coral-d)}
+.btn.flat{border-color:transparent;background:none;box-shadow:none;color:var(--muted)}
+.btn.flat:hover{background:#e2ecea;transform:none;box-shadow:none}
+
+/* hero */
+.hero{padding-block:70px 40px}
+.badge{display:inline-flex;gap:8px;align-items:center;background:var(--sun);color:#3b2d00;font:600 13px var(--body);padding:6px 14px;border-radius:99px;border:2px solid var(--navy);text-decoration:none}
+h1{font:700 clamp(40px,6.6vw,80px)/1 var(--head);letter-spacing:-.04em;margin:22px 0 20px;max-width:16ch}
+h1 span{background:linear-gradient(transparent 62%,#9fe6d9 62%)}
+.lede{font-size:20px;max-width:46ch;color:var(--muted);margin:0 0 28px}
+.who{display:inline-flex;background:#fff;border:2px solid var(--navy);border-radius:14px;padding:4px;gap:4px;margin-bottom:26px;flex-wrap:wrap}
+.who button{border:0;background:none;min-height:44px;padding:0 18px;border-radius:10px;font:600 15px var(--body);color:var(--muted);cursor:pointer}
+.who button[aria-pressed=true]{background:var(--navy);color:#fff}
+.who button:hover:not([aria-pressed=true]){background:#e2ecea}
+.herogrid{display:grid;grid-template-columns:1.1fr 1fr;gap:48px;align-items:center}
+.scene{background:var(--navy);border-radius:24px;padding:22px;color:#fff;border:2px solid var(--navy);box-shadow:10px 10px 0 var(--teal);min-height:380px}
+.scene h3{margin:0 0 4px;font:600 13px var(--body);letter-spacing:.12em;text-transform:uppercase;color:#9fe6d9}
+.scene .win{background:#fff;color:var(--ink);border-radius:14px;padding:16px;margin-top:12px;font-size:14px}
+.scene .win[hidden]{display:none}
+.win .ln{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #e5eeec}
+.win .ln:last-child{border:0}
+.tg{font:600 11px var(--body);padding:2px 9px;border-radius:99px;background:#e0f5f1;color:var(--teal-d)}
+.tg.c{background:#ffe3dc;color:#b43a1d}.tg.y{background:#fff0c2;color:#7a5a00}.tg.b{background:#dfe9f7;color:#244b80}
+.scene .say{margin-top:14px;font-size:15px;color:#cfe6e0}
+
+/* sections */
+section{padding:84px 0}
+.eyebrow{font:600 13px var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--teal-d)}
+h2{font:700 clamp(30px,4.4vw,52px)/1.04 var(--head);letter-spacing:-.035em;margin:10px 0 16px;max-width:20ch}
+.sub{color:var(--muted);font-size:18px;max-width:56ch;margin:0}
+
+/* journey */
+.journey{background:var(--navy);color:#fff;border-radius:32px;padding:56px 40px;margin-inline:auto}
+.journey h2{color:#fff}.journey .sub{color:#b5ccd6}.journey .eyebrow{color:#9fe6d9}
+.track{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:40px 0 24px;position:relative}
+.stop{background:var(--navy2);border:2px solid #2c5870;color:#fff;border-radius:14px;min-height:64px;padding:10px 12px;font:600 15px var(--body);cursor:pointer;text-align:left;transition:border-color .2s,background .2s}
+.stop small{display:block;font-weight:400;color:#9db8c4;font-size:12px}
+.stop[aria-selected=true]{background:var(--teal);border-color:#fff}
+.stop[aria-selected=true] small{color:#dcfaf4}
+.stop:hover:not([aria-selected=true]){border-color:#6fb5a8}
+.stage{display:grid;grid-template-columns:1fr 1fr;gap:34px;align-items:center;background:#fff;color:var(--ink);border-radius:20px;padding:30px}
+.stage[hidden]{display:none}
+.stage h3{font:700 26px var(--head);margin:0 0 8px;letter-spacing:-.02em}
+.stage p{color:var(--muted);margin:0}
+.stage ul{padding-left:18px;color:var(--muted);margin:12px 0 0}
+.mock{background:#eef6f4;border:2px solid var(--navy);border-radius:14px;padding:14px;display:grid;gap:8px;font-size:13px}
+.mock .r{background:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 11px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+
+/* features */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px}
+.fc{background:#fff;border:2px solid var(--navy);border-radius:18px;padding:26px;box-shadow:5px 5px 0 var(--navy)}
+.fc .ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;margin-bottom:16px;border:2px solid var(--navy)}
+.fc .ic svg{width:24px;height:24px}
+.fc h3{font:700 20px var(--head);margin:0 0 6px;letter-spacing:-.02em}
+.fc p{margin:0;color:var(--muted);font-size:15.5px}
+
+/* beta band */
+.betaband{background:var(--coral);border:2px solid var(--navy);border-radius:28px;padding:46px;display:grid;grid-template-columns:1.3fr 1fr;gap:30px;align-items:center;box-shadow:8px 8px 0 var(--navy);color:#fff}
+.betaband h2{color:#fff;max-width:18ch}
+.betaband p{color:#ffe9e3;margin:0 0 20px;max-width:46ch;font-size:18px}
+.betaband .btn{background:#fff}
+.betaband .ticket{background:#fff;color:var(--ink);border-radius:18px;padding:22px;border:2px dashed var(--navy);transform:rotate(2deg)}
+.ticket b{font:700 22px var(--head);display:block}.ticket span{color:var(--muted);font-size:14px}
+
+/* faq / contact strip */
+.faq{display:grid;gap:10px;max-width:820px;margin-top:30px}
+details{background:#fff;border:2px solid var(--navy);border-radius:14px;padding:0 20px}
+summary{cursor:pointer;min-height:56px;display:flex;align-items:center;font:600 17px var(--head);list-style:none;justify-content:space-between;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'+';font-size:24px;color:var(--teal-d)}
+details[open] summary::after{content:'–'}
+details p{margin:0 0 18px;color:var(--muted)}
+.strip{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;background:#fff;border:2px solid var(--navy);border-radius:18px;padding:26px 30px;margin-top:40px}
+.strip h3{font:700 22px var(--head);margin:0}.strip p{margin:2px 0 0;color:var(--muted)}
+
+footer{background:var(--navy);color:#b5ccd6;padding:50px 0;font-size:15px;margin-top:40px}
+footer .wrap{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
+footer a{margin-right:20px;text-decoration:none}footer a:hover{color:#fff;text-decoration:underline}
+
+/* sticky beta ribbon (mobile + scroll) */
+.ribbon{position:fixed;left:50%;bottom:16px;transform:translate(-50%,0);z-index:30;background:var(--navy);color:#fff;border-radius:99px;padding:8px 8px 8px 20px;display:flex;gap:14px;align-items:center;box-shadow:0 14px 34px -10px rgba(0,0,0,.5);font-size:14.5px;max-width:calc(100% - 24px)}
+.ribbon .btn{min-height:44px;padding:0 18px;box-shadow:none;border-color:var(--coral);border-radius:99px}
+
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(6,21,31,.6);z-index:60;opacity:0;pointer-events:none;transition:opacity .25s}
+.scrim.on{opacity:1;pointer-events:auto}
+aside.drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);background:var(--bg);z-index:61;transform:translateX(100%);transition:transform .28s ease;display:flex;flex-direction:column;border-left:2px solid var(--navy)}
+aside.drawer.on{transform:none}
+.dtop{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line)}
+.dtop strong{font:700 20px var(--head)}
+.x{width:44px;height:44px;border-radius:12px;border:2px solid var(--navy);background:#fff;font-size:22px;cursor:pointer}
+.dtabs{display:flex;gap:6px;padding:14px 20px 0}
+.dtabs button{flex:1;min-height:44px;border:2px solid transparent;border-radius:12px 12px 0 0;background:none;font:600 15px var(--body);color:var(--muted);cursor:pointer}
+.dtabs button[aria-selected=true]{background:#fff;border-color:var(--navy);border-bottom-color:#fff;color:var(--ink);margin-bottom:-2px;position:relative}
+.dbody{flex:1;overflow:auto;padding:24px 20px 30px;background:#fff;border-top:2px solid var(--navy)}
+.dbody [role=tabpanel][hidden]{display:none}
+.dbody h3{font:700 24px var(--head);margin:0 0 4px;letter-spacing:-.02em}
+.dbody .hint{margin:0 0 20px;color:var(--muted);font-size:15px}
+.f{display:grid;gap:15px}.two{grid-template-columns:1fr 1fr}
+label{font-size:14px;font-weight:600;display:block;margin-bottom:6px}
+input,select,textarea{width:100%;min-height:46px;border:2px solid #b9cdd0;border-radius:10px;background:#fff;color:var(--ink);padding:10px 13px;font:inherit;font-size:16px}
+textarea{min-height:110px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:3px solid #ffc9bb;border-color:var(--coral)}
+[aria-invalid=true]{border-color:#c4301a;background:#fff3f0}
+.err{color:#b32a14;font-size:13.5px;margin-top:4px}.err:empty{display:none}
+.check{display:flex;gap:10px;font-weight:400;font-size:14px;color:var(--muted);align-items:flex-start}
+.check input{width:20px;min-height:20px;margin-top:3px;accent-color:var(--teal)}
+.done{padding:20px 0}.done h3{font:700 26px var(--head);margin:0 0 6px}
+.done .tick{width:50px;height:50px;border-radius:50%;background:var(--teal);color:#fff;display:grid;place-items:center;margin-bottom:14px;border:2px solid var(--navy)}
+.done p{color:var(--muted)}
+.dev{margin-top:18px;font:11.5px/1.5 ui-monospace,monospace;border:1px dashed #8fb0b3;border-radius:8px;padding:8px 10px;color:#44646b;background:#f0f7f6}
+.dev b{color:var(--coral-d)}
+
+@media(max-width:900px){
+  header nav,.hide-m{display:none}
+  .herogrid,.stage,.betaband{grid-template-columns:1fr}
+  .grid3{grid-template-columns:1fr}
+  .track{grid-template-columns:1fr 1fr}
+  .journey{padding:34px 18px;border-radius:24px}
+  .betaband{padding:28px}
+  section{padding:58px 0}.hero{padding-block:40px 20px}
+  .two{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<div class="review"><span><b>COMP S3</b> · Audience-led — pick who you are and the page shows your story; a five-stop journey replaces a feature list. Sign up, Beta and Contact share one slide-over drawer (tabs) reachable from anywhere, plus a sticky beta ribbon.</span><span>Throwaway comp · forms do not submit anywhere</span></div>
+
+<header>
+  <div class="wrap">
+    <a class="logo" href="#top"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#0e2a3c"/><circle cx="12" cy="16" r="5" fill="#0f9d8a"/><circle cx="21" cy="16" r="5" fill="#ff6b4a" fill-opacity=".92"/></svg>Collega</a>
+    <nav aria-label="Primary"><a href="#top">Who it's for</a><a href="#journey">The journey</a><a href="#features">Features</a><a href="#faq">FAQ</a></nav>
+    <span class="sp"></span>
+    <a class="btn flat hide-m" href="https://app.collega-ai.com/login">Sign in</a>
+    <button class="btn hide-m" data-drawer="contact">Contact us</button>
+    <button class="btn pri" data-drawer="signup">Sign up</button>
+  </div>
+</header>
+
+<main id="top">
+<div class="wrap hero">
+  <div class="herogrid">
+    <div>
+      <a class="badge" href="#beta" data-drawer="beta">✦ Beta is open — request early access</a>
+      <h1>Ideas in. <span>Improvements out.</span></h1>
+      <p class="lede">Collega is where your organization captures process ideas, decides what's worth doing, and delivers it.</p>
+      <div class="who" role="group" aria-label="Show me the view for">
+        <button aria-pressed="true" data-who="user">I have ideas</button>
+        <button aria-pressed="false" data-who="admin">I run the process</button>
+        <button aria-pressed="false" data-who="lead">I deliver the work</button>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap"><button class="btn pri" data-drawer="signup">Create your workspace</button><button class="btn" data-drawer="beta">Join the beta</button></div>
+    </div>
+    <div class="scene" aria-live="polite">
+      <h3 id="scene-title">Raise an idea</h3>
+      <div class="win" data-scene="user">
+        <div class="ln"><strong>What's the problem?</strong><span class="tg">AI assist</span></div>
+        <div class="ln"><span>“Techs arrive without the right parts.”</span><span class="tg y">Draft</span></div>
+        <div class="ln"><span>Stock the van for the top 20 repairs</span><span class="tg c">High</span></div>
+        <div class="ln"><span>You review, then submit.</span><span class="tg b">You decide</span></div>
+      </div>
+      <div class="win" data-scene="admin" hidden>
+        <div class="ln"><strong>Statuses</strong><span class="tg">your words</span></div>
+        <div class="ln"><span>New → In Review → In Progress → Client Review → Complete</span></div>
+        <div class="ln"><span>Idea types &amp; custom fields</span><span class="tg b">configured</span></div>
+        <div class="ln"><span>Invite code · CSV import</span><span class="tg y">3 roles</span></div>
+      </div>
+      <div class="win" data-scene="lead" hidden>
+        <div class="ln"><strong>Sprint board</strong><span class="tg">Active</span></div>
+        <div class="ln"><span>Pending · Scoping · Development · Review · Complete</span></div>
+        <div class="ln"><span>OPP0-12 Stock the van</span><span class="tg y">Scoping</span></div>
+        <div class="ln"><span>Backlog · tasks · planning</span><span class="tg b">linked to idea</span></div>
+      </div>
+      <p class="say" id="scene-say">Describe it in plain words. The assistant drafts; you stay in control.</p>
+    </div>
+  </div>
+</div>
+
+<section id="journey" style="padding-top:40px">
+  <div class="wrap">
+    <div class="journey">
+      <div class="eyebrow">The journey</div>
+      <h2>One idea, five stops.</h2>
+      <p class="sub">Follow a single idea from a hallway comment to something that shipped.</p>
+      <div class="track" role="tablist" aria-label="Journey stops">
+        <button class="stop" role="tab" id="s1" aria-selected="true" aria-controls="g1"><small>01</small>Raise</button>
+        <button class="stop" role="tab" id="s2" aria-selected="false" aria-controls="g2" tabindex="-1"><small>02</small>Sort</button>
+        <button class="stop" role="tab" id="s3" aria-selected="false" aria-controls="g3" tabindex="-1"><small>03</small>Discuss</button>
+        <button class="stop" role="tab" id="s4" aria-selected="false" aria-controls="g4" tabindex="-1"><small>04</small>Plan</button>
+        <button class="stop" role="tab" id="s5" aria-selected="false" aria-controls="g5" tabindex="-1"><small>05</small>Deliver</button>
+      </div>
+      <div class="stage" role="tabpanel" id="g1" aria-labelledby="s1"><div><h3>Anyone can raise it.</h3><p>Type it in, or talk it through with the assistant and get a draft to edit.</p><ul><li>Idea types and fields set by your admins</li><li>Nothing saved until you submit</li></ul></div><div class="mock"><div class="r"><span>Title</span><b>Stock the van for the top 20 repairs</b></div><div class="r"><span>Type</span><b>Process improvement</b></div><div class="r"><span>Impact</span><b>Customer</b></div></div></div>
+      <div class="stage" role="tabpanel" id="g2" aria-labelledby="s2" hidden><div><h3>It lands on a board.</h3><p>Boards use your statuses as lanes. Drag a card, or move it from the keyboard.</p><ul><li>Filter by tag, priority, person</li><li>List or card view</li></ul></div><div class="mock"><div class="r"><span>New / Pending</span><b>3</b></div><div class="r"><span>In Review</span><b>2</b></div><div class="r"><span>In Progress</span><b>2</b></div></div></div>
+      <div class="stage" role="tabpanel" id="g3" aria-labelledby="s3" hidden><div><h3>The team weighs in.</h3><p>Comments, @mentions and upvotes show what matters. Followers hear when it moves.</p><ul><li>@mention a teammate</li><li>In-app inbox for activity</li></ul></div><div class="mock"><div class="r"><span>@Olivia — confirm the parts list?</span><span class="tg">comment</span></div><div class="r"><span>▲ 12 upvotes</span><span class="tg y">trending</span></div></div></div>
+      <div class="stage" role="tabpanel" id="g4" aria-labelledby="s4" hidden><div><h3>Approved? Plan it.</h3><p>Promote it to an issue — the same item — then schedule it into a sprint and break it into tasks.</p><ul><li>Backlog and sprint planning</li><li>Task checklist per issue</li></ul></div><div class="mock"><div class="r"><span>Backlog</span><b>1</b></div><div class="r"><span>Sprint · 22 Oct – 5 Nov</span><span class="tg">Active</span></div></div></div>
+      <div class="stage" role="tabpanel" id="g5" aria-labelledby="s5" hidden><div><h3>Ship it, and remember why.</h3><p>A five-stage sprint board takes it to complete — with the original idea and its discussion one click away.</p><ul><li>Pending · Scoping · Development · Review · Complete</li><li>Roadmap and outcomes — coming</li></ul></div><div class="mock"><div class="r"><span>Complete</span><b>OPP0-12</b></div><div class="r"><span>Origin</span><span class="tg b">idea · 12 upvotes</span></div></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="features" style="padding-top:20px">
+  <div class="wrap">
+    <div class="eyebrow">Built for real organizations</div>
+    <h2>Make it yours. Keep it safe.</h2>
+    <div class="grid3">
+      <div class="fc"><div class="ic" style="background:#e0f5f1"><svg viewBox="0 0 24 24" fill="none" stroke="#0b7a6b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="10" rx="1"/><rect x="17" y="4" width="4" height="13" rx="1"/></svg></div><h3>Boards that fit</h3><p>Your statuses, idea types and fields — not a generic template.</p></div>
+      <div class="fc"><div class="ic" style="background:#ffe3dc"><svg viewBox="0 0 24 24" fill="none" stroke="#b43a1d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4L12 3zM18 15l.9 2.1L21 18l-2.1.9L18 21l-.9-2.1L15 18l2.1-.9L18 15z"/></svg></div><h3>AI idea assist</h3><p>Plain-English in, structured draft out. Never saves on its own.</p></div>
+      <div class="fc"><div class="ic" style="background:#fff0c2"><svg viewBox="0 0 24 24" fill="none" stroke="#7a5a00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.5 3.4 7.6 8 9 4.6-1.4 8-4.5 8-9V6l-8-3z"/></svg></div><h3>Org-level isolation</h3><p>Every organization is a hard data boundary, with Org Admin, User and Read Only roles.</p></div>
+    </div>
+    <div class="strip"><div><h3>Not sure it fits your team?</h3><p>Tell us how you work today — we'll tell you honestly.</p></div><button class="btn" data-drawer="contact">Contact us</button></div>
+  </div>
+</section>
+
+<section id="beta" style="padding-top:10px">
+  <div class="wrap">
+    <div class="betaband">
+      <div><div class="eyebrow" style="color:#ffe9e3">Beta program</div><h2>Shape it with us.</h2><p>We're inviting a small group of teams to use Collega while the roadmap and outcomes views are finished. Beta terms and pricing: <em>[to be decided]</em>.</p><button class="btn" data-drawer="beta">Request early access</button></div>
+      <div class="ticket" aria-hidden="true"><span>ADMIT ONE · EARLY TEAM</span><b>Your own workspace, set up with you</b><span>+ a direct line to the builders</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="faq" style="padding-top:30px">
+  <div class="wrap">
+    <div class="eyebrow">Questions</div><h2>Quick answers.</h2>
+    <div class="faq">
+      <details><summary>Where do I sign in?</summary><p>At app.collega-ai.com. This site is for learning about Collega and creating a workspace.</p></details>
+      <details><summary>Who can see our data?</summary><p>Only members of your organization. Each organization is a separate boundary.</p></details>
+      <details><summary>Can the AI change our ideas on its own?</summary><p>No. The assistant drafts a form; a person reviews and submits it.</p></details>
+      <details><summary>How do we bring in our team?</summary><p>Share an invite code, add people directly, or import a CSV.</p></details>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer><div class="wrap"><div><strong style="color:#fff;font:700 20px var(--head)">Collega</strong><br>Idea management and delivery tracking.</div><div><a href="https://app.collega-ai.com/login">Sign in</a><a href="#" data-drawer="signup">Sign up</a><a href="#" data-drawer="contact">Contact</a><a href="#">Privacy</a><a href="#">Terms</a></div></div></footer>
+
+<div class="ribbon" id="ribbon"><span>Collega is in <strong>beta</strong></span><button class="btn pri" data-drawer="beta">Join</button></div>
+
+<!-- shared drawer -->
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Get started" aria-hidden="true">
+  <div class="dtop"><strong>Get in touch</strong><button class="x" id="dclose" aria-label="Close">×</button></div>
+  <div class="dtabs" role="tablist">
+    <button role="tab" id="dt-signup" aria-selected="true" aria-controls="dp-signup">Sign up</button>
+    <button role="tab" id="dt-beta" aria-selected="false" aria-controls="dp-beta" tabindex="-1">Beta</button>
+    <button role="tab" id="dt-contact" aria-selected="false" aria-controls="dp-contact" tabindex="-1">Contact</button>
+  </div>
+  <div class="dbody">
+    <div role="tabpanel" id="dp-signup" aria-labelledby="dt-signup">
+      <h3>Create your workspace</h3><p class="hint">You'll be the Org Admin. Already have one? <a href="https://app.collega-ai.com/login"><strong>Sign in</strong></a></p>
+      <form data-form class="f" aria-label="Create workspace">
+        <div><label for="su-org">Organization name</label><input id="su-org" name="org" required autocomplete="organization"><div class="err" data-err="org"></div></div>
+        <div class="two f"><div><label for="su-first">First name</label><input id="su-first" name="first" required autocomplete="given-name"><div class="err" data-err="first"></div></div><div><label for="su-last">Last name</label><input id="su-last" name="last" required autocomplete="family-name"><div class="err" data-err="last"></div></div></div>
+        <div><label for="su-email">Work email</label><input id="su-email" name="email" type="email" required autocomplete="email" data-msg="Enter a valid work email."><div class="err" data-err="email"></div></div>
+        <div><label for="su-pw">Password</label><input id="su-pw" name="pw" type="password" required minlength="8" autocomplete="new-password" data-msg="Use at least 8 characters."><div class="err" data-err="pw"></div></div>
+        <label class="check"><input type="checkbox" name="terms" required data-msg="Accept the terms to continue."> I agree to the Terms and Privacy Policy.</label><div class="err" data-err="terms"></div>
+        <button class="btn pri" type="submit">Create workspace</button>
+      </form>
+      <div class="done" hidden><div class="tick" aria-hidden="true">✓</div><h3>Check your email</h3><p>Confirm your address and you'll arrive in your workspace at app.collega-ai.com.</p><button class="btn" data-reset type="button">Start over</button></div>
+      <div class="dev"><b>Spec later:</b> self-serve organization creation replaces the seeded-admin / invite-code start and changes the initial user setup flow (SPEC/20-feature-auth.md, 20-feature-organizations-and-users.md).</div>
+    </div>
+    <div role="tabpanel" id="dp-beta" aria-labelledby="dt-beta" hidden>
+      <h3>Join the beta</h3><p class="hint">A small group of teams, set up with you personally.</p>
+      <form data-form class="f" aria-label="Beta signup">
+        <div><label for="b-email">Work email</label><input id="b-email" name="email" type="email" required autocomplete="email" data-msg="Enter a valid work email."><div class="err" data-err="email"></div></div>
+        <div class="two f"><div><label for="b-org">Organization</label><input id="b-org" name="org" required autocomplete="organization"><div class="err" data-err="org"></div></div><div><label for="b-role">Your role</label><select id="b-role" name="role"><option>I have ideas</option><option>I run the process</option><option>I deliver the work</option></select></div></div>
+        <div><label for="b-use">What would you use it for?</label><textarea id="b-use" name="use"></textarea></div>
+        <label class="check"><input type="checkbox" name="ok" required data-msg="Please agree so we can reply."> I'm happy to be contacted about the beta.</label><div class="err" data-err="ok"></div>
+        <button class="btn pri" type="submit">Request early access</button>
+      </form>
+      <div class="done" hidden><div class="tick" aria-hidden="true">✓</div><h3>You're on the list</h3><p>We'll email you to get started.</p><button class="btn" data-reset type="button">Add another</button></div>
+      <div class="dev"><b>Spec later:</b> beta requests need a store, an owner notification and a route into creating an organization. See SPEC/ideas-inbox.md.</div>
+    </div>
+    <div role="tabpanel" id="dp-contact" aria-labelledby="dt-contact" hidden>
+      <h3>Contact us</h3><p class="hint">Questions, demos, or a hand getting started.</p>
+      <form data-form class="f" aria-label="Contact us">
+        <div class="two f"><div><label for="ct-name">Name</label><input id="ct-name" name="name" required autocomplete="name"><div class="err" data-err="name"></div></div><div><label for="ct-email">Email</label><input id="ct-email" name="email" type="email" required autocomplete="email" data-msg="Enter a valid email."><div class="err" data-err="email"></div></div></div>
+        <div><label for="ct-topic">Topic</label><select id="ct-topic" name="topic"><option>Product question</option><option>Request a demo</option><option>Beta program</option><option>Support</option><option>Something else</option></select></div>
+        <div><label for="ct-msg">Message</label><textarea id="ct-msg" name="msg" required data-msg="Tell us a little about what you need."></textarea><div class="err" data-err="msg"></div></div>
+        <button class="btn pri" type="submit">Send message</button>
+      </form>
+      <div class="done" hidden><div class="tick" aria-hidden="true">✓</div><h3>Message sent</h3><p>Thanks — we'll reply by email.</p><button class="btn" data-reset type="button">Send another</button></div>
+      <div class="dev"><b>Spec later:</b> contact needs delivery to a shared inbox, spam protection and a stored record.</div>
+    </div>
+  </div>
+</aside>
+
+<script>
+/* Shared by the three marketing-site comps (S1–S3). Throwaway: validates, then shows the success
+   state. Nothing is sent anywhere — the backend is unspecified (see SPEC/ideas-inbox.md). */
+document.querySelectorAll('form[data-form]').forEach((form) => {
+  form.noValidate = true
+  form.addEventListener('submit', (e) => {
+    e.preventDefault()
+    let first = null
+    form.querySelectorAll('[required]').forEach((field) => {
+      const bad = !field.checkValidity()
+      field.setAttribute('aria-invalid', String(bad))
+      const slot = form.querySelector(`[data-err="${field.name}"]`)
+      if (slot) slot.textContent = bad ? field.dataset.msg || 'This field is required.' : ''
+      if (bad && !first) first = field
+    })
+    if (first) return first.focus()
+    const done = form.parentElement.querySelector('.done')
+    form.hidden = true
+    if (done) {
+      done.hidden = false
+      done.setAttribute('tabindex', '-1')
+      done.focus()
+    }
+  })
+  form.addEventListener('input', (e) => {
+    if (e.target.getAttribute('aria-invalid') === 'true' && e.target.checkValidity()) {
+      e.target.setAttribute('aria-invalid', 'false')
+      const slot = form.querySelector(`[data-err="${e.target.name}"]`)
+      if (slot) slot.textContent = ''
+    }
+  })
+})
+document.querySelectorAll('[data-reset]').forEach((btn) =>
+  btn.addEventListener('click', () => {
+    const box = btn.closest('.done')
+    const form = box.parentElement.querySelector('form')
+    form.reset()
+    box.hidden = true
+    form.hidden = false
+  }),
+)
+</script>
+<script>
+// audience toggle
+const says={user:['Raise an idea','Describe it in plain words. The assistant drafts; you stay in control.'],admin:['Shape the process','Set statuses, idea types and fields once. Bring your team in by invite code or CSV.'],lead:['Deliver the work','Approved ideas become issues: backlog, sprints and tasks, linked to where they began.']};
+document.querySelectorAll('[data-who]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('[data-who]').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  document.querySelectorAll('[data-scene]').forEach(s=>s.hidden=s.dataset.scene!==b.dataset.who);
+  document.getElementById('scene-title').textContent=says[b.dataset.who][0];document.getElementById('scene-say').textContent=says[b.dataset.who][1];
+}));
+// generic tablist helper
+function tablist(sel){const t=[...document.querySelectorAll(sel)];const pick=(x,focus)=>{t.forEach(y=>{const on=y===x;y.setAttribute('aria-selected',on);y.tabIndex=on?0:-1;document.getElementById(y.getAttribute('aria-controls')).hidden=!on});if(focus)x.focus()};
+ t.forEach((x,i)=>{x.addEventListener('click',()=>pick(x,false));x.addEventListener('keydown',e=>{const k={ArrowRight:1,ArrowLeft:-1,ArrowDown:1,ArrowUp:-1}[e.key];if(k){e.preventDefault();pick(t[(i+k+t.length)%t.length],true)}})});return pick}
+tablist('.stop');const pickD=tablist('.dtabs [role=tab]');
+// drawer
+const drawer=document.getElementById('drawer'),scrim=document.getElementById('scrim');let opener=null;
+function openD(tab,from){pickD(document.getElementById('dt-'+tab),false);opener=from;drawer.classList.add('on');scrim.classList.add('on');drawer.setAttribute('aria-hidden','false');document.getElementById('dclose').focus()}
+function closeD(){drawer.classList.remove('on');scrim.classList.remove('on');drawer.setAttribute('aria-hidden','true');opener&&opener.focus()}
+document.querySelectorAll('[data-drawer]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();openD(b.dataset.drawer,b)}));
+document.getElementById('dclose').addEventListener('click',closeD);scrim.addEventListener('click',closeD);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&drawer.classList.contains('on'))closeD()});
+// hide ribbon over the beta band / when drawer open
+const rib=document.getElementById('ribbon');new IntersectionObserver(([en])=>{rib.style.display=en.isIntersecting?'none':'flex'}).observe(document.querySelector('.betaband'));
+</script>
+</body>
+</html>
