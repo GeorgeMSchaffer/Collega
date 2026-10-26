@@ -169,9 +169,10 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
   connection is promoted to the domain level and is the only one real clients reach; the development
   connection is enabled only on first-party Applications we register (MCP Inspector, our test client), never
   promoted. Real third-party clients are tried in production against a test organization. Consequence: no
-  isolated place to try a real client; tenant-wide Auth0 settings are shared. Professional is budgeted for
-  the one tenant; the plan and the connection behaviour are to be confirmed with Auth0 before the first
-  backend slice, with two tenants as the fallback.
+  isolated place to try a real client; tenant-wide Auth0 settings are shared. B2C Professional ($240 a
+  month at 500 active users) is the plan, settled 2026-10-26 after Auth0's pricing page confirmed custom
+  database connections need Professional or Enterprise; the connection behaviour is to be confirmed with
+  Auth0 before the first backend slice, with two tenants as the fallback.
 - **A new `apps/mcp`**, its own Vercel project on `mcp.collega-ai.com`, HTTP-only like `apps/web`; the API stays
   the only thing that talks to the database and the only validator of a token.
 - **Read-only in v1**, the core eight tools. Writes and the Claude connectors directory listing come later
