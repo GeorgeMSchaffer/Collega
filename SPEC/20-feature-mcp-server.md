@@ -66,12 +66,20 @@ asks the API for everything. The API stays the only thing that talks to the data
 
 ### Identity (Auth0)
 
-6. **Auth0 is the authorization server**, with **a separate tenant for development and for production**
-   (owner decision 2026-10-26, after weighing one tenant). Collega stays the only place a password lives:
-   each tenant has one **custom database connection** whose login script calls `POST /api/v1/mcp-auth/verify`
-   on that environment's API. No user is imported and no password is stored in Auth0. Two tenants because
-   MCP clients are third-party applications, which Auth0 lets use only tenant-wide (domain-level)
-   connections, so one tenant cannot keep a dev and a prod connection apart (*Open 2*).
+6. **Auth0 is the authorization server**, **one tenant for every environment** (owner decision 2026-10-26,
+   chosen over two tenants because it is cheaper). Collega stays the only place a password lives: a
+   **custom database connection** whose login script calls `POST /api/v1/mcp-auth/verify`. No user is imported
+   and no password is stored in Auth0. One connection can call only one deployment, so there is **one
+   database connection per environment**. Auth0 tries only the first enabled database connection unless the
+   `/authorize` request names one with `connection`, and **third-party MCP clients (Claude, ChatGPT, Cursor)
+   build that request themselves and cannot add it.** So:
+   - **Production connection:** promoted to the domain level, the only connection a third-party client can
+     reach. Real MCP clients therefore always sign in against production.
+   - **Development connection:** enabled only on first-party Applications we register ourselves (MCP
+     Inspector and our own test client, pre-registered, not by CIMD), and never promoted. Each such
+     Application has exactly one database connection enabled, so no `connection` parameter is needed.
+   - Each environment has its own API (audience). Trying a real third-party client end to end is done in
+     production against a test organization (*Open 2*).
 7. `POST /api/v1/mcp-auth/verify` and `POST /api/v1/mcp-auth/profile` are server-to-server routes for Auth0
    alone, guarded by a shared secret the API reads in the auth folder. Verification answers one uniform
    failure for a wrong password, an unknown email, an inactive user, a must-change-password user and an
@@ -211,17 +219,20 @@ are Auth0's hosted pages, so Collega's wording there is Auth0 branding, not Reac
 
 ## Open points
 
-Settled 2026-10-26 and removed from this list: the domain (`mcp.collega-ai.com`), tenancy (two tenants),
-the three new dependencies (`mcp-handler`, `@modelcontextprotocol/sdk` 1.26 or later, `jose`), Site Admin
-reads needing the switch on, and CIMD-only registration.
+Settled 2026-10-26 and removed from this list: the domain (`mcp.collega-ai.com`), tenancy (one tenant, a
+database connection per environment), the three new dependencies (`mcp-handler`,
+`@modelcontextprotocol/sdk` 1.26 or later, `jose`), Site Admin reads needing the switch on, and CIMD-only
+registration.
 
-1. **Auth0 plan and cost.** Budgeted as Professional (about $240 a month for B2C) for each paid tenant. Before
+1. **Auth0 plan and cost.** Budgeted as Professional (about $240 a month for B2C) for the one tenant. Before
    the first backend slice, confirm on Auth0's own pricing page or with sales that the plan includes custom
-   database connections in both tenants, and the per-member price. Third-party guides disagree on several
+   at least two database connections, and the per-member price. Third-party guides disagree on several
    figures.
-2. **Domain-level connection and CIMD clients.** Auth0 says third-party applications use only domain-level
-   connections. Confirm that a client registered by Client ID Metadata Document is third-party, so the
-   connection is promoted in each tenant; the design assumes it is.
+2. **How the two connections behave in one tenant.** Confirm with Auth0: that a CIMD-registered client is
+   third-party and so uses only the promoted production connection; that a first-party Application with one
+   enabled connection never offers the promoted one; and that a pre-registered first-party client works with
+   MCP Inspector. Auth0's own article on multiple database connections covers only the `connection`
+   parameter, which third-party clients cannot send. If any of this fails, fall back to two tenants.
 3. **Refresh and the stamp claim.** Confirm whether the post-login Action runs on a refresh exchange. The
    design does not depend on it (rule 12), but a refreshed token would carry a stale stamp and force a
    re-authorization.
@@ -241,7 +252,8 @@ new `apps/mcp`; v1 is read-only; Org Admin opt-in; Site Admins connect read-only
 and not in this spec; the core eight tools; 60 per user and 600 per organization per minute; audit of
 connections and calls without content; `mcp.collega-ai.com`; escape and label user-written text.
 
-Blockers, same day: separate dev and prod Auth0 tenants (recommended over one tenant, which could not keep
-two database connections apart for third-party clients); Professional budgeted for each paid tenant;
+Blockers, same day: one Auth0 tenant with a database connection per environment (the owner's choice for cost,
+over the recommendation of two tenants; the design in rule 6 depends on real clients using production only);
+Professional budgeted for the one tenant;
 `mcp.collega-ai.com`; all three dependencies approved; the organization's switch governs Site Admins too;
 Client ID Metadata Documents only.

@@ -163,11 +163,15 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
   connection**: Auth0 asks Collega to check the email and password, so Collega stays the only place a
   password lives. Rejected: Auth0 owning passwords (two logins, and a Collega reset would not end the Auth0
   session); Collega as an OIDC provider (rebuilds the authorization server Auth0 was chosen to avoid).
-- **Two Auth0 tenants, development and production.** The owner first chose one tenant, then moved to two:
-  MCP clients are third-party applications, which Auth0 lets use only tenant-wide (domain-level)
-  connections, so one tenant cannot keep a dev and a prod database connection apart. Professional is
-  budgeted for each paid tenant; custom-database support is to be confirmed with Auth0 before the first
-  backend slice.
+- **One Auth0 tenant for every environment, with a database connection per environment.** The owner chose
+  this for cost, over the recommendation of two tenants. Auth0 tries only the first enabled database
+  connection unless `/authorize` names one, and third-party MCP clients cannot name one, so the production
+  connection is promoted to the domain level and is the only one real clients reach; the development
+  connection is enabled only on first-party Applications we register (MCP Inspector, our test client), never
+  promoted. Real third-party clients are tried in production against a test organization. Consequence: no
+  isolated place to try a real client; tenant-wide Auth0 settings are shared. Professional is budgeted for
+  the one tenant; the plan and the connection behaviour are to be confirmed with Auth0 before the first
+  backend slice, with two tenants as the fallback.
 - **A new `apps/mcp`**, its own Vercel project on `mcp.collega-ai.com`, HTTP-only like `apps/web`; the API stays
   the only thing that talks to the database and the only validator of a token.
 - **Read-only in v1**, the core eight tools. Writes and the Claude connectors directory listing come later
@@ -187,7 +191,7 @@ and ideas the organization already holds. An authorization server is the large, 
 buying it keeps that out of Collega, and the per-call recheck keeps revocation in Collega's hands whatever
 Auth0 does with a refresh.
 
-**Open, not decided here** (listed in the spec): the Auth0 plan check and whether CIMD clients need the promoted connection; the refresh-claim behaviour; DNS and Vercel setup; UI comps; privacy and terms; audit retention; refresh-token lifetime.
+**Open, not decided here** (listed in the spec): the Auth0 plan check and how the two connections behave in one tenant; the refresh-claim behaviour; DNS and Vercel setup; UI comps; privacy and terms; audit retention; refresh-token lifetime.
 
 ## 2026-10-25 — A Sprints page shows every sprint in three columns (Upcoming, Ongoing, Completed)
 
