@@ -216,16 +216,6 @@ For **anyone without an account**. That includes an internal suggestion box for 
 
 **Open questions:** who owns a KR (one named user, or the board owner by default)? Schedule Status categories and Loop before Stage 3, or ship its prompt as a banner on the idea drawer? Do Read Only users see KR values?
 
-## Teams and private boards
-
-*Captured 2026-09-30. Not yet refined. Anticipated need, no customer pulling.*
-
-**How might we** let an org keep some boards visible only to the people who should see them, without making admins manage access one board and one person at a time?
-
-- **Lean direction: private boards before teams.** Add a board visibility setting of *Org* or *Private*, with a member list of users. A **Team** is then just a named group of users you can add to that list. Per-idea permissions are out.
-- **The cost is cross-cutting, not local.** Every read that lists or aggregates ideas has to filter by visibility: Home, search, mentions, member and assignee pickers, portal routing to a board, CSV import, audit views, and View As.
-- **Open:** do Org Admins always see private boards? Can a private board be the target of a public portal?
-
 ## Integration suite
 
 *Captured 2026-09-30. Not yet refined. A major post-MVP goal: Jira, Zapier, ServiceDesk, Footprints and similar.*
