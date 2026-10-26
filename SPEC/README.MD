@@ -33,6 +33,8 @@ Canonical product and delivery specifications. This file is the index; the numbe
 | `20-feature-ai-idea-assist-v2.md` | Idea assistant v2 — co-author beside the create form, structured idea fields (supersedes v1 once shipped) | Specified 2026-09-27; **phase 3** of comp R |
 | `20-feature-prompt-eval-runner.md` | Prompt-eval runner — measures the idea assistant over `tools/prompt-eval` (developer tool; gates v2) | Specified 2026-09-28; **Sprint 12** |
 | `20-feature-issues-and-delivery.md` | Idea → execution handoff | Post-MVP |
+| `20-feature-board-access-and-groups.md` | Restricted boards and user groups: board access by user or group | Specified 2026-10-26; **not built**; slices 348–356 |
+| `20-feature-mcp-server.md` | MCP server (read-only) with Auth0 as the authorization server | Specified 2026-10-26; **not built**; open points listed in the spec |
 | `20-feature-oauth.md` | OAuth/SSO | **Deferred** |
 | `20-feature-saml.md` | SAML | **Deferred** |
 | `20-feature-reporting.md` | Reporting | **Deferred** |

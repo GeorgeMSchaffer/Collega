@@ -28,6 +28,9 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-26 | A board can be Restricted to named users and groups | active | full below |
+| 2026-10-26 | An MCP server lets members' AI clients read their organization's data; Auth0 is the authorization server | active | full below |
+| 2026-10-25 | A Sprints page shows every sprint in three columns (Upcoming, Ongoing, Completed) | active | full below |
 | 2026-10-22 | Anyone who can edit a task may schedule it into a sprint | active | full below |
 | 2026-10-22 | Sprint 17 as built differs from comp W in a few places | active | full below |
 | 2026-10-22 | The legacy Sprint board lists only cards with a delivery status | active | full below |
@@ -148,6 +151,101 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-10-26 — A board can be Restricted to named users and groups
+
+> Spec: `SPEC/20-feature-board-access-and-groups.md`; contracts: `SPEC/contracts/groups.md` and
+> `contracts/boards.md` "Board access". Specified only; nothing is built. Promotes the ideas inbox's
+> "Teams and private boards", now deleted from the inbox.
+
+**Decided by the owner (2026-10-26), in an interview, one question at a time.**
+
+- **Opt-in private boards.** A board is *Organization* (every board today, and the default) or
+  *Restricted*; only a Restricted board's access list of users and groups decides who sees it.
+  Rejected: every board needing grants (a migration and per-board admin for every organization); grants
+  that only allow editing on boards everyone sees.
+- **Org Admins always see every board**, listed or not, so no board can be orphaned. The board's creator
+  also always sees it. A Site Admin in View As sees what the target sees.
+- **Groups are managed by Org Admins only** (Settings → Groups); every member can list them.
+- **An Org Admin or the board's creator sets a board's access**, the same rule as allowed idea types
+  (2026-10-22).
+- **A non-member sees nothing**: items on a board they cannot see are left out of every list, count, lane,
+  picker and notification, and a direct link answers `404`, not `403`. Rejected: a redacted placeholder
+  (it reveals existence and needs a second rendering on every surface).
+- **A grant decides visibility only.** What someone can do on the board is still their role. Rejected:
+  viewer/editor grants (every edit check would consult grants).
+- **Membership is read at request time**, so joining or leaving a group changes access to every board the
+  group is on without editing any board.
+- **The S0.2 schema freeze is amended for this**: `boards.visibility` and four tables (`user_groups`,
+  `user_group_members`, `board_access_users`, `board_access_groups`).
+
+**Why.** The owner asked for access by user or group, so a team change is one edit to a group, not one per
+board. Defaulting to *Organization* keeps every current response unchanged until someone restricts a board,
+which lets the cross-cutting filter land one surface at a time behind tests.
+
+**Open, not decided here** (listed in the spec): whether a Restricted board shows non-admins who has
+access; a public portal targeting a Restricted board, when a portal is specified.
+
+## 2026-10-26 — An MCP server lets members' AI clients read their organization's data; Auth0 is the authorization server
+
+> Spec: `SPEC/20-feature-mcp-server.md`; contracts: `SPEC/contracts/mcp.md`. Specified only; nothing is built.
+
+**Decided by the owner (2026-10-26), in an interview, one question at a time.** This is the explicit ask that
+`AGENTS.md` "Explicitly Deferred" requires for OAuth, for *MCP access only*; Entra ID sign-in
+(`20-feature-oauth.md`) stays deferred and is a separate thing.
+
+- **Auth0** is the authorization server (a new external service, approved), as a **custom database
+  connection**: Auth0 asks Collega to check the email and password, so Collega stays the only place a
+  password lives. Rejected: Auth0 owning passwords (two logins, and a Collega reset would not end the Auth0
+  session); Collega as an OIDC provider (rebuilds the authorization server Auth0 was chosen to avoid).
+- **One Auth0 tenant for every environment, with a database connection per environment.** The owner chose
+  this for cost, over the recommendation of two tenants. Auth0 tries only the first enabled database
+  connection unless `/authorize` names one, and third-party MCP clients cannot name one, so the production
+  connection is promoted to the domain level and is the only one real clients reach; the development
+  connection is enabled only on first-party Applications we register (MCP Inspector, our test client), never
+  promoted. Real third-party clients are tried in production against a test organization. Consequence: no
+  isolated place to try a real client; tenant-wide Auth0 settings are shared. B2C Professional ($240 a
+  month at 500 active users) is the plan, settled 2026-10-26 after Auth0's pricing page confirmed custom
+  database connections need Professional or Enterprise; the connection behaviour is to be confirmed with
+  Auth0 before the first backend slice, with two tenants as the fallback.
+- **A new `apps/mcp`**, its own Vercel project on `mcp.collega-ai.com`, HTTP-only like `apps/web`; the API stays
+  the only thing that talks to the database and the only validator of a token.
+- **Read-only in v1**, the core eight tools. Writes and the Claude connectors directory listing come later
+  and are not in this spec.
+- **Off by default per organization; an Org Admin turns it on.** Site Admins may connect, read-only, naming
+  one organization per call, and only in an organization whose switch is on.
+- **Client ID Metadata Documents only** for registration; Dynamic Client Registration stays off until a needed client requires it.
+- **Approved dependencies:** `mcp-handler`, `@modelcontextprotocol/sdk` (1.26 or later) and `jose`.
+- **Access ends within a call, not within a token's life:** 15-minute tokens, and the API rechecks the user,
+  the `SecurityStamp` claim, the organization switch and the connection on every call. An MCP token is
+  accepted only on nine marked read routes; every other route refuses it.
+- **60 calls a minute per user and 600 per organization**, `429` over; **audit** of connections and one event
+  per call, never with query text or content; **user-written text is escaped and labelled** in every result.
+
+**Why.** Peers (Linear, Atlassian) ship remote MCP servers, and members want their own AI to read the boards
+and ideas the organization already holds. An authorization server is the large, security-sensitive piece;
+buying it keeps that out of Collega, and the per-call recheck keeps revocation in Collega's hands whatever
+Auth0 does with a refresh.
+
+**Open, not decided here** (listed in the spec): the Auth0 plan check and how the two connections behave in one tenant; the refresh-claim behaviour; DNS and Vercel setup; UI comps; privacy and terms; audit retention; refresh-token lifetime.
+
+## 2026-10-25 — A Sprints page shows every sprint in three columns (Upcoming, Ongoing, Completed)
+
+> Comps: `SPEC/mockups/comp-x-all-sprints.html` (options A to D), `comp-x-sprint-columns-states.html` (every state of the chosen one). Not yet specified or built; the feature spec and slices come next.
+
+**Decided by the owner (2026-10-25): option D, three columns.** A new **Sprints** page under Delivery lists every sprint on the organization's work boards, grouped Upcoming (state `Planned`), Ongoing (`Active`) and Completed. There is no archived state; Completed is the end state. "Upcoming" and "Ongoing" are the page's wording only; the states and the API keep their names.
+
+- **Sorting.** Upcoming by start date, soonest first; Ongoing by end date, soonest first; Completed by end date, latest first.
+- **Overdue and Not started.** A sprint past its end date stays Ongoing with an Overdue chip until it is completed; an Upcoming one past its start date shows Not started. Neither state is derived from dates (`contracts/sprints.md`: Start and Complete are explicit). An Org Admin gets **Complete sprint** on the Overdue card and **Start sprint** on the Not started one; the Complete confirmation names the carry-over (unfinished tasks return to the board's Backlog, done ones stay). Everyone else sees the chip only. Both remain Org Admin only, unchanged.
+- **Several Ongoing sprints** are allowed, even on one board (no single-active constraint, `contracts/sprints.md`); the page lists them all.
+- **A Completed card opens its board's Sprints tab**, not a new summary page. Upcoming opens the sprint's planning page and Ongoing the Sprint board.
+- **Paging.** Completed shows the latest 3, then 10 more per "Show more"; the other two columns load whole.
+- **Roles.** Add New Sprint is Org Admin only and shown disabled with its reason for a User and Read Only; Plan reads View for them. A Site Admin acting directly sees "Sprints belong to an organization" (as on Tasks).
+- **Cards keep their state chip** even inside a column that repeats it, so a card reads the same in List and search views.
+
+**Why.** A board's Sprints tab lists that board's sprints in no order and the Sprint board shows one, so nothing showed what was coming or what had finished. Three columns answer "what is next, what is running, what is done" at a glance and read like the boards people already use.
+
+**Open, not decided here:** the List and Timeline views drawn in comp X (options B and C) are not part of this decision; whether the page also offers them is for the spec.
 
 ## 2026-10-22 — Anyone who can edit a task may schedule it into a sprint
 

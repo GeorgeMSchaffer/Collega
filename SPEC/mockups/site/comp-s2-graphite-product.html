@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega — Comp S2 · Graphite, product-led</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#111110; --panel:#191917; --panel2:#201f1c; --line:#2d2b27; --text:#efece5; --muted:#a39f94;
+  --accent:#f2a93b; --accent-ink:#1b1306; --ok:#5fbf8a; --blue:#6e8ff0; --violet:#a07be8; --rose:#e0707a;
+  --r:12px; --font:'Inter',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 var(--font);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.wrap{max-width:1160px;margin:0 auto;padding:0 20px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.mono{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+
+/* comp review bar */
+.review{background:#000;color:#cfcac0;font:12px/1.4 var(--mono);padding:8px 20px;display:flex;gap:14px;flex-wrap:wrap;justify-content:space-between}
+.review b{color:var(--accent)}
+
+/* nav */
+header.nav{position:sticky;top:0;z-index:30;background:rgba(17,17,16,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;gap:24px;height:64px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;text-decoration:none}
+.logo i{width:28px;height:28px;border-radius:7px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font:700 12px var(--font);font-style:normal}
+.nav nav{display:flex;gap:4px;margin-left:12px}
+.nav nav a{padding:10px 12px;color:var(--muted);text-decoration:none;border-radius:8px;font-size:14px}
+.nav nav a:hover{color:var(--text);background:var(--panel)}
+.nav .sp{flex:1}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:600 14px var(--font);text-decoration:none;cursor:pointer;transition:background .2s,border-color .2s}
+.btn:hover{background:var(--panel2);border-color:#43403a}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.pri:hover{background:#f7b955}
+.btn.ghost{background:none;border-color:transparent;color:var(--muted)}
+.menu{display:none}
+
+/* hero */
+.hero{padding-block:72px 40px;text-align:center}
+.pill{display:inline-flex;gap:10px;align-items:center;padding:6px 14px 6px 8px;border:1px solid var(--line);border-radius:99px;background:var(--panel);font-size:13px;color:var(--muted);text-decoration:none}
+.pill b{background:var(--accent);color:var(--accent-ink);border-radius:99px;padding:2px 9px;font-size:11px;letter-spacing:.06em}
+h1{font-size:clamp(38px,6vw,68px);line-height:1.04;letter-spacing:-.03em;margin:22px auto 18px;max-width:15ch;font-weight:700}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{max-width:60ch;margin:0 auto 28px;color:var(--muted);font-size:18px}
+.cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.fine{margin-top:14px;font-size:13px;color:var(--muted)}
+
+/* app frame */
+.frame{margin:48px auto 0;border:1px solid var(--line);border-radius:16px;background:var(--panel);box-shadow:0 40px 90px -30px #000,0 0 0 1px #000 inset;overflow:hidden;text-align:left}
+.frame .bar{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);background:#141413}
+.frame .bar span{width:10px;height:10px;border-radius:50%;background:#34312c}
+.frame .bar code{margin-left:14px;font:12px var(--mono);color:var(--muted);background:var(--bg);padding:4px 12px;border-radius:6px}
+.shot{display:grid;grid-template-columns:168px 1fr;min-height:380px}
+.side{border-right:1px solid var(--line);padding:14px 10px;font-size:13px;color:var(--muted);background:#141413}
+.side div{padding:8px 10px;border-radius:7px}
+.side .on{background:var(--panel2);color:var(--text)}
+.side .grp{font:11px var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:14px 10px 4px;color:#6f6b62}
+.lanes{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:16px;overflow:hidden}
+.lane{background:#151513;border:1px solid var(--line);border-radius:10px;padding:8px}
+.lane h4{margin:2px 4px 8px;font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;display:flex;justify-content:space-between}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 10px;margin-bottom:8px;font-size:12px;line-height:1.35}
+.card small{display:flex;gap:6px;align-items:center;margin-top:7px;color:var(--muted);font:11px var(--mono)}
+.tag{padding:1px 7px;border-radius:99px;font:500 10px var(--mono);border:1px solid}
+.t1{color:#5fbf8a;border-color:#2d5a45;background:#14231b}.t2{color:#e0b24a;border-color:#5b4a1e;background:#241d0d}.t3{color:#a07be8;border-color:#463a68;background:#1d1830}.t4{color:#e0707a;border-color:#5f2d32;background:#2a1315}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+
+/* sections */
+section{padding:84px 0}
+.eyebrow{color:var(--accent);font:500 12px var(--mono);letter-spacing:.12em;text-transform:uppercase}
+h2{font-size:clamp(28px,4vw,42px);line-height:1.1;letter-spacing:-.025em;margin:10px 0 14px;max-width:20ch}
+.sub{color:var(--muted);max-width:58ch;font-size:17px;margin:0}
+.head{margin-bottom:40px}
+
+/* feature tabs */
+.tabs{display:grid;grid-template-columns:320px 1fr;gap:28px;align-items:start}
+.tablist{display:flex;flex-direction:column;gap:8px}
+.tab{text-align:left;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:12px;padding:14px 16px;cursor:pointer;font:inherit;min-height:44px;transition:border-color .2s,background .2s}
+.tab strong{display:block;font-size:15px}
+.tab span{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+.tab[aria-selected=true]{border-color:var(--accent);background:var(--panel2)}
+.tab:hover{border-color:#4a463e}
+.panel{border:1px solid var(--line);border-radius:16px;background:var(--panel);min-height:360px;padding:22px;overflow:hidden}
+.panel[hidden]{display:none}
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);margin-bottom:8px;font-size:14px}
+.row .grow{flex:1}
+.bars{display:flex;height:6px;border-radius:99px;overflow:hidden;gap:2px;width:140px}
+.bars i{display:block}
+.chat{display:flex;flex-direction:column;gap:10px;font-size:14px}
+.bub{max-width:80%;padding:10px 14px;border-radius:14px;border:1px solid var(--line);background:var(--panel2)}
+.bub.me{align-self:flex-end;background:#2a2112;border-color:#5b4a1e}
+.formcard{border:1px dashed #4a463e;border-radius:12px;padding:14px;font-size:13px;color:var(--muted);display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.formcard b{display:block;color:var(--text);font-weight:500}
+
+/* bento */
+.bento{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+.b{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:24px;position:relative;overflow:hidden}
+.b h3{margin:0 0 6px;font-size:18px}.b p{margin:0;color:var(--muted);font-size:15px}
+.b.w2{grid-column:span 2}.b.w3{grid-column:span 3}.b.w4{grid-column:span 4}
+.ic{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);display:grid;place-items:center;margin-bottom:16px;color:var(--accent);background:var(--panel2)}
+.ic svg{width:20px;height:20px}
+.themes{display:flex;gap:8px;margin-top:18px}
+.themes i{width:34px;height:34px;border-radius:9px;border:1px solid var(--line)}
+.role{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.role span{font-size:12px;border:1px solid var(--line);padding:4px 10px;border-radius:99px;color:var(--muted)}
+
+/* flow */
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--panel)}
+.flow div{padding:26px;border-right:1px solid var(--line)}
+.flow div:last-child{border:0}
+.flow .n{font:500 12px var(--mono);color:var(--accent)}
+.flow h3{margin:8px 0 6px;font-size:17px}.flow p{margin:0;color:var(--muted);font-size:14px}
+
+/* beta */
+.beta{background:linear-gradient(180deg,#1a1610,#111110);border-block:1px solid var(--line)}
+.betagrid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+.perks{list-style:none;padding:0;margin:24px 0 0;display:grid;gap:12px}
+.perks li{display:flex;gap:12px;color:var(--muted);font-size:15px}
+.perks svg{flex:none;width:20px;height:20px;color:var(--accent);margin-top:2px}
+.card-form{border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:26px}
+.card-form h3{margin:0 0 4px;font-size:20px}.card-form .hint{margin:0 0 18px;color:var(--muted);font-size:14px}
+
+/* forms */
+.f{display:grid;gap:14px}
+.f.two{grid-template-columns:1fr 1fr}
+label{font-size:13px;font-weight:600;display:block;margin-bottom:6px}
+input,select,textarea{width:100%;min-height:44px;background:var(--bg);color:var(--text);border:1px solid #3a3731;border-radius:10px;padding:10px 12px;font:inherit;font-size:15px}
+textarea{min-height:110px;resize:vertical}
+input::placeholder,textarea::placeholder{color:#7b776d}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+[aria-invalid=true]{border-color:var(--rose)}
+.err{color:#f08a93;font-size:12.5px;min-height:0;margin-top:4px}
+.err:empty{display:none}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted)}
+.check input{width:20px;min-height:20px;margin-top:2px;accent-color:var(--accent)}
+.done{text-align:center;padding:30px 10px}
+.done .tick{width:48px;height:48px;border-radius:50%;background:#14231b;border:1px solid #2d5a45;color:var(--ok);display:grid;place-items:center;margin:0 auto 14px}
+.done h3{margin:0 0 6px}.done p{color:var(--muted);margin:0 0 16px}
+.dev{margin-top:14px;font:11.5px/1.5 var(--mono);color:#8a8579;border:1px dashed #3a3731;border-radius:8px;padding:8px 10px}
+.dev b{color:var(--accent)}
+
+/* dialogs */
+dialog{border:1px solid var(--line);border-radius:18px;background:var(--panel);color:var(--text);padding:0;width:min(560px,calc(100% - 24px));max-height:calc(100dvh - 24px);overflow:auto}
+dialog::backdrop{background:rgba(0,0,0,.7);backdrop-filter:blur(3px)}
+.dh{display:flex;justify-content:space-between;align-items:start;padding:24px 26px 0}
+.dh h3{margin:0;font-size:22px}.dh p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.x{background:none;border:1px solid var(--line);color:var(--muted);width:44px;height:44px;border-radius:10px;cursor:pointer;font-size:20px}
+.x:hover{color:var(--text)}
+.db{padding:20px 26px 26px}
+.steps{display:flex;gap:6px;margin-bottom:16px}
+.steps i{height:4px;flex:1;border-radius:9px;background:var(--line)}.steps i.on{background:var(--accent)}
+
+/* footer */
+footer{border-top:1px solid var(--line);padding:48px 0;color:var(--muted);font-size:14px}
+.fgrid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:30px}
+footer h4{color:var(--text);font-size:13px;margin:0 0 10px}
+footer a{display:block;text-decoration:none;padding:4px 0}footer a:hover{color:var(--text)}
+
+@media(max-width:900px){
+  .nav nav,.nav .hide-m{display:none}
+  .menu{display:inline-flex}
+  .tabs,.betagrid{grid-template-columns:1fr}
+  .tablist{flex-direction:row;overflow-x:auto;padding-bottom:4px}
+  .tab{min-width:200px}
+  .bento{grid-template-columns:1fr}.b.w2,.b.w3,.b.w4{grid-column:auto}
+  .flow{grid-template-columns:1fr 1fr}.flow div{border-bottom:1px solid var(--line)}
+  .shot{grid-template-columns:1fr}.side{display:none}
+  .lanes{grid-template-columns:1fr 1fr}.lane:nth-child(n+3){display:none}
+  .fgrid{grid-template-columns:1fr 1fr}
+  .f.two{grid-template-columns:1fr}
+  section{padding:60px 0}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<div class="review"><span><b>COMP S2</b> · Graphite, product-led — dark, mirrors the app's own look; the product is the hero. Sign up and Contact open as dialogs; Beta is an inline section.</span><span>Throwaway comp · forms do not submit anywhere</span></div>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="logo" href="#top"><i>CG</i> Collega</a>
+    <nav aria-label="Primary">
+      <a href="#features">Product</a><a href="#flow">How it works</a><a href="#roles">Teams</a><a href="#beta">Beta</a>
+    </nav>
+    <span class="sp"></span>
+    <a class="btn ghost hide-m" href="https://app.collega-ai.com/login">Sign in</a>
+    <button class="btn hide-m" data-open="contact">Contact us</button>
+    <button class="btn pri" data-open="signup">Create workspace</button>
+  </div>
+</header>
+
+<main id="top">
+<div class="wrap hero">
+  <a class="pill" href="#beta"><b>BETA</b> Collega is open for early teams — join the beta →</a>
+  <h1>Every good idea, <em>from first spark to shipped.</em></h1>
+  <p class="lede">Collega gives your organization one place to capture process ideas, rank them on boards that speak your language, and carry the approved ones straight into delivery.</p>
+  <div class="cta">
+    <button class="btn pri" data-open="signup">Create your workspace</button>
+    <a class="btn" href="#beta">Join the beta</a>
+  </div>
+  <p class="fine">Already have a workspace? <a href="https://app.collega-ai.com/login">Sign in at app.collega-ai.com</a></p>
+
+  <div class="frame" role="img" aria-label="Illustration of a Collega board with five status lanes and idea cards">
+    <div class="bar"><span></span><span></span><span></span><code>app.collega-ai.com/boards/opportunities</code></div>
+    <div class="shot">
+      <div class="side">
+        <div class="grp">Workspace</div><div>Home</div><div>Inbox</div><div class="on">Boards</div><div>Ideas</div><div>Tasks</div>
+        <div class="grp">Delivery</div><div>Sprint board</div><div>Backlog</div><div>Roadmap</div>
+      </div>
+      <div class="lanes">
+        <div class="lane"><h4>New / Pending <span>3</span></h4>
+          <div class="card">Reduce manual handoffs<small><span class="dot" style="background:#8a8579"></span>Low · OPP0-1</small></div>
+          <div class="card">Add proactive alerts<small><span class="tag t2">diagnostics</span> OPP0-2</small></div>
+          <div class="card">Standardize the intake checklist<small><span class="dot" style="background:#e0b24a"></span>High</small></div></div>
+        <div class="lane"><h4>In Review <span>2</span></h4>
+          <div class="card">Pilot a faster review path<small><span class="dot" style="background:#e0707a"></span>Critical · OPP0-4</small></div>
+          <div class="card">Improve exception visibility<small><span class="tag t4">service</span> OPP0-5</small></div></div>
+        <div class="lane"><h4>In Progress <span>2</span></h4>
+          <div class="card">Automate weekly reporting<small><span class="tag t1">customer-impact</span></small></div>
+          <div class="card">Create a shared playbook<small><span class="dot" style="background:#e0b24a"></span>High · OPP0-7</small></div></div>
+        <div class="lane"><h4>Complete <span>3</span></h4>
+          <div class="card">Roll out the proven workflow<small><span class="tag t3">rollout</span> OPP0-9</small></div>
+          <div class="card">Measure time saved<small>OPP0-10</small></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section id="features">
+  <div class="wrap">
+    <div class="head"><div class="eyebrow">The product</div><h2>One workspace. Four things that matter.</h2><p class="sub">Pick a capability to see how it looks inside Collega.</p></div>
+    <div class="tabs">
+      <div class="tablist" role="tablist" aria-label="Features">
+        <button class="tab" role="tab" id="t1" aria-selected="true" aria-controls="p1"><strong>Boards that fit your process</strong><span>Your statuses, swimlanes and idea types</span></button>
+        <button class="tab" role="tab" id="t2" aria-selected="false" aria-controls="p2" tabindex="-1"><strong>AI idea assist</strong><span>Describe a problem, get a ready-to-edit idea</span></button>
+        <button class="tab" role="tab" id="t3" aria-selected="false" aria-controls="p3" tabindex="-1"><strong>Ideas to delivery</strong><span>Sprints, backlog and tasks — same item</span></button>
+        <button class="tab" role="tab" id="t4" aria-selected="false" aria-controls="p4" tabindex="-1"><strong>Collaboration</strong><span>Comments, @mentions, upvotes, following</span></button>
+      </div>
+      <div>
+        <div class="panel" role="tabpanel" id="p1" aria-labelledby="t1">
+          <div class="mono" style="margin-bottom:14px">Boards · 5 active</div>
+          <div class="row"><div class="grow"><strong>Opportunities</strong><div style="color:var(--muted);font-size:13px">Field service: faster diagnosis, the right parts on the van</div></div><div class="bars" aria-hidden="true"><i style="flex:3;background:#6b6860"></i><i style="flex:2;background:#e0a14a"></i><i style="flex:5;background:#6e8ff0"></i><i style="flex:3;background:#5fbf8a"></i></div></div>
+          <div class="row"><div class="grow"><strong>Continuous Improvement 2026</strong><div style="color:var(--muted);font-size:13px">CI board for 2026 projects</div></div><div class="bars" aria-hidden="true"><i style="flex:5;background:#6b6860"></i><i style="flex:2;background:#6e8ff0"></i></div></div>
+          <div class="row"><div class="grow"><strong>Collega MVP</strong><div style="color:var(--muted);font-size:13px">Tracking board to manage the project</div></div><div class="bars" aria-hidden="true"><i style="flex:2;background:#6b6860"></i><i style="flex:1;background:#a07be8"></i><i style="flex:3;background:#5fbf8a"></i></div></div>
+          <p style="color:var(--muted);font-size:14px;margin:16px 0 0">Define statuses, idea types, business impact and custom fields once. Every board speaks the same vocabulary.</p>
+        </div>
+        <div class="panel" role="tabpanel" id="p2" aria-labelledby="t2" hidden>
+          <div class="chat">
+            <div class="bub me">Our field techs keep arriving without the right parts.</div>
+            <div class="bub">How often does it happen, and what does a return trip cost you?</div>
+            <div class="bub me">Maybe one job in five. Mostly a second visit.</div>
+          </div>
+          <div class="formcard" style="margin-top:18px"><div><span class="mono">Title</span><b>Stock the van for the top 20 repairs</b></div><div><span class="mono">Type</span><b>Process improvement</b></div><div><span class="mono">Impact</span><b>Customer</b></div><div><span class="mono">Priority</span><b>High</b></div></div>
+          <p style="color:var(--muted);font-size:14px;margin:14px 0 0">It classifies against your organization's real options, and you review before submitting. It never saves on its own.</p>
+        </div>
+        <div class="panel" role="tabpanel" id="p3" aria-labelledby="t3" hidden>
+          <div class="mono" style="margin-bottom:14px">Sprint board</div>
+          <div class="lanes" style="padding:0;grid-template-columns:repeat(4,1fr)">
+            <div class="lane"><h4>Pending</h4><div class="card">Stock the van<small>OPP0-12</small></div></div>
+            <div class="lane"><h4>Scoping</h4><div class="card">Parts list<small>OPP0-12 · task</small></div></div>
+            <div class="lane"><h4>Development</h4></div>
+            <div class="lane"><h4>Complete</h4><div class="card">Pilot route<small>OPP0-9</small></div></div>
+          </div>
+          <p style="color:var(--muted);font-size:14px;margin:14px 0 0">An approved idea becomes an issue — the same item, so "why are we building this?" is one click away.</p>
+        </div>
+        <div class="panel" role="tabpanel" id="p4" aria-labelledby="t4" hidden>
+          <div class="row"><span class="tag t3">@mention</span><div class="grow">Olivia, can you confirm the parts list? <span style="color:var(--muted)">· 2h ago</span></div></div>
+          <div class="row"><span class="tag t2">following</span><div class="grow">You'll get an in-app notification when this idea moves.</div></div>
+          <div class="row"><span class="tag t1">▲ 12</span><div class="grow">Upvotes show where the organization's attention is.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="flow" style="padding-top:0">
+  <div class="wrap">
+    <div class="head"><div class="eyebrow">How it works</div><h2>From a hallway comment to a shipped change.</h2></div>
+    <div class="flow">
+      <div><span class="n">01</span><h3>Capture</h3><p>Anyone raises an idea — typed, or talked through with the assistant.</p></div>
+      <div><span class="n">02</span><h3>Sort</h3><p>Ideas land on a board and move through your statuses.</p></div>
+      <div><span class="n">03</span><h3>Decide</h3><p>Comments and upvotes surface what's worth doing.</p></div>
+      <div><span class="n">04</span><h3>Deliver</h3><p>Promote to an issue, plan the sprint, track tasks.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="roles" style="padding-top:0">
+  <div class="wrap">
+    <div class="head"><div class="eyebrow">Built for teams</div><h2>Safe by structure, flexible by design.</h2></div>
+    <div class="bento">
+      <div class="b w3"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.5 3.4 7.6 8 9 4.6-1.4 8-4.5 8-9V6l-8-3Z"/></svg></div><h3>Every organization is a hard boundary</h3><p>Your data is scoped to your organization. Roles keep administration, contribution and read-only access separate.</p><div class="role"><span>Org Admin</span><span>User</span><span>Read Only</span></div></div>
+      <div class="b w3"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg></div><h3>Your words, your fields</h3><p>Custom statuses, idea types and fields, so the board reads like your process — not a template.</p></div>
+      <div class="b w2"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 3v9l6 3"/></svg></div><h3>Five themes</h3><p>Graphite, Terrazzo and more. Remembered per browser.</p><div class="themes"><i style="background:#191917"></i><i style="background:#e9e3d6"></i><i style="background:#dde6f1"></i><i style="background:#d9efe9"></i><i style="background:#e4e8f6"></i></div></div>
+      <div class="b w2"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h6"/></svg></div><h3>Bulk import</h3><p>Bring your team in by CSV, or share an invite code.</p></div>
+      <div class="b w2"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/></svg></div><h3>Stay in the loop</h3><p>Follow an idea; hear in your inbox when it moves.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="beta" class="beta">
+  <div class="wrap betagrid">
+    <div>
+      <div class="eyebrow">Beta</div>
+      <h2>Help shape Collega.</h2>
+      <p class="sub">We're onboarding a small number of teams while we finish the roadmap and outcomes views. Early teams talk to the people building it.</p>
+      <ul class="perks">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-11"/></svg>Direct line to the team — your feedback becomes the next sprint.</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-11"/></svg>Your workspace, set up with you, on a fresh organization.</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-11"/></svg>Beta terms and pricing: <em>[to be decided]</em></li>
+      </ul>
+    </div>
+    <div class="card-form">
+      <h3>Request beta access</h3><p class="hint">We'll reply within a few days to set up your workspace.</p>
+      <form data-form class="f" aria-label="Beta signup">
+        <div><label for="b-email">Work email</label><input id="b-email" name="email" type="email" required autocomplete="email" placeholder="you@company.com" data-msg="Enter a valid work email."><div class="err" data-err="email"></div></div>
+        <div class="f two">
+          <div><label for="b-org">Organization</label><input id="b-org" name="org" required autocomplete="organization" placeholder="Acme Robotics"><div class="err" data-err="org"></div></div>
+          <div><label for="b-size">Team size</label><select id="b-size" name="size"><option>1–10</option><option>11–50</option><option>51–200</option><option>200+</option></select></div>
+        </div>
+        <div><label for="b-use">What would you use it for? <span style="color:var(--muted);font-weight:400">(optional)</span></label><textarea id="b-use" name="use" placeholder="Continuous improvement, field-service ideas…"></textarea></div>
+        <label class="check"><input type="checkbox" name="ok" required data-msg="Please agree so we can contact you."> I agree to be contacted about the beta.</label><div class="err" data-err="ok"></div>
+        <button class="btn pri" type="submit">Request access</button>
+      </form>
+      <div class="done" hidden><div class="tick" aria-hidden="true">✓</div><h3>You're on the list</h3><p>Thanks — we'll be in touch about your workspace.</p><button class="btn" data-reset type="button">Add another</button></div>
+      <div class="dev"><b>Spec later:</b> beta requests need a store, an owner notification and a path to provisioning an organization. See SPEC/ideas-inbox.md.</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap" style="text-align:center">
+    <h2 style="margin-inline:auto">Ready to give ideas a home?</h2>
+    <p class="sub" style="margin:0 auto 26px">Create a workspace in a couple of minutes, or talk to us first.</p>
+    <div class="cta"><button class="btn pri" data-open="signup">Create your workspace</button><button class="btn" data-open="contact">Contact us</button></div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap fgrid">
+    <div><a class="logo" href="#top" style="padding:0"><i>CG</i> Collega</a><p style="max-width:34ch">Idea management and delivery tracking for teams who improve how they work.</p></div>
+    <div><h4>Product</h4><a href="#features">Features</a><a href="#flow">How it works</a><a href="#beta">Beta</a></div>
+    <div><h4>Company</h4><a href="#" data-open="contact">Contact</a><a href="#">Privacy</a><a href="#">Terms</a></div>
+    <div><h4>Account</h4><a href="https://app.collega-ai.com/login">Sign in</a><a href="#" data-open="signup">Create workspace</a></div>
+  </div>
+</footer>
+
+<!-- Sign up dialog: two steps -->
+<dialog id="signup" aria-labelledby="su-h">
+  <div class="dh"><div><h3 id="su-h">Create your workspace</h3><p>Two quick steps. You become the Org Admin.</p></div><button class="x" data-close aria-label="Close">×</button></div>
+  <div class="db">
+    <div class="steps" aria-hidden="true"><i class="on" id="s1"></i><i id="s2"></i></div>
+    <form data-form class="f" id="su-form" aria-label="Create workspace">
+      <div id="su-a" class="f">
+        <div><label for="su-org">Organization name</label><input id="su-org" name="org" required autocomplete="organization" placeholder="Acme Robotics"><div class="err" data-err="org"></div></div>
+        <div><label for="su-size">Team size</label><select id="su-size" name="size"><option>1–10</option><option>11–50</option><option>51–200</option><option>200+</option></select></div>
+        <button class="btn pri" type="button" id="su-next">Continue</button>
+      </div>
+      <div id="su-b" class="f" hidden>
+        <div class="f two">
+          <div><label for="su-first">First name</label><input id="su-first" name="first" required autocomplete="given-name"><div class="err" data-err="first"></div></div>
+          <div><label for="su-last">Last name</label><input id="su-last" name="last" required autocomplete="family-name"><div class="err" data-err="last"></div></div>
+        </div>
+        <div><label for="su-email">Work email</label><input id="su-email" name="email" type="email" required autocomplete="email" data-msg="Enter a valid work email."><div class="err" data-err="email"></div></div>
+        <div><label for="su-pw">Password</label><input id="su-pw" name="pw" type="password" required minlength="8" autocomplete="new-password" data-msg="Use at least 8 characters, with upper, lower, a number and a symbol."><div class="err" data-err="pw"></div></div>
+        <label class="check"><input type="checkbox" name="terms" required data-msg="Accept the terms to continue."> I agree to the Terms and Privacy Policy.</label><div class="err" data-err="terms"></div>
+        <div style="display:flex;gap:10px"><button class="btn" type="button" id="su-back">Back</button><button class="btn pri" type="submit" style="flex:1">Create workspace</button></div>
+      </div>
+    </form>
+    <div class="done" hidden><div class="tick" aria-hidden="true">✓</div><h3>Check your email</h3><p>We sent a confirmation link. Confirm it and you'll land in your new workspace at app.collega-ai.com.</p><button class="btn" data-close type="button">Close</button></div>
+    <div class="dev"><b>Spec later:</b> this replaces the seeded-admin / invite-code start. It creates an organization and its first Org Admin from the public site; it changes the initial user setup flow (SPEC/20-feature-auth.md, 20-feature-organizations-and-users.md).</div>
+  </div>
+</dialog>
+
+<!-- Contact dialog -->
+<dialog id="contact" aria-labelledby="ct-h">
+  <div class="dh"><div><h3 id="ct-h">Contact us</h3><p>Questions, demos, or a hand getting started.</p></div><button class="x" data-close aria-label="Close">×</button></div>
+  <div class="db">
+    <form data-form class="f" aria-label="Contact us">
+      <div class="f two">
+        <div><label for="ct-name">Name</label><input id="ct-name" name="name" required autocomplete="name"><div class="err" data-err="name"></div></div>
+        <div><label for="ct-email">Email</label><input id="ct-email" name="email" type="email" required autocomplete="email" data-msg="Enter a valid email."><div class="err" data-err="email"></div></div>
+      </div>
+      <div><label for="ct-topic">Topic</label><select id="ct-topic" name="topic"><option>Product question</option><option>Request a demo</option><option>Beta program</option><option>Support</option><option>Something else</option></select></div>
+      <div><label for="ct-msg">Message</label><textarea id="ct-msg" name="msg" required data-msg="Tell us a little about what you need."></textarea><div class="err" data-err="msg"></div></div>
+      <button class="btn pri" type="submit">Send message</button>
+    </form>
+    <div class="done" hidden><div class="tick" aria-hidden="true">✓</div><h3>Message sent</h3><p>Thanks — we'll reply by email.</p><button class="btn" data-close type="button">Close</button></div>
+    <div class="dev"><b>Spec later:</b> contact submissions need delivery to a shared inbox, spam protection and a stored record.</div>
+  </div>
+</dialog>
+
+<script>
+/* Shared by the three marketing-site comps (S1–S3). Throwaway: validates, then shows the success
+   state. Nothing is sent anywhere — the backend is unspecified (see SPEC/ideas-inbox.md). */
+document.querySelectorAll('form[data-form]').forEach((form) => {
+  form.noValidate = true
+  form.addEventListener('submit', (e) => {
+    e.preventDefault()
+    let first = null
+    form.querySelectorAll('[required]').forEach((field) => {
+      const bad = !field.checkValidity()
+      field.setAttribute('aria-invalid', String(bad))
+      const slot = form.querySelector(`[data-err="${field.name}"]`)
+      if (slot) slot.textContent = bad ? field.dataset.msg || 'This field is required.' : ''
+      if (bad && !first) first = field
+    })
+    if (first) return first.focus()
+    const done = form.parentElement.querySelector('.done')
+    form.hidden = true
+    if (done) {
+      done.hidden = false
+      done.setAttribute('tabindex', '-1')
+      done.focus()
+    }
+  })
+  form.addEventListener('input', (e) => {
+    if (e.target.getAttribute('aria-invalid') === 'true' && e.target.checkValidity()) {
+      e.target.setAttribute('aria-invalid', 'false')
+      const slot = form.querySelector(`[data-err="${e.target.name}"]`)
+      if (slot) slot.textContent = ''
+    }
+  })
+})
+document.querySelectorAll('[data-reset]').forEach((btn) =>
+  btn.addEventListener('click', () => {
+    const box = btn.closest('.done')
+    const form = box.parentElement.querySelector('form')
+    form.reset()
+    box.hidden = true
+    form.hidden = false
+  }),
+)
+</script>
+<script>
+// tabs
+const tabs=[...document.querySelectorAll('.tab')];
+function pick(t){tabs.forEach(x=>{const on=x===t;x.setAttribute('aria-selected',on);x.tabIndex=on?0:-1;document.getElementById(x.getAttribute('aria-controls')).hidden=!on});t.focus()}
+tabs.forEach((t,i)=>{t.addEventListener('click',()=>pick(t));t.addEventListener('keydown',e=>{const k={ArrowDown:1,ArrowRight:1,ArrowUp:-1,ArrowLeft:-1}[e.key];if(k){e.preventDefault();pick(tabs[(i+k+tabs.length)%tabs.length])}})});
+// dialogs
+document.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();document.getElementById(b.dataset.open).showModal()}));
+document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>b.closest('dialog').close()));
+document.querySelectorAll('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d)d.close()}));
+// sign-up steps
+const a=document.getElementById('su-a'),b=document.getElementById('su-b');
+document.getElementById('su-next').addEventListener('click',()=>{const o=document.getElementById('su-org');if(!o.checkValidity()){o.setAttribute('aria-invalid','true');a.querySelector('[data-err=org]').textContent='Enter your organization name.';o.focus();return}a.hidden=true;b.hidden=false;document.getElementById('s2').classList.add('on');document.getElementById('su-first').focus()});
+document.getElementById('su-back').addEventListener('click',()=>{b.hidden=true;a.hidden=false;document.getElementById('s2').classList.remove('on')});
+</script>
+</body>
+</html>
