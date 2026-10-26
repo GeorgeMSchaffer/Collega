@@ -129,8 +129,8 @@ asks the API for everything. The API stays the only thing that talks to the data
 
 17. Audited, never with query text, arguments or returned content: `McpEnabled`, `McpDisabled`,
     `McpConnectionCreated`, `McpConnectionRevoked` (by self or by admin, with who), and **one `McpToolCalled`
-    per call** carrying actor, organization, tool name, result count and whether it was refused. Per-call rows
-    are the retention question in Open 7.
+    per call** carrying actor, organization, tool name, result count and whether it was refused. Every row is
+    kept; v1 has no purge job (Open 7).
 
 ### Untrusted content
 
@@ -196,7 +196,10 @@ are Auth0's hosted pages, so Collega's wording there is Auth0 branding, not Reac
 6. **The eight tools,** with wrapping, paging and size caps.
 7. **QA** for 2, 3, 5 and 6: hermetic, Auth0 replaced by a local JWKS fixture, no network.
 8. **Comp, then UI** for the three surfaces, then **UI QA**.
-9. **Smoke:** a manual pass with MCP Inspector and at least two real clients (not part of `pnpm check`).
+9. **Privacy and terms pages:** public pages (comp first) stating that Auth0 processes member emails and
+   sign-in metadata, with a subprocessor list; the wording is reviewed by the owner's counsel. The slice
+   lands before smoke, and MCP is not enabled for a customer without it.
+10. **Smoke:** a manual pass with MCP Inspector and at least two real clients (not part of `pnpm check`).
 
 ## Acceptance criteria
 
@@ -224,25 +227,43 @@ database connection per environment), the three new dependencies (`mcp-handler`,
 `@modelcontextprotocol/sdk` 1.26 or later, `jose`), Site Admin reads needing the switch on, and CIMD-only
 registration.
 
-1. **Auth0 plan and cost.** Budgeted as Professional (about $240 a month for B2C) for the one tenant. Before
-   the first backend slice, confirm on Auth0's own pricing page or with sales that the plan includes custom
-   at least two database connections, and the per-member price. Third-party guides disagree on several
-   figures.
-2. **How the two connections behave in one tenant.** Confirm with Auth0: that a CIMD-registered client is
-   third-party and so uses only the promoted production connection; that a first-party Application with one
-   enabled connection never offers the promoted one; and that a pre-registered first-party client works with
-   MCP Inspector. Auth0's own article on multiple database connections covers only the `connection`
-   parameter, which third-party clients cannot send. If any of this fails, fall back to two tenants.
-3. **Refresh and the stamp claim.** Confirm whether the post-login Action runs on a refresh exchange. The
-   design does not depend on it (rule 12), but a refreshed token would carry a stale stamp and force a
-   re-authorization.
-4. **DNS and Vercel.** `mcp.collega-ai.com` needs a DNS record and a custom domain on the new project;
-   `api.collega-ai.com` never resolved (`50-vercel-deployment.md`), so check the zone first.
-5. **UI comps** for the three surfaces.
-6. **Privacy and terms.** Auth0 becomes a processor of member emails and sign-in metadata; the privacy
-   policy and subprocessor list need updating before launch.
-7. **Retention of `McpToolCalled` rows.**
-8. **Refresh-token lifetime** (idle and absolute) in Auth0. Proposed: 30 days idle, 90 days absolute.
+1. **Auth0 plan and cost.** Settled 2026-10-26: B2C Professional, $240 a month at 500 monthly active users
+   (yearly billing is 11 times the monthly price), for the one tenant. Auth0's pricing page confirms custom
+   database connections exist only on Professional and Enterprise, so no free dev tenant is possible. B2B
+   Professional ($800) is not needed: no Organizations or customer SSO. Still open: the price above 500
+   active users, and a written answer from Auth0 that one tenant may hold two custom database connections
+   (no published cap was found; this folds into Open 2).
+2. **How the two connections behave in one tenant.** Confirmed in Auth0's docs 2026-10-26: a
+   CIMD-registered client must be third-party, and third-party clients use only domain-level (promoted)
+   connections, so they never reach the dev connection. Not documented, so it gates the first backend slice:
+   that a first-party Application with one enabled connection never offers the promoted one, that a
+   pre-registered first-party client works with MCP Inspector, and which database connection Auth0 picks when
+   a tenant has several. Test it on a free Auth0 tenant with two plain database connections, one promoted
+   and one enabled only on a first-party Application (enablement works the same as with custom databases).
+   Auth0's own article on multiple database connections covers only the `connection` parameter, which
+   third-party clients cannot send. If the test fails, fall back to two tenants.
+3. **Refresh and the stamp claim.** Auth0's docs say the post-login Action runs on a refresh-token exchange
+   and that custom claims usually carry over; community reports conflict on `event.refresh_token` and
+   requested scopes during refresh. The design does not depend on it (rule 12), but a refreshed token would
+   carry a stale stamp and force a re-authorization. Check it in the same free-tenant test.
+4. **DNS and Vercel.** Checked 2026-10-26: `collega-ai.com` uses Cloudflare nameservers and is not in
+   Vercel's domain list; `mcp.` and `api.collega-ai.com` do not resolve; the Vercel team has `collega` and
+   `collega-api` and no MCP project. Plan, done at slice 5 and not before: create the `collega-mcp` project,
+   add `mcp.collega-ai.com` as its custom domain, then add the CNAME Vercel gives for it in Cloudflare, set
+   to DNS-only (a Cloudflare proxy in front of Vercel breaks certificate issuance). `api.collega-ai.com`
+   stays out of scope: `COLLEGA_API_URL` keeps using the `*.vercel.app` URL.
+5. **UI comps** for the three surfaces: drawn 2026-10-26 in `SPEC/mockups/comp-r-mcp-connections.html` (Org
+   Admin switch and member list, member's own connected apps, help panel), approved by the owner as
+   drawn, 2026-10-26. It is the reference rendering for the UI slice.
+6. **Privacy and terms.** Settled 2026-10-26: build slice 9. No privacy, terms or subprocessor page exists in
+   the repo or the web app today, so this creates them rather than updating them. Auth0 becomes a processor
+   of member emails and sign-in metadata; counsel reviews the wording.
+7. **Retention of `McpToolCalled` rows.** Settled 2026-10-26: keep every row and add no purge job in v1,
+   matching the notification precedent (older rows are kept, not shown). Rows carry no content. Revisit
+   when the table's size is a measured problem; a purge would be a separate, scheduled change.
+8. **Refresh-token lifetime.** Settled 2026-10-26: 30 days idle, 90 days absolute, rotation on, set per
+   Application in Auth0. Revocation does not depend on it (per-call recheck), so this only sets how often a
+   member re-authorizes.
 
 ## Answered 2026-10-26
 
