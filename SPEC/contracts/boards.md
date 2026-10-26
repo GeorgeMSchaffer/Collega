@@ -168,6 +168,29 @@ Update board name or selected statuses.
   - `POST /api/v1/boards/{boardId}/ideas/import`: a row of a disallowed type is refused with the importer's per-row error, `This board doesn't take '{type name}' ideas.`; the other rows import.
   - Auto-created tasks are never checked, so a hand-off into an `autoCreateTask` lane is never refused for its type.
 
+### Board access (proposed 2026-10-26, slice 348)
+
+`SPEC/20-feature-board-access-and-groups.md` BAG-2 to BAG-4; `SPEC/decisions.md` 2026-10-26 "A board can be Restricted to named users and groups". Not built. Groups: [`contracts/groups.md`](groups.md).
+
+- **Who can see a board.** An Org Admin of its organization; a Site Admin acting directly; anyone when its `visibility` is `Organization`; and, when it is `Restricted`, its creator and every user on its access list directly or through a group. Membership is read on each request. A Site Admin in View As sees what the target sees. This one rule governs every route in every contract file: for a caller who cannot see a board, the board and every item on it (idea, Issue, task) answer as if they did not exist.
+- **Reads.**
+  - `GET …/boards` lists only boards the caller can see; each item gains `visibility` (`Organization` or `Restricted`).
+  - `GET /api/v1/boards/{boardId}` gains `visibility`; `accessUserIds` and `accessGroupIds` (arrays, stored even while `Organization`, `[]` when none); and `canManageAccess` — true for an Org Admin, or for the board's creator while an active User or Org Admin; false otherwise and on an archived board.
+- **Create.** `POST …/boards` accepts optional `visibility` (default `Organization`), `accessUserIds` and `accessGroupIds` (default `[]`), checked as below. Any caller who may create a board may set them, since they become its creator.
+- **`PUT /api/v1/boards/{boardId}/access`**
+  - **Roles:** an Org Admin of the board's organization, or the board's creator while an active User or Org Admin there; a Site Admin through View As, acting as the target. Anyone else who can see the board `403`; Read Only `403`.
+  - **Request:** `{ "visibility": "Organization" | "Restricted", "userIds": [ … ], "groupIds": [ … ] }` — replaces the whole setting.
+  - **Response:** `200` with the board detail shape.
+  - **Errors:** `404` for a board the caller cannot see; `409` for an archived board; `400` keyed `visibility` (`Visibility must be Organization or Restricted.`); `400` keyed `userIds` / `groupIds`, title `One or more fields are invalid.`: not an array of GUIDs (`User ids must be an array of ids.` / `Group ids must be an array of ids.`), the same id twice (`A user can be named only once.` / `A group can be named only once.`), an id not of the board's organization (`User '{id}' was not found.` / `Group '{id}' was not found.`).
+  - **Rules:** a Restricted board with both lists empty is accepted (only Org Admins and the creator see it). Switching to `Organization` keeps the lists, which then grant nothing. Ideas are not touched. Audited as `BoardAccessChanged`, metadata `{ fromVisibility, toVisibility, addedUserIds, removedUserIds, addedGroupIds, removedGroupIds }`; no event when nothing changed. No notification.
+- **Where the rule applies to a caller who cannot see board B** (BAG-4):
+  - Every route addressing B, or an item on B, by id — read or write: `404`, never `403`. That includes comments, upvotes, following, fields, metrics, dependencies, issue tasks, delivery, status and board moves, and `ideas/{ideaId}/board-tasks`.
+  - Every list, search, count and total leaves B's items out: the Ideas list, Home, the notification inbox and unread count, the Backlog, `/tasks`, sprints and sprint planning, the Roadmap and Outcome totals, `pull-candidates`, `ideas/export`, and `GET …/boards`' counts.
+  - A Board References lane referencing B shows none of B's cards, and its counts leave them out. Setting `referencesBoardId` to B is `400` keyed `referencesBoardId`, worded as for an unknown board.
+  - Moving an idea to B, pulling into or from B, and naming B in a CSV import row are refused as for an unknown board.
+  - For an idea on a Restricted board, `mention-candidates` and the assignee picker list only users who can see that board; naming any other user is `400` keyed `mentionEmails` / `assigneeIds` (`'{name}' can't see this board.`).
+  - Notification events about B's items are kept but not listed or counted for a user who cannot see B at read time.
+
 ### `GET /api/v1/organizations/{organizationId}/boards/pull-candidates`
 The pull picker's read (added 2026-10-13, slice 180). One tab per `source`; each is searchable by title and filterable by tag and author, within the caller's organization. The organization idea list cannot carry it: it has no "not on board X" and no way to list Issues with no sprint, so this is a dedicated read as `20-feature-board-pull-in.md` allowed.
 

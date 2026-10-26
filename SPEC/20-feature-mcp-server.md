@@ -63,6 +63,8 @@ asks the API for everything. The API stays the only thing that talks to the data
    or future, refuses it. The default is closed.
 5. An MCP caller sees exactly what the same user sees in the web app: the tools call the same use cases, so
    organization, role and board rules apply unchanged. The role is read live, never taken from the token.
+   That includes Restricted boards (`20-feature-board-access-and-groups.md` BAG-4, proposed 2026-10-26):
+   an item on a board the user cannot see is absent from every tool result.
 
 ### Identity (Auth0)
 

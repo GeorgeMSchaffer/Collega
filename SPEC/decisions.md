@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-26 | A board can be Restricted to named users and groups | active | full below |
 | 2026-10-26 | An MCP server lets members' AI clients read their organization's data; Auth0 is the authorization server | active | full below |
 | 2026-10-25 | A Sprints page shows every sprint in three columns (Upcoming, Ongoing, Completed) | active | full below |
 | 2026-10-22 | Anyone who can edit a task may schedule it into a sprint | active | full below |
@@ -150,6 +151,40 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-10-26 — A board can be Restricted to named users and groups
+
+> Spec: `SPEC/20-feature-board-access-and-groups.md`; contracts: `SPEC/contracts/groups.md` and
+> `contracts/boards.md` "Board access". Specified only; nothing is built. Promotes the ideas inbox's
+> "Teams and private boards", now deleted from the inbox.
+
+**Decided by the owner (2026-10-26), in an interview, one question at a time.**
+
+- **Opt-in private boards.** A board is *Organization* (every board today, and the default) or
+  *Restricted*; only a Restricted board's access list of users and groups decides who sees it.
+  Rejected: every board needing grants (a migration and per-board admin for every organization); grants
+  that only allow editing on boards everyone sees.
+- **Org Admins always see every board**, listed or not, so no board can be orphaned. The board's creator
+  also always sees it. A Site Admin in View As sees what the target sees.
+- **Groups are managed by Org Admins only** (Settings → Groups); every member can list them.
+- **An Org Admin or the board's creator sets a board's access**, the same rule as allowed idea types
+  (2026-10-22).
+- **A non-member sees nothing**: items on a board they cannot see are left out of every list, count, lane,
+  picker and notification, and a direct link answers `404`, not `403`. Rejected: a redacted placeholder
+  (it reveals existence and needs a second rendering on every surface).
+- **A grant decides visibility only.** What someone can do on the board is still their role. Rejected:
+  viewer/editor grants (every edit check would consult grants).
+- **Membership is read at request time**, so joining or leaving a group changes access to every board the
+  group is on without editing any board.
+- **The S0.2 schema freeze is amended for this**: `boards.visibility` and four tables (`user_groups`,
+  `user_group_members`, `board_access_users`, `board_access_groups`).
+
+**Why.** The owner asked for access by user or group, so a team change is one edit to a group, not one per
+board. Defaulting to *Organization* keeps every current response unchanged until someone restricts a board,
+which lets the cross-cutting filter land one surface at a time behind tests.
+
+**Open, not decided here** (listed in the spec): whether a Restricted board shows non-admins who has
+access; a public portal targeting a Restricted board, when a portal is specified.
 
 ## 2026-10-26 — An MCP server lets members' AI clients read their organization's data; Auth0 is the authorization server
 
