@@ -40,7 +40,7 @@ control of whether that is allowed at all.
 ```
 AI client ──MCP (Streamable HTTP, bearer)──▶ apps/mcp ──HTTPS, same bearer──▶ apps/api ──▶ application ──▶ DB
      │                                       (own Vercel project,               (AuthGuard: the only
-     └──OAuth 2.1 + PKCE──▶ Auth0 ──verify──▶ mcp.<domain>)                      reader of a credential)
+     └──OAuth 2.1 + PKCE──▶ Auth0 ──verify──▶ mcp.collega-ai.com)                      reader of a credential)
                               (custom database: POST /api/v1/mcp-auth/verify on apps/api)
 ```
 
@@ -54,8 +54,8 @@ asks the API for everything. The API stays the only thing that talks to the data
 1. MCP is **off by default** in every organization. An Org Admin of that organization turns it on and off.
    Turning it off takes effect on the next call and leaves the connection records in place.
 2. These may connect: an active **Org Admin, User or Read Only** in an organization with MCP on; and a
-   **Site Admin, read-only**, naming one organization per call, in an organization with MCP on (*assumption,
-   Open 7*).
+   **Site Admin, read-only**, naming one organization per call, in an organization with MCP on
+   (owner decision 2026-10-26: the switch governs Site Admins too).
 3. **Never:** an inactive user; a user who must still change their password; an archived organization;
    a View As session (an MCP token carries no impersonation, and no tool offers it).
 4. **Read-only.** Every tool is a read. The API accepts an MCP token only on the nine routes in
@@ -66,11 +66,12 @@ asks the API for everything. The API stays the only thing that talks to the data
 
 ### Identity (Auth0)
 
-6. **Auth0 is the authorization server**, one tenant for every environment (owner decision 2026-10-26).
-   Collega stays the only place a password lives: Auth0 uses a **custom database connection** whose login
-   script calls `POST /api/v1/mcp-auth/verify`. No user is imported and no password is stored in Auth0.
-   Because one connection can call only one deployment, **each environment gets its own database connection,
-   Auth0 API (audience) and Application**, enabled only for that environment (*Open 3*).
+6. **Auth0 is the authorization server**, with **a separate tenant for development and for production**
+   (owner decision 2026-10-26, after weighing one tenant). Collega stays the only place a password lives:
+   each tenant has one **custom database connection** whose login script calls `POST /api/v1/mcp-auth/verify`
+   on that environment's API. No user is imported and no password is stored in Auth0. Two tenants because
+   MCP clients are third-party applications, which Auth0 lets use only tenant-wide (domain-level)
+   connections, so one tenant cannot keep a dev and a prod connection apart (*Open 2*).
 7. `POST /api/v1/mcp-auth/verify` and `POST /api/v1/mcp-auth/profile` are server-to-server routes for Auth0
    alone, guarded by a shared secret the API reads in the auth folder. Verification answers one uniform
    failure for a wrong password, an unknown email, an inactive user, a must-change-password user and an
@@ -80,11 +81,13 @@ asks the API for everything. The API stays the only thing that talks to the data
 8. A **post-login Action** adds two claims: `https://collega.app/uid` (the Collega user id) and
    `https://collega.app/stamp` (the user's `SecurityStamp` at sign-in). Nothing else about the user (not role,
    not organization) is trusted from the token.
-9. **Tokens.** JWT access token; audience is the MCP resource URI (`https://mcp.<domain>/mcp`); one scope,
+9. **Tokens.** JWT access token; audience is the MCP resource URI (`https://mcp.collega-ai.com/mcp`); one scope,
    `collega:read`; lifetime **15 minutes**. Refresh tokens rotate with reuse detection (Auth0 setting);
    `offline_access` is requested by clients and is not listed in the server's scope metadata.
-10. **Client registration:** Client ID Metadata Documents first; Dynamic Client Registration enabled only if a
-    client we must support needs it (Auth0 ships it off). An unregistered client cannot reach consent.
+10. **Client registration:** Client ID Metadata Documents only for now (owner decision 2026-10-26).
+    Dynamic Client Registration stays off (Auth0 ships it off, and it forces the tenant-wide connection
+    promotion); it is enabled later only if a client we must support cannot connect. An unregistered client
+    cannot reach consent.
 11. `apps/mcp` serves OAuth Protected Resource Metadata (RFC 9728) naming the Auth0 tenant, answers an
     unauthenticated or rejected request with `401` and a `WWW-Authenticate: Bearer resource_metadata=…, scope="collega:read"`,
     and forwards the caller's bearer to the API unchanged. **The API is the validator:** signature (JWKS),
@@ -119,7 +122,7 @@ asks the API for everything. The API stays the only thing that talks to the data
 17. Audited, never with query text, arguments or returned content: `McpEnabled`, `McpDisabled`,
     `McpConnectionCreated`, `McpConnectionRevoked` (by self or by admin, with who), and **one `McpToolCalled`
     per call** carrying actor, organization, tool name, result count and whether it was refused. Per-call rows
-    are the retention question in Open 10.
+    are the retention question in Open 7.
 
 ### Untrusted content
 
@@ -131,7 +134,7 @@ asks the API for everything. The API stays the only thing that talks to the data
 
 ### Deployment
 
-19. `apps/mcp` is its own Vercel project on **`mcp.<collega domain>`** (Open 1), built on `mcp-handler` and
+19. `apps/mcp` is its own Vercel project on **`mcp.collega-ai.com`**, built on `mcp-handler` and
     the MCP SDK (1.26 or later) over **stateless Streamable HTTP**, with Fluid compute and no Redis. The URL
     is the token audience, so it is fixed before the first customer connects.
 20. Layer rules, enforced rather than conventional: `apps/mcp` may import nothing from the workspace (a
@@ -208,23 +211,27 @@ are Auth0's hosted pages, so Collega's wording there is Auth0 branding, not Reac
 
 ## Open points
 
-1. **Domain.** What is the Collega domain for `mcp.<domain>`? Fixed before the first connection.
-2. **Auth0 plan and cost.** Confirm the plan includes custom database connections (at least two),
-   Auth0's MCP features, the monthly-active-user price, and rate limits on the token endpoint.
-3. **One tenant for all environments** (owner's choice). Safe only with one database connection,
-   API audience and Application per environment, as rule 6 requires. Separate tenants are still safer.
-4. **Refresh and the stamp claim.** Confirm whether the post-login Action runs on a refresh exchange. The
+Settled 2026-10-26 and removed from this list: the domain (`mcp.collega-ai.com`), tenancy (two tenants),
+the three new dependencies (`mcp-handler`, `@modelcontextprotocol/sdk` 1.26 or later, `jose`), Site Admin
+reads needing the switch on, and CIMD-only registration.
+
+1. **Auth0 plan and cost.** Budgeted as Professional (about $240 a month for B2C) for each paid tenant. Before
+   the first backend slice, confirm on Auth0's own pricing page or with sales that the plan includes custom
+   database connections in both tenants, and the per-member price. Third-party guides disagree on several
+   figures.
+2. **Domain-level connection and CIMD clients.** Auth0 says third-party applications use only domain-level
+   connections. Confirm that a client registered by Client ID Metadata Document is third-party, so the
+   connection is promoted in each tenant; the design assumes it is.
+3. **Refresh and the stamp claim.** Confirm whether the post-login Action runs on a refresh exchange. The
    design does not depend on it (rule 12), but a refreshed token would carry a stale stamp and force a
    re-authorization.
-5. **Dynamic Client Registration.** Which required clients still need it?
-6. **New dependencies, for approval:** `mcp-handler`, `@modelcontextprotocol/sdk` (1.26 or later), and
-   a JWT library for JWKS verification (`jose`).
-7. **Site Admin reads need the organization's MCP switch on** (assumed). Alternative: Site Admin reads any.
-8. **UI comps** for the three surfaces.
-9. **Privacy and terms.** Auth0 becomes a processor of member emails and sign-in metadata; the privacy
+4. **DNS and Vercel.** `mcp.collega-ai.com` needs a DNS record and a custom domain on the new project;
+   `api.collega-ai.com` never resolved (`50-vercel-deployment.md`), so check the zone first.
+5. **UI comps** for the three surfaces.
+6. **Privacy and terms.** Auth0 becomes a processor of member emails and sign-in metadata; the privacy
    policy and subprocessor list need updating before launch.
-10. **Retention of `McpToolCalled` rows.**
-11. **Refresh-token lifetime** (idle and absolute) in Auth0.
+7. **Retention of `McpToolCalled` rows.**
+8. **Refresh-token lifetime** (idle and absolute) in Auth0. Proposed: 30 days idle, 90 days absolute.
 
 ## Answered 2026-10-26
 
@@ -232,4 +239,9 @@ Interview, one question at a time: Auth0 with a custom database (Collega keeps p
 new `apps/mcp`; v1 is read-only; Org Admin opt-in; Site Admins connect read-only; access ends within minutes
 (15-minute tokens plus a per-call recheck); one Auth0 tenant for all environments; directory listing later
 and not in this spec; the core eight tools; 60 per user and 600 per organization per minute; audit of
-connections and calls without content; `mcp.<domain>`; escape and label user-written text.
+connections and calls without content; `mcp.collega-ai.com`; escape and label user-written text.
+
+Blockers, same day: separate dev and prod Auth0 tenants (recommended over one tenant, which could not keep
+two database connections apart for third-party clients); Professional budgeted for each paid tenant;
+`mcp.collega-ai.com`; all three dependencies approved; the organization's switch governs Site Admins too;
+Client ID Metadata Documents only.

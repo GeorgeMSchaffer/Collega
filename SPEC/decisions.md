@@ -163,15 +163,19 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
   connection**: Auth0 asks Collega to check the email and password, so Collega stays the only place a
   password lives. Rejected: Auth0 owning passwords (two logins, and a Collega reset would not end the Auth0
   session); Collega as an OIDC provider (rebuilds the authorization server Auth0 was chosen to avoid).
-- **One Auth0 tenant for every environment.** Recorded as the owner's choice against the recommendation of
-  separate dev and prod tenants. It holds only if each environment has its own database connection, API
-  audience and Application (the spec's rule 6).
-- **A new `apps/mcp`**, its own Vercel project on `mcp.<domain>`, HTTP-only like `apps/web`; the API stays
+- **Two Auth0 tenants, development and production.** The owner first chose one tenant, then moved to two:
+  MCP clients are third-party applications, which Auth0 lets use only tenant-wide (domain-level)
+  connections, so one tenant cannot keep a dev and a prod database connection apart. Professional is
+  budgeted for each paid tenant; custom-database support is to be confirmed with Auth0 before the first
+  backend slice.
+- **A new `apps/mcp`**, its own Vercel project on `mcp.collega-ai.com`, HTTP-only like `apps/web`; the API stays
   the only thing that talks to the database and the only validator of a token.
 - **Read-only in v1**, the core eight tools. Writes and the Claude connectors directory listing come later
   and are not in this spec.
 - **Off by default per organization; an Org Admin turns it on.** Site Admins may connect, read-only, naming
-  one organization per call.
+  one organization per call, and only in an organization whose switch is on.
+- **Client ID Metadata Documents only** for registration; Dynamic Client Registration stays off until a needed client requires it.
+- **Approved dependencies:** `mcp-handler`, `@modelcontextprotocol/sdk` (1.26 or later) and `jose`.
 - **Access ends within a call, not within a token's life:** 15-minute tokens, and the API rechecks the user,
   the `SecurityStamp` claim, the organization switch and the connection on every call. An MCP token is
   accepted only on nine marked read routes; every other route refuses it.
@@ -183,10 +187,7 @@ and ideas the organization already holds. An authorization server is the large, 
 buying it keeps that out of Collega, and the per-call recheck keeps revocation in Collega's hands whatever
 Auth0 does with a refresh.
 
-**Open, not decided here** (listed in the spec): the domain; Auth0 plan, cost and custom-database limits;
-whether Dynamic Client Registration is needed; approval of `mcp-handler`, `@modelcontextprotocol/sdk` and a
-JWT library; whether a Site Admin read needs the organization's switch on; UI comps; privacy and terms; audit
-retention; refresh-token lifetime.
+**Open, not decided here** (listed in the spec): the Auth0 plan check and whether CIMD clients need the promoted connection; the refresh-claim behaviour; DNS and Vercel setup; UI comps; privacy and terms; audit retention; refresh-token lifetime.
 
 ## 2026-10-25 — A Sprints page shows every sprint in three columns (Upcoming, Ongoing, Completed)
 

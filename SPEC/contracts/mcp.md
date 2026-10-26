@@ -17,7 +17,7 @@ web app calls (settings and connections), the two routes Auth0 calls, and the MC
 The organization's MCP switch.
 
 - **Roles:** Org Admin of the organization.
-- **Response:** `200` — `enabled` boolean; `serverUrl` string (`https://mcp.<domain>/mcp`).
+- **Response:** `200` — `enabled` boolean; `serverUrl` string (`https://mcp.collega-ai.com/mcp`).
 - **Errors:** `403` for any other role; `404` outside the caller's organization.
 
 ### `PUT /api/v1/organizations/{organizationId}/mcp`
@@ -115,7 +115,7 @@ role is read live; no claim carries it.
 
 ## MCP server surface (`apps/mcp`)
 
-- **Endpoint:** `https://mcp.<domain>/mcp`, stateless Streamable HTTP, MCP revision 2026-07-28.
+- **Endpoint:** `https://mcp.collega-ai.com/mcp`, stateless Streamable HTTP, MCP revision 2026-07-28.
 - **Protected Resource Metadata:** `GET /.well-known/oauth-protected-resource` — `resource` is the MCP
   endpoint; `authorization_servers` is the Auth0 tenant; `scopes_supported` is `["collega:read"]`.
 - **Scope:** `collega:read`, the only one. A call with a token lacking it is `403 insufficient_scope`.
