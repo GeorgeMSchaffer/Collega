@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-26 | An MCP server lets members' AI clients read their organization's data; Auth0 is the authorization server | active | full below |
 | 2026-10-25 | A Sprints page shows every sprint in three columns (Upcoming, Ongoing, Completed) | active | full below |
 | 2026-10-22 | Anyone who can edit a task may schedule it into a sprint | active | full below |
 | 2026-10-22 | Sprint 17 as built differs from comp W in a few places | active | full below |
@@ -149,6 +150,43 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-10-26 — An MCP server lets members' AI clients read their organization's data; Auth0 is the authorization server
+
+> Spec: `SPEC/20-feature-mcp-server.md`; contracts: `SPEC/contracts/mcp.md`. Specified only; nothing is built.
+
+**Decided by the owner (2026-10-26), in an interview, one question at a time.** This is the explicit ask that
+`AGENTS.md` "Explicitly Deferred" requires for OAuth, for *MCP access only*; Entra ID sign-in
+(`20-feature-oauth.md`) stays deferred and is a separate thing.
+
+- **Auth0** is the authorization server (a new external service, approved), as a **custom database
+  connection**: Auth0 asks Collega to check the email and password, so Collega stays the only place a
+  password lives. Rejected: Auth0 owning passwords (two logins, and a Collega reset would not end the Auth0
+  session); Collega as an OIDC provider (rebuilds the authorization server Auth0 was chosen to avoid).
+- **One Auth0 tenant for every environment.** Recorded as the owner's choice against the recommendation of
+  separate dev and prod tenants. It holds only if each environment has its own database connection, API
+  audience and Application (the spec's rule 6).
+- **A new `apps/mcp`**, its own Vercel project on `mcp.<domain>`, HTTP-only like `apps/web`; the API stays
+  the only thing that talks to the database and the only validator of a token.
+- **Read-only in v1**, the core eight tools. Writes and the Claude connectors directory listing come later
+  and are not in this spec.
+- **Off by default per organization; an Org Admin turns it on.** Site Admins may connect, read-only, naming
+  one organization per call.
+- **Access ends within a call, not within a token's life:** 15-minute tokens, and the API rechecks the user,
+  the `SecurityStamp` claim, the organization switch and the connection on every call. An MCP token is
+  accepted only on nine marked read routes; every other route refuses it.
+- **60 calls a minute per user and 600 per organization**, `429` over; **audit** of connections and one event
+  per call, never with query text or content; **user-written text is escaped and labelled** in every result.
+
+**Why.** Peers (Linear, Atlassian) ship remote MCP servers, and members want their own AI to read the boards
+and ideas the organization already holds. An authorization server is the large, security-sensitive piece;
+buying it keeps that out of Collega, and the per-call recheck keeps revocation in Collega's hands whatever
+Auth0 does with a refresh.
+
+**Open, not decided here** (listed in the spec): the domain; Auth0 plan, cost and custom-database limits;
+whether Dynamic Client Registration is needed; approval of `mcp-handler`, `@modelcontextprotocol/sdk` and a
+JWT library; whether a Site Admin read needs the organization's switch on; UI comps; privacy and terms; audit
+retention; refresh-token lifetime.
 
 ## 2026-10-25 — A Sprints page shows every sprint in three columns (Upcoming, Ongoing, Completed)
 
