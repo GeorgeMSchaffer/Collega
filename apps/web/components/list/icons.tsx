@@ -26,6 +26,7 @@ const PATHS = {
     </>
   ),
   x: <path d="M6 6l12 12M18 6 6 18" />,
+  stop: <rect x="6" y="6" width="12" height="12" rx="2" />,
   plus: <path d="M12 5v14M5 12h14" />,
   search: (
     <>

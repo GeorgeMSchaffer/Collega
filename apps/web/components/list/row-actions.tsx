@@ -61,7 +61,8 @@ export function RowActions({
   )
 }
 
-function ActionButton({
+/** One icon action, for a row that needs one beyond View, Edit and Delete. */
+export function ActionButton({
   icon,
   label,
   item,

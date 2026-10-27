@@ -97,6 +97,11 @@ function sectionsFor(role: Role): Section[] {
         blurb: 'Every organization’s tags and their colours, read-only.',
       },
       {
+        href: '/settings/login-messages',
+        title: 'System messages',
+        blurb: 'Messages every user in every organization sees after signing in.',
+      },
+      {
         href: '/settings/ai-prompt',
         title: 'AI prompt',
         blurb:
@@ -148,6 +153,12 @@ function sectionsFor(role: Role): Section[] {
       title: 'Tags',
       blurb:
         'Labels for ideas on every board: their colours, and adding, renaming or deleting them.',
+    },
+    {
+      href: '/settings/login-messages',
+      title: 'Sign-in messages',
+      blurb:
+        'Messages everyone in this organization sees after signing in, and who has acknowledged them.',
     },
     {
       href: '/settings/ai-assist',
