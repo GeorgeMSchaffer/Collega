@@ -109,6 +109,7 @@ describe.skipIf(!DATABASE_URL)(
         currentUser,
         clock,
         { nextInt: () => 0 },
+        boards,
       )
       const boardService = new BoardService(
         boards,

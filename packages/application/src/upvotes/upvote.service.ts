@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { Role } from '@collega/domain/enums'
 import { createIdeaUpvote } from '@collega/domain/upvotes'
+import { ensureCanSeeBoard } from '../boards/board-access.js'
+import type { BoardAccessLookup } from '../boards/ports.js'
 import type { AuditEventWriter, Clock, CurrentUserContext, UnitOfWork } from '../common/index.js'
 import {
   attributeAudit,
@@ -25,6 +27,7 @@ export class UpvoteService {
     private readonly auditEvents: AuditEventWriter,
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
+    private readonly boardAccess: BoardAccessLookup,
   ) {}
 
   async toggle(ideaId: string): Promise<UpvoteToggleResult> {
@@ -33,11 +36,17 @@ export class UpvoteService {
     // All authenticated users, including Read Only, can upvote ("Upvotes" #1).
     const userId = this.requireAuthenticatedUserId()
 
-    const organizationId = await this.ideas.getOrganizationId(ideaId)
-    if (organizationId === null) {
+    const placement = await this.ideas.getPlacement(ideaId)
+    if (placement === null) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(organizationId)
+    this.ensureOrganizationScope(placement.organizationId)
+    await ensureCanSeeBoard(
+      this.boardAccess,
+      this.currentUser,
+      placement.boardId,
+      'Idea not found.',
+    )
 
     const now = this.clock.now()
     const existing = await this.upvoteRepository.getByIdeaAndUser(ideaId, userId)
@@ -62,7 +71,7 @@ export class UpvoteService {
       entityType: 'Idea',
       message: `Idea upvote ${hasUpvoted ? 'added' : 'removed'}.`,
       occurredAtUtc: now,
-      organizationId,
+      organizationId: placement.organizationId,
       attribution: attributeAudit(this.currentUser, userId),
       entityId: ideaId,
       metadataJson: null,

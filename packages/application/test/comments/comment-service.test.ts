@@ -172,6 +172,7 @@ function commentHarness(options: {
       audit,
       options.currentUser,
       fixedClock(),
+      { canSeeBoard: async () => true },
     ),
     added,
     updated,
@@ -487,8 +488,9 @@ function upvoteHarness(options: {
   }
 
   const ideas: UpvoteIdeaLookupPort = {
-    async getOrganizationId(ideaId) {
-      return byIdea[ideaId] ?? null
+    async getPlacement(ideaId) {
+      const organizationId = byIdea[ideaId]
+      return organizationId ? { organizationId, boardId: null } : null
     },
   }
 
@@ -502,6 +504,7 @@ function upvoteHarness(options: {
       audit,
       options.currentUser,
       fixedClock(),
+      { canSeeBoard: async () => true },
     ),
     added,
     removed,

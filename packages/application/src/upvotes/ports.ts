@@ -14,13 +14,15 @@ export interface IdeaUpvoteRepository {
 
 /**
  * The narrow slice of Ideas this feature needs: whether the idea exists (and isn't soft-deleted)
- * and which organization it belongs to, for scoping. Deliberately not `IdeaRepository` from the
+ * and which organization and board it belongs to, for scoping. Deliberately not `IdeaRepository` from the
  * sibling `ideas` feature - upvoting does not need the full aggregate, and this keeps the feature
  * folder independently reachable per the subpath-export convention. Wave C can satisfy this with
  * the same repository that backs `ideas`.
  */
 export interface IdeaLookupPort {
-  getOrganizationId(ideaId: string): Promise<string | null>
+  getPlacement(
+    ideaId: string,
+  ): Promise<{ readonly organizationId: string; readonly boardId: string | null } | null>
 }
 
 // Clock and AuditEventWriter are NOT redeclared here - they live in the kernel

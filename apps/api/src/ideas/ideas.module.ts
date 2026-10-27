@@ -1,3 +1,4 @@
+import type { BoardAccessLookup } from '@collega/application/boards'
 import type {
   AuditEventWriter,
   Clock,
@@ -89,6 +90,7 @@ import { IdeasController } from './ideas.controller.js'
         currentUser: CurrentUserContext,
         clock: Clock,
         random: RandomSource,
+        boardAccess: BoardAccessLookup,
         metricValues: IdeaMetricValuesPort,
         activity: IdeaActivityPort,
       ) =>
@@ -111,6 +113,7 @@ import { IdeasController } from './ideas.controller.js'
           currentUser,
           clock,
           random,
+          boardAccess,
           metricValues,
           activity,
         ),
@@ -133,6 +136,7 @@ import { IdeasController } from './ideas.controller.js'
         PORT_TOKENS.CurrentUserContext,
         PORT_TOKENS.Clock,
         PORT_TOKENS.RandomSource,
+        PORT_TOKENS.BoardAccessLookup,
         PORT_TOKENS.IdeaMetricValuesPort,
         PORT_TOKENS.IdeaActivityPort,
       ],
@@ -146,7 +150,17 @@ import { IdeasController } from './ideas.controller.js'
         auditEvents: AuditEventWriter,
         currentUser: CurrentUserContext,
         clock: Clock,
-      ) => new UpvoteService(upvoteRepository, ideas, unitOfWork, auditEvents, currentUser, clock),
+        boardAccess: BoardAccessLookup,
+      ) =>
+        new UpvoteService(
+          upvoteRepository,
+          ideas,
+          unitOfWork,
+          auditEvents,
+          currentUser,
+          clock,
+          boardAccess,
+        ),
       inject: [
         PORT_TOKENS.IdeaUpvoteRepository,
         PORT_TOKENS.IdeaLookupPort,
@@ -154,6 +168,7 @@ import { IdeasController } from './ideas.controller.js'
         PORT_TOKENS.AuditEventWriter,
         PORT_TOKENS.CurrentUserContext,
         PORT_TOKENS.Clock,
+        PORT_TOKENS.BoardAccessLookup,
       ],
     },
   ],

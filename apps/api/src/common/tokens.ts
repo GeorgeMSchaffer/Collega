@@ -56,6 +56,7 @@ export const PORT_TOKENS = {
 
   // Boards (packages/application/src/boards/ports.ts) --------------------------------------------
   BoardRepository: 'BoardRepository',
+  BoardAccessLookup: 'BoardAccessLookup',
   OrganizationExistenceLookup: 'OrganizationExistenceLookup',
 
   // Business impacts (packages/application/src/business-impacts/ports.ts) -----------------------

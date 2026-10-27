@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { createIdeaFollower } from '@collega/domain/followers'
+import { ensureCanSeeBoard } from '../boards/board-access.js'
+import type { BoardAccessLookup } from '../boards/ports.js'
 import type { Clock, CurrentUserContext, UnitOfWork } from '../common/index.js'
 import { ensureNotDirectSiteAdmin, NotFoundError, UnauthorizedError } from '../common/index.js'
 import type { FollowResult } from './models.js'
@@ -21,6 +23,7 @@ export class FollowService {
     private readonly unitOfWork: UnitOfWork,
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
+    private readonly boardAccess: BoardAccessLookup,
   ) {}
 
   async follow(ideaId: string): Promise<FollowResult> {
@@ -59,6 +62,7 @@ export class FollowService {
     if (idea === null || this.currentUser.organizationId !== idea.organizationId) {
       throw new NotFoundError('Idea not found.')
     }
+    await ensureCanSeeBoard(this.boardAccess, this.currentUser, idea.boardId, 'Idea not found.')
     return this.currentUser.userId
   }
 }

@@ -216,3 +216,10 @@ export interface AutoCreateTaskPort {
     referencedBoardId: string,
   ): Promise<() => Promise<void>>
 }
+
+/** Whether one user may see one board (SPEC/20-feature-board-access-and-groups.md BAG-3): an
+ * Organization board of their organization, or a Restricted one they created or are granted
+ * directly or through a group. Archived boards answer the same as live ones. */
+export interface BoardAccessLookup {
+  canSeeBoard(boardId: string, organizationId: string, userId: string): Promise<boolean>
+}
