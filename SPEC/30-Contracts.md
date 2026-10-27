@@ -116,6 +116,7 @@ contract states nothing for that item, and the conventions above apply.
 | Upvote Contracts | [`contracts/upvotes.md`](contracts/upvotes.md) | `/ideas/{ideaId}/upvote/toggle` |
 | AI Idea Assist Contracts | [`contracts/ai-assist.md`](contracts/ai-assist.md) | `/boards/{boardId}/idea-assist/turns`, `/ai-assist/*` (availability, prompt, usage), `/organizations/{organizationId}/ai-assist/*` (settings, usage) |
 | Following Contracts | [`contracts/following.md`](contracts/following.md) | `/ideas/{ideaId}/follow`. Added 2026-10-01 |
+| Sign-in Message Contracts | [`contracts/login-messages.md`](contracts/login-messages.md) | `/login-messages/system`, `/organizations/{organizationId}/login-messages`, `/login-messages/{messageId}` (and `/acknowledgements`, `/close`, `/acknowledge`), `/login-messages/visible`. Proposed 2026-10-27, not built |
 | MCP Contracts | [`contracts/mcp.md`](contracts/mcp.md) | `/organizations/{organizationId}/mcp` (and `/connections`), `/mcp/connections`, `/mcp-auth/verify` and `/profile` (for Auth0); the MCP server's metadata, scope and eight tools. Proposed 2026-10-26, not built |
 | Notification Event Contract | [`contracts/notifications.md`](contracts/notifications.md) | The internal notification event types and payload; since 2026-10-01 the inbox: `/notifications` (and `/unread-count`, `/{notificationId}/read`, `/read-all`). Subsection: Notification Inbox Contracts |
 | Health Contract | [`contracts/health.md`](contracts/health.md) | `/health`. Written from the code 2026-09-29. |

@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-27 | Admins can post sign-in messages, system-wide or per organization | active | full below |
 | 2026-10-26 | A board can be Restricted to named users and groups | active | full below |
 | 2026-10-26 | An MCP server lets members' AI clients read their organization's data; Auth0 is the authorization server | active | full below |
 | 2026-10-25 | A Sprints page shows every sprint in three columns (Upcoming, Ongoing, Completed) | active | full below |
@@ -151,6 +152,33 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-10-27 — Admins can post sign-in messages, system-wide or per organization
+
+> Spec: `SPEC/20-feature-login-messages.md`; contract: `SPEC/contracts/login-messages.md`.
+> Specified only; nothing is built.
+
+**Decided by the owner (2026-10-27), in an interview, one question at a time.**
+
+- **Two scopes.** System messages by the Site Admin reach every user; organization messages by an
+  Org Admin reach that organization. No role or group targeting.
+- **A date window** (start, optional end) decides how long a message shows. Rejected: seconds on
+  screen; a count of sign-ins.
+- **Three dismissal modes:** every sign-in; dismiss once; acknowledge required (closing without
+  acknowledging brings it back at the next sign-in).
+- **Display is chosen per message:** modal or banner.
+- **"Until the next sign-in"** is tracked server-side, so it follows the user across devices.
+  Rejected: coming back on every page load.
+- **Acknowledgement report:** *N of M acknowledged* plus who and when; an Org Admin sees only their
+  organization.
+- **Edits:** the admin chooses on save whether to *show again to everyone*, which resets
+  dismissals and acknowledgements.
+- **Content:** title and plain text; web addresses become links. Rejected: Markdown (renderer and
+  sanitizer, likely a new dependency).
+
+**How (design, not owner-decided):** the session token is issued only at sign-in and never
+refreshed, so its `iat` is the sign-in time; a receipt's close time is compared with it. No
+session table. Defaults to confirm on review are listed in the spec's open points.
 
 ## 2026-10-26 — A board can be Restricted to named users and groups
 
