@@ -218,6 +218,7 @@ Rules:
 
 ## Explicitly Deferred
 
-Do not build without an explicit ask: OAuth/SSO, SAML, reporting, guaranteed outbound email
-delivery, remember-this-device. Per-organization AI credentials are deliberately unimplemented
-(tracker rule 30); the conversion does not change that.
+Do not build without an explicit ask: OAuth/SSO, SAML, guaranteed outbound email delivery,
+remember-this-device. (Reporting left this list 2026-10-27, `SPEC/decisions.md`.)
+Per-organization AI credentials are deliberately unimplemented (tracker rule 30); the conversion
+does not change that.
