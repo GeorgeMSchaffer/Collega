@@ -20,15 +20,25 @@ export interface OutcomeRepository {
 
 /** The derived reads: every count and span is computed per read, never stored. */
 export interface OutcomeReadsPort {
-  rollupsByOutcomeIds(outcomeIds: readonly string[]): Promise<ReadonlyMap<string, OutcomeRollup>>
+  rollupsByOutcomeIds(
+    outcomeIds: readonly string[],
+    /** Only items on these boards or on none (BAG-4c); omitted or `null` is every item. */
+    visibleBoardIds?: readonly string[] | null,
+  ): Promise<ReadonlyMap<string, OutcomeRollup>>
 
   /** The top-level items grouped under each Outcome. */
   ideasByOutcomeIds(
     outcomeIds: readonly string[],
+    /** Only items on these boards or on none (BAG-4c); omitted or `null` is every item. */
+    visibleBoardIds?: readonly string[] | null,
   ): Promise<ReadonlyMap<string, readonly OutcomeIdea[]>>
 
   /** Top-level items under no Outcome; cards with a parent are excluded. */
-  listUngroupedIdeas(organizationId: string): Promise<readonly OutcomeIdea[]>
+  listUngroupedIdeas(
+    organizationId: string,
+    /** Only items on these boards or on none (BAG-4c); omitted or `null` is every item. */
+    visibleBoardIds?: readonly string[] | null,
+  ): Promise<readonly OutcomeIdea[]>
 }
 
 /** The slice of the idea repository grouping needs. */

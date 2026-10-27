@@ -13,6 +13,7 @@ import { Role } from '@collega/domain/enums'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { PrismaClient } from '../src/generated/prisma/index.js'
 import { PrismaUnitOfWork } from '../src/persistence/unit-of-work.js'
+import { PrismaBoardRepository } from '../src/repositories/board.repository.js'
 import { PrismaIdeaRepository } from '../src/repositories/idea.repository.js'
 import { PrismaOutcomeRepository } from '../src/repositories/outcome.repository.js'
 import { PrismaUserRepository } from '../src/repositories/user.repository.js'
@@ -84,6 +85,7 @@ describe.skipIf(!DATABASE_URL)('Outcome gaps against a live database', () => {
       admin(),
       { now: () => NOW },
       { nextInt: () => 0 },
+      new PrismaBoardRepository(prisma, unitOfWork),
     )
   }
 

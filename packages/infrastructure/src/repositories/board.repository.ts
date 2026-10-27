@@ -21,6 +21,7 @@ import type {
   PullCandidateFilter,
   PullCandidatePage,
   UserName,
+  VisibleBoardsLookup,
 } from '@collega/application/boards'
 import type { BoardsPort, SwimlaneInfo } from '@collega/application/ideas'
 import type { SprintBoardsPort } from '@collega/application/sprints'
@@ -38,6 +39,7 @@ import {
 } from '../persistence/constraint-errors.js'
 import type { PrismaClient } from '../persistence/prisma-client.js'
 import type { PrismaUnitOfWork } from '../persistence/unit-of-work.js'
+import { visibleBoardsCondition } from './idea.repository.js'
 
 type BoardRowWithSwimlanes = BoardRow & {
   board_swimlanes: SwimlaneRow[]
@@ -116,8 +118,29 @@ function boardIdeasWhere(boardIds: readonly string[]): Prisma.ideasWhereInput {
   return { board_id: { in: [...boardIds] }, is_deleted: false, phase: IdeaPhase.Discovery }
 }
 
+/** BAG-3 for one non-admin user: an Organization board, or a Restricted one they created or are
+ * granted directly or through a group. */
+function visibleToUser(userId: string): Prisma.boardsWhereInput[] {
+  return [
+    { visibility: 'Organization' },
+    { created_by_user_id: userId },
+    { board_access_users: { some: { user_id: userId } } },
+    {
+      board_access_groups: {
+        some: { user_groups: { user_group_members: { some: { user_id: userId } } } },
+      },
+    },
+  ]
+}
+
 export class PrismaBoardRepository
-  implements BoardRepository, BoardAccessLookup, AiBoardLookupPort, BoardsPort, SprintBoardsPort
+  implements
+    BoardRepository,
+    BoardAccessLookup,
+    VisibleBoardsLookup,
+    AiBoardLookupPort,
+    BoardsPort,
+    SprintBoardsPort
 {
   constructor(
     private readonly prisma: PrismaClient,
@@ -424,6 +447,7 @@ export class PrismaBoardRepository
         Prisma.sql`EXISTS (SELECT 1 FROM idea_tags AS filter_link INNER JOIN tags AS filter_tag ON filter_tag.id = filter_link.tag_id WHERE filter_link.idea_id = i.id AND filter_tag.normalized_name IN (${Prisma.join(filter.tags)}))`,
       )
     }
+    conditions.push(visibleBoardsCondition('i', filter.visibleBoardIds))
     // A task is never eligible: it stays on its parent's reference board. The same filters count
     // the tasks withheld, for the picker's "N tasks are hidden".
     const where = Prisma.join([...conditions, Prisma.sql`i.parent_idea_id IS NULL`], ' AND ')
@@ -726,20 +750,19 @@ export class PrismaBoardRepository
       where: {
         id: boardId,
         organization_id: organizationId,
-        OR: [
-          { visibility: 'Organization' },
-          { created_by_user_id: userId },
-          { board_access_users: { some: { user_id: userId } } },
-          {
-            board_access_groups: {
-              some: { user_groups: { user_group_members: { some: { user_id: userId } } } },
-            },
-          },
-        ],
+        OR: visibleToUser(userId),
       },
       select: { id: true },
     })
     return found !== null
+  }
+
+  async visibleBoardIds(organizationId: string, userId: string): Promise<readonly string[]> {
+    const rows = await this.prisma.boards.findMany({
+      where: { organization_id: organizationId, OR: visibleToUser(userId) },
+      select: { id: true },
+    })
+    return rows.map((row) => row.id)
   }
 
   async listGroupIdsForUser(userId: string): Promise<readonly string[]> {

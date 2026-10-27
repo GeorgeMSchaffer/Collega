@@ -12,6 +12,7 @@ import {
   fixedClock,
   NOW,
   ORG_A,
+  openBoards,
   orgAdmin,
   readOnly,
   recordingAudit,
@@ -70,6 +71,7 @@ function build(currentUser = orgAdmin()) {
     currentUser,
     fixedClock(),
     { nextInt: () => 0 },
+    openBoards(),
   )
 }
 

@@ -122,6 +122,29 @@ function uuidList(ids: readonly string[]): Prisma.Sql {
   return Prisma.join(ids.map((id) => Prisma.sql`${id}::uuid`))
 }
 
+/** BAG-4c: an item on no board, or on one of the caller's visible boards. `null` is every board. */
+export function visibleBoardsWhere(
+  visibleBoardIds: readonly string[] | null | undefined,
+): Prisma.ideasWhereInput {
+  return visibleBoardIds == null
+    ? {}
+    : { OR: [{ board_id: null }, { board_id: { in: [...visibleBoardIds] } }] }
+}
+
+/** `visibleBoardsWhere` for raw SQL, on the ideas row aliased `alias`. */
+export function visibleBoardsCondition(
+  alias: string,
+  visibleBoardIds: readonly string[] | null | undefined,
+): Prisma.Sql {
+  if (visibleBoardIds == null) {
+    return Prisma.sql`TRUE`
+  }
+  const column = Prisma.raw(`${alias}.board_id`)
+  return visibleBoardIds.length === 0
+    ? Prisma.sql`${column} IS NULL`
+    : Prisma.sql`(${column} IS NULL OR ${column} IN (${uuidList(visibleBoardIds)}))`
+}
+
 export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
   constructor(
     private readonly prisma: PrismaClient,
@@ -286,6 +309,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       where: {
         organization_id: filter.organizationId,
         is_deleted: false,
+        ...visibleBoardsWhere(filter.visibleBoardIds),
         ...(filter.anyPhase ? {} : { phase: Phase.Delivery }),
         ...(filter.backlogOnly ? { sprint_id: null } : {}),
         ...(filter.sprintId ? { sprint_id: filter.sprintId } : {}),
@@ -303,6 +327,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
    */
   async countChildrenByParentIds(
     parentIds: readonly string[],
+    visibleBoardIds: readonly string[] | null = null,
   ): Promise<ReadonlyMap<string, { readonly total: number; readonly done: number }>> {
     if (parentIds.length === 0) {
       return new Map()
@@ -317,6 +342,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       LEFT JOIN board_swimlanes l ON l.board_id = c.board_id AND l.status_id = c.status_id
       WHERE c.parent_idea_id IN (${Prisma.join(parentIds.map((id) => Prisma.sql`${id}::uuid`))})
         AND c.is_deleted = FALSE
+        AND ${visibleBoardsCondition('c', visibleBoardIds)}
       GROUP BY c.parent_idea_id
     `)
     return new Map(rows.map((row) => [row.parent_id, { total: row.total, done: row.done }]))
@@ -342,6 +368,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
   /** One grouped query for every sprint on the page - see `SprintIssuesPort.countsBySprintIds`. */
   async countsBySprintIds(
     sprintIds: readonly string[],
+    visibleBoardIds: readonly string[] | null = null,
   ): Promise<ReadonlyMap<string, SprintIssueCounts>> {
     if (sprintIds.length === 0) {
       return new Map()
@@ -365,6 +392,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       LEFT JOIN board_swimlanes l ON l.board_id = i.board_id AND l.status_id = i.status_id
       WHERE i.sprint_id IN (${Prisma.join(sprintIds.map((id) => Prisma.sql`${id}::uuid`))})
         AND i.is_deleted = FALSE
+        AND ${visibleBoardsCondition('i', visibleBoardIds)}
       GROUP BY i.sprint_id
     `)
 
@@ -445,6 +473,7 @@ export class PrismaIdeaRepository implements IdeaRepository, SprintIssuesPort {
       Prisma.sql`i.is_deleted = FALSE`,
       ...this.listFilterConditions(filter),
     ]
+    conditions.push(visibleBoardsCondition('i', filter.visibleBoardIds))
 
     if (filter.phase) {
       conditions.push(Prisma.sql`i.phase = ${filter.phase}::"IdeaPhase"`)

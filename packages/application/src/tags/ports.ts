@@ -61,7 +61,11 @@ export interface TagRepository {
    * Usage for each of the given tags, in a fixed number of grouped queries however many there
    * are. A tag with no live idea is absent from the map.
    */
-  usageByTagIds(tagIds: readonly string[]): Promise<ReadonlyMap<string, TagUsage>>
+  usageByTagIds(
+    tagIds: readonly string[],
+    /** Counts only items on these boards or on none (BAG-4c); omitted or `null` counts all. */
+    visibleBoardIds?: readonly string[] | null,
+  ): Promise<ReadonlyMap<string, TagUsage>>
 
   getCreatorNames(userIds: readonly string[]): Promise<ReadonlyMap<string, TagCreatorName>>
 

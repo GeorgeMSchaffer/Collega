@@ -111,6 +111,11 @@ function harness(options: {
     async listByOrganization(organizationId) {
       return [...boardsById.values()].filter((b) => b.organizationId === organizationId)
     },
+    async visibleBoardIds(organizationId) {
+      return [...boardsById.values()]
+        .filter((b) => b.organizationId === organizationId)
+        .map((b) => b.id)
+    },
     async isStatusReferenced() {
       return false
     },

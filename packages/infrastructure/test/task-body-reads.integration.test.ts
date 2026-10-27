@@ -337,6 +337,7 @@ describe.skipIf(!DATABASE_URL)('Task reads next to ideas, against a live databas
         organizationId,
         source: 'boards',
         excludeBoardId: null,
+        visibleBoardIds: null,
         search,
         tags: [],
         authorUserId: null,

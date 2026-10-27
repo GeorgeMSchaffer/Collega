@@ -45,6 +45,7 @@ import { createTag, normalizeTagName } from '@collega/domain/tags'
 import type { tags as TagRow } from '../generated/prisma/index.js'
 import { Prisma } from '../generated/prisma/index.js'
 import type { PrismaClient } from '../persistence/prisma-client.js'
+import { visibleBoardsCondition } from './idea.repository.js'
 
 /** Whether `error` is a P2002 on exactly `ux_tags_organization_id_normalized_name`. Tags has no
  * other non-PK unique index, but this is still checked precisely (model + column set, not just
@@ -251,7 +252,10 @@ export class PrismaTagRepository implements TagRepository, IdeasTagsPort, AiTags
 
   /** One grouped query for any number of tags: live ideas per (tag, board). Each idea is on at most
    * one board, so a tag's idea count is the sum over its boards plus its board-less ideas. */
-  async usageByTagIds(tagIds: readonly string[]): Promise<ReadonlyMap<string, TagUsage>> {
+  async usageByTagIds(
+    tagIds: readonly string[],
+    visibleBoardIds: readonly string[] | null = null,
+  ): Promise<ReadonlyMap<string, TagUsage>> {
     if (tagIds.length === 0) {
       return new Map()
     }
@@ -265,6 +269,7 @@ export class PrismaTagRepository implements TagRepository, IdeasTagsPort, AiTags
       LEFT JOIN boards AS board ON board.id = idea.board_id
       WHERE idea_tag.tag_id IN (${Prisma.join(tagIds.map((id) => Prisma.sql`${id}::uuid`))})
         AND idea.is_deleted = FALSE
+        AND ${visibleBoardsCondition('idea', visibleBoardIds)}
       GROUP BY idea_tag.tag_id, board.id, board.name
     `)
 

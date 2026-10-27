@@ -100,7 +100,11 @@ export class CommentService {
 
     const now = this.clock.now()
     const authorId = this.requireAuthenticatedUserId()
-    const mentionedUserIds = await this.resolveMentions(idea.organizationId, command.mentionEmails)
+    const mentionedUserIds = await this.resolveMentions(
+      idea.organizationId,
+      idea.boardId,
+      command.mentionEmails,
+    )
 
     const comment = runDomain(createComment, {
       id: randomUUID(),
@@ -146,7 +150,11 @@ export class CommentService {
     }
 
     const now = this.clock.now()
-    const mentionedUserIds = await this.resolveMentions(idea.organizationId, command.mentionEmails)
+    const mentionedUserIds = await this.resolveMentions(
+      idea.organizationId,
+      idea.boardId,
+      command.mentionEmails,
+    )
 
     const updated = runDomain(
       editComment,
@@ -328,6 +336,7 @@ export class CommentService {
    */
   private async resolveMentions(
     organizationId: string,
+    boardId: string | null,
     mentionEmails: readonly string[] | null,
   ): Promise<readonly string[]> {
     if (!mentionEmails || mentionEmails.length === 0) {
@@ -358,6 +367,15 @@ export class CommentService {
         user.status !== UserStatus.Active
       ) {
         errors.push(`Mention '${trimmed}' could not be resolved to a user in your organization.`)
+        continue
+      }
+      // BAG-4h: a mention notifies, so it may name only someone who can see the idea's board.
+      if (
+        boardId !== null &&
+        user.role !== Role.OrgAdmin &&
+        !(await this.boardAccess.canSeeBoard(boardId, organizationId, user.id))
+      ) {
+        errors.push(`Mention '${trimmed}' is not a user who can see this board.`)
         continue
       }
 

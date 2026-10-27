@@ -105,6 +105,7 @@ describe.skipIf(!DATABASE_URL)(
         currentUser,
         clock,
         boards,
+        boards,
       )
       return { ideaService, sprintService }
     }

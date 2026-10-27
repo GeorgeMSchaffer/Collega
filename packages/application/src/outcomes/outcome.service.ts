@@ -13,6 +13,8 @@ import {
   softDeleteOutcome,
   updateOutcome,
 } from '@collega/domain/outcomes'
+import { visibleBoardIdsFor } from '../boards/board-access.js'
+import type { VisibleBoardsLookup } from '../boards/ports.js'
 import {
   type AuditEventWriter,
   attributeAudit,
@@ -68,6 +70,7 @@ export class OutcomeService {
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
     private readonly random: RandomSource,
+    private readonly boardAccess: VisibleBoardsLookup,
   ) {}
 
   async list(
@@ -95,7 +98,7 @@ export class OutcomeService {
     const outcome = await this.requireOutcome(outcomeId, organizationId)
 
     const [item] = await this.project([outcome])
-    const ideas = await this.reads.ideasByOutcomeIds([outcome.id])
+    const ideas = await this.reads.ideasByOutcomeIds([outcome.id], await this.visibleBoardIds())
     return { ...(item as OutcomeItem), ideas: ideas.get(outcome.id) ?? [] }
   }
 
@@ -105,10 +108,14 @@ export class OutcomeService {
 
     const outcomes = await this.outcomes.listByOrganization(organizationId)
     const items = await this.project(outcomes)
-    const ideas = await this.reads.ideasByOutcomeIds(outcomes.map((o) => o.id))
+    const visible = await this.visibleBoardIds()
+    const ideas = await this.reads.ideasByOutcomeIds(
+      outcomes.map((o) => o.id),
+      visible,
+    )
     return {
       outcomes: items.map((item) => ({ ...item, ideas: ideas.get(item.outcomeId) ?? [] })),
-      ungrouped: await this.reads.listUngroupedIdeas(organizationId),
+      ungrouped: await this.reads.listUngroupedIdeas(organizationId, visible),
     }
   }
 
@@ -313,7 +320,10 @@ export class OutcomeService {
     if (outcomes.length === 0) {
       return []
     }
-    const rollups = await this.reads.rollupsByOutcomeIds(outcomes.map((o) => o.id))
+    const rollups = await this.reads.rollupsByOutcomeIds(
+      outcomes.map((o) => o.id),
+      await this.visibleBoardIds(),
+    )
     return outcomes.map((outcome) => toItem(outcome, rollups.get(outcome.id) ?? EMPTY_ROLLUP))
   }
 
@@ -336,6 +346,12 @@ export class OutcomeService {
   }
 
   /** Missing, soft-deleted and other-organization Outcomes are all a 404. */
+  /** Outcomes are organization-wide; their items and counts leave out what the caller cannot see
+   * (BAG-4c). */
+  private visibleBoardIds(): Promise<readonly string[] | null> {
+    return visibleBoardIdsFor(this.boardAccess, this.currentUser)
+  }
+
   private async requireOutcome(outcomeId: string, organizationId: string): Promise<Outcome> {
     const outcome = await this.outcomes.getById(outcomeId)
     if (!outcome || outcome.isDeleted || outcome.organizationId !== organizationId) {

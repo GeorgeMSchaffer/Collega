@@ -6,7 +6,7 @@ import type { EffortLevel, IdeaPhase } from '@collega/domain/enums'
 import type { AutoCreateTaskParent } from '../ideas/models.js'
 import type { PullCandidatePage } from './models.js'
 
-export interface BoardRepository {
+export interface BoardRepository extends VisibleBoardsLookup {
   /** Stages the new board with its lanes and its allowed idea types. */
   add(board: Board): Promise<void>
 
@@ -159,6 +159,8 @@ export type PullCandidateFilter = {
   readonly authorUserId: string | null
   /** The caller, for `isMine`. */
   readonly currentUserId: string
+  /** Boards the caller may see (BAG-4e); `null` is every board. Items on no board always pass. */
+  readonly visibleBoardIds: readonly string[] | null
   readonly page: { readonly page: number; readonly pageSize: number }
 }
 
@@ -222,4 +224,10 @@ export interface AutoCreateTaskPort {
  * directly or through a group. Archived boards answer the same as live ones. */
 export interface BoardAccessLookup {
   canSeeBoard(boardId: string, organizationId: string, userId: string): Promise<boolean>
+}
+
+/** The ids of every board one user may see in their organization, by the same rule as
+ * `BoardAccessLookup` (BAG-3), for filtering lists and counts (BAG-4c). */
+export interface VisibleBoardsLookup {
+  visibleBoardIds(organizationId: string, userId: string): Promise<readonly string[]>
 }

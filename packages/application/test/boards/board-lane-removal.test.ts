@@ -107,6 +107,9 @@ function harness(
     async listByOrganization() {
       return [existing]
     },
+    async visibleBoardIds() {
+      return [existing.id]
+    },
     async isStatusReferenced() {
       return false
     },

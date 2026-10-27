@@ -166,6 +166,7 @@ describe.skipIf(!DATABASE_URL)('Board References comp U backend, against a live 
       currentUser,
       clock,
       { nextInt: () => 0 },
+      boards,
     )
     return { ideaService, boardService, outcomeService }
   }

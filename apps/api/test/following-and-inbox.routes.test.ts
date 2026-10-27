@@ -159,7 +159,9 @@ function inboxController(
     },
     markAllRead: async () => {},
   }
-  const service = new NotificationInboxService(repository, options.currentUser ?? caller(), CLOCK)
+  const service = new NotificationInboxService(repository, options.currentUser ?? caller(), CLOCK, {
+    visibleBoardIds: async () => [],
+  })
   return { controller: new NotificationsController(service), calls }
 }
 

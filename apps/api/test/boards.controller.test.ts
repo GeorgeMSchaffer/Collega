@@ -88,6 +88,7 @@ function controller(otherBoards: readonly Board[] = []): {
     },
     getById: async (id) => [existing, ...otherBoards].find((b) => b.id === id) ?? null,
     listByOrganization: async () => [existing, ...otherBoards],
+    visibleBoardIds: async () => [existing, ...otherBoards].map((b) => b.id),
     isStatusReferenced: async () => false,
     countIdeasByBoard: async () => new Map(),
     countIdeasByBoardAndStatus: async () => [],

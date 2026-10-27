@@ -24,6 +24,7 @@ import {
   NOW,
   ORG_A,
   ORG_B,
+  openBoards,
   orgAdmin,
   readOnly,
   recordingAudit,
@@ -167,6 +168,7 @@ function setup(options: {
     options.currentUser,
     fixedClock(),
     options.random ?? { nextInt: () => 3 },
+    openBoards(),
   )
   return {
     service,

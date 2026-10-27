@@ -1,3 +1,4 @@
+import type { VisibleBoardsLookup } from '@collega/application/boards'
 import type {
   AuditEventWriter,
   Clock,
@@ -42,6 +43,7 @@ import { OutcomesController } from './outcomes.controller.js'
         currentUser: CurrentUserContext,
         clock: Clock,
         random: RandomSource,
+        boardAccess: VisibleBoardsLookup,
       ) =>
         new OutcomeService(
           outcomes,
@@ -53,6 +55,7 @@ import { OutcomesController } from './outcomes.controller.js'
           currentUser,
           clock,
           random,
+          boardAccess,
         ),
       inject: [
         PORT_TOKENS.OutcomeRepository,
@@ -64,6 +67,7 @@ import { OutcomesController } from './outcomes.controller.js'
         PORT_TOKENS.CurrentUserContext,
         PORT_TOKENS.Clock,
         PORT_TOKENS.RandomSource,
+        PORT_TOKENS.VisibleBoardsLookup,
       ],
     },
   ],

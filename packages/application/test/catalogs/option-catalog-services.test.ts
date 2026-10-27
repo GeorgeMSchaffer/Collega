@@ -42,6 +42,7 @@ import {
   NOW,
   ORG_A,
   ORG_B,
+  openBoards,
   orgAdmin,
   readOnly,
   recordingAudit,
@@ -621,9 +622,17 @@ function tagHarness(options: { currentUser: CurrentUserContext }) {
   }
 
   return {
-    service: new TagService(tags, ORG_LOOKUP, recordingAudit(), options.currentUser, fixedClock(), {
-      nextInt: () => 0,
-    }),
+    service: new TagService(
+      tags,
+      ORG_LOOKUP,
+      recordingAudit(),
+      options.currentUser,
+      fixedClock(),
+      {
+        nextInt: () => 0,
+      },
+      openBoards(),
+    ),
     calls,
   }
 }

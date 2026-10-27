@@ -1,3 +1,4 @@
+import type { VisibleBoardsLookup } from '@collega/application/boards'
 import type { Clock, CurrentUserContext } from '@collega/application/common'
 import type {
   NotificationEventRepository,
@@ -53,11 +54,13 @@ import { NotificationsController } from './notifications.controller.js'
         inbox: NotificationInboxRepository,
         currentUser: CurrentUserContext,
         clock: Clock,
-      ) => new NotificationInboxService(inbox, currentUser, clock),
+        boardAccess: VisibleBoardsLookup,
+      ) => new NotificationInboxService(inbox, currentUser, clock, boardAccess),
       inject: [
         PORT_TOKENS.NotificationInboxRepository,
         PORT_TOKENS.CurrentUserContext,
         PORT_TOKENS.Clock,
+        PORT_TOKENS.VisibleBoardsLookup,
       ],
     },
   ],

@@ -6,6 +6,7 @@
 // and a shared fake would have to grow a branch for each.
 
 import { Role } from '@collega/domain/enums'
+import type { BoardAccessLookup, VisibleBoardsLookup } from '../../src/boards/ports.js'
 import type {
   AuditEventInput,
   AuditEventWriter,
@@ -120,4 +121,12 @@ export const ALL_ROLES = [Role.SiteAdmin, Role.OrgAdmin, Role.User, Role.ReadOnl
 /** Plain lanes (not final, no reference) on the given statuses, for `createBoard`. */
 export function lanes(...statusIds: string[]) {
   return statusIds.map((statusId) => ({ statusId, isFinal: false, referencesBoardId: null }))
+}
+
+/** Board sight for suites that are not about Restricted boards: every board in `boardIds` (the
+ * boards the suite uses) is visible to every caller. */
+export function openBoards(
+  boardIds: readonly string[] = [],
+): BoardAccessLookup & VisibleBoardsLookup {
+  return { canSeeBoard: async () => true, visibleBoardIds: async () => boardIds }
 }

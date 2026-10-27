@@ -17,6 +17,7 @@ import {
   NOW,
   ORG_A,
   ORG_B,
+  openBoards,
   orgAdmin,
   readOnly,
   recordingAudit,
@@ -103,6 +104,7 @@ function make(ideas: Idea[], currentUser = orgAdmin(ORG_A)) {
       getSprintBoard: async (id) =>
         [board, otherBoard, unprefixedBoard].find((b) => b.id === id) ?? null,
     },
+    openBoards(),
   )
   return { service, added, updates, audit, unitOfWork }
 }
