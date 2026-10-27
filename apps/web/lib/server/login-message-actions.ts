@@ -106,6 +106,8 @@ export async function endLoginMessageNow(messageId: string): Promise<{ error: st
       display: message.display,
       dismissalMode: message.dismissalMode,
       startsAtUtc: message.startsAtUtc,
+      // The contract has no end-now route, so this is a full replacement timed by this server's
+      // clock; an edit landing between the read and the write would be overwritten.
       endsAtUtc: new Date().toISOString(),
       showAgain: false,
     })

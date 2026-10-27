@@ -2,8 +2,8 @@
 
 *Written 2026-10-27 (slice 357, spec) from the owner's answers, one question at a time.
 Decision: `SPEC/decisions.md` 2026-10-27 "Admins can post sign-in messages, system-wide or per
-organization". Contract: `SPEC/contracts/login-messages.md`, proposed. Status: **specified, not
-built**.*
+organization". Contract: `SPEC/contracts/login-messages.md`, proposed. Status: **built
+2026-10-27** (slices 358–363, PR #60).*
 
 ## Intent
 

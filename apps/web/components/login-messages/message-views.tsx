@@ -20,7 +20,8 @@ export const MODES: Record<DismissalMode, { name: string; hint: string; close: s
   },
 }
 
-const URL_PATTERN = /(https?:\/\/[^\s<]+)/g
+// The last character must not be sentence punctuation, so "see https://x.test/policy." links to `policy`.
+const URL_PATTERN = /(https?:\/\/[^\s<]*[^\s<.,;:!?)])/g
 
 /** Plain text with web addresses as links (the form promises it). Line breaks are kept by CSS. */
 export function MessageText({ text }: { text: string }) {
