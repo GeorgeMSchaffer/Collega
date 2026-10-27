@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-27 | Sign-in messages show on the first page after signing in only | active | full below |
 | 2026-10-27 | Usage analytics records what members view, tied to their account | active | full below |
 | 2026-10-27 | Admins can post sign-in messages, system-wide or per organization | active | full below |
 | 2026-10-26 | A board can be Restricted to named users and groups | active | full below |
@@ -151,6 +152,23 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | A denied admin route shows a refusal, not a disabled page | superseded in part | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | Conversion slices merge to `dev`, not to an integration branch | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
+
+---
+
+## 2026-10-27 — Sign-in messages show on the first page after signing in only
+
+> Spec: `SPEC/20-feature-login-messages.md` LMS-3a, 3d. Amends the entry below on sign-in messages.
+
+**Decided (owner):** the desk shows sign-in messages on the first page after signing in and on no
+later page of that session. A message the reader leaves unanswered there (neither closed nor
+acknowledged) waits for the next sign-in; a message that goes live mid-session first shows at the
+next sign-in. The owner chose this over keeping unanswered messages on screen until answered.
+
+**Why:** they are sign-in messages; a notice reappearing on every reload or popping up mid-task is
+the interruption the feature is meant to avoid.
+
+**How:** signing in sets a marker cookie beside the session; the desk shows the visible set while
+the marker is present and clears it once shown. The API and its visible-set rule are unchanged.
 
 ---
 

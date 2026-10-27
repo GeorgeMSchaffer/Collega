@@ -3,7 +3,7 @@
 *Written 2026-10-27 (slice 357, spec) from the owner's answers, one question at a time.
 Decision: `SPEC/decisions.md` 2026-10-27 "Admins can post sign-in messages, system-wide or per
 organization". Contract: `SPEC/contracts/login-messages.md`, proposed. Status: **built
-2026-10-27** (slices 358–363, PR #60).*
+2026-10-27** (slices 358–363, PR #60; LMS-3a amended in slice 369).*
 
 ## Intent
 
@@ -72,15 +72,17 @@ Each requirement has scenarios and an oracle. IDs are stable; later slices cite 
 
 ### LMS-3 A user sees the live messages in their scope — Added
 
-- **3a** On every desk page render, the user is shown each **live** message in their scope (system
-  messages, plus their organization's if they have one) that is not hidden by LMS-4.
+- **3a** On the first desk page after signing in, the user is shown each **live** message in their
+  scope (system messages, plus their organization's if they have one) that is not hidden by LMS-4.
+  Later pages of the same sign-in show none: a message left unanswered there waits for the next
+  sign-in (owner, 2026-10-27; amended from "every desk page render").
 - **3b** Order: system before organization; within each, earlier `startsAtUtc` first, then earlier
   creation.
 - **3c** `Modal` messages show one at a time in that order; the next opens when the current one is
   closed or acknowledged. `Banner` messages stack above the page content, below the View As
   banner, in the same order. Banners show while modals are open.
-- **3d** A message whose window opens after the user signed in appears on their next page load;
-  one whose window closes disappears on their next page load.
+- **3d** A message whose window opens after the user signed in first appears at their next sign-in;
+  one whose window closes is not shown at a later sign-in.
 - **3e** Editing a message's text without *Show again to everyone* changes what a user sees next
   time it shows, and does not bring back a message they had hidden.
 - **3f** While a Site Admin is in View As, no message is shown, and close and acknowledge are
@@ -247,8 +249,8 @@ pnpm test:e2e -- login-messages
 
 - **Decided by default, confirm on review:** no messages during View As, and close/acknowledge
   refused there (LMS-3f).
-- **Decided by default, confirm on review:** a message that goes live mid-session appears on the
-  next page load, not only at the next sign-in (LMS-3d).
+- **Owner, 2026-10-27 (replaces a default):** messages show only on the first desk page after
+  signing in; one that goes live mid-session waits for the next sign-in (LMS-3a, 3d).
 - **Decided by default, confirm on review:** delete is a hard delete and removes its receipts;
   *End now* is the way to stop a message and keep its acknowledgements.
 - **Decided by default:** Site Admins have no organization, so they see system messages only.
