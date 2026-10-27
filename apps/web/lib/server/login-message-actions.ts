@@ -20,7 +20,7 @@ import {
   apiPut,
 } from '../api/client'
 import type { WireLoginMessage } from '../api/wire'
-import { actingOrganizationId } from './current-user'
+import { actingOrganizationId, clearSignInMessagesDue } from './current-user'
 
 /** What the message form renders back; `errors` is the API's field-keyed 400. */
 export type LoginMessageFormState = {
@@ -152,4 +152,9 @@ export async function respondToLoginMessage(
   }
   // An admin reading the report on screen sees their own acknowledgement counted.
   revalidatePath('/settings/login-messages')
+}
+
+/** The desk has shown this sign-in's messages: later pages show none until the next sign-in. */
+export async function markSignInMessagesShown(): Promise<void> {
+  await clearSignInMessagesDue()
 }

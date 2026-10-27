@@ -74,6 +74,33 @@ export async function issueSession(token: string, maxAgeSeconds: number): Promis
     maxAge: maxAgeSeconds,
     path: '/',
   })
+  await markSignInMessagesDue()
+}
+
+/**
+ * Sign-in messages show on the first desk page after signing in and nowhere else (LMS-3a, owner
+ * 2026-10-27). A new session sets this marker; the desk shows the visible set while it is present
+ * and clears it once shown. It carries no identity - only "this browser has just signed in" - and
+ * lives here because this is the one module that writes cookies.
+ */
+const SIGN_IN_MESSAGES_COOKIE = 'collega_sign_in_messages'
+
+async function markSignInMessagesDue(): Promise<void> {
+  ;(await cookies()).set(SIGN_IN_MESSAGES_COOKIE, '1', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+  })
+}
+
+export async function signInMessagesDue(): Promise<boolean> {
+  return (await cookies()).has(SIGN_IN_MESSAGES_COOKIE)
+}
+
+/** Only a Server Function or route handler may call this: a render cannot write cookies. */
+export async function clearSignInMessagesDue(): Promise<void> {
+  ;(await cookies()).delete(SIGN_IN_MESSAGES_COOKIE)
 }
 
 /**
@@ -102,7 +129,9 @@ export async function sessionRemainingMs(): Promise<number | null> {
 }
 
 export async function clearSession(): Promise<void> {
-  ;(await cookies()).delete(SESSION_COOKIE_NAME)
+  const jar = await cookies()
+  jar.delete(SESSION_COOKIE_NAME)
+  jar.delete(SIGN_IN_MESSAGES_COOKIE)
 }
 
 /**

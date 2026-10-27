@@ -3,7 +3,7 @@
 *Written 2026-10-27 (slice 357, spec) from the owner's answers, one question at a time.
 Decision: `SPEC/decisions.md` 2026-10-27 "Admins can post sign-in messages, system-wide or per
 organization". Contract: `SPEC/contracts/login-messages.md`, proposed. Status: **built
-2026-10-27** (slices 358–363, PR #60).*
+2026-10-27** (slices 358–363, PR #60; LMS-3a amended in slice 369).*
 
 ## Intent
 
@@ -72,22 +72,25 @@ Each requirement has scenarios and an oracle. IDs are stable; later slices cite 
 
 ### LMS-3 A user sees the live messages in their scope — Added
 
-- **3a** On every desk page render, the user is shown each **live** message in their scope (system
-  messages, plus their organization's if they have one) that is not hidden by LMS-4.
+- **3a** On the first desk page after signing in, the user is shown each **live** message in their
+  scope (system messages, plus their organization's if they have one) that is not hidden by LMS-4.
+  Later pages of the same sign-in show none: a message left unanswered there waits for the next
+  sign-in (owner, 2026-10-27; amended from "every desk page render").
 - **3b** Order: system before organization; within each, earlier `startsAtUtc` first, then earlier
   creation.
 - **3c** `Modal` messages show one at a time in that order; the next opens when the current one is
   closed or acknowledged. `Banner` messages stack above the page content, below the View As
   banner, in the same order. Banners show while modals are open.
-- **3d** A message whose window opens after the user signed in appears on their next page load;
-  one whose window closes disappears on their next page load.
+- **3d** A message whose window opens after the user signed in first appears at their next sign-in;
+  one whose window closes is not shown at a later sign-in.
 - **3e** Editing a message's text without *Show again to everyone* changes what a user sees next
   time it shows, and does not bring back a message they had hidden.
 - **3f** While a Site Admin is in View As, no message is shown, and close and acknowledge are
   refused (`403`). An admin must not dismiss or acknowledge on someone else's behalf.
 
 *Oracle:* service tests for the visible-set rule over a fixed clock; web tests for ordering and
-stacking; the Playwright spec for a modal then a banner.
+stacking; the Playwright spec for a modal then a banner, and for an unanswered message gone on
+reload and back after the next sign-in (LMS-3a, to be added by QA).
 
 ### LMS-4 Closing, dismissing and acknowledging — Added
 
@@ -193,9 +196,11 @@ visible set are plain joins, and *Show again* is one `UPDATE … SET revision = 
 authorization by scope as in LMS-1/2); a Prisma repository in infrastructure. The clock is
 injected.
 
-**Web:** the desk layout fetches the visible set once per render and passes it to a client
-`<LoginMessages>` beside `ViewAsBanner`: banners in the column, modals through the design-system
-dialog. Close and acknowledge are server actions that call the API and refresh.
+**Web:** signing in sets a marker cookie beside the session. While it is present, the desk layout
+fetches the visible set and passes it to a client `<LoginMessages>` beside `ViewAsBanner`: banners
+in the column, modals in a native `<dialog>`. `<LoginMessages>` keeps that first set as the layout
+re-renders and clears the marker through a Server Function, so later pages show nothing (LMS-3a).
+Close and acknowledge are server actions that call the API.
 
 **Rejected:** (a) a session table to track "this sign-in": a schema change to auth for one
 comparison the token already supports; (b) receipts deleted on *Show again*: loses the old
@@ -247,8 +252,8 @@ pnpm test:e2e -- login-messages
 
 - **Decided by default, confirm on review:** no messages during View As, and close/acknowledge
   refused there (LMS-3f).
-- **Decided by default, confirm on review:** a message that goes live mid-session appears on the
-  next page load, not only at the next sign-in (LMS-3d).
+- **Owner, 2026-10-27 (replaces a default):** messages show only on the first desk page after
+  signing in; one that goes live mid-session waits for the next sign-in (LMS-3a, 3d).
 - **Decided by default, confirm on review:** delete is a hard delete and removes its receipts;
   *End now* is the way to stop a message and keep its acknowledgements.
 - **Decided by default:** Site Admins have no organization, so they see system messages only.
