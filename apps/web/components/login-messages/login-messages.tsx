@@ -4,7 +4,7 @@ import { Button } from '@collega/design-system'
 import { type KeyboardEvent, useEffect, useId, useRef, useState, useTransition } from 'react'
 import { Icon } from '@/components/list/icons'
 import type { VisibleLoginMessage } from '@/lib/data/login-messages'
-import { respondToLoginMessage } from '@/lib/server/login-message-actions'
+import { markSignInMessagesShown, respondToLoginMessage } from '@/lib/server/login-message-actions'
 import { BannerView, MessageText, MODES, ModalCard } from './message-views'
 
 type Response = 'close' | 'acknowledge'
@@ -12,15 +12,29 @@ type Response = 'close' | 'acknowledge'
 /**
  * The messages shown after sign-in (LMS-3, LMS-4): banners stacked above the page content, below
  * the View As banner, and modals one at a time in the API's order. A response hides the message
- * here at once; the API records it, so the next render agrees.
+ * here at once; the API records it.
+ *
+ * They show on the first desk page after signing in only. The set is kept from the first render, so
+ * the later, empty ones (the layout re-renders as the reader works) do not take it away; and once
+ * `due` has been seen the marker is cleared, so the next page load shows nothing.
  */
 export function LoginMessages({
-  messages,
+  messages: initial,
+  due = false,
   organizationName,
 }: {
   messages: VisibleLoginMessage[]
+  /** This render is the first desk page since signing in. */
+  due?: boolean
   organizationName: string | null
 }) {
+  const [messages, setMessages] = useState(initial)
+  useEffect(() => {
+    if (!due) return
+    // A new sign-in mounts the desk afresh, but take the newer set if the layout survived one.
+    setMessages(initial)
+    void markSignInMessagesShown()
+  }, [due, initial])
   const [answered, setAnswered] = useState<ReadonlySet<string>>(new Set())
   const [, startResponse] = useTransition()
 

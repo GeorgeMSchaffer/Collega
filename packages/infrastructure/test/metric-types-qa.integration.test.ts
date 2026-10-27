@@ -149,6 +149,7 @@ describe.skipIf(!DATABASE_URL)('Metric types QA against a live database', () => 
       auditWriter,
       currentUser,
       { now: () => NOW },
+      { canSeeBoard: async () => true },
     )
   }
 

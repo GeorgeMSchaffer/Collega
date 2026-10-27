@@ -124,10 +124,11 @@ function followingController(currentUser: CurrentUserContext) {
   }
   const service = new FollowService(
     followers,
-    { getById: async (id) => (id === IDEA ? { organizationId: ORG } : null) },
+    { getById: async (id) => (id === IDEA ? { organizationId: ORG, boardId: null } : null) },
     { saveChanges: async () => {} },
     currentUser,
     CLOCK,
+    { canSeeBoard: async () => true },
   )
   return new FollowingController(service)
 }

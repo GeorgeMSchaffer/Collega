@@ -5,6 +5,8 @@
 import { Role } from '@collega/domain/enums'
 import type { Idea } from '@collega/domain/ideas'
 import { checkMetricNumber, MetricTypeInvariantError } from '@collega/domain/metric-types'
+import { ensureCanSeeBoard } from '../boards/board-access.js'
+import type { BoardAccessLookup } from '../boards/ports.js'
 import {
   type AuditEventWriter,
   attributeAudit,
@@ -37,6 +39,7 @@ export class IdeaMetricsService {
     private readonly auditEvents: AuditEventWriter,
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
+    private readonly boardAccess: BoardAccessLookup,
   ) {}
 
   async get(ideaId: string): Promise<readonly IdeaMetric[]> {
@@ -157,6 +160,7 @@ export class IdeaMetricsService {
     if (!idea || idea.organizationId !== this.currentUser.organizationId) {
       throw new NotFoundError('Idea not found.')
     }
+    await ensureCanSeeBoard(this.boardAccess, this.currentUser, idea.boardId, 'Idea not found.')
     return idea
   }
 

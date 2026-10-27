@@ -169,6 +169,7 @@ describe.skipIf(!DATABASE_URL)('Board References follow-ups, against a live data
       currentUser,
       clock,
       { nextInt: () => 0 },
+      boards,
       new PrismaMetricTypeRepository(prisma, unitOfWork),
     )
     const boardService = new BoardService(
@@ -191,6 +192,7 @@ describe.skipIf(!DATABASE_URL)('Board References follow-ups, against a live data
       audit,
       currentUser,
       clock,
+      boards,
     )
     return { ideaService, boardService, metricsService, notifications, events }
   }

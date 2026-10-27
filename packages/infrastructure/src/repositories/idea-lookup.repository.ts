@@ -1,5 +1,5 @@
 // Satisfies both `comments.IdeaLookupPort` (`getById` -> `IdeaSummary`) and
-// `upvotes.IdeaLookupPort` (`getOrganizationId` -> `string | null`) on one class: the two ports
+// `upvotes.IdeaLookupPort` (`getPlacement` -> organization and board) on one class: the two ports
 // name different methods, so - per the brief - "one class can still implement both if the shapes
 // compose cleanly", and both only ever read from `ideas`.
 
@@ -36,14 +36,16 @@ export class IdeaLookupRepository
     }
   }
 
-  /** `upvotes.IdeaLookupPort.getOrganizationId`. Not scoped to `is_deleted = false`: the port
+  /** `upvotes.IdeaLookupPort.getPlacement`. Not scoped to `is_deleted = false`: the port
    * contract does not say to exclude a soft-deleted idea, and removing an upvote from an idea
    * that has since been deleted should still be possible. */
-  async getOrganizationId(ideaId: string): Promise<string | null> {
+  async getPlacement(
+    ideaId: string,
+  ): Promise<{ readonly organizationId: string; readonly boardId: string | null } | null> {
     const row = await this.prisma.ideas.findUnique({
       where: { id: ideaId },
-      select: { organization_id: true },
+      select: { organization_id: true, board_id: true },
     })
-    return row?.organization_id ?? null
+    return row ? { organizationId: row.organization_id, boardId: row.board_id } : null
   }
 }

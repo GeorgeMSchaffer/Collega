@@ -36,6 +36,8 @@ import {
   updateIdeaContent,
 } from '@collega/domain/ideas'
 import { normalizeTagName } from '@collega/domain/tags'
+import { ensureCanSeeBoard } from '../boards/board-access.js'
+import type { BoardAccessLookup } from '../boards/ports.js'
 import type {
   AuditEventWriter,
   Clock,
@@ -175,6 +177,7 @@ export class IdeaService {
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
     private readonly random: RandomSource,
+    private readonly boardAccess: BoardAccessLookup,
     /** Optional so a host that has no metric values reads `metrics` as `[]`. */
     private readonly metricValues?: Pick<IdeaMetricValuesPort, 'listByIdea'>,
     /** Optional like `metricValues`; the activity read needs it. */
@@ -188,7 +191,7 @@ export class IdeaService {
     if (!board) {
       throw new NotFoundError('Board not found.')
     }
-    this.ensureOrganizationScope(board.organizationId)
+    await this.ensureCanSeeBoardOf(board)
 
     const search = trimOrNull(query.search)
     const searchTextFieldIds = search
@@ -290,7 +293,7 @@ export class IdeaService {
     if (!board) {
       throw new NotFoundError('Board not found.')
     }
-    this.ensureOrganizationScope(board.organizationId)
+    await this.ensureCanSeeBoardOf(board)
     ensureBoardNotArchived(board)
 
     const statusId = command.statusId ?? leftMostStatusId(board)
@@ -388,7 +391,7 @@ export class IdeaService {
     if (!parent) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(parent.organizationId)
+    await this.ensureCanSeeIdea(parent)
     await this.ensureIdeaBoardNotArchived(parent)
 
     return this.addBoardTask(parent, command)
@@ -412,7 +415,7 @@ export class IdeaService {
     if (!board) {
       throw new NotFoundError('Board not found.')
     }
-    this.ensureOrganizationScope(board.organizationId)
+    await this.ensureCanSeeBoardOf(board)
     if (!(await this.boards.isReferencedByLane(boardId))) {
       throw new UnprocessableError(
         'boardIsNotAWorkBoard',
@@ -427,7 +430,7 @@ export class IdeaService {
       throw new NotFoundError('Idea not found.')
     }
     if (parent) {
-      this.ensureOrganizationScope(parent.organizationId)
+      await this.ensureCanSeeIdea(parent)
       await this.ensureIdeaBoardNotArchived(parent)
     }
     const sprintId = await this.resolveTaskSprint(board, command.sprintId)
@@ -507,7 +510,7 @@ export class IdeaService {
     if (!parent) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(parent.organizationId)
+    await this.ensureCanSeeIdea(parent)
 
     const tasks = await this.ideaRepository.listChildren(parent.id)
     if (tasks.length === 0) {
@@ -553,13 +556,14 @@ export class IdeaService {
     if (!parent) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(parent.organizationId)
+    await this.ensureCanSeeIdea(parent)
     await this.ensureIdeaBoardNotArchived(parent)
 
     const task = await this.ideaRepository.getById(taskId, false)
     if (!task || task.parentIdeaId !== parent.id) {
       throw new NotFoundError('Task not found.')
     }
+    await ensureCanSeeBoard(this.boardAccess, this.currentUser, task.boardId, 'Task not found.')
 
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
@@ -907,7 +911,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
 
     const actorId = this.requireAuthenticatedUserId()
     if (!this.canAdministerIdeaContent(idea, actorId)) {
@@ -959,7 +963,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
 
     return this.projectDetail(idea)
   }
@@ -975,7 +979,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
 
     const page = normalizePageRequest(toPageRequestInput(query.page, query.pageSize))
     return this.activity?.listForIdea(ideaId, page) ?? toPage([], 0, page)
@@ -990,7 +994,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
     await this.ensureIdeaBoardNotArchived(idea)
 
     const now = this.clock.now()
@@ -1172,7 +1176,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
     if (!(await this.isTaskItem(idea))) {
       // Only if it stopped being a task since the route asked.
       throw new ConflictError('This item is no longer a task.')
@@ -1246,7 +1250,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
     if (idea.organizationId !== organizationId) {
       throw new NotFoundError('Idea not found.')
     }
@@ -1305,7 +1309,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
     await this.ensureIdeaBoardNotArchived(idea)
 
     const blockerIds = [...new Set(ideaIds)]
@@ -1443,7 +1447,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
 
     // A pool idea sits in no lane; only a pull sets its status (board pull-in rule 2).
     if (idea.boardId === null) {
@@ -1587,7 +1591,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
 
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
@@ -1643,7 +1647,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
 
     if (!this.canAdministerIdeaContent(idea, null, true)) {
       throw new ForbiddenError('You are not allowed to return an issue to discovery.')
@@ -1679,7 +1683,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
 
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
@@ -1722,7 +1726,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
 
     if (!this.canAdministerIdeaContent(idea, null, true)) {
       throw new ForbiddenError('You are not allowed to assign issues to a sprint.')
@@ -1786,7 +1790,7 @@ export class IdeaService {
     if (!board) {
       throw new NotFoundError('Board not found.')
     }
-    this.ensureOrganizationScope(board.organizationId)
+    await this.ensureCanSeeBoardOf(board)
     ensureBoardNotArchived(board)
 
     const ideaIds = command.ideaIds
@@ -1962,7 +1966,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
     if (idea.phase !== IdeaPhase.Delivery) {
       throw new NotFoundError('Idea not found.')
     }
@@ -2017,7 +2021,7 @@ export class IdeaService {
     if (!board) {
       throw new NotFoundError('Board not found.')
     }
-    this.ensureOrganizationScope(board.organizationId)
+    await this.ensureCanSeeBoardOf(board)
 
     // Page through the store, but bounded - every idea, its tags, its field-value snapshot, and
     // the rendered CSV are all held in memory at once, and the endpoint is reachable by any
@@ -2129,7 +2133,7 @@ export class IdeaService {
     if (!board) {
       throw new NotFoundError('Board not found.')
     }
-    this.ensureOrganizationScope(board.organizationId)
+    await this.ensureCanSeeBoardOf(board)
     ensureBoardNotArchived(board)
 
     const now = this.clock.now()
@@ -3069,6 +3073,18 @@ export class IdeaService {
     if (this.requireAuthenticatedRole() === Role.ReadOnly) {
       throw new ForbiddenError('Read Only users cannot create or edit ideas.')
     }
+  }
+
+  /** Organization scope, then board sight: an item on a board the caller cannot see is `404`
+   * (SPEC/20-feature-board-access-and-groups.md BAG-4a/b). */
+  private async ensureCanSeeIdea(idea: Pick<Idea, 'organizationId' | 'boardId'>): Promise<void> {
+    this.ensureOrganizationScope(idea.organizationId)
+    await ensureCanSeeBoard(this.boardAccess, this.currentUser, idea.boardId, 'Idea not found.')
+  }
+
+  private async ensureCanSeeBoardOf(board: BoardContext): Promise<void> {
+    this.ensureOrganizationScope(board.organizationId)
+    await ensureCanSeeBoard(this.boardAccess, this.currentUser, board.boardId, 'Board not found.')
   }
 
   private ensureOrganizationScope(organizationId: string): void {

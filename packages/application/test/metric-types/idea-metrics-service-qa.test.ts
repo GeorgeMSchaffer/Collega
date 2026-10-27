@@ -160,6 +160,7 @@ function harness(
     },
     currentUser,
     fixedClock(),
+    { canSeeBoard: async () => true },
   )
   return { service, log, events, applied, listByIdea }
 }

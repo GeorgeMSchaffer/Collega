@@ -333,6 +333,7 @@ const PORT_ALIASES: Provider[] = [
   { provide: PORT_TOKENS.AiUsersPort, useExisting: PrismaUserRepository },
 
   { provide: PORT_TOKENS.BoardRepository, useExisting: PrismaBoardRepository },
+  { provide: PORT_TOKENS.BoardAccessLookup, useExisting: PrismaBoardRepository },
   {
     provide: PORT_TOKENS.OrganizationExistenceLookup,
     useExisting: OrganizationExistenceLookupRepository,
