@@ -42,10 +42,11 @@ describe('JwtAccessTokenService.issue', () => {
       .slice(0, 2)
       .map((part) => JSON.parse(Buffer.from(part, 'base64url').toString('utf8')))
     expect(header).toEqual({ alg: 'HS256', typ: 'JWT' })
-    // No `iat`: `noTimestamp` drops the explicit one too. Nothing reads it; `exp` is the deadline.
+    // `iat` is the injected clock's, not the wall clock's: sign-in messages read it as the sign-in.
     expect(payload).toEqual({
       sub: 'user-1',
       sstamp: 'STAMP-1',
+      iat: ISSUED.getTime() / 1000,
       exp: ISSUED.getTime() / 1000 + 28_800,
     })
     expect(expiresInSeconds).toBe(28_800)
@@ -59,6 +60,7 @@ describe('JwtAccessTokenService.tryValidate', () => {
     expect(service.tryValidate(token, ISSUED)).toEqual({
       userId: 'user-1',
       securityStamp: 'STAMP-1',
+      issuedAtUtc: ISSUED,
     })
   })
 

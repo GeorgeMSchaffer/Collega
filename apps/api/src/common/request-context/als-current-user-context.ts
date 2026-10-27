@@ -52,6 +52,10 @@ export class AlsCurrentUserContext implements CurrentUserContext {
     return this.store.identity?.realUserId ?? null
   }
 
+  get signedInAtUtc(): Date | null {
+    return this.store.identity?.signedInAtUtc ?? null
+  }
+
   /**
    * The real administrator behind a live View As session, for `GET /auth/me` to build its banner
    * from. Null when nobody is impersonating.

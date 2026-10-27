@@ -134,3 +134,16 @@ export enum IssueTaskState {
   InProgress = 'InProgress', // 1
   Done = 'Done', // 2
 }
+
+/** How a sign-in message appears (SPEC/20-feature-login-messages.md). */
+export enum LoginMessageDisplay {
+  Modal = 'Modal',
+  Banner = 'Banner',
+}
+
+/** What hides a sign-in message, and for how long (LMS-4). */
+export enum LoginMessageDismissal {
+  EveryLogin = 'EveryLogin',
+  DismissOnce = 'DismissOnce',
+  AcknowledgeRequired = 'AcknowledgeRequired',
+}

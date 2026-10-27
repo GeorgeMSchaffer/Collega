@@ -13,6 +13,7 @@ import { FollowingModule } from './following/following.module.js'
 import { IdeaTypesModule } from './idea-types/idea-types.module.js'
 import { IdeasModule } from './ideas/ideas.module.js'
 import { IssueTasksModule } from './issue-tasks/issue-tasks.module.js'
+import { LoginMessagesModule } from './login-messages/login-messages.module.js'
 import { MetricTypesModule } from './metric-types/metric-types.module.js'
 import { NotificationsModule } from './notifications/notifications.module.js'
 import { OrganizationsModule } from './organizations/organizations.module.js'
@@ -37,6 +38,7 @@ export const FEATURE_MODULES = [
   IdeaTypesModule,
   IdeasModule,
   IssueTasksModule,
+  LoginMessagesModule,
   MetricTypesModule,
   NotificationsModule,
   OrganizationsModule,

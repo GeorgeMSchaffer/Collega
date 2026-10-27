@@ -50,12 +50,10 @@ export class JwtAccessTokenService implements AccessTokenIssuer, AccessTokenVali
       exp: expiresAtSeconds,
     }
 
-    // noTimestamp: the explicit iat above is the one that counts - jsonwebtoken would otherwise
-    // overwrite it with the real wall clock, defeating the `nowUtc` parameter's testability.
-    const token = jsonwebtoken.sign(claims, this.config.signingKey, {
-      algorithm: 'HS256',
-      noTimestamp: true,
-    })
+    // jsonwebtoken keeps an explicit `iat` and only falls back to the wall clock when it is absent.
+    // (`noTimestamp`, used here until 2026-10-27, deletes `iat` outright; sign-in messages read it as
+    // the sign-in time, SPEC/20-feature-login-messages.md.)
+    const token = jsonwebtoken.sign(claims, this.config.signingKey, { algorithm: 'HS256' })
 
     return { token, expiresInSeconds: this.config.lifetimeSeconds }
   }
@@ -79,7 +77,11 @@ export class JwtAccessTokenService implements AccessTokenIssuer, AccessTokenVali
       }
 
       const sstamp = payload.sstamp
-      return { userId: sub, securityStamp: typeof sstamp === 'string' ? sstamp : '' }
+      return {
+        userId: sub,
+        securityStamp: typeof sstamp === 'string' ? sstamp : '',
+        ...(typeof payload.iat === 'number' ? { issuedAtUtc: new Date(payload.iat * 1000) } : {}),
+      }
     } catch {
       // Malformed, unsigned, or expired - jsonwebtoken throws for all three; the port collapses
       // them to the same `null` the caller treats as "not authenticated".

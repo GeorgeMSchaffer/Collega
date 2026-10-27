@@ -123,4 +123,6 @@ export type AuthenticatedPrincipal = {
    */
   readonly mustChangePassword: boolean
   readonly impersonation: ImpersonationContext | null
+  /** When the session token was issued: the sign-in (SPEC/20-feature-login-messages.md). */
+  readonly signedInAtUtc?: Date | null
 }

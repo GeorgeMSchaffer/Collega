@@ -25,6 +25,8 @@ export interface AccessTokenIssuer {
 export type ValidatedAccessToken = {
   readonly userId: string
   readonly securityStamp: string
+  /** The token's `iat`: only sign-in issues a token, so this is the sign-in time. */
+  readonly issuedAtUtc?: Date
 }
 
 export interface AccessTokenValidator {

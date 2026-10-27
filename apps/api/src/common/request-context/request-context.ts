@@ -12,6 +12,8 @@ export interface ResolvedIdentity {
   readonly role: Role
   readonly isImpersonating: boolean
   readonly realUserId: string
+  /** The session token's issue time, which is the sign-in. */
+  readonly signedInAtUtc?: Date | null
 
   /**
    * The real administrator and the session's clock, for the banner and nothing else.
