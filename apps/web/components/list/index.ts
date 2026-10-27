@@ -30,7 +30,7 @@ export {
   QuickAddRow,
   type QuickAddValues,
 } from './quick-add-row'
-export { type RowAction, RowActions } from './row-actions'
+export { ActionButton, type RowAction, RowActions } from './row-actions'
 export { useAddedHighlight } from './use-added-highlight'
 export { useListState } from './use-list-state'
 export { ViewSwitch } from './view-switch'

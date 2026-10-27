@@ -107,6 +107,9 @@ export const PORT_TOKENS = {
   OutcomeIdeasPort: 'OutcomeIdeasPort',
   OutcomeUsersPort: 'OutcomeUsersPort',
 
+  // Sign-in messages (packages/application/src/login-messages/ports.ts) --------------------------
+  LoginMessageRepository: 'LoginMessageRepository',
+
   // Metric types (packages/application/src/metric-types/ports.ts) -------------------------------
   MetricTypeRepository: 'MetricTypeRepository',
   IdeaMetricValuesPort: 'IdeaMetricValuesPort',

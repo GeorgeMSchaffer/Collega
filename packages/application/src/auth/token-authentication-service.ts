@@ -49,11 +49,12 @@ export class TokenAuthenticationService {
     // (SPEC/20-feature-view-as.md rule 1). Resolving the session here - the one place identity is
     // already established - is what lets every downstream authorization check work unchanged.
     const impersonated = await this.impersonation.resolveActingPrincipal(user, this.clock.now())
-    if (impersonated) {
-      return impersonated
-    }
+    const principal = impersonated ?? toPrincipal(user)
 
-    return toPrincipal(user)
+    // The token's issue time is the sign-in (SPEC/20-feature-login-messages.md).
+    return validated.issuedAtUtc === undefined
+      ? principal
+      : { ...principal, signedInAtUtc: validated.issuedAtUtc }
   }
 }
 

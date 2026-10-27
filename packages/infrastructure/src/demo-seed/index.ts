@@ -7,6 +7,7 @@ import { deliverySeed } from './modules/delivery.js'
 import { fieldsSeed } from './modules/fields.js'
 import { groupsSeed } from './modules/groups.js'
 import { ideasAndUpvotesSeed } from './modules/ideas-and-upvotes.js'
+import { loginMessagesSeed } from './modules/login-messages.js'
 import { organizationsSeed } from './modules/organizations.js'
 import { DEMO_ORGANIZATIONS, seedId } from './modules/scenario.js'
 import { usersSeed } from './modules/users.js'
@@ -34,6 +35,7 @@ const MODULES: readonly SeedModule[] = [
   deliverySeed,
   fieldsSeed,
   boardReferencesSeed,
+  loginMessagesSeed,
 ]
 
 export type SeedOutcome = {

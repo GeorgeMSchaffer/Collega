@@ -70,6 +70,8 @@ const DOMAIN_ENUMS: Record<string, Record<string, string>> = {
   DeliveryStatus: Enums.DeliveryStatus,
   SprintState: Enums.SprintState,
   IssueTaskState: Enums.IssueTaskState,
+  LoginMessageDisplay: Enums.LoginMessageDisplay,
+  LoginMessageDismissal: Enums.LoginMessageDismissal,
 }
 
 describe('domain enums vs packages/infrastructure/prisma/schema.prisma', () => {

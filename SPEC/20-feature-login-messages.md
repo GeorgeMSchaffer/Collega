@@ -2,8 +2,8 @@
 
 *Written 2026-10-27 (slice 357, spec) from the owner's answers, one question at a time.
 Decision: `SPEC/decisions.md` 2026-10-27 "Admins can post sign-in messages, system-wide or per
-organization". Contract: `SPEC/contracts/login-messages.md`, proposed. Status: **specified, not
-built**.*
+organization". Contract: `SPEC/contracts/login-messages.md`, proposed. Status: **built
+2026-10-27** (slices 358–363, PR #60).*
 
 ## Intent
 
@@ -159,7 +159,10 @@ Graphite and Terrazzo.
 refreshes it, so the token's `iat` is a stable sign-in time. "Hidden until the next sign-in" is a
 comparison of the receipt's `closedAtUtc` with that time: no session table and no per-session
 row. The principal resolved by `TokenAuthenticationService` gains `signedInAtUtc` (from `iat`), and
-`CurrentUserContext` exposes it. Everything else is additive: two new tables, new routes, a new
+`CurrentUserContext` exposes it. *Found while building 358:* the signer passed `noTimestamp`, which makes
+jsonwebtoken drop `iat`, so tokens carried only `sub`, `sstamp` and `exp`. The signer now keeps the
+explicit `iat` from the injected clock; a token issued before that has none, and its holder sees a
+closed message again only after their next sign-in. Everything else is additive: two new tables, new routes, a new
 desk component; no existing response changes.
 
 **Persistence** (an S0.2 amendment, numbered when its migration merges):
@@ -217,7 +220,7 @@ Sequential except where noted. Each backend slice starts with failing tests for 
 | Slice | Role | Outcome | Owns | Depends on |
 |---|---|---|---|---|
 | **357** | Spec | This file; decision entry; `contracts/login-messages.md` (proposed) and its index row; tracker row | `SPEC/` | — |
-| **358** | Backend | Migration for both tables and enums; domain entity and rules; `LoginMessageService` manage half; routes `GET/POST /login-messages/system`, `GET/POST /organizations/{orgId}/login-messages`, `GET/PUT/DELETE /login-messages/{id}`; audit; demo seed adds one live system banner and one org modal | domain, application, infrastructure `login-messages`, api `login-messages.controller.ts`, migration | 357 |
+| **358** | Backend | `iat` kept in the session token; migration for both tables and enums; domain entity and rules; `LoginMessageService` manage half; routes `GET/POST /login-messages/system`, `GET/POST /organizations/{orgId}/login-messages`, `GET/PUT/DELETE /login-messages/{id}`; audit; demo seed adds one ended system banner and one scheduled org modal (none live, so no e2e run meets one) | domain, application, infrastructure `login-messages`, api `login-messages.controller.ts`, migration | 357 |
 | **359** | Backend | `signedInAtUtc` on the principal and `CurrentUserContext`; `GET /login-messages/visible`; `POST …/{id}/close`, `/acknowledge`; `showAgain` on `PUT`; `GET …/{id}/acknowledgements` | application `auth` (principal only), `login-messages`, infrastructure repo, api controller | 358 |
 | **360** | QA | API suite per role and mode; visible-set table over the clock; View As refusal | `apps/api` tests | 359 |
 | **361** | UI/UX | Throwaway comp: the modal, the banner stack, the Settings list and drawer with report; owner approves | `SPEC/mockups/comp-r-login-messages.html` | 357 (may run beside 358–360) |

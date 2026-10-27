@@ -555,6 +555,7 @@ model organizations {
   fieldsets                  fieldsets[]
   idea_types                 idea_types[]
   ideas                      ideas[]
+  login_messages             login_messages[]
   metric_types               metric_types[]
   outcomes                   outcomes[]
   sprints                    sprints[]
@@ -562,6 +563,44 @@ model organizations {
   tags                       tags[]
   user_groups                user_groups[]
   users                      users[]
+}
+
+/// A message shown on the desk after sign-in (SPEC/20-feature-login-messages.md). A null
+/// `organization_id` is a system message, managed by a Site Admin.
+model login_messages {
+  id                     String                   @id(map: "PK_login_messages") @db.Uuid
+  organization_id        String?                  @db.Uuid
+  title                  String                   @db.VarChar(120)
+  body                   String                   @db.VarChar(4000)
+  display                LoginMessageDisplay
+  dismissal_mode         LoginMessageDismissal
+  starts_at_utc          DateTime                 @db.Timestamptz(6)
+  ends_at_utc            DateTime?                @db.Timestamptz(6)
+  revision               Int                      @default(1)
+  created_at_utc         DateTime                 @db.Timestamptz(6)
+  updated_at_utc         DateTime                 @db.Timestamptz(6)
+  created_by_user_id     String?                  @db.Uuid
+  updated_by_user_id     String?                  @db.Uuid
+  organizations          organizations?           @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_login_messages_organizations_organization_id")
+  login_message_receipts login_message_receipts[]
+
+  @@index([organization_id, starts_at_utc], map: "ix_login_messages_organization_id_starts_at_utc")
+}
+
+/// One user's close, dismissal and acknowledgement of a message, for one revision. Overwritten
+/// when the message's revision moves on.
+model login_message_receipts {
+  message_id          String         @db.Uuid
+  user_id             String         @db.Uuid
+  revision            Int
+  closed_at_utc       DateTime?      @db.Timestamptz(6)
+  dismissed_at_utc    DateTime?      @db.Timestamptz(6)
+  acknowledged_at_utc DateTime?      @db.Timestamptz(6)
+  login_messages      login_messages @relation(fields: [message_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_login_message_receipts_login_messages_message_id")
+  users               users          @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_login_message_receipts_users_user_id")
+
+  @@id([message_id, user_id], map: "PK_login_message_receipts")
+  @@index([user_id], map: "ix_login_message_receipts_user_id")
 }
 
 /// An organization-defined measure (cost saved, hours, revenue) that items carry projected and
@@ -722,6 +761,7 @@ model users {
   idea_upvotes                                                        idea_upvotes[]
   impersonation_sessions_impersonation_sessions_real_user_idTousers   impersonation_sessions[] @relation("impersonation_sessions_real_user_idTousers")
   impersonation_sessions_impersonation_sessions_target_user_idTousers impersonation_sessions[] @relation("impersonation_sessions_target_user_idTousers")
+  login_message_receipts                                              login_message_receipts[]
   organizations                                                       organizations?           @relation(fields: [organization_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "FK_users_organizations_organization_id")
   user_group_members                                                  user_group_members[]
   board_access_users                                                  board_access_users[]
@@ -839,6 +879,17 @@ enum Priority {
   Medium // 1
   High // 2
   Critical // 3
+}
+
+enum LoginMessageDisplay {
+  Modal
+  Banner
+}
+
+enum LoginMessageDismissal {
+  EveryLogin
+  DismissOnce
+  AcknowledgeRequired
 }
 
 enum Role {

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { type ReactNode, Suspense } from 'react'
 import { IdleSignOut } from '@/components/auth/idle-sign-out'
+import { LoginMessagesSlot } from '@/components/login-messages/login-messages-slot'
 import { navGroupsWithoutCounts } from '@/components/nav/nav-items'
 import { Sidebar } from '@/components/nav/sidebar'
 import { SidebarNav } from '@/components/nav/sidebar-nav'
@@ -60,6 +61,10 @@ export default async function DeskLayout({ children }: { children: ReactNode }) 
           {/* Above the content rather than inside a screen: acting as someone changes what every
               screen means, so it cannot be something one route remembers to render. */}
           <ViewAsBanner />
+          {/* Sign-in messages sit below View As (LMS-3c); suspended so they never hold up the page. */}
+          <Suspense fallback={null}>
+            <LoginMessagesSlot />
+          </Suspense>
           {children}
         </div>
       </div>

@@ -760,3 +760,42 @@ export type WireRoadmap = {
   outcomes: readonly WireOutcomeDetail[]
   ungrouped: readonly WireOutcomeIdea[]
 }
+
+/** A sign-in message, as its manager reads it (`contracts/login-messages.md` "Message body"). */
+export type WireLoginMessage = {
+  id: string
+  organizationId: string | null
+  title: string
+  body: string
+  display: 'Modal' | 'Banner'
+  dismissalMode: 'EveryLogin' | 'DismissOnce' | 'AcknowledgeRequired'
+  startsAtUtc: string
+  endsAtUtc: string | null
+  revision: number
+  state: 'Scheduled' | 'Live' | 'Ended'
+  /** `AcknowledgeRequired` only, for the current revision. */
+  acknowledgedCount?: number
+  audienceCount?: number
+  createdAtUtc: string
+  updatedAtUtc: string
+}
+
+/** `GET /login-messages/visible` items: what the desk shows this sign-in, in display order. */
+export type WireVisibleLoginMessage = {
+  id: string
+  scope: 'System' | 'Organization'
+  title: string
+  body: string
+  display: 'Modal' | 'Banner'
+  dismissalMode: 'EveryLogin' | 'DismissOnce' | 'AcknowledgeRequired'
+  revision: number
+}
+
+/** `GET /login-messages/{id}/acknowledgements`. */
+export type WireLoginMessageAcknowledgements = WirePage<{
+  userId: string
+  name: string
+  email: string
+  organizationName: string | null
+  acknowledgedAtUtc: string | null
+}> & { acknowledgedCount: number; audienceCount: number }
