@@ -13,11 +13,12 @@ import { LoginMessages } from './login-messages'
  */
 export async function LoginMessagesSlot() {
   const due = await signInMessagesDue()
-  const messages = due ? await getVisibleLoginMessages().catch(() => []) : []
+  // A failed read keeps the marker, so the next page tries again rather than losing this sign-in's.
+  const messages = due ? await getVisibleLoginMessages().catch(() => null) : []
   return (
     <LoginMessages
-      messages={messages}
-      due={due}
+      messages={messages ?? []}
+      due={due && messages !== null}
       organizationName={currentUser().organizationName}
     />
   )

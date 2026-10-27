@@ -89,7 +89,8 @@ Each requirement has scenarios and an oracle. IDs are stable; later slices cite 
   refused (`403`). An admin must not dismiss or acknowledge on someone else's behalf.
 
 *Oracle:* service tests for the visible-set rule over a fixed clock; web tests for ordering and
-stacking; the Playwright spec for a modal then a banner.
+stacking; the Playwright spec for a modal then a banner, and for an unanswered message gone on
+reload and back after the next sign-in (LMS-3a, to be added by QA).
 
 ### LMS-4 Closing, dismissing and acknowledging — Added
 
@@ -195,9 +196,11 @@ visible set are plain joins, and *Show again* is one `UPDATE … SET revision = 
 authorization by scope as in LMS-1/2); a Prisma repository in infrastructure. The clock is
 injected.
 
-**Web:** the desk layout fetches the visible set once per render and passes it to a client
-`<LoginMessages>` beside `ViewAsBanner`: banners in the column, modals through the design-system
-dialog. Close and acknowledge are server actions that call the API and refresh.
+**Web:** signing in sets a marker cookie beside the session. While it is present, the desk layout
+fetches the visible set and passes it to a client `<LoginMessages>` beside `ViewAsBanner`: banners
+in the column, modals in a native `<dialog>`. `<LoginMessages>` keeps that first set as the layout
+re-renders and clears the marker through a Server Function, so later pages show nothing (LMS-3a).
+Close and acknowledge are server actions that call the API.
 
 **Rejected:** (a) a session table to track "this sign-in": a schema change to auth for one
 comparison the token already supports; (b) receipts deleted on *Show again*: loses the old
