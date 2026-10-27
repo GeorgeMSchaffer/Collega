@@ -9,6 +9,7 @@ import {
   type UpdateBoardResult,
 } from '@collega/application/boards'
 import { BOARD_NAME_MAX_LENGTH } from '@collega/domain/boards'
+import { BoardVisibility } from '@collega/domain/enums'
 import { Body, Controller, Get, HttpCode, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
 import { AuthGuard } from '../auth/auth.guard.js'
 import {
@@ -45,7 +46,13 @@ type CreateBoardBody = {
   pullItemIds?: unknown
   forceReason?: unknown
   allowedIdeaTypeIds?: unknown
+  visibility?: unknown
+  accessUserIds?: unknown
+  accessGroupIds?: unknown
 }
+
+/** `PUT /boards/{boardId}/access` (SPEC/contracts/boards.md "Board access"). */
+type SetBoardAccessBody = { visibility?: unknown; userIds?: unknown; groupIds?: unknown }
 
 /** `PUT /boards/{boardId}/allowed-idea-types` (added 2026-10-22). */
 type SetAllowedIdeaTypesBody = { ideaTypeIds?: unknown }
@@ -164,6 +171,38 @@ function toPullItemIds(value: unknown): readonly string[] {
  * active idea type is the Application layer's. Absent or `null` is empty only where `absentMeansAll`
  * (on create); the replace route needs the array.
  */
+/** `Organization` or `Restricted`; absent is `undefined` only where `absentAllowed` (on create). */
+function toVisibility(value: unknown, absentAllowed: boolean): BoardVisibility | undefined {
+  if (absentAllowed && (value === undefined || value === null)) {
+    return undefined
+  }
+  if (value !== BoardVisibility.Organization && value !== BoardVisibility.Restricted) {
+    throw new RequestValidationError({
+      visibility: ['Visibility must be Organization or Restricted.'],
+    })
+  }
+  return value
+}
+
+/**
+ * An access list: anything but an array of strings is refused here under `field`; whether each
+ * string names a user or group of the organization, once, is the Application layer's.
+ */
+function toAccessIds(
+  field: string,
+  noun: 'User' | 'Group',
+  value: unknown,
+  absentAllowed: boolean,
+): readonly string[] {
+  if (absentAllowed && (value === undefined || value === null)) {
+    return []
+  }
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== 'string')) {
+    throw new RequestValidationError({ [field]: [`${noun} ids must be an array of ids.`] })
+  }
+  return value as readonly string[]
+}
+
 function toIdeaTypeIds(field: string, value: unknown, absentMeansAll: boolean): readonly string[] {
   if (absentMeansAll && (value === undefined || value === null)) {
     return []
@@ -241,6 +280,9 @@ export class BoardsController {
       pullItemIds: toPullItemIds(body.pullItemIds),
       forceReason: optional(body.forceReason),
       allowedIdeaTypeIds: toIdeaTypeIds('allowedIdeaTypeIds', body.allowedIdeaTypeIds, true),
+      visibility: toVisibility(body.visibility, true),
+      accessUserIds: toAccessIds('accessUserIds', 'User', body.accessUserIds, true),
+      accessGroupIds: toAccessIds('accessGroupIds', 'Group', body.accessGroupIds, true),
     })
   }
 
@@ -281,6 +323,22 @@ export class BoardsController {
   ): Promise<BoardDetail> {
     return this.boards.setAllowedIdeaTypes(boardId, {
       ideaTypeIds: toIdeaTypeIds('ideaTypeIds', body?.ideaTypeIds, false),
+    })
+  }
+
+  /**
+   * Replaces who can see the board (SPEC/contracts/boards.md "Board access"): an Org Admin, or the
+   * board's creator.
+   */
+  @Put('boards/:boardId/access')
+  async setAccess(
+    @Param('boardId', UuidParamPipe) boardId: string,
+    @Body() body: SetBoardAccessBody | undefined,
+  ): Promise<BoardDetail> {
+    return this.boards.setAccess(boardId, {
+      visibility: toVisibility(body?.visibility, false) as BoardVisibility,
+      userIds: toAccessIds('userIds', 'User', body?.userIds, false),
+      groupIds: toAccessIds('groupIds', 'Group', body?.groupIds, false),
     })
   }
 

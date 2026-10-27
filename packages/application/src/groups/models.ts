@@ -6,6 +6,14 @@ export type GroupListItem = {
   readonly name: string
   readonly description: string | null
   readonly memberCount: number
+  /** Restricted boards naming the group, counted only among boards the caller can see. */
+  readonly boardCount: number
+}
+
+export type GroupBoardModel = {
+  readonly boardId: string
+  readonly name: string
+  readonly isArchived: boolean
 }
 
 export type GroupMemberModel = {
@@ -23,6 +31,8 @@ export type GroupDetail = {
   readonly name: string
   readonly description: string | null
   readonly members: readonly GroupMemberModel[]
+  /** Restricted boards naming the group that the caller can see, by name. */
+  readonly boards: readonly GroupBoardModel[]
   readonly canManage: boolean
 }
 

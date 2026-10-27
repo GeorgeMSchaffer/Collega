@@ -141,6 +141,16 @@ function harness(options: {
       return { items: [], page: 1, pageSize: 20, totalCount: 0, hiddenTaskCount: 0 }
     },
     async replaceAllowedIdeaTypes() {},
+    async replaceAccess() {},
+    async listGroupIdsForUser() {
+      return []
+    },
+    async listOrganizationUserIds() {
+      return []
+    },
+    async listOrganizationGroupIds() {
+      return []
+    },
     async listIdeaTypes() {
       return []
     },

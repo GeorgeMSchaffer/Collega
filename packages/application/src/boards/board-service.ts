@@ -10,6 +10,7 @@ import {
   BoardArchivedError,
   BoardInvariantError,
   boardTakesIdeaType,
+  canSeeBoard,
   createBoard,
   deriveKeyPrefix,
   disableIdeaFeatures,
@@ -17,10 +18,11 @@ import {
   reorderBoardSwimlanes,
   type SwimlaneLane,
   setAllowedIdeaTypes,
+  setBoardAccess,
   unarchiveBoard,
   updateBoard,
 } from '@collega/domain/boards'
-import { IdeaPhase, Role } from '@collega/domain/enums'
+import { BoardVisibility, IdeaPhase, Role } from '@collega/domain/enums'
 import { type Idea, pullIdeaOntoBoard } from '@collega/domain/ideas'
 import type { Status } from '@collega/domain/statuses'
 import { normalizeTagName } from '@collega/domain/tags'
@@ -48,6 +50,7 @@ import {
   readForceReason,
 } from '../ideas/index.js'
 import type { StatusRepository } from '../statuses/index.js'
+import { loadBoardViewer } from './board-viewer.js'
 import type {
   BoardDetail,
   BoardListItem,
@@ -62,6 +65,7 @@ import type {
   PulledItem,
   ReorderSwimlanesCommand,
   SetAllowedIdeaTypesCommand,
+  SetBoardAccessCommand,
   SwimlaneDetail,
   SwimlaneInput,
   UpdateBoardCommand,
@@ -95,7 +99,12 @@ export class BoardService {
     this.ensureReadScope(organizationId)
     await this.ensureOrganizationExists(organizationId)
 
-    const organizationBoards = await this.boards.listByOrganization(organizationId)
+    // Only the boards the caller can see (BAG-3); a Restricted board they cannot see is not
+    // listed, and is not named as referencing anything either.
+    const viewer = await loadBoardViewer(this.currentUser, this.boards)
+    const organizationBoards = (await this.boards.listByOrganization(organizationId)).filter(
+      (board) => canSeeBoard(board, viewer),
+    )
     const boards = organizationBoards.filter((board) => query.includeArchived || !board.isArchived)
     // Lanes arrive with the boards, so the reference links cost no further read.
     const referencedBy = new Map<string, string[]>()
@@ -169,6 +178,7 @@ export class BoardService {
         nextItemNumber: board.nextItemNumber,
         hasReferenceLane: board.swimlanes.some((lane) => lane.referencesBoardId !== null),
         referencedByBoardIds: referencedBy.get(board.id) ?? [],
+        visibility: board.visibility,
       }
     })
   }
@@ -189,6 +199,16 @@ export class BoardService {
             await this.boards.listIdeaTypes(organizationId),
           )
 
+    const access = await this.validateAccess(
+      organizationId,
+      {
+        visibility: command.visibility ?? BoardVisibility.Organization,
+        userIds: command.accessUserIds ?? [],
+        groupIds: command.accessGroupIds ?? [],
+      },
+      { users: 'accessUserIds', groups: 'accessGroupIds' },
+    )
+
     const now = this.clock.now()
     const organizationBoards = await this.boards.listByOrganization(organizationId)
     const board = runDomain(createBoard, {
@@ -208,6 +228,7 @@ export class BoardService {
       sprintsEnabled: command.sprintsEnabled,
       ideaFeaturesEnabled: command.ideaFeaturesEnabled,
       allowedIdeaTypeIds,
+      access,
       nowUtc: now,
       actorUserId: this.currentUser.userId,
     })
@@ -256,8 +277,58 @@ export class BoardService {
     }
 
     this.ensureReadScope(board.organizationId)
+    await this.ensureCanSee(board)
 
     const statusLookup = await this.loadStatusLookup(board.organizationId)
+    return toDetail(board, statusLookup, this.canSetAllowedIdeaTypes(board))
+  }
+
+  /**
+   * Replaces who can see the board (SPEC/contracts/boards.md "Board access"): an Org Admin, or the
+   * board's creator while a User there. Ideas are not touched. Audited as `BoardAccessChanged`
+   * with what changed; nothing is written or audited when nothing changed. No notification.
+   */
+  async setAccess(boardId: string, command: SetBoardAccessCommand): Promise<BoardDetail> {
+    const existing = await this.boards.getById(boardId)
+    if (existing === null) {
+      throw new NotFoundError('Board not found.')
+    }
+    this.ensureReadScope(existing.organizationId)
+    await this.ensureCanSee(existing)
+    this.ensureAllowedIdeaTypesScope(existing)
+
+    const access = await this.validateAccess(existing.organizationId, command)
+    const now = this.clock.now()
+    const board = runDomain(setBoardAccess, existing, access, now, this.currentUser.userId)
+
+    const change = {
+      fromVisibility: existing.visibility,
+      toVisibility: board.visibility,
+      addedUserIds: board.accessUserIds.filter((id) => !existing.accessUserIds.includes(id)),
+      removedUserIds: existing.accessUserIds.filter((id) => !board.accessUserIds.includes(id)),
+      addedGroupIds: board.accessGroupIds.filter((id) => !existing.accessGroupIds.includes(id)),
+      removedGroupIds: existing.accessGroupIds.filter((id) => !board.accessGroupIds.includes(id)),
+    }
+    const statusLookup = await this.loadStatusLookup(existing.organizationId)
+    if (
+      change.fromVisibility === change.toVisibility &&
+      change.addedUserIds.length + change.removedUserIds.length === 0 &&
+      change.addedGroupIds.length + change.removedGroupIds.length === 0
+    ) {
+      return toDetail(existing, statusLookup, this.canSetAllowedIdeaTypes(existing))
+    }
+
+    await this.boards.replaceAccess(board)
+    await this.unitOfWork.saveChanges()
+    await this.audit(
+      'BoardAccessChanged',
+      board.organizationId,
+      board.id,
+      `Board '${board.name}' access changed.`,
+      now,
+      change,
+    )
+
     return toDetail(board, statusLookup, this.canSetAllowedIdeaTypes(board))
   }
 
@@ -933,6 +1004,51 @@ export class BoardService {
     }
   }
 
+  /** A board the caller cannot see answers as if it did not exist (BAG-4a). */
+  private async ensureCanSee(board: Board): Promise<void> {
+    if (!canSeeBoard(board, await loadBoardViewer(this.currentUser, this.boards))) {
+      throw new NotFoundError('Board not found.')
+    }
+  }
+
+  /** Checks an access list against the organization's users and groups, answering a `400` keyed
+   * by the list's own request field. */
+  private async validateAccess(
+    organizationId: string,
+    access: SetBoardAccessCommand,
+    fields: { readonly users: string; readonly groups: string } = {
+      users: 'userIds',
+      groups: 'groupIds',
+    },
+  ): Promise<SetBoardAccessCommand> {
+    const invalid = (field: string, message: string) =>
+      new ValidationError('One or more fields are invalid.', { [field]: [message] })
+    const requested = {
+      userIds: access.userIds.map((id) => id.toLowerCase()),
+      groupIds: access.groupIds.map((id) => id.toLowerCase()),
+    }
+    if (new Set(requested.userIds).size !== requested.userIds.length) {
+      throw invalid(fields.users, 'A user can be named only once.')
+    }
+    if (new Set(requested.groupIds).size !== requested.groupIds.length) {
+      throw invalid(fields.groups, 'A group can be named only once.')
+    }
+    const none: readonly string[] = []
+    const [userIds, groupIds] = await Promise.all([
+      access.userIds.length === 0 ? none : this.boards.listOrganizationUserIds(organizationId),
+      access.groupIds.length === 0 ? none : this.boards.listOrganizationGroupIds(organizationId),
+    ])
+    const unknownUser = access.userIds.find((id) => !userIds.includes(id.toLowerCase()))
+    if (unknownUser !== undefined) {
+      throw invalid(fields.users, `User '${unknownUser}' was not found.`)
+    }
+    const unknownGroup = access.groupIds.find((id) => !groupIds.includes(id.toLowerCase()))
+    if (unknownGroup !== undefined) {
+      throw invalid(fields.groups, `Group '${unknownGroup}' was not found.`)
+    }
+    return { visibility: access.visibility, ...requested }
+  }
+
   private ensureReadScope(organizationId: string): void {
     const role = this.requireAuthenticatedRole()
     if (role === Role.SiteAdmin) {
@@ -1388,6 +1504,11 @@ function toDetail(
     nextItemNumber: board.nextItemNumber,
     allowedIdeaTypeIds: board.allowedIdeaTypeIds,
     canSetAllowedIdeaTypes,
+    visibility: board.visibility,
+    accessUserIds: board.accessUserIds,
+    accessGroupIds: board.accessGroupIds,
+    // Access is set under the same rule as the allowed idea types (decided 2026-10-26).
+    canManageAccess: canSetAllowedIdeaTypes,
   }
 }
 

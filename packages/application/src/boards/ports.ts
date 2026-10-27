@@ -19,6 +19,19 @@ export interface BoardRepository {
   /** Stages replacing the board's allowed idea types with `board.allowedIdeaTypeIds`. */
   replaceAllowedIdeaTypes(board: Board): Promise<void>
 
+  /** Stages replacing the board's visibility and access lists (SPEC/contracts/boards.md "Board
+   * access"). Touches nothing else on the board. */
+  replaceAccess(board: Board): Promise<void>
+
+  /** The groups the user belongs to, read on every request so a membership change applies at once. */
+  listGroupIdsForUser(userId: string): Promise<readonly string[]>
+
+  /** Every user id of the organization, for checking an access list. */
+  listOrganizationUserIds(organizationId: string): Promise<readonly string[]>
+
+  /** Every group id of the organization, for checking an access list. */
+  listOrganizationGroupIds(organizationId: string): Promise<readonly string[]>
+
   /**
    * Every idea type of the organization, archived ones included, in idea type sort order (sort
    * order, then name). Here rather than on an idea types port for the reason `countIdeasByBoard`

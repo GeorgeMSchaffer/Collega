@@ -1,6 +1,6 @@
 // Command and result shapes for board configuration (SPEC/30-Contracts.md "Board Contracts").
 
-import type { IdeaPhase, Priority } from '@collega/domain/enums'
+import type { BoardVisibility, IdeaPhase, Priority } from '@collega/domain/enums'
 import type { Page } from '../common/index.js'
 
 /** A requested swimlane: which status, and its position. Order is normalized densely 0..n-1. */
@@ -33,6 +33,18 @@ export type CreateBoardCommand = {
   /** The idea types the board takes (SPEC/contracts/boards.md "Allowed idea types"). Absent or
    * empty: every type. */
   readonly allowedIdeaTypeIds?: readonly string[] | undefined
+  /** Who can see the board (SPEC/contracts/boards.md "Board access"). Absent: `Organization`. */
+  readonly visibility?: BoardVisibility | undefined
+  /** Absent: empty. */
+  readonly accessUserIds?: readonly string[] | undefined
+  readonly accessGroupIds?: readonly string[] | undefined
+}
+
+/** `PUT /boards/{boardId}/access`: replaces the visibility and both access lists. */
+export type SetBoardAccessCommand = {
+  readonly visibility: BoardVisibility
+  readonly userIds: readonly string[]
+  readonly groupIds: readonly string[]
 }
 
 /** `PUT /boards/{boardId}/allowed-idea-types`: replaces the whole list; empty allows every type. */
@@ -101,6 +113,8 @@ export type BoardListItem = {
   readonly hasReferenceLane: boolean
   /** Non-archived boards with a lane referencing this board; empty when none. */
   readonly referencedByBoardIds: readonly string[]
+  /** Who can see the board; only boards the caller can see are listed. */
+  readonly visibility: BoardVisibility
 }
 
 export type BoardListQuery = {
@@ -161,6 +175,12 @@ export type BoardDetail = {
   /** Whether this caller may change `allowedIdeaTypeIds`: an Org Admin, or the board's creator
    * while a User or Org Admin; never on an archived board. */
   readonly canSetAllowedIdeaTypes: boolean
+  readonly visibility: BoardVisibility
+  /** Stored whatever the visibility; grants only while `Restricted`. */
+  readonly accessUserIds: readonly string[]
+  readonly accessGroupIds: readonly string[]
+  /** Whether this caller may change the access: the same rule as `canSetAllowedIdeaTypes`. */
+  readonly canManageAccess: boolean
 }
 
 /** A `PUT /boards/{boardId}` result: the detail, plus what was pulled when the save pulled. */
