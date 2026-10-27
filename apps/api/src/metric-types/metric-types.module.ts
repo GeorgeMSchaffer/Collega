@@ -1,3 +1,4 @@
+import type { BoardAccessLookup } from '@collega/application/boards'
 import type {
   AuditEventWriter,
   Clock,
@@ -54,6 +55,7 @@ import { MetricTypesController } from './metric-types.controller.js'
         auditEvents: AuditEventWriter,
         currentUser: CurrentUserContext,
         clock: Clock,
+        boardAccess: BoardAccessLookup,
       ) =>
         new IdeaMetricsService(
           ideas,
@@ -63,6 +65,7 @@ import { MetricTypesController } from './metric-types.controller.js'
           auditEvents,
           currentUser,
           clock,
+          boardAccess,
         ),
       inject: [
         PORT_TOKENS.MetricIdeasPort,
@@ -72,6 +75,7 @@ import { MetricTypesController } from './metric-types.controller.js'
         PORT_TOKENS.AuditEventWriter,
         PORT_TOKENS.CurrentUserContext,
         PORT_TOKENS.Clock,
+        PORT_TOKENS.BoardAccessLookup,
       ],
     },
   ],

@@ -4,6 +4,7 @@
 import { IdeaPhase, Priority, Role, UserStatus } from '@collega/domain/enums'
 import type { Idea } from '@collega/domain/ideas'
 import { createIdea, promoteIdeaToIssue } from '@collega/domain/ideas'
+import type { BoardAccessLookup } from '../../src/boards/ports.js'
 import type { CurrentUserContext, RandomSource } from '../../src/common/index.js'
 import { IdeaService } from '../../src/ideas/idea.service.js'
 import type {
@@ -200,6 +201,8 @@ export function harness(options: {
   fieldValues?: Partial<IdeaFieldValuesPort>
   /** The metric-value reader behind `IdeaDetail.metrics`; omitted, as in a host that has none. */
   metricValues?: Pick<IdeaMetricValuesPort, 'listByIdea'>
+  /** Board sight; every board is visible unless a test says otherwise. */
+  boardAccess?: BoardAccessLookup
   /** What `getFirstActiveStatusId` answers; `null` models an organization with no active status. */
   firstActiveStatusId?: string | null
   /** What `countChildrenByParentIds` answers per parent id. */
@@ -634,6 +637,7 @@ export function harness(options: {
       options.currentUser,
       fixedClock(),
       options.random ?? { nextInt: () => 0 },
+      options.boardAccess ?? { canSeeBoard: async () => true },
       options.metricValues,
       options.activity,
     ),

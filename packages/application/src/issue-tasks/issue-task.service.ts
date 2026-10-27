@@ -19,6 +19,8 @@ import {
   reorderIssueTasks,
   updateIssueTask,
 } from '@collega/domain/issue-tasks'
+import { ensureCanSeeBoard } from '../boards/board-access.js'
+import type { BoardAccessLookup } from '../boards/ports.js'
 import {
   type Clock,
   type CurrentUserContext,
@@ -52,6 +54,7 @@ export class IssueTaskService {
     private readonly unitOfWork: UnitOfWork,
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
+    private readonly boardAccess: BoardAccessLookup,
   ) {}
 
   /** Reading the checklist is available to anyone who can see the Issue, Read Only included. */
@@ -276,6 +279,7 @@ export class IssueTaskService {
       // 404, not 403: confirming the Issue exists elsewhere is the thing being fished for.
       throw new NotFoundError('Idea not found.')
     }
+    await ensureCanSeeBoard(this.boardAccess, this.currentUser, idea.boardId, 'Idea not found.')
     return idea
   }
 

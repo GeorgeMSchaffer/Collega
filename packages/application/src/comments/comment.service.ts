@@ -10,6 +10,8 @@ import {
   editComment,
 } from '@collega/domain/comments'
 import { NotificationEventType, Role, UserStatus } from '@collega/domain/enums'
+import { ensureCanSeeBoard } from '../boards/board-access.js'
+import type { BoardAccessLookup } from '../boards/ports.js'
 import {
   type AuditEventWriter,
   attributeAudit,
@@ -66,6 +68,7 @@ export class CommentService {
     private readonly auditEvents: AuditEventWriter,
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
+    private readonly boardAccess: BoardAccessLookup,
   ) {}
 
   async listByIdea(ideaId: string, query: CommentListQuery): Promise<CommentListResult> {
@@ -220,6 +223,7 @@ export class CommentService {
     if (role !== Role.SiteAdmin && this.currentUser.organizationId !== idea.organizationId) {
       throw new NotFoundError('Idea not found.')
     }
+    await ensureCanSeeBoard(this.boardAccess, this.currentUser, idea.boardId, 'Idea not found.')
 
     return idea
   }

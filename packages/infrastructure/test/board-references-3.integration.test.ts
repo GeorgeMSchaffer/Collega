@@ -140,6 +140,7 @@ describe.skipIf(!DATABASE_URL)('Board References comp U backend, against a live 
       currentUser,
       clock,
       { nextInt: () => 0 },
+      boards,
       new PrismaMetricTypeRepository(prisma, unitOfWork),
       audit,
     )

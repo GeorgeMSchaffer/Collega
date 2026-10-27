@@ -374,6 +374,7 @@ function wired(currentUser: CurrentUserContext) {
       audit,
       currentUser,
       clock,
+      { canSeeBoard: async () => true },
     ),
   )
 }

@@ -211,6 +211,7 @@ function harness(options: {
       audit,
       options.currentUser,
       fixedClock(),
+      { canSeeBoard: async () => true },
     ),
     settlements,
     reservations,

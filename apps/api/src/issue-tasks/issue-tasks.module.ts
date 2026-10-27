@@ -1,3 +1,4 @@
+import type { BoardAccessLookup } from '@collega/application/boards'
 import type { Clock, CurrentUserContext, UnitOfWork } from '@collega/application/common'
 import type {
   IssueTaskIdeaPort,
@@ -43,7 +44,18 @@ import { IssueTasksController } from './issue-tasks.controller.js'
         unitOfWork: UnitOfWork,
         currentUser: CurrentUserContext,
         clock: Clock,
-      ) => new IssueTaskService(tasks, ideas, users, notifications, unitOfWork, currentUser, clock),
+        boardAccess: BoardAccessLookup,
+      ) =>
+        new IssueTaskService(
+          tasks,
+          ideas,
+          users,
+          notifications,
+          unitOfWork,
+          currentUser,
+          clock,
+          boardAccess,
+        ),
       inject: [
         PORT_TOKENS.IssueTaskRepository,
         PORT_TOKENS.IssueTaskIdeaPort,
@@ -52,6 +64,7 @@ import { IssueTasksController } from './issue-tasks.controller.js'
         PORT_TOKENS.UnitOfWork,
         PORT_TOKENS.CurrentUserContext,
         PORT_TOKENS.Clock,
+        PORT_TOKENS.BoardAccessLookup,
       ],
     },
   ],

@@ -94,6 +94,7 @@ describe.skipIf(!DATABASE_URL)(
         currentUser,
         clock,
         { nextInt: () => 0 },
+        boards,
       )
       const sprintService = new SprintService(
         new PrismaSprintRepository(prisma, unitOfWork),

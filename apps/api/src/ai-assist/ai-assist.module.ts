@@ -19,6 +19,7 @@ import {
   IdeaAssistContextBuilder,
   IdeaAssistService,
 } from '@collega/application/ai'
+import type { BoardAccessLookup } from '@collega/application/boards'
 import type {
   AuditEventWriter,
   Clock,
@@ -126,6 +127,7 @@ import { IdeaAssistController } from './idea-assist.controller.js'
         auditEvents: AuditEventWriter,
         currentUser: CurrentUserContext,
         clock: Clock,
+        boardAccess: BoardAccessLookup,
       ) =>
         new IdeaAssistService(
           model,
@@ -137,6 +139,7 @@ import { IdeaAssistController } from './idea-assist.controller.js'
           auditEvents,
           currentUser,
           clock,
+          boardAccess,
         ),
       inject: [
         PORT_TOKENS.IdeaDraftModel,
@@ -148,6 +151,7 @@ import { IdeaAssistController } from './idea-assist.controller.js'
         PORT_TOKENS.AuditEventWriter,
         PORT_TOKENS.CurrentUserContext,
         PORT_TOKENS.Clock,
+        PORT_TOKENS.BoardAccessLookup,
       ],
     },
     {

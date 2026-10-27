@@ -11,6 +11,7 @@
 import { randomUUID } from 'node:crypto'
 import type { AiBoardLookupPort } from '@collega/application/ai'
 import type {
+  BoardAccessLookup,
   BoardIdeaType,
   BoardRepository,
   BoardStatusIdeaCount,
@@ -116,7 +117,7 @@ function boardIdeasWhere(boardIds: readonly string[]): Prisma.ideasWhereInput {
 }
 
 export class PrismaBoardRepository
-  implements BoardRepository, AiBoardLookupPort, BoardsPort, SprintBoardsPort
+  implements BoardRepository, BoardAccessLookup, AiBoardLookupPort, BoardsPort, SprintBoardsPort
 {
   constructor(
     private readonly prisma: PrismaClient,
@@ -718,6 +719,27 @@ export class PrismaBoardRepository
       this.prisma.board_access_groups.deleteMany({ where: { board_id: board.id } }),
     )
     this.enqueueAccessRows(board)
+  }
+
+  async canSeeBoard(boardId: string, organizationId: string, userId: string): Promise<boolean> {
+    const found = await this.prisma.boards.findFirst({
+      where: {
+        id: boardId,
+        organization_id: organizationId,
+        OR: [
+          { visibility: 'Organization' },
+          { created_by_user_id: userId },
+          { board_access_users: { some: { user_id: userId } } },
+          {
+            board_access_groups: {
+              some: { user_groups: { user_group_members: { some: { user_id: userId } } } },
+            },
+          },
+        ],
+      },
+      select: { id: true },
+    })
+    return found !== null
   }
 
   async listGroupIdsForUser(userId: string): Promise<readonly string[]> {

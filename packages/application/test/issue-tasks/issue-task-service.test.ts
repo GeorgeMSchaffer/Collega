@@ -174,6 +174,7 @@ function harness(options: {
       countingUnitOfWork(),
       options.currentUser,
       fixedClock(),
+      { canSeeBoard: async () => true },
     ),
     added,
     saved,
