@@ -10,6 +10,7 @@ import { DemoSeedModule } from './demo-seed/demo-seed.module.js'
 import { FieldDefinitionsModule } from './field-definitions/field-definitions.module.js'
 import { FieldsetsModule } from './fieldsets/fieldsets.module.js'
 import { FollowingModule } from './following/following.module.js'
+import { GroupsModule } from './groups/groups.module.js'
 import { IdeaTypesModule } from './idea-types/idea-types.module.js'
 import { IdeasModule } from './ideas/ideas.module.js'
 import { IssueTasksModule } from './issue-tasks/issue-tasks.module.js'
@@ -34,6 +35,7 @@ export const FEATURE_MODULES = [
   FieldDefinitionsModule,
   FieldsetsModule,
   FollowingModule,
+  GroupsModule,
   IdeaTypesModule,
   IdeasModule,
   IssueTasksModule,
