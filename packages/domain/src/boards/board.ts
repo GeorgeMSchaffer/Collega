@@ -8,6 +8,7 @@
 // upsert against that composite key without this layer tracking row identity across a reorder.
 
 import { type Auditable, markCreated, markUpdated } from '../common/index.js'
+import { BoardVisibility, Role } from '../enums/index.js'
 
 export const BOARD_NAME_MAX_LENGTH = 150
 export const BOARD_DESCRIPTION_MAX_LENGTH = 500
@@ -80,6 +81,53 @@ export type Board = Auditable & {
   readonly nextItemNumber: number
   /** The idea types the board takes; empty takes every active type (rule 15). */
   readonly allowedIdeaTypeIds: readonly string[]
+  readonly visibility: BoardVisibility
+  /** The access list. Stored whatever the visibility; grants only while `Restricted`. */
+  readonly accessUserIds: readonly string[]
+  readonly accessGroupIds: readonly string[]
+}
+
+/** Who is asking, for `canSeeBoard`. `groupIds` are the groups the viewer belongs to. */
+export type BoardViewer = {
+  readonly userId: string | null
+  readonly organizationId: string | null
+  readonly role: Role
+  readonly groupIds: readonly string[]
+}
+
+/**
+ * The one rule for who can see a board (SPEC/contracts/boards.md "Board access"): a Site Admin
+ * acting directly and the board's Org Admins always; anyone in the organization while it is
+ * `Organization`; and, while it is `Restricted`, its creator and everyone on its access list
+ * directly or through a group. In View As the viewer is the target, so this answers for them.
+ */
+export function canSeeBoard(
+  board: {
+    readonly organizationId: string
+    readonly visibility: BoardVisibility
+    readonly createdByUserId: string | null
+    readonly accessUserIds: readonly string[]
+    readonly accessGroupIds: readonly string[]
+  },
+  viewer: BoardViewer,
+): boolean {
+  if (viewer.role === Role.SiteAdmin) {
+    return true
+  }
+  if (viewer.organizationId !== board.organizationId) {
+    return false
+  }
+  if (viewer.role === Role.OrgAdmin || board.visibility === BoardVisibility.Organization) {
+    return true
+  }
+  if (viewer.userId === null) {
+    return false
+  }
+  return (
+    board.createdByUserId === viewer.userId ||
+    board.accessUserIds.includes(viewer.userId) ||
+    board.accessGroupIds.some((groupId) => viewer.groupIds.includes(groupId))
+  )
 }
 
 /**
@@ -221,6 +269,8 @@ export function createBoard(params: {
   readonly ideaFeaturesEnabled?: boolean | undefined
   /** Absent or empty: every type. The Application layer has already checked the ids. */
   readonly allowedIdeaTypeIds?: readonly string[] | undefined
+  /** Absent: `Organization` with empty lists. The Application layer has already checked the ids. */
+  readonly access?: BoardAccess | undefined
   readonly nowUtc: Date
   readonly actorUserId: string | null
 }): Board {
@@ -246,6 +296,7 @@ export function createBoard(params: {
     ideaFeaturesEnabled: params.ideaFeaturesEnabled ?? true,
     nextItemNumber: 1,
     allowedIdeaTypeIds: params.allowedIdeaTypeIds ?? [],
+    ...accessOf(params.access ?? NO_ACCESS_LIST),
     ...markCreated(params.nowUtc, params.actorUserId),
   }
 }
@@ -343,6 +394,47 @@ export function setAllowedIdeaTypes(
 ): Board {
   requireNotArchived(board)
   return markUpdated({ ...board, allowedIdeaTypeIds: [...ideaTypeIds] }, nowUtc, actorUserId)
+}
+
+export type BoardAccess = {
+  readonly visibility: BoardVisibility
+  readonly userIds: readonly string[]
+  readonly groupIds: readonly string[]
+}
+
+const NO_ACCESS_LIST: BoardAccess = {
+  visibility: BoardVisibility.Organization,
+  userIds: [],
+  groupIds: [],
+}
+
+function accessOf(access: BoardAccess) {
+  if (new Set(access.userIds).size !== access.userIds.length) {
+    throw new BoardInvariantError('userIds', 'A user can be named only once.')
+  }
+  if (new Set(access.groupIds).size !== access.groupIds.length) {
+    throw new BoardInvariantError('groupIds', 'A group can be named only once.')
+  }
+  return {
+    visibility: access.visibility,
+    accessUserIds: [...access.userIds],
+    accessGroupIds: [...access.groupIds],
+  }
+}
+
+/**
+ * Replaces who can see the board (SPEC/contracts/boards.md "Board access"). Refused on an archived
+ * board, like every other setting. A Restricted board with both lists empty is allowed: only its
+ * Org Admins and its creator see it. The Application layer has already checked the ids.
+ */
+export function setBoardAccess(
+  board: Board,
+  access: BoardAccess,
+  nowUtc: Date,
+  actorUserId: string | null,
+): Board {
+  requireNotArchived(board)
+  return markUpdated({ ...board, ...accessOf(access) }, nowUtc, actorUserId)
 }
 
 function requireNotArchived(board: Board): void {

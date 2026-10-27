@@ -80,6 +80,29 @@ model board_swimlanes {
   @@index([references_board_id], map: "ix_board_swimlanes_references_board_id")
 }
 
+/// Users granted a Restricted board directly (SPEC/contracts/boards.md "Board access"). Kept while
+/// the board is Organization, where it grants nothing.
+model board_access_users {
+  board_id String @db.Uuid
+  user_id  String @db.Uuid
+  boards   boards @relation(fields: [board_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_board_access_users_boards_board_id")
+  users    users  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_board_access_users_users_user_id")
+
+  @@id([board_id, user_id], map: "PK_board_access_users")
+  @@index([user_id], map: "ix_board_access_users_user_id")
+}
+
+/// Groups granted a Restricted board; membership is read at request time.
+model board_access_groups {
+  board_id    String      @db.Uuid
+  group_id    String      @db.Uuid
+  boards      boards      @relation(fields: [board_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_board_access_groups_boards_board_id")
+  user_groups user_groups @relation(fields: [group_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_board_access_groups_user_groups_group_id")
+
+  @@id([board_id, group_id], map: "PK_board_access_groups")
+  @@index([group_id], map: "ix_board_access_groups_group_id")
+}
+
 /// The idea types a board takes (SPEC/contracts/boards.md "Allowed idea types"). No rows means every
 /// active type, which is every board until someone narrows it, so nothing was backfilled.
 model board_idea_types {
@@ -108,9 +131,12 @@ model boards {
   idea_features_enabled    Boolean           @default(true)
   key_prefix               String?           @db.VarChar(10)
   next_item_number         Int               @default(1)
+  visibility               BoardVisibility   @default(Organization)
   board_swimlanes          board_swimlanes[] @relation("swimlane_board")
   referencing_swimlanes    board_swimlanes[] @relation("swimlane_reference")
   board_idea_types         board_idea_types[]
+  board_access_users       board_access_users[]
+  board_access_groups      board_access_groups[]
   sprints                  sprints[]
   organizations            organizations     @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_boards_organizations_organization_id")
 
@@ -535,6 +561,7 @@ model organizations {
   sprints                    sprints[]
   statuses                   statuses[]
   tags                       tags[]
+  user_groups                user_groups[]
   users                      users[]
 }
 
@@ -677,6 +704,35 @@ model tags {
   @@unique([organization_id, normalized_name], map: "ux_tags_organization_id_normalized_name")
 }
 
+/// An organization's named set of users (SPEC/contracts/groups.md). Its use is a Restricted board's
+/// access list, which arrives with board visibility.
+model user_groups {
+  id                 String               @id(map: "PK_user_groups") @db.Uuid
+  organization_id    String               @db.Uuid
+  name               String               @db.VarChar(100)
+  normalized_name    String               @db.VarChar(100)
+  description        String?              @db.VarChar(500)
+  created_at_utc     DateTime             @db.Timestamptz(6)
+  updated_at_utc     DateTime             @db.Timestamptz(6)
+  created_by_user_id String?              @db.Uuid
+  updated_by_user_id String?              @db.Uuid
+  user_group_members  user_group_members[]
+  board_access_groups board_access_groups[]
+  organizations       organizations        @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_user_groups_organizations_organization_id")
+
+  @@unique([organization_id, normalized_name], map: "ux_user_groups_organization_id_normalized_name")
+}
+
+model user_group_members {
+  group_id    String      @db.Uuid
+  user_id     String      @db.Uuid
+  user_groups user_groups @relation(fields: [group_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_user_group_members_user_groups_group_id")
+  users       users       @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_user_group_members_users_user_id")
+
+  @@id([group_id, user_id], map: "PK_user_group_members")
+  @@index([user_id], map: "ix_user_group_members_user_id")
+}
+
 model users {
   id                                                                  String                   @id(map: "PK_users") @db.Uuid
   organization_id                                                     String?                  @db.Uuid
@@ -707,6 +763,8 @@ model users {
   impersonation_sessions_impersonation_sessions_target_user_idTousers impersonation_sessions[] @relation("impersonation_sessions_target_user_idTousers")
   login_message_receipts                                              login_message_receipts[]
   organizations                                                       organizations?           @relation(fields: [organization_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "FK_users_organizations_organization_id")
+  user_group_members                                                  user_group_members[]
+  board_access_users                                                  board_access_users[]
 
   @@index([organization_id], map: "ix_users_organization_id")
 }
@@ -739,6 +797,12 @@ enum AiCallOutcome {
 enum AiKeySource {
   Platform // 0
   Organization // 1
+}
+
+/// Who can see a board (SPEC/contracts/boards.md "Board access").
+enum BoardVisibility {
+  Organization
+  Restricted
 }
 
 /// The fixed delivery lifecycle; the sprint board's five swimlanes. Separate from the

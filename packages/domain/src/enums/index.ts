@@ -1,4 +1,4 @@
-// The fourteen domain enums, mirrored from packages/infrastructure/prisma/schema.prisma.
+// The fifteen domain enums, mirrored from packages/infrastructure/prisma/schema.prisma.
 //
 // Hand-written rather than re-exported from the generated Prisma client, because
 // packages/domain imports nothing - that is the layer rule biome.json enforces. The
@@ -20,6 +20,13 @@ export enum Role {
   OrgAdmin = 'OrgAdmin',
   User = 'User',
   ReadOnly = 'ReadOnly',
+}
+
+/** Who can see a board (SPEC/contracts/boards.md "Board access"). New with board access; no
+ * pre-migration column. */
+export enum BoardVisibility {
+  Organization = 'Organization',
+  Restricted = 'Restricted',
 }
 
 export enum UserStatus {

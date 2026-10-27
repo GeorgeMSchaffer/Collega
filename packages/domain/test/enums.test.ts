@@ -64,6 +64,7 @@ const DOMAIN_ENUMS: Record<string, Record<string, string>> = {
   NotificationEventType: Enums.NotificationEventType,
   AiCallOutcome: Enums.AiCallOutcome,
   AiKeySource: Enums.AiKeySource,
+  BoardVisibility: Enums.BoardVisibility,
   IdeaPhase: Enums.IdeaPhase,
   EffortLevel: Enums.EffortLevel,
   DeliveryStatus: Enums.DeliveryStatus,

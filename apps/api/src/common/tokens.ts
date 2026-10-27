@@ -77,6 +77,10 @@ export const PORT_TOKENS = {
   // Fieldsets (packages/application/src/fieldsets/ports.ts) -------------------------------------
   FieldsetRepository: 'FieldsetRepository',
 
+  // Groups (packages/application/src/groups/ports.ts) -------------------------------------------
+  GroupRepository: 'GroupRepository',
+  GroupMemberLookup: 'GroupMemberLookup',
+
   // Idea Fields (packages/application/src/idea-fields/ports.ts) ----------------------------------
   IdeaTypeRepository: 'IdeaTypeRepository',
 
