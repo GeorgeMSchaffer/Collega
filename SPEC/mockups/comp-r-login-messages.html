@@ -432,6 +432,9 @@ html{overflow-x:clip}
   .mdl-f .btn{flex:1;justify-content:center}.mdl-f .pos{flex-basis:100%}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.bnr-acts{display:flex;gap:6px;flex:none}
+.bnr .btn.pri{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}
+@media (max-width:700px){.bnr .bnr-acts{margin-left:30px}.bnr .bnr-acts .btn{margin-left:0}}
 </style>
 
 <div class="proto" role="region" aria-label="Prototype controls">
@@ -490,7 +493,7 @@ let seq = 10;
 const DATA = {
   org: [
     { id: 1, title: 'Policy update: remote work addendum', body: 'The remote work addendum takes effect on 9 November.\nPlease read it at https://intranet.acme-robotics.example/policies/remote-work and press Acknowledge to confirm you have.', display: 'Modal', mode: 'AcknowledgeRequired', start: '2026-10-26T09:00', end: '2026-11-09T17:00', ack: [12, 40] },
-    { id: 2, title: 'Welcome to the Q4 planning cycle', body: 'Q4 planning is open. Add your ideas to the Opportunities board by 6 November.', display: 'Banner', mode: 'DismissOnce', start: '2026-10-20T08:00', end: '2026-11-06T18:00' },
+    { id: 2, title: 'Welcome to the Q4 planning cycle', body: 'Q4 planning is open. Add your ideas to the Opportunities board by 6 November.', display: 'Banner', mode: 'AcknowledgeRequired', start: '2026-10-20T08:00', end: '2026-11-06T18:00', ack: [9, 40] },
     { id: 3, title: 'Quarter-end change freeze', body: 'No production changes from 12 to 16 November.', display: 'Banner', mode: 'EveryLogin', start: '2026-11-12T00:00', end: '2026-11-16T23:59' },
     { id: 4, title: 'Safety stand-down, 22 October', body: 'All shifts pause for a one-hour safety briefing. Details: https://intranet.acme-robotics.example/safety', display: 'Modal', mode: 'AcknowledgeRequired', start: '2026-10-21T08:00', end: '2026-10-23T08:00', ack: [38, 40] },
     { id: 5, title: 'Friday demo day', body: 'Teams show what shipped this sprint on Friday at 14:00 in the main hall.', display: 'Modal', mode: 'DismissOnce', start: '2026-10-27T08:00', end: '2026-10-31T17:00' },
@@ -521,7 +524,9 @@ function banner(kind, m, id) {
   return `<div class="bnr ${kind}" role="region" aria-label="${sys ? 'System message' : 'Organization message'}: ${esc(m.title)}" data-b="${id}">
     <span class="ic">${svg(sys ? 'wrench' : 'building')}</span>
     <div class="txt"><span class="kind">${sys ? 'System' : 'Acme Robotics'}</span><b>${esc(m.title)}</b><p class="body">${linkify(m.body)}</p></div>
-    <button class="btn sm" type="button" data-close-b="${id}">${label}</button></div>`;
+    ${m.mode === 'AcknowledgeRequired'
+      ? `<span class="bnr-acts"><button class="btn sm" type="button" data-close-b="${id}">Close</button><button class="btn sm pri" type="button" data-close-b="${id}">Acknowledge</button></span>`
+      : `<button class="btn sm" type="button" data-close-b="${id}">${label}</button>`}</div>`;
 }
 function renderDesk() {
   const sys = DATA.site[0], org = DATA.org[1];
@@ -584,7 +589,7 @@ function previewHtml(f) {
   const lbl = MODE[f.mode][2], org = S.scope === 'org';
   if (f.display === 'Banner') {
     return `<div class="bnr ${org ? 'org' : 'sys'}"><span class="ic">${svg(org ? 'building' : 'wrench')}</span><div class="txt"><span class="kind">${org ? 'Acme Robotics' : 'System'}</span><b>${t2}</b><p class="body">${b}</p></div>
-      <span class="btn sm" aria-hidden="true">${f.mode === 'AcknowledgeRequired' ? 'Acknowledge' : lbl}</span></div>`;
+      ${f.mode === 'AcknowledgeRequired' ? '<span class="bnr-acts"><span class="btn sm" aria-hidden="true">Close</span><span class="btn sm pri" aria-hidden="true">Acknowledge</span></span>' : `<span class="btn sm" aria-hidden="true">${lbl}</span>`}</div>`;
   }
   const ack = f.mode === 'AcknowledgeRequired';
   return `<div class="pv-modal"><div class="mdl-h"><div><div class="eb">${svg(org ? 'building' : 'wrench')}${org ? 'Message from Acme Robotics' : 'Message from Collega'}</div><h2>${t2}</h2></div><span class="ghost-x" aria-hidden="true">✕</span></div>
@@ -672,7 +677,7 @@ document.addEventListener('click', (e) => {
   if (t.id === 'replay') { S.mIdx = 0; S.shown = { b1: true, b2: true }; renderDesk(); return; }
   if (t.dataset.nav === 'desk') return show('desk');
   if (t.dataset.nav === 'settings') return show('org');
-  if (t.dataset.closeB) { S.shown[t.dataset.closeB] = false; renderDesk(); toast(t.textContent === 'Dismiss' ? 'Dismissed. It will not show again.' : 'Closed. It returns after your next sign-in.'); return; }
+  if (t.dataset.closeB) { S.shown[t.dataset.closeB] = false; renderDesk(); toast(t.textContent === 'Dismiss' ? 'Dismissed. It will not show again.' : t.textContent === 'Acknowledge' ? 'Acknowledged. It will not show again.' : 'Closed. It returns after your next sign-in.'); return; }
   if (t.dataset.m) { toast(t.dataset.m === 'ack' ? 'Acknowledged. It will not show again.' : 'Closed. It returns after your next sign-in.'); return nextModal(); }
   if (t.dataset.c === 'no') { $('modal').innerHTML = ''; return lastFocus && lastFocus.focus(); }
   if (t.dataset.c === 'yes') { const sc = t.dataset.sc; DATA[sc] = DATA[sc].filter((m) => m.id !== +t.dataset.id); $('modal').innerHTML = ''; $('drawer').classList.remove('open'); renderList(sc); toast('Message deleted.'); return; }
