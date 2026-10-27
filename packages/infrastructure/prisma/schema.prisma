@@ -754,6 +754,8 @@ model users {
   updated_at_utc                                                      DateTime                 @db.Timestamptz(6)
   created_by_user_id                                                  String?                  @db.Uuid
   updated_by_user_id                                                  String?                  @db.Uuid
+  /// The user's own "Record how I use Collega" switch, inverted (SPEC/20-feature-analytics.md rule 11).
+  usage_tracking_opt_out                                              Boolean                  @default(false)
   comment_mentions                                                    comment_mentions[]
   idea_assignees                                                      idea_assignees[]
   idea_followers                                                      idea_followers[]
@@ -909,4 +911,37 @@ enum SprintState {
 enum UserStatus {
   Active // 0
   Inactive // 1
+}
+
+/// One view a member made in the web app (SPEC/20-feature-analytics.md Part 3). Kept for the
+/// retention window, then rolled up into `usage_daily`. No foreign keys on purpose: deleting a user
+/// or an organization never waits on event rows.
+model usage_events {
+  id                   String   @id(map: "PK_usage_events") @db.Uuid
+  organization_id      String?  @db.Uuid
+  /// The real user; under View As, the administrator (the audit log's rule).
+  user_id              String   @db.Uuid
+  /// Under View As, the user being acted as. Excluded from every statistic.
+  on_behalf_of_user_id String?  @db.Uuid
+  event_type           String   @db.VarChar(40)
+  route                String   @db.VarChar(200)
+  entity_id            String?  @db.Uuid
+  props_json           String?
+  occurred_at_utc      DateTime @db.Timestamptz(6)
+  received_at_utc      DateTime @db.Timestamptz(6)
+
+  @@index([user_id, occurred_at_utc], map: "ix_usage_events_user_id_occurred_at_utc")
+  @@index([organization_id, event_type, occurred_at_utc], map: "ix_usage_events_organization_id_event_type_occurred_at_utc")
+  @@index([occurred_at_utc], map: "ix_usage_events_occurred_at_utc")
+}
+
+/// Daily counts that outlive `usage_events`' retention. Names no one.
+model usage_daily {
+  day             DateTime @db.Date
+  organization_id String   @db.Uuid
+  event_type      String   @db.VarChar(40)
+  event_count     Int
+  user_count      Int
+
+  @@id([day, organization_id, event_type], map: "PK_usage_daily")
 }

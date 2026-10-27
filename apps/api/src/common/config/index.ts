@@ -5,9 +5,10 @@ import { type AuthConfig, authFragment } from './fragments/auth.js'
 import { type DatabaseConfig, databaseFragment } from './fragments/database.js'
 import { type ServerConfig, serverFragment } from './fragments/server.js'
 import { type SiteAdminConfig, siteAdminFragment } from './fragments/site-admin.js'
+import { type UsageConfig, usageFragment } from './fragments/usage.js'
 
 export type { EnvFragment } from './fragment.js'
-export type { AiConfig, AuthConfig, DatabaseConfig, ServerConfig, SiteAdminConfig }
+export type { AiConfig, AuthConfig, DatabaseConfig, ServerConfig, SiteAdminConfig, UsageConfig }
 
 export type Config = {
   readonly ai: AiConfig
@@ -15,6 +16,7 @@ export type Config = {
   readonly database: DatabaseConfig
   readonly server: ServerConfig
   readonly siteAdmin: SiteAdminConfig
+  readonly usage: UsageConfig
 }
 
 /** Every fragment. A feature slice adds its own here and writes nothing else in this file. */
@@ -24,6 +26,7 @@ const FRAGMENTS = {
   database: databaseFragment,
   server: serverFragment,
   siteAdmin: siteAdminFragment,
+  usage: usageFragment,
 } as const
 
 export class ConfigError extends Error {
@@ -73,6 +76,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     database: FRAGMENTS.database.read(env, problems),
     server: FRAGMENTS.server.read(env, problems),
     siteAdmin: FRAGMENTS.siteAdmin.read(env, problems),
+    usage: FRAGMENTS.usage.read(env, problems),
   }
 
   if (problems.length > 0) throw new ConfigError(problems)

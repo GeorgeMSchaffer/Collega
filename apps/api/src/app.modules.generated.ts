@@ -22,6 +22,7 @@ import { OutcomesModule } from './outcomes/outcomes.module.js'
 import { SprintsModule } from './sprints/sprints.module.js'
 import { StatusesModule } from './statuses/statuses.module.js'
 import { TagsModule } from './tags/tags.module.js'
+import { UsageModule } from './usage/usage.module.js'
 import { UsersModule } from './users/users.module.js'
 import { ViewAsModule } from './view-as/view-as.module.js'
 
@@ -48,6 +49,7 @@ export const FEATURE_MODULES = [
   SprintsModule,
   StatusesModule,
   TagsModule,
+  UsageModule,
   UsersModule,
   ViewAsModule,
 ] as const
