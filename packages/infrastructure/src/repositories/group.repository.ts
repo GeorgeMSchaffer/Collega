@@ -1,7 +1,8 @@
 // Satisfies `GroupRepository` (groups/ports.ts). A membership row is only the (group, user) pair, so
 // `save` replaces the member set by deleting the pairs that left and inserting the ones that joined.
 
-import type { GroupRepository } from '@collega/application/groups'
+import type { GroupBoardGrant, GroupRepository } from '@collega/application/groups'
+import type { BoardVisibility } from '@collega/domain/enums'
 import type { Group } from '@collega/domain/groups'
 import type {
   user_group_members as GroupMemberRow,
@@ -63,6 +64,53 @@ export class PrismaGroupRepository implements GroupRepository {
       select: { id: true },
     })
     return found !== null
+  }
+
+  async listRestrictedBoardGrants(
+    groupIds: readonly string[],
+  ): Promise<readonly GroupBoardGrant[]> {
+    if (groupIds.length === 0) {
+      return []
+    }
+    const rows = await this.prisma.board_access_groups.findMany({
+      where: { group_id: { in: [...groupIds] }, boards: { visibility: 'Restricted' } },
+      select: {
+        group_id: true,
+        boards: {
+          select: {
+            id: true,
+            name: true,
+            is_archived: true,
+            organization_id: true,
+            visibility: true,
+            created_by_user_id: true,
+            board_access_users: { select: { user_id: true } },
+            board_access_groups: { select: { group_id: true } },
+          },
+        },
+      },
+    })
+    return rows.map((row) => ({
+      groupId: row.group_id,
+      board: {
+        id: row.boards.id,
+        name: row.boards.name,
+        isArchived: row.boards.is_archived,
+        organizationId: row.boards.organization_id,
+        visibility: row.boards.visibility as BoardVisibility,
+        createdByUserId: row.boards.created_by_user_id,
+        accessUserIds: row.boards.board_access_users.map((grant) => grant.user_id),
+        accessGroupIds: row.boards.board_access_groups.map((grant) => grant.group_id),
+      },
+    }))
+  }
+
+  async listGroupIdsForUser(userId: string): Promise<readonly string[]> {
+    const rows = await this.prisma.user_group_members.findMany({
+      where: { user_id: userId },
+      select: { group_id: true },
+    })
+    return rows.map((row) => row.group_id)
   }
 
   async add(group: Group): Promise<void> {

@@ -1,8 +1,25 @@
 // Persistence ports for groups (SPEC/contracts/groups.md). Infrastructure implements these against
 // Prisma; this feature depends only on the shapes below.
 
+import type { BoardVisibility } from '@collega/domain/enums'
 import type { Group } from '@collega/domain/groups'
 import type { User } from '@collega/domain/users'
+
+/** A Restricted board granted to a group, with what `canSeeBoard` needs to decide whether the
+ * caller may see it. */
+export type GroupBoardGrant = {
+  readonly groupId: string
+  readonly board: {
+    readonly id: string
+    readonly name: string
+    readonly isArchived: boolean
+    readonly organizationId: string
+    readonly visibility: BoardVisibility
+    readonly createdByUserId: string | null
+    readonly accessUserIds: readonly string[]
+    readonly accessGroupIds: readonly string[]
+  }
+}
 
 export interface GroupRepository {
   add(group: Group): Promise<void>
@@ -22,6 +39,12 @@ export interface GroupRepository {
   /** Whether the organization already has a group of this name (trimmed, case-insensitive),
    * excluding `excludeId`. */
   existsByName(organizationId: string, name: string, excludeId: string | null): Promise<boolean>
+
+  /** The Restricted boards whose access list names any of `groupIds`, one entry per pair. */
+  listRestrictedBoardGrants(groupIds: readonly string[]): Promise<readonly GroupBoardGrant[]>
+
+  /** The groups the user belongs to. */
+  listGroupIdsForUser(userId: string): Promise<readonly string[]>
 }
 
 /** Satisfied by the users feature's `UserRepository`. Ids that do not exist are absent. */

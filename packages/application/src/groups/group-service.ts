@@ -3,6 +3,7 @@
 // list names groups; writing is the organization's Org Admin only (a Site Admin acts through View As).
 
 import { randomUUID } from 'node:crypto'
+import { canSeeBoard } from '@collega/domain/boards'
 import { Role } from '@collega/domain/enums'
 import {
   createGroup,
@@ -12,6 +13,7 @@ import {
   updateGroup,
 } from '@collega/domain/groups'
 import type { User } from '@collega/domain/users'
+import { loadBoardViewer } from '../boards/board-viewer.js'
 import {
   type AuditEventWriter,
   attributeAudit,
@@ -32,7 +34,12 @@ import type {
   SetGroupMembersCommand,
   UpdateGroupCommand,
 } from './models.js'
-import type { GroupMemberLookup, GroupRepository, OrganizationExistenceLookup } from './ports.js'
+import type {
+  GroupBoardGrant,
+  GroupMemberLookup,
+  GroupRepository,
+  OrganizationExistenceLookup,
+} from './ports.js'
 
 const INVALID = 'One or more fields are invalid.'
 
@@ -51,7 +58,9 @@ export class GroupService {
     this.ensureReadScope(organizationId)
     await this.ensureOrganizationExists(organizationId)
 
-    return [...(await this.groups.listByOrganization(organizationId))]
+    const groups = await this.groups.listByOrganization(organizationId)
+    const visibleGrants = await this.visibleBoardGrants(groups.map((group) => group.id))
+    return [...groups]
       .sort(
         (a, b) =>
           a.name.toLowerCase().localeCompare(b.name.toLowerCase()) || a.id.localeCompare(b.id),
@@ -62,6 +71,7 @@ export class GroupService {
         name: group.name,
         description: group.description,
         memberCount: group.memberUserIds.length,
+        boardCount: visibleGrants.filter((grant) => grant.groupId === group.id).length,
       }))
   }
 
@@ -160,6 +170,10 @@ export class GroupService {
 
   async delete(groupId: string): Promise<void> {
     const existing = await this.requireManageableGroup(groupId)
+    // Every board whose grant goes with the group, seen or not, so the access can be rebuilt by hand.
+    const boardIds = (await this.groups.listRestrictedBoardGrants([existing.id])).map(
+      (grant) => grant.board.id,
+    )
 
     await this.groups.delete(existing.id)
     await this.unitOfWork.saveChanges()
@@ -171,6 +185,7 @@ export class GroupService {
       {
         name: existing.name,
         userIds: existing.memberUserIds,
+        boardIds,
       },
     )
   }
@@ -198,14 +213,41 @@ export class GroupService {
           a.id.localeCompare(b.id),
       )
       .map(toMemberModel)
+    const boards = (await this.visibleBoardGrants([group.id]))
+      .map((grant) => ({
+        boardId: grant.board.id,
+        name: grant.board.name,
+        isArchived: grant.board.isArchived,
+      }))
+      .sort(
+        (a, b) =>
+          a.name.toLowerCase().localeCompare(b.name.toLowerCase()) ||
+          a.boardId.localeCompare(b.boardId),
+      )
     return {
       groupId: group.id,
       organizationId: group.organizationId,
       name: group.name,
       description: group.description,
       members,
+      boards,
       canManage: this.canManage(group.organizationId),
     }
+  }
+
+  /** The Restricted boards granted to `groupIds` that the caller can see (BAG-4: a board they
+   * cannot see is not counted or named). */
+  private async visibleBoardGrants(
+    groupIds: readonly string[],
+  ): Promise<readonly GroupBoardGrant[]> {
+    if (groupIds.length === 0) {
+      return []
+    }
+    const [grants, viewer] = await Promise.all([
+      this.groups.listRestrictedBoardGrants(groupIds),
+      loadBoardViewer(this.currentUser, this.groups),
+    ])
+    return grants.filter((grant) => canSeeBoard(grant.board, viewer))
   }
 
   private async ensureNameAvailable(
