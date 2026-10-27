@@ -534,6 +534,7 @@ model organizations {
   sprints                    sprints[]
   statuses                   statuses[]
   tags                       tags[]
+  user_groups                user_groups[]
   users                      users[]
 }
 
@@ -638,6 +639,34 @@ model tags {
   @@unique([organization_id, normalized_name], map: "ux_tags_organization_id_normalized_name")
 }
 
+/// An organization's named set of users (SPEC/contracts/groups.md). Its use is a Restricted board's
+/// access list, which arrives with board visibility.
+model user_groups {
+  id                 String               @id(map: "PK_user_groups") @db.Uuid
+  organization_id    String               @db.Uuid
+  name               String               @db.VarChar(100)
+  normalized_name    String               @db.VarChar(100)
+  description        String?              @db.VarChar(500)
+  created_at_utc     DateTime             @db.Timestamptz(6)
+  updated_at_utc     DateTime             @db.Timestamptz(6)
+  created_by_user_id String?              @db.Uuid
+  updated_by_user_id String?              @db.Uuid
+  user_group_members user_group_members[]
+  organizations      organizations        @relation(fields: [organization_id], references: [id], onUpdate: NoAction, map: "FK_user_groups_organizations_organization_id")
+
+  @@unique([organization_id, normalized_name], map: "ux_user_groups_organization_id_normalized_name")
+}
+
+model user_group_members {
+  group_id    String      @db.Uuid
+  user_id     String      @db.Uuid
+  user_groups user_groups @relation(fields: [group_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_user_group_members_user_groups_group_id")
+  users       users       @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "FK_user_group_members_users_user_id")
+
+  @@id([group_id, user_id], map: "PK_user_group_members")
+  @@index([user_id], map: "ix_user_group_members_user_id")
+}
+
 model users {
   id                                                                  String                   @id(map: "PK_users") @db.Uuid
   organization_id                                                     String?                  @db.Uuid
@@ -667,6 +696,7 @@ model users {
   impersonation_sessions_impersonation_sessions_real_user_idTousers   impersonation_sessions[] @relation("impersonation_sessions_real_user_idTousers")
   impersonation_sessions_impersonation_sessions_target_user_idTousers impersonation_sessions[] @relation("impersonation_sessions_target_user_idTousers")
   organizations                                                       organizations?           @relation(fields: [organization_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "FK_users_organizations_organization_id")
+  user_group_members                                                  user_group_members[]
 
   @@index([organization_id], map: "ix_users_organization_id")
 }

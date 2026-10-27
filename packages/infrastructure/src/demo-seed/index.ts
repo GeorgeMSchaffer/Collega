@@ -5,6 +5,7 @@ import { boardsAndStatusesSeed } from './modules/boards-and-statuses.js'
 import { commentsSeed } from './modules/comments.js'
 import { deliverySeed } from './modules/delivery.js'
 import { fieldsSeed } from './modules/fields.js'
+import { groupsSeed } from './modules/groups.js'
 import { ideasAndUpvotesSeed } from './modules/ideas-and-upvotes.js'
 import { organizationsSeed } from './modules/organizations.js'
 import { DEMO_ORGANIZATIONS, seedId } from './modules/scenario.js'
@@ -26,6 +27,7 @@ import type { SeedModule } from './types.js'
 const MODULES: readonly SeedModule[] = [
   organizationsSeed,
   usersSeed,
+  groupsSeed,
   boardsAndStatusesSeed,
   ideasAndUpvotesSeed,
   commentsSeed,
@@ -110,6 +112,8 @@ export async function resetDemoSeed(prisma: PrismaClient): Promise<number> {
   await remove(prisma.idea_type_fields.deleteMany({ where: { idea_types: org } }))
   await remove(prisma.fieldset_fields.deleteMany({ where: { fieldsets: org } }))
   await remove(prisma.fieldsets.deleteMany({ where: org }))
+  // Memberships go with their group (ON DELETE CASCADE).
+  await remove(prisma.user_groups.deleteMany({ where: org }))
   await remove(prisma.field_definition_options.deleteMany({ where: { field_definitions: org } }))
   await remove(prisma.field_definitions.deleteMany({ where: org }))
   await remove(prisma.idea_types.deleteMany({ where: org }))

@@ -188,6 +188,8 @@ async function main(): Promise<void> {
       ],
       ['fieldset_fields', () => prisma.fieldset_fields.deleteMany({ where: { fieldsets: org } })],
       ['fieldsets', () => prisma.fieldsets.deleteMany({ where: org })],
+      // Memberships go with their group (ON DELETE CASCADE).
+      ['user_groups', () => prisma.user_groups.deleteMany({ where: org })],
       [
         'field_definition_options',
         () => prisma.field_definition_options.deleteMany({ where: { field_definitions: org } }),
