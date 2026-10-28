@@ -124,6 +124,11 @@ function sectionsFor(role: Role): Section[] {
         title: 'API usage',
         blurb: 'Assistant token consumption and estimated cost, per organization.',
       },
+      {
+        href: '/settings/usage-analytics',
+        title: 'Usage analytics',
+        blurb: 'How one organization uses Collega: totals, milestones, paths and member trails.',
+      },
     ]
   }
 
