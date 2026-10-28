@@ -1507,6 +1507,49 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
       /^<guid@(viewas\.candidates\.siteadmin\.body\[\d+\]\.userId|me\.(user|readonly)\.body\.userId|login\.orgadmin\.body\.user\.userId)>$/,
     kind: 'value',
   },
+  // Restricted boards (SPEC/20-feature-board-access-and-groups.md BAG-2a, BAG-5b). Replayed
+  // 2026-10-28 (slice 353) against a freshly seeded stack: every seeded board is `Organization`,
+  // so these fields are the only board-access differences, and they are additive. Each is
+  // accepted as the field appearing and only that (`kind: 'extra'`); a changed value of any
+  // recorded field is still a mismatch. The group reads (`boardCount`, `boards`) are not in the
+  // corpus: it was recorded before groups existed.
+  {
+    cases: [
+      'boards.list.orgadmin',
+      'boards.list.readonly',
+      'boards.list.siteadmin',
+      'boards.list.user',
+      'comments.board',
+      'ideaassist.board',
+      'ideas.board',
+    ],
+    path: 'body[].visibility',
+    decided: '2026-10-28',
+    reason:
+      'Board list items gain `visibility` (contracts/boards.md "Board access"). Every seeded board ' +
+      'is `Organization`, and a board the caller cannot see is left out of the list, which no ' +
+      'recorded case exercises because the seed restricts nothing.',
+    kind: 'extra',
+  },
+  ...(['visibility', 'accessUserIds', 'accessGroupIds', 'canManageAccess'] as const).map(
+    (field) => ({
+      cases: [
+        'boards.get.orgadmin',
+        'boards.get.readonly',
+        'boards.get.siteadmin',
+        'boards.get.user',
+        'boards.update.orgadmin',
+      ],
+      path: `body.${field}`,
+      decided: '2026-10-28',
+      reason:
+        'The board detail gains `visibility`, `accessUserIds`, `accessGroupIds` and ' +
+        '`canManageAccess` (contracts/boards.md "Board access"). Observed as `Organization`, `[]`, ' +
+        '`[]`, and `canManageAccess` true for the Org Admin and false otherwise, as the contract ' +
+        'states for a board the caller did not create.',
+      kind: 'extra' as const,
+    }),
+  ),
 ]
 
 /** One entry as it applies to one of its cases - the unit staleness is reported at. */

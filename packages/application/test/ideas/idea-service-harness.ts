@@ -162,6 +162,13 @@ export const ORG_LIST_QUERY: OrganizationIdeaListQuery = {
   phase: null,
 }
 
+/** The repositories' board-sight filter (BAG-4c): `null` is every board, and an item on no board
+ * always passes. The default `boardAccess` answers every board, so only a suite that narrows it
+ * sees anything filtered. */
+function onVisibleBoard(idea: Idea, visibleBoardIds: readonly string[] | null): boolean {
+  return visibleBoardIds === null || idea.boardId === null || visibleBoardIds.includes(idea.boardId)
+}
+
 export type Harness = {
   service: IdeaService
   saved: Idea[]
@@ -266,7 +273,8 @@ export function harness(options: {
     async listByOrganization(filter) {
       orgFilters.push(filter)
       const items = [...ideasById.values()].filter(
-        (i) => i.organizationId === filter.organizationId,
+        (i) =>
+          i.organizationId === filter.organizationId && onVisibleBoard(i, filter.visibleBoardIds),
       )
       return {
         items,
@@ -294,7 +302,10 @@ export function harness(options: {
     async listDelivery(filter) {
       deliveryFilters.push(filter)
       return [...ideasById.values()].filter(
-        (i) => i.organizationId === filter.organizationId && i.phase === IdeaPhase.Delivery,
+        (i) =>
+          i.organizationId === filter.organizationId &&
+          i.phase === IdeaPhase.Delivery &&
+          onVisibleBoard(i, filter.visibleBoardIds),
       )
     },
     async listBySprint() {
