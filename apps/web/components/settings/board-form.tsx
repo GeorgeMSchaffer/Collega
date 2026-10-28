@@ -15,6 +15,7 @@ import {
 } from '@collega/design-system'
 import Link from 'next/link'
 import { type FormEvent, useActionState, useState, useTransition } from 'react'
+import { AccessSection } from '@/components/access/access-section'
 import { IdeaMovesGuard } from '@/components/settings/idea-moves-guard'
 import { type PullSetup, PullStep } from '@/components/settings/pull-step'
 import { NO_FLAGS, SwimlanePicker } from '@/components/settings/swimlane-picker'
@@ -22,6 +23,7 @@ import { PULL_ITEM_CAP } from '@/lib/limits'
 import type { BoardFormState, FieldRefusals } from '@/lib/server/board-actions'
 import { createBoard, saveBoard } from '@/lib/server/board-actions'
 import type {
+  AccessSetup,
   AllowedIdeaTypesSetup,
   LaneFlags,
   PullCandidate,
@@ -62,6 +64,7 @@ export function BoardForm({
   submitLabel,
   explainerHeading,
   pullSetup,
+  access,
 }: {
   /** The board being edited, or null on the create route. */
   boardId: string | null
@@ -83,6 +86,8 @@ export function BoardForm({
   explainerHeading: string
   /** What the *Add existing items* step needs; absent leaves the step out. */
   pullSetup?: PullSetup
+  /** The Access section's setup; absent when the caller may not manage access. */
+  access?: AccessSetup | undefined
 }) {
   const [state, submit, pending] = useActionState(boardId === null ? createBoard : saveBoard, IDLE)
   const onSubmit = useKeptSubmit(submit)
@@ -110,6 +115,7 @@ export function BoardForm({
               ideaFeaturesEnabled={ideaFeaturesEnabled}
               allowedIdeaTypes={allowedIdeaTypes}
               references={references}
+              access={access}
               refusals={state}
               statuses={statuses}
               pull={
@@ -211,6 +217,7 @@ export function BoardFields({
   ideaFeaturesEnabled = true,
   allowedIdeaTypes,
   references,
+  access,
   refusals,
   statuses,
   sectionHeading: SectionHeading = 'h2',
@@ -230,6 +237,8 @@ export function BoardFields({
   allowedIdeaTypes?: AllowedIdeaTypesSetup | undefined
   /** The boards a lane may reference; absent leaves the References controls out. */
   references?: ReferenceContext | undefined
+  /** Who can see the board; absent leaves the Access section out (no `canManageAccess`). */
+  access?: AccessSetup | undefined
   /** The last save's field refusals: the key prefix and, where it is plain, the lane. */
   refusals?: FieldRefusals | undefined
   statuses: Status[]
@@ -294,6 +303,8 @@ export function BoardFields({
           rows={3}
         />
       </Field>
+
+      {access ? <AccessSection setup={access} sectionHeading={SectionHeading} /> : null}
 
       <div className="mb-4">
         <Switch

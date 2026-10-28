@@ -81,6 +81,14 @@ function refusedSave(
 ): { error: string | null; pullErrors: string[] } & FieldRefusals {
   if (error instanceof ApiError) {
     const { keyPrefix, ...rest } = error.errors
+    // The access lists' refusals (an unknown or foreign user or group) have no control to sit
+    // beside, so they read in the banner as the API words them.
+    const access = ['visibility', 'userIds', 'groupIds', 'accessUserIds', 'accessGroupIds'].flatMap(
+      (field) => error.errors[field] ?? [],
+    )
+    if (error.status === 400 && access.length > 0) {
+      return { error: access.join(' '), pullErrors: [] }
+    }
     if (error.status === 400 && (error.errors.ideaTypeIds || error.errors.allowedIdeaTypeIds)) {
       return {
         error: null,
@@ -183,6 +191,9 @@ function boardBody(form: FormData): {
   swimlanes: ({ statusId: string; order: number } & LaneFlags)[]
   pullItemIds?: string[]
   allowedIdeaTypeIds?: string[]
+  visibility?: string
+  accessUserIds?: string[]
+  accessGroupIds?: string[]
 } {
   // Left out when empty, so a save that pulls nothing is the request it was before the step existed.
   const pullItemIds = form.getAll('pullItemIds').map(String)
@@ -215,7 +226,36 @@ function boardBody(form: FormData): {
     ...(form.has('allowedIdeaTypesShown') && allowed.length > 0
       ? { allowedIdeaTypeIds: allowed }
       : {}),
+    // Create only, from a form that showed the Access section: a save sets it through its own
+    // route (`save`), and a form without it leaves the API's default, open to everyone.
+    ...(form.has('accessShown') ? accessBody(form, 'access') : {}),
   }
+}
+
+/** The Access section's fields, named for create (`access…`) or for `PUT /boards/{id}/access`. */
+function accessBody(
+  form: FormData,
+  prefix: 'access',
+): {
+  visibility: string
+  accessUserIds: string[]
+  accessGroupIds: string[]
+}
+function accessBody(
+  form: FormData,
+  prefix: 'put',
+): {
+  visibility: string
+  userIds: string[]
+  groupIds: string[]
+}
+function accessBody(form: FormData, prefix: 'access' | 'put') {
+  const visibility = String(form.get('visibility') ?? 'Organization')
+  const userIds = form.getAll('accessUserIds').map(String)
+  const groupIds = form.getAll('accessGroupIds').map(String)
+  return prefix === 'access'
+    ? { visibility, accessUserIds: userIds, accessGroupIds: groupIds }
+    : { visibility, userIds, groupIds }
 }
 
 /**
@@ -270,7 +310,13 @@ async function save(
   const boardId = String(form.get('boardId') ?? '')
 
   try {
-    const { allowedIdeaTypeIds: _create, ...body } = boardBody(form)
+    const {
+      allowedIdeaTypeIds: _types,
+      visibility: _visibility,
+      accessUserIds: _users,
+      accessGroupIds: _groups,
+      ...body
+    } = boardBody(form)
     await apiPut(apiPath`/boards/${boardId}`, { ...body, ideaMoves: ideaMoves(form) })
   } catch (error) {
     return refusedSave(error, form)
@@ -290,11 +336,25 @@ async function save(
     }
   }
 
+  // Who can see the board: its own route, from a form that showed the section (the caller may
+  // manage access). Written after the board, so a refusal says only the access failed.
+  let accessRefusal: string | null = null
+  if (form.has('accessShown')) {
+    try {
+      await apiPut(apiPath`/boards/${boardId}/access`, accessBody(form, 'put'))
+    } catch (error) {
+      const refused = refusedSave(error, form)
+      accessRefusal =
+        `The board was saved, but who can see it was not. ${refused.error ?? ''}`.trim()
+    }
+  }
+
   // The lanes changed, so the board itself is stale as well as the lists. Escaped for the reason
   // `apiPath` gives: a cache path is a path, and an id that names no route revalidates nothing,
   // which is the right outcome for a write the API refused to believe in.
   revalidatePath(`/boards/${encodeURIComponent(boardId)}`)
   revalidatePath('/', 'layout')
+  if (accessRefusal) return { error: accessRefusal, pullErrors: [] }
   if (typesRefusal) {
     const saved = 'The board was saved, but its allowed idea types were not.'
     return {

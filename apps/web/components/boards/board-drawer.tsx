@@ -15,6 +15,7 @@ import {
   saveBoardInPlace,
 } from '@/lib/server/board-actions'
 import type {
+  AccessSetup,
   AllowedIdeaTypesSetup,
   BoardOverview,
   LaneFlags,
@@ -45,6 +46,8 @@ export type BoardFormData = {
   statuses: Status[]
   /** What the *Add existing items* step needs; absent leaves the step out. */
   pull?: PullSetup
+  /** The Access section's setup; absent when the caller may not manage access. */
+  access?: AccessSetup | undefined
 }
 
 /** A board's lanes as the view shows them, read-only: each lane's status and its Board References flags. */
@@ -178,6 +181,7 @@ export function BoardDrawer({
           ideaFeaturesEnabled={form.ideaFeaturesEnabled}
           allowedIdeaTypes={form.allowedIdeaTypes}
           references={form.references}
+          access={form.access}
           refusals={outcome.formKey === formKey ? outcome : undefined}
           statuses={form.statuses}
           sectionHeading="h3"
@@ -260,6 +264,17 @@ function BoardFacts({
     ['By', board.createdBy ?? '—'],
     ['Key prefix', board.keyPrefix ?? '—'],
     ['Idea features', board.ideaFeaturesEnabled ? 'On' : 'Off'],
+    [
+      'Who can see it',
+      board.restricted ? (
+        <span key="a" className="inline-flex items-center gap-1.5">
+          <Icon name="lock" className="size-3.5" />
+          Chosen people
+        </span>
+      ) : (
+        'Everyone'
+      ),
+    ],
     ['Status', board.archivedOn ? `Archived ${board.archivedOn}` : statusLabel(board)],
   ]
 

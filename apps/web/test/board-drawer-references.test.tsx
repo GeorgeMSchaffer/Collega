@@ -69,6 +69,8 @@ function overview(over: Partial<BoardOverview> = {}): BoardOverview {
     keyPrefix: 'DISC',
     sprintsEnabled: false,
     ideaFeaturesEnabled: true,
+    restricted: false,
+    createdById: null,
     ...over,
   }
 }

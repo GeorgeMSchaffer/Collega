@@ -1,6 +1,7 @@
 import { Card } from '@collega/design-system'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { LockMark } from '@/components/access/lock-mark'
 import type { BoardOverview } from '@/lib/types'
 import { BoardStatus, createdLine, LaneLegend, LaneStrip, TopTags } from './board-parts'
 
@@ -13,8 +14,9 @@ export function BoardCard({ board, actions }: { board: BoardOverview; actions: R
     <Card className="flex flex-col">
       <div className="flex items-start justify-between gap-2 px-5 pt-4">
         {/* The list pattern's rows sit under the page's h1, so a card title is an h2. */}
-        <h2 className="m-0 text-base font-semibold">
+        <h2 className="m-0 inline-flex items-center gap-1.5 text-base font-semibold">
           <Link href={`/boards/${board.id}`}>{board.name}</Link>
+          {board.restricted ? <LockMark /> : null}
         </h2>
         {board.isArchived ? <BoardStatus board={board} /> : null}
       </div>

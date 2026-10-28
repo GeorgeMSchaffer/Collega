@@ -1,3 +1,4 @@
+import { loadBoardAccess, loadNewBoardAccess } from '@/components/access/load-access-setup'
 import { UsageViewed } from '@/components/analytics/usage-viewed'
 import type { BoardFormData, BoardView } from '@/components/boards/board-drawer'
 import { BoardsScreen } from '@/components/boards/boards-screen'
@@ -45,11 +46,12 @@ async function formFor(
   const archivedBoardIds = boards.filter((board) => board.isArchived).map((board) => board.id)
 
   if (requested === 'new') {
-    const [statuses, pull, references, choices] = await Promise.all([
+    const [statuses, pull, references, choices, access] = await Promise.all([
       getStatuses(),
       loadPullSetup({ isAdmin, archivedBoardIds }),
       getReferenceContext(null),
       getIdeaTypeChoices(),
+      loadNewBoardAccess(),
     ])
     return {
       boardId: null,
@@ -64,6 +66,7 @@ async function formFor(
       references,
       statuses,
       pull,
+      access,
     }
   }
 
@@ -90,6 +93,7 @@ async function formFor(
     ideaFeaturesEnabled: board.ideaFeaturesEnabled,
     allowedIdeaTypes,
     references,
+    access: await loadBoardAccess(board, listed),
     // A lane whose status has since been archived is missing from the catalog; merging it in keeps
     // it visible and removable rather than silently dropped on the next save (as Settings does).
     statuses: [

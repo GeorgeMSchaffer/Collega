@@ -19,6 +19,7 @@ export function SettingsPage({
   lead,
   actions,
   siteAdminOnly = false,
+  openToMembers = false,
   children,
 }: {
   title: string
@@ -27,6 +28,8 @@ export function SettingsPage({
   actions?: ReactNode
   /** Deployment-level route: an Org Admin is refused too, with a different reason. */
   siteAdminOnly?: boolean
+  /** Every role reads this route; the screen itself decides who may change anything. */
+  openToMembers?: boolean
   children: ReactNode
 }) {
   return (
@@ -40,7 +43,7 @@ export function SettingsPage({
         }
       />
       <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
-        <Gate siteAdminOnly={siteAdminOnly} what={gate}>
+        <Gate siteAdminOnly={siteAdminOnly} openToMembers={openToMembers} what={gate}>
           {/* The action sits inside the gate with the heading, so a role the route refuses never
               reads "Add New Status" above a panel telling them the page is closed to them. */}
           <UsageViewed type="admin.viewed" screen />
@@ -84,13 +87,16 @@ export function Th({ children, className = '' }: { children?: ReactNode; classNa
 /** Picks the refusal the route actually owes: an Org Admin passes one gate and not the other. */
 function Gate({
   siteAdminOnly,
+  openToMembers,
   what,
   children,
 }: {
   siteAdminOnly: boolean
+  openToMembers: boolean
   what: string
   children: ReactNode
 }) {
+  if (openToMembers) return <>{children}</>
   if (siteAdminOnly) {
     return <SiteAdminOnly>{children}</SiteAdminOnly>
   }
