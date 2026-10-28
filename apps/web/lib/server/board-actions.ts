@@ -70,13 +70,13 @@ function refusal(error: unknown): string {
   throw error
 }
 
+const ACCESS_FIELDS = ['visibility', 'userIds', 'groupIds', 'accessUserIds', 'accessGroupIds']
+
 /**
  * A refused save: the banner message, the per-item messages of a refused pull (which the step shows
  * beside the items they name), and the refusals that belong on a field. The banner keeps only what
  * is left over.
  */
-const ACCESS_FIELDS = ['visibility', 'userIds', 'groupIds', 'accessUserIds', 'accessGroupIds']
-
 function refusedSave(
   error: unknown,
   form: FormData,
