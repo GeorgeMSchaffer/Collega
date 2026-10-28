@@ -114,10 +114,11 @@ the idea activity history (`GET /api/v1/ideas/{ideaId}/activity`) is unaffected.
     are sent in one batch every 10 seconds, when the queue reaches 25 events, or when the page is
     hidden (`sendBeacon`, falling back to `fetch` with `keepalive`). Nothing awaits the send and
     nothing is shown if it fails. A failed batch is dropped, not retried. Above 200 queued events
-    the oldest are dropped.
+    the oldest are dropped. Nothing is queued or sent while a password change is required: the
+    rotation gate would refuse it (`contracts/auth.md`).
 14. **The server answers before it can fail.** The intake route returns `202` for any signed-in
-    caller, whatever happens to the write. The insert is one statement per batch with a 2-second
-    statement timeout. Any failure — timeout, connection, validation of the stored row — is caught
+    caller, whatever happens to the write. The insert is one statement per batch, and the request
+    stops waiting on it after 2 seconds. Any failure — timeout, connection, validation of the stored row — is caught
     and written to the console as one JSON line tagged `usage_events_write_failed`, carrying the
     batch (which holds no content, requirement 8), the user and organization ids and the error
     message. Vercel keeps runtime logs, and a log drain can keep them longer; nothing is written

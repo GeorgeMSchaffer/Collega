@@ -35,13 +35,17 @@ Record a batch of view events from the web client.
   batch, a malformed event, an unknown `type` or `props` key, an oversized body, a rate-limited
   batch, an opted-out caller, a Site Admin acting directly, `COLLEGA_USAGE_TRACKING=off` and a
   failed write are all `202` with the events not stored. The client ignores the response, and an
-  error status would only add noise to the browser console.
+  error status would only add noise to the browser console. **Before the route:** while a password
+  change is required the rotation gate answers `403` (`contracts/auth.md` keeps that allowlist to
+  two routes), so the web client sends nothing until the password is changed; a body that is not JSON (`400`) or is over the platform's 100 KB
+  parser limit (`413`) is refused by the framework, and the web client never sends either.
 - **Rules:**
   - The server sets `user_id`, `organization_id` and `on_behalf_of_user_id` from the session; the
     body never carries an identity.
   - An `occurredAtUtc` more than 24 hours from the server's clock is replaced by the server's time.
   - At most 60 batches a minute per user; batches over that are dropped.
-  - One insert per batch, with a 2-second statement timeout. A failure is written to the console as
+  - One insert per batch, one database operation. The request stops waiting after 2 seconds and
+    treats that as a failure (the insert may still complete). A failure is written to the console as
     one JSON line, `{ "tag": "usage_events_write_failed", "userId", "organizationId", "events",
     "error" }`, and the response is still `202`.
 
