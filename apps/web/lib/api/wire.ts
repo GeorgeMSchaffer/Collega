@@ -36,6 +36,9 @@ export type WireViewingAs = {
   expiresAtUtc: string
 }
 
+/** `GET /auth/me` alone adds this to the summary (`SPEC/contracts/auth.md`, decision 2026-10-28). */
+export type WireMe = WireCurrentUser & { requiresPasswordChange: boolean }
+
 /** `POST /auth/login`. No `accessToken`: decision `08` moved it into the httpOnly cookie. */
 export type WireLoginResponse = {
   expiresInSeconds: number

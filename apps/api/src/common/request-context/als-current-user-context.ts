@@ -64,6 +64,10 @@ export class AlsCurrentUserContext implements CurrentUserContext {
    * the property rule 4 exists to protect - so this deliberately sits outside the interface every
    * application service depends on, reachable only by asking for this class by name.
    */
+  get passwordChangeRequired(): boolean {
+    return this.store.identity?.passwordChangeRequired ?? false
+  }
+
   get impersonation(): ImpersonationContext | null {
     const identity = this.store.identity
     if (!identity?.impersonation) return null

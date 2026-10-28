@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-28 | `GET /auth/me` reports `requiresPasswordChange` | active | full below |
 | 2026-10-28 | The usage rollup runs on `GET`, one day per transaction | active | full below |
 | 2026-10-27 | Sign-in messages show on the first page after signing in only | active | full below |
 | 2026-10-27 | Usage analytics records what members view, tied to their account | active | full below |
@@ -155,6 +156,20 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-10-28 — `GET /auth/me` reports `requiresPasswordChange`
+
+> Spec: `SPEC/20-feature-analytics.md` rule 13; contract: `SPEC/contracts/auth.md`. Owner decision,
+> slice 365 review.
+
+- **What:** `GET /auth/me` adds `requiresPasswordChange`, `true` while the signed-in account must
+  change its password. Only that route returns it; the shared user summary is unchanged.
+- **Why:** rule 13 says the web client sends no usage events while a password change is required.
+  The client could not see that state: `/auth/me` is on the rotation allowlist, so a member
+  mid-rotation who opens a desk URL still gets the layout. The owner chose to report the flag over
+  accepting batches the rotation gate would refuse.
+- **Not changed:** the rotation allowlist (`contracts/auth.md`) stays at two routes, and the intake
+  route stays off it.
 
 ## 2026-10-28 — The usage rollup runs on `GET`, one day per transaction
 
