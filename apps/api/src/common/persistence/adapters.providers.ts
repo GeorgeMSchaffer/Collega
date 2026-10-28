@@ -39,6 +39,7 @@ import {
   PrismaSprintRepository,
   PrismaStatusRepository,
   PrismaTagRepository,
+  PrismaUsageReportRepository,
   PrismaUsageRepository,
   PrismaUserRepository,
 } from '@collega/infrastructure/repositories'
@@ -181,6 +182,11 @@ const CONCRETE_ADAPTERS: Provider[] = [
   {
     provide: PrismaUsageRepository,
     useFactory: (prisma: PrismaClient) => new PrismaUsageRepository(prisma),
+    inject: [PORT_TOKENS.PrismaClient],
+  },
+  {
+    provide: PrismaUsageReportRepository,
+    useFactory: (prisma: PrismaClient) => new PrismaUsageReportRepository(prisma),
     inject: [PORT_TOKENS.PrismaClient],
   },
   {
@@ -376,6 +382,7 @@ const PORT_ALIASES: Provider[] = [
   { provide: PORT_TOKENS.LoginMessageRepository, useExisting: PrismaLoginMessageRepository },
   { provide: PORT_TOKENS.UsageEventStore, useExisting: PrismaUsageRepository },
   { provide: PORT_TOKENS.UsageTrackingPreferences, useExisting: PrismaUsageRepository },
+  { provide: PORT_TOKENS.UsageReports, useExisting: PrismaUsageReportRepository },
   { provide: PORT_TOKENS.MetricTypeRepository, useExisting: PrismaMetricTypeRepository },
   { provide: PORT_TOKENS.IdeaMetricValuesPort, useExisting: PrismaMetricTypeRepository },
   { provide: PORT_TOKENS.IdeaActivityPort, useExisting: PrismaAuditEventWriter },
