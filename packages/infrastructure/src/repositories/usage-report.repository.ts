@@ -408,15 +408,13 @@ export class PrismaUsageReportRepository implements UsageReports {
         ue.props_json AS metadata, ue.id
       FROM usage_events AS ue
       WHERE ${who} AND ${inRange(Prisma.sql`ue.occurred_at_utc`)}`
-    // Changes as the statistics define them: no sign-in or View As bookkeeping.
     const changeBranch = (who: Prisma.Sql) => Prisma.sql`
       SELECT ae.occurred_at_utc AS at,
         CASE WHEN ae.on_behalf_of_user_id IS NULL THEN 'change' ELSE 'viewAs' END AS kind,
         ae.event_type AS event, ae.entity_type, ae.entity_id, ae.on_behalf_of_user_id,
         ae.actor_user_id, ae.metadata_json AS metadata, ae.id
       FROM audit_events AS ae
-      WHERE ${who} AND ${inRange(Prisma.sql`ae.occurred_at_utc`)}
-        AND ae.event_type NOT LIKE 'Auth%' AND ae.event_type NOT LIKE 'ViewAs%'`
+      WHERE ${who} AND ${inRange(Prisma.sql`ae.occurred_at_utc`)}`
     const viewRows = query.includeViews
       ? Prisma.sql`
           ${viewBranch(Prisma.sql`ue.user_id = ${userId}::uuid AND ue.on_behalf_of_user_id IS NULL`)}
