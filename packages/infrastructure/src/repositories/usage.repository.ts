@@ -10,7 +10,13 @@ import type {
 } from '@collega/application/usage'
 import { Prisma, type PrismaClient } from '../persistence/prisma-client.js'
 
-/** Rule 14: a slow insert gives up rather than holding the function's one connection. */
+/**
+ * Rule 14: the request stops waiting on a slow insert after this long and reports it as failed.
+ * Timed here rather than with `SET LOCAL statement_timeout`, which needs a transaction and turns
+ * one billed operation into four (Prisma Postgres bills by operation, rule 18). The statement may
+ * still finish in the database; the batch is then stored and also logged as failed, which errs on
+ * the side of not losing it.
+ */
 const INSERT_TIMEOUT_MS = 2000
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -27,9 +33,7 @@ export class PrismaUsageRepository implements UsageEventStore, UsageTrackingPref
       ),
     )
     // One statement: the opt-out check and the insert cannot disagree.
-    const [, inserted] = await this.prisma.$transaction([
-      this.prisma.$executeRawUnsafe(`SET LOCAL statement_timeout = ${INSERT_TIMEOUT_MS}`),
-      this.prisma.$executeRaw(Prisma.sql`
+    const insert = this.prisma.$executeRaw(Prisma.sql`
         INSERT INTO usage_events (
           id, organization_id, user_id, on_behalf_of_user_id, event_type, route, entity_id,
           props_json, occurred_at_utc, received_at_utc
@@ -43,9 +47,19 @@ export class PrismaUsageRepository implements UsageEventStore, UsageTrackingPref
           SELECT 1 FROM users AS opted_out
           WHERE opted_out.id = ${batch.optOutUserId}::uuid AND opted_out.usage_tracking_opt_out
         )
-      `),
-    ])
-    return inserted
+      `)
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(
+        () => reject(new Error(`Usage insert took longer than ${INSERT_TIMEOUT_MS} ms.`)),
+        INSERT_TIMEOUT_MS,
+      )
+    })
+    try {
+      return await Promise.race([insert, timeout])
+    } finally {
+      clearTimeout(timer)
+    }
   }
 
   async rollUpBefore(cutoffUtc: Date): Promise<{ daysRolledUp: number; rowsDeleted: number }> {
@@ -62,12 +76,12 @@ export class PrismaUsageRepository implements UsageEventStore, UsageTrackingPref
       // One day per transaction: it is either still raw or fully rolled up, never half of each.
       const [, , deleted] = await this.prisma.$transaction([
         this.prisma.$executeRaw(Prisma.sql`
-          DELETE FROM usage_daily AS ud WHERE ud.day = ${start}::date
+          DELETE FROM usage_daily AS ud WHERE ud.day = (${start}::timestamptz AT TIME ZONE 'UTC')::date
         `),
         // Statistics exclude View As events and the views of members who opted out (contract).
         this.prisma.$executeRaw(Prisma.sql`
           INSERT INTO usage_daily (day, organization_id, event_type, event_count, user_count)
-          SELECT ${start}::date, ue.organization_id, ue.event_type, COUNT(*), COUNT(DISTINCT ue.user_id)
+          SELECT (${start}::timestamptz AT TIME ZONE 'UTC')::date, ue.organization_id, ue.event_type, COUNT(*), COUNT(DISTINCT ue.user_id)
           FROM usage_events AS ue
           LEFT JOIN users AS member ON member.id = ue.user_id
           WHERE ue.occurred_at_utc >= ${start}::timestamptz

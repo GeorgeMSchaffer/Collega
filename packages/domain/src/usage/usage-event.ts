@@ -17,6 +17,8 @@ export type UsageEventType = (typeof USAGE_EVENT_TYPES)[number]
 const PROP_KEYS = new Set(['source', 'list', 'scope', 'resultCount', 'filterKeys', 'screen'])
 
 export const MAX_EVENTS_PER_BATCH = 50
+/** The contract's cap on a batch body, measured as its JSON text. */
+export const MAX_BATCH_CHARS = 16 * 1024
 const MAX_TEXT = 100
 const MAX_LIST = 20
 const MAX_ROUTE = 200
@@ -99,6 +101,9 @@ export function parseUsageEvent(raw: unknown, now: Date): UsageEvent | null {
 
 /** The valid events of a batch body; an unusable body yields none. */
 export function parseUsageBatch(body: unknown, now: Date): UsageEvent[] {
+  if (JSON.stringify(body ?? null).length > MAX_BATCH_CHARS) {
+    return []
+  }
   const events = (body as { events?: unknown } | null)?.events
   if (!Array.isArray(events) || events.length === 0 || events.length > MAX_EVENTS_PER_BATCH) {
     return []

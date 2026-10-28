@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-28 | The usage rollup runs on `GET`, one day per transaction | active | full below |
 | 2026-10-27 | Sign-in messages show on the first page after signing in only | active | full below |
 | 2026-10-27 | Usage analytics records what members view, tied to their account | active | full below |
 | 2026-10-27 | Admins can post sign-in messages, system-wide or per organization | active | full below |
@@ -154,6 +155,28 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-10-28 — The usage rollup runs on `GET`, one day per transaction
+
+> Spec: `SPEC/20-feature-analytics.md` rule 17; contract: `SPEC/contracts/usage.md`. Slice 364 built
+> it this way; this entry records the owner's approval after review.
+
+**Decided by the owner (2026-10-28).**
+
+- **`GET /api/v1/internal/usage/rollup`, not `POST`.** Vercel Cron calls a path with `GET`. The
+  route changes nothing a crawler or prefetch could reach: `CronSecretGuard` refuses any call
+  without `Authorization: Bearer <CRON_SECRET>`.
+- **One day per transaction, not 10,000-row batches.** Each day's rollup and the deletion of its raw
+  rows commit together, so a day is always either raw or rolled up, and a re-run replaces it. About
+  4,000 rows a day keeps each transaction short.
+
+**Also from the same review (design, not owner-decided):** the insert is one database operation
+with the 2-second limit timed by the API rather than `SET LOCAL statement_timeout`; intake stays
+behind the password-rotation gate (its two-route allowlist in `contracts/auth.md` is unchanged), so
+the web client sends nothing while a password change is required; the 16 KB body cap is enforced on the parsed body;
+the rollup converts days in UTC explicitly; and the migration's extra
+`ix_usage_events_occurred_at_utc` index, which the rollup's day scan uses, is part of the
+2026-10-27 amendment.
 
 ## 2026-10-27 — Sign-in messages show on the first page after signing in only
 
