@@ -45,8 +45,13 @@ export function ListToolbar({
   const usage = useRef(searchUsage)
   usage.current = searchUsage
 
+  // Only a search submitted here: a list that loads with `?q=` already set (a reload, a shared
+  // link, back and forward) ran no search.
+  const searched = useRef(query)
   useEffect(() => {
     const current = usage.current
+    if (query === searched.current) return
+    searched.current = query
     if (query === '' || !current) return
     recordUsage({
       type: 'search.run',

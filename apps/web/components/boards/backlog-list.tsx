@@ -4,6 +4,7 @@ import { Button, EmptyState, Select } from '@collega/design-system'
 import type { Route } from 'next'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import { recordUsage } from '@/components/analytics/usage-recorder'
 import { ParentChip } from '@/components/ideas/idea-badges'
 import { People, TagList } from '@/components/ideas/idea-chips'
 import { ListToolbar, MultiSelectFilter } from '@/components/list'
@@ -61,6 +62,22 @@ export function BacklogList({
   const [parents, setParents] = useState<string[]>([])
   const [assignees, setAssignees] = useState<string[]>([])
   const [tags, setTags] = useState<string[]>([])
+  // `filter.applied` with the keys in use, never their values (`SPEC/20-feature-analytics.md`
+  // rule 7). These filters live in this component rather than the URL, so `useListState` cannot.
+  const filterKeys = [
+    ...(parents.length > 0 ? ['parent'] : []),
+    ...(assignees.length > 0 ? ['assignee'] : []),
+    ...(tags.length > 0 ? ['tag'] : []),
+  ].join(',')
+  const filtersRead = useRef(filterKeys)
+  useEffect(() => {
+    if (filterKeys === filtersRead.current) return
+    filtersRead.current = filterKeys
+    recordUsage({
+      type: 'filter.applied',
+      props: { list: 'board-backlog', filterKeys: filterKeys ? filterKeys.split(',') : [] },
+    })
+  }, [filterKeys])
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set())
   const [creating, setCreating] = useState<readonly string[] | null>(null)
   const [target, setTarget] = useState('')
