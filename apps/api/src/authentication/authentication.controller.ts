@@ -183,14 +183,18 @@ export class AuthenticationController {
   @Get('me')
   @UseGuards(AuthGuard)
   @AllowWhilePasswordChangeRequired()
-  async me(): Promise<CurrentUserSummary> {
+  async me(): Promise<CurrentUserSummary & { requiresPasswordChange: boolean }> {
     const userId = this.currentUser.userId
     if (userId === null) {
       // Unreachable behind AuthGuard; if it ever happens the guard has been removed, and a 401
       // is a far better failure than dereferencing null.
       throw new UnauthorizedException()
     }
-    const summary = await this.auth.getCurrentUser(userId)
+    // GET /auth/me only, not the shared summary (`SPEC/contracts/auth.md`, decision 2026-10-28).
+    const summary = {
+      ...(await this.auth.getCurrentUser(userId)),
+      requiresPasswordChange: this.ambient.passwordChangeRequired,
+    }
     const impersonation = this.ambient.impersonation
     if (!impersonation) return summary
 

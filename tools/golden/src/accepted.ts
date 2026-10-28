@@ -419,6 +419,37 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
   },
   {
     cases: [
+      'aiassist.org',
+      'auth.me.orgadmin',
+      'auth.me.readonly',
+      'auth.me.siteadmin',
+      'auth.me.user',
+      'boards.org',
+      'businessimpacts.org',
+      'comments.org',
+      'fielddefinitions.org',
+      'ideaassist.org',
+      'ideas.org',
+      'ideatypes.org',
+      'organizations.org',
+      'profile.org',
+      'statuses.org',
+      'tags.org',
+      'users.org',
+    ],
+    path: 'body.requiresPasswordChange',
+    decided: '2026-10-28',
+    reason:
+      'A deliberate addition, not drift. GET /auth/me now reports whether the signed-in account ' +
+      'must change its password, so the web client sends no usage events while every other route ' +
+      'would refuse them (SPEC/decisions.md 2026-10-28, SPEC/contracts/auth.md). Only GET ' +
+      '/auth/me carries it, which is why the PUT /auth/me and login cases are not listed: the ' +
+      'shared summary they return is unchanged. Every case listed is a 200 GET /auth/me, the four ' +
+      'role cases and the `*.org` setup steps that resolve the caller first.',
+    kind: 'extra',
+  },
+  {
+    cases: [
       'ideas.get.orgadmin',
       'ideas.get.readonly',
       'ideas.get.siteadmin',
