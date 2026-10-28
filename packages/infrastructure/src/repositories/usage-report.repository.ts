@@ -396,7 +396,9 @@ export class PrismaUsageReportRepository implements UsageReports {
     // acted as this member are `viewAs`.
     const inRange = (column: Prisma.Sql) =>
       Prisma.sql`${column} >= ${from}::timestamptz AND ${column} < ${to}::timestamptz`
-    // One branch per way a row can belong to this member, so each can use its own index.
+    // One branch per way a row can belong to this member, so the member's own views use the
+    // (user_id, occurred_at_utc) index. The other branches have no index on their user column and
+    // range-scan by time, at most 90 days; indexing them needs a schema amendment.
     const viewBranch = (who: Prisma.Sql) => Prisma.sql`
       SELECT ue.occurred_at_utc AS at,
         CASE WHEN ue.on_behalf_of_user_id IS NULL THEN 'view' ELSE 'viewAs' END AS kind,
