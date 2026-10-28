@@ -124,6 +124,7 @@ describe.skipIf(!DATABASE_URL)('Board sprint header and chip against a live data
         currentUser,
         clock,
         boards,
+        boards,
       ),
     }
   }

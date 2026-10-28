@@ -20,6 +20,7 @@ import {
   member,
   NOW,
   ORG_A,
+  openBoards,
   siteAdmin,
 } from '../support/fixtures.js'
 
@@ -80,7 +81,12 @@ function inboxHarness(options: {
     },
   }
   return {
-    service: new NotificationInboxService(repository, options.currentUser, fixedClock()),
+    service: new NotificationInboxService(
+      repository,
+      options.currentUser,
+      fixedClock(),
+      openBoards(),
+    ),
     calls,
   }
 }

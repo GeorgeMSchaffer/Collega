@@ -26,6 +26,7 @@ import {
   NOW,
   ORG_A,
   ORG_B,
+  openBoards,
   orgAdmin,
   readOnly,
   recordingAudit,
@@ -188,6 +189,7 @@ function harness(options: {
     options.currentUser,
     fixedClock(),
     random,
+    openBoards(),
   )
   return { service, store, ideaStore, ungrouped, rollupRequests, audit, unitOfWork }
 }

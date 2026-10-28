@@ -36,8 +36,8 @@ import {
   updateIdeaContent,
 } from '@collega/domain/ideas'
 import { normalizeTagName } from '@collega/domain/tags'
-import { ensureCanSeeBoard } from '../boards/board-access.js'
-import type { BoardAccessLookup } from '../boards/ports.js'
+import { ensureCanSeeBoard, visibleBoardIdsFor } from '../boards/board-access.js'
+import type { BoardAccessLookup, VisibleBoardsLookup } from '../boards/ports.js'
 import type {
   AuditEventWriter,
   Clock,
@@ -177,7 +177,7 @@ export class IdeaService {
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
     private readonly random: RandomSource,
-    private readonly boardAccess: BoardAccessLookup,
+    private readonly boardAccess: BoardAccessLookup & VisibleBoardsLookup,
     /** Optional so a host that has no metric values reads `metrics` as `[]`. */
     private readonly metricValues?: Pick<IdeaMetricValuesPort, 'listByIdea'>,
     /** Optional like `metricValues`; the activity read needs it. */
@@ -257,6 +257,7 @@ export class IdeaService {
     const page = normalizePageRequest(toPageRequestInput(query.page, query.pageSize))
     const ideasPage = await this.ideaRepository.listByOrganization({
       organizationId,
+      visibleBoardIds: await visibleBoardIdsFor(this.boardAccess, this.currentUser),
       createdByUserId,
       assignedToUserId,
       page,
@@ -512,7 +513,11 @@ export class IdeaService {
     }
     await this.ensureCanSeeIdea(parent)
 
-    const tasks = await this.ideaRepository.listChildren(parent.id)
+    // A task on a board the caller cannot see is left out (BAG-4c), not shown redacted.
+    const visible = await visibleBoardIdsFor(this.boardAccess, this.currentUser)
+    const tasks = (await this.ideaRepository.listChildren(parent.id)).filter(
+      (task) => visible === null || task.boardId === null || visible.includes(task.boardId),
+    )
     if (tasks.length === 0) {
       return []
     }
@@ -768,10 +773,16 @@ export class IdeaService {
     await this.getActiveIdeaType(organizationId, command.ideaTypeId)
     await this.ensureActiveBusinessImpact(organizationId, command.businessImpactId)
 
-    const assigneeIds = await this.resolveAssignees(organizationId, command.assigneeUserIds, [])
+    const assigneeIds = await this.resolveAssignees(
+      organizationId,
+      boardId,
+      command.assigneeUserIds,
+      [],
+    )
     const tagIds = await this.resolveTags(organizationId, command.tagNames, now, authorId)
     const mentionIds = await this.resolveMentions(
       organizationId,
+      boardId,
       command.mentionEmails,
       'mentionEmails',
     )
@@ -1041,12 +1052,14 @@ export class IdeaService {
 
     const assigneeIds = await this.resolveAssignees(
       idea.organizationId,
+      idea.boardId,
       command.assigneeUserIds,
       existingAssignees,
     )
     const tagIds = await this.resolveTags(idea.organizationId, command.tagNames, now, actorId)
     const mentionIds = await this.resolveMentions(
       idea.organizationId,
+      idea.boardId,
       command.mentionEmails,
       'mentionEmails',
     )
@@ -1193,6 +1206,7 @@ export class IdeaService {
     const existingAssignees = [...idea.assigneeUserIds]
     const assigneeIds = await this.resolveAssignees(
       idea.organizationId,
+      idea.boardId,
       command.assigneeUserIds,
       existingAssignees,
     )
@@ -1945,6 +1959,7 @@ export class IdeaService {
     const boardSprint = sprintId ? (await this.sprints.getById(sprintId))?.boardId : null
     const ideas = await this.ideaRepository.listDelivery({
       organizationId,
+      visibleBoardIds: await visibleBoardIdsFor(this.boardAccess, this.currentUser),
       sprintId,
       backlogOnly: sprintId === null,
       deliveryStatus: parseOptionalDeliveryStatus(query.deliveryStatus),
@@ -2736,7 +2751,10 @@ export class IdeaService {
     const counts =
       parentIds.length === 0
         ? new Map()
-        : await this.ideaRepository.countChildrenByParentIds(parentIds)
+        : await this.ideaRepository.countChildrenByParentIds(
+            parentIds,
+            await visibleBoardIdsFor(this.boardAccess, this.currentUser),
+          )
     return {
       isTaskCard,
       hidesIdeaFeatures: (idea) =>
@@ -2871,6 +2889,7 @@ export class IdeaService {
 
   private async resolveAssignees(
     organizationId: string,
+    boardId: string | null,
     requested: readonly string[] | null,
     existing: readonly string[],
   ): Promise<readonly string[]> {
@@ -2901,6 +2920,13 @@ export class IdeaService {
       // if they later became inactive (rule #12).
       if (user.status !== UserStatus.Active && !existingSet.has(id)) {
         errors.push(`Assignee '${user.email}' is not an active user and cannot be newly assigned.`)
+        continue
+      }
+
+      // BAG-4h: a newly assigned user must be able to see the item's board. A user already
+      // assigned is kept, as an inactive one is.
+      if (!existingSet.has(id) && !(await this.userCanSeeBoard(user, boardId))) {
+        errors.push(`Assignee '${user.email}' cannot see this board.`)
       }
     }
 
@@ -2963,6 +2989,7 @@ export class IdeaService {
    * mention resolution, kept local since Ideas is the only owner of `IdeaMention`. */
   private async resolveMentions(
     organizationId: string,
+    boardId: string | null,
     mentionEmails: readonly string[] | null,
     fieldName: string,
   ): Promise<readonly string[]> {
@@ -2994,6 +3021,11 @@ export class IdeaService {
         user.status !== UserStatus.Active
       ) {
         errors.push(`Mention '${trimmed}' could not be resolved to a user in your organization.`)
+        continue
+      }
+      // BAG-4h: a mention notifies, so it may name only someone who can see the item's board.
+      if (!(await this.userCanSeeBoard(user, boardId))) {
+        errors.push(`Mention '${trimmed}' is not a user who can see this board.`)
         continue
       }
 
@@ -3073,6 +3105,17 @@ export class IdeaService {
     if (this.requireAuthenticatedRole() === Role.ReadOnly) {
       throw new ForbiddenError('Read Only users cannot create or edit ideas.')
     }
+  }
+
+  /** Whether `user` (not the caller) can see `boardId`; an item on no board is seen by everyone. */
+  private async userCanSeeBoard(user: UserSummary, boardId: string | null): Promise<boolean> {
+    if (boardId === null || user.role === Role.OrgAdmin || user.role === Role.SiteAdmin) {
+      return true
+    }
+    return (
+      user.organizationId !== null &&
+      this.boardAccess.canSeeBoard(boardId, user.organizationId, user.id)
+    )
   }
 
   /** Organization scope, then board sight: an item on a board the caller cannot see is `404`

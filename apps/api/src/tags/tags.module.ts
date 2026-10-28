@@ -1,3 +1,4 @@
+import type { VisibleBoardsLookup } from '@collega/application/boards'
 import type {
   AuditEventWriter,
   Clock,
@@ -35,7 +36,9 @@ import { TagsController } from './tags.controller.js'
         currentUser: CurrentUserContext,
         clock: Clock,
         random: RandomSource,
-      ) => new TagService(tags, organizations, auditEvents, currentUser, clock, random),
+        boardAccess: VisibleBoardsLookup,
+      ) =>
+        new TagService(tags, organizations, auditEvents, currentUser, clock, random, boardAccess),
       inject: [
         PORT_TOKENS.TagRepository,
         PORT_TOKENS.OrganizationExistenceLookup,
@@ -43,6 +46,7 @@ import { TagsController } from './tags.controller.js'
         PORT_TOKENS.CurrentUserContext,
         PORT_TOKENS.Clock,
         PORT_TOKENS.RandomSource,
+        PORT_TOKENS.VisibleBoardsLookup,
       ],
     },
   ],

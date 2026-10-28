@@ -271,6 +271,7 @@ describe.skipIf(!DATABASE_URL)('Tag management against a live database', () => {
       admin,
       { now: () => LATER },
       { nextInt: () => 0 },
+      new PrismaBoardRepository(prisma, new PrismaUnitOfWork(prisma)),
     )
 
     const renamed = `probe-target-renamed-${run}`

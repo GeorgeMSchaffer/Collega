@@ -19,6 +19,8 @@ import {
   startSprint,
   updateSprint,
 } from '@collega/domain/sprints'
+import { ensureCanSeeBoard, visibleBoardIdsFor } from '../boards/board-access.js'
+import type { BoardAccessLookup, VisibleBoardsLookup } from '../boards/ports.js'
 import {
   type AuditEventWriter,
   attributeAudit,
@@ -63,19 +65,25 @@ export class SprintService {
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
     private readonly boards: SprintBoardsPort,
+    private readonly boardAccess: BoardAccessLookup & VisibleBoardsLookup,
   ) {}
 
   async list(organizationId: string, state: SprintState | null): Promise<readonly SprintItem[]> {
     this.ensureReadScope(organizationId)
 
     const sprints = await this.sprints.listByOrganization(organizationId, state)
-    return this.project(sprints)
+    const visible = await visibleBoardIdsFor(this.boardAccess, this.currentUser)
+    // A board sprint belongs to its board: one on a board the caller cannot see is left out.
+    return this.project(
+      sprints.filter((s) => visible === null || s.boardId === null || visible.includes(s.boardId)),
+    )
   }
 
   /** A board's sprints. Readable like the organization list; the board's own organization is the scope. */
   async listForBoard(boardId: string, state: SprintState | null): Promise<readonly SprintItem[]> {
     const board = await this.requireBoard(boardId)
     this.ensureReadScope(board.organizationId)
+    await ensureCanSeeBoard(this.boardAccess, this.currentUser, board.id, 'Board not found.')
 
     return this.project(await this.sprints.listByBoard(board.id, state))
   }
@@ -83,6 +91,7 @@ export class SprintService {
   async get(organizationId: string, sprintId: string): Promise<SprintItem> {
     const sprint = await this.requireSprint(sprintId, organizationId)
     this.ensureReadScope(sprint.organizationId)
+    await ensureCanSeeBoard(this.boardAccess, this.currentUser, sprint.boardId, 'Sprint not found.')
 
     const [item] = await this.project([sprint])
     // Unreachable: `project` returns one item per sprint given to it.
@@ -374,7 +383,10 @@ export class SprintService {
     }
 
     // Two batched reads for the whole page, not two per row.
-    const counts = await this.issues.countsBySprintIds(sprints.map(idOf))
+    const counts = await this.issues.countsBySprintIds(
+      sprints.map(idOf),
+      await visibleBoardIdsFor(this.boardAccess, this.currentUser),
+    )
     const ownerIds = [...new Set(sprints.flatMap((s) => (s.ownerUserId ? [s.ownerUserId] : [])))]
     const owners = ownerIds.length > 0 ? await this.users.listByIds(ownerIds) : []
     const ownerNames = new Map(owners.map((u) => [u.id, `${u.firstName} ${u.lastName}`.trim()]))

@@ -80,7 +80,15 @@ function setup(options: { vanishOnWrite?: boolean } = {}) {
   const audit: AuditEventWriter = { write: async () => {} }
   const clock: Clock = { now: () => NOW }
   const controller = new TagsController(
-    new TagService(tags, organizations, audit, ORG_ADMIN, clock, { nextInt: () => 4 }),
+    new TagService(
+      tags,
+      organizations,
+      audit,
+      ORG_ADMIN,
+      clock,
+      { nextInt: () => 4 },
+      { visibleBoardIds: async () => [] },
+    ),
   )
   return { controller, written }
 }

@@ -1,3 +1,4 @@
+import type { BoardAccessLookup, VisibleBoardsLookup } from '@collega/application/boards'
 import type {
   AuditEventWriter,
   Clock,
@@ -52,6 +53,7 @@ import { SprintsController } from './sprints.controller.js'
         currentUser: CurrentUserContext,
         clock: Clock,
         boards: SprintBoardsPort,
+        boardAccess: BoardAccessLookup & VisibleBoardsLookup,
       ) =>
         new SprintService(
           sprints,
@@ -62,6 +64,7 @@ import { SprintsController } from './sprints.controller.js'
           currentUser,
           clock,
           boards,
+          boardAccess,
         ),
       inject: [
         PORT_TOKENS.SprintRepository,
@@ -72,6 +75,7 @@ import { SprintsController } from './sprints.controller.js'
         PORT_TOKENS.CurrentUserContext,
         PORT_TOKENS.Clock,
         PORT_TOKENS.SprintBoardsPort,
+        PORT_TOKENS.BoardAccessLookup,
       ],
     },
   ],

@@ -1,4 +1,4 @@
-import type { BoardAccessLookup } from '@collega/application/boards'
+import type { BoardAccessLookup, VisibleBoardsLookup } from '@collega/application/boards'
 import type {
   AuditEventWriter,
   Clock,
@@ -90,7 +90,7 @@ import { IdeasController } from './ideas.controller.js'
         currentUser: CurrentUserContext,
         clock: Clock,
         random: RandomSource,
-        boardAccess: BoardAccessLookup,
+        boardAccess: BoardAccessLookup & VisibleBoardsLookup,
         metricValues: IdeaMetricValuesPort,
         activity: IdeaActivityPort,
       ) =>

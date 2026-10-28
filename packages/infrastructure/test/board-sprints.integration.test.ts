@@ -209,6 +209,7 @@ describe.skipIf(!DATABASE_URL)('Board sprints against a live database', () => {
     const ideas = new PrismaIdeaRepository(prisma, new PrismaUnitOfWork(prisma))
     const filter = {
       organizationId,
+      visibleBoardIds: null,
       sprintId: boardSprintId,
       backlogOnly: false,
       deliveryStatus: null,

@@ -152,6 +152,9 @@ function setup(
       pickerFilters.push(filter)
       return { items: [], page: 1, pageSize: 25, totalCount: 0 }
     },
+    async visibleBoardIds() {
+      return [TARGET, OTHER_BOARD]
+    },
   } as unknown as BoardRepository
   const statuses = {
     async listByOrganization() {

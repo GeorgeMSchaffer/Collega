@@ -17,6 +17,7 @@ import type { outcomes as OutcomeRow } from '../generated/prisma/index.js'
 import { Prisma } from '../generated/prisma/index.js'
 import type { PrismaClient } from '../persistence/prisma-client.js'
 import type { PrismaUnitOfWork } from '../persistence/unit-of-work.js'
+import { visibleBoardsCondition } from './idea.repository.js'
 
 function toDateString(value: Date): string {
   return value.toISOString().slice(0, 10)
@@ -137,6 +138,7 @@ export class PrismaOutcomeRepository implements OutcomeRepository, OutcomeReadsP
 
   async rollupsByOutcomeIds(
     outcomeIds: readonly string[],
+    visibleBoardIds: readonly string[] | null = null,
   ): Promise<ReadonlyMap<string, OutcomeRollup>> {
     if (outcomeIds.length === 0) {
       return new Map()
@@ -151,6 +153,7 @@ export class PrismaOutcomeRepository implements OutcomeRepository, OutcomeReadsP
       LEFT JOIN board_swimlanes l ON l.board_id = i.board_id AND l.status_id = i.status_id
       WHERE i.outcome_id IN (${uuidList(outcomeIds)})
         AND i.is_deleted = FALSE
+        AND ${visibleBoardsCondition('i', visibleBoardIds)}
       GROUP BY i.outcome_id
     `)
     const taskRows = await this.prisma.$queryRaw<
@@ -174,6 +177,8 @@ export class PrismaOutcomeRepository implements OutcomeRepository, OutcomeReadsP
       WHERE p.outcome_id IN (${uuidList(outcomeIds)})
         AND p.is_deleted = FALSE
         AND c.is_deleted = FALSE
+        AND ${visibleBoardsCondition('p', visibleBoardIds)}
+        AND ${visibleBoardsCondition('c', visibleBoardIds)}
       GROUP BY p.outcome_id
     `)
 
@@ -202,6 +207,7 @@ export class PrismaOutcomeRepository implements OutcomeRepository, OutcomeReadsP
         AND i.is_deleted = FALSE
         AND i.parent_idea_id IS NULL
         AND t.is_archived = FALSE
+        AND ${visibleBoardsCondition('i', visibleBoardIds)}
       GROUP BY i.outcome_id, t.metric_type_id, t.name, t.unit, t.created_at_utc
       ORDER BY t.created_at_utc ASC, t.metric_type_id ASC
     `)
@@ -263,6 +269,7 @@ export class PrismaOutcomeRepository implements OutcomeRepository, OutcomeReadsP
 
   async ideasByOutcomeIds(
     outcomeIds: readonly string[],
+    visibleBoardIds: readonly string[] | null = null,
   ): Promise<ReadonlyMap<string, readonly OutcomeIdea[]>> {
     const grouped = new Map<string, OutcomeIdea[]>()
     if (outcomeIds.length === 0) {
@@ -287,6 +294,7 @@ export class PrismaOutcomeRepository implements OutcomeRepository, OutcomeReadsP
       LEFT JOIN sprints s ON s.id = i.sprint_id AND s.is_deleted = FALSE
       WHERE i.outcome_id IN (${uuidList(outcomeIds)})
         AND i.is_deleted = FALSE
+        AND ${visibleBoardsCondition('i', visibleBoardIds)}
       ORDER BY i.created_at_utc ASC, i.title ASC
     `)
     const metrics = await this.metricsByIdeaIds(rows.map((row) => row.idea_id))
@@ -339,7 +347,10 @@ export class PrismaOutcomeRepository implements OutcomeRepository, OutcomeReadsP
     return byIdea
   }
 
-  async listUngroupedIdeas(organizationId: string): Promise<readonly OutcomeIdea[]> {
+  async listUngroupedIdeas(
+    organizationId: string,
+    visibleBoardIds: readonly string[] | null = null,
+  ): Promise<readonly OutcomeIdea[]> {
     const rows = await this.prisma.$queryRaw<IdeaQueryRow[]>(Prisma.sql`
       SELECT i.outcome_id AS outcome_id,
              i.id AS idea_id,
@@ -361,6 +372,7 @@ export class PrismaOutcomeRepository implements OutcomeRepository, OutcomeReadsP
         AND i.outcome_id IS NULL
         AND i.parent_idea_id IS NULL
         AND i.is_deleted = FALSE
+        AND ${visibleBoardsCondition('i', visibleBoardIds)}
       ORDER BY i.created_at_utc ASC, i.title ASC
     `)
     const metrics = await this.metricsByIdeaIds(rows.map((row) => row.idea_id))

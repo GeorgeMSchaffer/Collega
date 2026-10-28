@@ -50,6 +50,7 @@ import {
   readForceReason,
 } from '../ideas/index.js'
 import type { StatusRepository } from '../statuses/index.js'
+import { visibleBoardIdsFor } from './board-access.js'
 import { loadBoardViewer } from './board-viewer.js'
 import type {
   BoardDetail,
@@ -233,6 +234,7 @@ export class BoardService {
       actorUserId: this.currentUser.userId,
     })
     ensureKeyPrefixFree(board, organizationBoards)
+    await this.ensureReferencesVisible(board, null)
     const newTargets = planReferences(board, organizationBoards)
     const pull = await this.planPull(
       organizationId,
@@ -415,6 +417,7 @@ export class BoardService {
       }
       ensureKeyPrefixFree(board, organizationBoards)
     }
+    await this.ensureReferencesVisible(board, existing)
     const newTargets = planReferences(board, organizationBoards)
     await this.ensureReferenceLanesFree(existing, board)
     const moves = await this.planIdeaMoves(existing, board, command.ideaMoves ?? [], statusLookup)
@@ -513,6 +516,28 @@ export class BoardService {
    * Discovery ideas and no Issues. Same scope as creating a board: Read Only is refused, a direct
    * Site Admin is refused, and another organization is not found.
    */
+  /** A lane may newly reference only a board the caller can see; one they cannot is refused exactly
+   * as a missing board is (BAG-4d). A reference already saved is left alone, so losing sight of a
+   * target does not block every later save of the board. */
+  private async ensureReferencesVisible(board: Board, existing: Board | null): Promise<void> {
+    const before = new Set(existing?.swimlanes.flatMap((lane) => lane.referencesBoardId ?? []))
+    const added = board.swimlanes.flatMap((lane) =>
+      lane.referencesBoardId !== null && !before.has(lane.referencesBoardId)
+        ? [lane.referencesBoardId]
+        : [],
+    )
+    if (added.length === 0) {
+      return
+    }
+    const visible = await visibleBoardIdsFor(this.boards, this.currentUser)
+    if (visible !== null && added.some((id) => !visible.includes(id))) {
+      throw new UnprocessableError(
+        'referencesBoardInvalid',
+        'A lane can reference only an active board of this organization.',
+      )
+    }
+  }
+
   async listPullCandidates(
     organizationId: string,
     query: PullCandidatesQuery,
@@ -535,6 +560,7 @@ export class BoardService {
       // A User sees only what they could pull, which is their own ideas whatever author was asked.
       authorUserId: role === Role.OrgAdmin ? query.authorUserId : userId,
       currentUserId: userId,
+      visibleBoardIds: await visibleBoardIdsFor(this.boards, this.currentUser),
       page: normalizePageRequest(toPageRequest(query.page, query.pageSize)),
     })
   }
@@ -568,7 +594,14 @@ export class BoardService {
 
     const role = this.requireAuthenticatedRole()
     const userId = this.requireAuthenticatedUserId()
-    const found = await Promise.all(requested.map((id) => this.ideas.getById(id, true)))
+    const visible = await visibleBoardIdsFor(this.boards, this.currentUser)
+    // An item on a board the caller cannot see is reported as not found (BAG-4e).
+    const found = (await Promise.all(requested.map((id) => this.ideas.getById(id, true)))).map(
+      (idea) =>
+        idea && (visible === null || idea.boardId === null || visible.includes(idea.boardId))
+          ? idea
+          : null,
+    )
     const openTasksOf = await this.openTasksHoldingPull(found, board.id)
     // Rule 15: a board that limits its idea types refuses a pull of any other type.
     const ideaTypeNames =

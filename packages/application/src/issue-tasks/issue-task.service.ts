@@ -103,7 +103,11 @@ export class IssueTaskService {
 
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
-    const assigneeUserId = await this.resolveAssignee(idea, command.assigneeUserId)
+    const assigneeUserId = await this.resolveAssignee(
+      idea,
+      command.assigneeUserId,
+      existing.assigneeUserId,
+    )
 
     const task = runDomain(
       updateIssueTask,
@@ -227,7 +231,11 @@ export class IssueTaskService {
   /** A task assignee need NOT be an assignee of the parent Issue - any active user in the org
    * qualifies (spec "Task assignee"). Constraining it to the Issue's assignees would force
    * spurious Issue assignments just to name a helper. */
-  private async resolveAssignee(idea: Idea, assigneeUserId: string | null): Promise<string | null> {
+  private async resolveAssignee(
+    idea: Idea,
+    assigneeUserId: string | null,
+    existingAssigneeUserId: string | null = null,
+  ): Promise<string | null> {
     const trimmed = assigneeUserId?.trim()
     if (!trimmed) {
       return null
@@ -242,6 +250,17 @@ export class IssueTaskService {
     ) {
       throw new ValidationError('One or more fields are invalid.', {
         assigneeUserId: ['Assignee must be an active user in this organization.'],
+      })
+    }
+    // BAG-4h: a new assignee must be able to see the Issue's board; the current one is kept.
+    if (
+      user.id !== existingAssigneeUserId &&
+      idea.boardId !== null &&
+      user.role !== Role.OrgAdmin &&
+      !(await this.boardAccess.canSeeBoard(idea.boardId, idea.organizationId, user.id))
+    ) {
+      throw new ValidationError('One or more fields are invalid.', {
+        assigneeUserId: ['Assignee cannot see this board.'],
       })
     }
     return user.id

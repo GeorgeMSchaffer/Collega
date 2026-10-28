@@ -367,6 +367,7 @@ function wired(currentUser: CurrentUserContext, ideas: Idea[] = [item()]) {
     currentUser,
     clock,
     { nextInt: () => 0 },
+    { visibleBoardIds: async () => [] },
   )
   return new OutcomesController(service)
 }

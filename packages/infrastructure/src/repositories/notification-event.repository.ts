@@ -25,6 +25,7 @@ import type { NotificationEventType, UserStatus } from '@collega/domain/enums'
 import type { NotificationEvent } from '@collega/domain/notifications'
 import { Prisma } from '../generated/prisma/index.js'
 import type { PrismaClient } from '../persistence/prisma-client.js'
+import { visibleBoardsCondition } from './idea.repository.js'
 
 type InboxSqlRow = {
   id: string
@@ -44,14 +45,22 @@ type InboxSqlRow = {
 
 /** The recipient's rows inside the window, leaving out a soft-deleted idea's (feature rule 27).
  * `notification_events.idea_id` has no foreign key, so a row whose idea is gone is left out too. */
-function inboxWhere(recipientUserId: string, sinceUtc: Date, unreadOnly = false): Prisma.Sql {
+function inboxWhere(
+  recipientUserId: string,
+  sinceUtc: Date,
+  unreadOnly: boolean,
+  visibleBoardIds: readonly string[] | null,
+): Prisma.Sql {
   const unread = unreadOnly ? Prisma.sql`AND notification.read_at_utc IS NULL` : Prisma.empty
   return Prisma.sql`
     notification.recipient_user_id = ${recipientUserId}::uuid
     AND notification.occurred_at_utc >= ${sinceUtc}
     ${unread}
     AND EXISTS (
-      SELECT 1 FROM ideas AS idea WHERE idea.id = notification.idea_id AND idea.is_deleted = FALSE
+      SELECT 1 FROM ideas AS idea
+      WHERE idea.id = notification.idea_id
+        AND idea.is_deleted = FALSE
+        AND ${visibleBoardsCondition('idea', visibleBoardIds)}
     )`
 }
 
@@ -83,8 +92,14 @@ export class PrismaNotificationEventRepository
     readonly sinceUtc: Date
     readonly unreadOnly: boolean
     readonly page: PageRequest
+    readonly visibleBoardIds?: readonly string[] | null
   }): Promise<Page<InboxRow>> {
-    const where = inboxWhere(query.recipientUserId, query.sinceUtc, query.unreadOnly)
+    const where = inboxWhere(
+      query.recipientUserId,
+      query.sinceUtc,
+      query.unreadOnly,
+      query.visibleBoardIds ?? null,
+    )
     const { page, pageSize } = query.page
 
     const rows = await this.prisma.$queryRaw<InboxSqlRow[]>(Prisma.sql`
@@ -124,11 +139,15 @@ export class PrismaNotificationEventRepository
     }
   }
 
-  async countUnread(recipientUserId: string, sinceUtc: Date): Promise<number> {
+  async countUnread(
+    recipientUserId: string,
+    sinceUtc: Date,
+    visibleBoardIds: readonly string[] | null = null,
+  ): Promise<number> {
     const [unread] = await this.prisma.$queryRaw<{ unread: number }[]>(Prisma.sql`
       SELECT COUNT(*)::int AS unread
       FROM notification_events AS notification
-      WHERE ${inboxWhere(recipientUserId, sinceUtc)}
+      WHERE ${inboxWhere(recipientUserId, sinceUtc, false, visibleBoardIds)}
         AND notification.read_at_utc IS NULL
     `)
     return unread?.unread ?? 0
