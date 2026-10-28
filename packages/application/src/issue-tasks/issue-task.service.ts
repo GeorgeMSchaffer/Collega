@@ -260,7 +260,7 @@ export class IssueTaskService {
       !(await this.boardAccess.canSeeBoard(idea.boardId, idea.organizationId, user.id))
     ) {
       throw new ValidationError('One or more fields are invalid.', {
-        assigneeUserId: ['Assignee cannot see this board.'],
+        assigneeUserId: [`'${`${user.firstName} ${user.lastName}`.trim()}' can't see this board.`],
       })
     }
     return user.id

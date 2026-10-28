@@ -219,19 +219,9 @@ describe('BAG-4b writes by id, IdeaService', () => {
     )
   })
 
-  // `delete` checks "only an Org Admin may delete" before board sight, so OUTSIDER (a User) gets
-  // 403 for a hidden item and 404 for a missing one: the difference tells them the id exists.
   // Contract: every route addressing an item on B by id, read or write, is 404, never 403.
-  it.fails.each(HIDDEN_ITEMS)('deleting the %s is 404 for OUTSIDER', async (_label, id) => {
+  it.each(HIDDEN_ITEMS)('deleting the %s is 404 for OUTSIDER', async (_label, id) => {
     await expectAsIfMissing((service, target) => service.delete(target), id)
-  })
-
-  it('documents what delete answers today: 403 for the hidden idea, 404 for a missing one', async () => {
-    const hidden = await rejectionOf(world(as(OUTSIDER)).service.delete(IDEA))
-    const missing = await rejectionOf(world(as(OUTSIDER)).service.delete(MISSING))
-
-    expect(hidden.name).toBe('ForbiddenError')
-    expect(missing).toBeInstanceOf(NotFoundError)
   })
 
   it('the Issue’s delivery writes are 404 for OUTSIDER', async () => {
@@ -422,9 +412,8 @@ describe('BAG-4d a reference lane on a visible board, pointing at the Restricted
 
 describe('BAG-4e dependency targets', () => {
   // A blocker on a board the caller cannot see must be refused as a nonexistent id is (404
-  // `Idea not found.`). The code checks "same board" on the hidden blocker first and answers
-  // 422 blockerOnOtherBoard, which tells OUTSIDER that an item with that id exists elsewhere.
-  it.fails('naming a hidden item as a blocker is refused as for a missing id', async () => {
+  // `Idea not found.`), not with a 422 that says an item with that id exists elsewhere.
+  it('naming a hidden item as a blocker is refused as for a missing id', async () => {
     const hidden = await rejectionOf(world(as(OUTSIDER)).service.setBlockedBy(OPEN_IDEA, [IDEA]))
     const missing = await rejectionOf(
       world(as(OUTSIDER)).service.setBlockedBy(OPEN_IDEA, [MISSING]),
@@ -432,12 +421,6 @@ describe('BAG-4e dependency targets', () => {
 
     expect(hidden.constructor).toBe(missing.constructor)
     expect(hidden.message).toBe(missing.message)
-  })
-
-  it('documents what the code answers today: 422 blockerOnOtherBoard for the hidden blocker', async () => {
-    const hidden = await rejectionOf(world(as(OUTSIDER)).service.setBlockedBy(OPEN_IDEA, [IDEA]))
-
-    expect(hidden).toBeInstanceOf(UnprocessableError)
   })
 })
 
@@ -496,10 +479,9 @@ describe('BAG-4h assignees and mentions on an idea on the Restricted board', () 
     expect(outsider.saved.map((i) => i.id)).toEqual([OPEN_IDEA])
   })
 
-  // SPEC/contracts/boards.md "Board access": `400` keyed `mentionEmails` / `assigneeIds`, worded
-  // `'{name}' can't see this board.`. The code answers "Assignee '<email>' cannot see this board."
-  // under `assigneeUserIds` (the field the idea routes already take; the key is the brief's).
-  it.fails('the assignee refusal is worded as the contract states', async () => {
+  // SPEC/contracts/boards.md "Board access": `400` keyed `assigneeUserIds`, worded
+  // `'{name}' can't see this board.`.
+  it('the assignee refusal is worded as the contract states', async () => {
     const hidden = ideas().find((i) => i.id === IDEA) as Idea
     const error = await rejectionOf(
       world(as(INSIDER)).service.update(IDEA, {

@@ -125,7 +125,7 @@ exist (owner, 2026-10-26: "filtered out", not a redacted placeholder).
   see B at read time. Stored events are kept, so regaining access restores them.
 - **4g** CSV import naming B is refused per row as an unknown board.
 - **4h** Mentioning or assigning a user who cannot see the idea's board is `400` keyed
-  `mentionEmails` / `assigneeIds`.
+  `mentionEmails` / `assigneeUserIds` (an Issue checklist item: `assigneeUserId`).
 - **4i** Audit views: Org Admins see all (unchanged); no other role reads audit.
 - **4j** The MCP server (`SPEC/20-feature-mcp-server.md`, not built) inherits this rule; its spec
   gets a one-line pointer.

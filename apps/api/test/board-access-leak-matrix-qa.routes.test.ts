@@ -754,9 +754,8 @@ describe('BAG-4 comments, upvotes and following', () => {
   })
 
   // SPEC/contracts/boards.md "Board access": naming a user who cannot see the board is 400 with the
-  // message `'{name}' can't see this board.`. The code answers "Mention '<email>' is not a user who
-  // can see this board." - right key, different wording.
-  it.fails('4h: the mention refusal is worded as the contract states', async () => {
+  // message `'{name}' can't see this board.`.
+  it('4h: the mention refusal is worded as the contract states', async () => {
     const { controller } = commentsController(as(INSIDER))
     const { body } = renderProblem(
       await rejectionOf(

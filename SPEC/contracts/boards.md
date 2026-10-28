@@ -188,7 +188,7 @@ Update board name or selected statuses.
   - Every list, search, count and total leaves B's items out: the Ideas list, Home, the notification inbox and unread count, the Backlog, `/tasks`, sprints and sprint planning, the Roadmap and Outcome totals, `pull-candidates`, `ideas/export`, and `GET …/boards`' counts.
   - A Board References lane referencing B shows none of B's cards, and its counts leave them out. Setting `referencesBoardId` to B is `422` `referencesBoardInvalid`, exactly as for an unknown board (owner, 2026-10-28).
   - Moving an idea to B, pulling into or from B, and naming B in a CSV import row are refused as for an unknown board.
-  - For an idea on a Restricted board, `mention-candidates` and the assignee picker list only users who can see that board; naming any other user is `400` keyed `mentionEmails` / `assigneeIds` (`'{name}' can't see this board.`).
+  - For an idea on a Restricted board, `mention-candidates` and the assignee picker list only users who can see that board; naming any other user is `400` keyed `mentionEmails` / `assigneeUserIds` (`assigneeUserId` on an Issue checklist item), worded `'{name}' can't see this board.`.
   - Notification events about B's items are kept but not listed or counted for a user who cannot see B at read time.
 
 ### `GET /api/v1/organizations/{organizationId}/boards/pull-candidates`
