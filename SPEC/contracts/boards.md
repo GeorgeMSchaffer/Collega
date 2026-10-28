@@ -186,7 +186,7 @@ Update board name or selected statuses.
 - **Where the rule applies to a caller who cannot see board B** (BAG-4):
   - Every route addressing B, or an item on B, by id — read or write: `404`, never `403`. That includes comments, upvotes, following, fields, metrics, dependencies, issue tasks, delivery, status and board moves, and `ideas/{ideaId}/board-tasks`.
   - Every list, search, count and total leaves B's items out: the Ideas list, Home, the notification inbox and unread count, the Backlog, `/tasks`, sprints and sprint planning, the Roadmap and Outcome totals, `pull-candidates`, `ideas/export`, and `GET …/boards`' counts.
-  - A Board References lane referencing B shows none of B's cards, and its counts leave them out. Setting `referencesBoardId` to B is `400` keyed `referencesBoardId`, worded as for an unknown board.
+  - A Board References lane referencing B shows none of B's cards, and its counts leave them out. Setting `referencesBoardId` to B is `422` `referencesBoardInvalid`, exactly as for an unknown board (owner, 2026-10-28).
   - Moving an idea to B, pulling into or from B, and naming B in a CSV import row are refused as for an unknown board.
   - For an idea on a Restricted board, `mention-candidates` and the assignee picker list only users who can see that board; naming any other user is `400` keyed `mentionEmails` / `assigneeIds` (`'{name}' can't see this board.`).
   - Notification events about B's items are kept but not listed or counted for a user who cannot see B at read time.

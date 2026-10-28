@@ -117,7 +117,7 @@ exist (owner, 2026-10-26: "filtered out", not a redacted placeholder).
   and Outcome counts, pull candidates, CSV export, and the tag catalog's usage counts.
 - **4d** A Board References lane that references B shows no cards from B to that caller; the
   lane's header and count reflect only what they can see. Configuring a lane to reference B
-  requires being able to see B (`400` keyed `referencesBoardId` otherwise, worded as an unknown board).
+  requires being able to see B (otherwise `422` `referencesBoardInvalid`, exactly as for an unknown board; owner, 2026-10-28).
 - **4e** Pickers leave out what the caller cannot see: dependency targets, pull candidates, the
   move-to-board list. Mention and assignee candidates **for an idea on a Restricted board** are only
   users who can see that board.
