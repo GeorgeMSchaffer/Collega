@@ -375,7 +375,7 @@ export class CommentService {
         user.role !== Role.OrgAdmin &&
         !(await this.boardAccess.canSeeBoard(boardId, organizationId, user.id))
       ) {
-        errors.push(`Mention '${trimmed}' is not a user who can see this board.`)
+        errors.push(`'${`${user.firstName} ${user.lastName}`.trim()}' can't see this board.`)
         continue
       }
 

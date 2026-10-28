@@ -1335,6 +1335,13 @@ export class IdeaService {
       if (!blocker || blocker.organizationId !== idea.organizationId) {
         throw new NotFoundError('Idea not found.')
       }
+      // A blocker on a board the caller cannot see is refused as a missing id is (BAG-4e).
+      await ensureCanSeeBoard(
+        this.boardAccess,
+        this.currentUser,
+        blocker.boardId,
+        'Idea not found.',
+      )
       if (blocker.boardId === null || blocker.boardId !== idea.boardId) {
         throw new UnprocessableError(
           'blockerOnOtherBoard',
@@ -2006,6 +2013,11 @@ export class IdeaService {
     // Deletion is restricted to Site Admin or an in-scope Org Admin (rule #16 / "Permissions").
     // Deliberately no separate `ensureOrganizationScope` call here - matches the pre-migration API, where
     // `canAdministerIdeaContent`'s own org check is what a cross-org Org Admin fails.
+    // Board sight comes first, so an item on a board the caller cannot see is `404` like a missing
+    // one rather than a `403` that confirms it exists (BAG-4b).
+    if (idea.organizationId === this.currentUser.organizationId) {
+      await ensureCanSeeBoard(this.boardAccess, this.currentUser, idea.boardId, 'Idea not found.')
+    }
     if (!this.canAdministerIdeaContent(idea, null, true)) {
       throw new ForbiddenError('You are not allowed to delete ideas.')
     }
@@ -2926,7 +2938,7 @@ export class IdeaService {
       // BAG-4h: a newly assigned user must be able to see the item's board. A user already
       // assigned is kept, as an inactive one is.
       if (!existingSet.has(id) && !(await this.userCanSeeBoard(user, boardId))) {
-        errors.push(`Assignee '${user.email}' cannot see this board.`)
+        errors.push(`'${`${user.firstName} ${user.lastName}`.trim()}' can't see this board.`)
       }
     }
 
@@ -3025,7 +3037,7 @@ export class IdeaService {
       }
       // BAG-4h: a mention notifies, so it may name only someone who can see the item's board.
       if (!(await this.userCanSeeBoard(user, boardId))) {
-        errors.push(`Mention '${trimmed}' is not a user who can see this board.`)
+        errors.push(`'${`${user.firstName} ${user.lastName}`.trim()}' can't see this board.`)
         continue
       }
 
