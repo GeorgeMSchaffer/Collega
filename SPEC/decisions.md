@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-28 | The usage report reads bound older periods and trail paging | active | full below |
 | 2026-10-28 | `GET /auth/me` reports `requiresPasswordChange` | active | full below |
 | 2026-10-28 | The usage rollup runs on `GET`, one day per transaction | active | full below |
 | 2026-10-27 | Sign-in messages show on the first page after signing in only | active | full below |
@@ -156,6 +157,22 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-10-28 — The usage report reads bound older periods and trail paging
+
+> Spec: `SPEC/20-feature-analytics.md` Part 3; contract: `SPEC/contracts/usage.md` (overview,
+> trail). Slice 366 review fixes (373); this entry records the owner's approval after review.
+
+**Decided by the owner (2026-10-28).** Each is a `400` with the shared validation error.
+
+- **An older overview period covers at most 366 days.** A period wholly before retention reads daily
+  counts and the audit log; a year bounds that scan. Periods within retention keep the contract's
+  90-day cap.
+- **An overview period that crosses the retention boundary is refused (`from`).** It is neither raw
+  nor daily-only, and the overview never mixes the two. `dailyOnly: true` still means the whole
+  period is older than retention. Slice 367's period picker offers either side, not both.
+- **The trail's `page` is at most 10,000.** It bounds the offset; nobody pages a support record that
+  far.
 
 ## 2026-10-28 — `GET /auth/me` reports `requiresPasswordChange`
 

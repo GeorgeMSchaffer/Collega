@@ -64,26 +64,36 @@ function views(organizationId: string, from: Date | null, to: Date | null, role:
   `
 }
 
-/** Counted changes in a window: audit events a member made themselves. */
+/**
+ * Counted changes in a window: audit events a member made themselves. Two branches rather than
+ * `COALESCE(organization_id, actor's)`, so the organization index serves the first. `detail` adds
+ * the entity id and metadata, for the milestones.
+ */
 function changes(
   organizationId: string,
   from: Date | null,
   to: Date | null,
   role: UsageRole | null,
+  detail = false,
 ) {
-  return Prisma.sql`
+  const branch = (organization: Prisma.Sql) => Prisma.sql`
     SELECT ae.actor_user_id AS user_id, member.role::text AS role, ae.event_type AS event,
       'change' AS kind, ae.occurred_at_utc AS at
+      ${detail ? Prisma.sql`, ae.entity_id, ae.metadata_json` : Prisma.empty}
     FROM audit_events AS ae
     JOIN users AS member ON member.id = ae.actor_user_id
-    WHERE COALESCE(ae.organization_id, member.organization_id) = ${organizationId}::uuid
+    WHERE ${organization}
       ${from === null ? Prisma.empty : Prisma.sql`AND ae.occurred_at_utc >= ${from}::timestamptz`}
       ${to === null ? Prisma.empty : Prisma.sql`AND ae.occurred_at_utc < ${to}::timestamptz`}
       AND ae.on_behalf_of_user_id IS NULL
       AND member.role <> 'SiteAdmin'
       AND ae.event_type NOT LIKE 'Auth%'
       AND ae.event_type NOT LIKE 'ViewAs%'
-      ${roleFilter(role)}
+      ${roleFilter(role)}`
+  return Prisma.sql`
+    ${branch(Prisma.sql`ae.organization_id = ${organizationId}::uuid`)}
+    UNION ALL
+    ${branch(Prisma.sql`ae.organization_id IS NULL AND member.organization_id = ${organizationId}::uuid`)}
   `
 }
 
@@ -125,16 +135,17 @@ export class PrismaUsageReportRepository implements UsageReports {
           GROUP BY ud.event_type`
       : Prisma.sql`SELECT NULL::text AS event, 0::bigint AS count WHERE false`
 
-    const [totals] = await this.prisma.$queryRaw<
-      {
-        members: bigint
-        active_members: bigint
-        views: bigint
-        daily_views: bigint
-        changes: bigint
-        visits: bigint
-      }[]
-    >(Prisma.sql`
+    const [[totals], milestones, weeklyActive, featureUse] = await Promise.all([
+      this.prisma.$queryRaw<
+        {
+          members: bigint
+          active_members: bigint
+          views: bigint
+          daily_views: bigint
+          changes: bigint
+          visits: bigint
+        }[]
+      >(Prisma.sql`
       WITH activity AS (${views(org, from, to, role)} UNION ALL ${changes(org, from, to, role)}),
       gaps AS (
         SELECT a.at - LAG(a.at) OVER (PARTITION BY a.user_id ORDER BY a.at) AS gap FROM activity AS a
@@ -148,7 +159,11 @@ export class PrismaUsageReportRepository implements UsageReports {
         (SELECT COALESCE(SUM(d.count), 0)::bigint FROM (${dailyViews}) AS d) AS daily_views,
         (SELECT COUNT(*) FROM activity AS a WHERE a.kind = 'change') AS changes,
         (SELECT COUNT(*) FROM gaps AS g WHERE g.gap IS NULL OR g.gap > ${VISIT_GAP}) AS visits
-    `)
+    `),
+      this.milestones(org),
+      this.weeklyActive(org, role),
+      this.featureUse(period, dailyOnly, dailyViews),
+    ])
 
     const activeMembers = toNumber(totals?.active_members ?? 0)
     const visits = toNumber(totals?.visits ?? 0)
@@ -164,9 +179,9 @@ export class PrismaUsageReportRepository implements UsageReports {
             ? 0
             : Math.round((10 * visits) / activeMembers / weeks) / 10,
       },
-      milestones: await this.milestones(org),
-      weeklyActive: await this.weeklyActive(org, role),
-      featureUse: await this.featureUse(period, dailyOnly, dailyViews),
+      milestones,
+      weeklyActive,
+      featureUse,
       dailyOnly,
     }
   }
@@ -174,7 +189,7 @@ export class PrismaUsageReportRepository implements UsageReports {
   /** Whole history, not the period, and not narrowed by role. */
   private async milestones(org: string): Promise<UsageOverview['milestones']> {
     const [row] = await this.prisma.$queryRaw<Record<UsageMilestoneKey, Date | null>[]>(Prisma.sql`
-      WITH contributing AS (${changes(org, null, null, null)}),
+      WITH contributing AS MATERIALIZED (${changes(org, null, null, null, true)}),
       default_board AS (
         SELECT (ae.metadata_json::jsonb ->> 'defaultBoardId')::uuid AS board_id
         FROM audit_events AS ae
@@ -182,32 +197,34 @@ export class PrismaUsageReportRepository implements UsageReports {
       ),
       firsts AS (
         SELECT a.user_id, MIN(a.at) AS first_at
-        FROM (${changes(org, null, null, null)} UNION ALL ${views(org, null, null, null)}) AS a
+        FROM (
+          SELECT c.user_id, c.at FROM contributing AS c
+          UNION ALL
+          SELECT v.user_id, v.at FROM (${views(org, null, null, null)}) AS v
+        ) AS a
         GROUP BY a.user_id
+      ),
+      -- Filtered before the metadata is cast, so only status changes are read as JSON.
+      status_moves AS MATERIALIZED (
+        SELECT c.entity_id, c.at, c.metadata_json FROM contributing AS c
+        WHERE c.event = 'IdeaStatusChanged'
       )
       SELECT
         org.created_at_utc AS "organizationCreated",
-        (SELECT MIN(ae.occurred_at_utc) FROM audit_events AS ae
-          JOIN users AS member ON member.id = ae.actor_user_id
-          WHERE COALESCE(ae.organization_id, member.organization_id) = ${org}::uuid
-            AND ae.event_type = 'BoardCreated' AND ae.on_behalf_of_user_id IS NULL
-            AND member.role <> 'SiteAdmin'
-            AND NOT EXISTS (SELECT 1 FROM default_board AS db WHERE db.board_id = ae.entity_id)
+        (SELECT MIN(c.at) FROM contributing AS c
+          WHERE c.event = 'BoardCreated'
+            AND NOT EXISTS (SELECT 1 FROM default_board AS db WHERE db.board_id = c.entity_id)
         ) AS "firstBoardByPerson",
         (SELECT MIN(c.at) FROM contributing AS c
           WHERE c.event IN ('IdeaCreated', 'IdeasImported')) AS "firstIdea",
         (SELECT MIN(c.at) FROM contributing AS c WHERE c.event = 'CommentCreated') AS "firstComment",
         (SELECT f.first_at FROM firsts AS f ORDER BY f.first_at OFFSET 2 LIMIT 1) AS "thirdActiveMember",
-        (SELECT MIN(ae.occurred_at_utc) FROM audit_events AS ae
-          JOIN users AS member ON member.id = ae.actor_user_id
-          JOIN ideas AS idea ON idea.id = ae.entity_id
+        (SELECT MIN(m.at) FROM status_moves AS m
+          JOIN ideas AS idea ON idea.id = m.entity_id
           JOIN board_swimlanes AS lane
             ON lane.board_id = idea.board_id
-           AND lane.status_id = (ae.metadata_json::jsonb ->> 'toStatusId')::uuid
+           AND lane.status_id = (m.metadata_json::jsonb ->> 'toStatusId')::uuid
            AND lane.is_final
-          WHERE COALESCE(ae.organization_id, member.organization_id) = ${org}::uuid
-            AND ae.event_type = 'IdeaStatusChanged' AND ae.on_behalf_of_user_id IS NULL
-            AND member.role <> 'SiteAdmin'
         ) AS "firstIdeaInFinalLane"
       FROM organizations AS org
       WHERE org.id = ${org}::uuid
@@ -237,7 +254,7 @@ export class PrismaUsageReportRepository implements UsageReports {
     const rows = await this.prisma.$queryRaw<{ week: Date; active_members: bigint }[]>(Prisma.sql`
       WITH activity AS (${views(org, null, null, role)} UNION ALL ${changes(org, null, null, role)}),
       bounds AS (
-        SELECT GREATEST(
+        SELECT MIN(a.at) AS first_at, GREATEST(
           date_trunc('week', MIN(a.at) AT TIME ZONE 'UTC'),
           date_trunc('week', now() AT TIME ZONE 'UTC') - ${WEEKS_SHOWN - 1} * INTERVAL '1 week'
         ) AS first_week
@@ -250,7 +267,7 @@ export class PrismaUsageReportRepository implements UsageReports {
       ) AS w (week)
       LEFT JOIN activity AS a
         ON date_trunc('week', a.at AT TIME ZONE 'UTC') = w.week
-      WHERE b.first_week IS NOT NULL
+      WHERE b.first_at IS NOT NULL
       GROUP BY w.week
       ORDER BY w.week
     `)
@@ -375,32 +392,41 @@ export class PrismaUsageReportRepository implements UsageReports {
     limit: number
   }): Promise<{ items: readonly UsageTrailItem[]; totalCount: number }> {
     const { userId, fromUtc: from, toUtc: to } = query
-    // A support record, so nothing is excluded but an opted-out member's views. Rows made while
-    // someone acted as this member are `viewAs`.
-    const viewRows = query.includeViews
-      ? Prisma.sql`
-          SELECT ue.occurred_at_utc AS at,
-            CASE WHEN ue.on_behalf_of_user_id IS NULL THEN 'view' ELSE 'viewAs' END AS kind,
-            ue.event_type AS event,
-            CASE ue.event_type WHEN 'board.viewed' THEN 'Board' WHEN 'idea.opened' THEN 'Idea' END AS entity_type,
-            ue.entity_id, ue.on_behalf_of_user_id, ue.user_id AS actor_user_id,
-            ue.props_json AS metadata, ue.id
-          FROM usage_events AS ue
-          WHERE (ue.user_id = ${userId}::uuid AND ue.on_behalf_of_user_id IS NULL
-              OR ue.on_behalf_of_user_id = ${userId}::uuid)
-            AND ue.occurred_at_utc >= ${from}::timestamptz AND ue.occurred_at_utc < ${to}::timestamptz
-          UNION ALL`
-      : Prisma.empty
-    const trail = Prisma.sql`
-      ${viewRows}
+    // A support record: an opted-out member's views are left out, and rows made while someone
+    // acted as this member are `viewAs`.
+    const inRange = (column: Prisma.Sql) =>
+      Prisma.sql`${column} >= ${from}::timestamptz AND ${column} < ${to}::timestamptz`
+    // One branch per way a row can belong to this member, so the member's own views use the
+    // (user_id, occurred_at_utc) index. The other branches have no index on their user column and
+    // range-scan by time, at most 90 days; indexing them needs a schema amendment.
+    const viewBranch = (who: Prisma.Sql) => Prisma.sql`
+      SELECT ue.occurred_at_utc AS at,
+        CASE WHEN ue.on_behalf_of_user_id IS NULL THEN 'view' ELSE 'viewAs' END AS kind,
+        ue.event_type AS event,
+        CASE ue.event_type WHEN 'board.viewed' THEN 'Board' WHEN 'idea.opened' THEN 'Idea' END AS entity_type,
+        ue.entity_id, ue.on_behalf_of_user_id, ue.user_id AS actor_user_id,
+        ue.props_json AS metadata, ue.id
+      FROM usage_events AS ue
+      WHERE ${who} AND ${inRange(Prisma.sql`ue.occurred_at_utc`)}`
+    const changeBranch = (who: Prisma.Sql) => Prisma.sql`
       SELECT ae.occurred_at_utc AS at,
         CASE WHEN ae.on_behalf_of_user_id IS NULL THEN 'change' ELSE 'viewAs' END AS kind,
         ae.event_type AS event, ae.entity_type, ae.entity_id, ae.on_behalf_of_user_id,
         ae.actor_user_id, ae.metadata_json AS metadata, ae.id
       FROM audit_events AS ae
-      WHERE (ae.actor_user_id = ${userId}::uuid AND ae.on_behalf_of_user_id IS NULL
-          OR ae.on_behalf_of_user_id = ${userId}::uuid)
-        AND ae.occurred_at_utc >= ${from}::timestamptz AND ae.occurred_at_utc < ${to}::timestamptz
+      WHERE ${who} AND ${inRange(Prisma.sql`ae.occurred_at_utc`)}`
+    const viewRows = query.includeViews
+      ? Prisma.sql`
+          ${viewBranch(Prisma.sql`ue.user_id = ${userId}::uuid AND ue.on_behalf_of_user_id IS NULL`)}
+          UNION ALL
+          ${viewBranch(Prisma.sql`ue.on_behalf_of_user_id = ${userId}::uuid`)}
+          UNION ALL`
+      : Prisma.empty
+    const trail = Prisma.sql`
+      ${viewRows}
+      ${changeBranch(Prisma.sql`ae.actor_user_id = ${userId}::uuid AND ae.on_behalf_of_user_id IS NULL`)}
+      UNION ALL
+      ${changeBranch(Prisma.sql`ae.on_behalf_of_user_id = ${userId}::uuid`)}
     `
     const [rows, [count]] = await Promise.all([
       this.prisma.$queryRaw<
