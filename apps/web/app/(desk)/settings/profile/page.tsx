@@ -9,11 +9,13 @@ import {
   FileButton,
 } from '@collega/design-system'
 import Link from 'next/link'
+import { UsageViewed } from '@/components/analytics/usage-viewed'
 import { PageHeader } from '@/components/common/page-header'
 import { Topbar } from '@/components/nav/topbar'
 import { PasswordForm } from '@/components/settings/password-form'
 import { ProfileForm } from '@/components/settings/profile-form'
-import { getProfile } from '@/lib/data'
+import { UsageTrackingSwitch } from '@/components/settings/usage-tracking-switch'
+import { getProfile, getUsageTracking } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
@@ -38,9 +40,13 @@ export default async function ProfilePage() {
   await requireCurrentUser()
 
   const profile = await getProfile()
+  // Under View As the API refuses the read (`SPEC/contracts/usage.md`), so it is not asked.
+  const viewingAs = currentUser().viewingAs !== null
+  const usageTracking = viewingAs ? true : await getUsageTracking()
 
   return (
     <>
+      <UsageViewed type="settings.viewed" screen />
       <Topbar
         title={
           <span className="text-sm font-normal text-muted-foreground">
@@ -52,7 +58,12 @@ export default async function ProfilePage() {
       <main className="flex min-w-0 flex-1 flex-col gap-6 p-6">
         <PageHeader
           title="My Profile"
-          description={<>Edit your name and change your password. Email and role are read-only.</>}
+          description={
+            <>
+              Edit your name, change your password and choose whether your usage is recorded. Email
+              and role are read-only.
+            </>
+          }
         />
 
         <div className="flex max-w-[720px] flex-col gap-4">
@@ -100,6 +111,18 @@ export default async function ProfilePage() {
             </CardHeader>
             <CardContent>
               <PasswordForm />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Usage</CardTitle>
+              <CardDescription>
+                Helps us learn which parts of Collega people use. It is tied to your account.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <UsageTrackingSwitch enabled={usageTracking} refused={viewingAs} />
             </CardContent>
           </Card>
         </div>

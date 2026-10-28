@@ -22,7 +22,7 @@ import { NextResponse } from 'next/server'
 import { SESSION_COOKIE_NAME } from '@/lib/api/config'
 
 /** Everything the reader sees without signing in. */
-const PUBLIC_PATHS = ['/login', '/register', '/change-password']
+const PUBLIC_PATHS = ['/login', '/register', '/change-password', '/privacy']
 
 export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl

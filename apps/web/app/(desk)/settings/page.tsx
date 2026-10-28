@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from '@collega/design-system'
 import Link from 'next/link'
+import { UsageViewed } from '@/components/analytics/usage-viewed'
 import { PageHeader } from '@/components/common/page-header'
 import { Topbar } from '@/components/nav/topbar'
 import { requireCurrentUser } from '@/lib/server/current-user'
@@ -191,6 +192,7 @@ export default async function SettingsPage() {
 
   return (
     <>
+      <UsageViewed type="settings.viewed" screen />
       <Topbar title={<b>Settings</b>} />
       <main className="flex min-w-0 flex-1 flex-col gap-6 p-6">
         <PageHeader

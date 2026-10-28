@@ -1,3 +1,4 @@
+import { UsageViewed } from '@/components/analytics/usage-viewed'
 import type { BoardFormData, BoardView } from '@/components/boards/board-drawer'
 import { BoardsScreen } from '@/components/boards/boards-screen'
 import { loadPullSetup } from '@/components/boards/load-pull-setup'
@@ -150,6 +151,7 @@ export default async function BoardsPage({ searchParams }: { searchParams: Promi
 
   return (
     <>
+      <UsageViewed type="list.viewed" props={{ list: 'boards' }} />
       {/* No "New idea" here, by design: this screen chooses a board rather than acting on one, and
           an idea is always raised against a board. */}
       <Topbar title={<b>Boards</b>} />

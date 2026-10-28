@@ -27,6 +27,7 @@ import { deleteLoginMessage, endLoginMessageNow } from '@/lib/server/login-messa
 import { formatMessageTime, LoginMessageDrawer } from './login-message-drawer'
 
 const CONFIG: ListConfig = {
+  usageList: 'login-messages',
   filters: ['state'],
   views: ['list'],
   sortKeys: ['title', 'display', 'mode', 'window', 'state'],

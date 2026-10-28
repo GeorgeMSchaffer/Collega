@@ -66,6 +66,8 @@ export default async function LoginPage({
             Have an invite code? <Link href="/register">Create an account</Link>.
             <br />
             Forgot your password? Ask your organization admin to reset it.
+            <br />
+            <Link href="/privacy">How Collega records what you view</Link>.
           </p>
         </div>
       </div>

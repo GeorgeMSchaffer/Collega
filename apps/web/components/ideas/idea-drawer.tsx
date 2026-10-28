@@ -2,6 +2,7 @@
 
 import { Alert, Button, cn } from '@collega/design-system'
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react'
+import { recordUsage } from '@/components/analytics/usage-recorder'
 import { Drawer } from '@/components/list'
 import { Icon } from '@/components/list/icons'
 import type { BoardRef, IdeaBlockers, IdeaDetail, IdeaFormOptions, IdeaTasks } from '@/lib/types'
@@ -47,6 +48,7 @@ export function IdeaDrawer({
   onClose,
   onDelete,
   onSaved,
+  openedFrom,
 }: {
   mode: DrawerMode | null
   idea: IdeaDetail | null
@@ -81,6 +83,8 @@ export function IdeaDrawer({
   onClose: () => void
   onDelete: (trigger: HTMLElement) => void
   onSaved: (ideaId: string) => void
+  /** Where an opening came from, for `idea.opened`; an idea already open on first mount came from a link. */
+  openedFrom: 'board' | 'list' | 'inbox'
 }) {
   const formId = useId()
   const [saving, setSaving] = useState(false)
@@ -110,6 +114,23 @@ export function IdeaDrawer({
   const form = mode === 'create' || mode === 'edit'
   const assisted = open && mode === 'create' && assistAvailable
   const chatShown = assisted && assist === 'chat'
+
+  // `idea.opened` once per idea opened (`SPEC/20-feature-analytics.md` rule 7). Moving between view
+  // and edit of the same idea is not a new opening.
+  const openedId = open && mode !== 'create' ? (idea?.id ?? null) : null
+  const fromLink = useRef(openedId !== null)
+  useEffect(() => {
+    if (openedId === null) {
+      fromLink.current = false
+      return
+    }
+    recordUsage({
+      type: 'idea.opened',
+      entityId: openedId,
+      props: { source: fromLink.current ? 'link' : openedFrom },
+    })
+    fromLink.current = false
+  }, [openedId, openedFrom])
 
   // The drawer stays mounted when closed, so each opening starts a new conversation.
   useEffect(() => {

@@ -32,6 +32,7 @@ import { BoardDrawer, type BoardFormData, type BoardView, type DrawerMode } from
 import { BoardStatus, LaneFigures, LaneStrip, statusLabel, TopTags } from './board-parts'
 
 const CONFIG: ListConfig = {
+  usageList: 'boards',
   filters: ['status'],
   filterDefaults: { status: ['Active'] },
   views: ['list', 'cards'],

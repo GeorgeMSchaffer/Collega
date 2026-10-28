@@ -25,6 +25,7 @@ import type { TagOverview } from '@/lib/types'
 import { TagDrawer, type TagDrawerMode, type TagUsage } from './tag-drawer'
 
 const CONFIG: ListConfig = {
+  usageList: 'tags',
   filters: ['usage'],
   views: ['list'],
   sortKeys: ['name', 'organization', 'ideas', 'boards', 'created'],

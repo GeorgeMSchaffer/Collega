@@ -174,6 +174,7 @@ export function InboxWorkspace({
       )}
 
       <IdeaDrawer
+        openedFrom="inbox"
         mode={mode}
         idea={idea}
         boardName={idea?.boardId === null ? 'No board' : (board?.name ?? null)}

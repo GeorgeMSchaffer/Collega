@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { UsageViewed } from '@/components/analytics/usage-viewed'
 import { PageHeader } from '@/components/common/page-header'
 import { Topbar } from '@/components/nav/topbar'
 import { AdminOnly, SiteAdminOnly } from './admin-only'
@@ -42,6 +43,7 @@ export function SettingsPage({
         <Gate siteAdminOnly={siteAdminOnly} what={gate}>
           {/* The action sits inside the gate with the heading, so a role the route refuses never
               reads "Add New Status" above a panel telling them the page is closed to them. */}
+          <UsageViewed type="admin.viewed" screen />
           <PageHeader title={title} description={lead} action={actions} />
           {children}
         </Gate>

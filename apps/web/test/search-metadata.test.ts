@@ -16,11 +16,11 @@ import { config, proxy } from '@/proxy'
 afterEach(() => vi.unstubAllEnvs())
 
 describe('robots.txt', () => {
-  it('allows sign-in and register and disallows everything else', () => {
+  it('allows sign-in, register and privacy and disallows everything else', () => {
     const { rules } = robots()
     expect(rules).toEqual({
       userAgent: '*',
-      allow: ['/login', '/register'],
+      allow: ['/login', '/register', '/privacy'],
       disallow: '/',
     })
   })
@@ -32,11 +32,12 @@ describe('robots.txt', () => {
 })
 
 describe('sitemap.xml', () => {
-  it('lists sign-in and register and nothing else', () => {
+  it('lists sign-in, register and privacy and nothing else', () => {
     vi.stubEnv('VERCEL_PROJECT_PRODUCTION_URL', 'collega.example.test')
     expect(sitemap().map((entry) => entry.url)).toEqual([
       'https://collega.example.test/login',
       'https://collega.example.test/register',
+      'https://collega.example.test/privacy',
     ])
   })
 
@@ -67,7 +68,7 @@ describe('proxy matcher and gate', () => {
   })
 
   it('lets a signed-out crawler read the public pages through the gate', () => {
-    for (const path of ['/login', '/register']) {
+    for (const path of ['/login', '/register', '/privacy']) {
       expect(
         proxy(new NextRequest(`https://collega.test${path}`)).headers.get('location'),
       ).toBeNull()

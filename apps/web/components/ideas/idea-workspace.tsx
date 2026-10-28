@@ -1004,6 +1004,7 @@ export function IdeaWorkspace({
       )}
 
       <IdeaDrawer
+        openedFrom={board ? 'board' : 'list'}
         mode={drawerMode}
         idea={drawerIdea}
         boardName={
