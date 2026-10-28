@@ -20,6 +20,8 @@ import type {
   Effort,
   FieldDefinition,
   Fieldset,
+  GroupDetail,
+  GroupOverview,
   Idea,
   IdeaDetail,
   IdeaFormField,
@@ -63,6 +65,8 @@ import type {
   WireEffectiveField,
   WireFieldDefinition,
   WireFieldset,
+  WireGroupDetail,
+  WireGroupListItem,
   WireIdeaAssignee,
   WireIdeaComment,
   WireIdeaDetail,
@@ -365,6 +369,8 @@ export function toBoardOverview(wire: WireBoardListItem): BoardOverview {
     keyPrefix: wire.keyPrefix,
     sprintsEnabled: wire.sprintsEnabled,
     ideaFeaturesEnabled: wire.ideaFeaturesEnabled,
+    restricted: wire.visibility === 'Restricted',
+    createdById: wire.createdBy?.userId ?? null,
   }
 }
 
@@ -805,5 +811,44 @@ export function toOutcomeRoadmap(wire: WireRoadmap): OutcomeRoadmap {
   return {
     outcomes: wire.outcomes.map(toOutcomeWithIdeas),
     ungrouped: wire.ungrouped.map(toOutcomeIdea),
+  }
+}
+
+// Groups (slice 355). Appended.
+
+export function toGroupOverview(wire: WireGroupListItem): GroupOverview {
+  return {
+    id: wire.groupId,
+    name: wire.name,
+    description: wire.description,
+    memberCount: wire.memberCount,
+    boardCount: wire.boardCount,
+  }
+}
+
+export function toGroupDetail(wire: WireGroupDetail): GroupDetail {
+  return {
+    id: wire.groupId,
+    name: wire.name,
+    description: wire.description,
+    memberCount: wire.members.length,
+    boardCount: wire.boards.length,
+    members: wire.members.map((member) => {
+      const role = toRole(member.role)
+      return {
+        id: member.userId,
+        name: `${member.firstName} ${member.lastName}`.trim(),
+        email: member.email,
+        role,
+        roleLabel: roleLabel(role),
+        active: toUserStatus(member.status) === 'Active',
+      }
+    }),
+    boards: wire.boards.map((board) => ({
+      id: board.boardId,
+      name: board.name,
+      isArchived: board.isArchived,
+    })),
+    canManage: wire.canManage,
   }
 }

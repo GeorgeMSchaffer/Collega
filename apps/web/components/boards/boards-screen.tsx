@@ -5,6 +5,7 @@ import type { Route } from 'next'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useRef, useState, useTransition } from 'react'
+import { LockMark } from '@/components/access/lock-mark'
 import { GatedAction } from '@/components/common/gated-action'
 import { PageHeader } from '@/components/common/page-header'
 import {
@@ -50,9 +51,12 @@ const COLUMNS: Column<BoardOverview>[] = [
     className: 'max-w-0 w-[34%]',
     cell: (board) => (
       <>
-        <Link href={`/boards/${board.id}`} className="font-semibold">
-          {board.name}
-        </Link>
+        <span className="inline-flex items-center gap-1.5">
+          <Link href={`/boards/${board.id}`} className="font-semibold">
+            {board.name}
+          </Link>
+          {board.restricted ? <LockMark /> : null}
+        </span>
         <span className="block truncate text-xs text-muted-foreground">
           {board.description ?? <span className="italic">No description yet.</span>}
         </span>

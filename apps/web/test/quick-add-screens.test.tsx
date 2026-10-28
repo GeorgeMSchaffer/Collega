@@ -354,6 +354,8 @@ function overview(name: string): BoardOverview {
     keyPrefix: null,
     sprintsEnabled: false,
     ideaFeaturesEnabled: true,
+    restricted: false,
+    createdById: null,
   }
 }
 

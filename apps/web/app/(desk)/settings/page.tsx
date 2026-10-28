@@ -36,7 +36,17 @@ const PROFILE: Section = {
  * reason and replaced by AI Prompt, which is the deployment-level surface a Site Admin does own.
  */
 function sectionsFor(role: Role): Section[] {
-  if (!isAdministrator(role)) return [PROFILE]
+  if (!isAdministrator(role)) {
+    return [
+      PROFILE,
+      {
+        href: '/settings/groups',
+        title: 'Groups',
+        blurb:
+          'Who is in each group. Groups give access to Restricted boards; an Org Admin manages them.',
+      },
+    ]
+  }
 
   if (role === 'SiteAdmin') {
     return [
@@ -128,6 +138,11 @@ function sectionsFor(role: Role): Section[] {
       href: '/settings/boards',
       title: 'Boards',
       blurb: 'The boards you track ideas on, and which statuses become each one’s swimlanes.',
+    },
+    {
+      href: '/settings/groups',
+      title: 'Groups',
+      blurb: 'Named sets of people to give access to Restricted boards in one step.',
     },
     {
       href: '/settings/statuses',

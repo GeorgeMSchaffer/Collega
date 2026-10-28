@@ -183,7 +183,11 @@ export type WireBoardListItem = {
   hasReferenceLane: boolean
   /** The non-archived boards with a lane that references this one. */
   referencedByBoardIds: readonly string[]
+  visibility: WireBoardVisibility
 }
+
+/** Who can see a board (`contracts/boards.md` "Board access"). */
+export type WireBoardVisibility = 'Organization' | 'Restricted'
 
 export type WireBoardLaneCount = {
   statusId: string
@@ -210,6 +214,12 @@ export type WireBoardDetail = {
   allowedIdeaTypeIds: readonly string[]
   /** Whether this caller may change `allowedIdeaTypeIds`. */
   canSetAllowedIdeaTypes: boolean
+  visibility: WireBoardVisibility
+  /** Kept while the board is `Organization`, when they grant nothing. */
+  accessUserIds: readonly string[]
+  accessGroupIds: readonly string[]
+  /** An Org Admin, or the creator while an active User or Org Admin; false on an archived board. */
+  canManageAccess: boolean
 }
 
 export type WireSwimlane = {
@@ -802,3 +812,32 @@ export type WireLoginMessageAcknowledgements = WirePage<{
   organizationName: string | null
   acknowledgedAtUtc: string | null
 }> & { acknowledgedCount: number; audienceCount: number }
+
+/** `GET /organizations/{id}/groups` (`contracts/groups.md`). */
+export type WireGroupListItem = {
+  groupId: string
+  organizationId: string
+  name: string
+  description: string | null
+  memberCount: number
+  /** Restricted boards naming the group, among those the caller can see. */
+  boardCount: number
+}
+
+/** `GET /groups/{id}` and every group write's answer. */
+export type WireGroupDetail = {
+  groupId: string
+  organizationId: string
+  name: string
+  description: string | null
+  members: readonly {
+    userId: string
+    firstName: string
+    lastName: string
+    email: string
+    role: string
+    status: string
+  }[]
+  boards: readonly { boardId: string; name: string; isArchived: boolean }[]
+  canManage: boolean
+}

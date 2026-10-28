@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { loadBoardAccess } from '@/components/access/load-access-setup'
 import { loadPullSetup } from '@/components/boards/load-pull-setup'
 import { BoardRefusal } from '@/components/settings/admin-only'
 import { BoardForm } from '@/components/settings/board-form'
@@ -66,6 +67,7 @@ export default async function EditBoardPage({ params }: { params: Promise<{ boar
             : undefined
         }
         references={references}
+        access={await loadBoardAccess(board, overview)}
         // A board may hold a lane whose status has since been archived, and the catalog excludes
         // those. Merging them in is what keeps such a lane visible and removable rather than
         // silently dropped from the picker — and silently dropped from the board on the next save.

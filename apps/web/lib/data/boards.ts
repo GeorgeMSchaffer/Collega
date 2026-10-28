@@ -130,6 +130,10 @@ export async function getBoard(id: string): Promise<BoardWithLanes | null> {
       ideaFeaturesEnabled: board.ideaFeaturesEnabled,
       allowedIdeaTypeIds: [...board.allowedIdeaTypeIds],
       canSetAllowedIdeaTypes: board.canSetAllowedIdeaTypes,
+      restricted: board.visibility === 'Restricted',
+      accessUserIds: [...board.accessUserIds],
+      accessGroupIds: [...board.accessGroupIds],
+      canManageAccess: board.canManageAccess,
       // Deleted statuses still hold ideas that have to go somewhere, so their lane stays on the
       // board — hiding it would silently drop cards off a screen that claims to show all of them.
       lanes: [...board.swimlanes].sort((a, b) => a.order - b.order).map(swimlaneToStatus),
@@ -217,6 +221,7 @@ export async function getBoardAdmin(): Promise<BoardAdmin[]> {
     name: board.name,
     laneCount: board.swimlaneCount,
     userStatusMoves: board.allowUserStatusUpdate,
+    restricted: board.visibility === 'Restricted',
   }))
 }
 

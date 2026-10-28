@@ -1,5 +1,6 @@
 import { buttonVariants, EmptyState } from '@collega/design-system'
 import Link from 'next/link'
+import { LockMark } from '@/components/access/lock-mark'
 import { GatedAction } from '@/components/common/gated-action'
 import { AdminTable, SettingsPage, Th } from '@/components/settings/settings-page'
 import { getBoardAdmin } from '@/lib/data'
@@ -76,7 +77,10 @@ export default async function SettingsBoardsPage() {
             {boards.map((board) => (
               <tr key={board.id} className="border-b last:border-0">
                 <td className="px-4 py-2.5">
-                  <b className="font-medium">{board.name}</b>
+                  <span className="inline-flex items-center gap-1.5">
+                    <b className="font-medium">{board.name}</b>
+                    {board.restricted ? <LockMark /> : null}
+                  </span>
                 </td>
                 <td className="px-4 py-2.5 tabular-nums">{board.laneCount}</td>
                 <td className="px-4 py-2.5 text-right">

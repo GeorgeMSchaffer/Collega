@@ -70,6 +70,8 @@ function board(over: Partial<BoardOverview> = {}): BoardOverview {
     keyPrefix: null,
     sprintsEnabled: false,
     ideaFeaturesEnabled: true,
+    restricted: false,
+    createdById: null,
     ...over,
   }
 }
