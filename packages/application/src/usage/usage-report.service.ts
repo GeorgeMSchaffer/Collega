@@ -24,6 +24,10 @@ import type {
 const DAY_MS = 24 * 60 * 60 * 1000
 /** Routes that read raw events cover at most this many days (contract shared rules). */
 const MAX_RAW_DAYS = 90
+/** An older period reads daily counts, and changes from the audit log; a year bounds the scan. */
+const MAX_DAILY_DAYS = 366
+/** Bounds the trail's offset; nobody pages a support record this far. */
+const MAX_PAGE = 10_000
 const TRAIL_DEFAULT_PAGE_SIZE = 50
 const TRAIL_MAX_PAGE_SIZE = 100
 const DATE = /^\d{4}-\d{2}-\d{2}$/
@@ -44,8 +48,10 @@ export class UsageReportService {
   /** `GET /usage/organizations/{organizationId}/overview`. */
   async overview(organizationId: string, query: Query): Promise<UsageOverview> {
     this.ensureSiteAdmin()
-    const period = this.period(organizationId, query, false)
-    const dailyOnly = period.fromUtc < this.retentionStart()
+    const period = this.period(organizationId, query, true)
+    // A period is either within retention (raw events, people and roles) or wholly older than it
+    // (daily counts), as the screen's period choice is; one that straddles the line is refused.
+    const dailyOnly = period.toUtc <= this.retentionStart()
     if (dailyOnly && period.role !== null) {
       throw invalid('role', 'Older periods keep daily counts only, with no split by role.')
     }
@@ -56,7 +62,7 @@ export class UsageReportService {
   /** `GET /usage/organizations/{organizationId}/paths`. */
   async paths(organizationId: string, query: Query): Promise<UsagePaths> {
     this.ensureSiteAdmin()
-    const period = this.period(organizationId, query, true)
+    const period = this.period(organizationId, query, false)
     const after = query.after
     if (typeof after !== 'string' || !EVENT_NAME.test(after)) {
       throw invalid('after', 'Choose the event the paths start from.')
@@ -71,8 +77,8 @@ export class UsageReportService {
     query: Query,
   ): Promise<Page<UsageTrailItem> & { readonly optedOut: boolean }> {
     this.ensureSiteAdmin()
-    const { fromUtc, toUtc } = this.period(userId, query, true)
-    const page = wholeNumber(query.page, 1, 'page', 1, Number.MAX_SAFE_INTEGER)
+    const { fromUtc, toUtc } = this.period(userId, query, false)
+    const page = wholeNumber(query.page, 1, 'page', 1, MAX_PAGE)
     const pageSize = wholeNumber(
       query.pageSize,
       TRAIL_DEFAULT_PAGE_SIZE,
@@ -117,13 +123,19 @@ export class UsageReportService {
     return new Date(today - this.retentionDays * DAY_MS)
   }
 
-  private period(organizationId: string, query: Query, raw: boolean): UsagePeriod {
+  /** `allowOlder`: a period wholly before retention is allowed too (the overview's daily counts). */
+  private period(organizationId: string, query: Query, allowOlder: boolean): UsagePeriod {
     const fromUtc = date(query.from, 'from')
     const toUtc = date(query.to, 'to')
     if (toUtc <= fromUtc) {
       throw invalid('to', 'To must be after from.')
     }
-    if (raw) {
+    const older = allowOlder && toUtc <= this.retentionStart()
+    if (older) {
+      if (toUtc.getTime() - fromUtc.getTime() > MAX_DAILY_DAYS * DAY_MS) {
+        throw invalid('to', `An older period covers at most ${MAX_DAILY_DAYS} days.`)
+      }
+    } else {
       if (fromUtc < this.retentionStart()) {
         throw invalid(
           'from',
@@ -170,7 +182,7 @@ function wholeNumber(
     throw invalid(
       field,
       field === 'page'
-        ? 'Page must be a whole number, 1 or more.'
+        ? `Page must be a whole number from ${min} to ${max}.`
         : `Page size must be a whole number from ${min} to ${max}.`,
     )
   }
