@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Comp R: Restricted boards and user groups. A throwaway comp for SPEC/20-feature-board-access-and-groups.md BAG-6 (slice 354).
+     Self-contained; open in a browser. Theme tokens are copied verbatim from comp-r-portico-prototype.html. Approved as drawn 2026-10-28. -->
+
+<title>Collega Board Access Comp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&family=Figtree:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Young+Serif&family=Instrument+Sans:wght@400;500;600;700&family=Lexend:wght@500;600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=Schibsted+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Theme tokens: verbatim from comp-r-portico-prototype.html.
+   Every colour the app uses is a token below, so a theme is only a block of values. */
+:root,:root[data-proto-theme="portico"]{--suggest:#3B6E51;--suggest-tint:#E3EEE7;color-scheme:light;
+--bg:#F1F5F5;--ink:#16292E;--ink2:#2C4247;--muted:#56696D;--line:#DDE6E7;--line2:#C6D3D5;--card:#FFFFFF;--soft:#E8EFF0;--rowh:#F6FAFA;--thead:#F7FAFA;--facts:#F6FAFA;
+--pri:#1F6A80;--pri-h:#185769;--pri-t:#1B5F73;--pri-tint:#E1EEF1;--pri-ink:#FFFFFF;--vote:#F2B28A;--vote-ink:#16292E;
+--hot:#B64A34;--hot-t:#963B28;--hot-tint:#F6E1DB;--ok-t:#3B6E51;--ok-tint:#E3EEE7;--warn-t:#8E4A1F;--warn-tint:#FCEBDF;
+--side:#FFFFFF;--side-ink:#2C4247;--side-line:#DDE6E7;--side-hover:#EEF4F4;--side-on:#E1EEF1;--side-on-ink:#16292E;--bar:#16292E;--bar-ink:#E3EEF0;
+--tag:#E1EEF1;--tag-ink:#1B5566;--av1:#1F6A80;--av1i:#FFFFFF;--av2:#F2B28A;--av2i:#16292E;--av3:#7A5AA6;--av3i:#FFFFFF;--av4:#4F8A6A;--av4i:#FFFFFF;
+--shadow:22 41 46;--r:14px;--rs:10px;--display:"Outfit",ui-sans-serif,system-ui,sans-serif;--body:"Figtree",ui-sans-serif,system-ui,sans-serif;--mono:"DM Mono",ui-monospace,monospace;--h-weight:600}
+:root[data-proto-theme="sera"]{--suggest:#2E6E4C;--suggest-tint:#E1EFE7;--bg:#F3F4F7;--ink:#1C2236;--ink2:#343B52;--muted:#5C6378;--line:#E2E4EC;--line2:#CCD0DC;--soft:#ECEEF3;--rowh:#F7F8FB;--thead:#F7F8FB;--facts:#F5F6FA;
+--pri:#3450A8;--pri-h:#2A4290;--pri-t:#2E4799;--pri-tint:#E6EAF6;--vote:#E3B04B;--vote-ink:#1C2236;--hot:#B8553F;--hot-t:#94402D;--hot-tint:#F6E3DE;--ok-t:#2E6E4C;--ok-tint:#E1EFE7;--warn-t:#83590C;--warn-tint:#FAF0DA;
+--side:#1F2540;--side-ink:#CDD1E3;--side-line:#2D3454;--side-hover:#272E4D;--side-on:#2E3760;--side-on-ink:#FFFFFF;--bar:#0F1426;--bar-ink:#E6E9F5;--tag:#ECEEF3;--tag-ink:#343B52;
+--av1:#3450A8;--av1i:#FFFFFF;--av2:#E3B04B;--av2i:#1C2236;--av3:#B8553F;--av3i:#FFFFFF;--av4:#3E8A62;--av4i:#FFFFFF;--shadow:28 34 54;--r:16px;--display:"Bricolage Grotesque",ui-sans-serif,sans-serif;--body:"DM Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="lagoon"]{--suggest:#2F5F9E;--suggest-tint:#E3ECF8;--bg:#F3F4EF;--ink:#13302B;--ink2:#2A4640;--muted:#5A6B66;--line:#E1E5DF;--line2:#CBD3CB;--soft:#EAEFEA;--rowh:#F7F9F5;--thead:#F7F9F5;--facts:#F5F8F3;
+--pri:#0E6B5C;--pri-h:#0A5649;--pri-t:#0C6154;--pri-tint:#DCEFEA;--vote:#F08A6C;--vote-ink:#13302B;--hot:#C2412D;--hot-t:#9E3322;--hot-tint:#F9E1DA;--ok-t:#2F6B3F;--ok-tint:#E2F0E4;--warn-t:#7A5410;--warn-tint:#F8EDD3;
+--side:#FFFFFF;--side-ink:#2A4640;--side-line:#E1E5DF;--side-hover:#EFF3EE;--side-on:#DCEFEA;--side-on-ink:#13302B;--bar:#0F2A25;--bar-ink:#E2F0EC;--tag:#DCEFEA;--tag-ink:#0C5549;
+--av1:#0E6B5C;--av1i:#FFFFFF;--av2:#F08A6C;--av2i:#13302B;--av3:#3D6FB6;--av3i:#FFFFFF;--av4:#8C6A1F;--av4i:#FFFFFF;--shadow:19 48 43;--r:16px;--rs:12px;--display:"Lexend",ui-sans-serif,sans-serif;--body:"Nunito Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:600}
+:root[data-proto-theme="terrazzo"]{--suggest:#3F6B2E;--suggest-tint:#E6F2DF;--bg:#F5F6F8;--ink:#1E2733;--ink2:#36414F;--muted:#5E6978;--line:#E3E6EB;--line2:#CDD2DA;--soft:#EDF0F3;--rowh:#F8F9FB;--thead:#F8F9FB;--facts:#F6F7F9;
+--pri:#3D5A80;--pri-h:#324B6B;--pri-t:#35507A;--pri-tint:#E4EAF2;--vote:#F4C7C3;--vote-ink:#1E2733;--hot:#B84A4A;--hot-t:#963636;--hot-tint:#F7E2E2;--ok-t:#3F6B2E;--ok-tint:#E6F2DF;--warn-t:#7F5A12;--warn-tint:#F7EDD6;
+--side:#FFFFFF;--side-ink:#36414F;--side-line:#E3E6EB;--side-hover:#F1F3F6;--side-on:#E4EAF2;--side-on-ink:#1E2733;--bar:#1E2733;--bar-ink:#E8ECF2;--tag:#F4E4E1;--tag-ink:#7A3B34;
+--av1:#3D5A80;--av1i:#FFFFFF;--av2:#F4C7C3;--av2i:#1E2733;--av3:#4E7A40;--av3i:#FFFFFF;--av4:#7A5AA6;--av4i:#FFFFFF;--shadow:30 39 51;--r:8px;--rs:6px;--display:"Schibsted Grotesk",ui-sans-serif,sans-serif;--body:"Public Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="graphite"]{color-scheme:dark;--metric:#5CC8E0;--suggest:#5CC8E0;--suggest-tint:#0F1D21;--suggest-line:#2E6A78;
+--bg:#0F1113;--ink:#E6E8EA;--ink2:#C4CAD0;--muted:#9BA3AB;--line:#22272C;--line2:#2C3238;--card:#16191C;--soft:#1C2024;--rowh:#1A1E22;--thead:#121518;--facts:#1A1E22;--field:#0F1113;
+--pri:#F5A524;--pri-h:#FFC35C;--pri-t:#F5A524;--pri-tint:#2A2418;--pri-ink:#16120A;--vote:#2A2418;--vote-ink:#F3E3C3;--me:#2A2418;--me-ink:#F3E3C3;
+--hot:#E5484D;--hot-t:#FF8A8E;--hot-tint:#2E1719;--ok-t:#58C781;--ok-tint:#13241A;--warn-t:#F5B456;--warn-tint:#2A2418;
+--side:#121518;--side-ink:#AEB5BC;--side-line:#22272C;--side-hover:#1A1E22;--side-on:#1C2024;--side-on-ink:#E6E8EA;--bar:#0B0D0F;--bar-ink:#AEB5BC;--tag:#1C2024;--tag-ink:#C4CAD0;
+--av1:#2A2418;--av1i:#F5A524;--av2:#153038;--av2i:#5CC8E0;--av3:#262B30;--av3i:#C4CAD0;--av4:#1C2A20;--av4i:#58C781;--shadow:0 0 0;--r:8px;--rs:6px;
+--display:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;--h-weight:600}
+:root{--metric:var(--pri);--field:var(--card);--suggest-line:var(--suggest);--me:var(--pri);--me-ink:var(--pri-ink);--drawer:clamp(380px,28vw,520px);--drawer-wide:clamp(720px,62vw,1100px)}
+*,*::before,*::after{box-sizing:border-box}
+html,body{min-height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--body);display:flex;flex-direction:column}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.i{width:16px;height:16px;flex:none}
+[hidden]{display:none!important}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* comp controls and reviewer notes: the chrome band, outside the app */
+.proto{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:8px 16px;background:var(--bar);color:var(--bar-ink);font-size:13px}
+.proto b{font-family:var(--display);font-weight:600}
+.proto .grp{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.proto .lbl{opacity:.7;margin-right:2px}
+.proto button{background:transparent;border:1px solid color-mix(in srgb,var(--bar-ink) 30%,transparent);border-radius:999px;padding:3px 10px;color:var(--bar-ink);cursor:pointer}
+.proto button[aria-pressed="true"]{background:var(--bar-ink);color:var(--bar);border-color:var(--bar-ink)}
+.note{padding:6px 16px 8px;background:var(--bar);color:var(--bar-ink);font-size:12px;opacity:.85;border-top:1px solid color-mix(in srgb,var(--bar-ink) 15%,transparent)}
+.note p{margin:0;max-width:110ch}
+
+/* app shell, as comp R */
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);flex:1 0 auto}
+.side{background:var(--side);border-right:1px solid var(--side-line);padding:14px 10px;display:flex;flex-direction:column;gap:2px;color:var(--side-ink)}
+.brand{display:flex;gap:10px;align-items:center;padding:4px 6px 12px}
+.brand b{display:block;font:600 16px/1.1 var(--display)}.brand small{font-size:12px;opacity:.75}
+.mark{display:grid;place-items:center;width:30px;height:30px;border-radius:var(--rs);background:var(--pri);color:var(--pri-ink);font:600 12px var(--display)}
+.navlbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.7;padding:10px 8px 4px}
+.nav{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:var(--rs);color:var(--side-ink);cursor:pointer;border:0;background:none;width:100%;text-align:left}
+.nav:hover{background:var(--side-hover)}
+.nav:disabled{opacity:.55;cursor:default}
+.nav[aria-current="page"]{background:var(--side-on);color:var(--side-on-ink);font-weight:600;box-shadow:inset 3px 0 0 var(--pri)}
+.nav span{flex:1}
+.me{margin-top:auto;display:flex;gap:10px;align-items:center;padding:10px 6px 2px;border-top:1px solid var(--side-line)}
+.me b{display:block;font-size:13px}.me small{font-size:12px;opacity:.75}
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:8px;min-height:52px;padding:8px 24px;border-bottom:1px solid var(--line);background:var(--card)}
+.topbar .sp{flex:1}
+.crumb{color:var(--muted)}.crumb b{color:var(--ink)}
+.themepick{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.themepick select{border:1px solid var(--line2);border-radius:999px;padding:4px 10px;background:var(--card);color:var(--ink);cursor:pointer}
+.work{padding:20px 24px 32px;display:flex;flex-direction:column;gap:16px;min-width:0;max-width:960px}
+.pghead{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.pghead h1{margin:0;font:var(--h-weight) 28px/1.15 var(--display);letter-spacing:-.02em}
+.pghead p{margin:4px 0 0;color:var(--muted);max-width:64ch}
+.denywrap{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.why{font-size:12px;color:var(--muted);font-style:italic}
+.btn{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13px;padding:8px 14px;border-radius:var(--rs);border:1px solid var(--line2);background:var(--card);cursor:pointer}
+.btn:hover{border-color:var(--pri)}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}.btn.pri:hover{background:var(--pri-h)}
+.btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
+.btn.sm{padding:4px 10px;font-size:12px}
+.iconbtn{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer}
+.iconbtn:hover{background:var(--soft);color:var(--ink)}
+.av{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;font:700 10px var(--body);flex:none}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:1px 8px;border-radius:999px;background:var(--tag);color:var(--tag-ink);margin:1px 2px 1px 0}
+.sub{font-size:12px;color:var(--muted)}
+
+/* unread: ink, never a hue (the colour rule; the accent variant was rejected 2026-10-01) */
+:root{--unread:var(--ink);--unread-ink:var(--card)}
+.badge{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--unread);color:var(--unread-ink);font:700 11px/20px var(--body);text-align:center;font-variant-numeric:tabular-nums}
+
+/* the inbox list */
+.inbox{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin:0;padding:0;list-style:none;overflow:hidden}
+.inbox li+li{border-top:1px solid var(--line)}
+.nrow{display:grid;grid-template-columns:10px 28px minmax(0,1fr) auto;gap:12px;align-items:start;width:100%;padding:12px 16px;border:0;background:none;text-align:left;cursor:pointer}
+.nrow:hover{background:var(--rowh)}
+.nrow .mk{width:8px;height:8px;border-radius:50%;margin-top:10px}
+.nrow.unread{box-shadow:inset 3px 0 0 var(--unread)}
+.nrow.unread .mk{background:var(--unread)}
+.nrow .what{color:var(--ink2)}
+.nrow .what b{color:var(--ink);font-weight:600}
+.nrow.unread .what{color:var(--ink)}
+.nrow.unread .what .t{font-weight:700}
+.nrow .what .t{font-weight:500;color:var(--ink)}
+.nrow .when{font-size:12px;color:var(--muted);white-space:nowrap;margin-top:2px}
+.nrow.unread .when{color:var(--ink2);font-weight:600}
+.pager{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px}
+.empty{background:var(--card);border:1px dashed var(--line2);border-radius:var(--r);padding:40px 24px;text-align:center}
+.empty h2{margin:8px 0 4px;font:var(--h-weight) 18px var(--display)}
+.empty p{margin:0 auto;color:var(--muted);max-width:48ch}
+.empty .big{width:36px;height:36px;color:var(--muted)}
+
+/* a minimal Ideas list, so the drawer can be opened outside the inbox */
+.tablewrap{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line)}
+tbody tr:last-child td{border-bottom:0}
+th{font:600 12px var(--body);color:var(--muted);background:var(--thead)}
+.ttl{font-weight:600;color:var(--ink);cursor:pointer;border:0;background:none;padding:0;text-align:left}
+.ttl:hover{color:var(--pri-t);text-decoration:underline}
+
+/* drawer, as comp R */
+.drawer{position:fixed;top:0;right:0;bottom:0;width:var(--drawer);max-width:100%;background:var(--card);border-left:1px solid var(--line2);box-shadow:-18px 0 40px rgb(var(--shadow)/.16);z-index:40;display:flex;flex-direction:column;transform:translateX(105%);transition:transform .22s ease;visibility:hidden}
+.drawer.open{transform:none;visibility:visible}
+.dhead{display:flex;align-items:flex-start;gap:8px;padding:16px 18px 10px;border-bottom:1px solid var(--line)}
+.dhead .eb{font:500 11px var(--mono);color:var(--muted);letter-spacing:.03em}
+.dhead h2{margin:2px 0 0;font:var(--h-weight) 19px/1.25 var(--display)}
+.dhead .x{margin-left:auto}
+.dbody{flex:1;overflow:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px;min-height:0}
+.dfoot{display:flex;gap:8px;align-items:center;padding:12px 18px;border-top:1px solid var(--line);background:var(--thead)}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:12px;background:var(--facts);border-radius:var(--rs);padding:12px;margin:0}
+.facts dt{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.facts dd{margin:3px 0 0;font-weight:500}
+.sect h3{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.sect p{margin:0}
+.engage{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.votes-on{background:var(--vote);color:var(--vote-ink);border-color:transparent}
+.follow[aria-pressed="true"]{background:var(--soft);border-color:var(--ink2);color:var(--ink)}
+.msg{background:var(--card);border:1px solid var(--line);border-radius:12px;border-top-left-radius:4px;padding:8px 12px;margin-bottom:6px}
+.composer{display:flex;gap:6px}.composer input{flex:1;border:1px solid var(--line2);border-radius:8px;padding:8px 10px;background:var(--field);color:var(--ink)}
+
+@media (max-width:760px){
+  .app{grid-template-columns:1fr}
+  .side{flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--side-line)}
+  .side .navlbl,.side .me,.brand small{display:none}
+  .nav{width:auto}
+  .topbar,.work{padding-left:16px;padding-right:16px}
+  .nrow{grid-template-columns:10px 28px minmax(0,1fr)}
+  .nrow .when{grid-column:3}
+  .facts{grid-template-columns:1fr}
+}
+.page{max-width:880px}.page h1{font-family:var(--display);font-weight:var(--h-weight);font-size:22px;margin:0 0 4px}
+.lede{color:var(--muted);margin:0 0 18px;max-width:70ch}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin-bottom:16px}
+.panel h2{font-family:var(--display);font-size:15px;margin:0 0 4px}
+.switchrow{display:flex;align-items:center;gap:16px;justify-content:space-between}
+.sw{position:relative;width:44px;height:26px;border-radius:999px;border:1px solid var(--line2);background:var(--soft);cursor:pointer;flex:none}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:left .15s}
+.sw[aria-checked="true"]{background:var(--pri);border-color:var(--pri)}.sw[aria-checked="true"]::after{left:20px;background:var(--pri-ink)}
+.sw:focus-visible,.btn:focus-visible,.copy:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+table.t{width:100%;border-collapse:collapse;font-size:13.5px}
+table.t th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--thead);padding:8px 12px;border-bottom:1px solid var(--line)}
+table.t td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.t tr:last-child td{border-bottom:0}
+.tw{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--card)}
+.btn.danger{color:var(--hot-t);border-color:var(--hot-t);background:transparent}.btn.danger:hover{background:var(--hot-tint)}
+.banner{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border-radius:var(--rs);background:var(--warn-tint);color:var(--warn-t);margin-bottom:16px;font-size:13.5px}
+.empty{padding:28px 18px;text-align:center;color:var(--muted)}.empty b{display:block;color:var(--ink);margin-bottom:4px}
+.url{display:flex;gap:8px;align-items:center;background:var(--facts);border:1px solid var(--line);border-radius:var(--rs);padding:8px 10px;font-family:var(--mono);font-size:13px;margin:10px 0}
+.url code{flex:1;overflow-wrap:anywhere}
+.copy{border:1px solid var(--line2);background:var(--card);color:var(--ink);border-radius:6px;padding:4px 10px;font-weight:600;font-size:12px;cursor:pointer}
+ol.steps{margin:8px 0 0 18px;padding:0}ol.steps li{margin:6px 0}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:8px 12px;font-weight:600;color:var(--muted);cursor:pointer;font:inherit}
+.tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--pri)}
+.muted{color:var(--muted)}.confirm{display:inline-flex;gap:6px;align-items:center}
+
+/* board access comp additions */
+.lock{display:inline-grid;place-items:center;color:var(--muted)}
+.lock svg{width:13px;height:13px}
+.nav .lock{margin-left:auto}
+.boardhead{display:flex;align-items:center;gap:10px}
+.boardhead h1{display:flex;align-items:center;gap:8px}
+.boardhead h1 .lock svg{width:18px;height:18px}
+.vis{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--soft);color:var(--ink2);white-space:nowrap}
+.vis svg{width:12px;height:12px}
+table.t .nm{display:flex;align-items:center;gap:8px}
+table.t tbody tr{cursor:pointer}
+table.t tbody tr:hover td{background:var(--rowh)}
+.num{font-variant-numeric:tabular-nums;text-align:right}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label,.field .lab{font-size:12px;font-weight:600;color:var(--ink2)}
+.field input,.field textarea{border:1px solid var(--line2);border-radius:var(--rs);padding:8px 10px;background:var(--field);color:var(--ink);font:inherit;width:100%}
+.field textarea{min-height:64px;resize:vertical}
+.field .hint{font-size:12px;color:var(--muted)}
+.field input[readonly],.field textarea[readonly]{background:var(--soft);border-color:var(--line)}
+.choice{display:grid;gap:8px}
+.opt{display:grid;grid-template-columns:18px minmax(0,1fr);gap:10px;align-items:start;padding:10px 12px;border:1px solid var(--line2);border-radius:var(--rs);cursor:pointer;background:var(--card)}
+.opt:has(input:checked){border-color:var(--pri);box-shadow:inset 0 0 0 1px var(--pri)}
+.opt input{margin:3px 0 0;accent-color:var(--pri)}
+.opt b{display:block;font-size:13.5px}
+.opt span{font-size:12.5px;color:var(--muted)}
+.picker{position:relative}
+.picker input{padding-left:32px}
+.picker .s{position:absolute;left:10px;top:9px;color:var(--muted)}
+.menu{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--card);border:1px solid var(--line2);border-radius:var(--rs);box-shadow:0 12px 28px rgb(var(--shadow)/.18);z-index:5;max-height:260px;overflow:auto;padding:4px}
+.menu .mh{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:6px 8px 2px}
+.menu button{display:flex;align-items:center;gap:8px;width:100%;padding:6px 8px;border:0;background:none;border-radius:6px;text-align:left;cursor:pointer}
+.menu button:hover,.menu button:focus-visible{background:var(--soft)}
+.menu button small{margin-left:auto;color:var(--muted);font-size:12px}
+.gico{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:6px;background:var(--pri-tint);color:var(--pri-t);flex:none}
+.gico svg{width:14px;height:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.pchip{display:inline-flex;align-items:center;gap:6px;padding:3px 4px 3px 4px;border:1px solid var(--line2);border-radius:999px;background:var(--card);font-size:12.5px;max-width:100%}
+.pchip .av{width:22px;height:22px;font-size:9px}
+.pchip .gico{width:22px;height:22px;border-radius:999px}
+.pchip small{color:var(--muted)}
+.pchip button{display:inline-grid;place-items:center;width:20px;height:20px;border:0;border-radius:50%;background:none;color:var(--muted);cursor:pointer}
+.pchip button:hover{background:var(--soft);color:var(--ink)}
+.pchip button svg{width:12px;height:12px}
+.count{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:var(--rs);background:var(--facts);font-size:13px}
+.count b{font-variant-numeric:tabular-nums}
+.count .lk{margin-left:auto;font-size:12.5px}
+.kept{opacity:.55}
+.callout{padding:9px 12px;border-radius:var(--rs);background:var(--warn-tint);color:var(--warn-t);font-size:13px}
+.mlist{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:var(--rs)}
+.mlist li{display:flex;align-items:center;gap:10px;padding:7px 10px}
+.mlist li+li{border-top:1px solid var(--line)}
+.mlist li .who{flex:1;min-width:0}
+.mlist li .who b{display:block;font-size:13px;font-weight:600}
+.mlist li .who small{color:var(--muted);font-size:12px}
+.st{font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--soft);color:var(--muted)}
+.confirmbox{border:1px solid var(--hot-t);background:var(--hot-tint);color:var(--ink);border-radius:var(--rs);padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:8px}
+.confirmbox .row{display:flex;gap:6px;flex-wrap:wrap}
+.scrim{position:fixed;inset:0;background:rgb(var(--shadow)/.28);z-index:39}
+.drawer .dfoot .sp{flex:1}
+.ro{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
+@media (max-width:760px){
+  .side .nav .lock{margin-left:4px}
+  table.t .hide-sm{display:none}
+  .drawer{width:100%}
+}
+</style></head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-group" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M20 20l-4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+</svg>
+<div class="proto" role="region" aria-label="Comp controls">
+  <b>Collega · comp R — Restricted boards and groups</b>
+  <div class="grp" role="group" aria-label="Screen"><span class="lbl">Screen</span>
+    <button data-screen="boards" aria-pressed="false">Boards list</button><button data-screen="board" aria-pressed="true">Board → Access</button><button data-screen="groups" aria-pressed="false">Settings → Groups</button></div>
+  <div class="grp" role="group" aria-label="Signed in as"><span class="lbl">Signed in as</span>
+    <button data-role="admin" aria-pressed="true">Org Admin</button><button data-role="creator" aria-pressed="false">Board creator (User)</button><button data-role="member" aria-pressed="false">User in Core team</button><button data-role="readonly" aria-pressed="false">Read Only, no group</button></div>
+  <div class="grp" role="group" aria-label="Board"><span class="lbl">Board</span>
+    <button data-board="b2" aria-pressed="true">Atlas Roadmap</button><button data-board="b1" aria-pressed="false">Product Ideas</button><button data-board="b3" aria-pressed="false">Strategy 2027</button></div>
+</div>
+<div class="note"><p>Throwaway comp for SPEC/20-feature-board-access-and-groups.md BAG-6. A board is visible to everyone in the organization unless its creator or an Org Admin restricts it to chosen people and groups. Org Admins and the creator always see a board. Groups are managed by Org Admins under Settings; others can read them. Someone who cannot see a board finds nothing at all: no row, no lock, no count. Switch roles to compare.</p></div>
+<div class="app">
+  <aside class="side" aria-label="Main">
+    <div class="brand"><span class="mark">CG</span><span><b>Collega</b><small>Acme Robotics</small></span></div>
+    <div class="navlbl">Workspace</div>
+    <button class="nav" disabled><span>Home</span></button>
+    <button class="nav" id="nav-boards" data-go="boards"><span>Boards</span></button>
+    <div id="sideboards"></div>
+    <button class="nav" disabled><span>Ideas</span></button>
+    <div class="navlbl">Configure</div>
+    <button class="nav" id="nav-groups" data-go="groups"><span>Settings → Groups</span></button>
+    <div class="me"><span class="av" id="me-av"></span><span><b id="me-name"></b><small id="me-role"></small></span></div>
+  </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb" id="crumb"></span><span class="sp"></span>
+      <label class="themepick" for="theme">Theme
+        <select id="theme"><optgroup label="Dark"><option value="graphite" selected>Graphite</option></optgroup><optgroup label="Light"><option value="terrazzo">Terrazzo</option><option value="portico">Portico</option><option value="sera">Piazza Sera</option><option value="lagoon">Lagoon</option></optgroup></select></label></div>
+    <main class="work" id="work"></main>
+  </div>
+</div>
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dtitle"></aside>
+<div class="vh" role="status" aria-live="polite" id="live"></div>
+<script>
+const ic = (n) => `<svg class="i" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const LOCK = `<span class="lock" title="Restricted: only chosen people and groups">${ic('lock')}<span class="vh">Restricted</span></span>`;
+const AV = ['av1','av2','av3','av4'];
+const USERS = [
+  { id:'u1', first:'Olivia', last:'Administer', role:'Org Admin', active:true },
+  { id:'u2', first:'Maya', last:'Collaborator', role:'User', active:true },
+  { id:'u3', first:'Noah', last:'Contributor', role:'User', active:true },
+  { id:'u4', first:'Priya', last:'Shah', role:'User', active:true },
+  { id:'u5', first:'Rosa', last:'Observer', role:'Read Only', active:true },
+  { id:'u6', first:'Leo', last:'Park', role:'User', active:true },
+  { id:'u7', first:'Ines', last:'Duarte', role:'User', active:true },
+  { id:'u8', first:'Sam', last:'Okafor', role:'User', active:false },
+  { id:'u9', first:'Ben', last:'Ortiz', role:'Org Admin', active:true },
+  { id:'u10', first:'Kai', last:'Lindqvist', role:'Read Only', active:true },
+  { id:'u11', first:'Zoe', last:'Martin', role:'User', active:true },
+  { id:'u12', first:'Theo', last:'Grant', role:'User', active:true },
+];
+const S = {
+  screen:'board', role:'admin', boardId:'b2', drawer:null, query:'', menu:false, err:null, confirmDelete:false, draft:null,
+  groups:[
+    { id:'g1', name:'Core team', desc:'The Atlas delivery squad.', members:['u2','u3','u6','u7','u8'] },
+    { id:'g2', name:'Leadership', desc:'Directors and the founders.', members:['u7','u9'] },
+    { id:'g3', name:'Design guild', desc:'', members:['u4','u6','u11'] },
+  ],
+  boards:[
+    { id:'b1', name:'Product Ideas', vis:'Organization', creator:'u1', users:[], groups:[], ideas:42 },
+    { id:'b2', name:'Atlas Roadmap', vis:'Restricted', creator:'u2', users:['u4'], groups:['g1'], ideas:17 },
+    { id:'b3', name:'Strategy 2027', vis:'Restricted', creator:'u9', users:[], groups:['g2'], ideas:9 },
+    { id:'b4', name:'Support Inbox', vis:'Organization', creator:'u1', users:[], groups:[], ideas:63 },
+  ],
+};
+const ME = { admin:'u1', creator:'u2', member:'u3', readonly:'u5' };
+const $ = (s) => document.querySelector(s);
+const live = (m) => { $('#live').textContent = m };
+const user = (id) => USERS.find(u => u.id === id);
+const group = (id) => S.groups.find(g => g.id === id);
+const board = (id) => S.boards.find(b => b.id === id);
+const nameOf = (u) => `${u.first} ${u.last}`;
+const ini = (u) => u.first[0] + u.last[0];
+const avc = (u) => { const k = AV[(+u.id.slice(1)) % 4]; return `background:var(--${k});color:var(--${k}i)` };
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const me = () => user(ME[S.role]);
+const isAdmin = () => me().role === 'Org Admin';
+function canSee(b, u = me()){
+  if (u.role === 'Org Admin' || b.vis === 'Organization' || b.creator === u.id) return true;
+  return b.users.includes(u.id) || b.groups.some(g => group(g)?.members.includes(u.id));
+}
+const canManage = (b) => isAdmin() || (b.creator === me().id && me().role !== 'Read Only');
+const visibleBoards = () => S.boards.filter(b => canSee(b));
+/** Active people who can see a board described by `a` (vis/users/groups) on board `b`. */
+function seers(b, a){ return USERS.filter(u => u.active && canSee({ ...b, ...a }, u)) }
+
+function boardsScreen(){
+  const rows = visibleBoards().map(b => `<tr data-open-board="${b.id}"><td><span class="nm"><b>${esc(b.name)}</b>${b.vis==='Restricted'?LOCK:''}</span></td>
+    <td>${b.vis==='Restricted'?`<span class="vis">${ic('lock')}Chosen people</span>`:`<span class="vis">${ic('globe')}Everyone</span>`}</td>
+    <td class="num">${b.ideas}</td><td class="hide-sm">${esc(nameOf(user(b.creator)))}</td></tr>`).join('');
+  return `<div class="pghead"><div><h1>Boards</h1><p>${visibleBoards().length} boards you can see.</p></div></div>
+  <div class="tw"><table class="t"><thead><tr><th>Board</th><th>Who can see it</th><th class="num">Ideas</th><th class="hide-sm">Created by</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <p class="sub">A board you cannot see is not listed, counted or named anywhere, so a Read Only member with no group sees two boards here, not four.</p>`;
+}
+function boardScreen(){
+  const b = board(S.boardId);
+  if (!canSee(b)) return `<div class="empty"><b>Board not found</b>It may have been removed, or the link is wrong. <a href="#" data-go="boards">Back to Boards</a></div><p class="sub">The same page a deleted board gives: the lock is never shown to someone who cannot see the board.</p>`;
+  const lanes = ['Inbox','Exploring','Committed','Done'].map(l => `<div class="panel" style="flex:1;min-width:140px;margin:0"><h2>${l}</h2><p class="sub">Cards…</p></div>`).join('');
+  return `<div class="pghead"><div class="boardhead"><h1>${esc(b.name)}${b.vis==='Restricted'?LOCK:''}</h1></div>
+    <button class="btn" data-settings>${ic('gear')}Board settings</button></div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap">${lanes}</div>`;
+}
+function groupsScreen(){
+  const admin = isAdmin();
+  const vb = visibleBoards();
+  const rows = S.groups.map(g => {
+    const n = vb.filter(b => b.vis === 'Restricted' && b.groups.includes(g.id)).length;
+    return `<tr data-open-group="${g.id}"><td><span class="nm"><span class="gico">${ic('group')}</span><span><b>${esc(g.name)}</b>${g.desc?`<br><span class="sub">${esc(g.desc)}</span>`:''}</span></span></td>
+      <td class="num">${g.members.length}</td><td class="num hide-sm">${n || '—'}</td></tr>`;
+  }).join('');
+  return `<div class="pghead"><div><h1>Groups</h1><p>Named sets of people. Give a group access to a Restricted board once; when someone joins or leaves the group, every board it is on follows.</p></div>
+    ${admin?`<button class="btn pri" data-new-group>New group</button>`:`<span class="ro">${ic('lock')}Only Org Admins can change groups.</span>`}</div>
+  ${S.groups.length?`<div class="tw"><table class="t"><thead><tr><th>Group</th><th class="num">Members</th><th class="num hide-sm">On boards</th></tr></thead><tbody>${rows}</tbody></table></div>`
+  :`<div class="empty"><b>No groups yet</b>${admin?'Create one, then add it to a Restricted board.':'An Org Admin has not created any groups.'}</div>`}
+  <p class="sub">"On boards" counts only Restricted boards you can see.</p>`;
+}
+
+/* ---- board settings drawer ---- */
+function personChip(u, removable){
+  return `<span class="pchip"><span class="av" style="${avc(u)}">${ini(u)}</span>${esc(nameOf(u))}${u.active?'':' <small>· inactive</small>'}${removable?`<button data-rm-user="${u.id}" aria-label="Remove ${esc(nameOf(u))}">${ic('x')}</button>`:''}</span>`;
+}
+function groupChip(g, removable){
+  return `<span class="pchip"><span class="gico">${ic('group')}</span>${esc(g.name)} <small>${g.members.length}</small>${removable?`<button data-rm-group="${g.id}" aria-label="Remove group ${esc(g.name)}">${ic('x')}</button>`:''}</span>`;
+}
+function pickerMenu(sel){
+  const q = S.query.trim().toLowerCase();
+  const b = board(S.boardId);
+  const gs = S.groups.filter(g => !sel.groups.includes(g.id) && g.name.toLowerCase().includes(q));
+  const us = USERS.filter(u => !sel.users.includes(u.id) && u.role !== 'Org Admin' && u.id !== b.creator && nameOf(u).toLowerCase().includes(q));
+  if (!gs.length && !us.length) return `<div class="menu" role="listbox"><div class="mh">No match</div></div>`;
+  return `<div class="menu" role="listbox" aria-label="People and groups">
+    ${gs.length?`<div class="mh">Groups</div>${gs.map(g=>`<button role="option" data-add-group="${g.id}"><span class="gico">${ic('group')}</span>${esc(g.name)}<small>${g.members.length} people</small></button>`).join('')}`:''}
+    ${us.length?`<div class="mh">People</div>${us.map(u=>`<button role="option" data-add-user="${u.id}"><span class="av" style="${avc(u)};width:24px;height:24px;font-size:9px">${ini(u)}</span>${esc(nameOf(u))}<small>${u.role}${u.active?'':' · inactive'}</small></button>`).join('')}`:''}
+  </div>`;
+}
+function accessSection(){
+  const b = board(S.boardId), d = S.draft;
+  const restricted = d.vis === 'Restricted';
+  const n = seers(b, d).length, all = USERS.filter(u => u.active).length;
+  const empty = restricted && !d.users.length && !d.groups.length;
+  const creator = user(b.creator);
+  const cname = creator.id === me().id ? 'you' : esc(nameOf(creator));
+  const listing = `<div class="field ${restricted?'':'kept'}"><span class="lab" id="pk-lab">People and groups</span>
+      <div class="picker"><span class="s">${ic('search')}</span><input id="pk" aria-labelledby="pk-lab" placeholder="Add people or groups" value="${esc(S.query)}" autocomplete="off" ${restricted?'':'disabled'} aria-expanded="${S.menu}">${S.menu&&restricted?pickerMenu(d):''}</div>
+      <div class="chips">${d.groups.map(id=>groupChip(group(id),restricted)).join('')}${d.users.map(id=>personChip(user(id),restricted)).join('')}</div>
+      <span class="hint">Org Admins and the board's creator (${cname}) always see this board, so they are not offered here.</span></div>`;
+  return `<div class="sect"><h3>Access</h3>
+    <div class="choice" role="radiogroup" aria-label="Who can see this board">
+      <label class="opt"><input type="radio" name="vis" value="Organization" ${restricted?'':'checked'}><span><b>Everyone in Acme Robotics</b><span>Every member sees the board. Roles still decide what they can change.</span></span></label>
+      <label class="opt"><input type="radio" name="vis" value="Restricted" ${restricted?'checked':''}><span><b>Only people and groups I choose</b><span>Nobody else sees it, or anything on it, anywhere in Collega.</span></span></label>
+    </div></div>
+    ${restricted || d.users.length || d.groups.length ? listing : ''}
+    ${!restricted && (d.users.length || d.groups.length) ? `<p class="sub" style="margin:-6px 0 0">Your list is kept and applies again if you choose "Only people and groups I choose".</p>` : ''}
+    ${empty?`<div class="callout" role="note">No one is chosen yet, so only Org Admins and ${cname} can see this board.</div>`:''}
+    <div class="count">${ic('group')}<span><b>${restricted?n:all}</b> ${restricted?`of ${all} people can see this board`:'people can see this board'}</span>${restricted?`<a href="#" class="lk" data-who>Who?</a>`:''}</div>
+    ${S.showWho&&restricted?`<ul class="mlist">${seers(b,d).map(u=>`<li><span class="av" style="${avc(u)}">${ini(u)}</span><span class="who"><b>${esc(nameOf(u))}</b><small>${why(b,d,u)}</small></span></li>`).join('')}</ul>`:''}`;
+}
+function why(b, d, u){
+  if (u.role === 'Org Admin') return 'Org Admin';
+  if (u.id === b.creator) return 'Created the board';
+  const via = d.groups.filter(g => group(g).members.includes(u.id)).map(g => group(g).name);
+  const parts = [];
+  if (d.users.includes(u.id)) parts.push('Chosen directly');
+  if (via.length) parts.push('Through ' + via.join(', '));
+  return parts.join(' · ');
+}
+function boardDrawer(){
+  const b = board(S.boardId), manage = canManage(b);
+  return `<div class="dhead"><div><div class="eb">BOARD SETTINGS</div><h2 id="dtitle">${esc(b.name)}</h2></div><button class="iconbtn x" data-close aria-label="Close">${ic('x')}</button></div>
+  <div class="dbody">
+    <div class="field"><label for="bname">Name</label><input id="bname" value="${esc(b.name)}" ${manage?'':'readonly'}></div>
+    ${manage ? accessSection() : `<div class="sect"><h3>Access</h3><p class="ro">${b.vis==='Restricted'?ic('lock')+'Only chosen people and groups see this board.':ic('globe')+'Everyone in Acme Robotics sees this board.'}</p><p class="sub" style="margin-top:6px">Only an Org Admin or the board's creator can change who sees it.</p></div>`}
+  </div>
+  <div class="dfoot">${manage?`<button class="btn pri" data-save-board>Save</button><button class="btn" data-close>Cancel</button>`:`<button class="btn" data-close>Close</button>`}</div>`;
+}
+
+/* ---- group drawer ---- */
+function groupDrawer(){
+  const admin = isAdmin(), d = S.draft, isNew = !d.id;
+  const vb = visibleBoards().filter(b => b.vis === 'Restricted' && d.id && b.groups.includes(d.id));
+  const q = S.query.trim().toLowerCase();
+  const pool = USERS.filter(u => !d.members.includes(u.id) && nameOf(u).toLowerCase().includes(q));
+  const members = d.members.map(user).sort((a,b)=>a.last.localeCompare(b.last));
+  return `<div class="dhead"><div><div class="eb">${isNew?'NEW GROUP':'GROUP'}</div><h2 id="dtitle">${isNew?'New group':esc(d.name)}</h2></div><button class="iconbtn x" data-close aria-label="Close">${ic('x')}</button></div>
+  <div class="dbody">
+    <div class="field"><label for="gname">Name</label><input id="gname" value="${esc(d.name)}" maxlength="100" ${admin?'':'readonly'} aria-invalid="${!!S.err}" aria-describedby="gname-err">${S.err?`<span class="hint" id="gname-err" style="color:var(--hot-t)">${S.err}</span>`:''}</div>
+    <div class="field"><label for="gdesc">Description <span class="sub">(optional)</span></label><textarea id="gdesc" maxlength="500" ${admin?'':'readonly'}>${esc(d.desc)}</textarea></div>
+    <div class="field"><span class="lab" id="gm-lab">Members · ${d.members.length}</span>
+      ${admin?`<div class="picker"><span class="s">${ic('search')}</span><input id="gm" aria-labelledby="gm-lab" placeholder="Add people" value="${esc(S.query)}" autocomplete="off" aria-expanded="${S.menu}">${S.menu?`<div class="menu" role="listbox" aria-label="People">${pool.length?pool.map(u=>`<button role="option" data-add-member="${u.id}"><span class="av" style="${avc(u)};width:24px;height:24px;font-size:9px">${ini(u)}</span>${esc(nameOf(u))}<small>${u.role}${u.active?'':' · inactive'}</small></button>`).join(''):'<div class="mh">No match</div>'}</div>`:''}</div>`:''}
+      ${members.length?`<ul class="mlist">${members.map(u=>`<li><span class="av" style="${avc(u)}">${ini(u)}</span><span class="who"><b>${esc(nameOf(u))}</b><small>${u.role}</small></span>${u.active?'':'<span class="st">Inactive</span>'}${admin?`<button class="iconbtn" data-rm-member="${u.id}" aria-label="Remove ${esc(nameOf(u))}">${ic('x')}</button>`:''}</li>`).join('')}</ul>`:`<p class="sub">No members yet.</p>`}
+      <span class="hint">Anyone in the organization, any role. An inactive member keeps their place and regains access if reactivated.</span></div>
+    ${isNew?'':`<div class="sect"><h3>On boards</h3>${vb.length?`<div class="chips">${vb.map(b=>`<span class="pchip" style="padding:3px 10px">${LOCK}${esc(b.name)}</span>`).join('')}</div>`:`<p class="sub">Not on any Restricted board you can see.</p>`}</div>`}
+    ${S.confirmDelete?`<div class="confirmbox" role="alertdialog" aria-label="Confirm delete"><span><b>Delete ${esc(d.name)}?</b> ${vb.length?`It is on ${vb.map(b=>esc(b.name)).join(', ')}. People who see ${vb.length>1?'those boards':'that board'} only through this group lose access.`:'It is not on any board you can see.'} Its members stay in Collega.</span><div class="row"><button class="btn sm danger" data-delete-group>Delete group</button><button class="btn sm" data-cancel-delete>Keep it</button></div></div>`:''}
+  </div>
+  <div class="dfoot">${admin?`<button class="btn pri" data-save-group>${isNew?'Create group':'Save'}</button><button class="btn" data-close>Cancel</button><span class="sp"></span>${isNew?'':`<button class="btn danger" data-ask-delete>Delete</button>`}`:`<span class="ro">${ic('lock')}Only Org Admins can change groups.</span><span class="sp"></span><button class="btn" data-close>Close</button>`}</div>`;
+}
+
+const CRUMB = { boards:'Workspace › <b>Boards</b>', board:'Boards › <b></b>', groups:'Settings › <b>Groups</b>' };
+function render(){
+  const focusId = document.activeElement?.id, caret = document.activeElement?.selectionStart;
+  $('#work').innerHTML = { boards:boardsScreen, board:boardScreen, groups:groupsScreen }[S.screen]();
+  $('#crumb').innerHTML = S.screen==='board' ? `Boards › <b>${esc(board(S.boardId).name)}</b>` : CRUMB[S.screen];
+  $('#sideboards').innerHTML = visibleBoards().map(b => `<button class="nav" data-open-board="${b.id}" style="padding-left:22px" ${S.screen==='board'&&S.boardId===b.id?'aria-current="page"':''}><span>${esc(b.name)}</span>${b.vis==='Restricted'?LOCK:''}</button>`).join('');
+  document.querySelectorAll('[data-screen]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.screen===S.screen));
+  document.querySelectorAll('[data-role]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.role===S.role));
+  document.querySelectorAll('[data-board]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.board===S.boardId));
+  $('#nav-boards').setAttribute('aria-current', S.screen==='boards'?'page':'false');
+  $('#nav-groups').setAttribute('aria-current', S.screen==='groups'?'page':'false');
+  const u = me(); $('#me-av').textContent = ini(u); $('#me-av').setAttribute('style', avc(u)); $('#me-name').textContent = nameOf(u); $('#me-role').textContent = u.role;
+  const dr = $('#drawer');
+  if (S.drawer) { dr.innerHTML = S.drawer==='board' ? boardDrawer() : groupDrawer(); dr.classList.add('open'); $('#scrim').hidden = false; }
+  else { dr.classList.remove('open'); $('#scrim').hidden = true; }
+  if (S.confirmDelete) document.querySelector('.confirmbox')?.scrollIntoView({ block: 'nearest' });
+  if (focusId && document.getElementById(focusId)) { const el = document.getElementById(focusId); el.focus(); if (caret != null && el.setSelectionRange) el.setSelectionRange(caret, caret); }
+}
+function openBoardDrawer(){ const b = board(S.boardId); S.draft = { vis:b.vis, users:[...b.users], groups:[...b.groups] }; S.drawer='board'; S.query=''; S.menu=false; S.showWho=false; render(); $('#bname')?.focus(); }
+function openGroupDrawer(id){ const g = id ? group(id) : { id:null, name:'', desc:'', members:[] }; S.draft = { ...g, members:[...g.members] }; S.drawer='group'; S.query=''; S.menu=false; S.err=null; S.confirmDelete=false; render(); $('#gname')?.focus(); }
+function closeDrawer(){ S.drawer=null; S.draft=null; S.menu=false; render(); }
+
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('button,a,tr,input');
+  if (!t) { if (S.menu && !e.target.closest('.picker')) { S.menu=false; render(); } return; }
+  const d = t.dataset;
+  if (t.matches('input#pk,input#gm')) { S.menu = true; render(); return; }
+  if (d.screen || d.go) { e.preventDefault(); S.screen = d.screen || d.go; S.drawer = null; }
+  else if (d.role) { S.role = d.role; if (S.drawer) S.drawer = null; }
+  else if (d.board) { S.boardId = d.board; S.screen = 'board'; S.drawer = null; }
+  else if (d.openBoard) { S.boardId = d.openBoard; S.screen = 'board'; S.drawer = null; }
+  else if (d.openGroup) { openGroupDrawer(d.openGroup); return; }
+  else if (d.newGroup !== undefined) { openGroupDrawer(null); return; }
+  else if (d.settings !== undefined) { openBoardDrawer(); return; }
+  else if (d.close !== undefined) { closeDrawer(); return; }
+  else if (d.addGroup) { S.draft.groups.push(d.addGroup); S.query=''; S.menu=false; live(group(d.addGroup).name + ' added'); }
+  else if (d.addUser) { S.draft.users.push(d.addUser); S.query=''; S.menu=false; live(nameOf(user(d.addUser)) + ' added'); }
+  else if (d.rmGroup) { S.draft.groups = S.draft.groups.filter(x => x !== d.rmGroup); live(group(d.rmGroup).name + ' removed'); }
+  else if (d.rmUser) { S.draft.users = S.draft.users.filter(x => x !== d.rmUser); live(nameOf(user(d.rmUser)) + ' removed'); }
+  else if (d.who !== undefined) { e.preventDefault(); S.showWho = !S.showWho; }
+  else if (d.saveBoard !== undefined) { const b = board(S.boardId); b.vis = S.draft.vis; b.users = S.draft.users; b.groups = S.draft.groups; live('Access saved'); closeDrawer(); return; }
+  else if (d.addMember) { S.draft.members.push(d.addMember); S.query=''; S.menu=false; live(nameOf(user(d.addMember)) + ' added'); }
+  else if (d.rmMember) { S.draft.members = S.draft.members.filter(x => x !== d.rmMember); live(nameOf(user(d.rmMember)) + ' removed'); }
+  else if (d.askDelete !== undefined) { S.confirmDelete = true; }
+  else if (d.cancelDelete !== undefined) { S.confirmDelete = false; }
+  else if (d.deleteGroup !== undefined) { const id = S.draft.id; S.groups = S.groups.filter(g => g.id !== id); S.boards.forEach(b => b.groups = b.groups.filter(g => g !== id)); live('Group deleted'); closeDrawer(); return; }
+  else if (d.saveGroup !== undefined) {
+    const name = $('#gname').value.trim(); S.draft.name = name; S.draft.desc = $('#gdesc').value.trim();
+    if (!name) { S.err = 'Group name is required.'; render(); return; }
+    if (S.groups.some(g => g.id !== S.draft.id && g.name.toLowerCase() === name.toLowerCase())) { S.err = 'A group with this name already exists.'; render(); return; }
+    if (S.draft.id) Object.assign(group(S.draft.id), S.draft); else S.groups.push({ ...S.draft, id: 'g' + Date.now() });
+    live('Group saved'); closeDrawer(); return;
+  }
+  else return;
+  render();
+});
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'pk' || e.target.id === 'gm') { S.query = e.target.value; S.menu = true; render(); }
+  if (e.target.id === 'gname' && S.draft) { S.draft.name = e.target.value; }
+  if (e.target.id === 'gdesc' && S.draft) { S.draft.desc = e.target.value; }
+});
+document.addEventListener('change', (e) => { if (e.target.name === 'vis') { S.draft.vis = e.target.value; S.menu = false; render(); } });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (S.menu) { S.menu = false; render(); } else if (S.drawer) closeDrawer(); } });
+$('#scrim').addEventListener('click', closeDrawer);
+$('#theme').addEventListener('change', e => document.documentElement.setAttribute('data-proto-theme', e.target.value));
+document.documentElement.setAttribute('data-proto-theme', 'graphite');
+render();
+</script>
+</body>
+</html>
