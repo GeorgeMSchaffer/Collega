@@ -1,4 +1,4 @@
-import type { UsageMilestoneKey, UsageRole, UsageTrailItem } from './data/usage'
+import type { UsageMilestoneKey, UsageRole, UsageTrailItem, UsageTrailNames } from './data/usage'
 
 /**
  * What the Site Admin usage screen shows for the API's periods and event names (slice 367; comp
@@ -94,29 +94,58 @@ const asProps = (metadata: unknown): Props =>
 
 const text = (value: unknown) => (typeof value === 'string' ? value : null)
 
-/**
- * One trail row in words. The API returns ids and event props only (the contract leaves names to
- * the client's own reads), so a row says what kind of thing happened and never invents a name.
- */
-export function describeTrailItem(item: UsageTrailItem): string {
-  const props = asProps(item.metadata)
-  // A View As row may be a view or a change; `describeView` falls back to the plain label.
-  const what =
-    item.kind === 'change' ? usageEventLabel(item.event) : describeView(item.event, props)
-  return item.kind === 'viewAs' ? `Acting as this member: ${lowerFirst(what)} (not counted)` : what
+/** The idea a trail row is about: the item itself, or a comment's idea (`{ Id }` in its audit metadata). */
+export function trailIdeaId(item: UsageTrailItem): string | null {
+  if (item.event === 'idea.opened' || item.entityType === 'Idea') return item.entityId
+  if (item.entityType === 'Comment') return text(asProps(item.metadata).Id)
+  return null
 }
 
-function describeView(event: string, props: Props): string {
-  switch (event) {
+/**
+ * One trail row in words, as the comp draws them: "Opened CI-19 “Bulk export…” from the board",
+ * "Moved CI-19 from Review to Planned", "Sam Sitewide acting as Noah Contributor: viewed board
+ * Customer Insights (not counted)". `names` comes from `getUsageTrailNames`; a name it could not
+ * read falls back to the kind of thing ("an idea", "a board"), never an id.
+ */
+export function describeTrailItem(
+  item: UsageTrailItem,
+  names: UsageTrailNames,
+  memberName: string,
+): string {
+  const props = asProps(item.metadata)
+  const what = isView(item) ? describeView(item, props, names) : describeChange(item, props, names)
+  if (item.kind !== 'viewAs') return what
+  const actor = names.users[item.actorUserId] ?? 'An administrator'
+  return `${actor} acting as ${memberName}: ${lowerFirst(what)} (not counted)`
+}
+
+/** View events are dotted (`board.viewed`); audit event types are not (`IdeaCreated`). */
+const isView = (item: UsageTrailItem) => item.event.includes('.')
+
+function ideaRef(item: UsageTrailItem, names: UsageTrailNames, withTitle = false): string {
+  const id = trailIdeaId(item)
+  const idea = id ? names.ideas[id] : undefined
+  if (!idea) return 'an idea'
+  if (!idea.itemKey) return `“${idea.title}”`
+  return withTitle ? `${idea.itemKey} “${idea.title}”` : idea.itemKey
+}
+
+function boardRef(id: string | null, names: UsageTrailNames): string {
+  const name = id ? names.boards[id] : undefined
+  return name ? `board ${name}` : 'a board'
+}
+
+function describeView(item: UsageTrailItem, props: Props, names: UsageTrailNames): string {
+  switch (item.event) {
     case 'board.viewed':
-      return 'Viewed a board'
+      return `Viewed ${boardRef(item.entityId, names)}`
     case 'idea.opened': {
       const source = text(props.source)
-      return source ? `Opened an idea from the ${source}` : 'Opened an idea'
+      return `Opened ${ideaRef(item, names, true)}${source ? ` from the ${source}` : ''}`
     }
     case 'list.viewed': {
       const list = text(props.list)
-      return list ? `Viewed the ${list} list` : 'Viewed a list'
+      return list ? `Viewed list ${capitalize(list)}` : 'Viewed a list'
     }
     case 'search.run': {
       const scope = text(props.scope)
@@ -127,16 +156,39 @@ function describeView(event: string, props: Props): string {
     case 'filter.applied': {
       const keys = Array.isArray(props.filterKeys) ? props.filterKeys.filter(text) : []
       const list = text(props.list)
-      return `Filtered${list ? ` ${list}` : ''}${keys.length ? ` by ${keys.join(', ')}` : ''}`
+      return `Filtered${list ? ` list ${capitalize(list)}` : ''}${keys.length ? ` by ${keys.join(', ')}` : ''}`
     }
     case 'admin.viewed':
     case 'settings.viewed': {
       const screen = text(props.screen)
-      return screen ? `Viewed ${screen}` : usageEventLabel(event)
+      return screen ? `Viewed ${screen}` : usageEventLabel(item.event)
     }
     default:
-      return usageEventLabel(event)
+      return usageEventLabel(item.event)
   }
 }
 
+function describeChange(item: UsageTrailItem, props: Props, names: UsageTrailNames): string {
+  switch (item.event) {
+    case 'IdeaCreated':
+      return `Created idea ${ideaRef(item, names)}`
+    case 'IdeaUpdated':
+      return `Edited ${ideaRef(item, names)}`
+    case 'IdeaStatusChanged': {
+      const from = names.statuses[text(props.fromStatusId) ?? '']
+      const to = names.statuses[text(props.toStatusId) ?? '']
+      return `Moved ${ideaRef(item, names)}${from ? ` from ${from}` : ''}${to ? ` to ${to}` : ''}`
+    }
+    case 'CommentCreated':
+      return `Commented on ${ideaRef(item, names)}`
+    case 'BoardCreated':
+      return `Created ${boardRef(item.entityId, names)}`
+  }
+  const label = usageEventLabel(item.event)
+  if (trailIdeaId(item)) return `${label}: ${ideaRef(item, names)}`
+  if (item.entityType === 'Board') return `${label}: ${boardRef(item.entityId, names)}`
+  return label
+}
+
 const lowerFirst = (value: string) => value.charAt(0).toLowerCase() + value.slice(1)
+const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1)

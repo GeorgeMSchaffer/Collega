@@ -3,7 +3,7 @@ import type { Route } from 'next'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import type { PageSize } from '@/components/list'
-import type { UsageOverview, UsagePaths, UsageRole, UsageTrail } from '@/lib/data'
+import type { UsageOverview, UsagePaths, UsageRole, UsageTrail, UsageTrailNames } from '@/lib/data'
 import {
   describeTrailItem,
   formatWait,
@@ -378,11 +378,13 @@ export function UsageTrailTab({
   memberControl,
   member,
   trail,
+  names,
   pageSize,
 }: {
   memberControl: ReactNode
   member: { displayName: string; roleLabel: string } | null
   trail: UsageTrail | null
+  names: UsageTrailNames | null
   pageSize: PageSize
 }) {
   return (
@@ -408,7 +410,8 @@ export function UsageTrailTab({
                 audit log appear.
               </Alert>
             ) : null}
-            {trail.items.length === 0 ? (
+            {/* On totalCount, not this page's items: a page past the end keeps the pager to go back. */}
+            {trail.totalCount === 0 ? (
               <Foot>Nothing recorded for this member in the period.</Foot>
             ) : (
               <>
@@ -435,7 +438,9 @@ export function UsageTrailTab({
                       <td className={td}>
                         <KindBadge kind={item.kind} />
                       </td>
-                      <td className={td}>{describeTrailItem(item)}</td>
+                      <td className={td}>
+                        {names ? describeTrailItem(item, names, member.displayName) : null}
+                      </td>
                     </tr>
                   ))}
                 </Table>

@@ -15,6 +15,7 @@ import {
   getUsageOverview,
   getUsagePaths,
   getUsageTrail,
+  getUsageTrailNames,
   type UsageRole,
 } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
@@ -201,7 +202,8 @@ async function TrailTab({
 }) {
   const members = await getMembersForOrganization(organizationId)
   const member = members.find((m) => m.id === first(search.member)) ?? null
-  const page = Math.max(1, Math.trunc(Number(first(search.page))) || 1)
+  // The API refuses a page above 10,000 (400).
+  const page = Math.min(10_000, Math.max(1, Math.trunc(Number(first(search.page))) || 1))
   const pageSize = oneOf<`${PageSize}`>(
     first(search.pageSize),
     PAGE_SIZES.map(String) as `${PageSize}`[],
@@ -209,11 +211,19 @@ async function TrailTab({
   )
   const size = Number(pageSize) as PageSize
   const trail = member ? await getUsageTrail(member.id, period, page, size) : null
+  const names = trail
+    ? await getUsageTrailNames(
+        organizationId,
+        trail.items,
+        Object.fromEntries(members.map((m) => [m.id, m.displayName])),
+      )
+    : null
 
   return (
     <UsageTrailTab
       member={member}
       trail={trail}
+      names={names}
       pageSize={size}
       memberControl={
         <UsageSelect
