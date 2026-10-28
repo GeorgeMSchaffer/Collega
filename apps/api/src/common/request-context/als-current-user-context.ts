@@ -56,6 +56,11 @@ export class AlsCurrentUserContext implements CurrentUserContext {
     return this.store.identity?.signedInAtUtc ?? null
   }
 
+  /** The signed-in account owes a password change; `GET /auth/me` reports it (decision 2026-10-28). */
+  get passwordChangeRequired(): boolean {
+    return this.store.identity?.passwordChangeRequired ?? false
+  }
+
   /**
    * The real administrator behind a live View As session, for `GET /auth/me` to build its banner
    * from. Null when nobody is impersonating.

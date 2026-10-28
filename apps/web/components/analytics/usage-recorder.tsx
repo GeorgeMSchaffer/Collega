@@ -39,8 +39,8 @@ export function recordUsage(input: UsageInput): void {
 }
 
 /**
- * Mounted once by the desk layout. `enabled` is false for a Site Admin acting directly
- * (`usageRecordingAllowed`); then whatever was held is dropped unsent.
+ * Mounted once by the desk layout. `enabled` is false while a password change is owed and for a
+ * Site Admin acting directly (`usageRecordingAllowed`); then whatever was held is dropped unsent.
  */
 export function UsageRecorder({ enabled }: { enabled: boolean }) {
   useEffect(() => {

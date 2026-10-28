@@ -90,9 +90,11 @@ Return the currently authenticated user summary.
   - `status`
   - `portraitDataUrl` string or `null`
   - `viewingAs` object or `null` — populated while a View As session is live
+  - `requiresPasswordChange` boolean — this response only (see Rules)
 - **Errors:**
   - `401` caller is not authenticated
 - **Rules:**
+  - `requiresPasswordChange` was added 2026-10-28 (`SPEC/decisions.md`): `true` while the session's own account must change its password, the same flag the login response carries. The web client reads it to send no usage events while every other route would refuse them (`SPEC/20-feature-analytics.md` rule 13). It describes the signed-in account, not a user acted as under View As. It is **not** part of the shared summary below: only `GET /auth/me` returns it.
   - `portraitDataUrl` and `viewingAs` were missing from this document until 2026-09-09 and are **not** optional: every recorded fixture carries them, and the client depends on `viewingAs` to render the effective role during impersonation. Verified against `tools/golden/fixtures/auth.me.*`.
   - `organizationTitle` was added 2026-09-10 (`SPEC/decisions.md`) so the client can name the organization from the one call it already makes per request. `null` means the caller belongs to no organization — a Site Admin, whose surfaces read "All organizations" — and nothing else: a caller with an `organizationId` always has a string here. It is **not** a fallback for a title that could not be resolved, and clients must keep the two cases apart.
   - This shape is shared by every response that returns an authenticated user summary: `POST /auth/login` (under `user`), `PUT /auth/me`, `PUT`/`DELETE /auth/me/portrait`, and both identities on `POST /auth/view-as`.

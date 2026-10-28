@@ -40,7 +40,7 @@ import { toCurrentUser } from '../api/adapt'
 // separate files only because the credential half is what the lint rule pins down.
 import { apiGet, apiPath, isApiStatus } from '../api/client'
 import { SESSION_COOKIE_NAME } from '../api/config'
-import type { WireCurrentUser } from '../api/wire'
+import type { WireCurrentUser, WireMe } from '../api/wire'
 import { setCurrentUser } from '../session'
 import type { CurrentUser } from '../types'
 
@@ -205,9 +205,9 @@ export async function actingOrganizationId(): Promise<string | null> {
  * A 401 is an answer, not a failure. Every other status still throws, because a 500 from
  * `/auth/me` is an outage and must reach an error boundary rather than log everybody out.
  */
-const loadMe = cache(async (): Promise<WireCurrentUser | null> => {
+const loadMe = cache(async (): Promise<WireMe | null> => {
   try {
-    return await apiGet<WireCurrentUser>('resolveCurrentUser', apiPath`/auth/me`)
+    return await apiGet<WireMe>('resolveCurrentUser', apiPath`/auth/me`)
   } catch (error) {
     if (isApiStatus(error, 401)) return null
     throw error
@@ -221,17 +221,13 @@ const loadPrincipal = cache(async (): Promise<CurrentUser | null> => {
 })
 
 /**
- * Whether this browser should send usage events at all (`SPEC/20-feature-analytics.md` rule 10):
- * not for a Site Admin acting directly, whom the intake drops anyway. The user's own opt-out is the
- * API's to apply, so it is not read here.
- *
- * A password change that is owed cannot be seen here: `/auth/me` does not report it. Sign-in sends
- * that reader to `/change-password`, outside this layout, and every other read refuses them; a
- * batch that still arrives is refused by the rotation gate inside `app/(desk)/usage/events/route.ts`,
- * which answers the browser `204` all the same.
+ * Whether this browser should send usage events at all (`SPEC/20-feature-analytics.md` rules 10
+ * and 13). Not while a password change is owed: the rotation gate would refuse the batch. Not for a
+ * Site Admin acting directly, whom the intake drops anyway. The user's own opt-out is the API's to
+ * apply, so it is not read here.
  */
 export async function usageRecordingAllowed(): Promise<boolean> {
   const me = await loadMe()
-  if (!me) return false
+  if (!me || me.requiresPasswordChange) return false
   return !(toCurrentUser(me).role === 'SiteAdmin' && me.viewingAs === null)
 }
