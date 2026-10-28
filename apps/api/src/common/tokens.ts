@@ -115,6 +115,7 @@ export const PORT_TOKENS = {
   // Usage analytics (packages/application/src/usage/ports.ts) -----------------------------------
   UsageEventStore: 'UsageEventStore',
   UsageTrackingPreferences: 'UsageTrackingPreferences',
+  UsageReports: 'UsageReports',
 
   // Metric types (packages/application/src/metric-types/ports.ts) -------------------------------
   MetricTypeRepository: 'MetricTypeRepository',

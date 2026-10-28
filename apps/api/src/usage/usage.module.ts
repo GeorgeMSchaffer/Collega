@@ -1,6 +1,8 @@
 import type { AuditEventWriter, Clock, CurrentUserContext } from '@collega/application/common'
 import {
   type UsageEventStore,
+  UsageReportService,
+  type UsageReports,
   UsageService,
   type UsageTrackingPreferences,
 } from '@collega/application/usage'
@@ -53,6 +55,16 @@ import { UsageController } from './usage.controller.js'
         PORT_TOKENS.Clock,
         CONFIG,
       ],
+    },
+    {
+      provide: UsageReportService,
+      useFactory: (
+        reports: UsageReports,
+        currentUser: CurrentUserContext,
+        clock: Clock,
+        config: Config,
+      ) => new UsageReportService(reports, currentUser, clock, config.usage.retentionDays),
+      inject: [PORT_TOKENS.UsageReports, PORT_TOKENS.CurrentUserContext, PORT_TOKENS.Clock, CONFIG],
     },
   ],
 })
