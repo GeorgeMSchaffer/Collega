@@ -42,7 +42,7 @@ export default async function ProfilePage() {
   const profile = await getProfile()
   // Under View As the API refuses the read (`SPEC/contracts/usage.md`), so it is not asked.
   const viewingAs = currentUser().viewingAs !== null
-  const usageTracking = viewingAs ? true : await getUsageTracking()
+  const usageTracking = viewingAs ? null : await getUsageTracking()
 
   return (
     <>
@@ -122,7 +122,7 @@ export default async function ProfilePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <UsageTrackingSwitch enabled={usageTracking} refused={viewingAs} />
+              <UsageTrackingSwitch enabled={usageTracking} />
             </CardContent>
           </Card>
         </div>

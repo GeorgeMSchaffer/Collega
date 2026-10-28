@@ -207,6 +207,7 @@ export function TagsScreen({
       ) : (
         <>
           <ListToolbar
+            searchUsage={{ scope: 'tags', resultCount: filtered.length }}
             query={state.q}
             onQueryChange={(q) => update({ q })}
             placeholder="Filter by tag…"

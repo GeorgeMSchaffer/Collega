@@ -26,14 +26,15 @@ export function useListState(config: ListConfig) {
   const update = useCallback(
     (patch: Partial<ListState>) => {
       const next: ListState = { ...state, page: 1, ...patch }
-      // The keys in use, never their values (`SPEC/20-feature-analytics.md` rule 7).
-      if (config.usageList && ('q' in patch || 'filters' in patch)) {
+      // The keys in use, never their values (`SPEC/20-feature-analytics.md` rule 7). The text box is
+      // `search.run`, recorded by `ListToolbar`.
+      if (config.usageList && 'filters' in patch) {
         const filterKeys = Object.keys(next.filters).filter(
           (key) => (next.filters[key]?.length ?? 0) > 0,
         )
         recordUsage({
           type: 'filter.applied',
-          props: { list: config.usageList, filterKeys: next.q ? ['q', ...filterKeys] : filterKeys },
+          props: { list: config.usageList, filterKeys },
         })
       }
       // Other parameters on the route (an open drawer's `?idea=`) are the screen's, not the list's.

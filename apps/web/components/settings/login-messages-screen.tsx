@@ -265,6 +265,7 @@ export function LoginMessagesScreen({
       ) : (
         <>
           <ListToolbar
+            searchUsage={{ scope: 'login-messages', resultCount: filtered.length }}
             query={state.q}
             onQueryChange={(q) => update({ q })}
             placeholder="Search messages"

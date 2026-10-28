@@ -264,6 +264,7 @@ export function BoardsScreen({
         <>
           {boards.length > 0 ? (
             <ListToolbar
+              searchUsage={{ scope: 'boards', resultCount: filtered.length }}
               query={state.q}
               onQueryChange={(q) => update({ q })}
               placeholder="Filter by board, lane, tag, person, status…"

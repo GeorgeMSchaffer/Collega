@@ -1,6 +1,7 @@
 'use client'
 
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react'
+import { recordUsage } from '@/components/analytics/usage-recorder'
 import { Icon } from './icons'
 
 /**
@@ -19,6 +20,7 @@ export function ListToolbar({
   debounceMs = 250,
   children,
   end,
+  searchUsage,
 }: {
   query: string
   onQueryChange: (query: string) => void
@@ -28,12 +30,29 @@ export function ListToolbar({
   debounceMs?: number
   children?: ReactNode
   end?: ReactNode
+  /**
+   * Records `search.run` when a search lands (`SPEC/20-feature-analytics.md` rule 7): the list it
+   * searched and how many rows matched, never the text.
+   */
+  searchUsage?: { scope: string; resultCount: number }
 }) {
   const id = useId()
   const [draft, setDraft] = useState(query)
   const reported = useRef(query)
   const report = useRef(onQueryChange)
   report.current = onQueryChange
+  // Read when the query lands, so a later change of count alone is not a new search.
+  const usage = useRef(searchUsage)
+  usage.current = searchUsage
+
+  useEffect(() => {
+    const current = usage.current
+    if (query === '' || !current) return
+    recordUsage({
+      type: 'search.run',
+      props: { scope: current.scope, resultCount: current.resultCount },
+    })
+  }, [query])
 
   useEffect(() => {
     if (query !== reported.current) {

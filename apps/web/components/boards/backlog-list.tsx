@@ -186,6 +186,7 @@ export function BacklogList({
   return (
     <div className="flex min-w-0 flex-col gap-3">
       <ListToolbar
+        searchUsage={{ scope: 'board-backlog', resultCount: shown.length }}
         query={query}
         onQueryChange={setQuery}
         label="Search tasks"
