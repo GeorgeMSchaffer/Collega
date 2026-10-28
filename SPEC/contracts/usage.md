@@ -100,8 +100,9 @@ The Member trail tab.
 - **Errors:** `400`; `401`; `403`; `404` user missing.
 - **Rules:** when `optedOut` is `true`, only changes are returned.
 
-### `POST /api/v1/internal/usage/rollup`
-The nightly job, called by Vercel Cron.
+### `GET /api/v1/internal/usage/rollup`
+The nightly job, called by Vercel Cron. `GET` because Vercel Cron calls a path with `GET` (changed from
+`POST` in slice 364).
 
 - **Roles:** none. Authorized only by `Authorization: Bearer <CRON_SECRET>`, checked in the auth
   folder; any user token is `401`.
@@ -109,5 +110,6 @@ The nightly job, called by Vercel Cron.
 - **Response:** `200` `{ daysRolledUp, rowsDeleted }`.
 - **Errors:** `401`.
 - **Rules:** rolls up every complete UTC day older than retention not yet in `usage_daily`, replacing
-  a day if run again; then deletes raw rows older than retention in batches of 10,000. Excluded
+  a day if run again, and deletes that day's raw rows in the same transaction (one day per batch,
+  about 4,000 rows at the expected volume). Excluded
   rows (View As, opted-out) are not counted in rollups.

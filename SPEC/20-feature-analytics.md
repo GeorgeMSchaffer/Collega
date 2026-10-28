@@ -132,8 +132,8 @@ the idea activity history (`GET /api/v1/ideas/{ideaId}/activity`) is unaffected.
     up into `usage_daily` — one row per day, organization and event type, with the event count and
     the distinct-user count — and then deleted.
 17. **The nightly job.** A Vercel cron on the API project calls
-    `POST /api/v1/internal/usage/rollup` once a night. It rolls up every complete day not yet
-    rolled up, then deletes raw rows past retention in batches of 10,000, so it never holds a long
+    `GET /api/v1/internal/usage/rollup` once a night (04:00 UTC). Each day past retention is rolled
+    up and its raw rows deleted in one transaction, one day at a time, so it never holds a long
     lock. It is idempotent: re-running a day replaces that day's rollup. A failed run logs and is
     retried the next night; it never touches a user request. Vercel signs the call with
     `CRON_SECRET`, and the check lives in the auth folder, the identity chokepoint.

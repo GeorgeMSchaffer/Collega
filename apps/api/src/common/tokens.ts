@@ -111,6 +111,10 @@ export const PORT_TOKENS = {
   // Sign-in messages (packages/application/src/login-messages/ports.ts) --------------------------
   LoginMessageRepository: 'LoginMessageRepository',
 
+  // Usage analytics (packages/application/src/usage/ports.ts) -----------------------------------
+  UsageEventStore: 'UsageEventStore',
+  UsageTrackingPreferences: 'UsageTrackingPreferences',
+
   // Metric types (packages/application/src/metric-types/ports.ts) -------------------------------
   MetricTypeRepository: 'MetricTypeRepository',
   IdeaMetricValuesPort: 'IdeaMetricValuesPort',

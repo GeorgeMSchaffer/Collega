@@ -39,6 +39,7 @@ import {
   PrismaSprintRepository,
   PrismaStatusRepository,
   PrismaTagRepository,
+  PrismaUsageRepository,
   PrismaUserRepository,
 } from '@collega/infrastructure/repositories'
 import { JwtAccessTokenService, Pbkdf2PasswordHasher } from '@collega/infrastructure/security'
@@ -176,6 +177,11 @@ const CONCRETE_ADAPTERS: Provider[] = [
     useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
       new PrismaLoginMessageRepository(prisma, uow),
     inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
+  },
+  {
+    provide: PrismaUsageRepository,
+    useFactory: (prisma: PrismaClient) => new PrismaUsageRepository(prisma),
+    inject: [PORT_TOKENS.PrismaClient],
   },
   {
     provide: PrismaMetricTypeRepository,
@@ -367,6 +373,8 @@ const PORT_ALIASES: Provider[] = [
   { provide: PORT_TOKENS.SprintBoardsPort, useExisting: PrismaBoardRepository },
 
   { provide: PORT_TOKENS.LoginMessageRepository, useExisting: PrismaLoginMessageRepository },
+  { provide: PORT_TOKENS.UsageEventStore, useExisting: PrismaUsageRepository },
+  { provide: PORT_TOKENS.UsageTrackingPreferences, useExisting: PrismaUsageRepository },
   { provide: PORT_TOKENS.MetricTypeRepository, useExisting: PrismaMetricTypeRepository },
   { provide: PORT_TOKENS.IdeaMetricValuesPort, useExisting: PrismaMetricTypeRepository },
   { provide: PORT_TOKENS.IdeaActivityPort, useExisting: PrismaAuditEventWriter },
