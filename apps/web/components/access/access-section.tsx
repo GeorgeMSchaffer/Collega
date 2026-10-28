@@ -32,6 +32,9 @@ export function AccessSection({
   const creatorName = creatorId === setup.readerId ? 'you' : (setup.creator?.name ?? 'its creator')
   const rolesKnown = setup.people.every((candidate) => candidate.role !== null)
 
+  // A display mirror of the API's one visibility rule (`canSeeBoard` in the domain; contracts/
+  // boards.md "Board access") for the head count BAG-6b asks for, which no route returns. It decides
+  // nothing: the API filters every read. Change both together.
   const active = setup.people.filter((candidate) => candidate.active)
   const why = (id: string, role: string | null): string | null => {
     if (role === 'OrgAdmin') return 'Org Admin'
@@ -59,7 +62,7 @@ export function AccessSection({
         kind: 'group' as const,
         id: candidate.id,
         name: candidate.name,
-        detail: `${candidate.memberIds.length} people`,
+        detail: `${candidate.memberCount} people`,
       })),
     ...setup.people
       .filter(
@@ -131,7 +134,7 @@ export function AccessSection({
                 <Chip
                   key={`g-${id}`}
                   label={group(id)?.name ?? 'A deleted group'}
-                  detail={String(group(id)?.memberIds.length ?? 0)}
+                  detail={String(group(id)?.memberCount ?? 0)}
                   isGroup
                   removable={restricted}
                   onRemove={(name) => {

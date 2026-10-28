@@ -61,7 +61,18 @@ export async function saveGroup(groupId: string | null, form: FormData): Promise
       savedId = created.groupId
     } else {
       await apiPut(apiPath`/groups/${groupId}`, details)
-      await apiPut(apiPath`/groups/${groupId}/members`, { userIds })
+      try {
+        await apiPut(apiPath`/groups/${groupId}/members`, { userIds })
+      } catch (error) {
+        // The name and description are written by now, so the screens are stale either way.
+        const refused = refusal(error)
+        revalidateGroupScreens()
+        return {
+          error: `The name and description were saved, but the members were not.${refused.error ? ` ${refused.error}` : ''}`,
+          errors: refused.errors,
+          savedId: null,
+        }
+      }
       savedId = groupId
     }
   } catch (error) {

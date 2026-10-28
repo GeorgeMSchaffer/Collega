@@ -1124,5 +1124,6 @@ export type AccessSetup = {
   creator: { id: string; name: string } | null
   readerId: string
   people: { id: string; name: string; role: Role | null; active: boolean }[]
-  groups: { id: string; name: string; memberIds: string[] }[]
+  /** `memberIds` are the active members, who count toward who can see; `memberCount` is everyone. */
+  groups: { id: string; name: string; memberIds: string[]; memberCount: number }[]
 }

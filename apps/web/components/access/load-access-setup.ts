@@ -42,6 +42,7 @@ export async function loadAccessSetup(board: {
       id: group.id,
       name: group.name,
       memberIds: group.members.filter((member) => member.active).map((member) => member.id),
+      memberCount: group.members.length,
     })),
   }
 }

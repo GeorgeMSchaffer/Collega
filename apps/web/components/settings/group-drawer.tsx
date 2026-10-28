@@ -156,7 +156,8 @@ function GroupForm({
     }))
 
   return (
-    <form id={FORM_ID} action={action} className="flex flex-col gap-4">
+    // A reader's form has no action, so Enter in a read-only field cannot send a refused write.
+    <form id={FORM_ID} action={canManage ? action : undefined} className="flex flex-col gap-4">
       {outcome.error ? (
         <Alert variant="destructive">
           <span>{outcome.error}</span>

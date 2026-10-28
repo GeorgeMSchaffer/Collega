@@ -75,6 +75,8 @@ function refusal(error: unknown): string {
  * beside the items they name), and the refusals that belong on a field. The banner keeps only what
  * is left over.
  */
+const ACCESS_FIELDS = ['visibility', 'userIds', 'groupIds', 'accessUserIds', 'accessGroupIds']
+
 function refusedSave(
   error: unknown,
   form: FormData,
@@ -83,11 +85,16 @@ function refusedSave(
     const { keyPrefix, ...rest } = error.errors
     // The access lists' refusals (an unknown or foreign user or group) have no control to sit
     // beside, so they read in the banner as the API words them.
-    const access = ['visibility', 'userIds', 'groupIds', 'accessUserIds', 'accessGroupIds'].flatMap(
-      (field) => error.errors[field] ?? [],
-    )
+    const access = ACCESS_FIELDS.flatMap((field) => error.errors[field] ?? [])
     if (error.status === 400 && access.length > 0) {
-      return { error: access.join(' '), pullErrors: [] }
+      const other = Object.entries(rest)
+        .filter(([field]) => !ACCESS_FIELDS.includes(field) && field !== 'pullItemIds')
+        .map(([, message]) => message)
+      return {
+        error: [...access, ...other].join(' '),
+        pullErrors: [...(error.errorLists.pullItemIds ?? [])],
+        ...(keyPrefix ? { keyPrefix: { message: KEY_PREFIX_RULE, locked: false } } : {}),
+      }
     }
     if (error.status === 400 && (error.errors.ideaTypeIds || error.errors.allowedIdeaTypeIds)) {
       return {
@@ -354,12 +361,15 @@ async function save(
   // which is the right outcome for a write the API refused to believe in.
   revalidatePath(`/boards/${encodeURIComponent(boardId)}`)
   revalidatePath('/', 'layout')
-  if (accessRefusal) return { error: accessRefusal, pullErrors: [] }
+  if (accessRefusal && !typesRefusal) return { error: accessRefusal, pullErrors: [] }
   if (typesRefusal) {
     const saved = 'The board was saved, but its allowed idea types were not.'
     return {
       ...typesRefusal,
-      error: typesRefusal.error ? `${saved} ${typesRefusal.error}` : null,
+      error:
+        [accessRefusal, typesRefusal.error ? `${saved} ${typesRefusal.error}` : null]
+          .filter(Boolean)
+          .join(' ') || null,
       allowedIdeaTypes: typesRefusal.allowedIdeaTypes
         ? `${saved} ${typesRefusal.allowedIdeaTypes}`
         : saved,
