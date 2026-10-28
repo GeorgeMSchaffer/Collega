@@ -149,7 +149,7 @@ export default async function BoardPage({
 
   return (
     <>
-      <BoardViewed />
+      <BoardViewed boardId={board.id} />
       <Topbar
         title={
           <span className="text-sm font-normal text-muted-foreground">

@@ -23,12 +23,14 @@ export const SCOPES = { assigned: 'Assigned to me', created: 'Created by me' } a
 export const PHASES = { Ideas: 'Ideas only', Issues: 'Issues only' } as const
 
 export const IDEAS_LIST: ListConfig = {
+  usageList: 'ideas',
   filters: ['board', 'status', 'priority', 'tag', 'scope', 'phase'],
   views: ['list', 'cards'],
   sortKeys: ['title', 'board', ...BOARD_SORT_KEYS.slice(1)],
 }
 
 export const BOARD_LIST: ListConfig = {
+  usageList: 'board',
   filters: ['status', 'priority', 'tag'],
   views: ['lanes', 'list'],
   sortKeys: BOARD_SORT_KEYS,

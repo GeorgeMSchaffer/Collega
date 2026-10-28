@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { UsageViewed } from '@/components/analytics/usage-viewed'
 import { SprintPlanning } from '@/components/boards/sprint-planning'
 import { PageHeader } from '@/components/common/page-header'
 import { Topbar } from '@/components/nav/topbar'
@@ -38,6 +39,7 @@ export default async function SprintPlanningPage({
 
   return (
     <>
+      <UsageViewed type="list.viewed" props={{ list: 'sprint-planning' }} />
       <Topbar
         title={
           <span className="text-sm font-normal text-muted-foreground">

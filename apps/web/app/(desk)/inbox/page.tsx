@@ -1,4 +1,5 @@
 import { Alert } from '@collega/design-system'
+import { UsageViewed } from '@/components/analytics/usage-viewed'
 import { DRAWER_PARAMS } from '@/components/ideas/idea-list-config'
 import { loadIdeaDrawer } from '@/components/ideas/load-idea-drawer'
 import { INBOX_LIST } from '@/components/inbox/inbox-list-config'
@@ -52,6 +53,7 @@ export default async function InboxPage({
 
   return (
     <>
+      <UsageViewed type="list.viewed" props={{ list: 'inbox' }} />
       <Topbar title={<b>Inbox</b>} />
       <main className="flex min-w-0 max-w-[960px] flex-1 flex-col gap-4 p-6 max-md:px-4">
         {drawer.missing ? (

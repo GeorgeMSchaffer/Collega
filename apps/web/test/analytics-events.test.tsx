@@ -28,6 +28,7 @@ vi.mock('next/navigation', () => ({
 }))
 
 const EMAIL = 'person@example.test'
+const BOARD_ID = '6f1c2a0e-3b4d-4e5f-8a9b-0c1d2e3f4a5b'
 const FREE_TEXT = 'Our secret roadmap problem'
 
 const idea = {
@@ -137,8 +138,8 @@ describe('view-as.started', () => {
 
 describe('board.viewed', () => {
   it('fires once on mount from the browser, with no properties', () => {
-    const { rerender } = render(<BoardViewed />)
-    rerender(<BoardViewed />)
+    const { rerender } = render(<BoardViewed boardId={BOARD_ID} />)
+    rerender(<BoardViewed boardId={BOARD_ID} />)
     expect(sdk.browserTrack).toHaveBeenCalledExactlyOnceWith('board.viewed')
   })
 })

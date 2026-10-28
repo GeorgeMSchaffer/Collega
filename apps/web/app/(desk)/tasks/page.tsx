@@ -1,4 +1,5 @@
 import { EmptyState } from '@collega/design-system'
+import { UsageViewed } from '@/components/analytics/usage-viewed'
 import { PageHeader } from '@/components/common/page-header'
 import { Topbar } from '@/components/nav/topbar'
 import { TasksTable } from '@/components/tasks/tasks-table'
@@ -73,6 +74,7 @@ export default async function TasksPage({
 
   return (
     <>
+      <UsageViewed type="list.viewed" props={{ list: 'tasks' }} />
       {header}
       <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
         <PageHeader

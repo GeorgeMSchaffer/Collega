@@ -3,6 +3,7 @@
 import type { Route } from 'next'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useMemo } from 'react'
+import { recordUsage } from '@/components/analytics/usage-recorder'
 import { type ListConfig, type ListState, listStateToQuery, readListState } from './list-state'
 
 /**
@@ -25,6 +26,17 @@ export function useListState(config: ListConfig) {
   const update = useCallback(
     (patch: Partial<ListState>) => {
       const next: ListState = { ...state, page: 1, ...patch }
+      // The keys in use, never their values (`SPEC/20-feature-analytics.md` rule 7). The text box is
+      // `search.run`, recorded by `ListToolbar`.
+      if (config.usageList && 'filters' in patch) {
+        const filterKeys = Object.keys(next.filters).filter(
+          (key) => (next.filters[key]?.length ?? 0) > 0,
+        )
+        recordUsage({
+          type: 'filter.applied',
+          props: { list: config.usageList, filterKeys },
+        })
+      }
       // Other parameters on the route (an open drawer's `?idea=`) are the screen's, not the list's.
       const merged = new URLSearchParams(params)
       for (const key of ['q', 'sort', 'dir', 'page', 'size', 'view', ...(config.filters ?? [])]) {

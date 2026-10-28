@@ -1,12 +1,17 @@
 import type { Metadata } from 'next'
 import { type ReactNode, Suspense } from 'react'
+import { UsageRecorder } from '@/components/analytics/usage-recorder'
 import { IdleSignOut } from '@/components/auth/idle-sign-out'
 import { LoginMessagesSlot } from '@/components/login-messages/login-messages-slot'
 import { navGroupsWithoutCounts } from '@/components/nav/nav-items'
 import { Sidebar } from '@/components/nav/sidebar'
 import { SidebarNav } from '@/components/nav/sidebar-nav'
 import { ViewAsBanner } from '@/components/nav/view-as-banner'
-import { requireCurrentUser, sessionRemainingMs } from '@/lib/server/current-user'
+import {
+  requireCurrentUser,
+  sessionRemainingMs,
+  usageRecordingAllowed,
+} from '@/lib/server/current-user'
 import { SessionProvider } from '@/lib/session-client'
 
 /** Every signed-in page stays out of search indexes (`SPEC/20-feature-analytics.md` req. 4). */
@@ -48,6 +53,7 @@ export default async function DeskLayout({ children }: { children: ReactNode }) 
   return (
     <SessionProvider user={user}>
       <IdleSignOut sessionRemainingMs={await sessionRemainingMs()} {...devIdleTimings()} />
+      <UsageRecorder enabled={await usageRecordingAllowed()} />
       <div className="grid min-h-screen grid-cols-[256px_minmax(0,1fr)] max-md:grid-cols-1 max-md:content-start">
         {/* Suspense here is load-bearing, not decoration. `Sidebar` awaits its counts, and an
             un-suspended await in a layout blocks the whole response: nothing flushes, so no page's

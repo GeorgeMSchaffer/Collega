@@ -22,6 +22,7 @@ import type { DeliveryStatus, Effort, IdeaFormOptions, Issue, Outcome, Sprint } 
 import { BacklogAdd, type BacklogPrefill, RowEditButton } from './backlog-add'
 
 const CONFIG: ListConfig = {
+  usageList: 'backlog',
   views: ['list'],
   sortKeys: ['title', 'outcome', 'effort', 'status', 'assignee', 'votes'],
 }

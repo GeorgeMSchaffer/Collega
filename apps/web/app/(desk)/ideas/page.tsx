@@ -1,4 +1,5 @@
 import { Alert } from '@collega/design-system'
+import { UsageViewed } from '@/components/analytics/usage-viewed'
 import { GatedAction } from '@/components/common/gated-action'
 import { PageHeader } from '@/components/common/page-header'
 import { AddIdeaButton } from '@/components/ideas/add-idea-button'
@@ -61,6 +62,7 @@ export default async function IdeasPage({
 
   return (
     <>
+      <UsageViewed type="list.viewed" props={{ list: 'ideas' }} />
       <Topbar title={<b>Ideas</b>} />
       <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
         <PageHeader

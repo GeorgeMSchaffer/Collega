@@ -27,6 +27,7 @@ import { deleteLoginMessage, endLoginMessageNow } from '@/lib/server/login-messa
 import { formatMessageTime, LoginMessageDrawer } from './login-message-drawer'
 
 const CONFIG: ListConfig = {
+  usageList: 'login-messages',
   filters: ['state'],
   views: ['list'],
   sortKeys: ['title', 'display', 'mode', 'window', 'state'],
@@ -264,6 +265,7 @@ export function LoginMessagesScreen({
       ) : (
         <>
           <ListToolbar
+            searchUsage={{ scope: 'login-messages', resultCount: filtered.length }}
             query={state.q}
             onQueryChange={(q) => update({ q })}
             placeholder="Search messages"

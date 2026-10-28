@@ -198,21 +198,40 @@ export async function actingOrganizationId(): Promise<string | null> {
 }
 
 /**
- * The acting user, or `null` when the request carries no usable session.
+ * `GET /auth/me` as the API answered it, or `null` when the request carries no usable session.
  *
  * `cache`d, so the layout and the page each asking for identity is one request, not two.
  *
  * A 401 is an answer, not a failure. Every other status still throws, because a 500 from
  * `/auth/me` is an outage and must reach an error boundary rather than log everybody out.
  */
-const loadPrincipal = cache(async (): Promise<CurrentUser | null> => {
-  let me: WireCurrentUser
+const loadMe = cache(async (): Promise<WireCurrentUser | null> => {
   try {
-    me = await apiGet<WireCurrentUser>('resolveCurrentUser', apiPath`/auth/me`)
+    return await apiGet<WireCurrentUser>('resolveCurrentUser', apiPath`/auth/me`)
   } catch (error) {
     if (isApiStatus(error, 401)) return null
     throw error
   }
-
-  return toCurrentUser(me)
 })
+
+/** The acting user, or `null` when the request carries no usable session. */
+const loadPrincipal = cache(async (): Promise<CurrentUser | null> => {
+  const me = await loadMe()
+  return me ? toCurrentUser(me) : null
+})
+
+/**
+ * Whether this browser should send usage events at all (`SPEC/20-feature-analytics.md` rule 10):
+ * not for a Site Admin acting directly, whom the intake drops anyway. The user's own opt-out is the
+ * API's to apply, so it is not read here.
+ *
+ * A password change that is owed cannot be seen here: `/auth/me` does not report it. Sign-in sends
+ * that reader to `/change-password`, outside this layout, and every other read refuses them; a
+ * batch that still arrives is refused by the rotation gate inside `app/(desk)/usage/events/route.ts`,
+ * which answers the browser `204` all the same.
+ */
+export async function usageRecordingAllowed(): Promise<boolean> {
+  const me = await loadMe()
+  if (!me) return false
+  return !(toCurrentUser(me).role === 'SiteAdmin' && me.viewingAs === null)
+}
