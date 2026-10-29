@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-28 | The Site Admin usage screen: placement, older period, named trail rows | active | full below |
 | 2026-10-28 | The usage report reads bound older periods and trail paging | active | full below |
 | 2026-10-28 | `GET /auth/me` reports `requiresPasswordChange` | active | full below |
 | 2026-10-28 | The usage rollup runs on `GET`, one day per transaction | active | full below |
@@ -157,6 +158,23 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-10-28 — The Site Admin usage screen: placement, older period, named trail rows
+
+> Spec: `SPEC/20-feature-analytics.md` rule 19; contract: `SPEC/contracts/usage.md`; comp
+> `comp-r-usage-analytics.html`. Slice 367 review; this entry records the owner's answers.
+
+**Decided by the owner (2026-10-28).**
+
+- **Placement:** the screen is a Settings page, `/settings/usage-analytics`, beside API usage, like
+  the other Site Admin screens. The comp's own sidebar item is not built.
+- **Older period:** "Older than 90 days (daily counts only)" covers 180 days ago to 90 days ago
+  (UTC; `to` is the retention start, exclusive), as long as the longest recent period. The API
+  allows up to 366 days (entry below); the screen asks for 90.
+- **Named trail rows:** member trail rows name the board, idea, status and View As admin, as the
+  comp draws them. The client resolves names from existing reads (board and status lists, idea and
+  user detail), as `contracts/usage.md` allows. Accepted cost: one idea read per distinct idea on a
+  page (up to 100); a name that can't be read falls back to "a board" or "an idea".
 
 ## 2026-10-28 — The usage report reads bound older periods and trail paging
 
