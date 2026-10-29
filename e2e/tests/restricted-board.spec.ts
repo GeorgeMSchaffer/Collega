@@ -124,6 +124,10 @@ test.describe('a Restricted board', () => {
       await expect(members.getByText('Members · 0')).toBeVisible()
       await members.getByRole('button', { name: 'Save' }).click()
       await expect(members.getByText('No members yet.')).toBeVisible(TIMEOUT)
+      // The drawer empties its list before the save lands; the list's count comes from the server.
+      await expect(
+        adminPage.getByRole('row').filter({ hasText: GROUP }).getByRole('cell').nth(1),
+      ).toHaveText('0', TIMEOUT)
 
       await expectNotFound(page, boardId)
     } finally {

@@ -30,18 +30,13 @@ and a browser check.
 
 Run: `cd apps/web && npx vitest run test/access-section.test.tsx test/board-actions-access.test.ts test/group-actions.test.ts test/groups-page.test.tsx test/groups-screen.test.tsx test/load-access-setup.test.ts test/lock-marks.test.tsx`
 
-### Playwright spec: written, NOT passing yet
+### Playwright spec: passing
 
-`e2e/tests/restricted-board.spec.ts` has one test with these steps: an Org Admin restricts a board
-to a group, a member sees it, a non-member gets Not found and doesn't see it in the list, and a
-removed member loses it. A `finally` block restores the board and the group.
-
-- The first agent ran the whole flow, up to one failing locator. The lock mark's sr-only text
-  "Restricted" (`apps/web/components/access/lock-mark.tsx:14`) also matched a link.
-- Line 112 now reads `row.getByText('Restricted', { exact: true })`. The second agent may have
-  changed it, and that change was **never run**.
-- Before running, reseed with `pnpm --filter @collega/infrastructure db:seed`. Then run only this
-  spec, following `e2e/AGENTS.md`. Run it twice to prove it can be rerun.
+`e2e/tests/restricted-board.spec.ts` passed twice in a row on 2026-10-28 (ports 3100 and 3101,
+each run reseeded), with the steps described in the 356 row. The fix was to wait for the group
+list's server-side member count to read 0 before checking the removed member. The drawer clears its
+list before the save lands, and checking too early hit a race: the board loaded, then its ideas
+came back 404, so the page showed "Something went wrong" instead of Not found.
 
 ### Not done
 
@@ -54,12 +49,11 @@ removed member loses it. A `finally` block restores the board and the group.
 
 ## Next steps
 
-1. Get the e2e spec green, two runs in a row.
-2. Run `pnpm check`. If `apps/web/next-env.d.ts` gets modified, `git checkout` it.
-3. Do the browser check. Start the preview with `preview_start` name `dev`. The web app is on
+1. Run `pnpm check`. If `apps/web/next-env.d.ts` gets modified, `git checkout` it.
+2. Do the browser check. Start the preview with `preview_start` name `dev`. The web app is on
    3005, not 3004.
-4. Update the tracker and delete this file. Commit, push, open the PR, and run the reviewer.
-5. Then the next open item: the idea-scoped mention and assignee candidate lists (BAG 4e).
+3. Update the tracker and delete this file. Commit, push, open the PR, and run the reviewer.
+4. Then the next open item: the idea-scoped mention and assignee candidate lists (BAG 4e).
 
 ## Rules carried over
 
