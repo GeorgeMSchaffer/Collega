@@ -18,8 +18,8 @@ export const USAGE_RANGE_LABELS: Record<UsageRange, string> = {
 
 /** The spec's default retention (rule 16); raw-event routes refuse a `from` before it. */
 const RETENTION_DAYS = 90
-/** The API's longest daily-counts period. */
-const OLDER_DAYS = 365
+/** The older period is as long as the longest recent one (owner, 2026-10-28). */
+const OLDER_DAYS = 90
 const DAY_MS = 24 * 60 * 60 * 1000
 
 const ymd = (ms: number) => new Date(ms).toISOString().slice(0, 10)
