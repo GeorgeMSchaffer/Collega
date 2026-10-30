@@ -1,5 +1,6 @@
 import { Alert, buttonVariants, EmptyState } from '@collega/design-system'
 import Link from 'next/link'
+import { UsageViewed } from '@/components/analytics/usage-viewed'
 import { GatedAction } from '@/components/common/gated-action'
 import { PageHeader } from '@/components/common/page-header'
 import { AdminAction } from '@/components/delivery/admin-action'
@@ -50,6 +51,7 @@ export default async function BacklogPage({
 
   return (
     <>
+      <UsageViewed type="list.viewed" props={{ list: 'backlog' }} />
       <Topbar
         title={
           <span className="text-sm font-normal text-muted-foreground">

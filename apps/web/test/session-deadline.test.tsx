@@ -107,6 +107,7 @@ describe('desk layout wiring of IdleSignOut', { timeout: 30_000 }, () => {
     vi.doMock('@/lib/server/current-user', () => ({
       requireCurrentUser: async () => ({ role: 'User' }),
       sessionRemainingMs: async () => 600_000,
+      usageRecordingAllowed: async () => true,
     }))
     vi.doMock('@/lib/session-client', () => ({ SessionProvider: () => null }))
     vi.doMock('@/components/nav/view-as-banner', () => ({ ViewAsBanner: () => null }))

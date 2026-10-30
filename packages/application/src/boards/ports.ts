@@ -6,7 +6,7 @@ import type { EffortLevel, IdeaPhase } from '@collega/domain/enums'
 import type { AutoCreateTaskParent } from '../ideas/models.js'
 import type { PullCandidatePage } from './models.js'
 
-export interface BoardRepository {
+export interface BoardRepository extends VisibleBoardsLookup {
   /** Stages the new board with its lanes and its allowed idea types. */
   add(board: Board): Promise<void>
 
@@ -18,6 +18,19 @@ export interface BoardRepository {
 
   /** Stages replacing the board's allowed idea types with `board.allowedIdeaTypeIds`. */
   replaceAllowedIdeaTypes(board: Board): Promise<void>
+
+  /** Stages replacing the board's visibility and access lists (SPEC/contracts/boards.md "Board
+   * access"). Touches nothing else on the board. */
+  replaceAccess(board: Board): Promise<void>
+
+  /** The groups the user belongs to, read on every request so a membership change applies at once. */
+  listGroupIdsForUser(userId: string): Promise<readonly string[]>
+
+  /** Every user id of the organization, for checking an access list. */
+  listOrganizationUserIds(organizationId: string): Promise<readonly string[]>
+
+  /** Every group id of the organization, for checking an access list. */
+  listOrganizationGroupIds(organizationId: string): Promise<readonly string[]>
 
   /**
    * Every idea type of the organization, archived ones included, in idea type sort order (sort
@@ -146,6 +159,8 @@ export type PullCandidateFilter = {
   readonly authorUserId: string | null
   /** The caller, for `isMine`. */
   readonly currentUserId: string
+  /** Boards the caller may see (BAG-4e); `null` is every board. Items on no board always pass. */
+  readonly visibleBoardIds: readonly string[] | null
   readonly page: { readonly page: number; readonly pageSize: number }
 }
 
@@ -202,4 +217,17 @@ export interface AutoCreateTaskPort {
     parent: AutoCreateTaskParent,
     referencedBoardId: string,
   ): Promise<() => Promise<void>>
+}
+
+/** Whether one user may see one board (SPEC/20-feature-board-access-and-groups.md BAG-3): an
+ * Organization board of their organization, or a Restricted one they created or are granted
+ * directly or through a group. Archived boards answer the same as live ones. */
+export interface BoardAccessLookup {
+  canSeeBoard(boardId: string, organizationId: string, userId: string): Promise<boolean>
+}
+
+/** The ids of every board one user may see in their organization, by the same rule as
+ * `BoardAccessLookup` (BAG-3), for filtering lists and counts (BAG-4c). */
+export interface VisibleBoardsLookup {
+  visibleBoardIds(organizationId: string, userId: string): Promise<readonly string[]>
 }

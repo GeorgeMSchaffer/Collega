@@ -60,6 +60,7 @@ describe.skipIf(!DATABASE_URL)('Board sprints QA against a live database', () =>
       currentUser,
       { now: () => NOW },
       new PrismaBoardRepository(prisma, unitOfWork),
+      new PrismaBoardRepository(prisma, unitOfWork),
     )
   }
 

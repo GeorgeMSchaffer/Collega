@@ -18,6 +18,7 @@ export interface IdeaFollowerRepository {
 
 export type FollowIdeaSummary = {
   readonly organizationId: string
+  readonly boardId: string | null
 }
 
 /** The narrow slice of Ideas this feature needs. Excludes soft-deleted ideas, which answer `404`. */

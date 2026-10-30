@@ -64,11 +64,14 @@ const DOMAIN_ENUMS: Record<string, Record<string, string>> = {
   NotificationEventType: Enums.NotificationEventType,
   AiCallOutcome: Enums.AiCallOutcome,
   AiKeySource: Enums.AiKeySource,
+  BoardVisibility: Enums.BoardVisibility,
   IdeaPhase: Enums.IdeaPhase,
   EffortLevel: Enums.EffortLevel,
   DeliveryStatus: Enums.DeliveryStatus,
   SprintState: Enums.SprintState,
   IssueTaskState: Enums.IssueTaskState,
+  LoginMessageDisplay: Enums.LoginMessageDisplay,
+  LoginMessageDismissal: Enums.LoginMessageDismissal,
 }
 
 describe('domain enums vs packages/infrastructure/prisma/schema.prisma', () => {

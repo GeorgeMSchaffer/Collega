@@ -10,9 +10,11 @@ import { DemoSeedModule } from './demo-seed/demo-seed.module.js'
 import { FieldDefinitionsModule } from './field-definitions/field-definitions.module.js'
 import { FieldsetsModule } from './fieldsets/fieldsets.module.js'
 import { FollowingModule } from './following/following.module.js'
+import { GroupsModule } from './groups/groups.module.js'
 import { IdeaTypesModule } from './idea-types/idea-types.module.js'
 import { IdeasModule } from './ideas/ideas.module.js'
 import { IssueTasksModule } from './issue-tasks/issue-tasks.module.js'
+import { LoginMessagesModule } from './login-messages/login-messages.module.js'
 import { MetricTypesModule } from './metric-types/metric-types.module.js'
 import { NotificationsModule } from './notifications/notifications.module.js'
 import { OrganizationsModule } from './organizations/organizations.module.js'
@@ -20,6 +22,7 @@ import { OutcomesModule } from './outcomes/outcomes.module.js'
 import { SprintsModule } from './sprints/sprints.module.js'
 import { StatusesModule } from './statuses/statuses.module.js'
 import { TagsModule } from './tags/tags.module.js'
+import { UsageModule } from './usage/usage.module.js'
 import { UsersModule } from './users/users.module.js'
 import { ViewAsModule } from './view-as/view-as.module.js'
 
@@ -34,9 +37,11 @@ export const FEATURE_MODULES = [
   FieldDefinitionsModule,
   FieldsetsModule,
   FollowingModule,
+  GroupsModule,
   IdeaTypesModule,
   IdeasModule,
   IssueTasksModule,
+  LoginMessagesModule,
   MetricTypesModule,
   NotificationsModule,
   OrganizationsModule,
@@ -44,6 +49,7 @@ export const FEATURE_MODULES = [
   SprintsModule,
   StatusesModule,
   TagsModule,
+  UsageModule,
   UsersModule,
   ViewAsModule,
 ] as const

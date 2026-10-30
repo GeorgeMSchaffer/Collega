@@ -419,6 +419,37 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
   },
   {
     cases: [
+      'aiassist.org',
+      'auth.me.orgadmin',
+      'auth.me.readonly',
+      'auth.me.siteadmin',
+      'auth.me.user',
+      'boards.org',
+      'businessimpacts.org',
+      'comments.org',
+      'fielddefinitions.org',
+      'ideaassist.org',
+      'ideas.org',
+      'ideatypes.org',
+      'organizations.org',
+      'profile.org',
+      'statuses.org',
+      'tags.org',
+      'users.org',
+    ],
+    path: 'body.requiresPasswordChange',
+    decided: '2026-10-28',
+    reason:
+      'A deliberate addition, not drift. GET /auth/me now reports whether the signed-in account ' +
+      'must change its password, so the web client sends no usage events while every other route ' +
+      'would refuse them (SPEC/decisions.md 2026-10-28, SPEC/contracts/auth.md). Only GET ' +
+      '/auth/me carries it, which is why the PUT /auth/me and login cases are not listed: the ' +
+      'shared summary they return is unchanged. Every case listed is a 200 GET /auth/me, the four ' +
+      'role cases and the `*.org` setup steps that resolve the caller first.',
+    kind: 'extra',
+  },
+  {
+    cases: [
       'ideas.get.orgadmin',
       'ideas.get.readonly',
       'ideas.get.siteadmin',
@@ -1507,6 +1538,49 @@ export const ACCEPTED_DIFFS: readonly AcceptedDiff[] = [
       /^<guid@(viewas\.candidates\.siteadmin\.body\[\d+\]\.userId|me\.(user|readonly)\.body\.userId|login\.orgadmin\.body\.user\.userId)>$/,
     kind: 'value',
   },
+  // Restricted boards (SPEC/20-feature-board-access-and-groups.md BAG-2a, BAG-5b). Replayed
+  // 2026-10-28 (slice 353) against a freshly seeded stack: every seeded board is `Organization`,
+  // so these fields are the only board-access differences, and they are additive. Each is
+  // accepted as the field appearing and only that (`kind: 'extra'`); a changed value of any
+  // recorded field is still a mismatch. The group reads (`boardCount`, `boards`) are not in the
+  // corpus: it was recorded before groups existed.
+  {
+    cases: [
+      'boards.list.orgadmin',
+      'boards.list.readonly',
+      'boards.list.siteadmin',
+      'boards.list.user',
+      'comments.board',
+      'ideaassist.board',
+      'ideas.board',
+    ],
+    path: 'body[].visibility',
+    decided: '2026-10-28',
+    reason:
+      'Board list items gain `visibility` (contracts/boards.md "Board access"). Every seeded board ' +
+      'is `Organization`, and a board the caller cannot see is left out of the list, which no ' +
+      'recorded case exercises because the seed restricts nothing.',
+    kind: 'extra',
+  },
+  ...(['visibility', 'accessUserIds', 'accessGroupIds', 'canManageAccess'] as const).map(
+    (field) => ({
+      cases: [
+        'boards.get.orgadmin',
+        'boards.get.readonly',
+        'boards.get.siteadmin',
+        'boards.get.user',
+        'boards.update.orgadmin',
+      ],
+      path: `body.${field}`,
+      decided: '2026-10-28',
+      reason:
+        'The board detail gains `visibility`, `accessUserIds`, `accessGroupIds` and ' +
+        '`canManageAccess` (contracts/boards.md "Board access"). Observed as `Organization`, `[]`, ' +
+        '`[]`, and `canManageAccess` true for the Org Admin and false otherwise, as the contract ' +
+        'states for a board the caller did not create.',
+      kind: 'extra' as const,
+    }),
+  ),
 ]
 
 /** One entry as it applies to one of its cases - the unit staleness is reported at. */

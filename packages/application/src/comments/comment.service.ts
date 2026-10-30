@@ -10,6 +10,8 @@ import {
   editComment,
 } from '@collega/domain/comments'
 import { NotificationEventType, Role, UserStatus } from '@collega/domain/enums'
+import { ensureCanSeeBoard } from '../boards/board-access.js'
+import type { BoardAccessLookup } from '../boards/ports.js'
 import {
   type AuditEventWriter,
   attributeAudit,
@@ -66,6 +68,7 @@ export class CommentService {
     private readonly auditEvents: AuditEventWriter,
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
+    private readonly boardAccess: BoardAccessLookup,
   ) {}
 
   async listByIdea(ideaId: string, query: CommentListQuery): Promise<CommentListResult> {
@@ -97,7 +100,11 @@ export class CommentService {
 
     const now = this.clock.now()
     const authorId = this.requireAuthenticatedUserId()
-    const mentionedUserIds = await this.resolveMentions(idea.organizationId, command.mentionEmails)
+    const mentionedUserIds = await this.resolveMentions(
+      idea.organizationId,
+      idea.boardId,
+      command.mentionEmails,
+    )
 
     const comment = runDomain(createComment, {
       id: randomUUID(),
@@ -143,7 +150,11 @@ export class CommentService {
     }
 
     const now = this.clock.now()
-    const mentionedUserIds = await this.resolveMentions(idea.organizationId, command.mentionEmails)
+    const mentionedUserIds = await this.resolveMentions(
+      idea.organizationId,
+      idea.boardId,
+      command.mentionEmails,
+    )
 
     const updated = runDomain(
       editComment,
@@ -220,6 +231,7 @@ export class CommentService {
     if (role !== Role.SiteAdmin && this.currentUser.organizationId !== idea.organizationId) {
       throw new NotFoundError('Idea not found.')
     }
+    await ensureCanSeeBoard(this.boardAccess, this.currentUser, idea.boardId, 'Idea not found.')
 
     return idea
   }
@@ -324,6 +336,7 @@ export class CommentService {
    */
   private async resolveMentions(
     organizationId: string,
+    boardId: string | null,
     mentionEmails: readonly string[] | null,
   ): Promise<readonly string[]> {
     if (!mentionEmails || mentionEmails.length === 0) {
@@ -354,6 +367,15 @@ export class CommentService {
         user.status !== UserStatus.Active
       ) {
         errors.push(`Mention '${trimmed}' could not be resolved to a user in your organization.`)
+        continue
+      }
+      // BAG-4h: a mention notifies, so it may name only someone who can see the idea's board.
+      if (
+        boardId !== null &&
+        user.role !== Role.OrgAdmin &&
+        !(await this.boardAccess.canSeeBoard(boardId, organizationId, user.id))
+      ) {
+        errors.push(`'${`${user.firstName} ${user.lastName}`.trim()}' can't see this board.`)
         continue
       }
 

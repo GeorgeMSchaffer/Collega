@@ -248,6 +248,7 @@ describe.skipIf(!DATABASE_URL)('Idea followers, against a live database', () => 
           realUserId: userId,
         },
         { now: () => T1 },
+        { canSeeBoard: async () => true },
       )
     }
 

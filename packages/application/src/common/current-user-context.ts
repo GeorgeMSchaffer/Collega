@@ -27,4 +27,11 @@ export interface CurrentUserContext {
 
   /** The real administrator. Equals `userId` when not impersonating - never null when authenticated. */
   readonly realUserId: string | null
+
+  /**
+   * When the session token was issued. Only sign-in issues one and nothing refreshes it, so this
+   * identifies the sign-in (SPEC/20-feature-login-messages.md). Optional so contexts built by hand
+   * for background work need not invent one.
+   */
+  readonly signedInAtUtc?: Date | null
 }

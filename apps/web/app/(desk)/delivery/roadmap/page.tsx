@@ -1,4 +1,5 @@
 import { EmptyState, Meta } from '@collega/design-system'
+import { UsageViewed } from '@/components/analytics/usage-viewed'
 import { GatedAction } from '@/components/common/gated-action'
 import { PageHeader } from '@/components/common/page-header'
 import { OutcomeCards } from '@/components/delivery/outcome-cards'
@@ -36,6 +37,7 @@ export default async function RoadmapPage() {
 
   return (
     <>
+      <UsageViewed type="list.viewed" props={{ list: 'roadmap' }} />
       <Topbar
         title={
           <span className="text-sm font-normal text-muted-foreground">

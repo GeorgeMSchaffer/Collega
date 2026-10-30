@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en" data-proto-theme="graphite">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Comp R: usage analytics (2026-10-27). A throwaway comp for the usage analytics spec: the Site Admin screen now, the Org Admin view later.
+     Self-contained; open in a browser. Theme tokens and chrome are copied from comp-r-mcp-connections.html. Approved as drawn 2026-10-27. -->
+
+<title>Collega Usage Analytics Comp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&family=Figtree:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Young+Serif&family=Instrument+Sans:wght@400;500;600;700&family=Lexend:wght@500;600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&family=Schibsted+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Theme tokens: verbatim from comp-r-portico-prototype.html.
+   Every colour the app uses is a token below, so a theme is only a block of values. */
+:root,:root[data-proto-theme="portico"]{--suggest:#3B6E51;--suggest-tint:#E3EEE7;color-scheme:light;
+--bg:#F1F5F5;--ink:#16292E;--ink2:#2C4247;--muted:#56696D;--line:#DDE6E7;--line2:#C6D3D5;--card:#FFFFFF;--soft:#E8EFF0;--rowh:#F6FAFA;--thead:#F7FAFA;--facts:#F6FAFA;
+--pri:#1F6A80;--pri-h:#185769;--pri-t:#1B5F73;--pri-tint:#E1EEF1;--pri-ink:#FFFFFF;--vote:#F2B28A;--vote-ink:#16292E;
+--hot:#B64A34;--hot-t:#963B28;--hot-tint:#F6E1DB;--ok-t:#3B6E51;--ok-tint:#E3EEE7;--warn-t:#8E4A1F;--warn-tint:#FCEBDF;
+--side:#FFFFFF;--side-ink:#2C4247;--side-line:#DDE6E7;--side-hover:#EEF4F4;--side-on:#E1EEF1;--side-on-ink:#16292E;--bar:#16292E;--bar-ink:#E3EEF0;
+--tag:#E1EEF1;--tag-ink:#1B5566;--av1:#1F6A80;--av1i:#FFFFFF;--av2:#F2B28A;--av2i:#16292E;--av3:#7A5AA6;--av3i:#FFFFFF;--av4:#4F8A6A;--av4i:#FFFFFF;
+--shadow:22 41 46;--r:14px;--rs:10px;--display:"Outfit",ui-sans-serif,system-ui,sans-serif;--body:"Figtree",ui-sans-serif,system-ui,sans-serif;--mono:"DM Mono",ui-monospace,monospace;--h-weight:600}
+:root[data-proto-theme="sera"]{--suggest:#2E6E4C;--suggest-tint:#E1EFE7;--bg:#F3F4F7;--ink:#1C2236;--ink2:#343B52;--muted:#5C6378;--line:#E2E4EC;--line2:#CCD0DC;--soft:#ECEEF3;--rowh:#F7F8FB;--thead:#F7F8FB;--facts:#F5F6FA;
+--pri:#3450A8;--pri-h:#2A4290;--pri-t:#2E4799;--pri-tint:#E6EAF6;--vote:#E3B04B;--vote-ink:#1C2236;--hot:#B8553F;--hot-t:#94402D;--hot-tint:#F6E3DE;--ok-t:#2E6E4C;--ok-tint:#E1EFE7;--warn-t:#83590C;--warn-tint:#FAF0DA;
+--side:#1F2540;--side-ink:#CDD1E3;--side-line:#2D3454;--side-hover:#272E4D;--side-on:#2E3760;--side-on-ink:#FFFFFF;--bar:#0F1426;--bar-ink:#E6E9F5;--tag:#ECEEF3;--tag-ink:#343B52;
+--av1:#3450A8;--av1i:#FFFFFF;--av2:#E3B04B;--av2i:#1C2236;--av3:#B8553F;--av3i:#FFFFFF;--av4:#3E8A62;--av4i:#FFFFFF;--shadow:28 34 54;--r:16px;--display:"Bricolage Grotesque",ui-sans-serif,sans-serif;--body:"DM Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="lagoon"]{--suggest:#2F5F9E;--suggest-tint:#E3ECF8;--bg:#F3F4EF;--ink:#13302B;--ink2:#2A4640;--muted:#5A6B66;--line:#E1E5DF;--line2:#CBD3CB;--soft:#EAEFEA;--rowh:#F7F9F5;--thead:#F7F9F5;--facts:#F5F8F3;
+--pri:#0E6B5C;--pri-h:#0A5649;--pri-t:#0C6154;--pri-tint:#DCEFEA;--vote:#F08A6C;--vote-ink:#13302B;--hot:#C2412D;--hot-t:#9E3322;--hot-tint:#F9E1DA;--ok-t:#2F6B3F;--ok-tint:#E2F0E4;--warn-t:#7A5410;--warn-tint:#F8EDD3;
+--side:#FFFFFF;--side-ink:#2A4640;--side-line:#E1E5DF;--side-hover:#EFF3EE;--side-on:#DCEFEA;--side-on-ink:#13302B;--bar:#0F2A25;--bar-ink:#E2F0EC;--tag:#DCEFEA;--tag-ink:#0C5549;
+--av1:#0E6B5C;--av1i:#FFFFFF;--av2:#F08A6C;--av2i:#13302B;--av3:#3D6FB6;--av3i:#FFFFFF;--av4:#8C6A1F;--av4i:#FFFFFF;--shadow:19 48 43;--r:16px;--rs:12px;--display:"Lexend",ui-sans-serif,sans-serif;--body:"Nunito Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:600}
+:root[data-proto-theme="terrazzo"]{--suggest:#3F6B2E;--suggest-tint:#E6F2DF;--bg:#F5F6F8;--ink:#1E2733;--ink2:#36414F;--muted:#5E6978;--line:#E3E6EB;--line2:#CDD2DA;--soft:#EDF0F3;--rowh:#F8F9FB;--thead:#F8F9FB;--facts:#F6F7F9;
+--pri:#3D5A80;--pri-h:#324B6B;--pri-t:#35507A;--pri-tint:#E4EAF2;--vote:#F4C7C3;--vote-ink:#1E2733;--hot:#B84A4A;--hot-t:#963636;--hot-tint:#F7E2E2;--ok-t:#3F6B2E;--ok-tint:#E6F2DF;--warn-t:#7F5A12;--warn-tint:#F7EDD6;
+--side:#FFFFFF;--side-ink:#36414F;--side-line:#E3E6EB;--side-hover:#F1F3F6;--side-on:#E4EAF2;--side-on-ink:#1E2733;--bar:#1E2733;--bar-ink:#E8ECF2;--tag:#F4E4E1;--tag-ink:#7A3B34;
+--av1:#3D5A80;--av1i:#FFFFFF;--av2:#F4C7C3;--av2i:#1E2733;--av3:#4E7A40;--av3i:#FFFFFF;--av4:#7A5AA6;--av4i:#FFFFFF;--shadow:30 39 51;--r:8px;--rs:6px;--display:"Schibsted Grotesk",ui-sans-serif,sans-serif;--body:"Public Sans",ui-sans-serif,system-ui,sans-serif;--h-weight:700}
+:root[data-proto-theme="graphite"]{color-scheme:dark;--metric:#5CC8E0;--suggest:#5CC8E0;--suggest-tint:#0F1D21;--suggest-line:#2E6A78;
+--bg:#0F1113;--ink:#E6E8EA;--ink2:#C4CAD0;--muted:#9BA3AB;--line:#22272C;--line2:#2C3238;--card:#16191C;--soft:#1C2024;--rowh:#1A1E22;--thead:#121518;--facts:#1A1E22;--field:#0F1113;
+--pri:#F5A524;--pri-h:#FFC35C;--pri-t:#F5A524;--pri-tint:#2A2418;--pri-ink:#16120A;--vote:#2A2418;--vote-ink:#F3E3C3;--me:#2A2418;--me-ink:#F3E3C3;
+--hot:#E5484D;--hot-t:#FF8A8E;--hot-tint:#2E1719;--ok-t:#58C781;--ok-tint:#13241A;--warn-t:#F5B456;--warn-tint:#2A2418;
+--side:#121518;--side-ink:#AEB5BC;--side-line:#22272C;--side-hover:#1A1E22;--side-on:#1C2024;--side-on-ink:#E6E8EA;--bar:#0B0D0F;--bar-ink:#AEB5BC;--tag:#1C2024;--tag-ink:#C4CAD0;
+--av1:#2A2418;--av1i:#F5A524;--av2:#153038;--av2i:#5CC8E0;--av3:#262B30;--av3i:#C4CAD0;--av4:#1C2A20;--av4i:#58C781;--shadow:0 0 0;--r:8px;--rs:6px;
+--display:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;--h-weight:600}
+:root{--metric:var(--pri);--field:var(--card);--suggest-line:var(--suggest);--me:var(--pri);--me-ink:var(--pri-ink);--drawer:clamp(380px,28vw,520px);--drawer-wide:clamp(720px,62vw,1100px)}
+*,*::before,*::after{box-sizing:border-box}
+html,body{min-height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--body);display:flex;flex-direction:column}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+.i{width:16px;height:16px;flex:none}
+[hidden]{display:none!important}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* comp controls and reviewer notes: the chrome band, outside the app */
+.proto{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:8px 16px;background:var(--bar);color:var(--bar-ink);font-size:13px}
+.proto b{font-family:var(--display);font-weight:600}
+.proto .grp{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.proto .lbl{opacity:.7;margin-right:2px}
+.proto button{background:transparent;border:1px solid color-mix(in srgb,var(--bar-ink) 30%,transparent);border-radius:999px;padding:3px 10px;color:var(--bar-ink);cursor:pointer}
+.proto button[aria-pressed="true"]{background:var(--bar-ink);color:var(--bar);border-color:var(--bar-ink)}
+.note{padding:6px 16px 8px;background:var(--bar);color:var(--bar-ink);font-size:12px;opacity:.85;border-top:1px solid color-mix(in srgb,var(--bar-ink) 15%,transparent)}
+.note p{margin:0;max-width:110ch}
+
+/* app shell, as comp R */
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);flex:1 0 auto}
+.side{background:var(--side);border-right:1px solid var(--side-line);padding:14px 10px;display:flex;flex-direction:column;gap:2px;color:var(--side-ink)}
+.brand{display:flex;gap:10px;align-items:center;padding:4px 6px 12px}
+.brand b{display:block;font:600 16px/1.1 var(--display)}.brand small{font-size:12px;opacity:.75}
+.mark{display:grid;place-items:center;width:30px;height:30px;border-radius:var(--rs);background:var(--pri);color:var(--pri-ink);font:600 12px var(--display)}
+.navlbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.7;padding:10px 8px 4px}
+.nav{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:var(--rs);color:var(--side-ink);cursor:pointer;border:0;background:none;width:100%;text-align:left}
+.nav:hover{background:var(--side-hover)}
+.nav:disabled{opacity:.55;cursor:default}
+.nav[aria-current="page"]{background:var(--side-on);color:var(--side-on-ink);font-weight:600;box-shadow:inset 3px 0 0 var(--pri)}
+.nav span{flex:1}
+.me{margin-top:auto;display:flex;gap:10px;align-items:center;padding:10px 6px 2px;border-top:1px solid var(--side-line)}
+.me b{display:block;font-size:13px}.me small{font-size:12px;opacity:.75}
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:8px;min-height:52px;padding:8px 24px;border-bottom:1px solid var(--line);background:var(--card)}
+.topbar .sp{flex:1}
+.crumb{color:var(--muted)}.crumb b{color:var(--ink)}
+.themepick{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.themepick select{border:1px solid var(--line2);border-radius:999px;padding:4px 10px;background:var(--card);color:var(--ink);cursor:pointer}
+.work{padding:20px 24px 32px;display:flex;flex-direction:column;gap:16px;min-width:0;max-width:960px}
+.pghead{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.pghead h1{margin:0;font:var(--h-weight) 28px/1.15 var(--display);letter-spacing:-.02em}
+.pghead p{margin:4px 0 0;color:var(--muted);max-width:64ch}
+.denywrap{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.why{font-size:12px;color:var(--muted);font-style:italic}
+.btn{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13px;padding:8px 14px;border-radius:var(--rs);border:1px solid var(--line2);background:var(--card);cursor:pointer}
+.btn:hover{border-color:var(--pri)}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:var(--pri-ink)}.btn.pri:hover{background:var(--pri-h)}
+.btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
+.btn.sm{padding:4px 10px;font-size:12px}
+.iconbtn{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer}
+.iconbtn:hover{background:var(--soft);color:var(--ink)}
+.av{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;font:700 10px var(--body);flex:none}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:1px 8px;border-radius:999px;background:var(--tag);color:var(--tag-ink);margin:1px 2px 1px 0}
+.sub{font-size:12px;color:var(--muted)}
+
+/* unread: ink, never a hue (the colour rule; the accent variant was rejected 2026-10-01) */
+:root{--unread:var(--ink);--unread-ink:var(--card)}
+.badge{min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--unread);color:var(--unread-ink);font:700 11px/20px var(--body);text-align:center;font-variant-numeric:tabular-nums}
+
+/* the inbox list */
+.inbox{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin:0;padding:0;list-style:none;overflow:hidden}
+.inbox li+li{border-top:1px solid var(--line)}
+.nrow{display:grid;grid-template-columns:10px 28px minmax(0,1fr) auto;gap:12px;align-items:start;width:100%;padding:12px 16px;border:0;background:none;text-align:left;cursor:pointer}
+.nrow:hover{background:var(--rowh)}
+.nrow .mk{width:8px;height:8px;border-radius:50%;margin-top:10px}
+.nrow.unread{box-shadow:inset 3px 0 0 var(--unread)}
+.nrow.unread .mk{background:var(--unread)}
+.nrow .what{color:var(--ink2)}
+.nrow .what b{color:var(--ink);font-weight:600}
+.nrow.unread .what{color:var(--ink)}
+.nrow.unread .what .t{font-weight:700}
+.nrow .what .t{font-weight:500;color:var(--ink)}
+.nrow .when{font-size:12px;color:var(--muted);white-space:nowrap;margin-top:2px}
+.nrow.unread .when{color:var(--ink2);font-weight:600}
+.pager{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px}
+.empty{background:var(--card);border:1px dashed var(--line2);border-radius:var(--r);padding:40px 24px;text-align:center}
+.empty h2{margin:8px 0 4px;font:var(--h-weight) 18px var(--display)}
+.empty p{margin:0 auto;color:var(--muted);max-width:48ch}
+.empty .big{width:36px;height:36px;color:var(--muted)}
+
+/* a minimal Ideas list, so the drawer can be opened outside the inbox */
+.tablewrap{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line)}
+tbody tr:last-child td{border-bottom:0}
+th{font:600 12px var(--body);color:var(--muted);background:var(--thead)}
+.ttl{font-weight:600;color:var(--ink);cursor:pointer;border:0;background:none;padding:0;text-align:left}
+.ttl:hover{color:var(--pri-t);text-decoration:underline}
+
+/* drawer, as comp R */
+.drawer{position:fixed;top:0;right:0;bottom:0;width:var(--drawer);max-width:100%;background:var(--card);border-left:1px solid var(--line2);box-shadow:-18px 0 40px rgb(var(--shadow)/.16);z-index:40;display:flex;flex-direction:column;transform:translateX(105%);transition:transform .22s ease;visibility:hidden}
+.drawer.open{transform:none;visibility:visible}
+.dhead{display:flex;align-items:flex-start;gap:8px;padding:16px 18px 10px;border-bottom:1px solid var(--line)}
+.dhead .eb{font:500 11px var(--mono);color:var(--muted);letter-spacing:.03em}
+.dhead h2{margin:2px 0 0;font:var(--h-weight) 19px/1.25 var(--display)}
+.dhead .x{margin-left:auto}
+.dbody{flex:1;overflow:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px;min-height:0}
+.dfoot{display:flex;gap:8px;align-items:center;padding:12px 18px;border-top:1px solid var(--line);background:var(--thead)}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:12px;background:var(--facts);border-radius:var(--rs);padding:12px;margin:0}
+.facts dt{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.facts dd{margin:3px 0 0;font-weight:500}
+.sect h3{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.sect p{margin:0}
+.engage{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.votes-on{background:var(--vote);color:var(--vote-ink);border-color:transparent}
+.follow[aria-pressed="true"]{background:var(--soft);border-color:var(--ink2);color:var(--ink)}
+.msg{background:var(--card);border:1px solid var(--line);border-radius:12px;border-top-left-radius:4px;padding:8px 12px;margin-bottom:6px}
+.composer{display:flex;gap:6px}.composer input{flex:1;border:1px solid var(--line2);border-radius:8px;padding:8px 10px;background:var(--field);color:var(--ink)}
+
+@media (max-width:760px){
+  .app{grid-template-columns:1fr}
+  .side{flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--side-line)}
+  .side .navlbl,.side .me,.brand small{display:none}
+  .nav{width:auto}
+  .topbar,.work{padding-left:16px;padding-right:16px}
+  .nrow{grid-template-columns:10px 28px minmax(0,1fr)}
+  .nrow .when{grid-column:3}
+  .facts{grid-template-columns:1fr}
+}
+.page{max-width:880px}.page h1{font-family:var(--display);font-weight:var(--h-weight);font-size:22px;margin:0 0 4px}
+.lede{color:var(--muted);margin:0 0 18px;max-width:70ch}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin-bottom:16px}
+.panel h2{font-family:var(--display);font-size:15px;margin:0 0 4px}
+.switchrow{display:flex;align-items:center;gap:16px;justify-content:space-between}
+.sw{position:relative;width:44px;height:26px;border-radius:999px;border:1px solid var(--line2);background:var(--soft);cursor:pointer;flex:none}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:left .15s}
+.sw[aria-checked="true"]{background:var(--pri);border-color:var(--pri)}.sw[aria-checked="true"]::after{left:20px;background:var(--pri-ink)}
+.sw:focus-visible,.btn:focus-visible,.copy:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+table.t{width:100%;border-collapse:collapse;font-size:13.5px}
+table.t th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--thead);padding:8px 12px;border-bottom:1px solid var(--line)}
+table.t td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.t tr:last-child td{border-bottom:0}
+.tw{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--card)}
+.btn.danger{color:var(--hot-t);border-color:var(--hot-t);background:transparent}.btn.danger:hover{background:var(--hot-tint)}
+.banner{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border-radius:var(--rs);background:var(--warn-tint);color:var(--warn-t);margin-bottom:16px;font-size:13.5px}
+.empty{padding:28px 18px;text-align:center;color:var(--muted)}.empty b{display:block;color:var(--ink);margin-bottom:4px}
+.url{display:flex;gap:8px;align-items:center;background:var(--facts);border:1px solid var(--line);border-radius:var(--rs);padding:8px 10px;font-family:var(--mono);font-size:13px;margin:10px 0}
+.url code{flex:1;overflow-wrap:anywhere}
+.copy{border:1px solid var(--line2);background:var(--card);color:var(--ink);border-radius:6px;padding:4px 10px;font-weight:600;font-size:12px;cursor:pointer}
+ol.steps{margin:8px 0 0 18px;padding:0}ol.steps li{margin:6px 0}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:8px 12px;font-weight:600;color:var(--muted);cursor:pointer;font:inherit}
+.tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--pri)}
+.muted{color:var(--muted)}.confirm{display:inline-flex;gap:6px;align-items:center}
+/* usage comp additions */
+.page.wide{max-width:1040px}
+.filters{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:end;margin:0 0 16px}
+.filters label{display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--muted)}
+.filters select{min-height:34px;padding:4px 10px;border:1px solid var(--line2);border-radius:var(--rs);background:var(--card);color:var(--ink);font-size:13.5px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
+.stat b{display:block;font:600 24px/1.2 var(--display);font-variant-numeric:tabular-nums}
+.stat span{font-size:12.5px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:860px){.grid2{grid-template-columns:1fr}}
+.ms{list-style:none;margin:8px 0 0;padding:0}
+.ms li{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.ms li:last-child{border-bottom:0}
+.ms .ck{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--ok-tint);color:var(--ok-t)}
+.ms li.no .ck{background:var(--soft);color:var(--muted)}
+.ms li.no .what{color:var(--muted)}
+.ms .when{font-size:12.5px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.weeks{display:flex;gap:6px;align-items:flex-end;height:150px;margin:14px 0 6px;padding-bottom:2px;border-bottom:1px solid var(--line2)}
+.wk{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:4px;position:relative}
+.wk i{display:block;width:100%;max-width:34px;background:var(--pri);border-radius:4px 4px 0 0}
+.wk small{font-size:11px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.wk:focus-visible i,.wk:hover i{background:var(--pri-h)}
+.wkx{display:flex;gap:6px}.wkx span{flex:1;text-align:center;font-size:11px;color:var(--muted)}
+.bar{display:flex;align-items:center;gap:8px;min-width:110px}
+.bar i{display:block;height:8px;background:var(--pri);border-radius:0 4px 4px 0;min-width:2px}
+.bar span{font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--ink2)}
+table.t td.n{text-align:right;font-variant-numeric:tabular-nums}
+table.t th.n{text-align:right}
+.kind{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.kind.v{background:var(--soft);color:var(--ink2)}
+.kind.c{background:var(--pri-tint);color:var(--pri-t)}
+.kind.a{background:var(--warn-tint);color:var(--warn-t)}
+tr.asx td{color:var(--muted)}
+.foot{font-size:12.5px;color:var(--muted);margin:10px 0 0;max-width:80ch}
+.tip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--bar);color:var(--bar-ink);font-size:12px;padding:6px 9px;border-radius:6px;white-space:nowrap;pointer-events:none;z-index:3;display:none}
+.wk:hover .tip,.wk:focus-visible .tip{display:block}
+.linkbtn{background:none;border:0;padding:0;color:var(--pri-t);font:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline}
+</style></head>
+<body>
+<div class="proto" role="region" aria-label="Comp controls">
+  <b>Collega · comp R — Usage analytics</b>
+  <div class="grp" role="group" aria-label="Signed in as"><span class="lbl">Signed in as</span>
+    <button data-role="site" aria-pressed="true">Site Admin</button><button data-role="org" aria-pressed="false">Org Admin (later)</button></div>
+  <div class="grp" role="group" aria-label="Data state"><span class="lbl">State</span>
+    <button data-state="data" aria-pressed="true">Established org</button><button data-state="new" aria-pressed="false">New org</button><button data-state="off" aria-pressed="false">Recording off</button></div>
+</div>
+<div class="note"><p>Throwaway comp for usage analytics (2026-10-27). Site Admin screen first; the Org Admin view is drawn so the screen doesn't paint itself into a corner and is built later. Views come from the new usage events (kept 90 days); changes come from the audit log. View As activity and members who turned recording off are never counted. Sample Acme Robotics data, today = Oct 27. Strings are COPY PROPOSED. Approved as drawn 2026-10-27.</p></div>
+<div class="app">
+  <aside class="side" aria-label="Main">
+    <div class="brand"><span class="mark">CG</span><span><b>Collega</b><small id="side-org">Platform</small></span></div>
+    <div class="navlbl" id="nav-group">Platform</div>
+    <button class="nav" disabled><span id="nav-a">Organizations</span></button>
+    <button class="nav" disabled><span id="nav-b">Users</span></button>
+    <button class="nav" aria-current="page"><span>Usage</span></button>
+    <button class="nav" disabled><span id="nav-c">AI prompts</span></button>
+    <div class="me"><span class="av" id="me-av" style="background:var(--av1);color:var(--av1i)">SA</span><span><b id="me-name">Sam Siteadmin</b><small id="me-role">Site Admin</small></span></div>
+  </aside>
+  <div class="main">
+    <div class="topbar"><span class="crumb" id="crumb"></span><span class="sp"></span>
+      <label class="themepick" for="theme">Theme
+        <select id="theme"><optgroup label="Light"><option value="terrazzo">Terrazzo</option><option value="portico">Portico</option><option value="sera">Piazza Sera</option><option value="lagoon">Lagoon</option></optgroup><optgroup label="Dark"><option value="graphite" selected>Graphite</option></optgroup></select></label></div>
+    <main class="work" id="work"></main>
+  </div>
+</div>
+<div class="vh" role="status" aria-live="polite" id="live"></div>
+<script>
+const S = { role: 'site', state: 'data', tab: 'overview', org: 'acme', range: '30', who: 'all', from: 'idea.opened', member: 'noah', tableView: false };
+const ORGS = { acme: 'Acme Robotics', blue: 'Blue Harbor Logistics', pine: 'Pinecone Labs' };
+const $ = (s) => document.querySelector(s), live = (m) => ($('#live').textContent = m);
+const fmt = (n) => n.toLocaleString('en-US');
+
+const DATA = {
+  data: {
+    stats: [['11 of 14', 'members active in the last 30 days'], ['2,418', 'views'], ['612', 'changes'], ['3.4', 'visits per active member per week']],
+    ms: [['Organization created', 'Sep 2', ''], ['First board made by a person', 'Sep 3', 'after 1 day'], ['First idea', 'Sep 3', 'after 1 day'], ['First comment', 'Sep 5', 'after 3 days'], ['Third active member', 'Sep 8', 'after 6 days'], ['First idea moved to a final lane', 'Sep 19', 'after 17 days']],
+    weeks: [14, 13, 12, 12, 11, 11, 10, 11, 11],
+    members: 14,
+    use: [
+      ['Board viewed', 'v', 812, 12, [3, 7, 2]], ['Idea opened', 'v', 744, 13, [3, 8, 2]], ['List viewed', 'v', 391, 11, [2, 7, 2]],
+      ['Search run', 'v', 188, 9, [2, 6, 1]], ['Filter applied', 'v', 163, 8, [2, 6, 0]], ['Idea status moved', 'c', 241, 9, [3, 6, 0]],
+      ['Comment added', 'c', 198, 11, [3, 8, 0]], ['Idea created', 'c', 117, 10, [2, 8, 0]], ['Settings viewed', 'v', 74, 4, [3, 1, 0]],
+      ['Admin screen viewed', 'v', 46, 3, [3, 0, 0]], ['Idea assistant used', 'c', 56, 6, [1, 5, 0]]]
+  },
+  new: {
+    stats: [['3 of 6', 'members active in the last 30 days'], ['94', 'views'], ['21', 'changes'], ['1.8', 'visits per active member per week']],
+    ms: [['Organization created', 'Oct 21', ''], ['First board made by a person', '', 'not yet'], ['First idea', 'Oct 22', 'after 1 day'], ['First comment', '', 'not yet'], ['Third active member', 'Oct 24', 'after 3 days'], ['First idea moved to a final lane', '', 'not yet']],
+    weeks: [3, 2],
+    members: 6,
+    use: [['Board viewed', 'v', 41, 3, [1, 2, 0]], ['Idea opened', 'v', 29, 3, [1, 2, 0]], ['Idea created', 'c', 9, 2, [1, 1, 0]], ['Settings viewed', 'v', 14, 1, [1, 0, 0]], ['Admin screen viewed', 'v', 10, 1, [1, 0, 0]]]
+  }
+};
+const PATHS = {
+  'idea.opened': [['Board viewed', 412, '0:48'], ['Comment added', 118, '1:52'], ['Opened another idea', 97, '0:21'], ['Idea status moved', 54, '1:10'], ['Idea edited', 26, '2:35'], ['Search run', 14, '0:30'], ['Left (no further action this visit)', 23, '']],
+  'board.viewed': [['Idea opened', 431, '0:19'], ['Idea status moved (drag)', 162, '0:42'], ['Filter applied', 88, '0:15'], ['List viewed', 61, '0:33'], ['Idea created', 37, '1:05'], ['Left (no further action this visit)', 33, '']],
+  'search.run': [['Idea opened', 121, '0:09'], ['Search run again', 44, '0:12'], ['Left (no further action this visit)', 23, '']],
+  'list.viewed': [['Idea opened', 204, '0:14'], ['Filter applied', 75, '0:10'], ['Board viewed', 64, '0:20'], ['Left (no further action this visit)', 48, '']]
+};
+const FROM = { 'idea.opened': 'Idea opened', 'board.viewed': 'Board viewed', 'search.run': 'Search run', 'list.viewed': 'List viewed' };
+const MEMBERS = { noah: ['Noah Contributor', 'User', false], maya: ['Maya Collaborator', 'User', true], olivia: ['Olivia Administer', 'Org Admin', false] };
+const TRAIL = [
+  ['Oct 27 · 09:12', 'v', 'Viewed board <b>Customer Insights</b>'],
+  ['Oct 27 · 09:13', 'v', 'Opened <b>CI-19</b> “Bulk export for audit reviews” from the board'],
+  ['Oct 27 · 09:15', 'c', 'Commented on <b>CI-19</b>'],
+  ['Oct 27 · 09:16', 'c', 'Moved <b>CI-19</b> from Review to Planned'],
+  ['Oct 27 · 09:20', 'v', 'Searched ideas (6 results, no text kept)'],
+  ['Oct 26 · 16:41', 'a', 'Sam Siteadmin acting as Noah: viewed board <b>Customer Insights</b> (not counted)'],
+  ['Oct 24 · 11:02', 'v', 'Viewed list <b>Ideas</b> with filters status, tag'],
+  ['Oct 24 · 11:04', 'c', 'Created idea <b>CI-23</b>']
+];
+const KIND = { v: ['v', 'Viewed'], c: ['c', 'Changed'], a: ['a', 'View As'] };
+
+const bar = (n, max) => `<span class="bar"><i style="width:${Math.max(2, Math.round(70 * n / max))}px"></i><span>${fmt(n)}</span></span>`;
+const isOrg = () => S.role === 'org';
+const old = () => S.range === 'older';
+
+function filters() {
+  const orgSel = isOrg() ? '' : `<label>Organization<select id="f-org"><option value="">Choose an organization</option>${Object.entries(ORGS).map(([k, v]) => `<option value="${k}"${S.org === k ? ' selected' : ''}>${v}</option>`).join('')}</select></label>`;
+  const opt = (v, l, cur) => `<option value="${v}"${cur === v ? ' selected' : ''}>${l}</option>`;
+  return `<div class="filters" role="group" aria-label="Filters">${orgSel}
+    <label>Period<select id="f-range">${opt('7', 'Last 7 days', S.range)}${opt('30', 'Last 30 days', S.range)}${opt('90', 'Last 90 days', S.range)}${opt('older', 'Older than 90 days (daily counts only)', S.range)}</select></label>
+    <label>Role<select id="f-who">${opt('all', 'All roles', S.who)}${opt('admin', 'Org Admins', S.who)}${opt('user', 'Users', S.who)}${opt('ro', 'Read Only', S.who)}</select></label></div>`;
+}
+function banners() {
+  let b = '';
+  if (S.state === 'off') b += `<div class="banner" role="note"><span>Recording of views has been off since Oct 20. Changes from the audit log still appear; views after that date are missing.</span></div>`;
+  return b;
+}
+function overview() {
+  const d = DATA[S.state === 'new' ? 'new' : 'data'];
+  const max = Math.max(...d.use.map((u) => u[2]));
+  const stats = `<div class="stats">${d.stats.map(([v, l]) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`).join('')}</div>`;
+  const ms = `<div class="panel"><h2>Getting started</h2><span class="muted">Milestones for this organization, from the audit log.</span><ul class="ms">${d.ms.map(([w, on, af]) => `<li class="${on ? '' : 'no'}"><span class="ck" aria-hidden="true">${on ? '✓' : '·'}</span><span class="what">${w}</span><span class="when">${on ? `${on}${af ? ' · ' + af : ''}` : af}</span></li>`).join('')}</ul></div>`;
+  const pk = Math.max(...d.weeks);
+  const weeksTable = `<table class="t"><thead><tr><th>Week</th><th class="n">Active members</th><th class="n">Share</th></tr></thead><tbody>${d.weeks.map((w, i) => `<tr><td>Week ${i}</td><td class="n">${w}</td><td class="n">${Math.round(100 * w / d.members)}%</td></tr>`).join('')}</tbody></table>`;
+  const weeksChart = `<div class="weeks" role="img" aria-label="Active members by week since the organization started">${d.weeks.map((w, i) => `<div class="wk" tabindex="0"><span class="tip">Week ${i}: ${w} of ${d.members} members (${Math.round(100 * w / d.members)}%)</span><small>${Math.round(100 * w / d.members)}%</small><i style="height:${Math.round(110 * w / pk)}px"></i></div>`).join('')}</div><div class="wkx">${d.weeks.map((_, i) => `<span>W${i}</span>`).join('')}</div>`;
+  const ret = `<div class="panel"><h2>Members coming back</h2><span class="muted">Share of ${d.members} members active each week since the organization started.</span>
+    ${d.weeks.length < 3 ? `<p class="foot">Only ${d.weeks.length} weeks so far. A trend shows from week 3.</p>` : ''}
+    ${S.tableView ? weeksTable : weeksChart}<p class="foot"><button class="linkbtn" data-tv>${S.tableView ? 'Show as chart' : 'Show as table'}</button></p></div>`;
+  const use = `<div class="panel"><h2>Feature use</h2><span class="muted">Views and changes in the period. People = distinct members.</span>
+    <div class="tw" style="margin-top:10px"><table class="t"><thead><tr><th>What</th><th>Kind</th><th>Count</th><th class="n">People</th><th class="n">Org Admins</th><th class="n">Users</th><th class="n">Read Only</th></tr></thead><tbody>
+    ${d.use.map(([w, k, n, p, r]) => `<tr><td>${w}</td><td><span class="kind ${KIND[k][0]}">${KIND[k][1]}</span></td><td>${bar(n, max)}</td><td class="n">${p}</td><td class="n">${r[0]}</td><td class="n">${r[1]}</td><td class="n">${r[2]}</td></tr>`).join('')}
+    </tbody></table></div>
+    <p class="foot">View As activity is not counted. 1 member has turned off recording: their views are not counted, their changes are.${old() ? ' Older than 90 days: counts per day only, no people or role split.' : ''}</p></div>`;
+  return `${stats}<div class="grid2">${ms}${ret}</div>${use}`;
+}
+function paths() {
+  if (old()) return `<div class="empty"><b>Paths need the last 90 days</b><p>Older periods keep daily counts only. Choose a period within the last 90 days.</p></div>`;
+  const rows = PATHS[S.from], tot = rows.reduce((a, r) => a + r[1], 0), max = Math.max(...rows.map((r) => r[1]));
+  return `<div class="panel"><div class="filters" style="margin:0 0 10px"><label>After<select id="f-from">${Object.entries(FROM).map(([k, v]) => `<option value="${k}"${S.from === k ? ' selected' : ''}>${v}</option>`).join('')}</select></label></div>
+    <h2>What people do next</h2><span class="muted">The next step within the same visit, top 10. ${fmt(tot)} times in the period.</span>
+    <div class="tw" style="margin-top:10px"><table class="t"><thead><tr><th>Next step</th><th>Times</th><th class="n">Share</th><th class="n">Typical wait</th></tr></thead><tbody>
+    ${rows.map(([w, n, t]) => `<tr><td>${w}</td><td>${bar(n, max)}</td><td class="n">${Math.round(100 * n / tot)}%</td><td class="n">${t || '—'}</td></tr>`).join('')}</tbody></table></div>
+    <p class="foot">A visit ends after 30 minutes without activity. Typical wait is the median.</p></div>`;
+}
+function trail() {
+  if (old()) return `<div class="empty"><b>The member trail covers the last 90 days</b><p>Older views are not kept. Changes stay in the audit log.</p></div>`;
+  const [name, role, optedOut] = MEMBERS[S.member];
+  const rows = optedOut ? TRAIL.filter((r) => r[1] === 'c') : TRAIL;
+  return `<div class="panel"><div class="filters" style="margin:0 0 10px"><label>Member<select id="f-member">${Object.entries(MEMBERS).map(([k, v]) => `<option value="${k}"${S.member === k ? ' selected' : ''}>${v[0]} · ${v[1]}</option>`).join('')}</select></label></div>
+    <h2>${name}</h2><span class="muted">${role} · views and changes, newest first. For support; only Site Admins see this.</span>
+    ${optedOut ? `<div class="banner" role="note" style="margin-top:10px"><span>${name} has turned off recording of feature use. Only changes from the audit log appear.</span></div>` : ''}
+    <div class="tw" style="margin-top:10px"><table class="t"><thead><tr><th>When</th><th>Kind</th><th>What</th></tr></thead><tbody>
+    ${rows.map(([w, k, t]) => `<tr class="${k === 'a' ? 'asx' : ''}"><td style="white-space:nowrap">${w}</td><td><span class="kind ${KIND[k][0]}">${KIND[k][1]}</span></td><td>${t}</td></tr>`).join('')}</tbody></table></div></div>`;
+}
+function page() {
+  const tabs = isOrg() ? [['overview', 'Overview'], ['paths', 'Paths']] : [['overview', 'Overview'], ['paths', 'Paths'], ['trail', 'Member trail']];
+  if (isOrg() && S.tab === 'trail') S.tab = 'overview';
+  const head = `<h1>${isOrg() ? 'Usage' : 'Usage analytics'}</h1><p class="lede">${isOrg() ? 'How your organization uses Collega: totals, milestones and common paths. Individual members’ views are never shown here.' : 'How each organization uses Collega. One organization at a time; nothing is pooled across organizations.'}</p>`;
+  if (!isOrg() && !S.org) return `<div class="page wide">${head}${filters()}<div class="empty"><b>Choose an organization</b><p>Usage is shown one organization at a time.</p></div></div>`;
+  const body = { overview, paths, trail }[S.tab]();
+  return `<div class="page wide">${head}${filters()}${banners()}<div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${S.tab === k}">${l}</button>`).join('')}</div>${body}</div>`;
+}
+function render() {
+  $('#work').innerHTML = page();
+  $('#crumb').innerHTML = isOrg() ? 'Settings › <b>Usage</b>' : `Platform › <b>Usage</b>${S.org ? ' › ' + ORGS[S.org] : ''}`;
+  $('#nav-group').textContent = isOrg() ? 'Configure' : 'Platform';
+  [['#nav-a', 'Settings', 'Organizations'], ['#nav-b', 'Members', 'Users'], ['#nav-c', 'Statuses', 'AI prompts']].forEach(([id, o, p]) => { $(id).textContent = isOrg() ? o : p; });
+  $('#side-org').textContent = isOrg() ? 'Acme Robotics' : 'Platform';
+  $('#me-av').textContent = isOrg() ? 'OA' : 'SA';
+  $('#me-name').textContent = isOrg() ? 'Olivia Administer' : 'Sam Siteadmin';
+  $('#me-role').textContent = isOrg() ? 'Org Admin' : 'Site Admin';
+  document.querySelectorAll('[data-role]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.role === S.role));
+  document.querySelectorAll('[data-state]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.state === S.state));
+}
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.role) { S.role = t.dataset.role; if (isOrg()) S.org = 'acme'; }
+  else if (t.dataset.state) S.state = t.dataset.state;
+  else if (t.dataset.tab) S.tab = t.dataset.tab;
+  else if (t.dataset.tv !== undefined) S.tableView = !S.tableView;
+  else return;
+  render();
+});
+document.addEventListener('change', (e) => {
+  const id = e.target.id, v = e.target.value;
+  if (id === 'theme') { document.documentElement.setAttribute('data-proto-theme', v); return; }
+  const map = { 'f-org': 'org', 'f-range': 'range', 'f-who': 'who', 'f-from': 'from', 'f-member': 'member' };
+  if (!map[id]) return;
+  S[map[id]] = v; render(); live('Updated'); document.getElementById(id)?.focus();
+});
+render();
+</script>
+</body>
+</html>

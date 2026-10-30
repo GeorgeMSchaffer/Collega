@@ -1,3 +1,4 @@
+import type { BoardAccessLookup } from '@collega/application/boards'
 import type { Clock, CurrentUserContext, UnitOfWork } from '@collega/application/common'
 import type { IdeaFollowerRepository, IdeaLookupPort } from '@collega/application/following'
 import { FollowService } from '@collega/application/following'
@@ -24,13 +25,15 @@ import { FollowingController } from './following.controller.js'
         unitOfWork: UnitOfWork,
         currentUser: CurrentUserContext,
         clock: Clock,
-      ) => new FollowService(followers, ideas, unitOfWork, currentUser, clock),
+        boardAccess: BoardAccessLookup,
+      ) => new FollowService(followers, ideas, unitOfWork, currentUser, clock, boardAccess),
       inject: [
         PORT_TOKENS.IdeaFollowerRepository,
         PORT_TOKENS.IdeaLookupPort,
         PORT_TOKENS.UnitOfWork,
         PORT_TOKENS.CurrentUserContext,
         PORT_TOKENS.Clock,
+        PORT_TOKENS.BoardAccessLookup,
       ],
     },
   ],

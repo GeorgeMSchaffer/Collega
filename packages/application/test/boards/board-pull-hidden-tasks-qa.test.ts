@@ -28,6 +28,9 @@ function setup(user: CurrentUserContext, answer: PullCandidatePage) {
       filters.push(filter)
       return answer
     },
+    async visibleBoardIds() {
+      return []
+    },
   } as unknown as BoardRepository
   const service = new BoardService(
     boards,

@@ -11,6 +11,8 @@ import { NotificationEventType, Role } from '@collega/domain/enums'
 import { createNotificationEvent } from '@collega/domain/notifications'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { PrismaClient } from '../src/generated/prisma/index.js'
+import { PrismaUnitOfWork } from '../src/persistence/unit-of-work.js'
+import { PrismaBoardRepository } from '../src/repositories/board.repository.js'
 import { PrismaNotificationEventRepository } from '../src/repositories/notification-event.repository.js'
 import { type ProbeOrg, probeOrg } from './support/following-probe.js'
 
@@ -458,6 +460,7 @@ describe.skipIf(!DATABASE_URL)('The notification inbox, against a live database'
           realUserId: admin,
         },
         { now: () => NOW },
+        new PrismaBoardRepository(prisma, new PrismaUnitOfWork(prisma)),
       )
 
       const page = await service.list({ page: null, pageSize: null, unreadOnly: false })

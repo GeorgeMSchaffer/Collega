@@ -19,6 +19,8 @@ import {
   reorderIssueTasks,
   updateIssueTask,
 } from '@collega/domain/issue-tasks'
+import { ensureCanSeeBoard } from '../boards/board-access.js'
+import type { BoardAccessLookup } from '../boards/ports.js'
 import {
   type Clock,
   type CurrentUserContext,
@@ -52,6 +54,7 @@ export class IssueTaskService {
     private readonly unitOfWork: UnitOfWork,
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
+    private readonly boardAccess: BoardAccessLookup,
   ) {}
 
   /** Reading the checklist is available to anyone who can see the Issue, Read Only included. */
@@ -100,7 +103,11 @@ export class IssueTaskService {
 
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
-    const assigneeUserId = await this.resolveAssignee(idea, command.assigneeUserId)
+    const assigneeUserId = await this.resolveAssignee(
+      idea,
+      command.assigneeUserId,
+      existing.assigneeUserId,
+    )
 
     const task = runDomain(
       updateIssueTask,
@@ -224,7 +231,11 @@ export class IssueTaskService {
   /** A task assignee need NOT be an assignee of the parent Issue - any active user in the org
    * qualifies (spec "Task assignee"). Constraining it to the Issue's assignees would force
    * spurious Issue assignments just to name a helper. */
-  private async resolveAssignee(idea: Idea, assigneeUserId: string | null): Promise<string | null> {
+  private async resolveAssignee(
+    idea: Idea,
+    assigneeUserId: string | null,
+    existingAssigneeUserId: string | null = null,
+  ): Promise<string | null> {
     const trimmed = assigneeUserId?.trim()
     if (!trimmed) {
       return null
@@ -239,6 +250,17 @@ export class IssueTaskService {
     ) {
       throw new ValidationError('One or more fields are invalid.', {
         assigneeUserId: ['Assignee must be an active user in this organization.'],
+      })
+    }
+    // BAG-4h: a new assignee must be able to see the Issue's board; the current one is kept.
+    if (
+      user.id !== existingAssigneeUserId &&
+      idea.boardId !== null &&
+      user.role !== Role.OrgAdmin &&
+      !(await this.boardAccess.canSeeBoard(idea.boardId, idea.organizationId, user.id))
+    ) {
+      throw new ValidationError('One or more fields are invalid.', {
+        assigneeUserId: [`'${`${user.firstName} ${user.lastName}`.trim()}' can't see this board.`],
       })
     }
     return user.id
@@ -276,6 +298,7 @@ export class IssueTaskService {
       // 404, not 403: confirming the Issue exists elsewhere is the thing being fished for.
       throw new NotFoundError('Idea not found.')
     }
+    await ensureCanSeeBoard(this.boardAccess, this.currentUser, idea.boardId, 'Idea not found.')
     return idea
   }
 

@@ -63,6 +63,8 @@ export type IdeaListFilter = {
 
 export type OrganizationIdeaListFilter = {
   readonly organizationId: string
+  /** Boards the caller may see (BAG-4c); `null` is every board. Items on no board always pass. */
+  readonly visibleBoardIds: readonly string[] | null
   readonly createdByUserId: string | null
   readonly assignedToUserId: string | null
   readonly page: PageRequest
@@ -148,6 +150,9 @@ export interface IdeaRepository {
    */
   countChildrenByParentIds(
     parentIds: readonly string[],
+    /** Counts only children on these boards or on none (BAG-4d); omitted or `null` counts all.
+     * Rules such as the reference-lane lock count every child and leave this out. */
+    visibleBoardIds?: readonly string[] | null,
   ): Promise<ReadonlyMap<string, { readonly total: number; readonly done: number }>>
 
   /** True when the idea has at least one live child sitting on `boardId`. */
@@ -156,6 +161,8 @@ export interface IdeaRepository {
 
 export type DeliveryFilter = {
   readonly organizationId: string
+  /** Boards the caller may see (BAG-4c); `null` is every board. Items on no board always pass. */
+  readonly visibleBoardIds: readonly string[] | null
   /** `null` with `backlogOnly` false spans every Delivery item in the organization. */
   readonly sprintId: string | null
   /** True reads the backlog: Delivery items with no sprint. */

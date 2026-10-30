@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from '@collega/design-system'
 import Link from 'next/link'
+import { UsageViewed } from '@/components/analytics/usage-viewed'
 import { PageHeader } from '@/components/common/page-header'
 import { Topbar } from '@/components/nav/topbar'
 import { requireCurrentUser } from '@/lib/server/current-user'
@@ -35,7 +36,17 @@ const PROFILE: Section = {
  * reason and replaced by AI Prompt, which is the deployment-level surface a Site Admin does own.
  */
 function sectionsFor(role: Role): Section[] {
-  if (!isAdministrator(role)) return [PROFILE]
+  if (!isAdministrator(role)) {
+    return [
+      PROFILE,
+      {
+        href: '/settings/groups',
+        title: 'Groups',
+        blurb:
+          'Who is in each group. Groups give access to Restricted boards; an Org Admin manages them.',
+      },
+    ]
+  }
 
   if (role === 'SiteAdmin') {
     return [
@@ -97,6 +108,11 @@ function sectionsFor(role: Role): Section[] {
         blurb: 'Every organization’s tags and their colours, read-only.',
       },
       {
+        href: '/settings/login-messages',
+        title: 'System messages',
+        blurb: 'Messages every user in every organization sees after signing in.',
+      },
+      {
         href: '/settings/ai-prompt',
         title: 'AI prompt',
         blurb:
@@ -107,6 +123,11 @@ function sectionsFor(role: Role): Section[] {
         href: '/settings/api-usage',
         title: 'API usage',
         blurb: 'Assistant token consumption and estimated cost, per organization.',
+      },
+      {
+        href: '/settings/usage-analytics',
+        title: 'Usage analytics',
+        blurb: 'How one organization uses Collega: totals, milestones, paths and member trails.',
       },
     ]
   }
@@ -122,6 +143,11 @@ function sectionsFor(role: Role): Section[] {
       href: '/settings/boards',
       title: 'Boards',
       blurb: 'The boards you track ideas on, and which statuses become each one’s swimlanes.',
+    },
+    {
+      href: '/settings/groups',
+      title: 'Groups',
+      blurb: 'Named sets of people to give access to Restricted boards in one step.',
     },
     {
       href: '/settings/statuses',
@@ -148,6 +174,12 @@ function sectionsFor(role: Role): Section[] {
       title: 'Tags',
       blurb:
         'Labels for ideas on every board: their colours, and adding, renaming or deleting them.',
+    },
+    {
+      href: '/settings/login-messages',
+      title: 'Sign-in messages',
+      blurb:
+        'Messages everyone in this organization sees after signing in, and who has acknowledged them.',
     },
     {
       href: '/settings/ai-assist',
@@ -180,6 +212,7 @@ export default async function SettingsPage() {
 
   return (
     <>
+      <UsageViewed type="settings.viewed" screen />
       <Topbar title={<b>Settings</b>} />
       <main className="flex min-w-0 flex-1 flex-col gap-6 p-6">
         <PageHeader

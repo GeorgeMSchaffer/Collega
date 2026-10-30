@@ -13,6 +13,8 @@ import {
   updateTag,
   validateTagName,
 } from '@collega/domain/tags'
+import { visibleBoardIdsFor } from '../boards/board-access.js'
+import type { VisibleBoardsLookup } from '../boards/ports.js'
 import {
   type AuditEventWriter,
   attributeAudit,
@@ -45,6 +47,7 @@ export class TagService {
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
     private readonly random: RandomSource,
+    private readonly boardAccess: VisibleBoardsLookup,
   ) {}
 
   /**
@@ -175,7 +178,10 @@ export class TagService {
     if (tags.length === 0) {
       return []
     }
-    const usage = await this.tags.usageByTagIds(tags.map((t) => t.id))
+    const usage = await this.tags.usageByTagIds(
+      tags.map((t) => t.id),
+      await visibleBoardIdsFor(this.boardAccess, this.currentUser),
+    )
     const creatorIds = [
       ...new Set(tags.flatMap((t) => (t.createdByUserId === null ? [] : [t.createdByUserId]))),
     ]

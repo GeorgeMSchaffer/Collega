@@ -56,6 +56,8 @@ export const PORT_TOKENS = {
 
   // Boards (packages/application/src/boards/ports.ts) --------------------------------------------
   BoardRepository: 'BoardRepository',
+  BoardAccessLookup: 'BoardAccessLookup',
+  VisibleBoardsLookup: 'VisibleBoardsLookup',
   OrganizationExistenceLookup: 'OrganizationExistenceLookup',
 
   // Business impacts (packages/application/src/business-impacts/ports.ts) -----------------------
@@ -76,6 +78,10 @@ export const PORT_TOKENS = {
 
   // Fieldsets (packages/application/src/fieldsets/ports.ts) -------------------------------------
   FieldsetRepository: 'FieldsetRepository',
+
+  // Groups (packages/application/src/groups/ports.ts) -------------------------------------------
+  GroupRepository: 'GroupRepository',
+  GroupMemberLookup: 'GroupMemberLookup',
 
   // Idea Fields (packages/application/src/idea-fields/ports.ts) ----------------------------------
   IdeaTypeRepository: 'IdeaTypeRepository',
@@ -102,6 +108,14 @@ export const PORT_TOKENS = {
   OutcomeReadsPort: 'OutcomeReadsPort',
   OutcomeIdeasPort: 'OutcomeIdeasPort',
   OutcomeUsersPort: 'OutcomeUsersPort',
+
+  // Sign-in messages (packages/application/src/login-messages/ports.ts) --------------------------
+  LoginMessageRepository: 'LoginMessageRepository',
+
+  // Usage analytics (packages/application/src/usage/ports.ts) -----------------------------------
+  UsageEventStore: 'UsageEventStore',
+  UsageTrackingPreferences: 'UsageTrackingPreferences',
+  UsageReports: 'UsageReports',
 
   // Metric types (packages/application/src/metric-types/ports.ts) -------------------------------
   MetricTypeRepository: 'MetricTypeRepository',

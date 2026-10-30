@@ -25,6 +25,7 @@ import type { TagOverview } from '@/lib/types'
 import { TagDrawer, type TagDrawerMode, type TagUsage } from './tag-drawer'
 
 const CONFIG: ListConfig = {
+  usageList: 'tags',
   filters: ['usage'],
   views: ['list'],
   sortKeys: ['name', 'organization', 'ideas', 'boards', 'created'],
@@ -206,6 +207,7 @@ export function TagsScreen({
       ) : (
         <>
           <ListToolbar
+            searchUsage={{ scope: 'tags', resultCount: filtered.length }}
             query={state.q}
             onQueryChange={(q) => update({ q })}
             placeholder="Filter by tag…"

@@ -36,6 +36,8 @@ import {
   updateIdeaContent,
 } from '@collega/domain/ideas'
 import { normalizeTagName } from '@collega/domain/tags'
+import { ensureCanSeeBoard, visibleBoardIdsFor } from '../boards/board-access.js'
+import type { BoardAccessLookup, VisibleBoardsLookup } from '../boards/ports.js'
 import type {
   AuditEventWriter,
   Clock,
@@ -175,6 +177,7 @@ export class IdeaService {
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
     private readonly random: RandomSource,
+    private readonly boardAccess: BoardAccessLookup & VisibleBoardsLookup,
     /** Optional so a host that has no metric values reads `metrics` as `[]`. */
     private readonly metricValues?: Pick<IdeaMetricValuesPort, 'listByIdea'>,
     /** Optional like `metricValues`; the activity read needs it. */
@@ -188,7 +191,7 @@ export class IdeaService {
     if (!board) {
       throw new NotFoundError('Board not found.')
     }
-    this.ensureOrganizationScope(board.organizationId)
+    await this.ensureCanSeeBoardOf(board)
 
     const search = trimOrNull(query.search)
     const searchTextFieldIds = search
@@ -254,6 +257,7 @@ export class IdeaService {
     const page = normalizePageRequest(toPageRequestInput(query.page, query.pageSize))
     const ideasPage = await this.ideaRepository.listByOrganization({
       organizationId,
+      visibleBoardIds: await visibleBoardIdsFor(this.boardAccess, this.currentUser),
       createdByUserId,
       assignedToUserId,
       page,
@@ -290,7 +294,7 @@ export class IdeaService {
     if (!board) {
       throw new NotFoundError('Board not found.')
     }
-    this.ensureOrganizationScope(board.organizationId)
+    await this.ensureCanSeeBoardOf(board)
     ensureBoardNotArchived(board)
 
     const statusId = command.statusId ?? leftMostStatusId(board)
@@ -388,7 +392,7 @@ export class IdeaService {
     if (!parent) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(parent.organizationId)
+    await this.ensureCanSeeIdea(parent)
     await this.ensureIdeaBoardNotArchived(parent)
 
     return this.addBoardTask(parent, command)
@@ -412,7 +416,7 @@ export class IdeaService {
     if (!board) {
       throw new NotFoundError('Board not found.')
     }
-    this.ensureOrganizationScope(board.organizationId)
+    await this.ensureCanSeeBoardOf(board)
     if (!(await this.boards.isReferencedByLane(boardId))) {
       throw new UnprocessableError(
         'boardIsNotAWorkBoard',
@@ -427,7 +431,7 @@ export class IdeaService {
       throw new NotFoundError('Idea not found.')
     }
     if (parent) {
-      this.ensureOrganizationScope(parent.organizationId)
+      await this.ensureCanSeeIdea(parent)
       await this.ensureIdeaBoardNotArchived(parent)
     }
     const sprintId = await this.resolveTaskSprint(board, command.sprintId)
@@ -507,9 +511,13 @@ export class IdeaService {
     if (!parent) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(parent.organizationId)
+    await this.ensureCanSeeIdea(parent)
 
-    const tasks = await this.ideaRepository.listChildren(parent.id)
+    // A task on a board the caller cannot see is left out (BAG-4c), not shown redacted.
+    const visible = await visibleBoardIdsFor(this.boardAccess, this.currentUser)
+    const tasks = (await this.ideaRepository.listChildren(parent.id)).filter(
+      (task) => visible === null || task.boardId === null || visible.includes(task.boardId),
+    )
     if (tasks.length === 0) {
       return []
     }
@@ -553,13 +561,14 @@ export class IdeaService {
     if (!parent) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(parent.organizationId)
+    await this.ensureCanSeeIdea(parent)
     await this.ensureIdeaBoardNotArchived(parent)
 
     const task = await this.ideaRepository.getById(taskId, false)
     if (!task || task.parentIdeaId !== parent.id) {
       throw new NotFoundError('Task not found.')
     }
+    await ensureCanSeeBoard(this.boardAccess, this.currentUser, task.boardId, 'Task not found.')
 
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
@@ -764,10 +773,16 @@ export class IdeaService {
     await this.getActiveIdeaType(organizationId, command.ideaTypeId)
     await this.ensureActiveBusinessImpact(organizationId, command.businessImpactId)
 
-    const assigneeIds = await this.resolveAssignees(organizationId, command.assigneeUserIds, [])
+    const assigneeIds = await this.resolveAssignees(
+      organizationId,
+      boardId,
+      command.assigneeUserIds,
+      [],
+    )
     const tagIds = await this.resolveTags(organizationId, command.tagNames, now, authorId)
     const mentionIds = await this.resolveMentions(
       organizationId,
+      boardId,
       command.mentionEmails,
       'mentionEmails',
     )
@@ -907,7 +922,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
 
     const actorId = this.requireAuthenticatedUserId()
     if (!this.canAdministerIdeaContent(idea, actorId)) {
@@ -959,7 +974,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
 
     return this.projectDetail(idea)
   }
@@ -975,7 +990,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
 
     const page = normalizePageRequest(toPageRequestInput(query.page, query.pageSize))
     return this.activity?.listForIdea(ideaId, page) ?? toPage([], 0, page)
@@ -990,7 +1005,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
     await this.ensureIdeaBoardNotArchived(idea)
 
     const now = this.clock.now()
@@ -1037,12 +1052,14 @@ export class IdeaService {
 
     const assigneeIds = await this.resolveAssignees(
       idea.organizationId,
+      idea.boardId,
       command.assigneeUserIds,
       existingAssignees,
     )
     const tagIds = await this.resolveTags(idea.organizationId, command.tagNames, now, actorId)
     const mentionIds = await this.resolveMentions(
       idea.organizationId,
+      idea.boardId,
       command.mentionEmails,
       'mentionEmails',
     )
@@ -1172,7 +1189,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
     if (!(await this.isTaskItem(idea))) {
       // Only if it stopped being a task since the route asked.
       throw new ConflictError('This item is no longer a task.')
@@ -1189,6 +1206,7 @@ export class IdeaService {
     const existingAssignees = [...idea.assigneeUserIds]
     const assigneeIds = await this.resolveAssignees(
       idea.organizationId,
+      idea.boardId,
       command.assigneeUserIds,
       existingAssignees,
     )
@@ -1246,7 +1264,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
     if (idea.organizationId !== organizationId) {
       throw new NotFoundError('Idea not found.')
     }
@@ -1305,7 +1323,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
     await this.ensureIdeaBoardNotArchived(idea)
 
     const blockerIds = [...new Set(ideaIds)]
@@ -1317,6 +1335,13 @@ export class IdeaService {
       if (!blocker || blocker.organizationId !== idea.organizationId) {
         throw new NotFoundError('Idea not found.')
       }
+      // A blocker on a board the caller cannot see is refused as a missing id is (BAG-4e).
+      await ensureCanSeeBoard(
+        this.boardAccess,
+        this.currentUser,
+        blocker.boardId,
+        'Idea not found.',
+      )
       if (blocker.boardId === null || blocker.boardId !== idea.boardId) {
         throw new UnprocessableError(
           'blockerOnOtherBoard',
@@ -1443,7 +1468,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
 
     // A pool idea sits in no lane; only a pull sets its status (board pull-in rule 2).
     if (idea.boardId === null) {
@@ -1587,7 +1612,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
 
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
@@ -1643,7 +1668,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
 
     if (!this.canAdministerIdeaContent(idea, null, true)) {
       throw new ForbiddenError('You are not allowed to return an issue to discovery.')
@@ -1679,7 +1704,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
 
     const now = this.clock.now()
     const actorId = this.requireAuthenticatedUserId()
@@ -1722,7 +1747,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
 
     if (!this.canAdministerIdeaContent(idea, null, true)) {
       throw new ForbiddenError('You are not allowed to assign issues to a sprint.')
@@ -1786,7 +1811,7 @@ export class IdeaService {
     if (!board) {
       throw new NotFoundError('Board not found.')
     }
-    this.ensureOrganizationScope(board.organizationId)
+    await this.ensureCanSeeBoardOf(board)
     ensureBoardNotArchived(board)
 
     const ideaIds = command.ideaIds
@@ -1941,6 +1966,7 @@ export class IdeaService {
     const boardSprint = sprintId ? (await this.sprints.getById(sprintId))?.boardId : null
     const ideas = await this.ideaRepository.listDelivery({
       organizationId,
+      visibleBoardIds: await visibleBoardIdsFor(this.boardAccess, this.currentUser),
       sprintId,
       backlogOnly: sprintId === null,
       deliveryStatus: parseOptionalDeliveryStatus(query.deliveryStatus),
@@ -1962,7 +1988,7 @@ export class IdeaService {
     if (!idea) {
       throw new NotFoundError('Idea not found.')
     }
-    this.ensureOrganizationScope(idea.organizationId)
+    await this.ensureCanSeeIdea(idea)
     if (idea.phase !== IdeaPhase.Delivery) {
       throw new NotFoundError('Idea not found.')
     }
@@ -1987,6 +2013,11 @@ export class IdeaService {
     // Deletion is restricted to Site Admin or an in-scope Org Admin (rule #16 / "Permissions").
     // Deliberately no separate `ensureOrganizationScope` call here - matches the pre-migration API, where
     // `canAdministerIdeaContent`'s own org check is what a cross-org Org Admin fails.
+    // Board sight comes first, so an item on a board the caller cannot see is `404` like a missing
+    // one rather than a `403` that confirms it exists (BAG-4b).
+    if (idea.organizationId === this.currentUser.organizationId) {
+      await ensureCanSeeBoard(this.boardAccess, this.currentUser, idea.boardId, 'Idea not found.')
+    }
     if (!this.canAdministerIdeaContent(idea, null, true)) {
       throw new ForbiddenError('You are not allowed to delete ideas.')
     }
@@ -2017,7 +2048,7 @@ export class IdeaService {
     if (!board) {
       throw new NotFoundError('Board not found.')
     }
-    this.ensureOrganizationScope(board.organizationId)
+    await this.ensureCanSeeBoardOf(board)
 
     // Page through the store, but bounded - every idea, its tags, its field-value snapshot, and
     // the rendered CSV are all held in memory at once, and the endpoint is reachable by any
@@ -2129,7 +2160,7 @@ export class IdeaService {
     if (!board) {
       throw new NotFoundError('Board not found.')
     }
-    this.ensureOrganizationScope(board.organizationId)
+    await this.ensureCanSeeBoardOf(board)
     ensureBoardNotArchived(board)
 
     const now = this.clock.now()
@@ -2732,7 +2763,10 @@ export class IdeaService {
     const counts =
       parentIds.length === 0
         ? new Map()
-        : await this.ideaRepository.countChildrenByParentIds(parentIds)
+        : await this.ideaRepository.countChildrenByParentIds(
+            parentIds,
+            await visibleBoardIdsFor(this.boardAccess, this.currentUser),
+          )
     return {
       isTaskCard,
       hidesIdeaFeatures: (idea) =>
@@ -2867,6 +2901,7 @@ export class IdeaService {
 
   private async resolveAssignees(
     organizationId: string,
+    boardId: string | null,
     requested: readonly string[] | null,
     existing: readonly string[],
   ): Promise<readonly string[]> {
@@ -2897,6 +2932,13 @@ export class IdeaService {
       // if they later became inactive (rule #12).
       if (user.status !== UserStatus.Active && !existingSet.has(id)) {
         errors.push(`Assignee '${user.email}' is not an active user and cannot be newly assigned.`)
+        continue
+      }
+
+      // BAG-4h: a newly assigned user must be able to see the item's board. A user already
+      // assigned is kept, as an inactive one is.
+      if (!existingSet.has(id) && !(await this.userCanSeeBoard(user, boardId))) {
+        errors.push(`'${`${user.firstName} ${user.lastName}`.trim()}' can't see this board.`)
       }
     }
 
@@ -2959,6 +3001,7 @@ export class IdeaService {
    * mention resolution, kept local since Ideas is the only owner of `IdeaMention`. */
   private async resolveMentions(
     organizationId: string,
+    boardId: string | null,
     mentionEmails: readonly string[] | null,
     fieldName: string,
   ): Promise<readonly string[]> {
@@ -2990,6 +3033,11 @@ export class IdeaService {
         user.status !== UserStatus.Active
       ) {
         errors.push(`Mention '${trimmed}' could not be resolved to a user in your organization.`)
+        continue
+      }
+      // BAG-4h: a mention notifies, so it may name only someone who can see the item's board.
+      if (!(await this.userCanSeeBoard(user, boardId))) {
+        errors.push(`'${`${user.firstName} ${user.lastName}`.trim()}' can't see this board.`)
         continue
       }
 
@@ -3069,6 +3117,29 @@ export class IdeaService {
     if (this.requireAuthenticatedRole() === Role.ReadOnly) {
       throw new ForbiddenError('Read Only users cannot create or edit ideas.')
     }
+  }
+
+  /** Whether `user` (not the caller) can see `boardId`; an item on no board is seen by everyone. */
+  private async userCanSeeBoard(user: UserSummary, boardId: string | null): Promise<boolean> {
+    if (boardId === null || user.role === Role.OrgAdmin || user.role === Role.SiteAdmin) {
+      return true
+    }
+    return (
+      user.organizationId !== null &&
+      this.boardAccess.canSeeBoard(boardId, user.organizationId, user.id)
+    )
+  }
+
+  /** Organization scope, then board sight: an item on a board the caller cannot see is `404`
+   * (SPEC/20-feature-board-access-and-groups.md BAG-4a/b). */
+  private async ensureCanSeeIdea(idea: Pick<Idea, 'organizationId' | 'boardId'>): Promise<void> {
+    this.ensureOrganizationScope(idea.organizationId)
+    await ensureCanSeeBoard(this.boardAccess, this.currentUser, idea.boardId, 'Idea not found.')
+  }
+
+  private async ensureCanSeeBoardOf(board: BoardContext): Promise<void> {
+    this.ensureOrganizationScope(board.organizationId)
+    await ensureCanSeeBoard(this.boardAccess, this.currentUser, board.boardId, 'Board not found.')
   }
 
   private ensureOrganizationScope(organizationId: string): void {

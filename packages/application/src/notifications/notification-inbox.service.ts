@@ -1,4 +1,6 @@
 import { UserStatus } from '@collega/domain/enums'
+import { visibleBoardIdsFor } from '../boards/board-access.js'
+import type { VisibleBoardsLookup } from '../boards/ports.js'
 import type { Clock, CurrentUserContext } from '../common/index.js'
 import { NotFoundError, normalizePageRequest, UnauthorizedError } from '../common/index.js'
 import type { InboxItem, InboxPage, InboxQuery, UnreadCountResult } from './models.js'
@@ -22,6 +24,7 @@ export class NotificationInboxService {
     private readonly inbox: NotificationInboxRepository,
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
+    private readonly boardAccess: VisibleBoardsLookup,
   ) {}
 
   async list(query: InboxQuery): Promise<InboxPage> {
@@ -30,6 +33,7 @@ export class NotificationInboxService {
       recipientUserId,
       sinceUtc: this.windowStart(),
       unreadOnly: query.unreadOnly,
+      visibleBoardIds: await visibleBoardIdsFor(this.boardAccess, this.currentUser),
       page: normalizePageRequest({
         ...(query.page !== null ? { page: query.page } : {}),
         ...(query.pageSize !== null ? { pageSize: query.pageSize } : {}),
@@ -47,7 +51,12 @@ export class NotificationInboxService {
 
   async unreadCount(): Promise<UnreadCountResult> {
     const recipientUserId = this.requireAuthenticatedUserId()
-    return { unreadCount: await this.inbox.countUnread(recipientUserId, this.windowStart()) }
+    const unreadCount = await this.inbox.countUnread(
+      recipientUserId,
+      this.windowStart(),
+      await visibleBoardIdsFor(this.boardAccess, this.currentUser),
+    )
+    return { unreadCount }
   }
 
   async markRead(notificationId: string): Promise<void> {

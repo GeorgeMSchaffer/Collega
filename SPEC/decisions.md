@@ -28,6 +28,13 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-10-28 | The Site Admin usage screen: placement, older period, named trail rows | active | full below |
+| 2026-10-28 | The usage report reads bound older periods and trail paging | active | full below |
+| 2026-10-28 | `GET /auth/me` reports `requiresPasswordChange` | active | full below |
+| 2026-10-28 | The usage rollup runs on `GET`, one day per transaction | active | full below |
+| 2026-10-27 | Sign-in messages show on the first page after signing in only | active | full below |
+| 2026-10-27 | Usage analytics records what members view, tied to their account | active | full below |
+| 2026-10-27 | Admins can post sign-in messages, system-wide or per organization | active | full below |
 | 2026-10-26 | A board can be Restricted to named users and groups | active | full below |
 | 2026-10-26 | An MCP server lets members' AI clients read their organization's data; Auth0 is the authorization server | active | full below |
 | 2026-10-25 | A Sprints page shows every sprint in three columns (Upcoming, Ongoing, Completed) | active | full below |
@@ -40,7 +47,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-10-22 | Users always move ideas between statuses | active | full below |
 | 2026-10-22 | A board can limit which idea types it takes | active | full below |
 | 2026-10-21 | Board key prefixes are derived, not typed | active | full below |
-| 2026-10-21 | Analytics runs without a consent banner | Current | Full below |
+| 2026-10-21 | Analytics runs without a consent banner | active; revisited 2026-10-27 | full below |
 | 2026-10-21 | Production runs with `COLLEGA_ALLOW_DEMO_SEED` set | active | full below |
 | 2026-10-20 | Idea assistant v2: enablement gate passed; the v1 default prompt stays | active | full below |
 | 2026-10-20 | Idea assistant v2: the idea type never auto-routes to a board | active | full below |
@@ -151,6 +158,169 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-10-28 — The Site Admin usage screen: placement, older period, named trail rows
+
+> Spec: `SPEC/20-feature-analytics.md` rule 19; contract: `SPEC/contracts/usage.md`; comp
+> `comp-r-usage-analytics.html`. Slice 367 review; this entry records the owner's answers.
+
+**Decided by the owner (2026-10-28).**
+
+- **Placement:** the screen is a Settings page, `/settings/usage-analytics`, beside API usage, like
+  the other Site Admin screens. The comp's own sidebar item is not built.
+- **Older period:** "Older than 90 days (daily counts only)" covers 180 days ago to 90 days ago
+  (UTC; `to` is the retention start, exclusive), as long as the longest recent period. The API
+  allows up to 366 days (entry below); the screen asks for 90.
+- **Named trail rows:** member trail rows name the board, idea, status and View As admin, as the
+  comp draws them. The client resolves names from existing reads (board and status lists, idea and
+  user detail), as `contracts/usage.md` allows. Accepted cost: one idea read per distinct idea on a
+  page (up to 100); a name that can't be read falls back to "a board" or "an idea".
+
+## 2026-10-28 — The usage report reads bound older periods and trail paging
+
+> Spec: `SPEC/20-feature-analytics.md` Part 3; contract: `SPEC/contracts/usage.md` (overview,
+> trail). Slice 366 review fixes (373); this entry records the owner's approval after review.
+
+**Decided by the owner (2026-10-28).** Each is a `400` with the shared validation error.
+
+- **An older overview period covers at most 366 days.** A period wholly before retention reads daily
+  counts and the audit log; a year bounds that scan. Periods within retention keep the contract's
+  90-day cap.
+- **An overview period that crosses the retention boundary is refused (`from`).** It is neither raw
+  nor daily-only, and the overview never mixes the two. `dailyOnly: true` still means the whole
+  period is older than retention. Slice 367's period picker offers either side, not both.
+- **The trail's `page` is at most 10,000.** It bounds the offset; nobody pages a support record that
+  far.
+
+## 2026-10-28 — `GET /auth/me` reports `requiresPasswordChange`
+
+> Spec: `SPEC/20-feature-analytics.md` rule 13; contract: `SPEC/contracts/auth.md`. Owner decision,
+> slice 365 review.
+
+- **What:** `GET /auth/me` adds `requiresPasswordChange`, `true` while the signed-in account must
+  change its password. Only that route returns it; the shared user summary is unchanged.
+- **Why:** rule 13 says the web client sends no usage events while a password change is required.
+  The client could not see that state: `/auth/me` is on the rotation allowlist, so a member
+  mid-rotation who opens a desk URL still gets the layout. The owner chose to report the flag over
+  accepting batches the rotation gate would refuse.
+- **Not changed:** the rotation allowlist (`contracts/auth.md`) stays at two routes, and the intake
+  route stays off it.
+
+## 2026-10-28 — The usage rollup runs on `GET`, one day per transaction
+
+> Spec: `SPEC/20-feature-analytics.md` rule 17; contract: `SPEC/contracts/usage.md`. Slice 364 built
+> it this way; this entry records the owner's approval after review.
+
+**Decided by the owner (2026-10-28).**
+
+- **`GET /api/v1/internal/usage/rollup`, not `POST`.** Vercel Cron calls a path with `GET`. The
+  route changes nothing a crawler or prefetch could reach: `CronSecretGuard` refuses any call
+  without `Authorization: Bearer <CRON_SECRET>`.
+- **One day per transaction, not 10,000-row batches.** Each day's rollup and the deletion of its raw
+  rows commit together, so a day is always either raw or rolled up, and a re-run replaces it. About
+  4,000 rows a day keeps each transaction short.
+
+**Also from the same review (design, not owner-decided):** the insert is one database operation
+with the 2-second limit timed by the API rather than `SET LOCAL statement_timeout`; intake stays
+behind the password-rotation gate (its two-route allowlist in `contracts/auth.md` is unchanged), so
+the web client sends nothing while a password change is required; the 16 KB body cap is enforced on the parsed body;
+the rollup converts days in UTC explicitly; and the migration's extra
+`ix_usage_events_occurred_at_utc` index, which the rollup's day scan uses, is part of the
+2026-10-27 amendment.
+
+## 2026-10-27 — Sign-in messages show on the first page after signing in only
+
+> Spec: `SPEC/20-feature-login-messages.md` LMS-3a, 3d. Amends the entry below on sign-in messages.
+
+**Decided (owner):** the desk shows sign-in messages on the first page after signing in and on no
+later page of that session. A message the reader leaves unanswered there (neither closed nor
+acknowledged) waits for the next sign-in; a message that goes live mid-session first shows at the
+next sign-in. The owner chose this over keeping unanswered messages on screen until answered.
+
+**Why:** they are sign-in messages; a notice reappearing on every reload or popping up mid-task is
+the interruption the feature is meant to avoid.
+
+**How:** signing in sets a marker cookie beside the session; the desk shows the visible set while
+the marker is present and clears it once shown. The API and its visible-set rule are unchanged.
+
+---
+
+## 2026-10-27 — Usage analytics records what members view, tied to their account
+
+> Spec: `SPEC/20-feature-analytics.md` Part 3; contract: `SPEC/contracts/usage.md`; comp:
+> `SPEC/mockups/comp-r-usage-analytics.html` (approved 2026-10-27). Specified only; nothing is built.
+
+**Decided by the owner (2026-10-27), in a brainstorm and then an interview, one question at a time.**
+
+- **One platform, no Google Analytics.** Vercel Analytics stays for anonymous traffic; Google
+  Search Console covers search queries and rankings. Journeys need an identity Vercel Analytics
+  does not keep, so they are recorded in our own PostgreSQL. Rejected: PostHog (a new dependency
+  and a third party holding user-level data); Vercel for the site plus PostHog for the app.
+- **Changes come from `audit_events`; views go in a new `usage_events` table.** The audit log
+  already answers activation, first board, retention and signup cohorts
+  (`tools/analytics/journeys.sql`, run against the local database). What it cannot show is what
+  members look at, and anything a Read Only member does.
+- **Seven view events:** board viewed, idea opened, list viewed, search run, filter applied, admin
+  screen viewed, settings screen viewed. Search text and filter values are never recorded.
+- **Tracking never affects the user.** The browser never waits; the intake route answers `202`
+  whatever happens to the write; a failure is logged to the console (Vercel's logs, which a drain
+  can keep), not to a file, which does not survive a serverless request. An environment switch
+  turns it off. **Audit writes stay strict**: only usage events fail open.
+- **Raw views are kept 90 days** (configurable), then rolled up into daily counts per organization
+  and event type by a nightly Vercel cron. Rejected: 13 months; forever.
+- **Events carry the user id.** Rejected: role only. It cannot show a member's path across visits
+  or per-member retention, and in a small organization "the Org Admin" is one known person anyway.
+- **Who sees it:** Site Admins now, per organization, with a member trail for support. Org Admins
+  later, for their own organization, as totals only: they never see an individual's views.
+- **View As:** recorded with the acting-as user, excluded from every statistic, shown in the trail.
+- **Privacy:** a public privacy page linked from sign-in and register, and a per-user switch in the
+  profile, on by default. Rejected: a line on the register page only; an email-to-object process;
+  an organization-wide switch. Production recording stays off until the page's wording is signed
+  off. **No consent banner:** nothing is stored on the device, so the 2026-10-21 position holds
+  (revisited, not superseded); the basis is legitimate interest with notice and an opt-out.
+- **Reporting is no longer deferred.** `AGENTS.md` drops it from "Explicitly Deferred". The whole
+  Reporting epic (`SPEC/05-product-definition.md`) may be specified and built, after usage
+  analytics.
+- **The S0.2 schema freeze is amended for this:** `usage_events` (`id`, `organization_id`,
+  `user_id`, `on_behalf_of_user_id`, `event_type`, `route`, `entity_id`, `props_json`,
+  `occurred_at_utc`, `received_at_utc`; indexed on `(user_id, occurred_at_utc)` and
+  `(organization_id, event_type, occurred_at_utc)`), `usage_daily` (`day`, `organization_id`,
+  `event_type`, `event_count`, `user_count`; unique on the first three) and
+  `users.usage_tracking_opt_out boolean not null default false`. **No foreign keys** on the two
+  tables, so deleting a user or an organization never waits on event rows.
+
+**How (design, not owner-decided):** the approved schema listed a visit id; it is not stored.
+The server keeps no state between requests and the browser stores nothing, so a visit is derived
+when read (no gap over 30 minutes). The intake route answers `202` even to malformed batches, a
+deliberate exception to the validation convention. The cron secret is checked in the auth folder,
+the identity chokepoint.
+
+## 2026-10-27 — Admins can post sign-in messages, system-wide or per organization
+
+> Spec: `SPEC/20-feature-login-messages.md`; contract: `SPEC/contracts/login-messages.md`.
+> Specified only; nothing is built.
+
+**Decided by the owner (2026-10-27), in an interview, one question at a time.**
+
+- **Two scopes.** System messages by the Site Admin reach every user; organization messages by an
+  Org Admin reach that organization. No role or group targeting.
+- **A date window** (start, optional end) decides how long a message shows. Rejected: seconds on
+  screen; a count of sign-ins.
+- **Three dismissal modes:** every sign-in; dismiss once; acknowledge required (closing without
+  acknowledging brings it back at the next sign-in).
+- **Display is chosen per message:** modal or banner.
+- **"Until the next sign-in"** is tracked server-side, so it follows the user across devices.
+  Rejected: coming back on every page load.
+- **Acknowledgement report:** *N of M acknowledged* plus who and when; an Org Admin sees only their
+  organization.
+- **Edits:** the admin chooses on save whether to *show again to everyone*, which resets
+  dismissals and acknowledgements.
+- **Content:** title and plain text; web addresses become links. Rejected: Markdown (renderer and
+  sanitizer, likely a new dependency).
+
+**How (design, not owner-decided):** the session token is issued only at sign-in and never
+refreshed, so its `iat` is the sign-in time; a receipt's close time is compared with it. No
+session table. Defaults to confirm on review are listed in the spec's open points.
 
 ## 2026-10-26 — A board can be Restricted to named users and groups
 
@@ -379,6 +549,10 @@ Vercel Analytics is used for page views and a small set of custom events (`SPEC/
 It sets no cookies, and the events carry no identifiers or personal data, so there is no consent
 banner. Revisit if an event ever needs a user identifier, or if analytics gains a cookie or a
 third-party script.
+
+**Revisited 2026-10-27** ("Usage analytics records what members view, tied to their account"):
+usage events now carry a user id, but they are first-party and nothing is stored on the device,
+so there is still no banner. Vercel Analytics itself stays anonymous.
 
 ## 2026-10-21 — Production runs with `COLLEGA_ALLOW_DEMO_SEED` set
 

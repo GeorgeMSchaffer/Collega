@@ -49,9 +49,16 @@ export interface NotificationInboxRepository {
     readonly sinceUtc: Date
     readonly unreadOnly: boolean
     readonly page: PageRequest
+    /** A notification about an item on a board the recipient cannot see now is left out (BAG-4f);
+     * omitted or `null` keeps every board. */
+    readonly visibleBoardIds?: readonly string[] | null
   }): Promise<Page<InboxRow>>
 
-  countUnread(recipientUserId: string, sinceUtc: Date): Promise<number>
+  countUnread(
+    recipientUserId: string,
+    sinceUtc: Date,
+    visibleBoardIds?: readonly string[] | null,
+  ): Promise<number>
 
   /**
    * Sets `read_at_utc` on one of the recipient's notifications if it is unread. Returns false when

@@ -4,6 +4,8 @@ import {
   ORGANIZATION_AI_SCOPE_STATEMENT_MAX_LENGTH,
   setOrganizationAiScopeStatement,
 } from '@collega/domain/organizations'
+import { ensureCanSeeBoard } from '../boards/board-access.js'
+import type { BoardAccessLookup } from '../boards/ports.js'
 import {
   type AuditEventWriter,
   attributeAudit,
@@ -126,6 +128,7 @@ export class IdeaAssistService {
     private readonly auditEvents: AuditEventWriter,
     private readonly currentUser: CurrentUserContext,
     private readonly clock: Clock,
+    private readonly boardAccess: BoardAccessLookup,
   ) {}
 
   /**
@@ -264,6 +267,7 @@ export class IdeaAssistService {
       if (!board || board.organizationId !== organizationId) {
         throw new NotFoundError('Board not found.')
       }
+      await ensureCanSeeBoard(this.boardAccess, this.currentUser, boardId, 'Board not found.')
     }
 
     return { organizationId, transcript, userTurnCount: transcript.filter(isUserTurn).length }

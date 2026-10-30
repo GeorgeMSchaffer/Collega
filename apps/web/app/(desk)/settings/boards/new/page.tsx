@@ -1,3 +1,4 @@
+import { loadNewBoardAccess } from '@/components/access/load-access-setup'
 import { loadPullSetup } from '@/components/boards/load-pull-setup'
 import { BoardRefusal } from '@/components/settings/admin-only'
 import { BoardForm } from '@/components/settings/board-form'
@@ -25,11 +26,12 @@ export default async function NewBoardPage() {
     return <BoardRefusal title="New board" reading="board creation" />
   }
 
-  const [statuses, boards, references, choices] = await Promise.all([
+  const [statuses, boards, references, choices, access] = await Promise.all([
     getStatuses(),
     getBoardOverviews({ includeArchived: true }),
     getReferenceContext(null),
     getIdeaTypeChoices(),
+    loadNewBoardAccess(),
   ])
 
   return (
@@ -41,6 +43,7 @@ export default async function NewBoardPage() {
       <BoardForm
         boardId={null}
         references={references}
+        access={access}
         allowedIdeaTypes={{ choices, selectedIds: [] }}
         // The first lanes of the catalog, because the API refuses a board with fewer than two and
         // a form that opens below its own floor cannot be submitted until the person works out

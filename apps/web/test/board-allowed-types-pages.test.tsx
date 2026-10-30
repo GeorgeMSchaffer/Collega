@@ -22,6 +22,10 @@ vi.mock('@/components/boards/load-pull-setup', () => ({
     archived: false,
   }),
 }))
+vi.mock('@/components/access/load-access-setup', () => ({
+  loadNewBoardAccess: async () => undefined,
+  loadBoardAccess: () => undefined,
+}))
 const screenProps = vi.hoisted(() => ({ current: null as Record<string, unknown> | null }))
 vi.mock('@/components/boards/boards-screen', () => ({
   BoardsScreen: (props: Record<string, unknown>) => {

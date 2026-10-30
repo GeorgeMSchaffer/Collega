@@ -88,6 +88,7 @@ function controller(otherBoards: readonly Board[] = []): {
     },
     getById: async (id) => [existing, ...otherBoards].find((b) => b.id === id) ?? null,
     listByOrganization: async () => [existing, ...otherBoards],
+    visibleBoardIds: async () => [existing, ...otherBoards].map((b) => b.id),
     isStatusReferenced: async () => false,
     countIdeasByBoard: async () => new Map(),
     countIdeasByBoardAndStatus: async () => [],
@@ -105,6 +106,10 @@ function controller(otherBoards: readonly Board[] = []): {
       hiddenTaskCount: 0,
     }),
     replaceAllowedIdeaTypes: async () => {},
+    replaceAccess: async () => {},
+    listGroupIdsForUser: async () => [],
+    listOrganizationUserIds: async () => [],
+    listOrganizationGroupIds: async () => [],
     listIdeaTypes: async () => [],
   }
   const statusRepository: StatusRepository = {

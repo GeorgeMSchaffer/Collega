@@ -4,6 +4,7 @@
 import { IdeaPhase, Priority, Role, UserStatus } from '@collega/domain/enums'
 import type { Idea } from '@collega/domain/ideas'
 import { createIdea, promoteIdeaToIssue } from '@collega/domain/ideas'
+import type { BoardAccessLookup, VisibleBoardsLookup } from '../../src/boards/ports.js'
 import type { CurrentUserContext, RandomSource } from '../../src/common/index.js'
 import { IdeaService } from '../../src/ideas/idea.service.js'
 import type {
@@ -161,6 +162,13 @@ export const ORG_LIST_QUERY: OrganizationIdeaListQuery = {
   phase: null,
 }
 
+/** The repositories' board-sight filter (BAG-4c): `null` is every board, and an item on no board
+ * always passes. The default `boardAccess` answers every board, so only a suite that narrows it
+ * sees anything filtered. */
+function onVisibleBoard(idea: Idea, visibleBoardIds: readonly string[] | null): boolean {
+  return visibleBoardIds === null || idea.boardId === null || visibleBoardIds.includes(idea.boardId)
+}
+
 export type Harness = {
   service: IdeaService
   saved: Idea[]
@@ -200,6 +208,8 @@ export function harness(options: {
   fieldValues?: Partial<IdeaFieldValuesPort>
   /** The metric-value reader behind `IdeaDetail.metrics`; omitted, as in a host that has none. */
   metricValues?: Pick<IdeaMetricValuesPort, 'listByIdea'>
+  /** Board sight; every board is visible unless a test says otherwise. */
+  boardAccess?: BoardAccessLookup & VisibleBoardsLookup
   /** What `getFirstActiveStatusId` answers; `null` models an organization with no active status. */
   firstActiveStatusId?: string | null
   /** What `countChildrenByParentIds` answers per parent id. */
@@ -263,7 +273,8 @@ export function harness(options: {
     async listByOrganization(filter) {
       orgFilters.push(filter)
       const items = [...ideasById.values()].filter(
-        (i) => i.organizationId === filter.organizationId,
+        (i) =>
+          i.organizationId === filter.organizationId && onVisibleBoard(i, filter.visibleBoardIds),
       )
       return {
         items,
@@ -291,7 +302,10 @@ export function harness(options: {
     async listDelivery(filter) {
       deliveryFilters.push(filter)
       return [...ideasById.values()].filter(
-        (i) => i.organizationId === filter.organizationId && i.phase === IdeaPhase.Delivery,
+        (i) =>
+          i.organizationId === filter.organizationId &&
+          i.phase === IdeaPhase.Delivery &&
+          onVisibleBoard(i, filter.visibleBoardIds),
       )
     },
     async listBySprint() {
@@ -634,6 +648,16 @@ export function harness(options: {
       options.currentUser,
       fixedClock(),
       options.random ?? { nextInt: () => 0 },
+      options.boardAccess ?? {
+        canSeeBoard: async () => true,
+        // Every board the harness knows of, so a User sees what an admin sees.
+        visibleBoardIds: async () => [
+          ...new Set([
+            ...boardsById.keys(),
+            ...[...ideasById.values()].flatMap((i) => (i.boardId === null ? [] : [i.boardId])),
+          ]),
+        ],
+      },
       options.metricValues,
       options.activity,
     ),

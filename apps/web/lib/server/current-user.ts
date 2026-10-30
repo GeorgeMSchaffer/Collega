@@ -40,7 +40,7 @@ import { toCurrentUser } from '../api/adapt'
 // separate files only because the credential half is what the lint rule pins down.
 import { apiGet, apiPath, isApiStatus } from '../api/client'
 import { SESSION_COOKIE_NAME } from '../api/config'
-import type { WireCurrentUser } from '../api/wire'
+import type { WireCurrentUser, WireMe } from '../api/wire'
 import { setCurrentUser } from '../session'
 import type { CurrentUser } from '../types'
 
@@ -74,6 +74,33 @@ export async function issueSession(token: string, maxAgeSeconds: number): Promis
     maxAge: maxAgeSeconds,
     path: '/',
   })
+  await markSignInMessagesDue()
+}
+
+/**
+ * Sign-in messages show on the first desk page after signing in and nowhere else (LMS-3a, owner
+ * 2026-10-27). A new session sets this marker; the desk shows the visible set while it is present
+ * and clears it once shown. It carries no identity - only "this browser has just signed in" - and
+ * lives here because this is the one module that writes cookies.
+ */
+const SIGN_IN_MESSAGES_COOKIE = 'collega_sign_in_messages'
+
+async function markSignInMessagesDue(): Promise<void> {
+  ;(await cookies()).set(SIGN_IN_MESSAGES_COOKIE, '1', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+  })
+}
+
+export async function signInMessagesDue(): Promise<boolean> {
+  return (await cookies()).has(SIGN_IN_MESSAGES_COOKIE)
+}
+
+/** Only a Server Function or route handler may call this: a render cannot write cookies. */
+export async function clearSignInMessagesDue(): Promise<void> {
+  ;(await cookies()).delete(SIGN_IN_MESSAGES_COOKIE)
 }
 
 /**
@@ -102,7 +129,9 @@ export async function sessionRemainingMs(): Promise<number | null> {
 }
 
 export async function clearSession(): Promise<void> {
-  ;(await cookies()).delete(SESSION_COOKIE_NAME)
+  const jar = await cookies()
+  jar.delete(SESSION_COOKIE_NAME)
+  jar.delete(SIGN_IN_MESSAGES_COOKIE)
 }
 
 /**
@@ -169,21 +198,36 @@ export async function actingOrganizationId(): Promise<string | null> {
 }
 
 /**
- * The acting user, or `null` when the request carries no usable session.
+ * `GET /auth/me` as the API answered it, or `null` when the request carries no usable session.
  *
  * `cache`d, so the layout and the page each asking for identity is one request, not two.
  *
  * A 401 is an answer, not a failure. Every other status still throws, because a 500 from
  * `/auth/me` is an outage and must reach an error boundary rather than log everybody out.
  */
-const loadPrincipal = cache(async (): Promise<CurrentUser | null> => {
-  let me: WireCurrentUser
+const loadMe = cache(async (): Promise<WireMe | null> => {
   try {
-    me = await apiGet<WireCurrentUser>('resolveCurrentUser', apiPath`/auth/me`)
+    return await apiGet<WireMe>('resolveCurrentUser', apiPath`/auth/me`)
   } catch (error) {
     if (isApiStatus(error, 401)) return null
     throw error
   }
-
-  return toCurrentUser(me)
 })
+
+/** The acting user, or `null` when the request carries no usable session. */
+const loadPrincipal = cache(async (): Promise<CurrentUser | null> => {
+  const me = await loadMe()
+  return me ? toCurrentUser(me) : null
+})
+
+/**
+ * Whether this browser should send usage events at all (`SPEC/20-feature-analytics.md` rules 10
+ * and 13). Not while a password change is owed: the rotation gate would refuse the batch. Not for a
+ * Site Admin acting directly, whom the intake drops anyway. The user's own opt-out is the API's to
+ * apply, so it is not read here.
+ */
+export async function usageRecordingAllowed(): Promise<boolean> {
+  const me = await loadMe()
+  if (!me || me.requiresPasswordChange) return false
+  return !(toCurrentUser(me).role === 'SiteAdmin' && me.viewingAs === null)
+}

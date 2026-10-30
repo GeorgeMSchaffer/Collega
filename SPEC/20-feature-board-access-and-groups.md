@@ -117,7 +117,7 @@ exist (owner, 2026-10-26: "filtered out", not a redacted placeholder).
   and Outcome counts, pull candidates, CSV export, and the tag catalog's usage counts.
 - **4d** A Board References lane that references B shows no cards from B to that caller; the
   lane's header and count reflect only what they can see. Configuring a lane to reference B
-  requires being able to see B (`400` keyed `referencesBoardId` otherwise, worded as an unknown board).
+  requires being able to see B (otherwise `422` `referencesBoardInvalid`, exactly as for an unknown board; owner, 2026-10-28).
 - **4e** Pickers leave out what the caller cannot see: dependency targets, pull candidates, the
   move-to-board list. Mention and assignee candidates **for an idea on a Restricted board** are only
   users who can see that board.
@@ -125,7 +125,7 @@ exist (owner, 2026-10-26: "filtered out", not a redacted placeholder).
   see B at read time. Stored events are kept, so regaining access restores them.
 - **4g** CSV import naming B is refused per row as an unknown board.
 - **4h** Mentioning or assigning a user who cannot see the idea's board is `400` keyed
-  `mentionEmails` / `assigneeIds`.
+  `mentionEmails` / `assigneeUserIds` (an Issue checklist item: `assigneeUserId`).
 - **4i** Audit views: Org Admins see all (unchanged); no other role reads audit.
 - **4j** The MCP server (`SPEC/20-feature-mcp-server.md`, not built) inherits this rule; its spec
   gets a one-line pointer.

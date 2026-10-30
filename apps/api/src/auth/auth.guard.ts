@@ -106,5 +106,7 @@ function toResolvedIdentity(principal: AuthenticatedPrincipal): ResolvedIdentity
     isImpersonating: principal.impersonation !== null,
     realUserId: principal.impersonation?.realUserId ?? principal.userId,
     impersonation: principal.impersonation,
+    signedInAtUtc: principal.signedInAtUtc ?? null,
+    passwordChangeRequired: principal.mustChangePassword,
   }
 }

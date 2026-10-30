@@ -566,6 +566,7 @@ describe.skipIf(!DATABASE_URL)('Board pull-in, against a live database', () => {
       boards.listPullCandidates({
         organizationId: orgA,
         source,
+        visibleBoardIds: null,
         excludeBoardId: null,
         search: null,
         tags: [],

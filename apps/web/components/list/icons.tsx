@@ -26,6 +26,7 @@ const PATHS = {
     </>
   ),
   x: <path d="M6 6l12 12M18 6 6 18" />,
+  stop: <rect x="6" y="6" width="12" height="12" rx="2" />,
   plus: <path d="M12 5v14M5 12h14" />,
   search: (
     <>
@@ -62,6 +63,12 @@ const PATHS = {
     <>
       <rect x="5" y="11" width="14" height="9" rx="2" />
       <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </>
+  ),
+  group: (
+    <>
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6" />
     </>
   ),
   send: <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" />,

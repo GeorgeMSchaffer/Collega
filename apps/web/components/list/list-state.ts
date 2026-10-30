@@ -29,6 +29,8 @@ export type ListState = {
 }
 
 export type ListConfig = {
+  /** The list's name in usage events (`filter.applied`); without one, filter changes are not recorded. */
+  usageList?: string
   /** The multi-select filter keys this screen reads, e.g. `['board', 'status']`. */
   filters?: readonly string[]
   /** Values a filter starts with when the URL names none (Boards: `status=Active`). */

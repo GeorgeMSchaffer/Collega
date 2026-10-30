@@ -113,6 +113,7 @@ describe.skipIf(!DATABASE_URL)('Board sprint header and chip against a live data
         currentUser,
         clock,
         { nextInt: () => 0 },
+        boards,
       ),
       sprintService: new SprintService(
         sprints,
@@ -122,6 +123,7 @@ describe.skipIf(!DATABASE_URL)('Board sprint header and chip against a live data
         audit,
         currentUser,
         clock,
+        boards,
         boards,
       ),
     }

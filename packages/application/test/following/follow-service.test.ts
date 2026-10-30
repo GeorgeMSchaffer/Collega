@@ -69,8 +69,8 @@ function followHarness(options: {
   }
   // A soft-deleted idea is not returned by the lookup, as the port documents.
   const known = new Map([
-    [IDEA_A, { organizationId: ORG_A }],
-    [IDEA_B, { organizationId: ORG_B }],
+    [IDEA_A, { organizationId: ORG_A, boardId: null }],
+    [IDEA_B, { organizationId: ORG_B, boardId: null }],
   ])
   const ideas: IdeaLookupPort = {
     async getById(id) {
@@ -79,7 +79,9 @@ function followHarness(options: {
   }
 
   return {
-    service: new FollowService(followers, ideas, uow, options.currentUser, fixedClock()),
+    service: new FollowService(followers, ideas, uow, options.currentUser, fixedClock(), {
+      canSeeBoard: async () => true,
+    }),
     rows,
     calls,
     uow,

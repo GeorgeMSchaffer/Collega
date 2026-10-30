@@ -565,3 +565,16 @@ export async function getFieldset(fieldsetId: string): Promise<Fieldset | null> 
     ),
   )
 }
+
+/**
+ * The caller's own "Record how I use Collega" switch (`GET /usage/tracking`). Never called under
+ * View As, where the API answers `403`: the switch belongs to the user, not to whoever acts as them.
+ */
+export async function getUsageTracking(): Promise<boolean> {
+  failIfRequested('getUsageTracking')
+  const { enabled } = await apiGet<{ enabled: boolean }>(
+    'getUsageTracking',
+    apiPath`/usage/tracking`,
+  )
+  return resolve(enabled)
+}

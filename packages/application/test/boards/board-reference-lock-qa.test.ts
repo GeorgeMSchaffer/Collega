@@ -152,6 +152,9 @@ function setup(
     async reassignIdeas(_boardId: string, items: unknown[]) {
       reassigned.push(items)
     },
+    async visibleBoardIds() {
+      return [SOURCE, TARGET, REFERENCED]
+    },
   } as unknown as BoardRepository
   const statuses = {
     async listByOrganization() {
@@ -572,6 +575,9 @@ describe('lane save: autoCreateTask', () => {
       },
       async moveIdeas() {},
       async reassignIdeas() {},
+      async visibleBoardIds() {
+        return [SOURCE, TARGET, REFERENCED]
+      },
     } as unknown as BoardRepository
     const service = new BoardService(
       boards,

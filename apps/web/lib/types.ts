@@ -223,6 +223,7 @@ export type BoardAdmin = {
   laneCount: number
   /** Whether a plain User may move a card between lanes, or only an administrator. */
   userStatusMoves: boolean
+  restricted: boolean
 }
 
 /**
@@ -332,6 +333,9 @@ export type BoardOverview = {
   keyPrefix: string | null
   sprintsEnabled: boolean
   ideaFeaturesEnabled: boolean
+  /** Restricted to chosen people and groups; the lists show a lock. */
+  restricted: boolean
+  createdById: string | null
 }
 
 /**
@@ -360,6 +364,11 @@ export type BoardWithLanes = {
   allowedIdeaTypeIds: string[]
   /** Whether the caller may change the allowed idea types. */
   canSetAllowedIdeaTypes: boolean
+  restricted: boolean
+  /** Stored even while the board is open to the organization, when they grant nothing. */
+  accessUserIds: string[]
+  accessGroupIds: string[]
+  canManageAccess: boolean
 }
 
 /** What the board form's *Allowed idea types* control needs: the types on offer and the ticked ones. */
@@ -1073,4 +1082,48 @@ export type OutcomeSummaryPage = {
 export type OutcomeRoadmap = {
   outcomes: OutcomeWithIdeas[]
   ungrouped: OutcomeIdea[]
+}
+
+/** A group as Settings → Groups lists it (`contracts/groups.md`). */
+export type GroupOverview = {
+  id: string
+  name: string
+  description: string | null
+  memberCount: number
+  /** Restricted boards naming the group, among those the reader can see. */
+  boardCount: number
+}
+
+export type GroupMember = {
+  id: string
+  name: string
+  email: string
+  role: Role
+  roleLabel: string
+  active: boolean
+}
+
+/** One group opened: its members and the Restricted boards it is on. */
+export type GroupDetail = GroupOverview & {
+  members: GroupMember[]
+  boards: { id: string; name: string; isArchived: boolean }[]
+  canManage: boolean
+}
+
+/**
+ * What the board form's Access section needs. `people` carries roles only when the reader may list
+ * users (an Org Admin); a User creating a board gets the member list, which has none, and the
+ * section then shows no head count rather than a wrong one.
+ */
+export type AccessSetup = {
+  restricted: boolean
+  userIds: string[]
+  groupIds: string[]
+  organizationName: string
+  /** The creator, who always sees the board: the reader on create. */
+  creator: { id: string; name: string } | null
+  readerId: string
+  people: { id: string; name: string; role: Role | null; active: boolean }[]
+  /** `memberIds` are the active members, who count toward who can see; `memberCount` is everyone. */
+  groups: { id: string; name: string; memberIds: string[]; memberCount: number }[]
 }

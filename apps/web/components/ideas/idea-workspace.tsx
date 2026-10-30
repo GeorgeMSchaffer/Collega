@@ -605,6 +605,7 @@ export function IdeaWorkspace({
   return (
     <>
       <ListToolbar
+        searchUsage={{ scope: config.usageList ?? 'ideas', resultCount: total }}
         query={state.q}
         onQueryChange={(q) => update({ q })}
         placeholder={`Filter by title, ${board ? '' : 'board, '}status, priority, tag, person, problem…`}
@@ -1004,6 +1005,7 @@ export function IdeaWorkspace({
       )}
 
       <IdeaDrawer
+        openedFrom={board ? 'board' : 'list'}
         mode={drawerMode}
         idea={drawerIdea}
         boardName={

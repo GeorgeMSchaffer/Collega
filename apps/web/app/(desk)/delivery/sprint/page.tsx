@@ -1,3 +1,4 @@
+import { UsageViewed } from '@/components/analytics/usage-viewed'
 import { loadIssueDrawer } from '@/components/delivery/load-issue-drawer'
 import { SprintBoard } from '@/components/delivery/sprint-board'
 import { Topbar } from '@/components/nav/topbar'
@@ -29,6 +30,7 @@ export default async function SprintBoardPage({
 
   return (
     <>
+      <UsageViewed type="list.viewed" props={{ list: 'sprints' }} />
       <Topbar
         title={
           <span className="text-sm font-normal text-muted-foreground">

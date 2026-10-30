@@ -1,3 +1,4 @@
+import type { BoardAccessLookup } from '@collega/application/boards'
 import type {
   CommentRepository,
   IdeaFollowersPort,
@@ -58,6 +59,7 @@ import { CommentsController } from './comments.controller.js'
         auditEvents: AuditEventWriter,
         currentUser: CurrentUserContext,
         clock: Clock,
+        boardAccess: BoardAccessLookup,
       ) =>
         new CommentService(
           comments,
@@ -69,6 +71,7 @@ import { CommentsController } from './comments.controller.js'
           auditEvents,
           currentUser,
           clock,
+          boardAccess,
         ),
       inject: [
         PORT_TOKENS.CommentRepository,
@@ -80,6 +83,7 @@ import { CommentsController } from './comments.controller.js'
         PORT_TOKENS.AuditEventWriter,
         PORT_TOKENS.CurrentUserContext,
         PORT_TOKENS.Clock,
+        PORT_TOKENS.BoardAccessLookup,
       ],
     },
   ],

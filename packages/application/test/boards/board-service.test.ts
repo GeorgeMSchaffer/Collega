@@ -111,6 +111,11 @@ function harness(options: {
     async listByOrganization(organizationId) {
       return [...boardsById.values()].filter((b) => b.organizationId === organizationId)
     },
+    async visibleBoardIds(organizationId) {
+      return [...boardsById.values()]
+        .filter((b) => b.organizationId === organizationId)
+        .map((b) => b.id)
+    },
     async isStatusReferenced() {
       return false
     },
@@ -141,6 +146,16 @@ function harness(options: {
       return { items: [], page: 1, pageSize: 20, totalCount: 0, hiddenTaskCount: 0 }
     },
     async replaceAllowedIdeaTypes() {},
+    async replaceAccess() {},
+    async listGroupIdsForUser() {
+      return []
+    },
+    async listOrganizationUserIds() {
+      return []
+    },
+    async listOrganizationGroupIds() {
+      return []
+    },
     async listIdeaTypes() {
       return []
     },

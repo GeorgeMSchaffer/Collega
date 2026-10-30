@@ -36,7 +36,11 @@ export interface SprintIssuesPort {
    * row, and a per-row count would be the N+1 the delivery reads were written to avoid. A board
    * sprint counts an item done when it sits in a final lane of its own board; a sprint with no
    * board keeps the delivery-status rule. */
-  countsBySprintIds(sprintIds: readonly string[]): Promise<ReadonlyMap<string, SprintIssueCounts>>
+  countsBySprintIds(
+    sprintIds: readonly string[],
+    /** Counts only items on these boards or on none (BAG-4c); `null` counts every item. */
+    visibleBoardIds?: readonly string[] | null,
+  ): Promise<ReadonlyMap<string, SprintIssueCounts>>
 
   update(idea: Idea): Promise<void>
 }

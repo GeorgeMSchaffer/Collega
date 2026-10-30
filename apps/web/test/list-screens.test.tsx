@@ -158,6 +158,8 @@ function boardOverview(name: string, overrides: Partial<BoardOverview> = {}): Bo
     keyPrefix: null,
     sprintsEnabled: false,
     ideaFeaturesEnabled: true,
+    restricted: false,
+    createdById: null,
     ...overrides,
   }
 }

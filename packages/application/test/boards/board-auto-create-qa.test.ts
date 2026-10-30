@@ -178,6 +178,9 @@ function setup(options: Options = {}) {
     async reassignIdeas() {
       log.push('reassign')
     },
+    async visibleBoardIds() {
+      return [CHILD, TARGET, OTHER]
+    },
   } as unknown as BoardRepository
 
   const tasks: AutoCreateTaskPort = {

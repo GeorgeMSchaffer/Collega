@@ -22,6 +22,7 @@ import {
   PrismaCommentRepository,
   PrismaFieldDefinitionRepository,
   PrismaFieldsetRepository,
+  PrismaGroupRepository,
   PrismaIdeaDependencyRepository,
   PrismaIdeaFieldValuesRepository,
   PrismaIdeaFollowerRepository,
@@ -30,6 +31,7 @@ import {
   PrismaIdeaUpvoteRepository,
   PrismaImpersonationSessionRepository,
   PrismaIssueTaskRepository,
+  PrismaLoginMessageRepository,
   PrismaMetricTypeRepository,
   PrismaNotificationEventRepository,
   PrismaOrganizationRepository,
@@ -37,6 +39,8 @@ import {
   PrismaSprintRepository,
   PrismaStatusRepository,
   PrismaTagRepository,
+  PrismaUsageReportRepository,
+  PrismaUsageRepository,
   PrismaUserRepository,
 } from '@collega/infrastructure/repositories'
 import { JwtAccessTokenService, Pbkdf2PasswordHasher } from '@collega/infrastructure/security'
@@ -105,6 +109,12 @@ const CONCRETE_ADAPTERS: Provider[] = [
     inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
   },
   {
+    provide: PrismaGroupRepository,
+    useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
+      new PrismaGroupRepository(prisma, uow),
+    inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
+  },
+  {
     provide: IdeaClassificationRepository,
     useFactory: (prisma: PrismaClient) => new IdeaClassificationRepository(prisma),
     inject: [PORT_TOKENS.PrismaClient],
@@ -162,6 +172,22 @@ const CONCRETE_ADAPTERS: Provider[] = [
     useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
       new PrismaIssueTaskRepository(prisma, uow),
     inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
+  },
+  {
+    provide: PrismaLoginMessageRepository,
+    useFactory: (prisma: PrismaClient, uow: AlsUnitOfWork) =>
+      new PrismaLoginMessageRepository(prisma, uow),
+    inject: [PORT_TOKENS.PrismaClient, AlsUnitOfWork],
+  },
+  {
+    provide: PrismaUsageRepository,
+    useFactory: (prisma: PrismaClient) => new PrismaUsageRepository(prisma),
+    inject: [PORT_TOKENS.PrismaClient],
+  },
+  {
+    provide: PrismaUsageReportRepository,
+    useFactory: (prisma: PrismaClient) => new PrismaUsageReportRepository(prisma),
+    inject: [PORT_TOKENS.PrismaClient],
   },
   {
     provide: PrismaMetricTypeRepository,
@@ -313,6 +339,8 @@ const PORT_ALIASES: Provider[] = [
   { provide: PORT_TOKENS.AiUsersPort, useExisting: PrismaUserRepository },
 
   { provide: PORT_TOKENS.BoardRepository, useExisting: PrismaBoardRepository },
+  { provide: PORT_TOKENS.BoardAccessLookup, useExisting: PrismaBoardRepository },
+  { provide: PORT_TOKENS.VisibleBoardsLookup, useExisting: PrismaBoardRepository },
   {
     provide: PORT_TOKENS.OrganizationExistenceLookup,
     useExisting: OrganizationExistenceLookupRepository,
@@ -331,6 +359,8 @@ const PORT_ALIASES: Provider[] = [
   { provide: PORT_TOKENS.FieldDefinitionRepository, useExisting: PrismaFieldDefinitionRepository },
 
   { provide: PORT_TOKENS.FieldsetRepository, useExisting: PrismaFieldsetRepository },
+  { provide: PORT_TOKENS.GroupRepository, useExisting: PrismaGroupRepository },
+  { provide: PORT_TOKENS.GroupMemberLookup, useExisting: PrismaUserRepository },
 
   { provide: PORT_TOKENS.IdeaTypeRepository, useExisting: PrismaIdeaTypeRepository },
 
@@ -349,6 +379,10 @@ const PORT_ALIASES: Provider[] = [
   { provide: PORT_TOKENS.SprintUsersPort, useExisting: PrismaUserRepository },
   { provide: PORT_TOKENS.SprintBoardsPort, useExisting: PrismaBoardRepository },
 
+  { provide: PORT_TOKENS.LoginMessageRepository, useExisting: PrismaLoginMessageRepository },
+  { provide: PORT_TOKENS.UsageEventStore, useExisting: PrismaUsageRepository },
+  { provide: PORT_TOKENS.UsageTrackingPreferences, useExisting: PrismaUsageRepository },
+  { provide: PORT_TOKENS.UsageReports, useExisting: PrismaUsageReportRepository },
   { provide: PORT_TOKENS.MetricTypeRepository, useExisting: PrismaMetricTypeRepository },
   { provide: PORT_TOKENS.IdeaMetricValuesPort, useExisting: PrismaMetricTypeRepository },
   { provide: PORT_TOKENS.IdeaActivityPort, useExisting: PrismaAuditEventWriter },

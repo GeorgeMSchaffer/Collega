@@ -49,6 +49,8 @@ export default function RegisterPage() {
 
           <p className="mt-4 text-sm text-muted-foreground">
             Already have an account? <Link href="/login">Sign in</Link>.
+            <br />
+            <Link href="/privacy">How Collega records what you view</Link>.
           </p>
         </div>
       </div>

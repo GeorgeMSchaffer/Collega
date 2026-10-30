@@ -2,6 +2,7 @@ import { Alert, buttonVariants } from '@collega/design-system'
 import type { Route } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { LockMark } from '@/components/access/lock-mark'
 import { BoardViewed } from '@/components/analytics/board-viewed'
 import { BacklogList } from '@/components/boards/backlog-list'
 import { type BoardTab, BoardTabs } from '@/components/boards/board-tabs'
@@ -149,7 +150,7 @@ export default async function BoardPage({
 
   return (
     <>
-      <BoardViewed />
+      <BoardViewed boardId={board.id} />
       <Topbar
         title={
           <span className="text-sm font-normal text-muted-foreground">
@@ -175,7 +176,16 @@ export default async function BoardPage({
       />
       <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
         <PageHeader
-          title={board.name}
+          title={
+            board.restricted ? (
+              <span className="inline-flex items-center gap-2">
+                {board.name}
+                <LockMark className="size-4.5" />
+              </span>
+            ) : (
+              board.name
+            )
+          }
           description={
             <>
               {board.description ? `${board.description} ` : null}
