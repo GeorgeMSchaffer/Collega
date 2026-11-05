@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WorkSprint | Parallel Tracks refinements</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: white; color: black; font-family: system-ui, sans-serif; }
+    main { max-width: 1120px; padding: 40px 24px; margin: auto; }
+    h1 { font-size: 32px; letter-spacing: -1px; margin: 0 0 12px; }
+    header p { max-width: 760px; line-height: 1.6; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 32px; }
+    article { border: 1px solid; padding: 24px; }
+    h2 { font-size: 18px; margin: 0; }
+    .lockup { display: flex; align-items: center; gap: 20px; min-height: 156px; }
+    .mark { width: 100px; height: 100px; flex-shrink: 0; }
+    .wordmark { font-weight: 700; font-size: clamp(24px, 3vw, 34px); letter-spacing: -1px; }
+    article p { min-height: 48px; font-size: 14px; line-height: 1.6; }
+    .sizes { display: flex; align-items: center; gap: 16px; padding-top: 16px; border-top: 1px solid; }
+    .tile { padding: 12px; display: flex; gap: 16px; align-items: center; background: black; color: white; }
+    footer { margin-top: 28px; line-height: 1.6; font-size: 14px; }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } .lockup { gap: 12px; } .mark { width: 80px; height: 80px; } }
+    @media print { article { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+    <defs>
+      <symbol id="a" viewBox="0 0 100 100">
+        <path d="M10 28H44L68 50H85M10 72H44L68 50" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M85 18V82" stroke="currentColor" stroke-width="9"/>
+      </symbol>
+      <symbol id="b" viewBox="0 0 100 100">
+        <path d="M10 26H36C53 26 53 50 70 50H85M10 74H36C53 74 53 50 70 50" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round"/>
+        <path d="M85 18V82" stroke="currentColor" stroke-width="9"/>
+      </symbol>
+      <symbol id="c" viewBox="0 0 100 100">
+        <path d="M10 20H31L61 50H85M10 50H85M10 80H31L61 50" fill="none" stroke="currentColor" stroke-width="9" stroke-linejoin="round"/>
+        <path d="M85 15V85" stroke="currentColor" stroke-width="9"/>
+      </symbol>
+      <symbol id="d" viewBox="0 0 100 100">
+        <path d="M10 19H28L59 45H79V55H59L28 81H10V69H24L46 50 24 31H10Z" fill="currentColor"/>
+        <path d="M84 16H94V84H84Z" fill="currentColor"/>
+      </symbol>
+      <symbol id="e" viewBox="0 0 100 100">
+        <path d="M10 27H33L60 50H85M10 73H33L60 50" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="85" cy="50" r="10" fill="currentColor"/>
+        <path d="M85 18V33M85 67V82" stroke="currentColor" stroke-width="8"/>
+      </symbol>
+      <symbol id="f" viewBox="0 0 100 100">
+        <path d="M27 88V64L50 39V17M73 88V64L50 39" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M18 17H82" stroke="currentColor" stroke-width="9"/>
+      </symbol>
+    </defs>
+  </svg>
+  <main>
+    <header>
+      <h1>Parallel Tracks / Six new takes</h1>
+      <p>Independent lanes joining at one finish line. These variations keep your preferred metaphor while exploring geometry, softness and the point of convergence. Proposals only; no production logo or palette change.</p>
+    </header>
+    <section class="grid" aria-label="Six Parallel Tracks logo variants">
+      <article>
+        <h2>02A / Shared Finish</h2>
+        <div class="lockup"><svg class="mark" aria-hidden="true"><use href="#a"/></svg><span class="wordmark">WorkSprint</span></div>
+        <p>Two angular lanes join, then reach a shared finish line. The closest refinement of the original, with the merge made explicit.</p>
+        <div class="sizes"><svg width="16" height="16" aria-hidden="true"><use href="#a"/></svg><svg width="32" height="32" aria-hidden="true"><use href="#a"/></svg><span class="tile"><svg width="16" height="16" aria-hidden="true"><use href="#a"/></svg><svg width="32" height="32" aria-hidden="true"><use href="#a"/></svg></span></div>
+      </article>
+      <article>
+        <h2>02B / Flow Together</h2>
+        <div class="lockup"><svg class="mark" aria-hidden="true"><use href="#b"/></svg><span class="wordmark">WorkSprint</span></div>
+        <p>Curved lanes merge smoothly into one path. A calmer take on coordination and sustained progress.</p>
+        <div class="sizes"><svg width="16" height="16" aria-hidden="true"><use href="#b"/></svg><svg width="32" height="32" aria-hidden="true"><use href="#b"/></svg><span class="tile"><svg width="16" height="16" aria-hidden="true"><use href="#b"/></svg><svg width="32" height="32" aria-hidden="true"><use href="#b"/></svg></span></div>
+      </article>
+      <article>
+        <h2>02C / Team Convergence</h2>
+        <div class="lockup"><svg class="mark" aria-hidden="true"><use href="#c"/></svg><span class="wordmark">WorkSprint</span></div>
+        <p>Three parallel streams become one. Makes the team metaphor stronger, at the cost of a busier small-size mark.</p>
+        <div class="sizes"><svg width="16" height="16" aria-hidden="true"><use href="#c"/></svg><svg width="32" height="32" aria-hidden="true"><use href="#c"/></svg><span class="tile"><svg width="16" height="16" aria-hidden="true"><use href="#c"/></svg><svg width="32" height="32" aria-hidden="true"><use href="#c"/></svg></span></div>
+      </article>
+      <article>
+        <h2>02D / Cut Tracks</h2>
+        <div class="lockup"><svg class="mark" aria-hidden="true"><use href="#d"/></svg><span class="wordmark">WorkSprint</span></div>
+        <p>Solid, squared-off tracks and a separated finish bar. A bolder, more industrial silhouette with crisp negative space.</p>
+        <div class="sizes"><svg width="16" height="16" aria-hidden="true"><use href="#d"/></svg><svg width="32" height="32" aria-hidden="true"><use href="#d"/></svg><span class="tile"><svg width="16" height="16" aria-hidden="true"><use href="#d"/></svg><svg width="32" height="32" aria-hidden="true"><use href="#d"/></svg></span></div>
+      </article>
+      <article>
+        <h2>02E / Common Outcome</h2>
+        <div class="lockup"><svg class="mark" aria-hidden="true"><use href="#e"/></svg><span class="wordmark">WorkSprint</span></div>
+        <p>The finish becomes a shared destination node. Connects the lane metaphor to traceable work and a visible result.</p>
+        <div class="sizes"><svg width="16" height="16" aria-hidden="true"><use href="#e"/></svg><svg width="32" height="32" aria-hidden="true"><use href="#e"/></svg><span class="tile"><svg width="16" height="16" aria-hidden="true"><use href="#e"/></svg><svg width="32" height="32" aria-hidden="true"><use href="#e"/></svg></span></div>
+      </article>
+      <article>
+        <h2>02F / Upward Finish</h2>
+        <div class="lockup"><svg class="mark" aria-hidden="true"><use href="#f"/></svg><span class="wordmark">WorkSprint</span></div>
+        <p>Rotates the convergence upward. A more compact direction suggesting teams meeting a milestone together.</p>
+        <div class="sizes"><svg width="16" height="16" aria-hidden="true"><use href="#f"/></svg><svg width="32" height="32" aria-hidden="true"><use href="#f"/></svg><span class="tile"><svg width="16" height="16" aria-hidden="true"><use href="#f"/></svg><svg width="32" height="32" aria-hidden="true"><use href="#f"/></svg></span></div>
+      </article>
+    </section>
+    <footer>Small samples are shown at 16px and 32px in positive and reversed treatments. The neutral wordmark is for comparison; typography, final geometry and trademark clearance remain unresolved.</footer>
+  </main>
+</body>
+</html>
