@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'none'; connect-src 'none'; form-action 'none'; base-uri 'none'">
+  <title>WorkSprint — Workflow story</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="demo.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header wrap">
+    <a class="lockup" href="#main" aria-label="WorkSprint home"><img src="assets/logo.svg" alt="" width="36" height="36">WorkSprint</a>
+    <nav class="links" aria-label="Main navigation">
+      <a class="quiet" href="#story">Product</a>
+      <a href="https://app.worksprint.io/login">Login</a>
+      <a class="button" href="#beta">Request beta access</a>
+    </nav>
+  </header>
+  <main id="main">
+    <section class="hero wrap" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">WORKSPRINT / BETA</p>
+        <h1 id="hero-title">Good ideas deserve a clear path to delivery.</h1>
+        <p class="lead">Capture the problem. Keep the discussion connected to tasks, boards and sprint planning.</p>
+        <div class="actions"><a class="button" href="#beta">Request beta access</a><a class="button secondary" href="#story">Explore the product</a></div>
+        <p class="small">Request access. No account is created on submission.</p>
+      </div>
+      <div class="illustration">
+        <p class="small">INDEPENDENT WORK. SHARED CONTEXT.</p>
+        <div class="tracks" role="img" aria-label="Illustrative diagram of independent tracks converging into one shared context">
+          <img class="base" src="assets/tracks.svg" alt="">
+          <img class="a" src="assets/tracks-a.svg" alt="">
+          <img class="b" src="assets/tracks-b.svg" alt="">
+        </div>
+        <p class="muted">Ideas, tasks and sprints keep a connection to the problem that started the work.</p>
+      </div>
+    </section>
+
+    <section class="story wrap" id="story" aria-labelledby="story-title">
+      <div class="max col">
+        <h2 id="story-title">The idea stays connected.<br>The work moves forward.</h2>
+        <p class="lead">One record of the problem, with space for the teams doing the work.</p>
+        <div class="step">
+          <div class="step-copy"><p class="eyebrow">01 / CAPTURE</p><h3>Give the idea context</h3><p class="lead">Capture the problem, proposed solutions and impact rationale. Comments and upvotes keep the discussion beside the idea.</p></div>
+          <div class="sequence" aria-label="Illustrative sequence"><div><i></i><p>PROBLEM / What needs to change?</p></div><div><i></i><p>PROPOSED SOLUTIONS / What could we do?</p></div><div><i></i><p>IMPACT RATIONALE / Why does it matter?</p></div></div>
+        </div>
+        <div class="step">
+          <div class="step-copy"><p class="eyebrow">02 / COORDINATE</p><h3>Let the work have its own flow</h3><p class="lead">Link an idea to tasks on a work board. Tasks have their own statuses and blockers while the parent keeps its context.</p></div>
+          <div class="sequence" aria-label="Illustrative sequence"><div><i></i><p>IDEA / Original context</p></div><div><i></i><p>LINKED TASKS / Work board</p></div><div><i></i><p>TASK PROGRESS / Visible on the parent</p></div></div>
+        </div>
+        <div class="step">
+          <div class="step-copy"><p class="eyebrow">03 / PLAN</p><h3>Plan the next sprint together</h3><p class="lead">Choose waiting tasks from the backlog and schedule them into a sprint. Unfinished work returns to the backlog.</p></div>
+          <div class="sequence" aria-label="Illustrative sequence"><div><i></i><p>BACKLOG / Work waiting to be scheduled</p></div><div><i></i><p>SPRINT / Tasks across several ideas</p></div><div><i></i><p>OUTCOMES / Projected and realized metrics</p></div></div>
+        </div>
+        <p class="muted">Optional AI co-author / Draft beside the form, keep your edits, or fill it out manually.</p>
+      </div>
+    </section>
+
+    <section class="block wrap" aria-labelledby="preview-title">
+      <div class="max col">
+        <h2 id="preview-title">A closer look at the workspace</h2>
+        <a class="shot" href="../worksprint-assets/board-lanes.png" aria-label="Open full-size board screenshot"><img src="../worksprint-assets/board-lanes.png" width="2000" height="1250" loading="lazy" alt="Actual Ideas board with five status lanes and task cards."></a>
+        <p class="lead">The board shows work by status. Open an idea to see its problem, proposed solutions, impact rationale and discussion.</p>
+      </div>
+    </section>
+
+    <section class="block wrap" id="faq" aria-labelledby="faq-title">
+      <div class="max col">
+        <h2 id="faq-title">A few things about the beta</h2>
+        <div class="faq-cols">
+          <div>
+            <article><h3>Who is WorkSprint for?</h3><p class="muted">Cross-functional teams managing improvement ideas and the work needed to deliver them.</p></article>
+            <article><h3>Does signup give me immediate access?</h3><p class="muted">No. We review beta requests manually and contact applicants about access. Submitting does not create an account.</p></article>
+          </div>
+          <div>
+            <article><h3>Do I have to use the AI assistant?</h3><p class="muted">No. You can fill out an idea manually. The assistant offers draft suggestions; you keep control of your edits and submission.</p></article>
+            <article><h3>Can existing users still sign in?</h3><p class="muted">Yes. Use Login to open the application. Beta requests and application accounts are separate.</p></article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="signup" id="beta" aria-labelledby="beta-title">
+      <div class="signup-copy">
+        <p class="eyebrow">BUILD WITH YOUR TEAM</p>
+        <h2 id="beta-title">Bring an idea.<br>Tell us about<br>the work.</h2>
+        <p class="lead">Tell us how your team would use WorkSprint. We review beta requests manually and contact applicants about access.</p>
+        <p class="muted">No promised access date.<br>No automatic account creation.</p>
+      </div>
+      <form aria-labelledby="form-title" novalidate>
+        <h3 id="form-title">Request beta access</h3>
+        <div class="row">
+          <div class="field"><label for="name">Name *</label><input id="name" name="name" placeholder="Your name" autocomplete="name" required maxlength="100"><p class="small">Required / up to 100 characters</p></div>
+          <div class="field"><label for="email">Email *</label><input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required maxlength="254"><p class="small">Personal or work / up to 254 characters</p></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="org">Organization (optional)</label><input id="org" name="organization" placeholder="Organization name" autocomplete="organization" maxlength="200"><p class="small">Up to 200 characters</p></div>
+          <div class="field"><label for="size">Team size (optional)</label><select id="size" name="teamSize"><option value="">Choose a team size</option><option>1</option><option>2-10</option><option>11-50</option><option>51-200</option><option>201+</option></select><p class="small">1, 2-10, 11-50, 51-200, 201+</p></div>
+        </div>
+        <div class="field"><label for="use">Use case (optional)</label><textarea id="use" name="useCase" placeholder="What would your team like to work on?" maxlength="1000"></textarea><p class="small">Up to 1,000 characters. No minimum length.</p></div>
+        <button class="button" type="submit">Request beta access</button>
+        <p class="small status" role="status" aria-live="polite"></p>
+        <p class="small">Requests are reviewed manually. Submission does not create an account or guarantee access.</p>
+        <p class="small">Privacy / Final notice awaits review before live intake. This page is a demo and sends nothing.</p>
+      </form>
+    </section>
+  </main>
+  <footer class="site-footer wrap">
+    <a class="lockup" href="#main" aria-label="WorkSprint home"><img src="assets/logo.svg" alt="" width="36" height="36">WorkSprint</a>
+    <p class="muted">Ideas into coordinated delivery.</p>
+    <nav class="links" aria-label="Footer navigation"><a href="https://app.worksprint.io/login">Login</a><a href="#beta">Privacy</a></nav>
+  </footer>
+</body>
+</html>
