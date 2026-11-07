@@ -1,14 +1,13 @@
 # apps/public
 
-Static clickable prototype of the Org Admin screens (29 screenshots with hash routing and
-percent-positioned hotspots). Not part of the application: no framework, no dependencies, no
-workspace imports, and no build step, so `pnpm check` has nothing to run here.
+The public WorkSprint site, static: no framework, no dependencies, no workspace imports and no
+build step, so `pnpm check` has nothing to run here.
 
-- `index.html` — the whole prototype. Screen list `S`, hotspot tables `HS`/`NAV`, and the
-  `SHOTS` image path are at the top of the script. Hotspot coordinates are in the 960×600
-  source-pixel space of the PNGs.
-- `shots/` — the source screenshots, `NN-name.png`, 960×600. A new screen needs a PNG here, an
-  entry in `S`, and hotspots in `HS`.
-- Press `H` to show hotspots and `G` for the calibration grid when placing them.
+- `index.html` — the app-aligned spacious narrative landing page, taken from
+  `SPEC/mockups/worksprint-marketing-app-narrative.html` (proposal bar and sibling-concept links
+  removed). Styles and the demo form script are in `worksprint-assets/`; its CSP allows only
+  same-origin assets, so nothing external can be added without changing the `<meta>` policy.
+- `prototype/` — clickable prototype of the Org Admin screens (29 screenshots, hash routing,
+  percent-positioned hotspots in 960×600 source px). Press `H` for hotspots, `G` for the grid.
 - Preview: `python3 -m http.server -d apps/public`.
 - Deploys as its own Vercel project with Root Directory `apps/public` (see `vercel.json`).

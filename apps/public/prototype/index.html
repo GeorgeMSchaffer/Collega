@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collega Admin Prototype</title>
+<style>
+  :root { --bg:#0e0f11; --panel:#16181b; --line:#26292e; --text:#e8e9eb; --dim:#8b9097; --accent:#f5a623; }
+  * { box-sizing: border-box; }
+  html, body { height:100%; margin:0; background:var(--bg); color:var(--text); font:13px/1.4 system-ui, sans-serif; }
+  .app { display:grid; grid-template-columns: 240px 1fr; height:100%; }
+  aside { background:var(--panel); border-right:1px solid var(--line); overflow:auto; padding:14px 10px; }
+  aside h1 { font-size:13px; margin:0 6px 12px; letter-spacing:.04em; }
+  aside h2 { font-size:10px; text-transform:uppercase; letter-spacing:.1em; color:var(--dim); margin:14px 6px 4px; }
+  aside a { display:flex; gap:8px; padding:5px 8px; border-radius:6px; color:var(--dim); text-decoration:none; }
+  aside a:hover { background:#1f2226; color:var(--text); }
+  aside a.on { background:#262a30; color:var(--text); }
+  aside a b { font-weight:400; color:#5d636b; min-width:18px; font-variant-numeric:tabular-nums; }
+  main { display:flex; flex-direction:column; min-width:0; }
+  .bar { display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid var(--line); }
+  .bar .t { flex:1; font-weight:600; }
+  .bar button { background:#1f2226; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:5px 10px; cursor:pointer; font:inherit; }
+  .bar button:hover { border-color:var(--accent); }
+  .bar button[aria-pressed=true] { background:var(--accent); color:#111; border-color:var(--accent); }
+  .stage { flex:1; display:grid; place-items:center; padding:20px; min-height:0; }
+  .frame { position:relative; aspect-ratio:960/600; width:min(100%, calc((100vh - 120px) * 1.6)); box-shadow:0 10px 40px #000a; border:1px solid var(--line); }
+  .frame img { position:absolute; inset:0; width:100%; height:100%; display:block; }
+  .hs { position:absolute; display:block; border-radius:4px; cursor:pointer; }
+  .hs:hover { outline:2px solid var(--accent); background:#f5a62322; }
+  .show .hs { outline:1.5px dashed var(--accent); background:#f5a62326; }
+  .hs::after { content:attr(data-label); position:absolute; left:0; top:100%; margin-top:4px; background:#000d; color:#fff; padding:2px 6px; border-radius:4px; font-size:11px; white-space:nowrap; pointer-events:none; opacity:0; z-index:2; }
+  .hs:hover::after { opacity:1; }
+  .grid { position:absolute; inset:0; pointer-events:none; display:none;
+    background-image: linear-gradient(#ff3b3b55 1px, transparent 1px), linear-gradient(90deg,#ff3b3b55 1px, transparent 1px);
+    background-size: 5.2083% 8.3333%; }
+  .gridon .grid { display:block; }
+  .hint { color:var(--dim); font-size:12px; padding:0 16px 10px; }
+  @media (max-width: 800px) { .app { grid-template-columns:1fr; } aside { display:none; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside id="index"></aside>
+  <main>
+    <div class="bar">
+      <button id="prev" title="Previous (←)">←</button>
+      <button id="next" title="Next (→)">→</button>
+      <div class="t" id="title"></div>
+      <button id="back" title="Back (Backspace)">Back</button>
+      <button id="hsBtn" aria-pressed="false" title="Show clickable areas (H)">Hotspots</button>
+      <button id="gridBtn" aria-pressed="false" title="Calibration grid (G)">Grid</button>
+    </div>
+    <div class="stage"><div class="frame" id="frame"><img id="img" alt=""><div class="grid"></div></div></div>
+    <div class="hint">Click the highlighted areas to move through the app. ← → step through screens, Backspace goes back, H shows clickable areas.</div>
+  </main>
+</div>
+<script>
+const SHOTS = 'shots/';
+const S = [
+  ['01-sign-in','Sign in','Start'],
+  ['02-home','Home','Work'],
+  ['03-command-palette','Command palette','Work'],
+  ['04-inbox','Inbox','Work'],
+  ['05-boards','Boards','Work'],
+  ['06-board-lanes','Board lanes','Work'],
+  ['07-ideas-list','Ideas list','Work'],
+  ['08-idea-drawer','Idea drawer','Work'],
+  ['10-backlog','Backlog','Delivery'],
+  ['11-issue-drawer','Issue drawer','Delivery'],
+  ['13-sprint-board','Sprint board','Delivery'],
+  ['14-tasks','Tasks','Delivery'],
+  ['15-roadmap','Roadmap','Delivery'],
+  ['16-settings','Settings','Settings'],
+  ['17-my-profile','My profile','Settings'],
+  ['18-users','Users','Settings'],
+  ['19-add-user','Add user','Settings'],
+  ['20-import-users','Import users','Settings'],
+  ['21-groups','Groups','Settings'],
+  ['22-board-settings','Boards (settings)','Settings'],
+  ['23-board-configuration','Edit board','Settings'],
+  ['24-statuses','Statuses','Settings'],
+  ['25-idea-types','Idea types','Settings'],
+  ['26-custom-fields','Custom fields','Settings'],
+  ['27-fieldsets','Fieldsets','Settings'],
+  ['28-tags','Tags','Settings'],
+  ['29-login-messages','Sign-in messages','Settings'],
+  ['30-ai-assist','AI assist','Settings'],
+  ['31-api-usage','API usage','Settings'],
+].map(([id,title,group]) => ({id, title, group, n:id.slice(0,2)}));
+const byN = Object.fromEntries(S.map(s => [s.n, s]));
+
+// Hotspots: [x, y, w, h, target, label], in 960x600 source pixels.
+const rail = (y, to, label) => [6, y-12, 160, 24, to, label];
+const NAV = [
+  [6, 63, 160, 24, '03', 'Search or jump'],
+  rail(126,'02','Home'), rail(152,'04','Inbox'), rail(178,'05','Boards'), rail(204,'07','Ideas'),
+  rail(251,'10','Backlog'), rail(298,'13','Sprint board'), rail(323,'14','Tasks'), rail(350,'15','Roadmap'),
+  rail(397,'16','Settings'),
+];
+const colX = [187, 442, 700], rowY = [112, 216, 320, 440], rowH = [92, 92, 109, 108];
+const tile = (c, r, to) => [colX[c], rowY[r], 245, rowH[r], to];
+const SETTINGS_TILES = [
+  tile(0,0,'17'), tile(1,0,'18'), tile(2,0,'22'),
+  tile(0,1,'21'), tile(1,1,'24'), tile(2,1,'25'),
+  tile(0,2,'26'), tile(1,2,'27'), tile(2,2,'28'),
+  tile(0,3,'29'), tile(1,3,'30'), tile(2,3,'31'),
+];
+const HS = {
+  '01': [[613, 333, 237, 21, '02', 'Sign in']],
+  '02': [[189, 344, 441, 236, '08', 'Open idea'], [647, 280, 270, 22, '04', 'Unread notifications']],
+  '05': [[187, 211, 756, 66, '06', 'Open Ideas board'], [187, 279, 756, 67, '06', 'Open Opportunities board']],
+  '07': [[187, 211, 756, 371, '08', 'Open idea']],
+  '10': [[187, 165, 756, 32, '11', 'Open issue']],
+  '16': SETTINGS_TILES,
+  '18': [[785, 65, 74, 22, '20', 'Import users'], [865, 65, 78, 22, '19', 'Add New User']],
+  '22': [[899, 157, 32, 17, '23', 'Edit Ideas'], [899, 190, 32, 17, '23', 'Edit Opportunities']],
+};
+const CRUMB = [187, 14, 40, 14, '16', 'Settings'];
+for (let i = 17; i <= 31; i++) { const n = String(i); if (byN[n]) HS[n] = [...(HS[n]||[]), CRUMB]; }
+for (const s of S) if (s.n !== '01') HS[s.n] = [...(HS[s.n]||[]), ...NAV];
+HS['14'] = HS['14'] || [];
+
+let current = '01', history = [];
+const $ = id => document.getElementById(id);
+function render() {
+  const s = byN[current];
+  $('img').src = SHOTS + s.id + '.png';
+  $('title').textContent = s.n + ' · ' + s.title;
+  document.querySelectorAll('.hs').forEach(e => e.remove());
+  for (const [x,y,w,h,to,label] of (HS[current]||[])) {
+    const a = document.createElement('a');
+    a.className = 'hs'; a.href = '#' + to; a.dataset.label = label || byN[to].title;
+    a.style.cssText = `left:${x/9.6}%;top:${y/6}%;width:${w/9.6}%;height:${h/6}%`;
+    $('frame').appendChild(a);
+  }
+  document.querySelectorAll('#index a').forEach(a => a.classList.toggle('on', a.dataset.n === current));
+}
+function go(n, push=true) {
+  if (!byN[n] || n === current) return;
+  if (push) history.push(current);
+  current = n; location.hash = n; render();
+}
+window.addEventListener('hashchange', () => { const n = location.hash.slice(1); if (byN[n] && n !== current) { history.push(current); current = n; render(); } });
+$('prev').onclick = () => { const i = S.findIndex(s => s.n === current); if (i > 0) go(S[i-1].n); };
+$('next').onclick = () => { const i = S.findIndex(s => s.n === current); if (i < S.length-1) go(S[i+1].n); };
+$('back').onclick = () => { const p = history.pop(); if (p) go(p, false); };
+function toggle(btn, cls) { const on = btn.getAttribute('aria-pressed') !== 'true'; btn.setAttribute('aria-pressed', on); $('frame').parentElement.classList.toggle(cls, on); $('frame').classList.toggle(cls, on); }
+$('hsBtn').onclick = () => toggle($('hsBtn'), 'show');
+$('gridBtn').onclick = () => toggle($('gridBtn'), 'gridon');
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') $('next').click();
+  else if (e.key === 'ArrowLeft') $('prev').click();
+  else if (e.key === 'Backspace') { e.preventDefault(); $('back').click(); }
+  else if (e.key === 'h') $('hsBtn').click();
+  else if (e.key === 'g') $('gridBtn').click();
+});
+let html = '<h1>Collega · Admin screens</h1>', g = '';
+for (const s of S) {
+  if (s.group !== g) { g = s.group; html += `<h2>${g}</h2>`; }
+  html += `<a href="#${s.n}" data-n="${s.n}"><b>${s.n}</b>${s.title}</a>`;
+}
+$('index').innerHTML = html;
+const start = location.hash.slice(1); if (byN[start]) current = start;
+render();
+</script>
+</body>
+</html>
