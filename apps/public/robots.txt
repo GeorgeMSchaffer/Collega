@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /prototype/
+Disallow: /workflow/
+
+Sitemap: https://worksprint.io/sitemap.xml
