@@ -2,24 +2,18 @@
   const tour = document.querySelector(".product-tour");
   const slides = [...tour.querySelectorAll(".tour-slide")];
   const caption = document.getElementById("tour-caption");
-  const pause = tour.querySelector(".tour-pause");
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   let active = 0;
   let timer;
   let manuallyNavigated = false;
-  let paused = false;
   let hovered = tour.matches(":hover");
   let focused = tour.contains(document.activeElement);
 
   function schedule() {
     clearTimeout(timer);
-    const playing = !manuallyNavigated && !paused && !hovered && !focused &&
+    const playing = !manuallyNavigated && !hovered && !focused &&
       !document.hidden && !reducedMotion.matches;
     caption.setAttribute("aria-live", playing ? "off" : "polite");
-    pause.disabled = manuallyNavigated || reducedMotion.matches;
-    pause.setAttribute("aria-label", paused ? "Resume autoplay" : "Pause autoplay");
-    tour.querySelector(".tour-pause-icon").setAttribute("d",
-      paused ? "m9 5 10 7-10 7Z" : "M9 5v14M15 5v14");
     if (playing) timer = setTimeout(() => show(active + 1, false), 30000);
   }
 
@@ -38,9 +32,12 @@
     slides[(active + 1) % slides.length].querySelector("img").loading = "eager";
   }
 
-  tour.querySelector(".tour-previous").addEventListener("click", () => show(active - 1, true));
-  tour.querySelector(".tour-next").addEventListener("click", () => show(active + 1, true));
-  pause.addEventListener("click", () => { paused = !paused; schedule(); });
+  tour.querySelectorAll(".tour-previous").forEach((button) => {
+    button.addEventListener("click", () => show(active - 1, true));
+  });
+  tour.querySelectorAll(".tour-next").forEach((button) => {
+    button.addEventListener("click", () => show(active + 1, true));
+  });
   tour.addEventListener("keydown", (event) => {
     const destination = { ArrowLeft: active - 1, ArrowRight: active + 1, Home: 0, End: slides.length - 1 };
     if (!Object.hasOwn(destination, event.key)) return;
