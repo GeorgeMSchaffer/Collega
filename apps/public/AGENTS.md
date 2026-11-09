@@ -17,6 +17,18 @@ build step, so `pnpm check` has nothing to run here.
   six seconds, and pauses on hover, focus, hidden pages and when off-screen. Manual navigation
   stops autoplay; reduced motion disables it and the animations. Without JavaScript, the first
   screenshot and caption remain; interactive controls stay hidden.
+- `/tour/` is a separate guided-tour review page. Its five guided stops use approved
+  captures from `worksprint-assets/`; its optional screen index uses the 29 owner-requested
+  prototype captures from `prototype/shots/`. Keep the old Collega labels and sample-data context
+  clear, and do not imply that prototype-only screens are available in the current app. The page
+  follows the static site's visual system and remains out of the sitemap and search index until
+  indexing is approved.
+- The homepage, tour and five product pages share the same header: Product tour, Beta FAQ,
+  Login and a Request beta access button. Product tour is a click/tap disclosure with
+  Guided overview, Ideas, Boards, Backlog, Sprints and Roadmap. The footer repeats that grouping
+  with Privacy. Keep these static links consistent across all seven pages; `site-navigation.js`
+  adds Escape, outside-click and focus-leave dismissal and opens the homepage privacy disclosure
+  for cross-page links. The owner approved linking the tour from this navigation.
 - `ideas/ boards/ backlog/ sprints/ roadmap/` — one product page per area, each with its own title,
   description, canonical and `sitemap.xml` entry. Copy states only what the app does today
   (the roadmap shows sprints; Outcomes are not built, so the page does not mention them).

@@ -25,6 +25,31 @@ production UI. The app's palette/layout do not change.
 Use a real approved app capture for the product preview; never fabricate data
 or expose private tenant content.
 
+### Owner-directed product-tour review page (2026-11-09)
+
+- Add a separate, public-only, self-paced tour at `/tour/` in the existing
+  static `apps/public` site. It is a review page, not signed-in onboarding.
+- Use approved screenshots from `apps/public/worksprint-assets/` for the
+  five-stop narrative, with short, accurate descriptions and visual highlights.
+- Add an optional screen index using the 29 owner-requested captures in
+  `apps/public/prototype/shots/`. Identify them as illustrative prototype
+  captures, retain the context that they show the earlier Collega branding and
+  seeded sample data, and do not imply that prototype-only screens are available
+  in the current app.
+- Do not imply that any screenshot is a live, interactive app session.
+- The owner subsequently approved consistent navigation across the homepage,
+  tour and five product pages: Product tour, Beta FAQ, Login,
+  with Request beta access as the primary header button. Product tour groups
+  Guided overview, Ideas, Boards, Backlog, Sprints and Roadmap in a click/tap
+  submenu. The footer uses the same grouping plus Privacy. This supersedes
+  the initial unlinked-review placement.
+- The owner subsequently removed The approach from the shared navigation;
+  its homepage content remains.
+- Keep the tour out of the sitemap and marked `noindex` until indexing is
+  explicitly approved.
+- This temporary placement for the review page does not settle the longer-term
+  marketing-app architecture described below.
+
 ## Form behavior
 
 Use Web3Forms Free provisionally, with 250 submissions/month acceptable for
@@ -36,8 +61,15 @@ iframe. No CAPTCHA; use provider spam filtering and an invisible honeypot.
 | Name | Yes | 100 characters; trimmed nonempty |
 | Email | Yes | 254 characters; trimmed, basic format; personal/work accepted |
 | Organization | No | 200 characters |
+| Phone number | No | Telephone input; accepts international formatting |
 | Team size | No | Blank, 1, 2-10, 11-50, 51-200, 201+ |
+| Industry | No | Blank, Technology, Financial services, Healthcare, Education, Manufacturing, Retail & e-commerce, Professional services, Government & nonprofit, Other |
 | Use case | No | 1,000 characters; no minimum length |
+| Product news | No | Unchecked checkbox; "Sign Up for Product News", with "Product specific news and updates." |
+
+Phone follows Organization. Industry sits below Team size. Optional dropdowns
+start blank, without the previous "Select if you'd like" prompt.
+Show a live use-case character count, initially "0 of 1,000 characters used".
 
 Do not disable browser validation without equivalent accessible feedback.
 Prevent duplicate submission while pending. Show success only after the
@@ -47,10 +79,28 @@ admission/date, account provisioning or automatic confirmation email.
 On provider/network/limit failure, show an explicit error and preserve the
 draft for correction/retry. Do not automatically retry submissions.
 
-Use applicant data only for request review and beta-access communications.
-No marketing subscription checkbox. Retain provider records and receiving
-mailbox copies until the beta ends, then delete within 30 days.
+The owner's subsequent signup-copy decision supersedes the earlier prohibition
+on a marketing checkbox: product news requires a separate, optional opt-in.
+The requested privacy copy describes signup information as used only for account
+creation, not stored permanently, and not used for marketing without that opt-in.
+This is forward-looking copy, requested as though signup were already connected;
+the static form still sends nothing and creates no account. Before live intake,
+resolve how this account-creation purpose fits manual beta review and set a
+specific deletion schedule. The earlier beta-end-plus-30-days retention proposal
+does not settle those new requirements.
 Do not log applicant payloads or send them to analytics.
+
+The static demo's Privacy disclosure uses the owner-requested brief copy:
+"Our website analytics collect only aggregate usage information, never
+personally identifiable information." Add: "We use your signup information only
+to create your account and don't store it permanently. We never use it for
+marketing unless you opt in to product news." Omit provider names and setup
+details from this disclosure. These copy changes do not resolve the live-intake
+privacy and setup gates below.
+
+Remove the homepage screenshot-provenance paragraph and the demo-only paragraph
+beside the form; omit demo labels from the form heading and submit button.
+Keep submission feedback truthful while the form remains disconnected.
 
 ## Tech stack and commands
 

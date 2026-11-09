@@ -2,7 +2,17 @@
 // CSP also blocks connections and form actions, including when JavaScript is unavailable.
 const form = document.querySelector('form');
 const feedback = form.querySelector('.feedback');
-const fields = [...form.querySelectorAll('input,textarea,select')];
+const fields = [...form.querySelectorAll('input:not([type="checkbox"]),textarea,select')];
+const useCase = form.elements.namedItem('useCase');
+const useCaseCount = document.getElementById('use-case-count');
+function updateUseCaseCount() {
+  useCaseCount.textContent = `${useCase.value.length.toLocaleString('en-US')} of ${useCase.maxLength.toLocaleString('en-US')} characters used`;
+}
+useCase.addEventListener('input', updateUseCaseCount);
+form.addEventListener('reset', () => {
+  queueMicrotask(updateUseCaseCount);
+});
+updateUseCaseCount();
 form.noValidate = true;
 form.querySelector('button').disabled = false;
 function validate(field, trim = false) {
@@ -11,7 +21,7 @@ function validate(field, trim = false) {
   if (field.required && !field.value.trim()) error = field.name === 'name' ? 'Enter your name.' : 'Enter your email.';
   else if (field.type === 'email' && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(field.value) || field.validity.typeMismatch)) error = 'Enter a valid email, such as name@example.com.';
   else if (field.maxLength >= 0 && field.value.length > field.maxLength) error = `Use ${field.maxLength} characters or fewer.`;
-  else if (field.tagName === 'SELECT' && !['', '1', '2-10', '11-50', '51-200', '201+'].includes(field.value)) error = 'Choose a listed team size or leave it blank.';
+  else if (field.tagName === 'SELECT' && ![...field.options].some(option => option.value === field.value)) error = `Choose a listed ${field.name === 'teamSize' ? 'team size' : 'industry'} or leave it blank.`;
   document.getElementById(field.id + '-error').textContent = error;
   field.setAttribute('aria-invalid', String(Boolean(error)));
   return !error;
