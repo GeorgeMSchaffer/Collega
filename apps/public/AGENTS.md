@@ -9,12 +9,14 @@ build step, so `pnpm check` has nothing to run here.
   Styles and the demo form script are in `worksprint-assets/`. The indexable marketing pages load
   Vercel Analytics through a local queue stub and `/_vercel/insights/script.js`; their CSP allows
   same-origin scripts and connections only. This is independent of `apps/web`.
-- The home page product preview is a five-slide captioned tour, replacing the feature-image
+- The home page product preview is a five-slide Field Notes tour, replacing the feature-image
   cards. `worksprint-assets/product-tour.css` and `product-tour.js` own its styles and behavior.
-  Captions sit above the screenshot; overlay arrows stop autoplay after manual navigation. Otherwise it loops
-  every 30 seconds; hover, focus, hidden pages and reduced motion suspend autoplay. The caption
-  includes subtle previous/next arrows, which also stop autoplay. Without JavaScript, the first
-  screenshot and caption remain.
+  Captions sit beside the screenshot on desktop and above it on mobile, with a thumbnail chapter
+  strip, image-overlay arrows, keyboard navigation and touch swipes. Slides use a 240ms directional
+  slide-and-fade with a subtle amber screen edge. Autoplay is opt-in via Play tour, advances every
+  six seconds, and pauses on hover, focus, hidden pages and when off-screen. Manual navigation
+  stops autoplay; reduced motion disables it and the animations. Without JavaScript, the first
+  screenshot and caption remain; interactive controls stay hidden.
 - `ideas/ boards/ backlog/ sprints/ roadmap/` — one product page per area, each with its own title,
   description, canonical and `sitemap.xml` entry. Copy states only what the app does today
   (the roadmap shows sprints; Outcomes are not built, so the page does not mention them).
