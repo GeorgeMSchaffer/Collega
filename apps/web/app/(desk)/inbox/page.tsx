@@ -59,7 +59,7 @@ export default async function InboxPage({
         {drawer.missing ? (
           <Alert role="status">
             <span>
-              That idea could not be opened. It may have been deleted, or it is not yours to see.
+              That item could not be opened. It may have been deleted, or it is not yours to see.
             </span>
           </Alert>
         ) : null}

@@ -101,7 +101,7 @@ async function OrganizationHomeView() {
           <>
             {readOnly ? 'Here’s what’s moving today.' : 'Here’s what needs you today.'}{' '}
             {organization} has{' '}
-            <Count href={home.ideasHref}>{plural(home.counts.ideas, 'idea', 'ideas')}</Count> across{' '}
+            <Count href={home.ideasHref}>{plural(home.counts.ideas, 'item', 'items')}</Count> across{' '}
             <Count href="/boards">{plural(home.counts.boards, 'board', 'boards')}</Count> and{' '}
             <Count href={home.counts.issues > 0 ? '/ideas?phase=Issues' : null}>
               {plural(home.counts.issues, 'delivery issue', 'delivery issues')}
@@ -134,7 +134,7 @@ function OrganizationDashboard({
   return (
     <>
       <KpiRow label="Your numbers" kpis={home.kpis}>
-        <UntrackedTile figures={['Open ideas', 'Awaiting review', 'Completed · 30d']} />
+        <UntrackedTile figures={['Open items', 'Awaiting review', 'Completed · 30d']} />
       </KpiRow>
 
       <div className={DASH}>
@@ -143,7 +143,7 @@ function OrganizationDashboard({
             id="home-attention"
             className={ORDER.attention}
             heading="Needs your attention"
-            standfirst="Critical and high-priority ideas still on a board, oldest first — the longer one waits, the more it needs a decision."
+            standfirst="Critical and high-priority items still on a board, oldest first — the longer one waits, the more it needs a decision."
           >
             {home.attention.rows.length === 0 ? (
               <EmptyNote>Nothing critical or high priority is waiting on a board.</EmptyNote>
@@ -162,7 +162,7 @@ function OrganizationDashboard({
             id="home-boards"
             className={ORDER.boards}
             heading="Your boards"
-            standfirst="Ideas on each board by lane, left to right in lane order."
+            standfirst="Items on each board by lane, left to right in lane order."
             action={
               role === 'OrgAdmin' ? (
                 <Link href="/settings/boards" className={SMALL_BUTTON}>
@@ -193,13 +193,13 @@ function OrganizationDashboard({
                   ) : null}
                   <LaneStrip board={board} />
                   {board.ideaCount === 0 ? (
-                    <p className="m-0 text-xs text-muted-foreground">No ideas yet</p>
+                    <p className="m-0 text-xs text-muted-foreground">No items yet</p>
                   ) : (
                     <LaneLegend board={board} />
                   )}
                   <TopTags board={board} limit={3} />
                   <div className="mt-auto flex justify-between gap-2 border-t pt-2 text-xs text-muted-foreground tabular-nums">
-                    <span>{plural(board.ideaCount, 'idea', 'ideas')}</span>
+                    <span>{plural(board.ideaCount, 'item', 'items')}</span>
                     <span>{plural(board.tagCount, 'tag', 'tags')}</span>
                   </div>
                 </Card>
@@ -231,7 +231,7 @@ function OrganizationDashboard({
                 </span>
               </>
             }
-            standfirst="Mentions and activity on ideas you follow, newest first."
+            standfirst="Mentions and activity on items you follow, newest first."
           >
             {unread.rows.length === 0 ? (
               <EmptyNote>You’re all caught up.</EmptyNote>
@@ -260,8 +260,8 @@ function OrganizationDashboard({
             {home.assigned.rows.length === 0 ? (
               <EmptyNote heading="Nothing is assigned to you.">
                 {role === 'ReadOnly'
-                  ? 'Ideas you’re named on will appear here.'
-                  : 'When someone adds you to an idea’s Assigned field, it lands here. Meanwhile, the queue on the left is a good place to pick something up.'}
+                  ? 'Items you’re named on will appear here.'
+                  : 'When someone adds you to an item’s Assigned field, it lands here. Meanwhile, the queue on the left is a good place to pick something up.'}
               </EmptyNote>
             ) : (
               <Rows footer={<Link href={home.assigned.href}>View all {home.assigned.total}</Link>}>
@@ -278,10 +278,10 @@ function OrganizationDashboard({
             id="home-voted"
             className={ORDER.voted}
             heading="Most upvoted"
-            standfirst="Ideas on a board with the most upvotes."
+            standfirst="Items on a board with the most upvotes."
           >
             {home.topVoted.length === 0 ? (
-              <EmptyNote>No ideas on a board yet.</EmptyNote>
+              <EmptyNote>No items on a board yet.</EmptyNote>
             ) : (
               <Rows>
                 {home.topVoted.map((idea) => (
@@ -387,7 +387,7 @@ function NoBoards() {
     >
       Your organization doesn&rsquo;t have any boards to show.{' '}
       {admin
-        ? 'Create one to start collecting ideas: it comes with your organization’s statuses as its lanes, and you can change them later.'
+        ? 'Create one to start collecting items: it comes with your organization’s statuses as its lanes, and you can change them later.'
         : 'An Org Admin or a User can create one from Boards.'}
     </EmptyState>
   )
@@ -404,7 +404,7 @@ async function PlatformHomeView() {
           <>
             Platform-wide, across every organization:{' '}
             {plural(home.counts.organizations, 'organization', 'organizations')},{' '}
-            {plural(home.counts.ideas, 'idea', 'ideas')},{' '}
+            {plural(home.counts.ideas, 'item', 'items')},{' '}
             {plural(home.counts.issues, 'delivery issue', 'delivery issues')}. You are not a member
             of any of them &mdash; to change what they own, act as one of their administrators.
           </>
@@ -433,14 +433,14 @@ async function PlatformHomeView() {
               <Panel
                 id="home-organizations"
                 heading="Organizations"
-                standfirst="Each organization’s size, largest first by ideas."
+                standfirst="Each organization’s size, largest first by items."
               >
                 <OrganizationRows organizations={home.organizations} />
               </Panel>
               <Panel
                 id="home-all-boards"
                 heading="All boards"
-                standfirst="Every board, grouped by organization, with its ideas by lane. Open one to read it; to change it, act as one of its administrators."
+                standfirst="Every board, grouped by organization, with its items by lane. Open one to read it; to change it, act as one of its administrators."
               >
                 {home.organizations.map((organization) => (
                   <OrganizationBoards key={organization.id} organization={organization} />
@@ -478,7 +478,7 @@ function OrganizationRows({ organizations }: { organizations: PlatformOrganizati
           <span className="flex min-w-40 flex-[0_1_220px] items-center gap-3">
             <Meter pct={(100 * organization.ideas) / largest} className="flex-1" />
             <span className="min-w-16 text-right font-mono text-xs text-muted-foreground">
-              {plural(organization.ideas, 'idea', 'ideas')}
+              {plural(organization.ideas, 'item', 'items')}
             </span>
           </span>
           <span className="min-w-16 text-right font-mono text-xs text-muted-foreground">
@@ -506,7 +506,7 @@ function OrganizationBoards({ organization }: { organization: PlatformOrganizati
             <RowTitle
               href={`/boards/${board.id}`}
               title={board.name}
-              sub={plural(board.ideaCount, 'idea', 'ideas')}
+              sub={plural(board.ideaCount, 'item', 'items')}
             />
             <span className="min-w-36 flex-[0_1_220px]">
               {board.ideaCount > 0 ? (
@@ -517,7 +517,7 @@ function OrganizationBoards({ organization }: { organization: PlatformOrganizati
                   </span>
                 </>
               ) : (
-                <span className="text-xs text-muted-foreground">No ideas yet</span>
+                <span className="text-xs text-muted-foreground">No items yet</span>
               )}
             </span>
           </Row>

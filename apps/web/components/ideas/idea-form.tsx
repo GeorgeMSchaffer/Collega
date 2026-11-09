@@ -364,7 +364,7 @@ export function IdeaForm({
         take('businessImpactId', 'Business impact', 'businessImpactId', changes.businessImpactId)
       }
       if (changes.ideaTypeId && options.ideaTypes.some((t) => t.id === changes.ideaTypeId)) {
-        take('ideaTypeId', 'Idea type', 'ideaTypeId', changes.ideaTypeId)
+        take('ideaTypeId', 'Item type', 'ideaTypeId', changes.ideaTypeId)
       }
       if (changes.priority && (PRIORITIES as readonly string[]).includes(changes.priority)) {
         take('priority', 'Priority', 'priority', changes.priority)
@@ -465,7 +465,7 @@ export function IdeaForm({
   }))
 
   const missingCatalogs = [
-    options.ideaTypes.length === 0 ? 'idea types' : null,
+    options.ideaTypes.length === 0 ? 'item types' : null,
     options.businessImpacts.length === 0 ? 'business impacts' : null,
   ].filter((catalog) => catalog !== null)
 
@@ -476,7 +476,7 @@ export function IdeaForm({
     // In the order the form shows them, so the first one focused is the first one seen.
     if (!draft.problem.trim()) found.problem = required('Problem')
     if (!draft.businessImpactId) found.businessImpactId = required('Business Impact')
-    if (!draft.ideaTypeId) found.ideaTypeId = required('Idea Type')
+    if (!draft.ideaTypeId) found.ideaTypeId = required('Item Type')
     if (!draft.solutions.some((s) => s.trim())) {
       found.proposedSolutions = 'Add at least one proposed solution.'
     }
@@ -586,7 +586,7 @@ export function IdeaForm({
       {missingCatalogs.length > 0 ? (
         <Alert variant="destructive" className="mb-4">
           <span>
-            This organization has no {missingCatalogs.join(' and no ')} to choose from. An idea
+            This organization has no {missingCatalogs.join(' and no ')} to choose from. An item
             requires every one of them, so an Org Admin has to add them in Settings first.
           </span>
         </Alert>
@@ -602,7 +602,7 @@ export function IdeaForm({
           label="Board"
           hint={
             draft.boardId === ''
-              ? 'Ideas with no board wait on the Ideas list until someone pulls them onto a board.'
+              ? 'Items with no board wait on the Items list until someone pulls them onto a board.'
               : undefined
           }
           error={errors.boardId}
@@ -644,7 +644,7 @@ export function IdeaForm({
             (!editing &&
               draft.boardId &&
               boards?.find((b) => b.id === draft.boardId)?.hasReferenceLane)
-              ? 'Low, Medium or High. Needed before this idea can move into a reference lane.'
+              ? 'Low, Medium or High. Needed before this item can move into a reference lane.'
               : 'Optional.'
           }
           onChange={(next) => {
@@ -712,7 +712,7 @@ export function IdeaForm({
         </Field>
         <Field
           htmlFor={fid('type')}
-          label="Idea type"
+          label="Item type"
           hint={editing ? 'Can’t change after creation.' : undefined}
           error={errors.ideaTypeId}
           {...mark('ideaTypeId')}
@@ -848,10 +848,10 @@ export function IdeaForm({
         </legend>
         {!idea && !type ? (
           <p className="m-0 mb-4 text-xs text-muted-foreground">
-            Pick an Idea Type to see its custom fields.
+            Pick an Item Type to see its custom fields.
           </p>
         ) : customFields.length === 0 ? (
-          <p className="m-0 mb-4 text-xs text-muted-foreground">This idea type has none.</p>
+          <p className="m-0 mb-4 text-xs text-muted-foreground">This item type has none.</p>
         ) : (
           customFields.map((field) => (
             <CustomField
@@ -1075,7 +1075,7 @@ export function TagsField({
       ) : (
         <span id={messageId} className="block text-xs text-muted-foreground">
           {full
-            ? `An idea can have at most ${TAGS_MAX} tags. Remove one to add another.`
+            ? `An item can have at most ${TAGS_MAX} tags. Remove one to add another.`
             : `Up to ${TAGS_MAX}, ${TAG_MAX_LENGTH} characters each. A tag that does not exist yet is created when you save.`}
         </span>
       )}
@@ -1124,7 +1124,7 @@ export function AssigneesField({
   const hint = locked
     ? 'Only the author or an Org Admin can change this.'
     : full
-      ? `An idea can have at most ${ASSIGNEES_MAX} assignees. Remove one to add another.`
+      ? `An item can have at most ${ASSIGNEES_MAX} assignees. Remove one to add another.`
       : `Optional, up to ${ASSIGNEES_MAX}.`
 
   return (

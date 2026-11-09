@@ -45,7 +45,7 @@ function NoStatuses({ siteAdmin }: { siteAdmin: boolean }) {
         </GatedAction>
       }
     >
-      Statuses are the columns your boards group ideas by. Add the first one and every board in this
+      Statuses are the columns your boards group items by. Add the first one and every board in this
       organization gets that lane.
     </EmptyState>
   )
@@ -111,7 +111,7 @@ export default async function StatusesPage() {
       lead={
         siteAdmin
           ? 'Workflow statuses across every organization. Open an organization to change its statuses.'
-          : 'The columns your boards group ideas by. Order here is the order on every board.'
+          : 'The columns your boards group items by. Order here is the order on every board.'
       }
       // An anchor rather than a button: the create form is a card on this page (comp P puts it
       // beside the list rather than in a drawer), so the header action's job is to reach it.

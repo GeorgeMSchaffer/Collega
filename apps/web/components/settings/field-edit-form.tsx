@@ -102,14 +102,14 @@ export function FieldEditForm({ field }: { field: FieldDefinitionDetail }) {
             defaultChecked={field.required}
             className="size-4"
           />
-          Required — an idea cannot be saved without it
+          Required — an item cannot be saved without it
         </label>
 
         {takesOptions ? (
           <fieldset className="m-0 flex flex-col gap-3 border-0 p-0">
             <legend className="mb-1 text-sm font-medium">Choices</legend>
             <p className="m-0 max-w-prose text-sm text-muted-foreground">
-              Removing a choice deletes it, along with the answers ideas have already given using
+              Removing a choice deletes it, along with the answers items have already given using
               it. Rows left blank are ignored.
             </p>
             {rows.map((row, index) => (
@@ -166,7 +166,7 @@ export function FieldEditForm({ field }: { field: FieldDefinitionDetail }) {
         <input type="hidden" name="fieldDefinitionId" value={field.id} />
 
         <p className="m-0 max-w-prose text-sm text-muted-foreground">
-          Archiving stops this field being asked for. The answers ideas have already given keep
+          Archiving stops this field being asked for. The answers items have already given keep
           resolving, so nothing recorded is lost.
         </p>
         <Button type="submit" variant="outline" disabled={archiving} className="w-fit">

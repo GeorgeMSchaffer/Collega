@@ -168,7 +168,7 @@ export function BacklogList({
           }
         >
           Every task on {boardName} is in a sprint or finished. Add a task here, or from an
-          idea&rsquo;s drawer once the idea reaches this board.
+          item&rsquo;s drawer once the item reaches this board.
         </EmptyState>
       </div>
     )
@@ -211,7 +211,7 @@ export function BacklogList({
         debounceMs={0}
       >
         <MultiSelectFilter
-          label="Parent idea"
+          label="Parent item"
           options={parentOptions}
           selected={parents}
           onChange={setParents}
@@ -425,7 +425,7 @@ export function BacklogList({
                   Task
                 </th>
                 <th scope="col" className="px-3.5">
-                  Parent idea
+                  Parent item
                 </th>
                 <th scope="col" className="px-3.5">
                   Status

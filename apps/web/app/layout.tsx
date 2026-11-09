@@ -8,7 +8,7 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Collega',
-  description: 'Organization-scoped collaboration and idea tracking.',
+  description: 'Organization-scoped collaboration and item tracking.',
 }
 
 /**

@@ -39,8 +39,8 @@ function NoFieldsets({ siteAdmin }: { siteAdmin: boolean }) {
         </GatedAction>
       }
     >
-      A fieldset groups custom fields so several idea types can ask for the same questions. Nothing
-      appears on an idea until a type uses the set.
+      A fieldset groups custom fields so several item types can ask for the same questions. Nothing
+      appears on an item until a type uses the set.
     </EmptyState>
   )
 }
@@ -66,7 +66,7 @@ export default async function FieldsetsPage() {
       lead={
         siteAdmin
           ? 'Fieldsets across every organization. Open an organization to change its fieldsets.'
-          : 'Reusable groups of custom fields. An idea type can use a set instead of picking each field, and edits to a set reach every type that uses it.'
+          : 'Reusable groups of custom fields. An item type can use a set instead of picking each field, and edits to a set reach every type that uses it.'
       }
       actions={
         siteAdmin ? undefined : (
@@ -114,7 +114,7 @@ export default async function FieldsetsPage() {
                     <td className="px-4 py-2.5">{fieldset.fields.length}</td>
                     <td className="px-4 py-2.5 text-muted-foreground">
                       {fieldset.usedByIdeaTypeCount === 0
-                        ? 'No idea type'
+                        ? 'No item type'
                         : `Used by ${String(fieldset.usedByIdeaTypeCount)} type${fieldset.usedByIdeaTypeCount === 1 ? '' : 's'}`}
                     </td>
                     <td className="px-4 py-2.5 text-right">

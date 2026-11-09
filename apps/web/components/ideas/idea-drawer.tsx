@@ -104,7 +104,7 @@ export function IdeaDrawer({
 
   const eyebrow =
     mode === 'create'
-      ? `New idea${createBoardId && boardName ? ` · ${boardName}` : ''}`
+      ? `New item${createBoardId && boardName ? ` · ${boardName}` : ''}`
       : mode === 'edit'
         ? `Edit · ${boardName ?? ''}`
         : idea
@@ -154,7 +154,7 @@ export function IdeaDrawer({
   const footer = !open ? null : form ? (
     <>
       <Button type="submit" form={formId} disabled={saving}>
-        {saving ? 'Saving…' : mode === 'create' ? 'Create idea' : 'Save changes'}
+        {saving ? 'Saving…' : mode === 'create' ? 'Create item' : 'Save changes'}
       </Button>
       <Button variant="outline" onClick={mode === 'create' ? onClose : onView}>
         Cancel
@@ -214,7 +214,7 @@ export function IdeaDrawer({
       open={open}
       onClose={onClose}
       eyebrow={eyebrow}
-      title={mode === 'create' ? 'Add New Idea' : (idea?.title ?? '')}
+      title={mode === 'create' ? 'Add New Item' : (idea?.title ?? '')}
       footer={footer}
       wide={chatShown}
       bleed={assisted}
@@ -246,7 +246,7 @@ export function IdeaDrawer({
               {assist === 'failed' ? (
                 <Notice>
                   AI assist is unavailable right now. Everything captured so far is filled in;
-                  finish the idea here.
+                  finish the item here.
                 </Notice>
               ) : null}
               {createForm}
@@ -256,7 +256,7 @@ export function IdeaDrawer({
           <>
             {mode === 'create' ? (
               <Notice>
-                AI assist is unavailable, so fill in the idea here. Everything works the same.
+                AI assist is unavailable, so fill in the item here. Everything works the same.
               </Notice>
             ) : null}
             {createForm}

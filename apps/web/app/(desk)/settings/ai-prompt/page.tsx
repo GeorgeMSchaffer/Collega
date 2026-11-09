@@ -52,7 +52,7 @@ export default async function AiPromptPage() {
             <CardDescription>
               The system prompt every organization&rsquo;s assistant runs under. Two placeholders
               are filled in per request: <Code>{'{{ORGANIZATION_CATALOG}}'}</Code> with that
-              organization&rsquo;s idea types, and <Code>{'{{SCOPE_STATEMENT}}'}</Code> with the
+              organization&rsquo;s item types, and <Code>{'{{SCOPE_STATEMENT}}'}</Code> with the
               statement its admin wrote. Both must appear somewhere in the text.
             </CardDescription>
           </CardHeader>

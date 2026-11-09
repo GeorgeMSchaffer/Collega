@@ -67,7 +67,7 @@ export default async function BacklogPage({
             <>
               Issues that are committed but not yet in a sprint, most upvoted first &mdash; so the
               list reads as the organization&rsquo;s own priority order. Assigning a sprint moves
-              the row; it is still the same idea, still carrying its history.
+              the row; it is still the same item, still carrying its history.
             </>
           }
           action={
@@ -109,12 +109,12 @@ export default async function BacklogPage({
                     <AddIssueButton label="Add issue" />
                   </GatedAction>
                   <Link href="/boards" className={buttonVariants({ variant: 'outline' })}>
-                    Open the ideas board
+                    Open the items board
                   </Link>
                 </div>
               }
             >
-              Every committed issue is in a sprint. New issues arrive here when an idea is promoted
+              Every committed issue is in a sprint. New issues arrive here when an item is promoted
               from a board or when one is added here.
             </EmptyState>
           }

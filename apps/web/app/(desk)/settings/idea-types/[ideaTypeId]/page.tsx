@@ -5,7 +5,7 @@ import { SettingsPage } from '@/components/settings/settings-page'
 import { getFieldDefinitions, getFieldsets, getIdeaTypes } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 
-export const metadata = { title: 'Edit idea type · Collega' }
+export const metadata = { title: 'Edit item type · Collega' }
 
 /**
  * Editing one idea type.
@@ -34,8 +34,8 @@ export default async function EditIdeaTypePage({
   return (
     <SettingsPage
       title={`Edit ${ideaType.name}`}
-      gate="idea-types"
-      lead="Renaming a type renames it everywhere it has been used. Below it, choose which fields its ideas ask for."
+      gate="item-types"
+      lead="Renaming a type renames it everywhere it has been used. Below it, choose which fields its items ask for."
     >
       <div className="flex flex-col gap-8">
         <div className="max-w-md">

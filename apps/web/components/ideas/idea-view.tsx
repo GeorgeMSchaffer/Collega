@@ -94,7 +94,7 @@ export function IdeaView({
         // The parent's board is not on the wire, so this opens it in the Ideas list's drawer.
         <Link
           href={`/ideas?idea=${encodeURIComponent(idea.parentIdeaId)}`}
-          aria-label={`Parent idea ${idea.parentItemKey ?? ''}`.trim()}
+          aria-label={`Parent item ${idea.parentItemKey ?? ''}`.trim()}
           className="w-fit hover:underline"
         >
           <ParentChip itemKey={idea.parentItemKey ?? null} className="px-2 py-0.5 text-xs" />
@@ -111,7 +111,7 @@ export function IdeaView({
               ) : null}
               {boardLine.name === null ? (
                 <span className="text-xs font-normal text-muted-foreground">
-                  Waiting on the Ideas list. An Org Admin can pull it onto a board from the board
+                  Waiting on the Items list. An Org Admin can pull it onto a board from the board
                   form.
                 </span>
               ) : (
@@ -133,7 +133,7 @@ export function IdeaView({
             </Fact>
           ) : null}
           <Fact label="Business impact">{idea.businessImpact}</Fact>
-          <Fact label="Idea type">{idea.ideaType}</Fact>
+          <Fact label="Item type">{idea.ideaType}</Fact>
           <Fact label="Assignees">
             <People people={idea.assignees} />
             {idea.assignees.length > 0 ? (

@@ -6,7 +6,7 @@ import { AuthPitch } from '@/components/auth-pitch'
 
 export const metadata = {
   title: 'Sign in · Collega',
-  description: 'Sign in to Collega to share, shape and track your organization’s ideas.',
+  description: 'Sign in to Collega to share, shape and track your organization’s items.',
 }
 
 /**
@@ -35,17 +35,17 @@ export default async function LoginPage({
     <>
       <AuthPitch
         preview
-        heading="Every idea your organization has, in one place."
+        heading="Every item your organization has, in one place."
         points={[
           'One account per person, scoped to your organization',
-          'Boards, statuses and idea types you define yourself',
+          'Boards, statuses and item types you define yourself',
           <>
             Keyboard-first: press <Kbd>Ctrl K</Kbd> anywhere
           </>,
         ]}
       >
         <p>
-          Collega tracks an idea from the first rough note through review, work, and delivery — with
+          Collega tracks an item from the first rough note through review, work, and delivery — with
           the people, comments, and history attached to it the whole way.
         </p>
       </AuthPitch>

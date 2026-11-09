@@ -29,7 +29,7 @@ export function BoardCard({ board, actions }: { board: BoardOverview; actions: R
         )}
         <LaneStrip board={board} />
         {board.ideaCount === 0 ? (
-          <p className="m-0 text-xs text-muted-foreground">No ideas yet</p>
+          <p className="m-0 text-xs text-muted-foreground">No items yet</p>
         ) : (
           <LaneLegend board={board} />
         )}
@@ -39,7 +39,7 @@ export function BoardCard({ board, actions }: { board: BoardOverview; actions: R
       <div className="flex flex-wrap items-center justify-between gap-2 border-t px-5 py-1.5 text-xs text-muted-foreground tabular-nums">
         <span>{createdLine(board)}</span>
         <span className="inline-flex items-center gap-2">
-          {board.ideaCount} ideas · {board.laneCount} lanes
+          {board.ideaCount} items · {board.laneCount} lanes
           {actions}
         </span>
       </div>

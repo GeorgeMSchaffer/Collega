@@ -48,7 +48,7 @@ export function UsageTrackingSwitch({ enabled }: { enabled: boolean | null }) {
         Record how I use Collega
       </Switch>
       <p id="usage-tracking-hint" className="m-0 mt-1 max-w-prose text-xs text-muted-foreground">
-        Notes which boards, ideas and screens you view, never what you type. Turning it off stops
+        Notes which boards, items and screens you view, never what you type. Turning it off stops
         recording at once and deletes nothing already kept. <Link href="/privacy">Privacy</Link>
       </p>
       {error ? (

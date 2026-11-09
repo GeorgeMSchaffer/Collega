@@ -8,7 +8,7 @@ import { getIdeaTypes, getIdeaTypesByOrganization } from '@/lib/data'
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser } from '@/lib/session'
 
-export const metadata = { title: 'Idea types · Collega' }
+export const metadata = { title: 'Item types · Collega' }
 
 /**
  * The cross-organization empty state offers navigation, not creation: an idea type belongs to one
@@ -18,14 +18,14 @@ function NoIdeaTypes({ siteAdmin }: { siteAdmin: boolean }) {
   if (siteAdmin) {
     return (
       <EmptyState
-        heading="No idea types anywhere yet"
+        heading="No item types anywhere yet"
         action={
           <Link href="/settings/organizations" className={buttonVariants({ variant: 'outline' })}>
             Go to Organizations
           </Link>
         }
       >
-        No organization has configured idea types. Open an organization to set its idea types up
+        No organization has configured item types. Open an organization to set its item types up
         &mdash; they cannot be created from this cross-organization view.
       </EmptyState>
     )
@@ -33,16 +33,16 @@ function NoIdeaTypes({ siteAdmin }: { siteAdmin: boolean }) {
 
   return (
     <EmptyState
-      heading="No idea types yet"
+      heading="No item types yet"
       action={
-        <GatedAction id="why-add-first-idea-type" label="Add the first idea type" denial={null}>
+        <GatedAction id="why-add-first-idea-type" label="Add the first item type" denial={null}>
           <a href="#add-idea-type" className={buttonVariants()}>
-            Add the first idea type
+            Add the first item type
           </a>
         </GatedAction>
       }
     >
-      Every idea is exactly one type, chosen at creation, so ideas cannot be created until at least
+      Every item is exactly one type, chosen at creation, so items cannot be created until at least
       one type exists.
     </EmptyState>
   )
@@ -64,24 +64,24 @@ export default async function IdeaTypesPage() {
 
   return (
     <SettingsPage
-      title={siteAdmin ? 'All idea types' : 'Idea types'}
-      gate="idea types"
+      title={siteAdmin ? 'All item types' : 'Item types'}
+      gate="item types"
       lead={
         siteAdmin
-          ? 'Idea types across every organization. Open an organization to change its types.'
-          : "The kinds of idea people may raise. An idea's type is set at creation and immutable after, because it decides which custom fields the idea asks for."
+          ? 'Item types across every organization. Open an organization to change its types.'
+          : "The kinds of item people may raise. An item's type is set at creation and immutable after, because it decides which custom fields the item asks for."
       }
       // No create control for a Site Admin: an idea type belongs to one organization, so there is
       // nothing for a button on the combined list to create. Comp Q marks it data-roles="OrgAdmin".
       actions={
         siteAdmin ? undefined : (
           <a href="#add-idea-type" className={buttonVariants()}>
-            Add New Idea Type
+            Add New Item Type
           </a>
         )
       }
     >
-      {siteAdmin ? <CrossOrgNote what="An idea type" /> : null}
+      {siteAdmin ? <CrossOrgNote what="An item type" /> : null}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_356px]">
         <div className="min-w-0">
@@ -91,8 +91,8 @@ export default async function IdeaTypesPage() {
             <AdminTable
               summary={
                 siteAdmin
-                  ? `${rows.length} idea types across ${catalogs.length} organizations.`
-                  : `${rows.length} idea types.`
+                  ? `${rows.length} item types across ${catalogs.length} organizations.`
+                  : `${rows.length} item types.`
               }
             >
               <thead>

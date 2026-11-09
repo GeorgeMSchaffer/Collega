@@ -25,7 +25,7 @@ const BOARDS: BoardRef[] = [
   { id: 'b-plain', name: 'Assembly', isArchived: false, hasReferenceLane: false },
   { id: 'b-ref', name: 'Planning', isArchived: false, hasReferenceLane: true },
 ]
-const HELPER = /Needed before this idea can move into a reference lane/
+const HELPER = /Needed before this item can move into a reference lane/
 
 function form(props: Partial<React.ComponentProps<typeof IdeaForm>> = {}) {
   const view = render(

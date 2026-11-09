@@ -20,7 +20,7 @@ const BOARD_SORT_KEYS = ['title', 'status', 'priority', 'assignedTo', 'tags', 'u
  * counted, and a later filter change keeps them. The toolbar shows them as removable chips.
  */
 export const SCOPES = { assigned: 'Assigned to me', created: 'Created by me' } as const
-export const PHASES = { Ideas: 'Ideas only', Issues: 'Issues only' } as const
+export const PHASES = { Ideas: 'Items only', Issues: 'Issues only' } as const
 
 export const IDEAS_LIST: ListConfig = {
   usageList: 'ideas',

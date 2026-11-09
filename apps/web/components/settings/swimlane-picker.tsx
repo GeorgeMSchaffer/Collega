@@ -140,7 +140,7 @@ export function SwimlanePicker({
         const selectWhy = readOnly
           ? null
           : ideas > 0
-            ? `${ideas} ${plural(ideas, 'idea currently sits', 'ideas currently sit')} in ${status.name}, so ${
+            ? `${ideas} ${plural(ideas, 'item currently sits', 'items currently sit')} in ${status.name}, so ${
                 wasReferencing ? 'this reference' : 'a reference'
               } can’t be ${wasReferencing ? 'changed to another board' : 'added'} while ${plural(ideas, 'it does', 'they do')}.`
             : lane.isFinal
@@ -148,7 +148,7 @@ export function SwimlanePicker({
               : null
         const removeWhy =
           wasReferencing && ideas > 0
-            ? `${ideas} ${plural(ideas, 'idea sits', 'ideas sit')} in this lane`
+            ? `${ideas} ${plural(ideas, 'item sits', 'items sit')} in this lane`
             : null
         const finalWhy = referencing
           ? 'Remove the board reference first: a Final lane can’t reference a board.'

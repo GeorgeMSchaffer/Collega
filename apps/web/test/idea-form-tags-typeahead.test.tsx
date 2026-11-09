@@ -200,7 +200,7 @@ describe('the ten-tag cap', () => {
     expect(screen.getAllByRole('button', { name: /^Remove tag-/ })).toHaveLength(10)
     expect(input().readOnly).toBe(true)
     expect(
-      screen.getByText('An idea can have at most 10 tags. Remove one to add another.'),
+      screen.getByText('An item can have at most 10 tags. Remove one to add another.'),
     ).toBeTruthy()
   })
 

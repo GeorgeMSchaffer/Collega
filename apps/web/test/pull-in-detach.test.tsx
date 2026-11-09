@@ -50,7 +50,7 @@ describe('detachOffer', () => {
   it('shows a User the control disabled on an archived board, but lets an Org Admin use it', () => {
     const archived = { isIssue: false, boardArchived: true }
     expect(detachOffer('User', ME, idea(), archived)).toEqual({
-      reason: 'Only an Org Admin can remove ideas from an archived board.',
+      reason: 'Only an Org Admin can remove items from an archived board.',
     })
     expect(detachOffer('OrgAdmin', 'u-admin', idea(), archived)).toEqual({ reason: null })
   })

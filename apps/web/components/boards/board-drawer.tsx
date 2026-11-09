@@ -258,12 +258,12 @@ function BoardFacts({
   isAdmin: boolean
 }) {
   const facts: [string, ReactNode][] = [
-    ['Ideas', board.ideaCount],
+    ['Items', board.ideaCount],
     ['Lanes', board.laneCount],
     ['Created', board.createdOn],
     ['By', board.createdBy ?? '—'],
     ['Key prefix', board.keyPrefix ?? '—'],
-    ['Idea features', board.ideaFeaturesEnabled ? 'On' : 'Off'],
+    ['Item features', board.ideaFeaturesEnabled ? 'On' : 'Off'],
     [
       'Who can see it',
       board.restricted ? (
@@ -284,7 +284,7 @@ function BoardFacts({
         <Alert variant="note" role="status" className="flex items-start gap-2">
           <Icon name="archive" />
           <span>
-            This board is archived. Its lanes and ideas are read-only, and its settings can&rsquo;t
+            This board is archived. Its lanes and items are read-only, and its settings can&rsquo;t
             change until it is unarchived.
           </span>
         </Alert>

@@ -168,7 +168,7 @@ describe('the References selector', () => {
     renderFields({ laneIdeaCounts: { 's-new': 3 } })
     expect(select('New').disabled).toBe(true)
     expect(document.getElementById('swimlane-select-why-s-new')?.textContent).toBe(
-      '3 ideas currently sit in New, so a reference can’t be added while they do.',
+      '3 items currently sit in New, so a reference can’t be added while they do.',
     )
     expect(select('Review').disabled).toBe(false)
   })
@@ -176,7 +176,7 @@ describe('the References selector', () => {
   it('uses the singular for one idea', () => {
     renderFields({ laneIdeaCounts: { 's-new': 1 } })
     expect(document.getElementById('swimlane-select-why-s-new')?.textContent).toBe(
-      '1 idea currently sits in New, so a reference can’t be added while it does.',
+      '1 item currently sits in New, so a reference can’t be added while it does.',
     )
   })
 
@@ -187,7 +187,7 @@ describe('the References selector', () => {
     })
     expect(select('Review').disabled).toBe(true)
     expect(document.getElementById('swimlane-select-why-s-review')?.textContent).toBe(
-      '2 ideas currently sit in Review, so this reference can’t be changed to another board while they do.',
+      '2 items currently sit in Review, so this reference can’t be changed to another board while they do.',
     )
   })
 
@@ -197,7 +197,7 @@ describe('the References selector', () => {
       laneIdeaCounts: { 's-done': 1 },
     })
     expect(document.getElementById('swimlane-select-why-s-done')?.textContent).toContain(
-      'idea currently sits in Done',
+      'item currently sits in Done',
     )
   })
 
@@ -288,7 +288,7 @@ describe('Remove on a reference lane', () => {
     expect(button.getAttribute('aria-disabled')).toBe('true')
     expect(button.getAttribute('aria-describedby')).toBe('swimlane-remove-s-review')
     expect(document.getElementById('swimlane-remove-s-review')?.textContent).toBe(
-      '2 ideas sit in this lane',
+      '2 items sit in this lane',
     )
     // Focusable, not natively disabled, so the reason stays reachable.
     expect(button.hasAttribute('disabled')).toBe(false)
@@ -297,7 +297,7 @@ describe('Remove on a reference lane', () => {
   it('uses the singular for one idea', () => {
     renderFields({ laneFlags: referencing, laneIdeaCounts: { 's-review': 1 } })
     expect(document.getElementById('swimlane-remove-s-review')?.textContent).toBe(
-      '1 idea sits in this lane',
+      '1 item sits in this lane',
     )
   })
 
@@ -507,7 +507,7 @@ describe('read-only lanes', () => {
 })
 
 describe('Idea features', () => {
-  const ideaSwitch = () => screen.getByRole('switch', { name: 'Idea features' })
+  const ideaSwitch = () => screen.getByRole('switch', { name: 'Item features' })
   const hidden = (container: HTMLElement) =>
     (container.querySelector('input[name="ideaFeaturesEnabled"]') as HTMLInputElement).value
 

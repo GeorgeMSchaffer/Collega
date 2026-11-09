@@ -44,7 +44,7 @@ export function IdeaTypeEditForm({ ideaType }: { ideaType: IdeaType }) {
         <Field
           htmlFor="idea-type-name"
           label="Name"
-          hint="The option people choose when they author an idea."
+          hint="The option people choose when they author an item."
         >
           <Input
             id="idea-type-name"
@@ -75,11 +75,11 @@ export function IdeaTypeEditForm({ ideaType }: { ideaType: IdeaType }) {
         <input type="hidden" name="ideaTypeId" value={ideaType.id} />
 
         <p className="m-0 max-w-prose text-sm text-muted-foreground">
-          Archiving takes this off the create-idea form. Ideas already of this type keep it, so
+          Archiving takes this off the create-item form. Items already of this type keep it, so
           nothing is lost — and the last remaining type cannot be archived.
         </p>
         <Button type="submit" variant="outline" disabled={archiving} className="w-fit">
-          {archiving ? 'Archiving…' : 'Archive idea type'}
+          {archiving ? 'Archiving…' : 'Archive item type'}
         </Button>
       </form>
     </div>

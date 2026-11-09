@@ -286,15 +286,15 @@ test.describe
       await page.getByRole('link', { name: world.board }).click()
       await expect(page).toHaveURL(/\/boards\/[0-9a-f-]+$/i, { timeout: 30_000 })
 
-      await page.getByRole('button', { name: /new idea/i }).click()
+      await page.getByRole('button', { name: /new item/i }).click()
       await page.getByLabel(/title/i).fill(world.idea)
       await page.getByLabel(/problem/i).fill('Authored by the journey suite.')
       await page.getByLabel('Solution 1').fill('Try it on one board first.')
       await page.getByLabel(/impact rationale/i).fill('Saves an hour a week.')
       await page.getByLabel(/business impact/i).selectOption({ index: 1 })
-      await page.getByLabel(/idea type/i).selectOption({ index: 1 })
+      await page.getByLabel(/item type/i).selectOption({ index: 1 })
       await page
-        .getByRole('button', { name: /create|add idea|save/i })
+        .getByRole('button', { name: /create|add item|save/i })
         .last()
         .click()
 
@@ -437,7 +437,7 @@ test.describe
         signIn(page, world.memberEmail, world.memberPasswordRotated),
       )
       await page.goto('/ideas')
-      await expect(page.getByRole('button', { name: /new idea/i }).first()).toBeDisabled({
+      await expect(page.getByRole('button', { name: /new item/i }).first()).toBeDisabled({
         timeout: 30_000,
       })
     })

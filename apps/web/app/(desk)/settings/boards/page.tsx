@@ -26,7 +26,7 @@ export default async function SettingsBoardsPage() {
       lead={
         siteAdmin
           ? 'There is no cross-organization board view.'
-          : 'The boards your organization tracks ideas on. Each one picks its own swimlanes from the shared set of statuses.'
+          : 'The boards your organization tracks items on. Each one picks its own swimlanes from the shared set of statuses.'
       }
       actions={
         siteAdmin ? undefined : (
@@ -59,7 +59,7 @@ export default async function SettingsBoardsPage() {
             </GatedAction>
           }
         >
-          A board is where ideas get worked. Without one there is nowhere for an idea to go, so this
+          A board is where items get worked. Without one there is nowhere for an item to go, so this
           is the first thing to set up.
         </EmptyState>
       ) : (

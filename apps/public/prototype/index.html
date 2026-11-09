@@ -65,8 +65,8 @@ const S = [
   ['04-inbox','Inbox','Work'],
   ['05-boards','Boards','Work'],
   ['06-board-lanes','Board lanes','Work'],
-  ['07-ideas-list','Ideas list','Work'],
-  ['08-idea-drawer','Idea drawer','Work'],
+  ['07-ideas-list','Items list','Work'],
+  ['08-idea-drawer','Item drawer','Work'],
   ['10-backlog','Backlog','Delivery'],
   ['11-issue-drawer','Issue drawer','Delivery'],
   ['13-sprint-board','Sprint board','Delivery'],
@@ -81,7 +81,7 @@ const S = [
   ['22-board-settings','Boards (settings)','Settings'],
   ['23-board-configuration','Edit board','Settings'],
   ['24-statuses','Statuses','Settings'],
-  ['25-idea-types','Idea types','Settings'],
+  ['25-idea-types','Item types','Settings'],
   ['26-custom-fields','Custom fields','Settings'],
   ['27-fieldsets','Fieldsets','Settings'],
   ['28-tags','Tags','Settings'],
@@ -95,7 +95,7 @@ const byN = Object.fromEntries(S.map(s => [s.n, s]));
 const rail = (y, to, label) => [6, y-12, 160, 24, to, label];
 const NAV = [
   [6, 63, 160, 24, '03', 'Search or jump'],
-  rail(126,'02','Home'), rail(152,'04','Inbox'), rail(178,'05','Boards'), rail(204,'07','Ideas'),
+  rail(126,'02','Home'), rail(152,'04','Inbox'), rail(178,'05','Boards'), rail(204,'07','Items'),
   rail(251,'10','Backlog'), rail(298,'13','Sprint board'), rail(323,'14','Tasks'), rail(350,'15','Roadmap'),
   rail(397,'16','Settings'),
 ];
@@ -109,9 +109,9 @@ const SETTINGS_TILES = [
 ];
 const HS = {
   '01': [[613, 333, 237, 21, '02', 'Sign in']],
-  '02': [[189, 344, 441, 236, '08', 'Open idea'], [647, 280, 270, 22, '04', 'Unread notifications']],
+  '02': [[189, 344, 441, 236, '08', 'Open item'], [647, 280, 270, 22, '04', 'Unread notifications']],
   '05': [[187, 211, 756, 66, '06', 'Open Ideas board'], [187, 279, 756, 67, '06', 'Open Opportunities board']],
-  '07': [[187, 211, 756, 371, '08', 'Open idea']],
+  '07': [[187, 211, 756, 371, '08', 'Open item']],
   '10': [[187, 165, 756, 32, '11', 'Open issue']],
   '16': SETTINGS_TILES,
   '18': [[785, 65, 74, 22, '20', 'Import users'], [865, 65, 78, 22, '19', 'Add New User']],

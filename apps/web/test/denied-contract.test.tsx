@@ -138,7 +138,7 @@ describe('upvoting', () => {
     const reason = engagementDenial('SiteAdmin')
     expect(reason).not.toBeNull()
     expectDeniedControl(
-      screen.getByRole('button', { name: 'Upvote this idea, currently 2 votes' }),
+      screen.getByRole('button', { name: 'Upvote this item, currently 2 votes' }),
       reason ?? '',
     )
   })
@@ -157,7 +157,7 @@ describe('upvoting', () => {
         />,
       )
       expectAllowedControl(
-        screen.getByRole('button', { name: 'Upvote this idea, currently 2 votes' }),
+        screen.getByRole('button', { name: 'Upvote this item, currently 2 votes' }),
       )
     })
   }

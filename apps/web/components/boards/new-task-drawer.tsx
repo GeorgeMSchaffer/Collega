@@ -152,8 +152,8 @@ function NewTaskForm({
       </Field>
       <Field
         htmlFor={`${id}-parent`}
-        label="Parent idea (optional)"
-        hint="Lists ideas sitting in a lane that references this board. Leave empty for a standalone task."
+        label="Parent item (optional)"
+        hint="Lists items sitting in a lane that references this board. Leave empty for a standalone task."
       >
         <Select
           id={`${id}-parent`}

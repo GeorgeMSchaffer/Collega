@@ -82,7 +82,7 @@ export function MoveAnywayDialog({
           value={reason}
           required
           aria-required="true"
-          placeholder="Why is this idea moving before its tasks are done?"
+          placeholder="Why is this item moving before its tasks are done?"
           onChange={(event) => setReason(event.target.value)}
         />
         <span className="text-xs text-muted-foreground">

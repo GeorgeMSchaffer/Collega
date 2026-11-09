@@ -363,7 +363,7 @@ async function save(
   revalidatePath('/', 'layout')
   if (accessRefusal && !typesRefusal) return { error: accessRefusal, pullErrors: [] }
   if (typesRefusal) {
-    const saved = 'The board was saved, but its allowed idea types were not.'
+    const saved = 'The board was saved, but its allowed item types were not.'
     return {
       ...typesRefusal,
       error:

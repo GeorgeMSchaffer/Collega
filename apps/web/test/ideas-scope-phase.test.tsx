@@ -102,7 +102,7 @@ describe('the toolbar chips on /ideas', () => {
 
   it.each([
     ['scope=created', 'Remove filter: Created by me'],
-    ['phase=Ideas', 'Remove filter: Ideas only'],
+    ['phase=Ideas', 'Remove filter: Items only'],
   ])('name the other values too (%s)', (search, name) => {
     renderIdeas(search)
     expect(screen.getByRole('button', { name })).toBeTruthy()

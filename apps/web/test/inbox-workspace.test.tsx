@@ -112,7 +112,7 @@ describe('a row’s wording', () => {
       'CommentAdded',
       'commented on',
       null,
-      'You follow this idea',
+      'You follow this item',
       'Ada Lovelace commented on Slow conveyor',
     ],
     [
@@ -133,28 +133,28 @@ describe('a row’s wording', () => {
       'IdeaStatusChanged',
       'x',
       'Review',
-      'You follow this idea',
+      'You follow this item',
       'Ada Lovelace moved Slow conveyor to Review',
     ],
     [
       'IdeaStatusChanged',
       'x',
       null,
-      'You follow this idea',
+      'You follow this item',
       'Ada Lovelace changed the status of Slow conveyor',
     ],
     [
       'IdeaPromoted',
       'x',
       null,
-      'You follow this idea',
+      'You follow this item',
       'Ada Lovelace promoted Slow conveyor to an issue',
     ],
     [
       'IssueDeliveryStatusChanged',
       'x',
       'Complete',
-      'You follow this idea',
+      'You follow this item',
       'Ada Lovelace moved Slow conveyor to Complete in delivery',
     ],
     [
@@ -164,7 +164,7 @@ describe('a row’s wording', () => {
       'Assigned to you',
       'Ada Lovelace assigned you a task on Slow conveyor',
     ],
-    ['IdeaEdited', 'x', null, 'You follow this idea', 'Ada Lovelace edited Slow conveyor'],
+    ['IdeaEdited', 'x', null, 'You follow this item', 'Ada Lovelace edited Slow conveyor'],
   ]
 
   it.each(cases)(
@@ -181,12 +181,12 @@ describe('a row’s wording', () => {
 describe('the board in the why-line (slice 154)', () => {
   it('reads {reason} · {boardName} when the idea’s board is known', () => {
     renderInbox([item({ boardName: 'Assembly' })])
-    expect(screen.getByText('You follow this idea · Assembly')).toBeTruthy()
+    expect(screen.getByText('You follow this item · Assembly')).toBeTruthy()
   })
 
   it('reads the reason alone when the board is unresolved', () => {
     renderInbox([item({ boardName: null })])
-    expect(screen.getByText('You follow this idea')).toBeTruthy()
+    expect(screen.getByText('You follow this item')).toBeTruthy()
     expect(screen.queryByText(/·/)).toBeNull()
   })
 })

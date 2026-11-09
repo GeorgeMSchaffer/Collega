@@ -59,7 +59,7 @@ test.describe('an org admin adds tasks to a work board', () => {
     await expect(title).toBeFocused()
 
     // Parented: the parent choices are the reference-lane ideas the server would accept.
-    const parent = drawer.getByLabel(/^Parent idea/)
+    const parent = drawer.getByLabel(/^Parent item/)
     const choices = await parent.locator('option').allTextContents()
     expect(choices.length).toBeGreaterThan(1)
     expect(choices[0]).toBe('No parent (standalone task)')
