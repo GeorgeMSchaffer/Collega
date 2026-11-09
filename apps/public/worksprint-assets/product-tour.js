@@ -1,7 +1,6 @@
 (() => {
   const tour = document.querySelector(".product-tour");
   const slides = [...tour.querySelectorAll(".tour-slide")];
-  const chapters = [...tour.querySelectorAll(".tour-chapters button")];
   const caption = document.getElementById("tour-caption");
   const pause = tour.querySelector(".tour-pause");
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -28,10 +27,6 @@
     if (manual) manuallyNavigated = true;
     active = (index + slides.length) % slides.length;
     slides.forEach((slide, i) => { slide.hidden = i !== active; });
-    chapters.forEach((chapter, i) => {
-      if (i === active) chapter.setAttribute("aria-current", "true");
-      else chapter.removeAttribute("aria-current");
-    });
     schedule();
     const slide = slides[active];
     document.getElementById("tour-caption-label").textContent = slide.dataset.label;
@@ -43,9 +38,6 @@
     slides[(active + 1) % slides.length].querySelector("img").loading = "eager";
   }
 
-  chapters.forEach((chapter, index) => {
-    chapter.addEventListener("click", () => show(index, true));
-  });
   tour.querySelector(".tour-previous").addEventListener("click", () => show(active - 1, true));
   tour.querySelector(".tour-next").addEventListener("click", () => show(active + 1, true));
   pause.addEventListener("click", () => { paused = !paused; schedule(); });
@@ -67,7 +59,7 @@
   reducedMotion.addEventListener("change", schedule);
   document.getElementById("tour-total").textContent = String(slides.length).padStart(2, "0");
   tour.classList.add("enhanced");
-  tour.querySelectorAll(".tour-chapters, .tour-arrow, .tour-meta").forEach((control) => {
+  tour.querySelectorAll(".tour-arrow, .tour-meta").forEach((control) => {
     control.hidden = false;
   });
   show(0, false);

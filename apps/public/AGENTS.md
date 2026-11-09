@@ -10,7 +10,7 @@ build step, so `pnpm check` has nothing to run here.
   same-origin assets, so nothing external can be added without changing the `<meta>` policy.
 - The home page product preview is a five-slide captioned tour, replacing the feature-image
   cards. `worksprint-assets/product-tour.css` and `product-tour.js` own its styles and behavior.
-  Overlay arrows and chapter buttons stop autoplay after manual navigation. Otherwise it loops
+  Captions sit above the screenshot; overlay arrows stop autoplay after manual navigation. Otherwise it loops
   every 30 seconds; hover, focus, hidden pages and reduced motion suspend autoplay. The caption
   includes a pause/resume control. Without JavaScript, the first screenshot and caption remain.
 - `ideas/ boards/ backlog/ sprints/ roadmap/` — one product page per area, each with its own title,

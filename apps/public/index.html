@@ -50,13 +50,17 @@
         <div class="intro"><div><p class="eyebrow">THE APPROACH</p><h2 id="approach-title">Keep the why with the work.</h2></div><p>Give ideas a place to take shape, organize work on shared boards, and plan what comes next in sprints. Keep the context visible as teams move toward delivery.</p></div>
         <ol class="flow" aria-label="Ideas to delivery"><li>Ideas</li><li>Boards</li><li>Sprints</li><li>Delivery</li></ol>
         <section class="product-tour panel" id="preview" aria-roledescription="carousel" aria-label="WorkSprint product tour">
-          <nav class="tour-chapters" aria-label="Choose a product tour slide" hidden>
-            <button type="button" aria-controls="product-slide-1" aria-current="true"><span>01</span>Ideas</button>
-            <button type="button" aria-controls="product-slide-2"><span>02</span>Shared context</button>
-            <button type="button" aria-controls="product-slide-3"><span>03</span>Backlog</button>
-            <button type="button" aria-controls="product-slide-4"><span>04</span>Sprints</button>
-            <button type="button" aria-controls="product-slide-5"><span>05</span>Roadmap</button>
-          </nav>
+          <div class="tour-caption-strip">
+            <div id="tour-caption" aria-live="off" aria-atomic="true">
+              <p class="tour-caption-label" id="tour-caption-label">01 / SEE THE WORK</p>
+              <h3 id="tour-caption-title">A shared view of what's moving.</h3>
+              <p class="tour-caption-copy" id="tour-caption-copy">See ideas across the board's status lanes, so the team can follow where the work stands.</p>
+            </div>
+            <div class="tour-meta" hidden>
+              <p class="tour-counter"><strong id="tour-number">01</strong> / <span id="tour-total">05</span></p>
+              <button class="tour-pause" type="button" aria-label="Pause autoplay"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path class="tour-pause-icon" d="M9 5v14M15 5v14"/></svg></button>
+            </div>
+          </div>
           <div class="tour-stage">
             <div class="tour-screen">
               <div class="tour-screen-bar"><span class="tour-window-dots" aria-hidden="true"><i></i><i></i><i></i></span><span id="tour-location">WORKSPACE / IDEAS BOARD</span><span class="tour-capture-label">REAL APP CAPTURE</span></div>
@@ -81,17 +85,6 @@
                 <button class="tour-arrow tour-previous" type="button" aria-label="Previous slide" hidden><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m14 6-6 6 6 6"/></svg></button>
                 <button class="tour-arrow tour-next" type="button" aria-label="Next slide" hidden><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m10 6 6 6-6 6"/></svg></button>
               </div>
-            </div>
-          </div>
-          <div class="tour-caption-strip">
-            <div id="tour-caption" aria-live="off" aria-atomic="true">
-              <p class="tour-caption-label" id="tour-caption-label">01 / SEE THE WORK</p>
-              <h3 id="tour-caption-title">A shared view of what's moving.</h3>
-              <p class="tour-caption-copy" id="tour-caption-copy">See ideas across the board's status lanes, so the team can follow where the work stands.</p>
-            </div>
-            <div class="tour-meta" hidden>
-              <p class="tour-counter"><strong id="tour-number">01</strong> / <span id="tour-total">05</span></p>
-              <button class="tour-pause" type="button" aria-label="Pause autoplay"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path class="tour-pause-icon" d="M9 5v14M15 5v14"/></svg></button>
             </div>
           </div>
         </section>
