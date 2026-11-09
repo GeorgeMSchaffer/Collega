@@ -55,7 +55,7 @@ export default async function TagsPage({ searchParams }: { searchParams: Promise
       lead={
         siteAdmin
           ? 'Every organization’s tags, read-only. Use View As to change an organization’s tags.'
-          : 'Labels for ideas on every board. A new tag gets a colour from the palette at random; an admin can change it here, or add tags before anyone uses them.'
+          : 'Labels for items on every board. A new tag gets a colour from the palette at random; an admin can change it here, or add tags before anyone uses them.'
       }
       actions={<AddTagButton denial={denial} />}
     >

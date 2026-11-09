@@ -202,7 +202,7 @@ function TagFacts({ tag, usage }: { tag: TagOverview; usage: TagUsage | null }) 
   const boardName = (boardId: string | null) =>
     tag.boards.find((board) => board.id === boardId)?.name
   const facts: [string, ReactNode][] = [
-    ['Ideas', tag.ideaCount],
+    ['Items', tag.ideaCount],
     [
       'Colour',
       <span key="c" className="inline-flex items-center gap-1.5">
@@ -238,7 +238,7 @@ function TagFacts({ tag, usage }: { tag: TagOverview; usage: TagUsage | null }) 
         <h3 className="m-0 text-sm font-semibold">Used on</h3>
         {tag.ideaCount === 0 || !usage || usage.ideas.length === 0 ? (
           <p className="m-0 text-sm text-muted-foreground">
-            Not used yet. It will be offered when anyone tags an idea.
+            Not used yet. It will be offered when anyone tags an item.
           </p>
         ) : (
           <>
@@ -258,7 +258,7 @@ function TagFacts({ tag, usage }: { tag: TagOverview; usage: TagUsage | null }) 
               <p className="m-0 text-xs text-muted-foreground">
                 And {usage.total - usage.ideas.length} more.{' '}
                 <Link href={`/ideas?tag=${encodeURIComponent(tag.name)}`}>
-                  See them all in Ideas
+                  See them all in Items
                 </Link>
               </p>
             ) : null}

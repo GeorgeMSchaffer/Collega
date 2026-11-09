@@ -295,7 +295,7 @@ export function AssistChat({
         add({
           role: 'assistant',
           sent: false,
-          text: `An idea holds up to ${MAX_SOLUTIONS} solutions. Remove one in the form to add another.`,
+          text: `An item holds up to ${MAX_SOLUTIONS} solutions. Remove one in the form to add another.`,
         })
         return
       }
@@ -325,7 +325,7 @@ export function AssistChat({
   return (
     <section
       ref={pane}
-      aria-label="Idea assistant"
+      aria-label="Item assistant"
       hidden={!active}
       inert={!active}
       className={cn('flex min-h-0 flex-col bg-muted/40', className)}
@@ -337,7 +337,7 @@ export function AssistChat({
         >
           ✦
         </span>
-        Idea assistant
+        Item assistant
         <span className="flex-1" />
         <Button variant="link" size="sm" type="button" onClick={onManual}>
           Fill out manually

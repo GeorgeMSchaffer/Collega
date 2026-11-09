@@ -122,10 +122,10 @@ describe('FollowButton', () => {
 
   it('says how many people follow, for a screen reader, in the singular too', () => {
     const { unmount } = renderButton({ followerCount: 1 })
-    expect(screen.getByText('1 person follows this idea')).toBeTruthy()
+    expect(screen.getByText('1 person follows this item')).toBeTruthy()
     unmount()
     renderButton({ followerCount: 4 })
-    expect(screen.getByText('4 people follow this idea')).toBeTruthy()
+    expect(screen.getByText('4 people follow this item')).toBeTruthy()
   })
 
   it('is aria-disabled with the reason shown, and never saves, when follow is denied', async () => {

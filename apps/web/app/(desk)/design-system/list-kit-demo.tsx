@@ -43,7 +43,7 @@ const COLUMNS: Column<BoardOverview>[] = [
       </>
     ),
   },
-  { key: 'ideaCount', header: 'Ideas', numeric: true, cell: (board) => board.ideaCount },
+  { key: 'ideaCount', header: 'Items', numeric: true, cell: (board) => board.ideaCount },
   { key: 'laneCount', header: 'Lanes', numeric: true, cell: (board) => board.laneCount },
   { key: 'createdBy', header: 'Created by', cell: (board) => board.createdBy ?? '—' },
   { key: 'createdOn', header: 'Created', numeric: true, cell: (board) => board.createdOn },
@@ -148,7 +148,7 @@ export function ListKitDemo({ boards }: { boards: BoardOverview[] }) {
                 <h3 className="m-0 text-base">{board.name}</h3>
                 <p className="m-0 text-sm text-muted-foreground">{board.description}</p>
                 <div className="mt-auto flex items-center justify-between border-t pt-2 text-xs text-muted-foreground">
-                  <span>{board.ideaCount} ideas</span>
+                  <span>{board.ideaCount} items</span>
                   {actions(board)}
                 </div>
               </article>
@@ -203,7 +203,7 @@ export function ListKitDemo({ boards }: { boards: BoardOverview[] }) {
             <p className="m-0 text-sm">{open.board.description ?? 'No description.'}</p>
             <dl className="m-0 grid grid-cols-2 gap-3 rounded-md bg-muted/60 p-3 text-sm">
               <div>
-                <dt className="text-xs uppercase tracking-wide text-muted-foreground">Ideas</dt>
+                <dt className="text-xs uppercase tracking-wide text-muted-foreground">Items</dt>
                 <dd className="m-0 mt-0.5 font-medium">{open.board.ideaCount}</dd>
               </div>
               <div>
@@ -224,7 +224,7 @@ export function ListKitDemo({ boards }: { boards: BoardOverview[] }) {
       <ConfirmDialog
         open={confirming !== null}
         title="Archive this board?"
-        description={`“${confirming?.name ?? ''}” leaves the Boards list. Its ideas stay in Ideas, and you can unarchive it any time. (Nothing is archived from this gallery.)`}
+        description={`“${confirming?.name ?? ''}” leaves the Boards list. Its items stay in Items, and you can unarchive it any time. (Nothing is archived from this gallery.)`}
         confirmLabel="Archive board"
         destructive={false}
         onConfirm={() => setConfirming(null)}

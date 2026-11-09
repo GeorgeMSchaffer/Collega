@@ -212,14 +212,14 @@ describe('the fieldset editor', () => {
 
   it('warns that saving changes every idea type that uses the set', () => {
     renderEditor({ ...SET_DELIVERY, usedByIdeaTypeCount: 2 })
-    expect(screen.getByText('Used by 2 idea types')).toBeTruthy()
+    expect(screen.getByText('Used by 2 item types')).toBeTruthy()
 
-    expect(screen.queryByText('No idea type uses this set yet.')).toBeNull()
+    expect(screen.queryByText('No item type uses this set yet.')).toBeNull()
   })
 
   it('says no idea type uses an unattached set', () => {
     renderEditor()
-    expect(screen.getByText('No idea type uses this set yet.')).toBeTruthy()
+    expect(screen.getByText('No item type uses this set yet.')).toBeTruthy()
   })
 
   it('posts the delete from its own form, apart from the save', () => {

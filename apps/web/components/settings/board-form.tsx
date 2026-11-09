@@ -162,13 +162,13 @@ export function BoardForm({
         </CardHeader>
         <CardContent className="flex flex-col gap-3 text-sm text-muted-foreground">
           <p className="m-0">
-            A board groups ideas into columns. Which columns, and in what order, is what makes two
+            A board groups items into columns. Which columns, and in what order, is what makes two
             boards in the same organization different from each other &mdash; they draw from one
             shared set of statuses.
           </p>
           <p className="m-0">
-            Removing a swimlane does not delete the status, and does not delete the ideas sitting in
-            it. Before saving, you choose which remaining lane those ideas move to.
+            Removing a swimlane does not delete the status, and does not delete the items sitting in
+            it. Before saving, you choose which remaining lane those items move to.
           </p>
         </CardContent>
       </Card>
@@ -312,22 +312,22 @@ export function BoardFields({
           onCheckedChange={setIdeaFeatures}
           aria-describedby="idea-features-hint"
         >
-          Idea features
+          Item features
         </Switch>
         <p id="idea-features-hint" className="m-0 mt-1 max-w-prose text-xs text-muted-foreground">
           {references && references.referencedBy.length > 0 && !ideaFeatures
             ? 'Off, because this board is the target of a reference. Cards here show title, description, assignees, tags, sprint and blockers. An Org Admin can turn it on.'
-            : 'Upvotes, idea types and their fields, and AI assist. On for ordinary boards.'}
+            : 'Upvotes, item types and their fields, and AI assist. On for ordinary boards.'}
         </p>
       </div>
 
       {allowedIdeaTypes ? (
         <fieldset className="mb-4 min-w-0 border-0 p-0" aria-describedby="allowed-types-hint">
-          <legend className="p-0 text-sm font-medium">Allowed idea types</legend>
+          <legend className="p-0 text-sm font-medium">Allowed item types</legend>
           <input type="hidden" name="allowedIdeaTypesShown" value="1" />
           <p id="allowed-types-hint" className="m-0 mt-1 max-w-prose text-xs text-muted-foreground">
-            Leave all unticked to take every type. Ideas already on the board stay. Applies only
-            while Idea features are on.
+            Leave all unticked to take every type. Items already on the board stay. Applies only
+            while Item features are on.
           </p>
           <div className="mt-2 flex flex-wrap gap-x-5 gap-y-2">
             {allowedIdeaTypes.choices.map((choice) => (

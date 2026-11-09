@@ -38,7 +38,7 @@ const ids = (fn: ReturnType<typeof vi.fn>): string[] => [
   ...((fn.mock.calls[0]?.[0] as Set<string> | undefined) ?? []),
 ]
 const rows = () => screen.queryAllByRole('checkbox').map((box) => box.closest('label')?.textContent)
-const parent = () => screen.getByLabelText('Parent idea') as HTMLSelectElement
+const parent = () => screen.getByLabelText('Parent item') as HTMLSelectElement
 const selectAll = () => screen.getByRole('button', { name: /^Select all/ }) as HTMLButtonElement
 const status = () => screen.getByRole('status').textContent ?? ''
 
@@ -63,7 +63,7 @@ describe('SprintTaskPicker list', () => {
   it('offers the parents of the tasks it holds, and nothing else', () => {
     picker()
     expect([...parent().options].map((option) => option.textContent)).toEqual([
-      'All parent ideas',
+      'All parent items',
       'Standalone (no parent)',
       'IDEA-7',
       'IDEA-8',
@@ -110,7 +110,7 @@ describe('SprintTaskPicker select all of a parent', () => {
   it('is disabled until a parent idea is chosen, with the reason', () => {
     picker()
     expect(selectAll().disabled).toBe(true)
-    expect(selectAll().title).toBe('Choose a parent idea in the filter first.')
+    expect(selectAll().title).toBe('Choose a parent item in the filter first.')
   })
 
   it('stays disabled for the standalone filter', () => {
@@ -187,24 +187,24 @@ describe('SprintTaskPicker counts', () => {
     picker()
     expect(status()).toContain('0 selected')
     expect(status()).toContain('4 unassigned')
-    expect(status()).not.toMatch(/from \d+ idea/)
+    expect(status()).not.toMatch(/from \d+ item/)
   })
 
   it('counts the ticked tasks and the distinct ideas they come from', () => {
     picker({ selected: ['2', '3', '4'] })
     expect(status()).toContain('3 selected')
-    expect(status()).toContain('from 2 ideas')
+    expect(status()).toContain('from 2 items')
   })
 
   it('says "1 idea" in the singular when the ticked tasks share a parent', () => {
     picker({ selected: ['2', '3'] })
-    expect(status()).toContain('from 1 idea')
-    expect(status()).not.toContain('1 ideas')
+    expect(status()).toContain('from 1 item')
+    expect(status()).not.toContain('1 items')
   })
 
   it('counts a standalone task as an idea of its own', () => {
     picker({ selected: ['1', '2'] })
-    expect(status()).toContain('from 2 ideas')
+    expect(status()).toContain('from 2 items')
   })
 
   it('says "N of M unassigned" while a filter narrows the list', () => {

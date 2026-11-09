@@ -62,7 +62,7 @@ describe('NewTaskDrawer', () => {
 
   it('offers exactly the parent choices it was given, plus none for a standalone task', () => {
     drawer()
-    const select = screen.getByLabelText(/Parent idea/) as HTMLSelectElement
+    const select = screen.getByLabelText(/Parent item/) as HTMLSelectElement
     expect([...select.options].map((option) => option.textContent)).toEqual([
       'No parent (standalone task)',
       'IDEA-1 · Ship the thing',
@@ -88,7 +88,7 @@ describe('NewTaskDrawer', () => {
   it('posts the chosen parent, description and assignee', async () => {
     drawer()
     type('Wire the sensor')
-    fireEvent.change(screen.getByLabelText(/Parent idea/), { target: { value: 'p-1' } })
+    fireEvent.change(screen.getByLabelText(/Parent item/), { target: { value: 'p-1' } })
     fireEvent.change(screen.getByLabelText('Description'), { target: { value: ' Needs a cable ' } })
     fireEvent.change(screen.getByLabelText('Add an assignee'), { target: { value: 'u-ada' } })
     save()
@@ -124,11 +124,11 @@ describe('NewTaskDrawer', () => {
   it('Save and add another clears the form, keeps the drawer open and puts focus in Title', async () => {
     drawer()
     type('First task')
-    fireEvent.change(screen.getByLabelText(/Parent idea/), { target: { value: 'p-1' } })
+    fireEvent.change(screen.getByLabelText(/Parent item/), { target: { value: 'p-1' } })
     another()
     await waitFor(() => expect(add).toHaveBeenCalledTimes(1))
     await waitFor(() => expect(title().value).toBe(''))
-    expect((screen.getByLabelText(/Parent idea/) as HTMLSelectElement).value).toBe('')
+    expect((screen.getByLabelText(/Parent item/) as HTMLSelectElement).value).toBe('')
     expect(nav.replace).not.toHaveBeenCalled()
     await waitFor(() => expect(document.activeElement).toBe(title()))
   })

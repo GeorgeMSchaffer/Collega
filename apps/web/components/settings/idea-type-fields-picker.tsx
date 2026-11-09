@@ -199,7 +199,7 @@ export function IdeaTypeFieldsPicker({
             <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
               <p className="m-0 font-medium text-foreground">All active fields</p>
               <p className="m-0 mt-1">
-                Nothing is chosen, so ideas of this type show every active custom field. Add a field
+                Nothing is chosen, so items of this type show every active custom field. Add a field
                 or a fieldset to show only those.
               </p>
             </div>
@@ -305,7 +305,7 @@ export function IdeaTypeFieldsPicker({
           ) : null}
 
           <p className="m-0 text-xs text-muted-foreground">
-            On the idea form the direct fields come first, then each fieldset in this order. Fields
+            On the item form the direct fields come first, then each fieldset in this order. Fields
             from a fieldset use the field&apos;s own Required setting.
           </p>
         </section>

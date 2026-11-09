@@ -210,7 +210,7 @@ export function Lane({
         <span className="flex-1" />
         <span className="font-mono text-xs font-medium opacity-80">
           {ideas.length}
-          <span className="sr-only"> ideas</span>
+          <span className="sr-only"> items</span>
         </span>
         {reorder ? (
           <span className="flex items-center gap-1">

@@ -102,7 +102,7 @@ describe('PullStep tabs by role', () => {
     render(<Harness />)
     open()
     const tabs = screen.getAllByRole('tab').map((tab) => tab.textContent?.replace(/\d+$/, ''))
-    expect(tabs).toEqual(['Unassigned ideas', 'Ideas on other boards', 'Backlog Issues'])
+    expect(tabs).toEqual(['Unassigned items', 'Items on other boards', 'Backlog Issues'])
     expect(screen.getAllByLabelText('Author').length).toBeGreaterThan(0)
   })
 
@@ -110,12 +110,12 @@ describe('PullStep tabs by role', () => {
     render(<Harness setup={{ ...SETUP, isAdmin: false, members: [] }} />)
     open()
     expect(screen.getAllByRole('tab').map((tab) => tab.textContent?.replace(/\d+$/, ''))).toEqual([
-      'Unassigned ideas',
-      'Ideas on other boards',
+      'Unassigned items',
+      'Items on other boards',
     ])
     expect(screen.queryByRole('tab', { name: /Backlog/ })).toBeNull()
     expect(screen.queryByLabelText('Author')).toBeNull()
-    expect(screen.getByText('You can pull ideas you created.')).toBeTruthy()
+    expect(screen.getByText('You can pull items you created.')).toBeTruthy()
   })
 
   it('moves between tabs with the arrow keys and wraps', () => {
@@ -158,7 +158,7 @@ describe('PullStep reading', () => {
   it('says so when a tab has nothing to pull', async () => {
     render(<Harness />)
     open()
-    expect(await screen.findAllByText('No ideas to pull here.')).not.toHaveLength(0)
+    expect(await screen.findAllByText('No items to pull here.')).not.toHaveLength(0)
   })
 
   it('labels a pool idea No board and an archived board archived, and flags an Issue', async () => {

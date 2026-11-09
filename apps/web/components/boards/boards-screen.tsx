@@ -65,7 +65,7 @@ const COLUMNS: Column<BoardOverview>[] = [
   },
   {
     key: 'ideas',
-    header: 'Ideas by lane',
+    header: 'Items by lane',
     className: 'w-[26%]',
     cell: (board) => (
       <div className="flex flex-col gap-1.5">
@@ -246,7 +246,7 @@ export function BoardsScreen({
         title="Boards"
         description={
           <>
-            Every board organizes the same organization&rsquo;s ideas by status. Open one to see its
+            Every board organizes the same organization&rsquo;s items by status. Open one to see its
             lanes.
           </>
         }
@@ -348,7 +348,7 @@ export function BoardsScreen({
         description={
           confirming?.isArchived
             ? `“${confirming.name}” returns to the Boards list and to the board picker.`
-            : `“${confirming?.name ?? ''}” leaves the Boards list. Its ${confirming?.ideaCount ?? 0} ideas stay in Ideas, and you can unarchive it any time.`
+            : `“${confirming?.name ?? ''}” leaves the Boards list. Its ${confirming?.ideaCount ?? 0} items stay in Items, and you can unarchive it any time.`
         }
         confirmLabel={confirming?.isArchived ? 'Unarchive' : 'Archive board'}
         destructive={false}

@@ -134,7 +134,7 @@ export function FieldForm() {
               defaultChecked={state.required}
               className="size-4"
             />
-            Required — an idea cannot be saved without it
+            Required — an item cannot be saved without it
           </label>
 
           {takesOptions ? (

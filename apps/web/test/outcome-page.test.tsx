@@ -114,15 +114,15 @@ describe('Outcome page header facts', () => {
 describe('Outcome page rollup', () => {
   it('shows ideas done and open, and tasks done of total with the remainder', async () => {
     await renderPage(outcome({ ideaCount: 5, doneIdeaCount: 2, taskCount: 9, doneTaskCount: 4 }))
-    expect(stat('Ideas')).toContain('5')
-    expect(stat('Ideas')).toContain('2 done · 3 open')
+    expect(stat('Items')).toContain('5')
+    expect(stat('Items')).toContain('2 done · 3 open')
     expect(stat('Tasks')).toContain('4 of 9')
     expect(stat('Tasks')).toContain('5 not done')
   })
 
   it('shows zero counts rather than hiding the tiles on an empty Outcome', async () => {
     await renderPage(outcome())
-    expect(stat('Ideas')).toContain('0 done · 0 open')
+    expect(stat('Items')).toContain('0 done · 0 open')
     expect(stat('Tasks')).toContain('0 of 0')
   })
 
@@ -202,7 +202,7 @@ describe('Outcome page items table', () => {
 
   it('shows the empty state and no table for an Outcome with no items', async () => {
     await renderPage(outcome())
-    expect(screen.getByText('No ideas grouped here yet')).toBeTruthy()
+    expect(screen.getByText('No items grouped here yet')).toBeTruthy()
     expect(screen.queryByRole('table')).toBeNull()
   })
 })

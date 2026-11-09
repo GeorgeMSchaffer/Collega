@@ -21,7 +21,7 @@ vi.mock('@/lib/server/auth-actions', () => ({ signOut: vi.fn() }))
 // The real link asks `/inbox/unread-count` on mount; the network is not part of this contract.
 vi.mock('@/components/nav/inbox-link', () => ({ InboxLink: () => <a href="/inbox">Inbox</a> }))
 
-const WORKSPACE = ['Boards', 'Ideas', 'Sprint board', 'Backlog', 'Roadmap']
+const WORKSPACE = ['Boards', 'Items', 'Sprint board', 'Backlog', 'Roadmap']
 const MEMBER_ROLES: Role[] = ['OrgAdmin', 'User', 'ReadOnly']
 
 function user(role: Role): CurrentUser {

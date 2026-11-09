@@ -154,7 +154,7 @@ export function TagsScreen({
           },
         ]
       : []),
-    { key: 'ideas', header: 'Ideas', numeric: true, cell: (tag) => tag.ideaCount },
+    { key: 'ideas', header: 'Items', numeric: true, cell: (tag) => tag.ideaCount },
     {
       key: 'boards',
       header: 'Boards',
@@ -189,7 +189,7 @@ export function TagsScreen({
     />
   )
 
-  const ideas = (n: number) => `${n} ${n === 1 ? 'idea' : 'ideas'}`
+  const ideas = (n: number) => `${n} ${n === 1 ? 'item' : 'items'}`
 
   return (
     <>
@@ -201,7 +201,7 @@ export function TagsScreen({
 
       {tags.length === 0 ? (
         <EmptyState heading="No tags yet">
-          A tag is created the first time anyone types it on an idea
+          A tag is created the first time anyone types it on an item
           {denial === null ? ', or here with Add New Tag.' : '.'}
         </EmptyState>
       ) : (

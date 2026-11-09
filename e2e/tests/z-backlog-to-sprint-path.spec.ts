@@ -49,7 +49,7 @@ async function addTask(page: Page, title: string, parent: 'standalone' | 'first'
   await expect(async () => {
     await drawer.getByLabel(/^Title/).fill(title)
     if (parent === 'first') {
-      const select = drawer.getByLabel(/^Parent idea/)
+      const select = drawer.getByLabel(/^Parent item/)
       const choice = (await select.locator('option').nth(1).textContent()) ?? ''
       parentKey = choice.split(' · ')[0] ?? ''
       await select.selectOption({ index: 1 })
@@ -142,7 +142,7 @@ test('a task goes from the Backlog to a sprint by every route', async ({ page })
   // TB-9: from the parent idea's drawer, an unscheduled task is scheduled into that sprint.
   await page.goto(`/boards/${boardId}?tab=backlog`)
   await page.getByRole('link', { name: scheduled }).first().click()
-  await page.getByRole('link', { name: `Parent idea ${parentKey}` }).click()
+  await page.getByRole('link', { name: `Parent item ${parentKey}` }).click()
   const tasks = page.getByRole('region', { name: /^Tasks/ })
   const taskRow = tasks.getByRole('listitem').filter({ hasText: scheduled })
   await expect(taskRow).toBeVisible(TIMEOUT)

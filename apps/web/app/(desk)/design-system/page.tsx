@@ -118,7 +118,7 @@ export default async function Page() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap items-center gap-3">
-            <Button>Create idea</Button>
+            <Button>Create item</Button>
             <Button variant="secondary">Secondary</Button>
             <Button variant="outline">Outline</Button>
             <Button variant="ghost">Ghost</Button>
@@ -166,7 +166,7 @@ export default async function Page() {
           </CardHeader>
           <CardContent className="max-w-2xl">
             <Field htmlFor="ds-title" label="Title" required hint="Up to 200 characters.">
-              <Input id="ds-title" required placeholder="Idea title" />
+              <Input id="ds-title" required placeholder="Item title" />
             </Field>
             <Field htmlFor="ds-problem" label="Problem" error="Problem is required.">
               <Textarea id="ds-problem" rows={3} aria-invalid />
@@ -178,7 +178,7 @@ export default async function Page() {
                   <option>High</option>
                 </Select>
               </Field>
-              <Field htmlFor="ds-type" label="Idea type">
+              <Field htmlFor="ds-type" label="Item type">
                 <Select id="ds-type" defaultValue="">
                   <option value="">Choose…</option>
                   <option>Improvement</option>

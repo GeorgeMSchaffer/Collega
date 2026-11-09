@@ -234,7 +234,7 @@ export function IssueDrawer({
               Provenance
             </h3>
             <p className="m-0">
-              Raised as an idea{idea.author ? ` by ${idea.author.name}` : ''} on {idea.createdOn} ·{' '}
+              Raised as an item{idea.author ? ` by ${idea.author.name}` : ''} on {idea.createdOn} ·{' '}
               <span className="tabular-nums">{issue.upvotesAtPromotion}</span> upvotes at promotion
               (<span className="tabular-nums">{issue.upvotes}</span> now)
               {issue.promotedOn

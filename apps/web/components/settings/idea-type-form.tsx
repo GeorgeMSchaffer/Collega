@@ -36,7 +36,7 @@ export function IdeaTypeForm() {
   return (
     <Card className="h-fit" id="add-idea-type">
       <CardHeader>
-        <CardTitle>Add idea type</CardTitle>
+        <CardTitle>Add item type</CardTitle>
       </CardHeader>
       <CardContent>
         {state.error ? (
@@ -61,7 +61,7 @@ export function IdeaTypeForm() {
           </Field>
 
           <Button type="submit" className="w-full justify-center" disabled={pending}>
-            {pending ? 'Adding…' : 'Add idea type'}
+            {pending ? 'Adding…' : 'Add item type'}
           </Button>
         </form>
       </CardContent>

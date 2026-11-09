@@ -56,7 +56,7 @@ export function UpvoteButton({
           size="sm"
           aria-disabled="true"
           aria-describedby="why-upvote"
-          aria-label={`Upvote this idea, currently ${count} votes`}
+          aria-label={`Upvote this item, currently ${count} votes`}
         >
           <span aria-hidden="true">▲</span> {count}
         </Button>
@@ -74,7 +74,7 @@ export function UpvoteButton({
         size="sm"
         disabled={voting}
         aria-pressed={hasUpvoted}
-        aria-label={`${hasUpvoted ? 'Remove your upvote from' : 'Upvote'} this idea, currently ${count} votes`}
+        aria-label={`${hasUpvoted ? 'Remove your upvote from' : 'Upvote'} this item, currently ${count} votes`}
         className={cn(hasUpvoted && 'border-primary text-primary')}
       >
         <span aria-hidden="true">▲</span> {count}
@@ -88,7 +88,7 @@ export function UpvoteButton({
   )
 }
 
-const followers = (n: number) => `${n} ${n === 1 ? 'person follows' : 'people follow'} this idea`
+const followers = (n: number) => `${n} ${n === 1 ? 'person follows' : 'people follow'} this item`
 
 /**
  * The Follow / Following toggle (`20-feature-idea-following.md` rules 45–46).

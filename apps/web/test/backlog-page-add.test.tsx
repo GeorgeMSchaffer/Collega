@@ -97,7 +97,7 @@ describe('Backlog empty state', () => {
     expect(
       screen.getByRole('button', { name: 'Add issue' }).getAttribute('aria-disabled'),
     ).toBeNull()
-    expect(screen.getByRole('link', { name: 'Open the ideas board' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Open the items board' })).toBeTruthy()
   })
 
   it('offers Add issue as a denied control with the reason to a Read Only member', async () => {

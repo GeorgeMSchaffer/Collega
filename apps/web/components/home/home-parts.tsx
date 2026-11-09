@@ -111,7 +111,7 @@ export function UntrackedTile({ figures }: { figures: string[] }) {
         ))}
       </ul>
       <p className="m-0 mt-1.5 text-xs text-muted-foreground">
-        These need to know which status means in review or complete, and when an idea moved, which
+        These need to know which status means in review or complete, and when an item moved, which
         Collega does not record yet.
       </p>
     </Tile>

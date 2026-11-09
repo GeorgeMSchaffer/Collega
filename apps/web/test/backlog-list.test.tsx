@@ -136,13 +136,13 @@ describe('BacklogList filters', () => {
 
   it('filters by parent idea', () => {
     list()
-    pick('Parent idea', 'IDEA-7')
+    pick('Parent item', 'IDEA-7')
     expect(titles()).toEqual(['Child of seven'])
   })
 
   it('filters to standalone tasks', () => {
     list()
-    pick('Parent idea', 'Standalone (no parent)')
+    pick('Parent item', 'Standalone (no parent)')
     expect(titles()).toEqual(['Standalone chore'])
   })
 

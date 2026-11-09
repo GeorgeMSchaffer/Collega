@@ -38,8 +38,8 @@ const ARCHIVED_REASON =
   'Archived boards take no pull. Unarchive this board first, from the Boards list.'
 
 const TABS: { source: PullSource; label: string }[] = [
-  { source: 'unassigned', label: 'Unassigned ideas' },
-  { source: 'boards', label: 'Ideas on other boards' },
+  { source: 'unassigned', label: 'Unassigned items' },
+  { source: 'boards', label: 'Items on other boards' },
   { source: 'backlog', label: 'Backlog Issues' },
 ]
 
@@ -298,13 +298,13 @@ export function PullStep({
 
         <p className="m-0 text-xs text-secondary-foreground">
           {setup.isAdmin
-            ? `Move ideas that already exist onto this board${boardId === null ? ' when it is created' : ''}. Nothing changes until you save.${boardId === null ? '' : ` Ideas already on ${boardName} are not listed.`}`
-            : 'You can pull ideas you created.'}
+            ? `Move items that already exist onto this board${boardId === null ? ' when it is created' : ''}. Nothing changes until you save.${boardId === null ? '' : ` Items already on ${boardName} are not listed.`}`
+            : 'You can pull items you created.'}
         </p>
 
         {laneRemoval ? (
           <Note>
-            Ideas in removed lanes move first, then pulled items are placed on the lanes as they
+            Items in removed lanes move first, then pulled items are placed on the lanes as they
             stand after this save.
           </Note>
         ) : null}
@@ -545,7 +545,7 @@ function PullPanel({
 
   const statusColor = (statusId: string) => statuses.find((status) => status.id === statusId)?.color
   const filtering = debounced.trim() !== '' || tag !== '' || author !== ''
-  const noun = source === 'backlog' ? 'Issues' : 'ideas'
+  const noun = source === 'backlog' ? 'Issues' : 'items'
 
   return (
     <div

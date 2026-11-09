@@ -47,10 +47,10 @@ export const USAGE_ROLE_LABELS: Record<UsageRole, string> = {
 export const MILESTONE_LABELS: Record<UsageMilestoneKey, string> = {
   organizationCreated: 'Organization created',
   firstBoardByPerson: 'First board made by a person',
-  firstIdea: 'First idea',
+  firstIdea: 'First item',
   firstComment: 'First comment',
   thirdActiveMember: 'Third active member',
-  firstIdeaInFinalLane: 'First idea moved to a final lane',
+  firstIdeaInFinalLane: 'First item moved to a final lane',
 }
 
 /** The view events Paths can start from, as the comp offers them. */
@@ -58,7 +58,28 @@ export const PATH_STARTS = ['idea.opened', 'board.viewed', 'search.run', 'list.v
 
 const EVENT_LABELS: Record<string, string> = {
   'board.viewed': 'Board viewed',
-  'idea.opened': 'Idea opened',
+  'idea.opened': 'Item opened',
+  IdeaCreated: 'Item created',
+  IdeaUpdated: 'Item updated',
+  IdeaStatusChanged: 'Item status changed',
+  IdeaUpvoteAdded: 'Item upvote added',
+  IdeaUpvoteRemoved: 'Item upvote removed',
+  IdeaMovedPastOpenTasks: 'Item moved past open tasks',
+  IdeaBoardChanged: 'Item board changed',
+  IdeaPromotedToIssue: 'Item promoted to issue',
+  IdeaTypeReassigned: 'Item type reassigned',
+  IdeaBlockedByChanged: 'Item blocked by changed',
+  IdeaDeleted: 'Item deleted',
+  IdeasImported: 'Items imported',
+  IdeaFieldValueChanged: 'Item field value changed',
+  IdeaTypeCreated: 'Item type created',
+  IdeaTypeUpdated: 'Item type updated',
+  IdeaTypesReordered: 'Item types reordered',
+  IdeaTypeDeleted: 'Item type deleted',
+  IdeaTypeFieldsUpdated: 'Item type fields updated',
+  IdeaTypeAppearanceUpdated: 'Item type appearance updated',
+  IdeaAssistTurn: 'Item assist turn',
+  IdeaMetricsChanged: 'Item metrics changed',
   'list.viewed': 'List viewed',
   'search.run': 'Search run',
   'filter.applied': 'Filter applied',
@@ -68,8 +89,7 @@ const EVENT_LABELS: Record<string, string> = {
 }
 
 /**
- * A view event's label, or an audit event type split into words: `IdeaStatusChanged` reads "Idea
- * status changed". The audit log has many types, and naming each here would drift from it.
+ * Known object events use presentation names; other audit types are split into words.
  */
 export function usageEventLabel(event: string): string {
   const known = EVENT_LABELS[event]
@@ -105,7 +125,7 @@ export function trailIdeaId(item: UsageTrailItem): string | null {
  * One trail row in words, as the comp draws them: "Opened CI-19 “Bulk export…” from the board",
  * "Moved CI-19 from Review to Planned", "Sam Sitewide acting as Noah Contributor: viewed board
  * Customer Insights (not counted)". `names` comes from `getUsageTrailNames`; a name it could not
- * read falls back to the kind of thing ("an idea", "a board"), never an id.
+ * read falls back to the kind of thing ("an item", "a board"), never an id.
  */
 export function describeTrailItem(
   item: UsageTrailItem,
@@ -125,7 +145,7 @@ const isView = (item: UsageTrailItem) => item.event.includes('.')
 function ideaRef(item: UsageTrailItem, names: UsageTrailNames, withTitle = false): string {
   const id = trailIdeaId(item)
   const idea = id ? names.ideas[id] : undefined
-  if (!idea) return 'an idea'
+  if (!idea) return 'an item'
   if (!idea.itemKey) return `“${idea.title}”`
   return withTitle ? `${idea.itemKey} “${idea.title}”` : idea.itemKey
 }
@@ -151,7 +171,7 @@ function describeView(item: UsageTrailItem, props: Props, names: UsageTrailNames
       const scope = text(props.scope)
       const count = typeof props.resultCount === 'number' ? props.resultCount : null
       const results = count === null ? '' : `${count} ${count === 1 ? 'result' : 'results'}, `
-      return `Searched${scope ? ` ${scope}` : ''} (${results}no text kept)`
+      return `Searched${scope ? ` ${scope === 'ideas' ? 'items' : scope}` : ''} (${results}no text kept)`
     }
     case 'filter.applied': {
       const keys = Array.isArray(props.filterKeys) ? props.filterKeys.filter(text) : []
@@ -171,7 +191,7 @@ function describeView(item: UsageTrailItem, props: Props, names: UsageTrailNames
 function describeChange(item: UsageTrailItem, props: Props, names: UsageTrailNames): string {
   switch (item.event) {
     case 'IdeaCreated':
-      return `Created idea ${ideaRef(item, names)}`
+      return `Created item ${ideaRef(item, names)}`
     case 'IdeaUpdated':
       return `Edited ${ideaRef(item, names)}`
     case 'IdeaStatusChanged': {
@@ -191,4 +211,5 @@ function describeChange(item: UsageTrailItem, props: Props, names: UsageTrailNam
 }
 
 const lowerFirst = (value: string) => value.charAt(0).toLowerCase() + value.slice(1)
-const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1)
+const capitalize = (value: string) =>
+  value === 'ideas' ? 'Items' : value.charAt(0).toUpperCase() + value.slice(1)

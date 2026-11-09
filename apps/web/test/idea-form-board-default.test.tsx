@@ -65,10 +65,10 @@ describe('IdeaForm Board field', () => {
 
   it('explains where an idea with no board waits, only while No board is chosen', () => {
     const { unmount } = form({ boardId: null })
-    expect(screen.getByText(/Ideas with no board wait on the Ideas list/)).toBeTruthy()
+    expect(screen.getByText(/Items with no board wait on the Items list/)).toBeTruthy()
     unmount()
     form({ boardId: 'b-1' })
-    expect(screen.queryByText(/Ideas with no board wait on the Ideas list/)).toBeNull()
+    expect(screen.queryByText(/Items with no board wait on the Items list/)).toBeNull()
   })
 
   it('falls back to No board when the preselected board is archived and so not offered', () => {

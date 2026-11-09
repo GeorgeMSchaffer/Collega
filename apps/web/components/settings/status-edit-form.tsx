@@ -98,7 +98,7 @@ export function StatusEditForm({ status }: { status: Status }) {
         <input type="hidden" name="statusId" value={status.id} />
 
         <p className="m-0 max-w-prose text-sm text-muted-foreground">
-          Archiving removes this lane from every board. Ideas already in it keep the status, so
+          Archiving removes this lane from every board. Items already in it keep the status, so
           nothing is lost — and the last remaining status cannot be archived.
         </p>
         <Button type="submit" variant="outline" disabled={archiving} className="w-fit">

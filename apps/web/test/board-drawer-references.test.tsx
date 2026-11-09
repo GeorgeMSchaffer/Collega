@@ -183,7 +183,7 @@ describe('the Boards drawer in edit mode', () => {
     expect(d.getByRole('group', { name: 'Kind of New' })).toBeTruthy()
     expect(d.getByRole('combobox', { name: 'References board for New' })).toBeTruthy()
     expect(d.getByRole('switch', { name: 'Auto-create one task on entry' })).toBeTruthy()
-    expect(d.getByRole('switch', { name: 'Idea features' })).toBeTruthy()
+    expect(d.getByRole('switch', { name: 'Item features' })).toBeTruthy()
   })
 
   it('gives a User asking for edit mode only the values: the page loads no form for them', () => {
@@ -202,7 +202,7 @@ describe('the Boards drawer in edit mode', () => {
     fireEvent.click(
       within(d.getByRole('group', { name: 'Kind of Done' })).getByRole('radio', { name: 'Final' }),
     )
-    fireEvent.click(d.getByRole('switch', { name: 'Idea features' }))
+    fireEvent.click(d.getByRole('switch', { name: 'Item features' }))
     fireEvent.click(d.getByRole('button', { name: 'Save changes' }))
     await waitFor(() => expect(save).toHaveBeenCalledTimes(1))
     const data = save.mock.calls[0]?.[1] as FormData
@@ -235,14 +235,14 @@ describe('the Boards drawer in edit mode', () => {
     search.params = new URLSearchParams('board=b-1&mode=edit')
     save.mockResolvedValue({
       error:
-        'A lane with ideas in it can’t have its reference changed or removed, and can’t be removed.',
+        'A lane with items in it can’t have its reference changed or removed, and can’t be removed.',
       savedId: null,
     })
     screenAs('OrgAdmin', { form: FORM })
     const d = within(dialog())
     fireEvent.click(d.getByRole('button', { name: 'Save changes' }))
     const alert = await d.findByRole('alert')
-    expect(alert.textContent).toMatch(/^A lane with ideas in it/)
+    expect(alert.textContent).toMatch(/^A lane with items in it/)
     expect(alert.textContent).not.toMatch(/laneInUse/)
   })
 

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import type { InboxItem, NotificationEventType } from '@/lib/types'
 
-const WHY_FOLLOW = 'You follow this idea'
+const WHY_FOLLOW = 'You follow this item'
 const WHY_MENTION = 'You were mentioned'
 
 /** Rule 42's table: what a row says between the actor and the title, after it, and why it came. */

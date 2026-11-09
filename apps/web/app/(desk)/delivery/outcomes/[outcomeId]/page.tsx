@@ -159,7 +159,7 @@ export default async function OutcomePage({
             )
           })}
           <Stat
-            label="Ideas"
+            label="Items"
             note={`${outcome.doneIdeaCount} done · ${outcome.ideaCount - outcome.doneIdeaCount} open`}
           >
             {outcome.ideaCount}
@@ -173,7 +173,7 @@ export default async function OutcomePage({
         <section aria-labelledby="outcome-ideas" className="rounded-lg border bg-card">
           <div className="flex flex-wrap items-center gap-3 px-4 py-3">
             <h2 id="outcome-ideas" className="m-0 text-base">
-              Ideas in this outcome
+              Items in this outcome
             </h2>
             {filters.length > 1 ? (
               <nav
@@ -203,7 +203,7 @@ export default async function OutcomePage({
 
           {outcome.ideas.length === 0 ? (
             <div className="border-t p-4">
-              <EmptyState heading="No ideas grouped here yet">
+              <EmptyState heading="No items grouped here yet">
                 Items grouped under this outcome are listed here.
               </EmptyState>
             </div>
@@ -213,7 +213,7 @@ export default async function OutcomePage({
                 <thead>
                   <tr className="text-xs text-muted-foreground">
                     <th className="px-4 py-2 font-medium">Key</th>
-                    <th className="px-4 py-2 font-medium">Idea</th>
+                    <th className="px-4 py-2 font-medium">Item</th>
                     <th className="px-4 py-2 font-medium">Status</th>
                     <th className="px-4 py-2 font-medium">Effort</th>
                     <th className="px-4 py-2 font-medium">Sprint</th>

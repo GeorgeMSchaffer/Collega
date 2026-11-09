@@ -13,7 +13,7 @@ export function AddIdeaButton() {
   return (
     <Button onClick={() => openDrawer({ create: true })}>
       <Icon name="plus" />
-      Add New Idea
+      Add New Item
     </Button>
   )
 }

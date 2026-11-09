@@ -8,7 +8,7 @@ import type { Status } from '@/lib/types'
 /** A lane the save would remove that still holds ideas. */
 export type RemovedLane = { id: string; name: string; ideaCount: number }
 
-const ideas = (count: number) => (count === 1 ? '1 idea' : `${count} ideas`)
+const ideas = (count: number) => (count === 1 ? '1 item' : `${count} items`)
 
 /**
  * The board form's confirm step for a save that removes lanes still holding ideas
@@ -81,15 +81,15 @@ export function IdeaMovesGuard({
       ))}
       <ConfirmDialog
         open={confirming && removed.length > 0}
-        title={only ? `Move the ideas in ${only.name}?` : 'Move the ideas in the removed lanes?'}
+        title={only ? `Move the items in ${only.name}?` : 'Move the items in the removed lanes?'}
         description={
           <>
             Removing {only ? 'this lane' : 'these lanes'} keeps {total === 1 ? 'its' : 'their'}{' '}
-            {ideas(total)}. Choose the lane they move to; each move is recorded in the idea&rsquo;s
+            {ideas(total)}. Choose the lane they move to; each move is recorded in the item&rsquo;s
             history.
           </>
         }
-        confirmLabel="Move ideas and save"
+        confirmLabel="Move items and save"
         destructive={false}
         onCancel={() => setConfirming(false)}
         onConfirm={() => {
