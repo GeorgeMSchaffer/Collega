@@ -27,5 +27,19 @@ build step, so `pnpm check` has nothing to run here.
   where the Figma frame has a placeholder.
 - `prototype/` — clickable prototype of the Org Admin screens (29 screenshots, hash routing,
   percent-positioned hotspots in 960×600 source px). Press `H` for hotspots, `G` for the grid. `workflow/` and `prototype/` are `noindex`.
+- Screenshot PNGs remain untouched as full-resolution links and compatibility fallbacks.
+  `prototype/shots/optimized/` and `worksprint-assets/optimized/` contain lossless WebP variants;
+  `<picture>`/`srcset`/`sizes` select for placement width and device pixel density. The tour has
+  separate 160/320px thumbnails and only eagerly loads its active/next slide when visible.
+  Product-page screenshots scale to their panel with `height:auto`; prototype hotspots retain
+  their original 8:5 coordinate system.
+- Regenerate with `python tools/public-images/optimize.py` from the repository root, using
+  Pillow with WebP support (image tooling only, not a site dependency). It preserves exact
+  aspect ratios, never upscales, verifies decoded pixels against the source/resized pixels,
+  and discards any resized variant that costs at least as many bytes as a larger variant.
+  It also refreshes static picture candidates and the prototype's generated `sources.js`.
+  `tools/public-images/originals.zip` holds byte-for-byte backups outside the deployed site;
+  reruns retain earlier versions. `tools/public-images/manifest.json` records original hashes,
+  backup entries, dimensions, sizes and variant URLs for reuse in product/user guides.
 - Preview: `python3 -m http.server -d apps/public`.
 - Deploys as its own Vercel project with Root Directory `apps/public` (see `vercel.json`).
