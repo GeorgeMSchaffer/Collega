@@ -1,99 +1,24 @@
-# apps/web
+# Web client
 
-The Next.js client (App Router). **HTTP only** — it may import `@collega/design-system` and nothing
-else from the workspace. An import of `@collega/application`, `@collega/domain` or
-`@collega/infrastructure` is a lint error, and that is deliberate
-(`SPEC/50-typescript-migration.md` §4.3): the browser tier reaches `apps/api` over the wire.
+Next.js App Router client. It reaches the API over HTTP and may import only
+`@collega/design-system` from the workspace. The browser tier must not import application, domain
+or infrastructure packages.
 
-## Layout
+- Use the `@/…` alias only for `@/lib`, `@/components` and `@/app`.
+- Screens call readers in `lib/data/`; readers call the API and their signatures are the screen
+  contract. Read the reader header before adding one.
+- Never invent screen data. If the API has no route, render the empty or unavailable state;
+  fixtures stay under `test/` and are not imported by the app.
+- Business rules belong in `packages/application`; client validation is for feedback, not
+  authority. Use design-system primitives and semantic tokens rather than per-screen shadcn
+  restyling or raw colors.
+- Add `'use client'` only where interaction needs it. Keep server-only modules out of client
+  import graphs; `next build` catches crossings that typechecking can miss.
 
-| Path | Holds |
-|---|---|
-| `app/(auth)/`, `app/(desk)/` | The route groups — login/register/change-password, and the signed-in surfaces |
-| `app/(desk)/design-system/` | The primitive gallery; check a design-system change here first |
-| `app/globals.css` | Tailwind entry point only — the theme lives in `@collega/design-system` |
-| `components/` | Screen components, grouped by surface |
-| `lib/data/` | **The data seam** — every reader the screens call |
-| `lib/api/` | `fetch` client, wire types, Problem Details handling |
-| `lib/server/` | Server actions (`*-actions.ts`) |
-| `test/` | Vitest |
-
-Use the `@/…` alias (`@/lib`, `@/components`, `@/app`) rather than relative paths.
-
-## Conventions
-
-- **Screens call `lib/data/`, never `lib/api/` directly.** Every reader there calls the API; a
-  reader's signature is the screen's contract, so changing where its data comes from replaces a
-  body, never a signature. Read that file's header before adding one.
-- **No screen invents data.** Where the API has no route for something a design shows, the screen
-  renders that part's empty or unavailable state (Home's untracked tiles are the example) rather
-  than a fixture. Test data lives under `test/`, mirrors the demo seed, and is never imported by
-  `app/`, `components/` or `lib/`.
-- **No business rules here.** Validation that decides an outcome belongs in
-  `packages/application`; the client validates for feedback, not for authority.
-- Build from `@collega/design-system` primitives; don't restyle shadcn per screen or reach for raw
-  colours.
-- `'use client'` only where interaction needs it. A client file that reaches a server-only module
-  through a barrel typechecks and then fails `next build`, which is why the build is part of
-  `pnpm check`.
-
-## A deploy can be cancelled by the ignore step, and that is not a failure
-
-`vercel.json`'s `ignoreCommand` asks Turbo whether `@collega/web` was affected since the previous
-deployed SHA, and cancels the build when it was not. On a commit that touches only `SPEC/` or
-another package, the deployment shows as **CANCELED** rather than skipped, which reads like
-something broke.
-
-**It reasons about source changes only, so it cannot see a reason to rebuild that leaves no diff.**
-Changing an environment variable is the one that bites: Vercel bakes the value into a deployment, a
-new value needs a new build, and the commit that would carry it usually changes nothing under
-`apps/web`. This happened on 2026-09-12 — `COLLEGA_API_URL` was corrected, `main` was moved, and the
-build that should have picked the value up cancelled itself while production carried on serving the
-old one.
-
-**A redeploy does not work. Corrected 2026-09-14, from the build log of two that did not.** This
-file used to say "redeploy from Vercel" here, and that advice cannot succeed: the ignore step asks
-what changed since `VERCEL_GIT_PREVIOUS_SHA`, and on a redeploy of a commit the previous SHA *is*
-that commit — so the honest answer is "nothing affected" and the build stops. Twice, on
-`collega-api` production, while a newly added `COLLEGA_ALLOW_DEMO_SEED` went on being invisible to
-the running function:
-
-```
-Running "turbo query affected --base=$VERCEL_GIT_PREVIOUS_SHA --packages @collega/api --exit-code"
-{ "affectedPackages": { "items": [], "length": 0 } }
-The deployment was canceled because the Ignored Build Step command returned exit code 0.
-```
-
-**Ship a commit that touches the app instead.** For production that means moving `main` — a
-promotion whose range includes a change under `apps/api` or `apps/web` gives the ignore step a real
-answer. There is no dashboard button that substitutes for it, which is the part worth remembering:
-the setting is applied instantly and reaches nothing until something rebuilds.
-
-**The change does not have to be code, only a path.** `turbo query affected` is path-based, not
-content-aware, so any file under the app's directory counts — a comment, a README, this file.
-Demonstrated by the commit that added the paragraph above: it edited `SPEC/50-vercel-deployment.md`
-and `apps/web/AGENTS.md`, nothing else, and `collega` built **READY** while `collega-api` cancelled.
-
-So the lever for each project is a path, and they are not the same one:
-
-| To rebuild | Touch something under |
-|---|---|
-| `collega` (web) | `apps/web/` — including its markdown |
-| `collega-api` | `apps/api/` — its own markdown will do |
-
-Editing a file under `apps/web/` will not rebuild the API, which is exactly the trap that left
-`COLLEGA_ALLOW_DEMO_SEED` inert: the variable is read by `apps/api`, and every commit since it was
-set had touched only the web app or `SPEC/`.
-
-The exact behaviour, since `|| exit 1` reads backwards at a glance:
-
-- Turbo **errors** — an empty `VERCEL_GIT_PREVIOUS_SHA`, which happens on a first deployment — exits
-  non-zero, so `|| exit 1` fires and the build **runs**.
-- Turbo **succeeds and reports nothing affected** exits 0, and the build is **cancelled**.
-
-So it fails open on an error and closed on a clean answer. `apps/api` carries the same line and had
-been erroring its way into building on every deployment, which looked like different behaviour and
-was not.
+Before changing the layout or interaction of a page, read the relevant UI guidance in
+`packages/design-system/AGENTS.md` and canonical `SPEC/` files. For canceled deployments, ignore
+steps, or environment-only changes, read `SPEC/50-vercel-deployment.md` §2: a clean ignore result
+can cancel an unchanged redeploy, and web/API builds watch different package paths.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

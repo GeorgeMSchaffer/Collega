@@ -1,55 +1,34 @@
-# apps/api
+# API
 
-The Nest.js host and the request boundary. **The only thing in the repo that talks to the
-database.** May import `@collega/application`, `@collega/infrastructure` and `@collega/domain`;
-may not import `@collega/design-system` or `apps/web`.
+Nest.js request boundary and the only application layer that talks to the database. It may import
+`@collega/application`, `@collega/infrastructure` and `@collega/domain`; it may not import the web
+app or design system.
 
-Runs serverless on Vercel. `server.js` and `bootstrap.ts` are one entrypoint, not two.
+## Feature modules
 
-## Layout
+Each feature owns `src/<feature>/<feature>.module.ts`. Build and typecheck hooks run the module
+generator, which builds `src/app.modules.generated.ts`; generated files and `src/app.module.ts`
+are not hand-edited. `auth/` and `common/` are excluded from generation and wired directly by the
+host.
 
-| Path | Holds |
-|---|---|
-| `src/<feature>/<feature>.controller.ts` | Routes only — parse, delegate, return |
-| `src/<feature>/<feature>.module.ts` | The feature's own Nest module |
-| `src/app.modules.generated.ts` | **Generated. Never edit.** |
-| `src/app.module.ts` | Host wiring — `auth` and `common`, plus the generated barrel |
-| `src/common/` | `config`, `errors`, `request-context`, `persistence`, `health`, pipes, `tokens.ts` |
-| `src/auth/` | The identity chokepoint — the only place a credential is read |
-| `test/` | Vitest, mirroring `src/` |
+## Request and error boundaries
 
-## The generated module barrel
+- Controllers parse, delegate and return; application services own business rules and
+  authorization.
+- Throw shared application errors. `common/errors/problem-details.filter.ts` maps them to HTTP;
+  controllers do not construct error bodies or set status codes.
+- Bind ports by tokens in `common/tokens.ts`; read its leading comment before adding one.
+- Only `src/auth/` reads credentials. Request context uses `AsyncLocalStorage`; do not thread
+  request objects through layers.
+- Routes use the global `/api/v1` prefix. Read `SPEC/30-Contracts.md` and the relevant
+  `SPEC/contracts/` file before API work; contracts are read-only.
+- `trust proxy` and the per-IP rate limiter are load-bearing. Read `bootstrap.ts` comments before
+  changing either.
 
-Each feature creates **only** its own `src/<feature>/<feature>.module.ts`;
-`scripts/generate-modules.mjs` scans for them and rewrites `app.modules.generated.ts`. It is wired
-into `build` and `typecheck` through the package.json `pre*` hooks, so it runs on its own. Nobody
-edits `app.module.ts` or the generated file by hand — that is what kept seven Wave D partitions off
-the same contended import list. `auth/` and `common/` are excluded on purpose: the host imports
-them directly.
+## Build and deployment
 
-## Conventions
+Read `SPEC/50-vercel-deployment.md` §2 for build and ignore-step behavior. The API deployment runs
+`db:migrate` and `db:bootstrap-admin`; the latter runs under plain Node, so its imports must not use
+`.js` specifiers to reach sibling `.ts` files.
 
-- **Controllers hold no business rules.** Parse the request, call the application service, return
-  the result. Authorization is the service's job.
-- **Errors:** throw the application kernel's errors. `common/errors/problem-details.filter.ts`
-  maps them to the response body; don't hand-build one, and don't set a status code in a
-  controller.
-- **Ports are bound by string token** — `common/tokens.ts` to
-  `common/persistence/adapters.providers.ts`. Read the comment at the top of `tokens.ts` before
-  adding a token; a new one is often not needed.
-- **Request context is `AsyncLocalStorage`** (`common/request-context/`), because serverless leaves
-  no long-lived in-process state. Don't thread a request object through the layers.
-- **Every route lives under `/api/v1`**, set as a global prefix in `bootstrap.ts`.
-  `SPEC/30-Contracts.md` and the area files under `SPEC/contracts/` are canonical for routes and
-  payloads, and are **read, not edited**, by an API slice.
-- `trust proxy` and the per-IP rate limiter are deliberate and load-bearing; read the comments in
-  `bootstrap.ts` before changing either.
-
-Tests are route-level and hermetic. An agent does not write tests for its own endpoints.
-
-**Deploys.** `vercel.json`'s `ignoreCommand` builds `collega-api` only when `@collega/api` or a
-workspace dependency changed since the previous build. A redeploy of an unchanged commit, or a
-change that touches only another project, shows **Canceled** (that is the ignore step working, not
-a failure). A build that fails leaves the last good deployment serving. The build also runs
-`db:migrate` and `db:bootstrap-admin` against the target database, and `bootstrap-admin` runs under
-plain `node`, so what it imports must not use `.js` specifiers for sibling `.ts` files.
+Tests are hermetic and route-level. A QA agent, not the endpoint implementer, writes endpoint tests.
