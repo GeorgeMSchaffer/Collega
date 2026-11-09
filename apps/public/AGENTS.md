@@ -6,8 +6,9 @@ build step, so `pnpm check` has nothing to run here.
 - `index.html` — the app-aligned spacious narrative landing page, taken from
   `SPEC/mockups/worksprint-marketing-app-narrative.html` (proposal bar and sibling-concept links
   removed), with the Workflow story Figma hero and its existing `workflow/assets/` track SVGs.
-  Styles and the demo form script are in `worksprint-assets/`; its CSP allows only
-  same-origin assets, so nothing external can be added without changing the `<meta>` policy.
+  Styles and the demo form script are in `worksprint-assets/`. The indexable marketing pages load
+  Vercel Analytics through a local queue stub and `/_vercel/insights/script.js`; their CSP allows
+  same-origin scripts and connections only. This is independent of `apps/web`.
 - The home page product preview is a five-slide captioned tour, replacing the feature-image
   cards. `worksprint-assets/product-tour.css` and `product-tour.js` own its styles and behavior.
   Captions sit above the screenshot; overlay arrows stop autoplay after manual navigation. Otherwise it loops
