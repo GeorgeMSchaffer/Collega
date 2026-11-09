@@ -1,29 +1,32 @@
-# apps/public
+# Public site
 
-The public WorkSprint site, static: no framework, no dependencies, no workspace imports and no
-build step, so `pnpm check` has nothing to run here.
+`apps/public` is an independent static site: no framework, build step, dependencies, workspace
+imports or relationship to `apps/web`.
 
-- `index.html` — the app-aligned spacious narrative landing page, taken from
-  `SPEC/mockups/worksprint-marketing-app-narrative.html` (proposal bar and sibling-concept links
-  removed), with the Workflow story Figma hero and its existing `workflow/assets/` track SVGs.
-  Styles and the demo form script are in `worksprint-assets/`. The indexable marketing pages load
-  Vercel Analytics through a local queue stub and `/_vercel/insights/script.js`; their CSP allows
-  same-origin scripts and connections only. This is independent of `apps/web`.
-- The home page product preview is a five-slide captioned tour, replacing the feature-image
-  cards. `worksprint-assets/product-tour.css` and `product-tour.js` own its styles and behavior.
-  Captions sit above the screenshot; overlay arrows stop autoplay after manual navigation. Otherwise it loops
-  every 30 seconds; hover, focus, hidden pages and reduced motion suspend autoplay. The caption
-  includes subtle previous/next arrows, which also stop autoplay. Without JavaScript, the first
-  screenshot and caption remain.
-- `ideas/ boards/ backlog/ sprints/ roadmap/` — one product page per area, each with its own title,
-  description, canonical and `sitemap.xml` entry. Copy states only what the app does today
-  (the roadmap shows sprints; Outcomes are not built, so the page does not mention them).
-- `robots.txt`, `sitemap.xml`, `favicon.svg` — canonical host is assumed to be `https://worksprint.io`.
-- `workflow/` — second landing concept built from the Figma file "WorkSprint — Landing page concepts",
-  frame `01 / Workflow story / Desktop` (3:2). Own CSS, demo-only form, SVGs from the file in
-  `workflow/assets/`. The product preview uses the approved board capture in `worksprint-assets/`
-  where the Figma frame has a placeholder.
-- `prototype/` — clickable prototype of the Org Admin screens (29 screenshots, hash routing,
-  percent-positioned hotspots in 960×600 source px). Press `H` for hotspots, `G` for the grid. `workflow/` and `prototype/` are `noindex`.
-- Preview: `python3 -m http.server -d apps/public`.
-- Deploys as its own Vercel project with Root Directory `apps/public` (see `vercel.json`).
+- Keep marketing copy accurate to behavior that ships today. Outcomes are not built; do not claim
+  them. Each product page owns its title, description and canonical URL and must appear in
+  `sitemap.xml`.
+- The indexable marketing pages use Vercel Analytics through the local queue stub and
+  `/_vercel/insights/script.js`. Keep their CSP limited to same-origin scripts and connections.
+  `robots.txt` and `sitemap.xml` use `https://worksprint.io`; `workflow/` and `prototype/` stay
+  `noindex`.
+- `worksprint-assets/` owns the home page's Field Notes tour, shared styles and demo scripts.
+  Read `worksprint-assets/product-tour.md` before changing the tour.
+- `workflow/` owns the second landing concept, demo-only form, styles and SVGs under `assets/`.
+  `prototype/` owns the 29-screen hash-routed Org Admin screenshot prototype; `H` toggles hotspots,
+  `G` toggles the grid, and hotspot positions use the 960×600 source coordinate system.
+- Screenshot PNGs remain untouched as full-resolution links and compatibility fallbacks.
+  `prototype/shots/optimized/` and `worksprint-assets/optimized/` contain lossless WebP variants;
+  `<picture>`/`srcset`/`sizes` select for placement width and device pixel density. The tour has
+  separate 160/320px thumbnails and only eagerly loads its active/next slide when visible.
+  Product-page screenshots scale to their panel with `height:auto`; prototype hotspots retain
+  their original 8:5 coordinate system.
+- Regenerate with `python tools/public-images/optimize.py` from the repository root, using
+  Pillow with WebP support (image tooling only, not a site dependency). It preserves exact
+  aspect ratios, never upscales, verifies decoded pixels against the source/resized pixels,
+  and discards any resized variant that costs at least as many bytes as a larger variant.
+  It also refreshes static picture candidates and the prototype's generated `sources.js`.
+  `tools/public-images/originals.zip` holds byte-for-byte backups outside the deployed site;
+  reruns retain earlier versions. `tools/public-images/manifest.json` records original hashes,
+  backup entries, dimensions, sizes and variant URLs for reuse in product/user guides.
+- The site deploys as its own Vercel project with Root Directory `apps/public`.

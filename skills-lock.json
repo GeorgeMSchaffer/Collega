@@ -7,6 +7,12 @@
       "skillPath": "skills/build-design-system/SKILL.md",
       "computedHash": "68fe389da353c02a64094841f4658387883db7f2a280956e308489e479cffeaf"
     },
+    "carousels-sliders": {
+      "source": "dylantarre/animation-principles",
+      "sourceType": "github",
+      "skillPath": "skills/07-by-ui-element/carousels-sliders/SKILL.md",
+      "computedHash": "882621662e9f6490ab491c681c9c73b4bf8788135854d8ff069b80a6e8d6f249"
+    },
     "caveman": {
       "source": "JuliusBrussee/caveman",
       "sourceType": "github",
@@ -19,17 +25,68 @@
       "skillPath": "skills/component-docs/SKILL.md",
       "computedHash": "0cc156185f7acb88350cb02583cdad358ddd7a592c6df69fafce2a2ad146f99d"
     },
+    "create-agentsmd": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/create-agentsmd/SKILL.md",
+      "computedHash": "bfbdbb76b17cca970d1d624e36ce72b6847860d740581c8865da796c1fef8552"
+    },
+    "deep-agents-memory": {
+      "source": "langchain-ai/langchain-skills",
+      "sourceType": "github",
+      "skillPath": "config/skills/deep-agents-memory/SKILL.md",
+      "computedHash": "cd4f906c303a13bb740ce310a9918bbaac190150fe2e943c5c3ddea010417a69"
+    },
     "design-system-boss": {
       "source": "arla6ka/design.how",
       "sourceType": "github",
       "skillPath": "skills/design-system-boss/SKILL.md",
       "computedHash": "6e11bbaedb2ff96ff95fba3c420a6c378ee74610ee6270f5de55c659b5d93a5c"
     },
+    "gsap-framer-scroll-animation": {
+      "source": "github/awesome-copilot",
+      "ref": "96543145e9cb97711020b57b9d88f968062c4fc7",
+      "sourceType": "github",
+      "skillPath": "skills/gsap-framer-scroll-animation/SKILL.md",
+      "computedHash": "e6a4caf23b818ffc5185d51339e941ca783944b6693da877fc1206693b2dff66"
+    },
     "migrate-design-system": {
       "source": "arla6ka/design.how",
       "sourceType": "github",
       "skillPath": "skills/migrate-design-system/SKILL.md",
       "computedHash": "b912ff72a22a49993d4a37cbb5cb6c8b07348682d7d7409dc2fc0cdce5053895"
+    },
+    "motion-graphics": {
+      "source": "liamrjohnston/remotion-motion-graphics-skill",
+      "sourceType": "github",
+      "skillPath": "skills/motion-graphics/SKILL.md",
+      "computedHash": "c4db8a31ddb162b15fa71ebf851288c581ddb5a298cc5fa8bb4bd14b789384b8"
+    },
+    "premium-frontend-ui": {
+      "source": "github/awesome-copilot",
+      "ref": "96543145e9cb97711020b57b9d88f968062c4fc7",
+      "sourceType": "github",
+      "skillPath": "skills/premium-frontend-ui/SKILL.md",
+      "computedHash": "e7f3d02a0233beafdd6fe5335427388109b9699ebcdc6a8782a8bada2826d916"
+    },
+    "product-tour": {
+      "source": "nt11111/product-tour",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "d88a4f799aad0acbcad44fdb50eafb3851138d985cfe16e26edecd39c1ebe5fe"
+    },
+    "quote-cards-and-text-graphics": {
+      "source": "social-media-skills/skills",
+      "sourceType": "github",
+      "skillPath": "skills/quote-cards-and-text-graphics/SKILL.md",
+      "computedHash": "2e3e064e569051d16118eaf86473dea09f5d3d7c5bb3e508a7176b20e45f6485"
+    },
+    "tailwindcss-development": {
+      "source": "laravel/boost",
+      "ref": "541d0f85ecdb7707a83d6fc30058b41600d07efe",
+      "sourceType": "github",
+      "skillPath": ".ai/tailwindcss/4/skill/tailwindcss-development/SKILL.md",
+      "computedHash": "44fd37a975d0969daa8cc2ff42b1d1f8d1138f7c7dc2ef181c5bd736f237d5e9"
     },
     "token-mapping": {
       "source": "arla6ka/design.how",

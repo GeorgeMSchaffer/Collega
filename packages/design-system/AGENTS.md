@@ -1,42 +1,25 @@
-# packages/design-system
+# Design system
 
-Comp P's tokens and primitives, on Tailwind CSS v4 + shadcn/ui. Imports nothing else from the
-workspace, and **nothing but `apps/web` imports it** — an import from `apps/api` or any
-`packages/*` layer is a lint error.
+Owns shared tokens and primitives for the web client. It imports nothing else from the workspace,
+and only `apps/web` may import it.
 
-## Layout
+## Client design references
 
-| Path | Holds |
-|---|---|
-| `src/globals.css` | **The theme** — the `@theme` block, the token values, the base layer |
-| `src/components/` | The primitives: `button`, `card`, `field`, `input`, `badge`, `alert`, `meter`, `marker`, `skeleton`, `states`, `denied`, … |
-| `src/lib/cn.ts` | The class-merge helper |
-| `test/` | Vitest + Testing Library |
+Comp P's structure remains locked. Comp R supersedes it for the list/detail pattern (drawer,
+toolbar and row actions), idea assistant and palette. The five themes are Terrazzo, Portico,
+Piazza Sera, Lagoon and Graphite; Graphite is the default, while Terrazzo is the bare `:root`.
+The picker remembers its selection per browser; each theme is a self-contained `[data-theme]`
+block. Comp Q is the reference rendering. Theme tokens live in `src/globals.css`;
+`apps/web/app/globals.css` imports them and supplies Tailwind source roots. Keep the themes and
+comps synchronized.
 
-Consumed as `@collega/design-system` and `@collega/design-system/globals.css`.
-`apps/web/app/globals.css` imports that stylesheet and adds only the app's Tailwind `@source`
-roots — the theme itself is not duplicated there.
+## Component rules
 
-## Conventions
-
-- **Comp P's structure is locked; the palette is five themes** (`SPEC/decisions.md` 2026-09-27,
-  2026-09-28): Terrazzo (the bare `:root`), Portico, Piazza Sera, Lagoon and Graphite (which
-  replaced Notte, and is the app's default since 2026-10-04), each one
-  self-contained `[data-theme]` block in `src/globals.css` — colours, fonts, radius, suggestion hue.
-  Comp R (`SPEC/mockups/comp-r-portico-prototype.html`) holds the values; comp Q
-  (`SPEC/mockups/comp-q-*.html`) is rendered in Terrazzo from `SPEC/mockups/_build/q.css`. Change a
-  token here and in the comps together, or the comps stop being a reference.
-- **Control geometry is tokens** (`--control-h`, `--control-h-sm`, `--control-h-lg`,
-  `--control-px`, `--field-h`, `--label-size` in `src/globals.css`), read by `Button`, `Label` and
-  the base layer's inputs. Change density there, not per component.
-- **Tag chip colours are computed** by `src/lib/tag-colors.ts`, whose `CHIP_THEMES` mirrors each
-  theme's `--card` and `--foreground`. Change a theme's card or ink there too, or a chip's text is
-  no longer guaranteed to clear 4.5:1.
-- **Component classes from the comps (`.btn`, `.panel`, `.marker`, …) are deliberately not carried
-  into CSS.** Each one is a real component in `src/components/` instead. Don't reintroduce them as
-  global classes.
-- Use shadcn/ui as intended rather than re-skinning it: a primitive here should be recognisable to
-  anyone who knows shadcn.
-- Semantic tokens only in component code — no raw hex, no one-off Tailwind colour utilities.
-- `apps/web/app/(desk)/design-system` renders the primitives; check a change there before wiring
-  it into a screen.
+- Keep geometry in shared CSS tokens (`--control-h`, `--control-h-sm`, `--control-h-lg`,
+  `--control-px`, `--field-h`, `--label-size`), not component-specific overrides.
+- `CHIP_THEMES` in `src/lib/tag-colors.ts` mirrors each theme's `--card` and `--foreground`.
+  Update both together to preserve the chip text's 4.5:1 contrast.
+- Implement comp components as primitives, not global component classes. Use shadcn/ui conventions
+  and semantic tokens; avoid raw colors and one-off Tailwind color utilities.
+- Check the primitive gallery in `apps/web/app/(desk)/design-system` before wiring a primitive
+  into a screen.

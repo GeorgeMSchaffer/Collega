@@ -134,6 +134,25 @@ Exit codes, verified against `turbo` 2.10.12 (the version the root `devDependenc
   `npx --yes turbo-ignore@2.10.12 --fallback=HEAD^1` — pinned to the root `turbo` version, since
   `turbo-ignore` ships from the same repository at the same version — and never the unpinned one.
 
+### Environment-only changes and same-commit redeploys
+
+The ignore step compares affected package paths, not Vercel environment settings. Changing an
+environment variable needs a new build to take effect; redeploying an unchanged commit can report
+no affected package and cancel instead. A canceled build leaves the previous deployment serving its
+old environment. A failed build also leaves the last successful deployment in service.
+
+The two projects watch different package graphs:
+
+| Project | Affected package | App-local path that can trigger a build |
+|---|---|---|
+| `collega` | `@collega/web` | `apps/web/` |
+| `collega-api` | `@collega/api` | `apps/api/` |
+
+A change under one app does not by itself trigger the other app's build. For an environment-only
+change under this setup, deploy a commit that touches a path in the affected project's package
+graph; a path-only change under that app can be sufficient. A clean "nothing affected" result is a
+cancellation, while a query error fails open and runs the build.
+
 ---
 
 ## 3. The API's entrypoint — `apps/api/server.js`

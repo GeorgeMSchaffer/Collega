@@ -25,7 +25,7 @@
   .bar button[aria-pressed=true] { background:var(--accent); color:#111; border-color:var(--accent); }
   .stage { flex:1; display:grid; place-items:center; padding:20px; min-height:0; }
   .frame { position:relative; aspect-ratio:960/600; width:min(100%, calc((100vh - 120px) * 1.6)); box-shadow:0 10px 40px #000a; border:1px solid var(--line); }
-  .frame img { position:absolute; inset:0; width:100%; height:100%; display:block; }
+  .frame img { position:absolute; inset:0; width:100%; height:100%; display:block; object-fit:contain; }
   .hs { position:absolute; display:block; border-radius:4px; cursor:pointer; }
   .hs:hover { outline:2px solid var(--accent); background:#f5a62322; }
   .show .hs { outline:1.5px dashed var(--accent); background:#f5a62326; }
@@ -51,10 +51,11 @@
       <button id="hsBtn" aria-pressed="false" title="Show clickable areas (H)">Hotspots</button>
       <button id="gridBtn" aria-pressed="false" title="Calibration grid (G)">Grid</button>
     </div>
-    <div class="stage"><div class="frame" id="frame"><img id="img" alt=""><div class="grid"></div></div></div>
+    <div class="stage"><div class="frame" id="frame"><picture><source id="webp" type="image/webp" sizes="(max-width: 800px) min(calc(100vw - 42px), calc((100vh - 120px) * 1.6)), min(calc(100vw - 282px), calc((100vh - 120px) * 1.6))"><img id="img" width="960" height="600" decoding="async" alt=""></picture><div class="grid"></div></div></div>
     <div class="hint">Click the highlighted areas to move through the app. ← → step through screens, Backspace goes back, H shows clickable areas.</div>
   </main>
 </div>
+<script src="shots/optimized/sources.js"></script>
 <script>
 const SHOTS = 'shots/';
 const S = [
@@ -125,7 +126,9 @@ let current = '01', history = [];
 const $ = id => document.getElementById(id);
 function render() {
   const s = byN[current];
+  $('webp').srcset = SCREENSHOT_SOURCES[s.id];
   $('img').src = SHOTS + s.id + '.png';
+  $('img').alt = s.title;
   $('title').textContent = s.n + ' · ' + s.title;
   document.querySelectorAll('.hs').forEach(e => e.remove());
   for (const [x,y,w,h,to,label] of (HS[current]||[])) {

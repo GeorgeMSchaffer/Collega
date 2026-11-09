@@ -1,224 +1,67 @@
-# AGENTS.md
+# Agent guidance
 
-Guidance for coding agents working in this repository. `CLAUDE.md` is a one-line import of this
-file, so these rules have one home rather than two copies that drift apart.
+`CLAUDE.md` imports this file. Read the closest `AGENTS.md` before working in an area; these
+instructions keep only repository-wide rules and point to conditional detail.
 
-This file carries only what must be true *before* touching code. Reference detail lives next to the
-code it describes: `apps/*`, `packages/*`, `e2e/` and `tools/golden` each carry their own
-`AGENTS.md` (with a `CLAUDE.md` importing it). Read the one for the area you are working in; don't
-duplicate it here.
+## Working rules
 
-## Working Rules
+- Treat canonical `SPEC/*.md` as product authority. Read the relevant spec before describing or
+  changing behavior; ask the user before resolving ambiguous or conflicting intent.
+- Make focused, minimal changes. Verify claims; comment only non-obvious code. Avoid error handling
+  for impossible cases and abstractions that do not measurably reduce complexity.
+- Do not add dependencies without approval, commit secrets or temporary files, or write tests for
+  code you implemented. High-impact tests belong to a QA agent.
+- Keep commits focused and human-written; omit AI or agent attribution.
 
-- Seek clarification before implementing ambiguous or conflicting behavior. Prefer an interview
-  format — one question at a time, with multiple-choice options.
-- Use progressive disclosure. Area-specific detail belongs in that area's `AGENTS.md`, referenced
-  from here rather than restated.
-- Keep commits focused on one change. Git history should read as human-written: no references to
-  Claude, agents, or code generation in commit messages. **This rule overrides the harness default
-  that would append tool attribution.**
-- Keep responses concise.
-- Treat `SPEC/*.md` as the source of truth. If an implementation would change behavior or
-  contradict the spec, ask first.
-- Make surgical changes; avoid unrelated refactors.
-- Comment only the non-obvious.
-- Don't add error handling for scenarios that can't happen.
-- Don't add abstractions — factories, wrappers, interfaces for a single implementation — unless
-  they measurably reduce complexity.
-- Don't aim for blanket test coverage. Cover high-usage, high-impact code. An agent does not write
-  tests for its own code; a QA agent does.
-- Don't add dependencies without approval.
+## Architecture and conventions
 
-## Coding Standards
+Dependencies flow inward: `packages/domain` owns pure business rules; `packages/application`
+orchestrates use cases and authorization; `packages/infrastructure` implements their ports;
+`apps/api` is the request and database boundary; `apps/web` uses HTTP and may import only
+`@collega/design-system` from the workspace. The design system is consumed only by the web app.
+Biome and architecture tests enforce these boundaries.
 
-- Prefer clear, minimal code over broad rewrites.
-- **Imports:** workspace packages are `@collega/<pkg>` with a feature subpath —
-  `@collega/domain/ideas`, `@collega/application/boards`. Relative imports inside a package carry
-  the `.js` extension (`nodenext`). `@/…` is an `apps/web` alias only, and only `@/lib`,
-  `@/components` and `@/app` exist.
-- **Errors:** the shared error model in `packages/*/src/common` (S0.3). Don't hand-build error
-  responses in controllers.
-- **Identity:** one chokepoint. Only the auth folder reads a credential — asserted by
-  `tools/arch/identity-chokepoint.test.ts`, not just linted.
-- **Request context:** `AsyncLocalStorage`, because Nest runs serverless and there is no
-  long-lived in-process state to hang anything on.
-- **Tests:** hermetic — no network, no real clock, no randomness. Inject the clock and fixed seeds.
-- **SQL:** UPPERCASE keywords, lowercase table/column names, no `SELECT *`, meaningful aliases.
-- Never commit secrets or temporary files.
+- Import workspace packages through `@collega/<package>/<feature>` subpaths. Relative imports
+  inside packages use `.js` extensions; `@/…` is an `apps/web` alias for `@/lib`, `@/components`
+  and `@/app`.
+- Use the shared error model in `packages/*/src/common`; controllers do not construct error
+  responses. Only the auth folder reads credentials, enforced by
+  `tools/arch/identity-chokepoint.test.ts`.
+- Request context uses `AsyncLocalStorage`. Keep tests hermetic: inject clocks and fixed IDs/seeds;
+  use no network, real clock or randomness.
+- SQL uses uppercase keywords, lowercase identifiers, meaningful aliases, and no `SELECT *`.
 
-## Build and Test
+## Specifications and status
 
-**Collega is a TypeScript monorepo.** pnpm workspaces + Turborepo; Node ≥ 24.20, pnpm ≥ 12.3.4.
+`SPEC/README.MD` is the index. Read the relevant canonical spec and `SPEC/decisions.md` before
+reopening a settled decision. `SPEC/Specs Overview.md` and `SPEC/SPECKIT/specs/` are derived;
+canonical specs win. Read `SPEC/archive/` only for requested history. API slices read, but do not
+edit, `SPEC/30-Contracts.md` and `SPEC/contracts/`.
 
-```bash
-pnpm install
-pnpm dev          # the whole application (alias for `pnpm start` → tools/local/start.ts)
-pnpm check        # the gate: lint + typecheck + test + build
-pnpm build
-pnpm test:e2e     # Playwright, separate because it needs a running app
-```
+Before feature work, clear `TODO` items in `SPEC/Bug Triage.md` unless the user approves an
+exception. Move completed items to `SPEC/archive/bug-triage-completed.md`; promoted items leave the
+queue, and an item must never live in both. `SPEC/ideas-inbox.md` is unscheduled and does not gate
+work.
 
-`pnpm check` is what "green" means. It runs Biome (lint, format, and the layer boundaries), `tsc`
-across every package, Vitest, and `next build`. The build is part of the gate because `tsc` cannot
-stand in for it — a `'use client'` file that reaches a server-only module through a barrel
-typechecks and then fails to build — and Turbo caches it, so a second run costs nothing.
+Before any status, planning or scope claim, reread the tracker's **Current Status** and run
+`git log --oneline -10` in the same turn. Investigate unfamiliar history or date gaps. Update
+`SPEC/implementation-agent-tracker.md` as slices start and finish; route completed rows and
+narratives to `SPEC/tracker-history.md`.
 
-One package at a time: `pnpm --filter @collega/api test`. Database, from
-`packages/infrastructure`: `pnpm --filter @collega/infrastructure db:migrate` then `db:seed`
-(a drop/migrate/seed cycle takes about four seconds).
+## Conditional guidance
 
-## Architecture
+- For UI or design-system work, read `apps/web/AGENTS.md` and
+  `packages/design-system/AGENTS.md`. Get a reviewed throwaway HTML comp in `SPEC/mockups/` before
+  implementing a page or flow whose layout is unsettled.
+- For deployment, Vercel configuration, or environment-only changes, read the relevant app
+  guidance and `SPEC/50-vercel-deployment.md` §2.
+- For epic-level, role-based work across multiple worktrees, read `AGENT-WORKFLOW.md`.
+- Before using the golden replay harness, read `tools/golden/README.md` and
+  `tools/golden/AGENTS.md`. Its recorded corpus is frozen data, not a gate or specification.
+  Prompt changes are measured against the committed v1 baseline in `tools/prompt-eval`.
 
-Dependencies flow inward. Business rules live in domain and application — **never** in controllers
-or React components.
+OAuth/SSO, SAML, guaranteed outbound email delivery and remember-this-device remain deferred.
+Per-organization AI credentials remain unimplemented; do not build either without an explicit ask.
 
-| Package | Role | Depends on |
-|---|---|---|
-| `packages/domain` | Entities, enums, value objects, invariants | nothing |
-| `packages/application` | Use-case orchestration, authorization, validation | domain |
-| `packages/infrastructure` | Prisma persistence on PostgreSQL, seeding, external integrations | implements application/domain ports |
-| `apps/api` | Nest.js host, controllers, request boundary — the only thing that talks to the database | application, infrastructure, domain |
-| `apps/web` | Next.js client. **HTTP only** — may import `@collega/design-system` and nothing else from the workspace | design-system |
-| `packages/design-system` | Comp P tokens and primitives, on Tailwind v4 + shadcn/ui | — |
-
-These boundaries are **enforced, not conventional**: `biome.json`'s `noRestrictedImports`
-overrides fail the lint run on a cross-layer import, `tools/boundaries` asserts those lint rules
-still work, and `tools/arch` holds the assertions lint cannot express.
-
-## Technology Stack
-
-| | |
-|---|---|
-| Runtime | Node.js 24.x, TypeScript 7 |
-| Frontend | **Next.js** (App Router) + Tailwind CSS v4 + shadcn/ui, used as intended |
-| Backend | **Nest.js**, running serverless |
-| ORM | **Prisma** — schema frozen at S0.2, `packages/infrastructure/prisma/` |
-| Database | PostgreSQL 16 — local in Docker; Prisma Postgres in production |
-| Tooling | pnpm workspaces + Turborepo, Biome for lint and format |
-| Tests | Vitest per package, the Playwright suite in `e2e/`, the golden corpus in `tools/golden` |
-| Hosting | Vercel |
-
-## Repository layout
-
-| Path | What |
-|---|---|
-| `apps/`, `packages/` | The application |
-| `SPEC/` | Canonical specs, the tracker, and sprint plans — the source of truth |
-| `SPEC/sprints/` | Per-sprint scope (completed ones in `SPEC/sprints/archive/`) |
-| `SPEC/mockups/` | Comp P/Q HTML mockups; `comp-q-*.html` is the reference rendering |
-| `SPEC/archive/` | **Superseded — don't read unless asked for history.** Several entries assert the project is unstarted, which was true when written and is not now |
-| `SPEC/SPECKIT/specs/` | Derived downstream copies of canonical `SPEC/*.md`; edit the canonical file first |
-| `e2e/` | Playwright suite (TypeScript), adapted to comp P in F2 |
-| `tools/golden` | Capture/replay harness — a regression detector, not a gate |
-| `tools/boundaries`, `tools/arch` | Architecture tests |
-| `tools/local` | `pnpm dev`'s launcher |
-| `tools/prompt-eval` | The AI-assist evaluation corpus, its runner and the committed v1 baseline |
-
-## Source of Truth
-
-`SPEC/*.md` is canonical. Read the relevant spec before describing or changing behavior;
-`SPEC/README.MD` indexes the full set. If behavior is ambiguous, or **two canonical specs**
-conflict, ask before implementing.
-
-**Read the index, open only the part you need.** The three most-read files are indexes over
-detail kept one link away, and each keeps its path and its section headings, so an existing
-pointer such as "30-Contracts.md § Idea Contracts" still resolves:
-
-- `SPEC/decisions.md` — dated log of decisions that constrain later work, newest first, with enough
-  of the reason that nobody reopens one by accident. Supersession is recorded, never edited away.
-  Read the top few before planning anything. It holds an index of every entry (status and where it
-  lives) and the newest entries in full; older entries are verbatim in `SPEC/decisions/archive-*.md`.
-- `SPEC/implementation-agent-tracker.md` — not product behavior, but the authoritative log of what
-  is built, in progress, and next. Update it as slices start and finish. It holds active and next
-  work only; finished rows and narratives move to `SPEC/tracker-history.md`.
-- `SPEC/50-typescript-migration.md` — the conversion plan: waves, slices, and what is settled.
-- `SPEC/30-Contracts.md` — canonical route/payload contracts. **Read, not edited**, by every API
-  slice; it is what the golden corpus pins. It holds the shared conventions and an index; each
-  contract section is in `SPEC/contracts/<area>.md`, and the rule covers the whole set.
-- `SPEC/40-test-strategy.md` — what must be covered. `SPEC/90-definition-of-done.md` — what done
-  means.
-- `SPEC/95-next-sprints.md` — index for remaining pre-MVP sprint scope.
-- `SPEC/Bug Triage.md` — clear its `TODO` items before new feature work unless the user approves an
-  exception. A cleared item moves to `SPEC/archive/bug-triage-completed.md`; it is never in both.
-- `SPEC/ideas-inbox.md` — unrefined ideas. Not scheduled, not specified, and **does not gate
-  work** — picked up only when the user asks.
-
-`SPEC/Specs Overview.md` is derived and non-canonical; where it disagrees, the canonical spec wins.
-That is precedence, not a conflict to raise.
-
-## Ground-Truth Verification
-
-Before any status, planning, or scope claim — in this session or any other — re-read
-`SPEC/implementation-agent-tracker.md`'s Current Status section AND run `git log --oneline -10`
-fresh in the same turn. Never answer from recollection, even within one conversation: this project
-moves fast through parallel worktree agents, and a stale in-context answer has already cost it
-roughly two weeks of invisible work. A large date jump or an unfamiliar recent commit is a signal
-to verify more, not less.
-
-## Client Design Direction
-
-**Comp P**, locked 2026-08-31 and made canonical 2026-09-03 (`SPEC/decisions.md`). Structure is
-locked. **Comp R** (`SPEC/mockups/comp-r-portico-prototype.html`, 2026-09-27) supersedes it for
-the list and detail pattern (drawer, list toolbar, row actions), the idea assistant, and the
-palette: five themes with a picker remembered per browser — **Graphite** (dark) by default since
-2026-10-04, Terrazzo the bare `:root`. Built on Tailwind v4 and
-shadcn/ui used as intended — comp Q (`SPEC/mockups/comp-q-*.html`) is the reference rendering,
-and `SPEC/mockups/_build/build_q.py` carries the component map. The theme lives in `packages/design-system/src/globals.css`, carried
-over from `_build/q.css`; `apps/web/app/globals.css` only imports it and declares the app's
-Tailwind `@source` roots. Change the palette in the design system and the comps together, or the
-comps stop being a reference.
-
-If a page or flow's layout isn't settled, produce a throwaway HTML comp in `SPEC/mockups/` for
-review before writing production React against an undecided design.
-
-## Data artefacts
-
-Two artefacts are **data, not patterns**:
-
-- `tools/golden` — 447 cases across all 81 endpoints × 4 roles, recorded 2026-09-03. It is a fixed
-  record, frozen alongside `inventory.json`; it cannot be re-recorded.
-- `tools/prompt-eval` — the AI-assist evaluation corpus, its TypeScript runner and the v1 baseline
-  (committed 2026-09-30) that prompt changes are measured against. `SPEC/decisions.md` 2026-09-13
-  schedules the rescope.
-
-The corpus is a **regression detector, not the specification**: shipping for feedback outranks
-fidelity to an app that was never finished, so a difference is a question with three answers — fix
-it, accept and record it, or deliberately do better — not automatically a defect
-(`SPEC/decisions.md` 2026-09-11). `SPEC/30-Contracts.md` is the authority.
-
-The database is seeded fresh from committed code in about four seconds; there is no data to
-migrate. What must be kept is `SPEC/` and `tools/golden`.
-
-## Session, Branch, and Source Control
-
-- Feature branches: `feature/<NNN>-<short-description>`.
-- Flow: feature branch → `dev` → `main`. Report the merge commit hash.
-- Commit at logical checkpoints — a finished feature or slice.
-- Open a pull request as ready for review once its work is finished and its checks pass; use a draft only while it is still in progress or waiting on a decision. (Owner, 2026-10-22.)
-
-## Multi-Agent Worktree Workflow
-
-For epic-level work, split execution across role-based subagents, each in its own git worktree
-branched off `dev`:
-
-- **Backend Developer** — domain/application/infrastructure/API tasks.
-- **QA Developer** — tests for the same slice, per `SPEC/40-test-strategy.md`.
-- **UI/UX Developer** — UI tasks.
-- **Code Reviewer** — gates the other three; reviews each finished branch (diff, build, tests, spec
-  conformance) before it merges. Not a parallel implementer.
-
-Rules:
-
-- Each implementer gets its own worktree so they don't collide mid-flight.
-- A role sits out a round if the sprint has no task for it — check the sprint's own file in
-  `SPEC/sprints/` before assigning UI/UX work, and don't parallelize downstream UI work early.
-- The Code Reviewer must approve before merge; each finished slice merges directly into `dev`.
-- Once merged into `dev`, delete both the worktree and the branch.
-- Update `SPEC/implementation-agent-tracker.md` as slices start and finish.
-
-## Explicitly Deferred
-
-Do not build without an explicit ask: OAuth/SSO, SAML, guaranteed outbound email delivery,
-remember-this-device. (Reporting left this list 2026-10-27, `SPEC/decisions.md`.)
-Per-organization AI credentials are deliberately unimplemented (tracker rule 30); the conversion
-does not change that.
+`pnpm check` is the completion gate (lint, typecheck, tests and build); run the browser E2E suite
+separately when the change requires it.
