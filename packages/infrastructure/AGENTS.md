@@ -1,52 +1,17 @@
-# packages/infrastructure
+# Infrastructure
 
-Persistence via Prisma on PostgreSQL, the seed modules, and external integrations. Implements the
-ports declared in `packages/application/src/*/ports.ts`. May import `@collega/domain` and
-`@collega/application`; may not import `apps/*` or `@collega/design-system`.
+Implements application/domain ports with Prisma persistence on PostgreSQL, seeds and external
+integrations. It may import domain and application packages, not apps or the design system.
 
-## Layout
-
-| Path | Holds |
-|---|---|
-| `src/repositories/` | One `<thing>.repository.ts` per port — the bulk of the package |
-| `src/persistence/` | `prisma-client.ts`, `unit-of-work.ts`, `constraint-errors.ts` |
-| `src/security/` | `pbkdf2-password-hasher.ts`, `jwt-access-token.service.ts` |
-| `src/integrations/` | `ai`, `csv`, `image-processing`, `organizations` |
-| `src/generated/` | Prisma Client output — **generated, git-ignored, never edited** |
-| `prisma/schema.prisma` | The schema, frozen at S0.2 |
-| `prisma/migrations/` | Applied migrations |
-| `src/demo-seed/` | `index.ts`, `compose.ts`, and `modules/` — the demo data, as code (`prisma/seed/` holds only the CLI wrappers) |
-| `test/` | Vitest, mirroring `src/` |
-
-## Commands
-
-```bash
-pnpm --filter @collega/infrastructure db:migrate   # prisma migrate deploy
-pnpm --filter @collega/infrastructure db:seed      # rebuild the demo data
-pnpm --filter @collega/infrastructure db:generate  # regenerate the client (also runs on install)
-pnpm --filter @collega/infrastructure db:check-enums
-```
-
-A full `dropdb` → migrate → seed cycle takes about four seconds, which is why the database is no
-longer something cutover has to preserve (`SPEC/decisions.md` 2026-09-09). Treat it as disposable:
-if a change needs different data, change the seed module, don't patch rows.
-
-The migration integration tests (`test/*-migration.integration.test.ts`) create a throwaway
-database per run, so the role in `DATABASE_URL` needs `CREATEDB`. The local Docker role has it.
-
-## Conventions
-
-- **The schema is frozen at S0.2.** A migration that reshapes it is a spec question, not a slice
-  decision — ask first.
-- **Repositories return domain shapes, not Prisma rows.** Mapping lives here; no Prisma type may
-  reach `packages/application`.
-- **Translate database constraint violations through `persistence/constraint-errors.ts`** into the
-  application kernel's errors. A raw `P2002` must never escape this package.
-- Write SQL as the house style has it: UPPERCASE keywords, lowercase identifiers, no `SELECT *`,
-  meaningful aliases.
-- Seeding is composed (`compose.ts`) from per-area modules and must stay deterministic and
-  idempotent: ids and content come from names, never from randomness; dates may be relative to the
-  run day.
-
-There is deliberately no root entrypoint: `package.json` exports only `./*`, so
-`@collega/infrastructure` on its own does not resolve. Import the feature subpath.
+- The Prisma schema is frozen at S0.2. Ask before changing its shape; that requires an approved
+  spec decision.
+- Repositories map Prisma records to domain shapes. No Prisma type crosses into application.
+- Translate database constraint failures through `src/persistence/constraint-errors.ts` to
+  application kernel errors; raw Prisma errors such as `P2002` must not escape.
+- Prisma Client output in `src/generated/` is generated, ignored and never edited. Keep
+  feature-subpath imports.
+- Demo seed data is disposable: change seed modules rather than patching rows. The composed seed
+  must remain deterministic and idempotent; derive IDs and content from names, with dates relative
+  to the run day.
+- Migration integration tests create a throwaway database; the `DATABASE_URL` role needs
+  `CREATEDB`.
