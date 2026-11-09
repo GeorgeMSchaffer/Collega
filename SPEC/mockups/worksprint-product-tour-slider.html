@@ -30,8 +30,6 @@
     .wrap { width: min(1280px, calc(100% - 96px)); margin-inline: auto; }
     .skip { position: absolute; top: -100px; left: 16px; padding: 12px; background: var(--card); z-index: 20; }
     .skip:focus { top: 12px; }
-    .comp-note { padding: 10px 24px; border-bottom: 1px solid var(--border); text-align: center; color: var(--muted); font-size: 13px; }
-    .comp-note strong { color: var(--foreground); font-weight: 500; }
     header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: 28px; }
     .brand { display: inline-flex; gap: 12px; align-items: center; font-size: 22px; font-weight: 600; }
     .brand img { width: 36px; height: 36px; }
@@ -77,18 +75,8 @@
     .icon-button:hover { border-color: var(--muted); background: #22272c; }
     .icon-button.next { border-color: var(--primary); background: var(--primary); color: var(--primary-foreground); }
     .icon-button.next:hover { background: #ffc35c; }
-    .tour-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 14px 36px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
-    .playback { display: flex; align-items: center; gap: 10px; }
-    .playback svg { width: 14px; height: 14px; }
-    .progress { position: relative; overflow: hidden; width: 64px; height: 2px; background: var(--border); }
-    .progress-fill { display: block; width: 100%; height: 100%; background: var(--primary); transform: scaleX(0); transform-origin: left; }
-    .progress-fill.running { animation: countdown 30s linear both; }
-    @keyframes countdown { to { transform: scaleX(1); } }
-    .pause { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 8px; border: 0; border-radius: var(--radius); background: transparent; color: var(--foreground); font-size: 12px; }
-    .pause:hover { background: #22272c; }
-    .pause:disabled { color: var(--muted); cursor: default; }
-    .source-note { margin: 16px 0 60px; color: var(--muted); font-size: 12px; text-align: center; }
-    .below { display: flex; align-items: start; justify-content: space-between; gap: 32px; padding-block: 40px 72px; border-top: 1px solid var(--border); }
+    .icon-button:disabled { color: var(--muted); cursor: default; }
+    .below { display: flex; align-items: start; justify-content: space-between; gap: 32px; margin-top: 60px; padding-block: 40px 72px; border-top: 1px solid var(--border); }
     .below h3 { max-width: 600px; margin-top: 12px; font-size: 32px; font-weight: 500; line-height: 1.25; }
     .below p { max-width: 350px; color: var(--muted); }
     .sr-only { position: absolute; overflow: hidden; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; clip-path: inset(50%); white-space: nowrap; }
@@ -99,11 +87,9 @@
       .intro-copy { max-width: 580px; }
       .caption-strip { gap: 24px; padding: 24px; }
       h2 { font-size: 23px; }
-      .tour-foot { padding-inline: 24px; }
     }
     @media (max-width: 640px) {
       .wrap { width: calc(100% - 32px); }
-      .comp-note { font-size: 11px; }
       header { padding-block: 20px; }
       .brand { font-size: 19px; }
       header nav { gap: 12px; font-size: 13px; }
@@ -121,10 +107,7 @@
       h2 { font-size: 23px; }
       .controls { justify-content: flex-end; }
       .counter { margin-right: auto; text-align: left; }
-      .tour-foot { gap: 4px 12px; padding: 10px 20px; font-size: 11px; }
-      .playback { flex-wrap: wrap; gap: 8px; }
-      .source-note { margin-bottom: 40px; }
-      .below { flex-direction: column; gap: 20px; }
+      .below { flex-direction: column; gap: 20px; margin-top: 40px; }
       .below h3 { font-size: 28px; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -134,7 +117,6 @@
 </head>
 <body>
   <a class="skip" href="#product-tour">Skip to product tour</a>
-  <div class="comp-note"><strong>DESIGN COMP</strong> / Product preview as a captioned tour. Existing page is unchanged.</div>
   <header class="wrap">
     <a class="brand" href="#product-tour"><img src="../../apps/public/workflow/assets/logo.svg" alt="" width="36" height="36">WorkSprint</a>
     <nav aria-label="Comp navigation"><a href="#product-tour">Product tour</a><a class="login" href="https://app.worksprint.io/login">Login</a><a class="button" href="../../apps/public/index.html#beta">Request beta access</a></nav>
@@ -182,16 +164,12 @@
         </div>
         <div class="controls">
           <p class="counter"><strong id="slide-number">01</strong> / <span id="slide-total">05</span></p>
+          <button class="icon-button" id="pause" type="button" aria-label="Pause autoplay"><svg id="pause-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5v14M15 5v14"/></svg></button>
           <button class="icon-button" id="previous" type="button" aria-label="Previous slide"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m14 6-6 6 6 6"/></svg></button>
           <button class="icon-button next" id="next" type="button" aria-label="Next slide"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m10 6 6 6-6 6"/></svg></button>
         </div>
       </div>
-      <div class="tour-foot">
-        <div class="playback"><span class="progress" aria-hidden="true"><span class="progress-fill" id="progress"></span></span><span id="playback-status">Autoplay every 30 seconds</span><button class="pause" id="pause" type="button" aria-label="Pause autoplay"><svg id="pause-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5v14M15 5v14"/></svg><span id="pause-label">Pause</span></button></div>
-        <span>Use the arrows or choose a chapter</span>
-      </div>
     </section>
-    <p class="source-note">Unaltered app captures. Existing Collega branding remains in the screenshots.</p>
     <section class="below" aria-labelledby="next-heading">
       <div><p class="eyebrow">FROM CONTEXT TO COORDINATION</p><h3 id="next-heading">Keep the why with the work.</h3></div>
       <p>This comp replaces only the product preview. The page's approach, beta FAQ and signup sections would continue below.</p>
@@ -202,7 +180,6 @@
     const tour = document.querySelector(".tour");
     const slides = [...tour.querySelectorAll(".slide")];
     const chapters = [...tour.querySelectorAll(".chapter")];
-    const progress = document.getElementById("progress");
     const pause = document.getElementById("pause");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const interval = 30000;
@@ -215,21 +192,13 @@
 
     function schedule() {
       clearTimeout(timer);
-      progress.classList.remove("running");
       const playing = !manuallyNavigated && !paused && !hovered && !focused && !document.hidden && !reducedMotion.matches;
-      const status = document.getElementById("playback-status");
-      status.textContent = manuallyNavigated ? "You're in control. Autoplay stopped." :
-        reducedMotion.matches ? "Autoplay off for reduced motion" :
-        playing ? "Next slide in 30 seconds" : "Autoplay paused";
       document.getElementById("caption").setAttribute("aria-live", playing ? "off" : "polite");
       pause.disabled = manuallyNavigated || reducedMotion.matches;
       pause.setAttribute("aria-label", paused ? "Resume autoplay" : "Pause autoplay");
-      document.getElementById("pause-label").textContent = paused ? "Resume" : "Pause";
       document.getElementById("pause-icon").innerHTML = paused ?
         '<path d="m9 5 10 7-10 7Z"/>' : '<path d="M9 5v14M15 5v14"/>';
       if (!playing) return;
-      void progress.offsetWidth;
-      progress.classList.add("running");
       timer = setTimeout(() => show(active + 1, false), interval);
     }
 
