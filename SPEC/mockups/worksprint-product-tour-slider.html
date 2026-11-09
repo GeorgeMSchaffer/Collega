@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>WorkSprint / Product tour slider comp</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --background: #0f1113;
+      --foreground: #e6e8ea;
+      --card: #16191c;
+      --muted: #9ba3ab;
+      --border: #2c3238;
+      --primary: #f5a524;
+      --primary-foreground: #16120a;
+      --cyan: #5cc8e0;
+      --radius: 6px;
+      --font: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--background); color: var(--foreground); font: 400 16px/1.6 var(--font); }
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; cursor: pointer; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    :focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+    p, h1, h2, h3 { margin: 0; }
+    svg { display: block; width: 20px; height: 20px; flex: none; }
+    .wrap { width: min(1280px, calc(100% - 96px)); margin-inline: auto; }
+    .skip { position: absolute; top: -100px; left: 16px; padding: 12px; background: var(--card); z-index: 20; }
+    .skip:focus { top: 12px; }
+    .comp-note { padding: 10px 24px; border-bottom: 1px solid var(--border); text-align: center; color: var(--muted); font-size: 13px; }
+    .comp-note strong { color: var(--foreground); font-weight: 500; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: 28px; }
+    .brand { display: inline-flex; gap: 12px; align-items: center; font-size: 22px; font-weight: 600; }
+    .brand img { width: 36px; height: 36px; }
+    header nav { display: flex; align-items: center; gap: 24px; }
+    header nav a { display: inline-flex; align-items: center; min-height: 44px; }
+    header nav a:hover { color: var(--primary); }
+    .button { display: inline-flex; justify-content: center; align-items: center; min-height: 48px; padding: 10px 22px; border: 1px solid var(--primary); border-radius: var(--radius); background: var(--primary); color: var(--primary-foreground); font-weight: 500; transition: background 180ms ease; }
+    .button:hover { background: #ffc35c; }
+    .eyebrow { color: var(--cyan); font-size: 12px; font-weight: 500; letter-spacing: .1em; }
+    .page-intro { display: flex; align-items: end; justify-content: space-between; gap: 40px; padding-block: 64px 32px; }
+    h1 { max-width: 760px; margin-top: 16px; font-size: clamp(36px, 4vw, 56px); font-weight: 600; line-height: 1.12; letter-spacing: -.025em; }
+    .intro-copy { max-width: 340px; padding-bottom: 3px; color: var(--muted); }
+    .tour { overflow: hidden; border: 1px solid var(--border); border-radius: 10px; background: var(--card); box-shadow: 0 20px 70px rgb(0 0 0 / .2); }
+    .chapters { display: flex; padding: 0 20px; border-bottom: 1px solid var(--border); }
+    .chapter { position: relative; display: flex; flex: 1; align-items: center; justify-content: center; gap: 10px; min-height: 66px; padding: 12px; border: 0; background: transparent; color: var(--muted); font-size: 14px; white-space: nowrap; transition: color 180ms ease, background 180ms ease; }
+    .chapter:hover { background: rgb(255 255 255 / .025); color: var(--foreground); }
+    .chapter[aria-current="true"] { color: var(--foreground); }
+    .chapter::after { position: absolute; bottom: -1px; left: 12px; right: 12px; height: 2px; background: var(--primary); content: ""; opacity: 0; transition: opacity 180ms ease; }
+    .chapter[aria-current="true"]::after { opacity: 1; }
+    .chapter-number { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+    .chapter[aria-current="true"] .chapter-number { color: var(--primary); }
+    .stage { padding: 24px 24px 0; background: linear-gradient(180deg, #1c2024 0%, var(--card) 100%); }
+    .screen { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius) var(--radius) 0 0; background: var(--background); }
+    .screen-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 40px; padding: 8px 16px; border-bottom: 1px solid var(--border); color: var(--muted); font-size: 11px; letter-spacing: .025em; }
+    .screen-status { display: flex; gap: 6px; }
+    .screen-status i { width: 6px; height: 6px; border-radius: 50%; background: #434a52; }
+    .screen-label { display: inline-flex; align-items: center; gap: 6px; }
+    .screen-label svg { width: 12px; height: 12px; }
+    .slides { position: relative; aspect-ratio: 2000 / 1250; }
+    .slide { position: absolute; inset: 0; margin: 0; }
+    .slide[hidden] { display: none; }
+    .slide img { display: block; width: 100%; height: 100%; object-fit: contain; }
+    .tour.enhanced .slide:not([hidden]) { animation: reveal-screen 300ms cubic-bezier(.22, 1, .36, 1) both; }
+    @keyframes reveal-screen { from { opacity: .25; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .caption-strip { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; align-items: center; min-height: 176px; padding: 30px 36px; border-top: 1px solid var(--border); }
+    .caption-label { margin-bottom: 8px; color: var(--primary); font-size: 11px; font-weight: 500; letter-spacing: .1em; }
+    h2 { font-size: 26px; font-weight: 500; line-height: 1.25; letter-spacing: -.02em; }
+    .caption-copy { max-width: 65ch; margin-top: 10px; color: var(--muted); font-size: 16px; line-height: 1.6; }
+    .controls { display: flex; align-items: center; gap: 10px; }
+    .counter { min-width: 64px; margin-right: 8px; color: var(--muted); font-size: 13px; text-align: center; font-variant-numeric: tabular-nums; }
+    .counter strong { color: var(--foreground); font-weight: 500; }
+    .icon-button { display: inline-flex; align-items: center; justify-content: center; width: 46px; height: 46px; padding: 0; border: 1px solid var(--border); border-radius: var(--radius); background: transparent; color: var(--foreground); transition: background 180ms ease, border-color 180ms ease; }
+    .icon-button:hover { border-color: var(--muted); background: #22272c; }
+    .icon-button.next { border-color: var(--primary); background: var(--primary); color: var(--primary-foreground); }
+    .icon-button.next:hover { background: #ffc35c; }
+    .tour-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 14px 36px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+    .playback { display: flex; align-items: center; gap: 10px; }
+    .playback svg { width: 14px; height: 14px; }
+    .progress { position: relative; overflow: hidden; width: 64px; height: 2px; background: var(--border); }
+    .progress-fill { display: block; width: 100%; height: 100%; background: var(--primary); transform: scaleX(0); transform-origin: left; }
+    .progress-fill.running { animation: countdown 30s linear both; }
+    @keyframes countdown { to { transform: scaleX(1); } }
+    .pause { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 8px; border: 0; border-radius: var(--radius); background: transparent; color: var(--foreground); font-size: 12px; }
+    .pause:hover { background: #22272c; }
+    .pause:disabled { color: var(--muted); cursor: default; }
+    .source-note { margin: 16px 0 60px; color: var(--muted); font-size: 12px; text-align: center; }
+    .below { display: flex; align-items: start; justify-content: space-between; gap: 32px; padding-block: 40px 72px; border-top: 1px solid var(--border); }
+    .below h3 { max-width: 600px; margin-top: 12px; font-size: 32px; font-weight: 500; line-height: 1.25; }
+    .below p { max-width: 350px; color: var(--muted); }
+    .sr-only { position: absolute; overflow: hidden; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; clip-path: inset(50%); white-space: nowrap; }
+    [hidden] { display: none !important; }
+    @media (max-width: 1000px) {
+      .wrap { width: calc(100% - 48px); }
+      .page-intro { align-items: start; flex-direction: column; gap: 24px; padding-top: 40px; }
+      .intro-copy { max-width: 580px; }
+      .caption-strip { gap: 24px; padding: 24px; }
+      h2 { font-size: 23px; }
+      .tour-foot { padding-inline: 24px; }
+    }
+    @media (max-width: 640px) {
+      .wrap { width: calc(100% - 32px); }
+      .comp-note { font-size: 11px; }
+      header { padding-block: 20px; }
+      .brand { font-size: 19px; }
+      header nav { gap: 12px; font-size: 13px; }
+      header nav .button { padding-inline: 12px; }
+      header nav .login { display: none; }
+      h1 { font-size: 36px; }
+      .page-intro { padding-top: 32px; }
+      .chapters { flex-wrap: wrap; padding: 4px; }
+      .chapter { flex: 1 1 30%; gap: 6px; min-height: 48px; padding: 8px 6px; font-size: 12px; }
+      .chapter::after { left: 6px; right: 6px; }
+      .stage { padding: 10px 10px 0; }
+      .screen-bar { min-height: 30px; padding: 6px 10px; font-size: 9px; }
+      .screen-label { display: none; }
+      .caption-strip { grid-template-columns: 1fr; gap: 22px; min-height: 264px; padding: 24px 20px; }
+      h2 { font-size: 23px; }
+      .controls { justify-content: flex-end; }
+      .counter { margin-right: auto; text-align: left; }
+      .tour-foot { gap: 4px 12px; padding: 10px 20px; font-size: 11px; }
+      .playback { flex-wrap: wrap; gap: 8px; }
+      .source-note { margin-bottom: 40px; }
+      .below { flex-direction: column; gap: 20px; }
+      .below h3 { font-size: 28px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#product-tour">Skip to product tour</a>
+  <div class="comp-note"><strong>DESIGN COMP</strong> / Product preview as a captioned tour. Existing page is unchanged.</div>
+  <header class="wrap">
+    <a class="brand" href="#product-tour"><img src="../../apps/public/workflow/assets/logo.svg" alt="" width="36" height="36">WorkSprint</a>
+    <nav aria-label="Comp navigation"><a href="#product-tour">Product tour</a><a class="login" href="https://app.worksprint.io/login">Login</a><a class="button" href="../../apps/public/index.html#beta">Request beta access</a></nav>
+  </header>
+  <main class="wrap">
+    <section class="page-intro" aria-labelledby="tour-heading">
+      <div><p class="eyebrow">A CLOSER LOOK / THE PRODUCT</p><h1 id="tour-heading">The idea is only<br>the beginning.</h1></div>
+      <p class="intro-copy">Take a tour of the workspace, from the first discussion to the next sprint. Keep the reason for the work in view.</p>
+    </section>
+    <section class="tour" id="product-tour" aria-roledescription="carousel" aria-label="WorkSprint product tour">
+      <nav class="chapters" aria-label="Choose a product tour slide">
+        <button class="chapter" type="button" data-slide="0" aria-current="true" aria-controls="tour-slide-1"><span class="chapter-number">01</span>Ideas</button>
+        <button class="chapter" type="button" data-slide="1" aria-controls="tour-slide-2"><span class="chapter-number">02</span>Shared context</button>
+        <button class="chapter" type="button" data-slide="2" aria-controls="tour-slide-3"><span class="chapter-number">03</span>Backlog</button>
+        <button class="chapter" type="button" data-slide="3" aria-controls="tour-slide-4"><span class="chapter-number">04</span>Sprints</button>
+        <button class="chapter" type="button" data-slide="4" aria-controls="tour-slide-5"><span class="chapter-number">05</span>Roadmap</button>
+      </nav>
+      <div class="stage">
+        <div class="screen">
+          <div class="screen-bar"><span class="screen-status" aria-hidden="true"><i></i><i></i><i></i></span><span id="screen-location">WORKSPACE / IDEAS BOARD</span><span class="screen-label"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m8 13 3-3 5 5"/></svg>REAL APP CAPTURE</span></div>
+          <div class="slides">
+            <figure class="slide" id="tour-slide-1" role="group" aria-roledescription="slide" aria-label="1 of 5: Ideas" data-label="01 / SEE THE WORK" data-title="A shared view of what's moving." data-caption="See ideas across the board's status lanes, so the team can follow where the work stands." data-location="WORKSPACE / IDEAS BOARD">
+              <img src="../../apps/public/worksprint-assets/board-lanes.png" width="2000" height="1250" alt="Ideas board showing cards across five status lanes." fetchpriority="high">
+            </figure>
+            <figure class="slide" id="tour-slide-2" role="group" aria-roledescription="slide" aria-label="2 of 5: Shared context" data-label="02 / KEEP THE WHY" data-title="The context stays with the idea." data-caption="Open an idea to read the problem, proposed solutions and impact rationale, with discussion kept beside the work." data-location="WORKSPACE / IDEA DETAIL" hidden>
+              <img src="../../apps/public/worksprint-assets/idea-drawer.png" width="2000" height="1250" alt="Idea detail drawer with problem, proposed solutions, impact rationale and discussion." loading="lazy">
+            </figure>
+            <figure class="slide" id="tour-slide-3" role="group" aria-roledescription="slide" aria-label="3 of 5: Backlog" data-label="03 / LINE UP WHAT'S NEXT" data-title="Make room for the next stretch." data-caption="Review the tasks waiting in the backlog before choosing what to schedule into a sprint." data-location="WORKSPACE / BACKLOG" hidden>
+              <img src="../../apps/public/worksprint-assets/backlog.png" width="2000" height="1250" alt="Task backlog showing work waiting to be scheduled into a sprint." loading="lazy">
+            </figure>
+            <figure class="slide" id="tour-slide-4" role="group" aria-roledescription="slide" aria-label="4 of 5: Sprints" data-label="04 / COORDINATE DELIVERY" data-title="One sprint. A shared focus." data-caption="Follow the current sprint's goal, time window and task progress across its delivery lanes." data-location="WORKSPACE / CURRENT SPRINT" hidden>
+              <img src="../../apps/public/worksprint-assets/sprint-board.png" width="2000" height="1250" alt="Current sprint board with goal, time window and delivery status lanes." loading="lazy">
+            </figure>
+            <figure class="slide" id="tour-slide-5" role="group" aria-roledescription="slide" aria-label="5 of 5: Roadmap" data-label="05 / LOOK AHEAD" data-title="See the sprints on the horizon." data-caption="View the sprint timeline to put the current work in the context of what comes next." data-location="WORKSPACE / ROADMAP" hidden>
+              <img src="../../apps/public/worksprint-assets/roadmap.png" width="2000" height="1250" alt="Roadmap showing sprints along a timeline." loading="lazy">
+            </figure>
+          </div>
+        </div>
+      </div>
+      <div class="caption-strip">
+        <div id="caption" aria-live="off" aria-atomic="true">
+          <p class="caption-label" id="caption-label">01 / SEE THE WORK</p>
+          <h2 id="caption-title">A shared view of what's moving.</h2>
+          <p class="caption-copy" id="caption-copy">See ideas across the board's status lanes, so the team can follow where the work stands.</p>
+        </div>
+        <div class="controls">
+          <p class="counter"><strong id="slide-number">01</strong> / <span id="slide-total">05</span></p>
+          <button class="icon-button" id="previous" type="button" aria-label="Previous slide"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m14 6-6 6 6 6"/></svg></button>
+          <button class="icon-button next" id="next" type="button" aria-label="Next slide"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m10 6 6 6-6 6"/></svg></button>
+        </div>
+      </div>
+      <div class="tour-foot">
+        <div class="playback"><span class="progress" aria-hidden="true"><span class="progress-fill" id="progress"></span></span><span id="playback-status">Autoplay every 30 seconds</span><button class="pause" id="pause" type="button" aria-label="Pause autoplay"><svg id="pause-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5v14M15 5v14"/></svg><span id="pause-label">Pause</span></button></div>
+        <span>Use the arrows or choose a chapter</span>
+      </div>
+    </section>
+    <p class="source-note">Unaltered app captures. Existing Collega branding remains in the screenshots.</p>
+    <section class="below" aria-labelledby="next-heading">
+      <div><p class="eyebrow">FROM CONTEXT TO COORDINATION</p><h3 id="next-heading">Keep the why with the work.</h3></div>
+      <p>This comp replaces only the product preview. The page's approach, beta FAQ and signup sections would continue below.</p>
+    </section>
+    <noscript><p>JavaScript is required for the interactive tour. The first product preview remains visible.</p></noscript>
+  </main>
+  <script>
+    const tour = document.querySelector(".tour");
+    const slides = [...tour.querySelectorAll(".slide")];
+    const chapters = [...tour.querySelectorAll(".chapter")];
+    const progress = document.getElementById("progress");
+    const pause = document.getElementById("pause");
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const interval = 30000;
+    let active = 0;
+    let timer;
+    let manuallyNavigated = false;
+    let paused = false;
+    let hovered = false;
+    let focused = false;
+
+    function schedule() {
+      clearTimeout(timer);
+      progress.classList.remove("running");
+      const playing = !manuallyNavigated && !paused && !hovered && !focused && !document.hidden && !reducedMotion.matches;
+      const status = document.getElementById("playback-status");
+      status.textContent = manuallyNavigated ? "You're in control. Autoplay stopped." :
+        reducedMotion.matches ? "Autoplay off for reduced motion" :
+        playing ? "Next slide in 30 seconds" : "Autoplay paused";
+      document.getElementById("caption").setAttribute("aria-live", playing ? "off" : "polite");
+      pause.disabled = manuallyNavigated || reducedMotion.matches;
+      pause.setAttribute("aria-label", paused ? "Resume autoplay" : "Pause autoplay");
+      document.getElementById("pause-label").textContent = paused ? "Resume" : "Pause";
+      document.getElementById("pause-icon").innerHTML = paused ?
+        '<path d="m9 5 10 7-10 7Z"/>' : '<path d="M9 5v14M15 5v14"/>';
+      if (!playing) return;
+      void progress.offsetWidth;
+      progress.classList.add("running");
+      timer = setTimeout(() => show(active + 1, false), interval);
+    }
+
+    function show(index, manual) {
+      if (manual) manuallyNavigated = true;
+      active = (index + slides.length) % slides.length;
+      slides.forEach((slide, i) => { slide.hidden = i !== active; });
+      chapters.forEach((chapter, i) => {
+        if (i === active) chapter.setAttribute("aria-current", "true");
+        else chapter.removeAttribute("aria-current");
+      });
+      schedule();
+      const slide = slides[active];
+      document.getElementById("caption-label").textContent = slide.dataset.label;
+      document.getElementById("caption-title").textContent = slide.dataset.title;
+      document.getElementById("caption-copy").textContent = slide.dataset.caption;
+      document.getElementById("screen-location").textContent = slide.dataset.location;
+      document.getElementById("slide-number").textContent = String(active + 1).padStart(2, "0");
+      const nextImage = slides[(active + 1) % slides.length].querySelector("img");
+      nextImage.loading = "eager";
+    }
+
+    chapters.forEach((chapter, index) => chapter.addEventListener("click", () => show(index, true)));
+    document.getElementById("previous").addEventListener("click", () => show(active - 1, true));
+    document.getElementById("next").addEventListener("click", () => show(active + 1, true));
+    pause.addEventListener("click", () => { paused = !paused; schedule(); });
+    tour.addEventListener("keydown", (event) => {
+      const destination = { ArrowLeft: active - 1, ArrowRight: active + 1, Home: 0, End: slides.length - 1 };
+      if (!(event.key in destination)) return;
+      event.preventDefault();
+      show(destination[event.key], true);
+    });
+    tour.addEventListener("mouseenter", () => { hovered = true; schedule(); });
+    tour.addEventListener("mouseleave", () => { hovered = false; schedule(); });
+    tour.addEventListener("focusin", () => { focused = true; schedule(); });
+    tour.addEventListener("focusout", (event) => {
+      if (event.relatedTarget && tour.contains(event.relatedTarget)) return;
+      focused = false;
+      schedule();
+    });
+    document.addEventListener("visibilitychange", schedule);
+    reducedMotion.addEventListener("change", schedule);
+    document.getElementById("slide-total").textContent = String(slides.length).padStart(2, "0");
+    tour.classList.add("enhanced");
+    show(0, false);
+  </script>
+</body>
+</html>
