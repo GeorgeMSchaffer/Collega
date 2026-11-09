@@ -112,12 +112,24 @@ footer p{font-size:var(--text-xs);color:var(--muted-foreground);margin:16px 0 0}
 .narrative .site-header{display:flex;align-items:center;justify-content:space-between;gap:24px;border-bottom:1px solid var(--border)}
 .narrative .nav-title,.narrative .rail-note{display:none}
 .narrative main{padding:32px}
-.narrative .hero{grid-template-columns:1fr;gap:48px;padding:48px 0 64px}
-.narrative .hero-copy{max-width:720px;margin:auto;text-align:center}
-.narrative .hero-copy h1{max-width:none}
-.narrative .hero-copy p{margin-left:auto;margin-right:auto}
-.narrative .actions{justify-content:center}
-.narrative .hero .panel{width:100%}
+.narrative .hero{grid-template-columns:minmax(0,620px) minmax(0,544px);gap:64px;align-items:start;max-width:1280px;margin:0 auto;padding:64px 0 96px}
+.narrative .hero-copy{display:flex;flex-direction:column;gap:24px;width:100%;max-width:620px;margin:0;text-align:left}
+.narrative .hero-copy h1{max-width:none;margin:0;color:var(--foreground);font:600 64px/70px var(--font-body);letter-spacing:normal}
+.narrative .hero-copy p{margin:0}
+.narrative .hero-copy .eyebrow{color:#5CC8E0;font:500 14px/20px var(--font-body)}
+.narrative .hero-copy .lead{font-size:18px;line-height:28px;color:var(--muted-foreground)}
+.narrative .hero-copy .actions{justify-content:flex-start;margin:0}
+.narrative .hero-copy .button{min-height:50px;padding:12px 24px;border-radius:var(--radius);font:500 16px/24px var(--font-body)}
+.narrative .hero-copy .muted{font-size:14px;line-height:20px}
+.narrative .hero-illustration{display:flex;flex-direction:column;gap:24px;width:100%;max-width:544px;padding:32px 24px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius)}
+.narrative .hero-illustration .eyebrow{margin:0;color:var(--muted-foreground);font:500 14px/20px var(--font-body)}
+.narrative .hero-tracks{position:relative;width:100%;max-width:496px;aspect-ratio:496/220}
+.narrative .hero-tracks img{position:absolute;display:block;max-width:none}
+.narrative .hero-tracks .base{inset:0;width:100%;height:100%}
+.narrative .hero-tracks .a{left:6.05%;top:12.73%;width:82.66%;height:74.54%}
+.narrative .hero-tracks .b{left:27.02%;top:15.45%;width:26.61%;height:69.1%}
+.narrative .hero-illustration-copy{margin:0;color:var(--muted-foreground);font-size:16px;line-height:24px}
+@media(max-width:1300px){.narrative .hero{grid-template-columns:1fr;gap:32px;padding:48px 0 64px}.narrative .hero-copy{max-width:620px}.narrative .hero-copy h1{font-size:48px;line-height:54px}}
 .narrative .section{padding:64px 0}
 .narrative .capabilities{grid-template-columns:1fr;gap:32px}
 .narrative .capability{display:grid;grid-template-columns:1fr 1.4fr;align-items:center}
@@ -129,4 +141,5 @@ footer p{font-size:var(--text-xs);color:var(--muted-foreground);margin:16px 0 0}
 @media(max-width:1100px){.shell .frame{grid-template-columns:192px minmax(0,1fr)}.shell .hero{grid-template-columns:1fr}.shell .capabilities{grid-template-columns:1fr}.shell .capability{display:grid;grid-template-columns:1fr 1fr}.shell .capability figure{margin:0;border-top:0;border-left:1px solid var(--border)}.lower{grid-template-columns:1fr}.fields{grid-template-columns:1fr 1fr}}
 @media(max-width:800px){.shell .frame{display:block}.site-header,.narrative .site-header{display:block;padding:16px 24px}.shell .site-header{border-right:0;border-bottom:1px solid var(--border)}.shell .site-header nav{flex-direction:row;flex-wrap:wrap}.nav-title,.rail-note{display:none}.site-header nav{margin-top:12px;flex-wrap:wrap}.intro{grid-template-columns:1fr;gap:8px}.narrative .capability,.narrative .capability:nth-child(2){grid-template-columns:1fr}.narrative .capability:nth-child(2) .cap-copy{order:0}.narrative .capability figure,.narrative .capability:nth-child(2) figure{border-left:0;border-right:0;border-top:1px solid var(--border)}}
 @media(max-width:600px){main,.narrative main{padding:24px 16px}.proposal{padding:8px 16px}.hero,.narrative .hero{padding:24px 0 32px;gap:24px}.section,.narrative .section{padding:32px 0}.shell .capability{display:flex}.shell .capability figure{border-left:0;border-top:1px solid var(--border)}.fields{grid-template-columns:1fr}.form,.cap-copy,.narrative .cap-copy{padding:20px}.site-header,.narrative .site-header{padding:16px}.site-header nav{gap:0}.site-header nav a{font-size:var(--text-xs)}h1{font-size:var(--text-3xl)}.lower{gap:24px}}
+@media(max-width:600px){.narrative .hero-copy h1{font-size:40px;line-height:46px}.narrative .hero-copy h1 br{display:none}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
