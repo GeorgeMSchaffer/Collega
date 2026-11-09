@@ -16,7 +16,9 @@
   <meta property="og:url" content="https://worksprint.io/">
   <meta name="twitter:card" content="summary">
   <link rel="stylesheet" href="worksprint-assets/app-aligned.css">
+  <link rel="stylesheet" href="worksprint-assets/product-tour.css">
   <script src="worksprint-assets/beta-demo.js" defer></script>
+  <script src="worksprint-assets/product-tour.js" defer></script>
 </head>
 <body class="narrative">
   <a class="skip" href="#main">Skip to content</a>
@@ -33,7 +35,6 @@
           <h1 id="hero-title">Good ideas deserve<br> a clear path<br> to delivery.</h1>
           <p class="lead">Capture the problem. Keep the discussion connected to tasks, boards and sprint planning.</p>
           <div class="actions"><a class="button" href="#beta">Request beta access</a><a class="button secondary" href="#approach">Explore the product</a></div>
-          <p class="muted">Request access. No account is created on submission.</p>
         </div>
         <div class="hero-illustration">
           <p class="eyebrow">INDEPENDENT WORK. SHARED CONTEXT.</p>
@@ -48,11 +49,48 @@
       <section class="section" id="approach" aria-labelledby="approach-title">
         <div class="intro"><div><p class="eyebrow">THE APPROACH</p><h2 id="approach-title">Keep the why with the work.</h2></div><p>Give ideas a place to take shape, organize work on shared boards, and plan what comes next in sprints. Keep the context visible as teams move toward delivery.</p></div>
         <ol class="flow" aria-label="Ideas to delivery"><li>Ideas</li><li>Boards</li><li>Sprints</li><li>Delivery</li></ol>
-        <div class="capabilities">
-          <article class="panel capability"><div class="cap-copy"><p class="eyebrow">01 / CONTEXT</p><h3>Give ideas shared context.</h3><p>Capture the idea and the discussion around it, so the team can understand what matters and why.</p></div><figure id="preview"><a class="shot" href="worksprint-assets/idea-drawer.png" aria-label="Open full-size approved idea drawer screenshot"><img src="worksprint-assets/idea-drawer.png" width="2000" height="1250" loading="lazy" alt="Actual idea detail drawer showing a problem, proposed solutions, impact rationale and discussion."></a><figcaption>Idea context · Real app capture</figcaption></figure></article>
-          <article class="panel capability"><div class="cap-copy"><p class="eyebrow">02 / COORDINATION</p><h3>Make work visible on boards.</h3><p>Organize ideas and tasks on shared boards, with statuses that show where the work stands.</p></div><figure><a class="shot" href="worksprint-assets/board-lanes.png" aria-label="Open full-size approved board screenshot"><img src="worksprint-assets/board-lanes.png" width="2000" height="1250" loading="lazy" alt="Actual Ideas board with New / Pending, In Review, In Progress, Client Review and Complete lanes."></a><figcaption>Board lanes · Real app capture</figcaption></figure></article>
-          <article class="panel capability"><div class="cap-copy"><p class="eyebrow">03 / DELIVERY</p><h3>Plan the next sprint.</h3><p>Bring tasks from the backlog into sprint planning and coordinate the next stretch of work.</p></div><figure><a class="shot" href="worksprint-assets/sprint-board.png" aria-label="Open full-size approved sprint board screenshot"><img src="worksprint-assets/sprint-board.png" width="2000" height="1250" loading="lazy" alt="Actual current sprint board showing its goal, state, time window and delivery status lanes."></a><figcaption>Current sprint board · Real app capture</figcaption></figure></article>
-        </div>
+        <section class="product-tour panel" id="preview" aria-roledescription="carousel" aria-label="WorkSprint product tour">
+          <div class="tour-caption-strip">
+            <div id="tour-caption" aria-live="off" aria-atomic="true">
+              <p class="tour-caption-label" id="tour-caption-label">01 / SEE THE WORK</p>
+              <h3 id="tour-caption-title">A shared view of what's moving.</h3>
+              <p class="tour-caption-copy" id="tour-caption-copy">See ideas across the board's status lanes, so the team can follow where the work stands.</p>
+            </div>
+            <div class="tour-meta" hidden>
+              <p class="tour-counter"><strong id="tour-number">01</strong> / <span id="tour-total">05</span></p>
+              <div class="tour-caption-controls">
+                <button class="tour-caption-arrow tour-previous" type="button" aria-label="Previous slide"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m14 6-6 6 6 6"/></svg></button>
+                <button class="tour-caption-arrow tour-next" type="button" aria-label="Next slide"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m10 6 6 6-6 6"/></svg></button>
+              </div>
+            </div>
+          </div>
+          <div class="tour-stage">
+            <div class="tour-screen">
+              <div class="tour-screen-bar"><span class="tour-window-dots" aria-hidden="true"><i></i><i></i><i></i></span><span id="tour-location">WORKSPACE / IDEAS BOARD</span><span class="tour-capture-label">REAL APP CAPTURE</span></div>
+              <div class="tour-viewport">
+                <div class="tour-slides">
+                  <figure class="tour-slide" id="product-slide-1" role="group" aria-roledescription="slide" aria-label="1 of 5: Ideas" data-label="01 / SEE THE WORK" data-title="A shared view of what's moving." data-caption="See ideas across the board's status lanes, so the team can follow where the work stands." data-location="WORKSPACE / IDEAS BOARD">
+                    <a href="worksprint-assets/board-lanes.png" aria-label="Open full-size Ideas board screenshot"><img src="worksprint-assets/board-lanes.png" width="2880" height="1800" loading="lazy" alt="Ideas board showing cards across five status lanes."></a>
+                  </figure>
+                  <figure class="tour-slide" id="product-slide-2" role="group" aria-roledescription="slide" aria-label="2 of 5: Shared context" data-label="02 / KEEP THE WHY" data-title="The context stays with the idea." data-caption="Open an idea to read the problem, proposed solutions and impact rationale, with discussion kept beside the work." data-location="WORKSPACE / IDEA DETAIL" hidden>
+                    <a href="worksprint-assets/idea-drawer.png" aria-label="Open full-size idea detail screenshot"><img src="worksprint-assets/idea-drawer.png" width="2880" height="1800" loading="lazy" alt="Idea detail drawer with problem, proposed solutions, impact rationale and discussion."></a>
+                  </figure>
+                  <figure class="tour-slide" id="product-slide-3" role="group" aria-roledescription="slide" aria-label="3 of 5: Backlog" data-label="03 / LINE UP WHAT'S NEXT" data-title="Make room for the next stretch." data-caption="Review the tasks waiting in the backlog before choosing what to schedule into a sprint." data-location="WORKSPACE / BACKLOG" hidden>
+                    <a href="worksprint-assets/backlog.png" aria-label="Open full-size backlog screenshot"><img src="worksprint-assets/backlog.png" width="960" height="600" loading="lazy" alt="Task backlog showing work waiting to be scheduled into a sprint."></a>
+                  </figure>
+                  <figure class="tour-slide" id="product-slide-4" role="group" aria-roledescription="slide" aria-label="4 of 5: Sprints" data-label="04 / COORDINATE DELIVERY" data-title="One sprint. A shared focus." data-caption="Follow the current sprint's goal, time window and task progress across its delivery lanes." data-location="WORKSPACE / CURRENT SPRINT" hidden>
+                    <a href="worksprint-assets/sprint-board.png" aria-label="Open full-size sprint board screenshot"><img src="worksprint-assets/sprint-board.png" width="2880" height="1800" loading="lazy" alt="Current sprint board with goal, time window and delivery status lanes."></a>
+                  </figure>
+                  <figure class="tour-slide" id="product-slide-5" role="group" aria-roledescription="slide" aria-label="5 of 5: Roadmap" data-label="05 / LOOK AHEAD" data-title="See the sprints on the horizon." data-caption="View the sprint timeline to put the current work in the context of what comes next." data-location="WORKSPACE / ROADMAP" hidden>
+                    <a href="worksprint-assets/roadmap.png" aria-label="Open full-size roadmap screenshot"><img src="worksprint-assets/roadmap.png" width="960" height="600" loading="lazy" alt="Roadmap showing sprints along a timeline."></a>
+                  </figure>
+                </div>
+                <button class="tour-arrow tour-previous" type="button" aria-label="Previous slide" hidden><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m14 6-6 6 6 6"/></svg></button>
+                <button class="tour-arrow tour-next" type="button" aria-label="Next slide" hidden><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m10 6 6 6-6 6"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </section>
         <p class="capture-note">All screenshots are approved, unaltered captures of the existing app, not renamed product renders. The WorkSprint icon here is platform-owned; organization names and custom tenant logos are separate and are not replaced.</p>
       </section>
       <section class="section lower" id="beta" aria-labelledby="beta-title">

@@ -8,6 +8,12 @@ build step, so `pnpm check` has nothing to run here.
   removed), with the Workflow story Figma hero and its existing `workflow/assets/` track SVGs.
   Styles and the demo form script are in `worksprint-assets/`; its CSP allows only
   same-origin assets, so nothing external can be added without changing the `<meta>` policy.
+- The home page product preview is a five-slide captioned tour, replacing the feature-image
+  cards. `worksprint-assets/product-tour.css` and `product-tour.js` own its styles and behavior.
+  Captions sit above the screenshot; overlay arrows stop autoplay after manual navigation. Otherwise it loops
+  every 30 seconds; hover, focus, hidden pages and reduced motion suspend autoplay. The caption
+  includes subtle previous/next arrows, which also stop autoplay. Without JavaScript, the first
+  screenshot and caption remain.
 - `ideas/ boards/ backlog/ sprints/ roadmap/` — one product page per area, each with its own title,
   description, canonical and `sitemap.xml` entry. Copy states only what the app does today
   (the roadmap shows sprints; Outcomes are not built, so the page does not mention them).
