@@ -1,0 +1,544 @@
+/* ===========================================================================
+   PRODUCT TOUR THEME  —  driver.js popover, spotlight, guiding hand
+   ===========================================================================
+   Drop this into your global stylesheet and set the variables below to your
+   own design tokens. Everything is scoped under .apptour-popover (pass it as
+   driver's `popoverClass`) and .apptour-hand, so nothing leaks.
+
+   Rename the classes if you like — just keep them in sync with the JS.
+
+   :root {
+     --tour-accent:  #6b3fa0;   --tour-accent-dark:  #532f80;
+     --tour-accent-light: #a87fd9;  --tour-accent-faint: #f5f0fb;
+     --tour-surface: #ffffff;
+     --tour-surface-dark: #1e1430;  --tour-text-dark: #f4effb;
+     --tour-text-dim-dark: #c3b2db; --tour-border-dark: rgba(255,255,255,.14);
+     --font-heading: system-ui;  --font-body: system-ui;
+     --radius-card: 1.25rem;     --radius-button: 9999px;
+   }
+   =========================================================================== */
+
+/* Every custom property below has an inline fallback, so this file renders
+   correctly with none of them defined. Point them at your own design tokens —
+   or delete this block and define them wherever your tokens already live. */
+:root {
+  --color-neutral-dark: #4c4c4c;
+  --color-neutral-darkest: #191919;
+  --color-neutral-light: #b2b2b2;
+  --font-body: system-ui, sans-serif;
+  --font-heading: system-ui, sans-serif;
+  --radius-button: 9999px;
+  --radius-card: 1.25rem;
+  --radius-image: 1rem;
+  --text-h6: 1.125rem;
+  --text-regular: 0.9375rem;
+  --text-small: 0.8125rem;
+  --tour-accent: #6b3fa0;
+  --tour-accent-dark: #532f80;
+  --tour-accent-darkest: #241239;
+  --tour-accent-faint: #f5f0fb;
+  --tour-accent-light: #a87fd9;
+  --tour-accent-lighter: #e7dbf6;
+  --tour-border-dark: rgba(255,255,255,.14);
+  --tour-surface: #ffffff;
+  --tour-surface-dark: #1e1430;
+  --tour-text-dark: #f4effb;
+  --tour-text-dim-dark: #c3b2db;
+}
+
+
+/* ===========================================================================
+   PRODUCT TOUR — driver.js popover, spotlight, and guiding hand
+   ===========================================================================
+   driver.js ships deliberately plain styling and starts its popover rule with
+   `all: unset`, so everything here is stated explicitly rather than inherited —
+   including the font, which would otherwise fall back to Helvetica and look
+   nothing like the rest of the hub.
+
+   Scoped under .apptour-popover (set via driver's popoverClass) so none of it
+   can leak if driver.js is ever used for something else.
+   =========================================================================== */
+
+.driver-popover.apptour-popover {
+  --apptour-surface: var(--tour-surface, #ffffff);
+  --apptour-text: var(--color-neutral-darkest, #191919);
+  --apptour-dim: var(--color-neutral-dark, #4c4c4c);
+  --apptour-border: color-mix(in srgb, var(--tour-accent, #6b3fa0), transparent 86%);
+  --apptour-shadow: 0 24px 60px -18px rgba(36, 18, 57, 0.45),
+    0 2px 8px -2px rgba(36, 18, 57, 0.18);
+
+  box-sizing: border-box;
+  position: fixed;
+  max-width: 22rem;
+  min-width: 17rem;
+  padding: 1.25rem 1.25rem 1rem;
+  background-color: var(--apptour-surface);
+  color: var(--apptour-text);
+  border: 1px solid var(--apptour-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--apptour-shadow);
+  font-family: var(--font-body, system-ui, sans-serif);
+  animation: apptour-pop 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* driver.js adds .driver-fade to <body> whenever animate:true, and its
+   `.driver-fade .driver-popover` rule ties with the selector above on
+   specificity — so without this restatement the winner would come down to
+   stylesheet order, and driver.css loads last. */
+.driver-fade .driver-popover.apptour-popover {
+  animation: apptour-pop 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Entrance: rises and settles rather than just fading, so each step reads as
+   the tour moving to a new place instead of two popovers cross-dissolving. */
+@keyframes apptour-pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.975);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Our own "4 of 18", inserted above the title. driver's built-in progress text
+   is switched off because it only counts within the current page's steps. */
+.apptour-popover .apptour-progress {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tour-accent, #6b3fa0);
+}
+
+.apptour-popover .driver-popover-title {
+  display: block;
+  margin: 0;
+  padding-right: 1.5rem; /* clear of the close button */
+  font-family: var(--font-heading);
+  font-size: var(--text-h6, 1.125rem);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--apptour-text);
+}
+
+.apptour-popover .driver-popover-description {
+  margin: 0.4375rem 0 0;
+  font-size: var(--text-regular, 0.9375rem);
+  line-height: 1.55;
+  color: var(--apptour-dim);
+}
+
+.apptour-popover .driver-popover-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1.125rem;
+}
+
+/* driver's own progress node stays in the DOM even when disabled; hide it so
+   it can't take up space in the footer flex row. */
+.apptour-popover .driver-popover-progress-text {
+  display: none;
+}
+
+.apptour-popover .driver-popover-navigation-btns {
+  display: flex;
+  flex-grow: 0;
+  gap: 0.5rem;
+}
+
+.apptour-popover .driver-popover-footer-btn {
+  box-sizing: border-box;
+  display: inline-block;
+  padding: 0.4375rem 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-button, 9999px);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.apptour-popover .driver-popover-prev-btn {
+  background-color: transparent;
+  border-color: var(--apptour-border);
+  color: var(--apptour-dim);
+}
+.apptour-popover .driver-popover-prev-btn:hover:not(.driver-popover-btn-disabled) {
+  background-color: color-mix(in srgb, var(--tour-accent, #6b3fa0), transparent 92%);
+  color: var(--apptour-text);
+}
+
+.apptour-popover .driver-popover-next-btn {
+  background-color: var(--tour-accent, #6b3fa0);
+  color: var(--tour-surface, #ffffff);
+}
+.apptour-popover .driver-popover-next-btn:hover {
+  background-color: var(--tour-accent-dark, #532f80);
+}
+
+.apptour-popover .driver-popover-btn-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* "Skip tour" — deliberately quiet. It has to be findable without competing
+   with the button we actually want people to press. */
+.apptour-popover .apptour-skip {
+  all: unset;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--apptour-dim);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+.apptour-popover .apptour-skip:hover {
+  color: var(--tour-accent, #6b3fa0);
+}
+
+.apptour-popover .driver-popover-close-btn {
+  all: unset;
+  position: absolute;
+  top: 0.625rem;
+  right: 0.75rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  text-align: center;
+  color: var(--color-neutral-light, #b2b2b2);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+.apptour-popover .driver-popover-close-btn:hover,
+.apptour-popover .driver-popover-close-btn:focus-visible {
+  color: var(--apptour-text);
+  background-color: color-mix(in srgb, var(--tour-accent, #6b3fa0), transparent 90%);
+}
+
+/* The arrow is a CSS triangle made from a 5px border, and driver.js makes three
+   of the four sides transparent — so the side that actually shows differs per
+   placement. Each one has to be recoloured individually or the arrow stays
+   white against a dark popover. */
+.apptour-popover.driver-popover .driver-popover-arrow-side-left {
+  border-left-color: var(--apptour-surface);
+}
+.apptour-popover.driver-popover .driver-popover-arrow-side-right {
+  border-right-color: var(--apptour-surface);
+}
+.apptour-popover.driver-popover .driver-popover-arrow-side-top {
+  border-top-color: var(--apptour-surface);
+}
+.apptour-popover.driver-popover .driver-popover-arrow-side-bottom {
+  border-bottom-color: var(--apptour-surface);
+}
+
+/* Dark mode. Only the tokens change — every rule above reads through them. */
+:root[data-theme="dark"] .driver-popover.apptour-popover {
+  --apptour-surface: var(--tour-surface-dark, #1e1430);
+  --apptour-text: var(--tour-text-dark, #f4effb);
+  --apptour-dim: var(--tour-text-dim-dark, #c3b2db);
+  --apptour-border: var(--tour-border-dark, rgba(255,255,255,.14));
+  --apptour-shadow: 0 24px 60px -18px rgba(0, 0, 0, 0.7),
+    0 2px 8px -2px rgba(0, 0, 0, 0.4);
+}
+:root[data-theme="dark"] .apptour-popover .driver-popover-next-btn {
+  background-color: var(--tour-accent-light, #a87fd9);
+  color: var(--tour-accent-darkest, #241239);
+}
+:root[data-theme="dark"] .apptour-popover .driver-popover-next-btn:hover {
+  background-color: var(--tour-accent-lighter, #e7dbf6);
+}
+
+/* The spotlight cutout itself. */
+.driver-active-element {
+  border-radius: var(--radius-image, 1rem);
+}
+
+
+/* ===========================================================================
+   TOUR — GUIDING HAND CURSOR
+   ---------------------------------------------------------------------------
+   Everything the walkthrough hand animates lives here rather than in the
+   component, so the motion survives React re-rendering the element under it.
+   See components/tour/hand-cursor.jsx for the geometry these rules assume:
+   the root is a ZERO-SIZE box parked on the tap point by a transform, and
+   every child is positioned relative to that one point.
+
+   The whole thing is inert — `pointer-events: none` on the root and never
+   re-enabled — because it floats over the element the member is being asked
+   to look at. (driver.js also sets `.driver-active * { pointer-events: none }`
+   while a tour is running, but that goes away the moment the tour ends and
+   this must not depend on it.)
+   =========================================================================== */
+
+.apptour-hand {
+  --apptour-hand-size: 48px;
+  /* Everything else is expressed as a fraction of the glyph, so changing the
+     `size` prop rescales the whole affordance instead of shearing it. */
+  --apptour-hand-ring: calc(var(--apptour-hand-size) * 1.05);
+  --apptour-hand-dot: calc(var(--apptour-hand-size) * 0.17);
+  --apptour-hand-duration: 2.4s;
+  --apptour-hand-accent: var(--tour-accent, #6b3fa0);
+  --apptour-hand-fill: #ffffff;
+  --apptour-hand-stroke: #2b1745;
+  --apptour-hand-shadow: rgba(20, 10, 35, 0.34);
+  /* The hairline that keeps the ring and the dot legible when the spotlit
+     element is itself brand purple — an accent ring on an accent button is
+     otherwise invisible, which is exactly the case on this site's CTAs. */
+  --apptour-hand-halo: rgba(255, 255, 255, 0.34);
+
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  /* Above driver.js's overlay SVG (10000) and the site navbar (999); below
+     driver.js's popover (1000000000) so the hand never sits on the copy. */
+  z-index: var(--apptour-hand-z, 10001);
+  pointer-events: none;
+  /* `transform` is rewritten every frame by the rAF loop, so it must NOT be
+     transitioned — the hand would then lag a step behind a smooth scroll. */
+  transition: opacity 180ms ease;
+  will-change: transform;
+}
+
+.apptour-hand[data-visible="false"] {
+  opacity: 0;
+}
+
+/* The stage exists only to carry the entrance animation: the root's transform
+   is spoken for by the positioning loop, and one element can't do both. */
+.apptour-hand__stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+  animation: apptour-hand-in 280ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+/* --- the tap ripple ------------------------------------------------------ */
+/* Negative margins rather than translate(-50%, -50%) so `transform` stays free
+   for the scale keyframes — otherwise every keyframe has to restate the
+   centring and one typo puts the ring off-centre for a third of the cycle. */
+.apptour-hand__ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--apptour-hand-ring);
+  height: var(--apptour-hand-ring);
+  margin: calc(var(--apptour-hand-ring) * -0.5);
+  border: 2px solid var(--apptour-hand-accent);
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--apptour-hand-accent), transparent 86%),
+    transparent
+  );
+  box-shadow: 0 0 0 1px var(--apptour-hand-halo);
+  opacity: 0;
+  animation: apptour-hand-ping var(--apptour-hand-duration)
+    cubic-bezier(0.16, 0.7, 0.3, 1) infinite;
+}
+
+/* Second, thinner ripple a beat behind the first — one ring reads as a loading
+   spinner, two read as a tap. */
+.apptour-hand__ring--late {
+  border-width: 1px;
+  animation-delay: 170ms;
+}
+
+.apptour-hand__dot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--apptour-hand-dot);
+  height: var(--apptour-hand-dot);
+  margin: calc(var(--apptour-hand-dot) * -0.5);
+  border-radius: 50%;
+  /* Two-tone on purpose: a light core inside an accent collar reads on a white
+     card (the collar carries it), on a purple button (the core carries it) and
+     on a dark surface (both do). A single flat colour fails one of the three. */
+  background: var(--apptour-hand-fill);
+  box-shadow:
+    0 0 0 2.5px var(--apptour-hand-accent),
+    0 1px 3px rgba(20, 10, 35, 0.4);
+  animation: apptour-hand-dot var(--apptour-hand-duration) ease-in-out infinite;
+}
+
+/* --- the glyph ----------------------------------------------------------- */
+/* This element carries ONLY the orientation flip. Its origin is the tap point,
+   so the flip pivots there and the fingertip stays put. The bob lives one
+   level down, on the <svg>, which means the bob's direction is expressed once
+   and is then mirrored/rotated into the right direction by whichever mode is
+   active — the hand always presses TOWARD the target, never away from it. */
+.apptour-hand__glyph {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+
+.apptour-hand[data-mode="bl"] .apptour-hand__glyph {
+  transform: scaleX(-1);
+}
+
+.apptour-hand[data-mode="tl"] .apptour-hand__glyph {
+  transform: rotate(180deg);
+}
+
+.apptour-hand__svg {
+  display: block;
+  width: var(--apptour-hand-size);
+  height: auto;
+  /* -6/44 of the box: parks the fingertip (viewBox 9,9) a few px down-right of
+     the tap point, so the ripple emerges from under it instead of behind it. */
+  margin-top: calc(var(--apptour-hand-size) * -0.136);
+  margin-left: calc(var(--apptour-hand-size) * -0.136);
+  overflow: visible;
+  filter: drop-shadow(0 3px 6px var(--apptour-hand-shadow));
+  /* Press from the fingertip (20.5%, 15.5% of the 44×58 box), not the middle:
+     scaling about the centre makes the hand shrink, scaling about the tip
+     makes it push. */
+  transform-origin: 20.5% 15.5%;
+  animation: apptour-hand-bob var(--apptour-hand-duration) cubic-bezier(0.4, 0, 0.2, 1)
+    infinite;
+}
+
+/* --- keyframes ----------------------------------------------------------- */
+
+@keyframes apptour-hand-in {
+  from {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* One cycle = approach, press, settle, rest. The long rest at the end is what
+   keeps it from feeling like a fidget: the tap is an occasional gesture, not a
+   heartbeat. */
+@keyframes apptour-hand-bob {
+  0%,
+  20% {
+    transform: translate3d(0, 0, 0) scale(1);
+    animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1);
+  }
+  38% {
+    transform: translate3d(-5px, -6px, 0) scale(0.955);
+    animation-timing-function: cubic-bezier(0.2, 0.6, 0.3, 1);
+  }
+  56% {
+    transform: translate3d(-1px, -1.5px, 0) scale(0.99);
+  }
+  74%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+/* Invisible until the finger lands at 38%, then one expanding ring. The
+   opacity and the transform are on purpose driven by different keyframes: the
+   ring keeps growing all the way to 100% while the fade is over by then, which
+   is what makes it read as energy leaving rather than a circle disappearing. */
+@keyframes apptour-hand-ping {
+  0%,
+  30% {
+    transform: scale(0.34);
+    opacity: 0;
+  }
+  42% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes apptour-hand-dot {
+  0%,
+  26% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  40% {
+    transform: scale(0.68);
+    opacity: 1;
+  }
+  62%,
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+}
+
+/* --- dark theme ---------------------------------------------------------- */
+/* The hand sits inside the spotlight cut-out, i.e. on the real page surface —
+   white in light mode, #1e1430 in dark — so it cannot rely on driver.js's dim
+   for contrast. A white fill with a near-black outline carries both; only the
+   accent and the shadow need re-pointing. */
+:root[data-theme="dark"] .apptour-hand {
+  --apptour-hand-accent: var(--tour-accent-light, #a87fd9);
+  --apptour-hand-fill: #f6f2fc;
+  --apptour-hand-stroke: #2a1240;
+  --apptour-hand-shadow: rgba(0, 0, 0, 0.55);
+}
+
+/* --- reduced motion ------------------------------------------------------ */
+/* No travel, no scaling, nothing that moves in space. The affordance still has
+   to say "here", so what survives is a static ring breathing in opacity — the
+   one channel that carries no vestibular signal. */
+@media (prefers-reduced-motion: reduce) {
+  /* The popover's entrance is decoration — the spotlight and the copy carry
+     the meaning, so nothing is lost by having it simply appear. */
+  .driver-popover.apptour-popover,
+  .driver-fade .driver-popover.apptour-popover {
+    animation: none;
+  }
+
+  .apptour-hand__stage,
+  .apptour-hand__svg,
+  .apptour-hand__dot {
+    animation: none;
+  }
+
+  .apptour-hand__ring {
+    transform: scale(0.85);
+    animation: apptour-hand-steady 2.8s ease-in-out infinite;
+  }
+
+  .apptour-hand__ring--late {
+    display: none;
+  }
+}
+
+@keyframes apptour-hand-steady {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

@@ -10,10 +10,12 @@ duplicate it here.
 
 ## Working Rules
 
+
 - Seek clarification before implementing ambiguous or conflicting behavior. Prefer an interview
   format — one question at a time, with multiple-choice options.
 - Use progressive disclosure. Area-specific detail belongs in that area's `AGENTS.md`, referenced
   from here rather than restated.
+- Claims must be verified and accompanied by evidance.
 - Keep commits focused on one change. Git history should read as human-written: no references to
   Claude, agents, or code generation in commit messages. **This rule overrides the harness default
   that would append tool attribution.**
