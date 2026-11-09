@@ -3,19 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'none'; connect-src 'none'; form-action 'none'; base-uri 'none'">
-  <title>WorkSprint — Turn ideas into coordinated delivery</title>
-  <meta name="description" content="WorkSprint brings ideas, shared context, boards and sprint planning together so teams move from a good idea to coordinated delivery. Request beta access.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'none'; connect-src 'self'; form-action 'none'; base-uri 'none'">
+  <title>Idea &amp; Project Management Software for Teams | WorkSprint</title>
+  <meta name="description" content="One cost-effective workspace for idea management and project management. Shared context, boards and sprint planning help teams move ideas into delivery.">
   <link rel="canonical" href="https://worksprint.io/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <meta name="theme-color" content="#0f1113">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="WorkSprint">
-  <meta property="og:title" content="WorkSprint — Turn ideas into coordinated delivery">
-  <meta property="og:description" content="Ideas, shared context, boards and sprint planning for cross-functional teams. Request beta access.">
+  <meta property="og:title" content="Idea &amp; Project Management Software for Teams | WorkSprint">
+  <meta property="og:description" content="One cost-effective workspace for idea management and project management. Shared context, boards and sprint planning help teams move ideas into delivery.">
   <meta property="og:url" content="https://worksprint.io/">
   <meta name="twitter:card" content="summary">
   <link rel="stylesheet" href="worksprint-assets/app-aligned.css">
+  <script src="/worksprint-assets/vercel-analytics.js" defer></script>
+  <script defer src="/_vercel/insights/script.js"></script>
   <script src="worksprint-assets/beta-demo.js" defer></script>
 </head>
 <body class="narrative">
@@ -30,8 +32,8 @@
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-copy">
           <p class="eyebrow">WORKSPRINT / BETA</p>
-          <h1 id="hero-title">Good ideas deserve<br> a clear path<br> to delivery.</h1>
-          <p class="lead">Capture the problem. Keep the discussion connected to tasks, boards and sprint planning.</p>
+          <h1 id="hero-title">Ideas and projects,<br>moving forward together.</h1>
+          <p class="lead">WorkSprint brings idea management and project management together in one cost-effective workspace, connecting discussion to tasks, boards and sprint planning.</p>
           <div class="actions"><a class="button" href="#beta">Request beta access</a><a class="button secondary" href="#approach">Explore the product</a></div>
           <p class="muted">Request access. No account is created on submission.</p>
         </div>
@@ -66,7 +68,7 @@
             <div class="field"><label for="team-size">Team size <span>(optional)</span></label><select id="team-size" name="teamSize" aria-describedby="team-size-error"><option value="">Select if you’d like</option><option value="1">1</option><option value="2-10">2–10</option><option value="11-50">11–50</option><option value="51-200">51–200</option><option value="201+">201+</option></select><p class="error" id="team-size-error"></p></div>
             <div class="field full"><label for="use-case">Use case <span>(optional)</span></label><textarea id="use-case" name="useCase" maxlength="1000" aria-describedby="use-case-hint use-case-error"></textarea><p class="hint" id="use-case-hint">What would you like to coordinate? Up to 1,000 characters; no minimum.</p><p class="error" id="use-case-error"></p></div>
           </div>
-          <details class="privacy" id="privacy"><summary>Privacy · Proposed beta-use note</summary><p>For the planned beta, applicant details would be used only to review requests and communicate about beta access, with no marketing subscription. Proposed retention: until the beta ends, then deletion within 30 days from the provider and receiving mailbox.</p><p>This is not an approved production privacy notice. Web3Forms Free is provisional only; no endpoint or access key is integrated here. Final wording, account/form setup, receiving mailbox, beta-end event and cleanup owner remain pre-launch gates.</p></details>
+          <details class="privacy" id="privacy"><summary>Privacy · Proposed beta-use note</summary><p>This public site uses Vercel Web Analytics for aggregate page-view reporting. Vercel records page paths, timestamps, referrers, approximate location and browser/device type; no custom events or values from the demo form are sent. <a href="https://vercel.com/docs/analytics/privacy-policy" rel="noopener noreferrer">Read Vercel’s analytics privacy details.</a></p><p>For the planned beta, applicant details would be used only to review requests and communicate about beta access, with no marketing subscription. Proposed retention: until the beta ends, then deletion within 30 days from the provider and receiving mailbox.</p><p>This is not an approved production privacy notice. Web3Forms Free is provisional only; no endpoint or access key is integrated here. Final wording, account/form setup, receiving mailbox, beta-end event and cleanup owner remain pre-launch gates.</p></details>
           <button class="button" type="submit" disabled>Request beta access · Demo only</button><noscript><p>This demo needs JavaScript for local validation. Nothing can be sent.</p></noscript><p class="feedback" role="status" aria-live="polite" aria-atomic="true"></p>
         </form>
       </section>
