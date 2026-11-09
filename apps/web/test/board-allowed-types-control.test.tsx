@@ -51,7 +51,7 @@ function drawer(over: Partial<BoardFormData> = {}) {
   )
 }
 
-const group = () => screen.queryByRole('group', { name: 'Allowed idea types' })
+const group = () => screen.queryByRole('group', { name: 'Allowed item types' })
 const box = (name: string) => screen.getByRole('checkbox', { name }) as HTMLInputElement
 
 describe('the Allowed idea types control in the board drawer', () => {

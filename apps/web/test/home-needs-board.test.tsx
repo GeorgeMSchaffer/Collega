@@ -119,9 +119,9 @@ describe('the Needs a board tile on the page', () => {
       '/ideas?board=none&phase=Ideas',
     )
     expect(
-      within(row).getByRole('link', { name: 'View ideas with no board' }).getAttribute('href'),
+      within(row).getByRole('link', { name: 'View items with no board' }).getAttribute('href'),
     ).toBe('/ideas?board=none&phase=Ideas')
-    expect(row.textContent).toContain('ideas with no board')
+    expect(row.textContent).toContain('items with no board')
   })
 
   it('draws no such tile for a User', async () => {

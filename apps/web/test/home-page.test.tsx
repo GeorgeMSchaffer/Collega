@@ -104,7 +104,7 @@ function orgHome(over: Partial<OrganizationHome> = {}): OrganizationHome {
       {
         label: 'You created',
         value: 5,
-        detail: 'ideas and issues',
+        detail: 'items and issues',
         definition: 'y',
         href: '/ideas?scope=created',
       },
@@ -169,7 +169,7 @@ const platformHome: PlatformHome = {
       href: '/settings/organizations',
     },
     { label: 'Boards', value: 3, detail: 'across 2 organizations', definition: 'b', href: null },
-    { label: 'Ideas', value: 14, detail: 'plus 3 delivery issues', definition: 'o', href: null },
+    { label: 'Items', value: 14, detail: 'plus 3 delivery issues', definition: 'o', href: null },
     { label: 'Users', value: 15, detail: '3 inactive', definition: 'u', href: '/settings/users' },
   ],
   organizations: [
@@ -221,7 +221,7 @@ describe('Home for a member of an organization', { timeout: 30_000 }, () => {
       expect(screen.getByRole('heading', { level: 1 }).textContent).toMatch(/^Good to see you, /)
       const text = document.body.textContent ?? ''
       expect(text).toContain('Here’s what needs you today.')
-      expect(text).toContain('41 ideas across 2 boards and 1 delivery issue —')
+      expect(text).toContain('41 items across 2 boards and 1 delivery issue —')
       expect(readers.getPlatformHome).not.toHaveBeenCalled()
     },
   )
@@ -236,7 +236,7 @@ describe('Home for a member of an organization', { timeout: 30_000 }, () => {
       orgHome({ counts: { ideas: 1, boards: 1, issues: 0 } }),
     )
     await renderHome('User')
-    expect(document.body.textContent).toContain('1 idea across 1 board and 0 delivery issues')
+    expect(document.body.textContent).toContain('1 item across 1 board and 0 delivery issues')
   })
 
   it('shows the three tiles and a fourth naming what is not tracked yet, with a dash for each', async () => {
@@ -245,7 +245,7 @@ describe('Home for a member of an organization', { timeout: 30_000 }, () => {
     expect(tiles).toHaveLength(4)
     const untracked = tiles[3] as HTMLElement
     expect(untracked.textContent).toContain('Not tracked yet')
-    for (const label of ['Open ideas', 'Awaiting review', 'Completed · 30d']) {
+    for (const label of ['Open items', 'Awaiting review', 'Completed · 30d']) {
       expect(untracked.textContent).toContain(label)
     }
     expect((tiles[0] as HTMLElement).textContent).toContain('2 critical')
@@ -296,7 +296,7 @@ describe('Home for a member of an organization', { timeout: 30_000 }, () => {
 
   it.each([
     ['User', 'When someone adds you'],
-    ['ReadOnly', 'Ideas you’re named on will appear here.'],
+    ['ReadOnly', 'Items you’re named on will appear here.'],
   ] as const)('tells %s when nothing is assigned', async (role, copy) => {
     readers.getOrganizationHome.mockResolvedValue(
       orgHome({ assigned: { total: 0, rows: [], href: '/ideas' } }),
@@ -315,7 +315,7 @@ describe('Home for a member of an organization', { timeout: 30_000 }, () => {
     )
     expect(boards.textContent).toContain('2 New')
     expect(boards.textContent).toContain('safety')
-    expect(boards.textContent).toContain('3 ideas')
+    expect(boards.textContent).toContain('3 items')
     expect(boards.textContent).toContain('4 tags')
   })
 
@@ -397,7 +397,7 @@ describe('Home for an App Admin', { timeout: 30_000 }, () => {
     await renderHome('SiteAdmin')
     expect(readers.getOrganizationHome).not.toHaveBeenCalled()
     expect(document.body.textContent).toContain(
-      '2 organizations, 14 ideas, 3 delivery issues. You are not a member of any of them',
+      '2 organizations, 14 items, 3 delivery issues. You are not a member of any of them',
     )
   })
 
@@ -407,7 +407,7 @@ describe('Home for an App Admin', { timeout: 30_000 }, () => {
     expect([...tiles.children].map((tile) => tile.textContent?.split(/\d/)[0])).toEqual([
       'Organizations',
       'Boards',
-      'Ideas',
+      'Items',
       'Users',
     ])
     expect(within(tiles).getByRole('link', { name: '2' }).getAttribute('href')).toBe(
@@ -426,7 +426,7 @@ describe('Home for an App Admin', { timeout: 30_000 }, () => {
     expect(acme.getAttribute('href')).toBe('/settings/organizations/o-acme')
     const row = acme.closest('li') as HTMLElement
     expect(row.textContent).toContain('1 board · 6 users (1 inactive)')
-    expect(row.textContent).toContain('10 ideas')
+    expect(row.textContent).toContain('10 items')
     expect(row.textContent).toContain('1 issue')
   })
 
@@ -524,7 +524,7 @@ describe('Home’s links and counts', { timeout: 30_000 }, () => {
     )
     await renderHome('User')
     const greeting = screen.getByRole('heading', { level: 1 }).parentElement as HTMLElement
-    expect(hrefOf('41 ideas', greeting)).toBe('/ideas?phase=Ideas&board=b1&board=b2')
+    expect(hrefOf('41 items', greeting)).toBe('/ideas?phase=Ideas&board=b1&board=b2')
     expect(hrefOf('2 boards', greeting)).toBe('/boards')
     expect(hrefOf('1 delivery issue', greeting)).toBe('/ideas?phase=Issues')
   })
@@ -564,7 +564,7 @@ describe('Home’s links and counts', { timeout: 30_000 }, () => {
     await renderHome('OrgAdmin')
     const tiles = screen.getByRole('list', { name: 'Your numbers' }).children
     expect((tiles[3] as HTMLElement).textContent).toContain(
-      'which status means in review or complete, and when an idea moved',
+      'which status means in review or complete, and when an item moved',
     )
   })
 })

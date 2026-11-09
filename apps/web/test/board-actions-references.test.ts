@@ -65,7 +65,7 @@ describe('ruleMessage', () => {
     ['referenceChainNotAllowed', 'Only one level of references is allowed.'],
     [
       'laneInUse',
-      'A lane with ideas in it can’t have its reference changed or removed, and can’t be removed.',
+      'A lane with items in it can’t have its reference changed or removed, and can’t be removed.',
     ],
     ['referenceTargetArchived', 'A board that a lane references can’t be archived.'],
     ['referencesBoardInvalid', 'A lane can reference only an active board of this organization.'],
@@ -270,7 +270,7 @@ describe('lane refusals', () => {
   it.each([
     [
       'laneInUse',
-      'A lane with ideas in it can’t have its reference changed or removed, and can’t be removed.',
+      'A lane with items in it can’t have its reference changed or removed, and can’t be removed.',
     ],
     ['referenceChainNotAllowed', 'Only one level of references is allowed.'],
     ['referencesBoardInvalid', 'A lane can reference only an active board of this organization.'],

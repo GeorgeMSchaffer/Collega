@@ -88,12 +88,12 @@ export function SprintTaskPicker({
           onChange={(event) => setQuery(event.target.value)}
         />
         <Select
-          aria-label="Parent idea"
+          aria-label="Parent item"
           value={parent}
           className="w-44"
           onChange={(event) => setParent(event.target.value)}
         >
-          <option value={ALL}>All parent ideas</option>
+          <option value={ALL}>All parent items</option>
           <option value={STANDALONE}>Standalone (no parent)</option>
           {parents.map(([value, label]) => (
             <option key={value} value={value}>
@@ -158,7 +158,7 @@ export function SprintTaskPicker({
           </span>
           {selected.size > 0 ? (
             <span>
-              from {ideaCount} {ideaCount === 1 ? 'idea' : 'ideas'}
+              from {ideaCount} {ideaCount === 1 ? 'item' : 'items'}
             </span>
           ) : null}
           {total > tasks.length ? (
@@ -178,14 +178,14 @@ export function SprintTaskPicker({
           variant="ghost"
           className="ml-auto"
           disabled={!parentTasks}
-          title={parentTasks ? undefined : 'Choose a parent idea in the filter first.'}
+          title={parentTasks ? undefined : 'Choose a parent item in the filter first.'}
           onClick={() => {
             const next = new Set(selected)
             for (const task of tasks) if (task.parentIdeaId === parent) next.add(task.id)
             onChange(next)
           }}
         >
-          {parentLabel ? `Select all ${parentLabel} tasks` : 'Select all of this idea’s tasks'}
+          {parentLabel ? `Select all ${parentLabel} tasks` : 'Select all of this item’s tasks'}
         </Button>
       </div>
       {error ? (

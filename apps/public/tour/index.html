@@ -6,7 +6,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'none'; connect-src 'self'; form-action 'none'; base-uri 'none">
   <meta name="robots" content="noindex, nofollow">
   <title>Take a guided tour of WorkSprint</title>
-  <meta name="description" content="See how WorkSprint keeps ideas, context, backlog and sprint planning connected in one workspace.">
+  <meta name="description" content="See how WorkSprint keeps items, context, backlog and sprint planning connected in one workspace.">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <meta name="theme-color" content="#0f1113">
   <link rel="stylesheet" href="/worksprint-assets/app-aligned.css">
@@ -20,7 +20,7 @@
     <header class="site-header">
       <a class="brand" href="/" aria-label="WorkSprint home"><img src="/favicon.svg" width="32" height="32" alt="">WorkSprint</a>
       <nav class="public-nav" aria-label="Main navigation">
-        <details class="nav-product"><summary>Product tour</summary><div class="nav-product-links"><a href="/tour/" aria-current="page">Guided overview</a><a href="/ideas/">Ideas</a><a href="/boards/">Boards</a><a href="/backlog/">Backlog</a><a href="/sprints/">Sprints</a><a href="/roadmap/">Roadmap</a></div></details>
+        <details class="nav-product"><summary>Product tour</summary><div class="nav-product-links"><a href="/tour/" aria-current="page">Guided overview</a><a href="/ideas/">Items</a><a href="/boards/">Boards</a><a href="/backlog/">Backlog</a><a href="/sprints/">Sprints</a><a href="/roadmap/">Roadmap</a></div></details>
         <a href="/#faq">Beta FAQ</a><a href="https://app.worksprint.io/login">Login ↗</a><a class="button nav-cta" href="/#beta">Request beta access</a>
       </nav>
     </header>
@@ -28,7 +28,7 @@
       <section class="hero tour-hero" aria-labelledby="tour-title">
         <div class="hero-copy">
           <p class="eyebrow">A CLOSER LOOK / GUIDED TOUR</p>
-          <h1 id="tour-title">Follow an idea into delivery.</h1>
+          <h1 id="tour-title">Follow an item into delivery.</h1>
           <p class="lead">See how WorkSprint keeps the reason for the work in view as a team discusses ideas, plans tasks and moves through a sprint.</p>
           <div class="actions">
             <a class="button" href="/#beta">Request beta access <span aria-hidden="true">→</span></a>
@@ -36,12 +36,12 @@
           </div>
           <p class="muted">Five guided stops · 29 more screens to explore</p>
         </div>
-        <div class="hero-illustration tour-overview" aria-label="The journey from ideas through boards and backlog to sprint delivery">
+        <div class="hero-illustration tour-overview" aria-label="The journey from items through boards and backlog to sprint delivery">
           <p class="eyebrow">ONE CONNECTED WORKSPACE</p>
           <ol class="tour-journey">
             <li>
               <span class="journey-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6m-5 3h4M8 14a6 6 0 1 1 8 0c-1 .8-1 1.5-1 2H9c0-.5 0-1.2-1-2Z"/></svg></span>
-              <div><span class="journey-step">01 / CAPTURE</span><strong>Ideas</strong></div>
+              <div><span class="journey-step">01 / CAPTURE</span><strong>Items</strong></div>
             </li>
             <li>
               <span class="journey-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16m6-16v16M6 8v4m6-4v7m6-7v2"/></svg></span>
@@ -80,7 +80,7 @@
           </div>
 
           <div class="tour-stop-nav" data-tour-nav role="group" aria-label="Choose a tour stop" hidden>
-            <button type="button" data-tour-index="0" aria-current="step"><span>01</span>Ideas</button>
+            <button type="button" data-tour-index="0" aria-current="step"><span>01</span>Items</button>
             <button type="button" data-tour-index="1"><span>02</span>Context</button>
             <button type="button" data-tour-index="2"><span>03</span>Backlog</button>
             <button type="button" data-tour-index="3"><span>04</span>Sprints</button>
@@ -91,30 +91,30 @@
             <article class="tour-stop" data-tour-stop>
               <div class="tour-copy">
                 <p class="tour-kicker">01 / SEE THE WORK</p>
-                <h3>Make every idea's status visible.</h3>
-                <p>Boards organize ideas into the status lanes your team uses. Filters and card details help people find what needs attention without losing sight of the rest of the work.</p>
+                <h3>Make every item's status visible.</h3>
+                <p>Boards organize items into the status lanes your team uses. Filters and card details help people find what needs attention without losing sight of the rest of the work.</p>
               </div>
               <figure class="tour-figure">
                 <div class="tour-image">
                   <img src="/worksprint-assets/board-lanes.png" width="2880" height="1800" fetchpriority="high" alt="WorkSprint Ideas board showing cards across five status lanes.">
                   <span class="tour-highlight tour-highlight-lanes" aria-hidden="true"><span>Status lanes</span></span>
                 </div>
-                <figcaption>Ideas move through the team's board, from New / Pending to Complete.</figcaption>
+                <figcaption>Items move through the team's board, from New / Pending to Complete.</figcaption>
               </figure>
             </article>
 
             <article class="tour-stop" data-tour-stop>
               <div class="tour-copy">
                 <p class="tour-kicker">02 / KEEP THE WHY</p>
-                <h3>Keep the reasoning beside the idea.</h3>
+                <h3>Keep the reasoning beside the item.</h3>
                 <p>Capture the problem, proposed solutions and impact rationale together. Comments, blockers and related work stay close to the context people need to make a decision.</p>
               </div>
               <figure class="tour-figure">
                 <div class="tour-image">
-                  <img src="/worksprint-assets/idea-drawer.png" width="2880" height="1800" loading="lazy" alt="WorkSprint idea detail drawer with problem, proposed solutions, impact rationale and discussion.">
-                  <span class="tour-highlight tour-highlight-context" aria-hidden="true"><span>Idea context</span></span>
+                  <img src="/worksprint-assets/idea-drawer.png" width="2880" height="1800" loading="lazy" alt="WorkSprint item detail drawer with problem, proposed solutions, impact rationale and discussion.">
+                  <span class="tour-highlight tour-highlight-context" aria-hidden="true"><span>Item context</span></span>
                 </div>
-                <figcaption>Open an idea to review its details and discussion in one place.</figcaption>
+                <figcaption>Open an item to review its details and discussion in one place.</figcaption>
               </figure>
             </article>
 
@@ -188,11 +188,11 @@
               <figure class="screen-card"><img src="/prototype/shots/01-sign-in.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of the sign-in screen."><figcaption><strong>Sign in</strong><span>Enter the workspace with your organization account.</span></figcaption></figure>
               <figure class="screen-card"><img src="/prototype/shots/02-home.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of Home with assigned work, items needing attention, and unread notifications."><figcaption><strong>Home</strong><span>See assigned work, items needing attention, and unread notifications at a glance.</span></figcaption></figure>
               <figure class="screen-card"><img src="/prototype/shots/03-command-palette.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of the command palette with search and workspace destinations."><figcaption><strong>Command palette</strong><span>Search the workspace or jump to a destination without leaving your current screen.</span></figcaption></figure>
-              <figure class="screen-card"><img src="/prototype/shots/04-inbox.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of the inbox for updates and mentions."><figcaption><strong>Inbox</strong><span>Catch up on mentions and updates to ideas you follow.</span></figcaption></figure>
-              <figure class="screen-card"><img src="/prototype/shots/05-boards.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of the Boards list with idea counts, status distribution, and tags."><figcaption><strong>Boards</strong><span>Browse boards and compare their idea counts, status mix, and tags.</span></figcaption></figure>
-              <figure class="screen-card"><img src="/prototype/shots/06-board-lanes.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of an idea board organized in status lanes."><figcaption><strong>Board lanes</strong><span>Move ideas through configured status lanes and keep each stage visible.</span></figcaption></figure>
-              <figure class="screen-card"><img src="/prototype/shots/07-ideas-list.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of the Ideas list with search, filters, and tabular results."><figcaption><strong>Ideas list</strong><span>Search and filter ideas by board, status, priority, and tags.</span></figcaption></figure>
-              <figure class="screen-card"><img src="/prototype/shots/08-idea-drawer.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of an idea detail drawer with context, blockers, and discussion."><figcaption><strong>Idea details</strong><span>Keep the problem, proposed solutions, impact rationale, blockers, and discussion together.</span></figcaption></figure>
+              <figure class="screen-card"><img src="/prototype/shots/04-inbox.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of the inbox for updates and mentions."><figcaption><strong>Inbox</strong><span>Catch up on mentions and updates to items you follow.</span></figcaption></figure>
+              <figure class="screen-card"><img src="/prototype/shots/05-boards.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of the Boards list with item counts, status distribution, and tags."><figcaption><strong>Boards</strong><span>Browse boards and compare their item counts, status mix, and tags.</span></figcaption></figure>
+              <figure class="screen-card"><img src="/prototype/shots/06-board-lanes.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of an item board organized in status lanes."><figcaption><strong>Board lanes</strong><span>Move items through configured status lanes and keep each stage visible.</span></figcaption></figure>
+              <figure class="screen-card"><img src="/prototype/shots/07-ideas-list.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of the Items list with search, filters, and tabular results."><figcaption><strong>Items list</strong><span>Search and filter items by board, status, priority, and tags.</span></figcaption></figure>
+              <figure class="screen-card"><img src="/prototype/shots/08-idea-drawer.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of an item detail drawer with context, blockers, and discussion."><figcaption><strong>Item details</strong><span>Keep the problem, proposed solutions, impact rationale, blockers, and discussion together.</span></figcaption></figure>
             </div>
           </details>
 
@@ -210,29 +210,29 @@
           <details class="screen-group">
             <summary><span>People and configuration</span><span class="screen-count">16 screens</span></summary>
             <div class="screen-grid">
-              <figure class="screen-card"><img src="/prototype/shots/16-settings.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of organization settings for people, boards, and idea configuration."><figcaption><strong>Settings</strong><span>Find profile, people, board, and idea-configuration tools.</span></figcaption></figure>
+              <figure class="screen-card"><img src="/prototype/shots/16-settings.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of organization settings for people, boards, and item configuration."><figcaption><strong>Settings</strong><span>Find profile, people, board, and item-configuration tools.</span></figcaption></figure>
               <figure class="screen-card"><img src="/prototype/shots/17-my-profile.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of profile details, portrait, password, and usage-recording controls."><figcaption><strong>My profile</strong><span>Update your name and portrait, manage your password, and choose whether usage is recorded.</span></figcaption></figure>
               <figure class="screen-card"><img src="/prototype/shots/18-users.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of organization members, roles, statuses, and invite code."><figcaption><strong>Users</strong><span>Manage member roles and status, and share or regenerate the organization invite code.</span></figcaption></figure>
               <figure class="screen-card"><img src="/prototype/shots/19-add-user.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of the form to add a user to an organization."><figcaption><strong>Add a user</strong><span>Create an organization account with a role and initial password; the person changes it at first sign-in.</span></figcaption></figure>
               <figure class="screen-card"><img src="/prototype/shots/20-import-users.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of CSV user import and per-row results."><figcaption><strong>Import users</strong><span>Import a CSV and review row-by-row results; new accounts receive a temporary password.</span></figcaption></figure>
               <figure class="screen-card"><img src="/prototype/shots/21-groups.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of named user groups and their restricted-board membership."><figcaption><strong>Groups</strong><span>Organize people into named groups for restricted-board access.</span></figcaption></figure>
               <figure class="screen-card"><img src="/prototype/shots/22-board-settings.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of board settings and the statuses used as swimlanes."><figcaption><strong>Board settings</strong><span>Manage boards and choose which organization statuses they use as swimlanes.</span></figcaption></figure>
-              <figure class="screen-card"><img src="/prototype/shots/23-board-configuration.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of board description, access, idea types, and swimlane settings."><figcaption><strong>Edit a board</strong><span>Set a board's description, access, allowed idea types, and lanes.</span></figcaption></figure>
+              <figure class="screen-card"><img src="/prototype/shots/23-board-configuration.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of board description, access, item types, and swimlane settings."><figcaption><strong>Edit a board</strong><span>Set a board's description, access, allowed item types, and lanes.</span></figcaption></figure>
               <figure class="screen-card"><img src="/prototype/shots/24-statuses.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of status names, colors, order, and status creation."><figcaption><strong>Statuses</strong><span>Set status names, colors, and order for the organization's board lanes.</span></figcaption></figure>
-              <figure class="screen-card"><img src="/prototype/shots/25-idea-types.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of idea types and their custom-field configuration."><figcaption><strong>Idea types</strong><span>Define kinds of ideas and choose which custom fields each one asks for.</span></figcaption></figure>
-              <figure class="screen-card"><img src="/prototype/shots/26-custom-fields.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of custom-field creation for idea types."><figcaption><strong>Custom fields</strong><span>Create questions that idea types can use, including required fields.</span></figcaption></figure>
-              <figure class="screen-card"><img src="/prototype/shots/27-fieldsets.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of reusable fieldsets for groups of custom fields."><figcaption><strong>Fieldsets</strong><span>Bundle reusable custom fields so several idea types can ask the same questions.</span></figcaption></figure>
-              <figure class="screen-card"><img src="/prototype/shots/28-tags.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of shared tags, colors, usage, and board associations."><figcaption><strong>Tags</strong><span>Create and recolor shared labels to organize and filter ideas.</span></figcaption></figure>
+              <figure class="screen-card"><img src="/prototype/shots/25-idea-types.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of item types and their custom-field configuration."><figcaption><strong>Item types</strong><span>Define kinds of items and choose which custom fields each one asks for.</span></figcaption></figure>
+              <figure class="screen-card"><img src="/prototype/shots/26-custom-fields.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of custom-field creation for item types."><figcaption><strong>Custom fields</strong><span>Create questions that item types can use, including required fields.</span></figcaption></figure>
+              <figure class="screen-card"><img src="/prototype/shots/27-fieldsets.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of reusable fieldsets for groups of custom fields."><figcaption><strong>Fieldsets</strong><span>Bundle reusable custom fields so several item types can ask the same questions.</span></figcaption></figure>
+              <figure class="screen-card"><img src="/prototype/shots/28-tags.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of shared tags, colors, usage, and board associations."><figcaption><strong>Tags</strong><span>Create and recolor shared labels to organize and filter items.</span></figcaption></figure>
               <figure class="screen-card"><img src="/prototype/shots/29-login-messages.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of scheduled sign-in messages and acknowledgement settings."><figcaption><strong>Sign-in messages</strong><span>Schedule workspace messages that appear when members sign in, with optional acknowledgement.</span></figcaption></figure>
-              <figure class="screen-card"><img src="/prototype/shots/30-ai-assist.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of the AI Assist scope statement and deployment availability notice."><figcaption><strong>AI Assist settings</strong><span>Set the organization's idea scope for the assistant; availability depends on deployment configuration.</span></figcaption></figure>
-              <figure class="screen-card"><img src="/prototype/shots/31-api-usage.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of a read-only assistant token-usage and estimated-cost view."><figcaption><strong>API usage</strong><span>Prototype view for read-only assistant token and cost reporting; usage analytics are not yet available.</span></figcaption></figure>
+              <figure class="screen-card"><img src="/prototype/shots/30-ai-assist.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of the AI Assist scope statement and deployment availability notice."><figcaption><strong>AI Assist settings</strong><span>Set the organization's item scope for the assistant; availability depends on deployment configuration.</span></figcaption></figure>
+              <figure class="screen-card"><img src="/prototype/shots/31-api-usage.png" width="960" height="600" loading="lazy" decoding="async" alt="Prototype capture of a read-only assistant token-usage and estimated-cost view."><figcaption><strong>API usage</strong><span>Prototype view of assistant token usage and estimated costs.</span></figcaption></figure>
             </div>
           </details>
         </section>
       </section>
 
       <section class="section tour-close" aria-labelledby="tour-close-title">
-        <p class="eyebrow">IDEAS INTO COORDINATED DELIVERY</p>
+        <p class="eyebrow">Items INTO COORDINATED DELIVERY</p>
         <h2 id="tour-close-title">Bring your team's next idea.</h2>
         <p>Tell us what your team is working on and request beta access. Requests are reviewed manually; submission does not guarantee admission or an access date.</p>
         <a class="button" href="/#beta">Request beta access <span aria-hidden="true">→</span></a>
@@ -242,7 +242,7 @@
         <div class="top">
           <a class="brand" href="/"><img src="/favicon.svg" width="32" height="32" alt="">WorkSprint</a>
           <nav class="public-nav" aria-label="Footer navigation">
-            <details class="nav-product"><summary>Product tour</summary><div class="nav-product-links"><a href="/tour/" aria-current="page">Guided overview</a><a href="/ideas/">Ideas</a><a href="/boards/">Boards</a><a href="/backlog/">Backlog</a><a href="/sprints/">Sprints</a><a href="/roadmap/">Roadmap</a></div></details>
+            <details class="nav-product"><summary>Product tour</summary><div class="nav-product-links"><a href="/tour/" aria-current="page">Guided overview</a><a href="/ideas/">Items</a><a href="/boards/">Boards</a><a href="/backlog/">Backlog</a><a href="/sprints/">Sprints</a><a href="/roadmap/">Roadmap</a></div></details>
             <a href="/#faq">Beta FAQ</a><a href="https://app.worksprint.io/login">Login ↗</a><a href="/#privacy">Privacy</a>
           </nav>
         </div>

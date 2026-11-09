@@ -112,12 +112,12 @@ async function ScopeStatement({ org }: { org: string }) {
             </Field>
 
             <h4 className="m-0 mt-6 text-sm font-semibold">
-              Always in scope &mdash; your active idea types
+              Always in scope &mdash; your active item types
             </h4>
             <p className="m-0 mt-1 max-w-prose text-sm text-muted-foreground">
-              Every active idea type is in scope whether or not the statement mentions it, so you
+              Every active item type is in scope whether or not the statement mentions it, so you
               never have to restate them. Change the set on{' '}
-              <Link href="/settings/idea-types">Idea Types</Link>.
+              <Link href="/settings/idea-types">Item Types</Link>.
             </p>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {inScope.map((type) => (

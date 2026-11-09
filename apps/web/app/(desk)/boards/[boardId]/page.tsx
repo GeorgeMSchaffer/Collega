@@ -203,7 +203,7 @@ export default async function BoardPage({
           action={
             tab === 'board' ? (
               authorDenial ? (
-                <GatedAction id="why-new-board" label="Add New Idea" denial={authorDenial} />
+                <GatedAction id="why-new-board" label="Add New Item" denial={authorDenial} />
               ) : (
                 <AddIdeaButton />
               )
@@ -233,7 +233,7 @@ export default async function BoardPage({
         {tab === 'board' && drawer.missing ? (
           <Alert role="status">
             <span>
-              That idea could not be opened. It may have been deleted, or it is not yours to see.
+              That item could not be opened. It may have been deleted, or it is not yours to see.
             </span>
           </Alert>
         ) : null}

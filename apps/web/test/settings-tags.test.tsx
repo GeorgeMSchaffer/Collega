@@ -165,16 +165,16 @@ describe('Delete tag confirmation', () => {
 
   it('counts ideas in the plural', () => {
     expect(confirmText('bravo')).toContain(
-      '“bravo” is removed from 3 ideas. Anyone who types it again creates a new tag.',
+      '“bravo” is removed from 3 items. Anyone who types it again creates a new tag.',
     )
   })
 
   it('says “1 idea”, not “1 ideas”', () => {
-    expect(confirmText('charlie')).toContain('is removed from 1 idea.')
+    expect(confirmText('charlie')).toContain('is removed from 1 item.')
   })
 
   it('says “0 ideas” for an unused tag', () => {
-    expect(confirmText('alpha')).toContain('is removed from 0 ideas.')
+    expect(confirmText('alpha')).toContain('is removed from 0 items.')
   })
 
   it('deletes the tag it asked about', async () => {

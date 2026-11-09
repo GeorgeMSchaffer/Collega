@@ -92,7 +92,7 @@ export function LaneFigures({ board }: { board: BoardOverview }) {
   return (
     <div className="flex flex-wrap gap-x-3 text-xs text-muted-foreground tabular-nums">
       <span>
-        <b className="font-semibold text-foreground">{board.ideaCount}</b> ideas
+        <b className="font-semibold text-foreground">{board.ideaCount}</b> items
       </span>
       {first ? (
         <span>

@@ -519,7 +519,7 @@ export function IdeaWorkspace({
   ]
 
   const filtering = state.q !== '' || Object.values(state.filters).some((v) => v.length > 0)
-  const empty = filtering ? 'Nothing matches these filters.' : 'No ideas yet.'
+  const empty = filtering ? 'Nothing matches these filters.' : 'No items yet.'
   const selectedId =
     drawer.mode === 'view' || drawer.mode === 'edit' ? (drawer.idea?.id ?? null) : null
 
@@ -734,7 +734,7 @@ export function IdeaWorkspace({
           ) : null}
           {total > rows.length ? (
             <p className="m-0 text-sm text-muted-foreground">
-              Showing the first {rows.length} of {total} ideas. Filter to narrow the board, or
+              Showing the first {rows.length} of {total} items. Filter to narrow the board, or
               switch to List to page through all of them.
             </p>
           ) : null}
@@ -970,19 +970,19 @@ export function IdeaWorkspace({
                       name: 'title',
                       label: 'Title',
                       required: true,
-                      placeholder: 'Add an idea — press Enter for more fields',
+                      placeholder: 'Add an item — press Enter for more fields',
                       maxLength: TITLE_MAX_LENGTH,
                     },
                   ]}
                   canAdd={canAdd}
-                  label="Quick add idea"
+                  label="Quick add item"
                   handoff="drawer"
                   onHandoff={handoff}
                   testId="ideas-quick-add-bar"
                 />
               ) : null}
               <DataTable
-                caption={board ? `Ideas on ${board.name}` : 'Ideas'}
+                caption={board ? `Items on ${board.name}` : 'Items'}
                 columns={columns}
                 rows={rows}
                 rowKey={(idea) => idea.id}
@@ -1039,7 +1039,7 @@ export function IdeaWorkspace({
         }
         effortNeeded={
           effortFix && drawerIdea?.id === effortFix.ideaId
-            ? `Add Effort to move this idea to ${effortFix.laneName}.`
+            ? `Add Effort to move this item to ${effortFix.laneName}.`
             : undefined
         }
         createBoards={boards}
@@ -1100,7 +1100,7 @@ export function IdeaWorkspace({
       <ConfirmDialog
         open={detaching !== null}
         title={`Remove “${detaching?.title ?? ''}” from ${detaching?.boardName ?? 'its board'}?`}
-        description="It moves to the Ideas list with no board and keeps its status, comments, upvotes and followers. No one is notified. Anyone who can pull it can put it on a board later."
+        description="It moves to the Items list with no board and keeps its status, comments, upvotes and followers. No one is notified. Anyone who can pull it can put it on a board later."
         confirmLabel="Remove from board"
         pending={detachPending}
         onConfirm={confirmDetach}
@@ -1109,9 +1109,9 @@ export function IdeaWorkspace({
 
       <ConfirmDialog
         open={removing !== null}
-        title="Delete this idea?"
-        description={`“${removing?.title ?? ''}” leaves its board and Ideas. This can’t be undone.`}
-        confirmLabel="Delete idea"
+        title="Delete this item?"
+        description={`“${removing?.title ?? ''}” leaves its board and Items. This can’t be undone.`}
+        confirmLabel="Delete item"
         pending={deleting}
         onConfirm={confirmRemove}
         onCancel={() => setRemoving(null)}

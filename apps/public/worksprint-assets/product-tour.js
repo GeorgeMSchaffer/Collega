@@ -22,16 +22,24 @@
     button.className = "tour-chapter";
     button.setAttribute("aria-label", `Show slide ${index + 1}: ${slide.dataset.name}`);
     button.setAttribute("aria-controls", slide.id);
+    const picture = document.createElement("picture");
+    const source = document.createElement("source");
+    source.type = "image/webp";
     const image = slide.querySelector("img").cloneNode();
+    const thumbnail = new URL(image.getAttribute("src"), document.baseURI);
+    thumbnail.pathname = thumbnail.pathname.replace(/\/([^/]+)\.png$/, "/optimized/$1");
+    source.srcset = `${thumbnail.href}-160.webp 160w, ${thumbnail.href}-320.webp 320w`;
+    source.sizes = "(max-width: 700px) 18vw, 110px";
     image.className = "tour-thumbnail";
     image.alt = "";
+    picture.append(source, image);
     const chapterNumber = document.createElement("span");
     chapterNumber.className = "tour-chapter-index";
     chapterNumber.textContent = number(index);
     const name = document.createElement("span");
     name.className = "tour-chapter-name";
     name.textContent = slide.dataset.name;
-    button.append(image, chapterNumber, name);
+    button.append(picture, chapterNumber, name);
     button.addEventListener("click", () => show(index, true));
     chapters.append(button);
     return button;
@@ -53,6 +61,12 @@
     schedule();
   }
 
+  function loadVisibleSlides() {
+    if (!visible) return;
+    slides[active].querySelector("img").loading = "eager";
+    slides[(active + 1) % slides.length].querySelector("img").loading = "eager";
+  }
+
   function show(index, manual) {
     if (manual) setPlaying(false);
     const next = (index + slides.length) % slides.length;
@@ -68,8 +82,7 @@
     document.getElementById("tour-location").textContent = slide.dataset.location;
     document.getElementById("tour-number").textContent = number(active);
     document.getElementById("tour-chapter-number").textContent = number(active);
-    slide.querySelector("img").loading = "eager";
-    slides[(active + 1) % slides.length].querySelector("img").loading = "eager";
+    loadVisibleSlides();
     if (changed && !reducedMotion.matches) {
       caption.getAnimations().forEach((animation) => animation.cancel());
       caption.animate(
@@ -132,6 +145,7 @@
   reducedMotion.addEventListener("change", updateMotionPreference);
   new IntersectionObserver(([entry]) => {
     visible = entry.isIntersecting;
+    loadVisibleSlides();
     schedule();
   }, { threshold: .35 }).observe(tour);
   document.getElementById("tour-total").textContent = number(slides.length - 1);

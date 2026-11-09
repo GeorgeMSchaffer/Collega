@@ -60,7 +60,7 @@ const save = () => fireEvent.click(screen.getByRole('button', { name: 'Save boar
 const dialog = () => document.querySelector('dialog') as HTMLDialogElement
 const isAsking = () => dialog().hasAttribute('open')
 const moveAndSave = () =>
-  within(dialog()).getByRole('button', { name: 'Move ideas and save', hidden: true })
+  within(dialog()).getByRole('button', { name: 'Move items and save', hidden: true })
 
 describe('IdeaMovesGuard', () => {
   it('saves straight away when no lane is removed', () => {
@@ -92,7 +92,7 @@ describe('IdeaMovesGuard', () => {
 
     expect(isAsking()).toBe(true)
     expect(posted).toEqual([])
-    expect(within(dialog()).getByText('Move the ideas in In Review?')).toBeTruthy()
+    expect(within(dialog()).getByText('Move the items in In Review?')).toBeTruthy()
   })
 
   it('offers one picker for the lane, with its count, defaulting to the first remaining lane', () => {
@@ -104,7 +104,7 @@ describe('IdeaMovesGuard', () => {
     const pickers = within(dialog()).getAllByRole('combobox', { hidden: true })
     expect(pickers).toHaveLength(1)
     const picker = within(dialog()).getByLabelText(
-      '3 ideas are in In Review. Move them to:',
+      '3 items are in In Review. Move them to:',
     ) as HTMLSelectElement
     expect(picker.value).toBe(NEW.id)
     expect([...picker.options].map((option) => option.text)).toEqual(['New / Pending', 'Done'])
@@ -117,14 +117,14 @@ describe('IdeaMovesGuard', () => {
     remove(DONE)
     save()
 
-    expect(within(dialog()).getByText('Move the ideas in the removed lanes?')).toBeTruthy()
+    expect(within(dialog()).getByText('Move the items in the removed lanes?')).toBeTruthy()
     const labels = within(dialog())
       .getAllByRole('combobox', { hidden: true })
       .map((picker) => picker.getAttribute('id'))
       .map((id) => document.querySelector(`label[for="${id}"]`)?.textContent)
     expect(labels).toEqual([
-      '1 idea is in In Review. Move it to:',
-      '2 ideas are in Done. Move them to:',
+      '1 item is in In Review. Move it to:',
+      '2 items are in Done. Move them to:',
     ])
   })
 
@@ -147,7 +147,7 @@ describe('IdeaMovesGuard', () => {
     remove(REVIEW)
     remove(DONE)
     save()
-    fireEvent.change(within(dialog()).getByLabelText('2 ideas are in Done. Move them to:'), {
+    fireEvent.change(within(dialog()).getByLabelText('2 items are in Done. Move them to:'), {
       target: { value: PARKED.id },
     })
     fireEvent.click(moveAndSave())
@@ -212,9 +212,9 @@ describe('ConfirmDialog keyboard cycle', () => {
     render(
       <ConfirmDialog
         open
-        title="Move the ideas in In Review?"
-        description="Removing this lane keeps its 3 ideas."
-        confirmLabel="Move ideas and save"
+        title="Move the items in In Review?"
+        description="Removing this lane keeps its 3 items."
+        confirmLabel="Move items and save"
         destructive={false}
         onConfirm={() => {}}
         onCancel={() => {}}
@@ -226,7 +226,7 @@ describe('ConfirmDialog keyboard cycle', () => {
     )
     const picker = screen.getByRole('combobox', { name: 'Target lane', hidden: true })
     const cancel = screen.getByRole('button', { name: 'Cancel', hidden: true })
-    const confirm = screen.getByRole('button', { name: 'Move ideas and save', hidden: true })
+    const confirm = screen.getByRole('button', { name: 'Move items and save', hidden: true })
 
     expect(document.activeElement).toBe(cancel)
 

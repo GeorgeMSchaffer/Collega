@@ -42,8 +42,8 @@ function NoFields({ siteAdmin }: { siteAdmin: boolean }) {
         </GatedAction>
       }
     >
-      Fields you define here become available to idea types, which choose the subset their ideas
-      show. Nothing appears on an idea until a type picks it up.
+      Fields you define here become available to item types, which choose the subset their items
+      show. Nothing appears on an item until a type picks it up.
     </EmptyState>
   )
 }
@@ -69,7 +69,7 @@ export default async function FieldsPage() {
       lead={
         siteAdmin
           ? 'Custom fields across every organization. Open an organization to change its fields.'
-          : "Extra questions attached to an idea type. A field appears on an idea only when that idea's type asks for it."
+          : "Extra questions attached to an item type. A field appears on an item only when that item's type asks for it."
       }
       // An anchor rather than a button: the create form is a card on this page, so the header
       // action's job is to reach it.
@@ -126,7 +126,7 @@ export default async function FieldsPage() {
                         // Reachable, and not the same as "no types exist": every type in the
                         // organization can be `Curated` and none of them have selected this field, so
                         // it is defined and shown nowhere.
-                        <span className="text-xs text-muted-foreground">No idea type</span>
+                        <span className="text-xs text-muted-foreground">No item type</span>
                       ) : (
                         <span className="flex flex-wrap gap-1.5">
                           {field.usedBy.map((name) => (

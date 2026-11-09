@@ -19,13 +19,13 @@ export default function PrivacyPage() {
       <h2 className="mt-8 mb-2">What we record</h2>
       <p>
         To learn which parts of Collega people use, we record a short note when you view something:
-        a board, an idea, a list, an admin or settings screen, or when you run a search or change a
-        filter. Each note says what kind of view it was, which board or idea it was (by its id), and
+        a board, an item, a list, an admin or settings screen, or when you run a search or change a
+        filter. Each note says what kind of view it was, which board or item it was (by its id), and
         when.
       </p>
       <p className="mt-3">
         We never record what you type into a search, the values you filter by, or the text of any
-        idea, comment or organization.
+        item, comment or organization.
       </p>
 
       <h2 className="mt-8 mb-2">It is tied to your account</h2>
@@ -50,7 +50,7 @@ export default function PrivacyPage() {
       <h2 className="mt-8 mb-2">How to turn it off</h2>
       <p>
         Turn off <strong>Record how I use Collega</strong> in your profile. Recording stops at once.
-        The changes you make, such as creating an idea, are still kept in the activity history as
+        The changes you make, such as creating an item, are still kept in the activity history as
         they always were.
       </p>
 

@@ -113,8 +113,8 @@ describe('the board drawer pull step by role', () => {
     drawer(setup({ isAdmin: false }))
     fireEvent.click(step())
     expect(screen.queryByRole('tab', { name: /Backlog Issues/ })).toBeNull()
-    expect(screen.getByRole('tab', { name: /Unassigned ideas/ })).toBeTruthy()
-    expect(screen.getByRole('tab', { name: /Ideas on other boards/ })).toBeTruthy()
+    expect(screen.getByRole('tab', { name: /Unassigned items/ })).toBeTruthy()
+    expect(screen.getByRole('tab', { name: /Items on other boards/ })).toBeTruthy()
   })
 
   it('gives an Org Admin creating a board all three tabs', () => {

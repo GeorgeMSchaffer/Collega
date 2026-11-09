@@ -28,6 +28,7 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 
 | Date | Decision | Status | Where |
 |---|---|---|---|
+| 2026-11-09 | Item names the object in presentation; Idea remains the internal model | active | full below |
 | 2026-10-28 | The Site Admin usage screen: placement, older period, named trail rows | active | full below |
 | 2026-10-28 | The usage report reads bound older periods and trail paging | active | full below |
 | 2026-10-28 | `GET /auth/me` reports `requiresPasswordChange` | active | full below |
@@ -158,6 +159,25 @@ Every entry, newest first. "Full below" entries are in this file; the rest are i
 | 2026-09-02 | The board is a scrolling rail of fixed-width columns | active | [2026-08-31 to 2026-09-04](decisions/archive-2026-08-31-to-2026-09-04.md) |
 
 ---
+
+## 2026-11-09 — Item names the object in presentation; Idea remains the internal model
+
+The owner requested **Item / Items** wherever the web app and public site name the tracked
+object, including Item type, Item features, Item assistant, navigation, captions, metadata and
+accessible labels. The owner explicitly retained natural brainstorming uses of "idea" and
+public marketing category phrases such as "idea management" and "Ideas into coordinated delivery."
+
+This is a presentation-only change. Routes, contracts, database names, identifiers, analytics
+keys and properties, business rules, stored/user-entered content, AI prompts and generated
+responses, and existing screenshot pixels remain unchanged. Actual board names such as
+"Ideas" remain data, not labels to translate. Backend-authored refusal text and configured
+prompt messages can therefore still contain Idea; do not rewrite arbitrary response text.
+Known event keys may receive Item display labels without changing the recorded event.
+
+The owner also approved necessary existing label-expectation updates and required
+decision/tracker documentation. No new behavior or tests belong to this terminology change.
+Older specs continue to describe the internal Idea model; this decision governs its
+presentation rather than renaming those specifications or contracts.
 
 ## 2026-10-28 — The Site Admin usage screen: placement, older period, named trail rows
 

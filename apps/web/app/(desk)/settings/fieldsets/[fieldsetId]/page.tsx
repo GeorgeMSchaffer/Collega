@@ -26,7 +26,7 @@ export default async function EditFieldsetPage({
     <SettingsPage
       title={`Edit ${fieldset.name}`}
       gate="fieldsets"
-      lead="Which fields this set holds, and in what order. Idea types that use it pick up every change."
+      lead="Which fields this set holds, and in what order. Item types that use it pick up every change."
     >
       <div className="max-w-2xl">
         <FieldsetEditForm fieldset={fieldset} fields={fields} />

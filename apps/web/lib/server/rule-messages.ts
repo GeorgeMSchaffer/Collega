@@ -10,18 +10,18 @@ const RULE_MESSAGES: Readonly<Record<string, string>> = {
   laneReferencesOwnBoard: 'A lane can’t reference its own board.',
   referenceChainNotAllowed: 'Only one level of references is allowed.',
   laneInUse:
-    'A lane with ideas in it can’t have its reference changed or removed, and can’t be removed.',
+    'A lane with items in it can’t have its reference changed or removed, and can’t be removed.',
   referenceTargetArchived: 'A board that a lane references can’t be archived.',
   referencesBoardInvalid: 'A lane can reference only an active board of this organization.',
   finalLaneCannotReference: 'A Final lane can’t reference a board.',
   autoCreateTaskRequiresReference: 'Auto-create needs a referenced board.',
   keyPrefixLocked: 'Keys have been issued on this board, so the prefix can’t change.',
   parentNotInReferenceLane:
-    'A task can only be added while the idea is in the lane that references that board.',
+    'A task can only be added while the item is in the lane that references that board.',
   boardIsNotAWorkBoard: 'No lane references this board, so it has no tasks to add.',
   parentIsTask: 'A task can’t have tasks of its own.',
   referencedBoardArchived: 'That board is archived, so tasks can’t be added to it.',
-  noDefaultIdeaType: 'The organization has no default Idea Type, so a task can’t be created yet.',
+  noDefaultIdeaType: 'The organization has no default Item Type, so a task can’t be created yet.',
   noDefaultBusinessImpact:
     'The organization has no default Business Impact, so a task can’t be created yet.',
   blockerIsSelf: 'A card can’t be blocked by itself.',
@@ -31,7 +31,7 @@ const RULE_MESSAGES: Readonly<Record<string, string>> = {
   sprintItemAlreadyAssigned: 'A task already in a sprint can’t be put in a new one.',
   sprintsNotEnabled: 'Sprints are switched off on this board.',
   effortRequiredInReferenceLane:
-    'Effort can be changed but not cleared while the idea is in a lane that references a board.',
+    'Effort can be changed but not cleared while the item is in a lane that references a board.',
 }
 
 /**

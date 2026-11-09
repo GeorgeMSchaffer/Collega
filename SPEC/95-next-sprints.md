@@ -5,7 +5,7 @@ Index of the sprint plan for remaining pre-MVP work as of 2026-08-10. This is **
 
 **This file is an index only — sprint content lives in per-sprint files.** Each sprint has its own file under `SPEC/sprints/`, moved to `SPEC/sprints/archive/` when complete (per user convention, 2026-08-10: every sprint gets a standalone plan document, archived on completion, same pattern as `SPEC/implementation-agent-tracker.md`/`-archive.md`).
 
-**Execution model note:** this project ships via role-based agents in isolated git worktrees (Backend Developer / QA Developer / UI/UX Developer / Code Reviewer — see `CLAUDE.md`'s "Multi-Agent Worktree Workflow"), not a human team with PTO. "Sprint" here means one coherent wave of agent work merged and verified together, not a calendar week. Capacity is expressed as slice count / role assignment, not points or days.
+**Execution model note:** this project ships via role-based agents in isolated git worktrees (Backend Developer / QA Developer / UI/UX Developer / Code Reviewer — see `AGENT-WORKFLOW.md`), not a human team with PTO. "Sprint" here means one coherent wave of agent work merged and verified together, not a calendar week. Capacity is expressed as slice count / role assignment, not points or days.
 
 **Explicitly out of scope for these sprints** (confirmed with the user): the previous stack's E2E work, which was discarded in slice F6 and never scheduled here. Also out of scope: anything post-MVP (OAuth, SAML, self-service password reset, Org AI credentials, the Roadmaps/Sprints/Tasks brainstorm in `Bug Triage.md`'s `## IDEAS` section) — none of that is "pre-MVP."
 

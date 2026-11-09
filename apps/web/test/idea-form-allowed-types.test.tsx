@@ -55,7 +55,7 @@ function createForm(boardId: string | null) {
   )
 }
 
-const typeSelect = () => screen.getByLabelText(/^Idea type/) as HTMLSelectElement
+const typeSelect = () => screen.getByLabelText(/^Item type/) as HTMLSelectElement
 const typeNames = () =>
   [...typeSelect().options].map((option) => option.textContent).filter((name) => name !== 'Choose…')
 

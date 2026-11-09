@@ -132,7 +132,7 @@ describe('choosing assignees', () => {
     expect(screen.getAllByRole('button', { name: /^Remove / })).toHaveLength(5)
     expect(picker()?.disabled).toBe(true)
     expect(
-      screen.getByText('An idea can have at most 5 assignees. Remove one to add another.'),
+      screen.getByText('An item can have at most 5 assignees. Remove one to add another.'),
     ).toBeTruthy()
   })
 

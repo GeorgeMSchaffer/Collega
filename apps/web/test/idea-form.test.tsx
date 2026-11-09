@@ -314,7 +314,7 @@ describe('IdeaForm classification defaults', () => {
     members: [],
     tags: [],
   }
-  const typeSelect = () => screen.getByLabelText('Idea type') as HTMLSelectElement
+  const typeSelect = () => screen.getByLabelText('Item type') as HTMLSelectElement
   const impactSelect = () => screen.getByLabelText('Business impact') as HTMLSelectElement
 
   it('preselects the first Idea Type and Business Impact on a new idea', () => {
@@ -329,7 +329,7 @@ describe('IdeaForm classification defaults', () => {
 
     expect(screen.getByText('Kaizen fields')).toBeTruthy()
     expect(screen.getByLabelText('Line (optional)')).toBeTruthy()
-    expect(screen.queryByText('Pick an Idea Type to see its custom fields.')).toBeNull()
+    expect(screen.queryByText('Pick an Item Type to see its custom fields.')).toBeNull()
   })
 
   it('sends the preselected ids when saved untouched', async () => {
@@ -357,7 +357,7 @@ describe('IdeaForm classification defaults', () => {
 
     expect(typeSelect().value).toBe('')
     expect(impactSelect().value).toBe('')
-    expect(screen.getByText('Pick an Idea Type to see its custom fields.')).toBeTruthy()
+    expect(screen.getByText('Pick an Item Type to see its custom fields.')).toBeTruthy()
   })
 })
 
@@ -368,7 +368,7 @@ describe('IdeaForm layout (owner decision 2026-10-22)', () => {
       'Title',
       'Problem',
       'Business impact',
-      'Idea type',
+      'Item type',
       'Priority',
       'Due date (optional)',
       'Solution 1',

@@ -118,16 +118,16 @@ test.describe('ideas on a board', () => {
     const title = `Demo idea ${Date.now()}`
 
     // The form opens in the drawer, from the page header's Add New Idea.
-    await page.getByRole('button', { name: 'Add New Idea' }).click()
+    await page.getByRole('button', { name: 'Add New Item' }).click()
     await expect(page).toHaveURL(/[?&]new=1/, { timeout: 30_000 })
     await page.getByLabel(/title/i).fill(title)
     await page.getByLabel(/problem/i).fill('Authored by the E2E suite.')
     await page.getByLabel('Solution 1').fill('Try it on one board first.')
     await page.getByLabel(/impact rationale/i).fill('Saves an hour a week.')
     await page.getByLabel(/business impact/i).selectOption({ index: 1 })
-    await page.getByLabel(/idea type/i).selectOption({ index: 1 })
+    await page.getByLabel(/item type/i).selectOption({ index: 1 })
     await page
-      .getByRole('button', { name: /create|add idea|save/i })
+      .getByRole('button', { name: /create|add item|save/i })
       .last()
       .click()
 
@@ -196,7 +196,7 @@ test.describe('read only', () => {
     //
     // This spec originally asserted the opposite and failed, which is the test doing its job on the
     // person writing it.
-    const newIdea = page.getByRole('button', { name: 'Add New Idea' })
+    const newIdea = page.getByRole('button', { name: 'Add New Item' })
     await expect(newIdea).toHaveCount(1)
     await expect(newIdea).toHaveAttribute('aria-disabled', 'true')
 

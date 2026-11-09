@@ -74,7 +74,7 @@ export function CreateOrganizationForm() {
 
           <p className="text-sm text-muted-foreground">
             Creating an organization also provisions its first board and its default status catalog,
-            so there is nothing to set up afterwards — it is ready for its first idea.
+            so there is nothing to set up afterwards — it is ready for its first item.
           </p>
 
           <fieldset className="m-0 flex flex-col gap-4 border-0 border-t p-0 pt-5">

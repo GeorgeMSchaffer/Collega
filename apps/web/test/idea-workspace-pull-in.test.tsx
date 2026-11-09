@@ -157,7 +157,7 @@ describe('Ideas list: Remove from board on a row', () => {
     expect(detach('mine-archived')?.getAttribute('aria-disabled')).toBe('true')
     expect(
       within(rowOf('mine-archived')).getByText(
-        'Only an Org Admin can remove ideas from an archived board.',
+        'Only an Org Admin can remove items from an archived board.',
       ),
     ).toBeTruthy()
   })

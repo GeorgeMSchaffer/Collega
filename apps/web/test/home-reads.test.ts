@@ -414,7 +414,7 @@ describe('getPlatformHome', () => {
     expect(kpis.map((kpi) => [kpi.label, kpi.value, kpi.href])).toEqual([
       ['Organizations', 2, '/settings/organizations'],
       ['Boards', 3, null],
-      ['Ideas', 14, null],
+      ['Items', 14, null],
       ['Users', 15, '/settings/users'],
     ])
   })

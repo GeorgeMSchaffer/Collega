@@ -174,7 +174,7 @@ export function BlockersSection({
             onChange={(event) => setQuery(event.target.value)}
           />
           <span id={`${id}-hint`} className="text-xs text-muted-foreground">
-            Cards on this board. Tasks of other ideas and standalone cards are listed.
+            Cards on this board. Tasks of other items and standalone cards are listed.
           </span>
           {shown.length === 0 ? (
             <p className="m-0 text-sm text-muted-foreground">No cards match.</p>

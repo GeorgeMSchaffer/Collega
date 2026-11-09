@@ -128,7 +128,7 @@ export function FieldsetEditForm({
 
           {archivedCount > 0 ? (
             <p className="m-0 max-w-prose text-sm text-muted-foreground">
-              Archived fields are skipped on ideas and are dropped from the set when you save.
+              Archived fields are skipped on items and are dropped from the set when you save.
             </p>
           ) : null}
 
@@ -172,10 +172,10 @@ export function FieldsetEditForm({
 
         <p className="m-0 max-w-prose text-sm text-muted-foreground">
           {usedBy === 0 ? (
-            'No idea type uses this set yet.'
+            'No item type uses this set yet.'
           ) : (
             <>
-              <Tag>{`Used by ${String(usedBy)} idea type${usedBy === 1 ? '' : 's'}`}</Tag> Saving
+              <Tag>{`Used by ${String(usedBy)} item type${usedBy === 1 ? '' : 's'}`}</Tag> Saving
               changes the fields on every one of them at once; answers already given are kept.
             </>
           )}
@@ -199,7 +199,7 @@ export function FieldsetEditForm({
         <input type="hidden" name="fieldsetId" value={fieldset.id} />
 
         <p className="m-0 max-w-prose text-sm text-muted-foreground">
-          Deleting removes the set but not its fields. It is refused while an idea type still uses
+          Deleting removes the set but not its fields. It is refused while an item type still uses
           it.
         </p>
         <Button type="submit" variant="outline" disabled={deleting} className="w-fit">

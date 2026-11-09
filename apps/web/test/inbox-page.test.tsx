@@ -125,7 +125,7 @@ describe('the inbox page', () => {
   it('tells the reader when the idea in the URL could not be opened', async () => {
     loadDrawer.mockResolvedValue({ ...NO_DRAWER, missing: true })
     await renderPage({ idea: 'gone' })
-    expect(screen.getByText(/That idea could not be opened\./)).toBeTruthy()
+    expect(screen.getByText(/That item could not be opened\./)).toBeTruthy()
   })
 
   it('never opens the drawer in create mode from here', async () => {

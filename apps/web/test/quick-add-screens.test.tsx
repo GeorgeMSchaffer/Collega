@@ -295,7 +295,7 @@ describe('Ideas quick-add bar', () => {
 
   it('refuses an empty Title without opening the drawer', () => {
     render(ideas('User', { rows: TWO_IDEAS, total: 2 }))
-    enter(field('Quick add idea'))
+    enter(field('Quick add item'))
     expect(nav.push).not.toHaveBeenCalled()
     expect(screen.getByText('Enter title.')).toBeTruthy()
   })
@@ -303,7 +303,7 @@ describe('Ideas quick-add bar', () => {
   it('opens the create drawer with the Title and clears the bar', () => {
     const props = { rows: TWO_IDEAS, total: 2 }
     const view = render(ideas('User', props))
-    const title = field('Quick add idea')
+    const title = field('Quick add item')
     type(title, ' Fewer changeovers ')
     enter(title)
     expect(nav.push).toHaveBeenCalledExactlyOnceWith('/list?new=1', { scroll: false })
@@ -322,8 +322,8 @@ describe('Ideas quick-add bar', () => {
     const props = { rows: TWO_IDEAS, total: 2 }
     const open = { drawer: { mode: 'create' as const, idea: null, formOptions: OPTIONS } }
     const view = render(ideas('User', props))
-    type(field('Quick add idea'), 'Spent title')
-    enter(field('Quick add idea'))
+    type(field('Quick add item'), 'Spent title')
+    enter(field('Quick add item'))
     view.rerender(ideas('User', { ...props, ...open }))
     // The form has read it; closing and reopening from the header button starts empty.
     view.rerender(ideas('User', props))

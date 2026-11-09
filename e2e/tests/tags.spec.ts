@@ -38,7 +38,7 @@ test.describe('an org admin manages tags', () => {
     const view = page.getByRole('complementary', { name })
     await expect(view).toBeVisible({ timeout: 30_000 })
     await expect(
-      view.getByText('Not used yet. It will be offered when anyone tags an idea.'),
+      view.getByText('Not used yet. It will be offered when anyone tags an item.'),
     ).toBeVisible()
 
     // Recolour through Custom, typed in lower case: the tag stores and shows it upper case.
@@ -74,7 +74,7 @@ test.describe('an org admin manages tags', () => {
     await filterTo(page, name)
     await page.getByRole('button', { name: `Delete ${name}` }).click()
     const confirm = page.getByRole('alertdialog', { name: 'Delete this tag?' })
-    await expect(confirm).toContainText(`“${name}” is removed from 0 ideas.`)
+    await expect(confirm).toContainText(`“${name}” is removed from 0 items.`)
     await expect(confirm).toContainText('Anyone who types it again creates a new tag.')
     await confirm.getByRole('button', { name: 'Delete tag' }).click()
     await expect(confirm).toBeHidden({ timeout: 30_000 })

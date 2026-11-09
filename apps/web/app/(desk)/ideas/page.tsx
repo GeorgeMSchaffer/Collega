@@ -19,7 +19,7 @@ import {
 import { requireCurrentUser } from '@/lib/server/current-user'
 import { currentUser, writeDenial } from '@/lib/session'
 
-export const metadata = { title: 'Ideas · Collega' }
+export const metadata = { title: 'Items · Collega' }
 
 /**
  * Every idea on every board (comp R): List by default, Cards beside it, filtered, sorted and paged
@@ -63,14 +63,14 @@ export default async function IdeasPage({
   return (
     <>
       <UsageViewed type="list.viewed" props={{ list: 'ideas' }} />
-      <Topbar title={<b>Ideas</b>} />
+      <Topbar title={<b>Items</b>} />
       <main className="flex min-w-0 flex-1 flex-col gap-4 p-6">
         <PageHeader
-          title="Ideas"
-          description="Every idea in the organization, on a board or not. Filter, sort, or open one to read and edit it."
+          title="Items"
+          description="Every item in the organization, on a board or not. Filter, sort, or open one to read and edit it."
           action={
             roleDenial ? (
-              <GatedAction id="why-new-ideas" label="Add New Idea" denial={roleDenial} />
+              <GatedAction id="why-new-ideas" label="Add New Item" denial={roleDenial} />
             ) : (
               <AddIdeaButton />
             )
@@ -79,7 +79,7 @@ export default async function IdeasPage({
         {drawer.missing ? (
           <Alert role="status">
             <span>
-              That idea could not be opened. It may have been deleted, or it is not yours to see.
+              That item could not be opened. It may have been deleted, or it is not yours to see.
             </span>
           </Alert>
         ) : null}

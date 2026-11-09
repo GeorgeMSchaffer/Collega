@@ -31,7 +31,7 @@ export function DemoDataForm() {
         <div className="flex flex-col gap-1">
           <h2 className="m-0 text-base font-semibold">Add the demo data</h2>
           <p className="m-0 text-sm text-muted-foreground">
-            Creates two organizations, ten accounts across them, four boards and the ideas, comments
+            Creates two organizations, ten accounts across them, four boards and the items, comments
             and delivery work that make a walkthrough. Safe to run more than once — it leaves
             anything already there alone, and repairs a catalog somebody renamed.
           </p>

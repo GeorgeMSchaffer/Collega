@@ -122,7 +122,7 @@ describe('saving a board with allowed idea types', () => {
     expect(result.savedId).toBeNull()
     expect(result.error).toBeNull()
     expect(result.allowedIdeaTypes).toBe(
-      "The board was saved, but its allowed idea types were not. Idea type 'x' was not found.",
+      "The board was saved, but its allowed item types were not. Idea type 'x' was not found.",
     )
     expect(revalidatePath).toHaveBeenCalledWith('/boards/b-1')
     expect(revalidatePath).toHaveBeenCalledWith('/', 'layout')
@@ -134,7 +134,7 @@ describe('saving a board with allowed idea types', () => {
       .mockRejectedValueOnce(new ApiError(403, '/boards/b-1/allowed-idea-types', 'Not allowed.'))
     const result = await saveBoardInPlace(IDLE, form({ shown: true, types: ['t-1'] }))
     expect(result.error).toBe(
-      'The board was saved, but its allowed idea types were not. Not allowed.',
+      'The board was saved, but its allowed item types were not. Not allowed.',
     )
     expect(result.allowedIdeaTypes).toBeTruthy()
   })

@@ -113,7 +113,7 @@ export function InboxWorkspace({
     <>
       <PageHeader
         title="Inbox"
-        description="Comments, status changes and edits on ideas you follow, and anything that mentions you — the last 90 days, newest first."
+        description="Comments, status changes and edits on items you follow, and anything that mentions you — the last 90 days, newest first."
         action={
           <span className="inline-flex flex-wrap items-center gap-2">
             {/* One button either way, so focus stays on it when marking all read disables it. */}
@@ -150,7 +150,7 @@ export function InboxWorkspace({
           <Icon name="bell" className="size-9 text-muted-foreground" />
           <h2 className="m-0 mt-2 text-lg">You&rsquo;re all caught up.</h2>
           <p className="m-0 max-w-[48ch] text-sm text-muted-foreground">
-            Comments, status changes and edits on ideas you follow, and anything that mentions you,
+            Comments, status changes and edits on items you follow, and anything that mentions you,
             land here.
           </p>
         </div>

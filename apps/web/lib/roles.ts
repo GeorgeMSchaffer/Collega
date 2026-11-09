@@ -200,7 +200,7 @@ export function detachOffer(
   const open = idea.taskCounts ? Math.max(0, idea.taskCounts.total - idea.taskCounts.done) : 0
   if (open > 0) return { reason: waitingText(open), ...(admin ? { override: true } : {}) }
   if (context.boardArchived && !admin) {
-    return { reason: 'Only an Org Admin can remove ideas from an archived board.' }
+    return { reason: 'Only an Org Admin can remove items from an archived board.' }
   }
   return { reason: null }
 }

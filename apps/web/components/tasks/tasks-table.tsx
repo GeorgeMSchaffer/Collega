@@ -178,7 +178,7 @@ export function TasksTable({
                 Board
               </th>
               <th scope="col" className="px-3.5">
-                Parent idea
+                Parent item
               </th>
               <th scope="col" className="px-3.5">
                 Status

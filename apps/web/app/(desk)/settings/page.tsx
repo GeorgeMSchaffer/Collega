@@ -85,22 +85,22 @@ function sectionsFor(role: Role): Section[] {
       {
         href: '/settings/statuses',
         title: 'Statuses',
-        blurb: 'The columns boards group ideas by, per organization.',
+        blurb: 'The columns boards group items by, per organization.',
       },
       {
         href: '/settings/idea-types',
-        title: 'Idea types',
-        blurb: 'The kinds of idea people may raise, and which fields each one asks for.',
+        title: 'Item types',
+        blurb: 'The kinds of item people may raise, and which fields each one asks for.',
       },
       {
         href: '/settings/fields',
         title: 'Custom fields',
-        blurb: 'Extra questions attached to an idea type.',
+        blurb: 'Extra questions attached to an item type.',
       },
       {
         href: '/settings/fieldsets',
         title: 'Fieldsets',
-        blurb: 'Reusable groups of custom fields that idea types can share.',
+        blurb: 'Reusable groups of custom fields that item types can share.',
       },
       {
         href: '/settings/tags',
@@ -142,7 +142,7 @@ function sectionsFor(role: Role): Section[] {
     {
       href: '/settings/boards',
       title: 'Boards',
-      blurb: 'The boards you track ideas on, and which statuses become each one’s swimlanes.',
+      blurb: 'The boards you track items on, and which statuses become each one’s swimlanes.',
     },
     {
       href: '/settings/groups',
@@ -152,28 +152,28 @@ function sectionsFor(role: Role): Section[] {
     {
       href: '/settings/statuses',
       title: 'Statuses',
-      blurb: 'The columns your boards group ideas by. Order here is the order on every board.',
+      blurb: 'The columns your boards group items by. Order here is the order on every board.',
     },
     {
       href: '/settings/idea-types',
-      title: 'Idea types',
-      blurb: 'The kinds of idea people may raise, and which fields each one asks for.',
+      title: 'Item types',
+      blurb: 'The kinds of item people may raise, and which fields each one asks for.',
     },
     {
       href: '/settings/fields',
       title: 'Custom fields',
-      blurb: 'Extra questions attached to an idea type.',
+      blurb: 'Extra questions attached to an item type.',
     },
     {
       href: '/settings/fieldsets',
       title: 'Fieldsets',
-      blurb: 'Reusable groups of custom fields that idea types can share.',
+      blurb: 'Reusable groups of custom fields that item types can share.',
     },
     {
       href: '/settings/tags',
       title: 'Tags',
       blurb:
-        'Labels for ideas on every board: their colours, and adding, renaming or deleting them.',
+        'Labels for items on every board: their colours, and adding, renaming or deleting them.',
     },
     {
       href: '/settings/login-messages',
@@ -248,7 +248,7 @@ export default async function SettingsPage() {
           <Alert variant="note" className="max-w-prose">
             <span>
               <b>Settings is almost entirely administrative.</b> You see only your own profile here.
-              Users, boards, statuses, idea types, fields, tags and the assistant are configured by
+              Users, boards, statuses, item types, fields, tags and the assistant are configured by
               an organization administrator, so they are <b>absent rather than refused</b>.
             </span>
           </Alert>

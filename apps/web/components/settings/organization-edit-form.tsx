@@ -121,7 +121,7 @@ export function OrganizationEditForm({ organization }: { organization: Organizat
       {organization.isArchived ? (
         <p className="m-0 border-t pt-6 text-sm text-muted-foreground">
           This organization is archived. It still appears on the list, and its people, boards and
-          ideas all still resolve.
+          items all still resolve.
         </p>
       ) : (
         <form action={archive} className="flex flex-col gap-2 border-t pt-6">
@@ -131,7 +131,7 @@ export function OrganizationEditForm({ organization }: { organization: Organizat
 
           <p className="m-0 max-w-prose text-sm text-muted-foreground">
             Archiving stops this organization being somewhere new work is filed. Its people, boards
-            and ideas keep resolving, and the list marks it rather than hiding it.
+            and items keep resolving, and the list marks it rather than hiding it.
           </p>
           <Button type="submit" variant="outline" disabled={archiving} className="w-fit">
             {archiving ? 'Archiving…' : 'Archive organization'}

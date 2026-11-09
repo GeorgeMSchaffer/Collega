@@ -23,7 +23,7 @@ export function ArchivedBanner({
   return (
     <Alert role="status" className="flex flex-wrap items-center gap-2">
       <Icon name="archive" />
-      <span className="flex-1">This board is archived. Its lanes and ideas are read-only.</span>
+      <span className="flex-1">This board is archived. Its lanes and items are read-only.</span>
       {canUnarchive ? (
         <Button
           size="sm"
