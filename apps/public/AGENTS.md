@@ -5,7 +5,8 @@ build step, so `pnpm check` has nothing to run here.
 
 - `index.html` — the app-aligned spacious narrative landing page, taken from
   `SPEC/mockups/worksprint-marketing-app-narrative.html` (proposal bar and sibling-concept links
-  removed). Styles and the demo form script are in `worksprint-assets/`; its CSP allows only
+  removed), with the Workflow story Figma hero and its existing `workflow/assets/` track SVGs.
+  Styles and the demo form script are in `worksprint-assets/`; its CSP allows only
   same-origin assets, so nothing external can be added without changing the `<meta>` policy.
 - `ideas/ boards/ backlog/ sprints/ roadmap/` — one product page per area, each with its own title,
   description, canonical and `sitemap.xml` entry. Copy states only what the app does today
